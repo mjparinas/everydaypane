@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
 import { MessageBoard } from "@/components/MessageBoard";
+import { Mark } from "@/components/Wordmark";
 import { SESSION_COOKIE, sessionFor } from "@/server/auth";
 
 import { SignOut } from "./SignOut";
@@ -16,7 +17,10 @@ export default async function FamilyPage() {
   return (
     <main className="mx-auto grid max-w-xl gap-4 p-4">
       <header className="flex items-center justify-between gap-2">
-        <h1 className="text-xl font-bold">Message board</h1>
+        <div className="flex min-w-0 items-center gap-3">
+          <Mark size={32} />
+          <h1 className="text-xl font-bold">Message board</h1>
+        </div>
         <div className="flex shrink-0 gap-2 whitespace-nowrap">
           {session.role === "admin" && (
             <a className="btn-ghost" href="/admin/">

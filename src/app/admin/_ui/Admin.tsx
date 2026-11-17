@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useSyncExternalStore } from "react";
 
 import { MessageBoard } from "@/components/MessageBoard";
+import { Mark } from "@/components/Wordmark";
 import type { DashboardConfig } from "@/lib/config/schema";
 
 import { DisplaysPanel } from "./DisplaysPanel";
@@ -124,9 +125,12 @@ function AdminPanel({ email }: { email: string }) {
     <div className="min-h-dvh pb-24 md:pb-8">
       <header className="sticky top-0 z-20 border-b border-line bg-panel/95 backdrop-blur">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-2">
-          <div className="min-w-0">
-            <h1 className="truncate text-lg font-bold">{name}</h1>
-            <p className="truncate text-xs text-soft">{email}</p>
+          <div className="flex min-w-0 items-center gap-3">
+            <Mark size={36} />
+            <div className="min-w-0">
+              <h1 className="truncate text-lg font-bold">{name}</h1>
+              <p className="truncate text-xs text-soft">{email}</p>
+            </div>
           </div>
           <SaveBar />
         </div>
