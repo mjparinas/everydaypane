@@ -96,6 +96,12 @@ panel can be complex if you need it to be."
   source is cached on its own and one failing never hides the others. The red strip sits in the layout's flow, so it
   pushes the widgets down rather than covering them; a tap dismisses it on that screen (localStorage) until a new
   alert arrives.
+- **Photos:** sources are in `config.integrations.photos.sources`; a photo widget picks some (none picked means all).
+  Amazon has no official API: shared albums use the share page's own endpoints (`/drive/v1/shares/<id>`, then
+  `/nodes/<id>/children?tempLink=true`, no sign-in); "photos of people" uses `/drive/v1/search` with
+  `people:(…)` and the admin's pasted Amazon cookies (encrypted `amazon.cookie` secret). Lists are cached 30 minutes;
+  displays get ids and sizes only, and images come through `/api/display/photo/`, which fetches only photos the server
+  listed (never a URL from the request) at the width the cell draws (`viewBox`). Expired temporary links are listed again.
 - **Garbage pickup:** the Township of Langley's collection calendar (tol.ca) is Recycle Coach, project 521,
   district `LANGL`, with zones such as Monday A or Thursday B. The zone is looked up from the address in the admin
   panel (or picked by hand) and the schedule is fetched and cached by the server (12 hours). The API is Recycle Coach's

@@ -9,6 +9,7 @@ import { date } from "./date";
 import { garbage } from "./garbage";
 import { messages } from "./messages";
 import { note } from "./note";
+import { photos } from "./photos";
 import { placeholder } from "./placeholder";
 import type { Cleanup, WidgetContext } from "./types";
 import { weather } from "./weather";
@@ -42,6 +43,7 @@ export function mountWidget(el: HTMLElement, w: Widget, ctx: WidgetContext): Cle
     case "alerts":
       return alerts(el, w, ctx);
     case "photos":
+      return photos(el, w, ctx);
     case "haEntity":
     case "camera":
       return placeholder(el, w.type);
