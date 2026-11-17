@@ -102,6 +102,10 @@ panel can be complex if you need it to be."
   `people:(…)` and the admin's pasted Amazon cookies (encrypted `amazon.cookie` secret). Lists are cached 30 minutes;
   displays get ids and sizes only, and images come through `/api/display/photo/`, which fetches only photos the server
   listed (never a URL from the request) at the width the cell draws (`viewBox`). Expired temporary links are listed again.
+  Amazon turns cloud servers away at times (a 503 robot page, seen 2026-11-17), so Amazon albums are listed every six
+  hours, a 503 is retried once after a pause, a refusal isn't retried for 20 minutes, and the last good list is served
+  meanwhile. We wait and retry; we never disguise the server or route around Amazon's blocking (for example through
+  the home network). Settings › Photos shows each album's photo count or error.
 - **Garbage pickup:** the Township of Langley's collection calendar (tol.ca) is Recycle Coach, project 521,
   district `LANGL`, with zones such as Monday A or Thursday B. The zone is looked up from the address in the admin
   panel (or picked by hand) and the schedule is fetched and cached by the server (12 hours). The API is Recycle Coach's
