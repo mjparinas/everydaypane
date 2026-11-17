@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useSyncExternalStore } from "react";
 
+import { MealPlanner } from "@/components/MealPlanner";
 import { MessageBoard } from "@/components/MessageBoard";
 import { Mark } from "@/components/Wordmark";
 import type { DashboardConfig } from "@/lib/config/schema";
@@ -23,6 +24,7 @@ const TABS = [
   { id: "schedule", label: "Schedule", icon: "🕒" },
   { id: "displays", label: "Displays", icon: "🖥️" },
   { id: "messages", label: "Messages", icon: "💬" },
+  { id: "meals", label: "Meals", icon: "🍽️" },
   { id: "settings", label: "Settings", icon: "⚙️" },
 ] as const;
 type Tab = (typeof TABS)[number]["id"];
@@ -162,6 +164,7 @@ function AdminPanel({ email }: { email: string }) {
             <MessageBoard />
           </div>
         )}
+        {tab === "meals" && <MealPlanner />}
         {tab === "settings" && (
           <div className="grid gap-4">
             <SettingsPanel />
@@ -174,7 +177,7 @@ function AdminPanel({ email }: { email: string }) {
 
       {/* A thumb-reachable tab bar on phones. */}
       <nav
-        className="fixed inset-x-0 bottom-0 z-20 grid grid-cols-6 border-t border-line bg-panel/95 pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden"
+        className="fixed inset-x-0 bottom-0 z-20 grid grid-cols-7 border-t border-line bg-panel/95 pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden"
         aria-label="Sections"
       >
         {TABS.map((t) => (

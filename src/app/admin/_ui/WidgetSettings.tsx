@@ -2,6 +2,7 @@
 
 import type { CountdownEvent, DashboardConfig, Widget } from "@/lib/config/schema";
 import { WIDGETS } from "@/lib/config/widgets";
+import { MEAL_LABELS, MEAL_SLOTS } from "@/lib/meals";
 
 import { NumberInput, Select, Text, TextArea, Toggle } from "./fields";
 import { HaEntityList } from "./haEntities";
@@ -325,6 +326,39 @@ function TypeSettings({
           <NumberInput label="Notes shown" value={w.count} min={1} max={20} onChange={(v) => e((x) => void (x.count = v))} />
           <p className="text-xs text-soft">
             The family posts notes from their phones at <span className="font-mono">/family/</span> (Messages tab here).
+          </p>
+        </>
+      );
+    }
+    case "meals": {
+      const e = edit<"meals">();
+      return (
+        <>
+          <Select
+            label="Days"
+            value={String(w.days)}
+            options={[1, 2, 3, 4, 5, 6, 7].map((n) => ({
+              value: String(n),
+              label: n === 1 ? "Today (tomorrow from 8 PM)" : n === 7 ? "The week" : `The next ${n} days`,
+            }))}
+            onChange={(v) => e((x) => void (x.days = Number(v)))}
+          />
+          {MEAL_SLOTS.map((slot) => (
+            <Toggle
+              key={slot}
+              label={`Show ${MEAL_LABELS[slot].toLowerCase()}`}
+              checked={w.slots.includes(slot)}
+              onChange={(on) =>
+                e((x) => {
+                  // Keep breakfast, lunch, dinner order, and at least one meal.
+                  const next = MEAL_SLOTS.filter((s) => (s === slot ? on : x.slots.includes(s)));
+                  if (next.length) x.slots = next;
+                })
+              }
+            />
+          ))}
+          <p className="text-xs text-soft">
+            Plan meals in the Meals tab here, or at <span className="font-mono">/family/</span> from a phone.
           </p>
         </>
       );

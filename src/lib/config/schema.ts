@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+import { MEAL_SLOTS } from "../meals";
 import { PERIODS } from "./periods";
 
 // The whole dashboard setup, as the admin panel edits it and every display reads it. One JSON document, validated
@@ -119,6 +120,17 @@ export const widgetSchema = z.discriminatedUnion("type", [
   z.object({ ...base, type: z.literal("note"), text: z.string().max(2000), size: z.enum(["s", "m", "l", "xl"]) }),
   // The family message board: notes anyone in the family posts from their phone (stored in the messages table).
   z.object({ ...base, type: z.literal("messages"), count: z.number().int().min(1).max(20) }),
+  // The meal plan (stored in the meals table): today's meals, or the days ahead, showing the chosen meals.
+  z.object({
+    ...base,
+    type: z.literal("meals"),
+    days: z.number().int().min(1).max(7),
+    slots: z
+      .array(z.enum(MEAL_SLOTS))
+      .min(1, "Pick at least one meal")
+      .max(3)
+      .refine((s) => new Set(s).size === s.length, "Each meal once"),
+  }),
   // Emergency and severe weather alerts for the area (the full-screen takeover is configured in config.alerts).
   z.object({ ...base, type: z.literal("alerts"), showAllClear: z.boolean() }),
   // Google Tasks (Melvin, 2026-11-17): the open tasks of some lists (none picked means every list switched on under
