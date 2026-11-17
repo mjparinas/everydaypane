@@ -6,7 +6,8 @@ import { ConfirmButton, Section, Select, Text } from "./fields";
 import { useAdmin } from "./store";
 
 // Displays: each screen (the UC-Display21 in the kitchen, an old tablet in the hall) gets its own secret address.
-// The address is shown once, when it's added; deleting a display signs that screen out.
+// Its address can be shown and copied again any time (Melvin, 2026-11-17); "New link" replaces it if it leaks, and
+// deleting a display signs that screen out.
 
 interface Device {
   id: string;
@@ -46,7 +47,6 @@ export function DisplaysPanel() {
   const [name, setName] = useState("Kitchen");
   const [viewId, setViewId] = useState("");
   const [added, setAdded] = useState<{ name: string; url: string } | null>(null);
-  const [copied, setCopied] = useState(false);
 
   function load() {
     return fetchDevices().then(
@@ -74,7 +74,6 @@ export function DisplaysPanel() {
     const body = (await r.json().catch(() => ({}))) as { url?: string; error?: string };
     if (!r.ok || !body.url) return setError(body.error ?? "Couldn't add the display.");
     setAdded({ name, url: body.url });
-    setCopied(false);
     void load();
   }
 
@@ -97,22 +96,9 @@ export function DisplaysPanel() {
         {added && (
           <div className="grid gap-2 rounded-xl border border-brand p-3" role="status">
             <p className="text-sm">
-              Open this address on <strong>{added.name}</strong>. It is shown only now, so copy it before you leave this page.
+              Open this address on <strong>{added.name}</strong>. You can see it again any time under Displays.
             </p>
-            <code className="block overflow-x-auto rounded-lg bg-bg p-2 text-xs break-all">{added.url}</code>
-            <div className="flex gap-2">
-              <button
-                className="btn-ghost"
-                onClick={() => {
-                  void navigator.clipboard.writeText(added.url).then(() => setCopied(true));
-                }}
-              >
-                {copied ? "Copied" : "Copy address"}
-              </button>
-              <a className="btn-ghost" href={added.url} target="_blank" rel="noreferrer">
-                Open ↗
-              </a>
-            </div>
+            <Address url={added.url} />
             <p className="text-xs text-soft">On the UC-Display21, set this as the start page in its browser (kiosk) settings.</p>
           </div>
         )}
@@ -143,6 +129,7 @@ export function DisplaysPanel() {
                   options={viewOptions}
                   onChange={(v) => void patch(d.id, { viewId: v || null })}
                 />
+                <DeviceLink id={d.id} />
                 <ConfirmButton
                   label="Delete display"
                   confirm="Tap again: this signs the screen out"
@@ -155,6 +142,63 @@ export function DisplaysPanel() {
           </ul>
         )}
       </Section>
+    </div>
+  );
+}
+
+/** A display's address with copy and open buttons. */
+function Address({ url }: { url: string }) {
+  const [copied, setCopied] = useState(false);
+  return (
+    <>
+      <code className="block overflow-x-auto rounded-lg bg-bg p-2 text-xs break-all">{url}</code>
+      <div className="flex flex-wrap gap-2">
+        <button
+          type="button"
+          className="btn-ghost"
+          onClick={() => {
+            void navigator.clipboard.writeText(url).then(() => setCopied(true));
+          }}
+        >
+          {copied ? "Copied" : "Copy address"}
+        </button>
+        <a className="btn-ghost" href={url} target="_blank" rel="noreferrer">
+          Open ↗
+        </a>
+      </div>
+    </>
+  );
+}
+
+/** Shows a display's address on request, and gives it a new one (the old address stops working). */
+function DeviceLink({ id }: { id: string }) {
+  const [url, setUrl] = useState<string | null>(null);
+  const [error, setError] = useState("");
+
+  async function fetchLink(method: "GET" | "POST") {
+    setError("");
+    const r = await call(`/api/admin/devices/${id}/`, method);
+    const body = (await r.json().catch(() => ({}))) as { url?: string };
+    if (body.url) return setUrl(body.url);
+    // Displays added before addresses were kept can only get a new one.
+    setError(
+      r.status === 404 && method === "GET"
+        ? "This display was added before addresses were kept. Give it a new link."
+        : "Couldn't get the address.",
+    );
+  }
+
+  return (
+    <div className="grid gap-2">
+      {url ? (
+        <Address url={url} />
+      ) : (
+        <button type="button" className="btn-ghost justify-self-start" onClick={() => void fetchLink("GET")}>
+          Show address
+        </button>
+      )}
+      {error && <p className="text-sm text-bad">{error}</p>}
+      <ConfirmButton label="New link" confirm="Tap again: the old address stops working" onConfirm={() => void fetchLink("POST")} />
     </div>
   );
 }

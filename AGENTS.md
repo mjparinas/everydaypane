@@ -80,8 +80,11 @@ panel can be complex if you need it to be."
 - **Database:** Turso in production (`DATABASE_URL` + `DATABASE_AUTH_TOKEN`, or the `TURSO_*` pair Vercel's
   integration creates), `file:local.db` in development, memory in tests. Tables are created on first use; migrations only
   ever add (`src/server/db.ts`).
-- **Displays** are devices with their own secret address `/d/<token>/` (only the hash is stored). A device shows one
-  view, or follows the time-of-day schedule. Deleting a device signs that screen out.
+- **Displays** are devices with their own secret address `/d/<token>/`. Requests are matched by the token's hash; the
+  token is also kept encrypted (`token_sealed`, like the other secrets) so an admin can show and copy the address again
+  from the Displays tab any time (Melvin, 2026-11-17, who didn't want it shown only once). "New link" replaces the
+  address and the old one stops working. A device shows one view, or follows the time-of-day schedule. Deleting a
+  device signs that screen out.
 - **Admin panel** (`src/app/admin/_ui/`): one page with tabs (a bottom tab bar on phones). Edits collect in a working
   copy (a Zustand store per page) and go out together with Save. The grid editor drags with pointer events (mouse and
   touch) and also moves and resizes with the keyboard; widgets never overlap or leave the grid (`src/lib/config/grid.ts`).

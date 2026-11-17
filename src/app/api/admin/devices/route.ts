@@ -11,7 +11,7 @@ export async function GET(req: Request) {
 
 const body = z.object({ name: z.string().trim().min(1).max(40), viewId: z.string().max(64).nullable() });
 
-/** Adds a display. Its address is in this answer only: the server keeps just a hash. */
+/** Adds a display and answers with its address (which the Displays tab can show again later). */
 export async function POST(req: Request) {
   if (!sameOrigin(req)) return json({ error: "Not allowed" }, 403);
   if (!(await adminFor(req))) return unauthorized();
