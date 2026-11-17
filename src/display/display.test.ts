@@ -10,6 +10,7 @@ import { aqhiBand, usAqiBand } from "./widgets/air";
 import { clock } from "./widgets/clock";
 import { countdown } from "./widgets/countdown";
 import { controlFor, stateText } from "./widgets/ha";
+import { meals } from "./widgets/meals";
 import { F, media, nowPlaying, positionNow } from "./widgets/media";
 
 const ctx = { payload: {} as DisplayPayload, timeZone: "America/Vancouver", hour12: true };
@@ -85,6 +86,52 @@ describe("widgets", () => {
     const stop = countdown(el, w, ctx);
     const rows = [...el.querySelectorAll(".cd-row")].map((r) => r.textContent);
     expect(rows).toEqual(["🎂Sam turns 11Tomorrow", "🎄Christmas38 days"]);
+    stop();
+  });
+});
+
+describe("meals", () => {
+  const plan = {
+    today: "2026-11-17",
+    meals: {
+      "2026-11-17": { breakfast: "Oatmeal", lunch: "Leftover soup", dinner: "Tacos" },
+      "2026-11-18": { breakfast: "Pancakes" },
+    },
+  };
+  const mount = async (now: string, change: Partial<ReturnType<typeof newWidget<"meals">>> = {}) => {
+    vi.useFakeTimers({ now: new Date(now) });
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(() => Promise.resolve(Response.json(plan))),
+    );
+    const el = document.createElement("div");
+    const stop = meals(el, { ...newWidget("meals", "ml", { x: 0, y: 0 }), ...change }, ctx);
+    await vi.advanceTimersByTimeAsync(0);
+    return { el, stop };
+  };
+  const rows = (el: HTMLElement) =>
+    [...el.querySelectorAll(".ml-row")].map((r) => `${r.className.includes("ml-next") ? "> " : ""}${r.textContent}`);
+
+  afterEach(() => vi.unstubAllGlobals());
+
+  it("shows today's meals with the next one highlighted", async () => {
+    const { el, stop } = await mount("2026-11-17T20:00:00Z"); // lunchtime in Langley
+    expect(el.querySelector(".w-label")?.textContent).toBe("Today's meals");
+    expect(rows(el)).toEqual(["🥣 BreakfastOatmeal", "> 🥪 LunchLeftover soup", "🍽️ DinnerTacos"]);
+    stop();
+  });
+
+  it("moves to tomorrow in the evening, and says when a meal isn't planned", async () => {
+    const { el, stop } = await mount("2026-11-18T04:30:00Z"); // 8:30 PM or later on the 17th
+    expect(el.querySelector(".w-label")?.textContent).toBe("Tomorrow's meals");
+    expect(rows(el)).toEqual(["> 🥣 BreakfastPancakes", "🥪 LunchNot planned", "🍽️ DinnerNot planned"]);
+    stop();
+  });
+
+  it("lists the days ahead with only the chosen meals", async () => {
+    const { el, stop } = await mount("2026-11-17T16:00:00Z", { days: 3, slots: ["dinner"] });
+    const days = [...el.querySelectorAll(".ml-day")].map((d) => d.textContent);
+    expect(days).toEqual(["Today🍽️ DinnerTacos", "TomorrowNothing planned", "Thu, Nov 19Nothing planned"]);
     stop();
   });
 });

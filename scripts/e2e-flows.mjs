@@ -162,6 +162,38 @@ export const flows = [
     },
   },
   {
+    name: "a meal planned on a phone reaches the display",
+    async run({ browser, page, base, expect }) {
+      const phone = await browser.newContext({ viewport: { width: 390, height: 844 }, storageState: await page.context().storageState() });
+      const p = await phone.newPage();
+      await p.goto(`${base}/family/`);
+      const today = p.getByRole("region", { name: /^Today/ });
+      const dinner = today.getByRole("combobox", { name: /Dinner/ });
+      await dinner.fill("Tacos");
+      const saved = p.waitForResponse((r) => r.url().includes("/api/meals/") && r.request().method() === "PUT");
+      await dinner.press("Enter");
+      expect((await saved).ok(), "the meal wasn't saved");
+      const overflow = await p.evaluate(() => document.documentElement.scrollWidth > innerWidth);
+      expect(!overflow, "the family page scrolls sideways on a phone");
+      await phone.close();
+
+      const { config, version } = await (await page.request.get(`${base}/api/admin/config/`)).json();
+      const home = config.views.find((v) => v.id === "home");
+      home.widgets = home.widgets.filter((w) => w.id !== "home-photos" && w.id !== "e2e-board");
+      home.widgets.push({ id: "e2e-meals", type: "meals", x: 4, y: 3, w: 5, h: 5, days: 7, slots: ["breakfast", "lunch", "dinner"] });
+      const put = await page.request.put(`${base}/api/admin/config/`, {
+        headers: { origin: base },
+        data: { baseVersion: version, config },
+      });
+      expect(put.ok(), `save: ${put.status()}`);
+      const url = await addDevice(page, base, "home");
+      const d = await openDisplay(browser, url);
+      await d.page.locator(".w-meals").getByText("Tacos").waitFor();
+      expect(d.errors.length === 0, d.errors.join("\n"));
+      await d.context.close();
+    },
+  },
+  {
     name: "an emergency alert shows as a red strip that a tap dismisses",
     async run({ browser, page, base, expect }) {
       const url = await addDevice(page, base, "home");

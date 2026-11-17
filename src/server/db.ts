@@ -20,6 +20,8 @@ const MIGRATIONS = [
   // Photos kept in our own private Blob store (uploads and Google Photos picks); src/server/library.ts.
   `CREATE TABLE IF NOT EXISTS photos (id TEXT PRIMARY KEY, source_id TEXT NOT NULL, pathname TEXT NOT NULL, w INTEGER NOT NULL, h INTEGER NOT NULL, taken TEXT, origin TEXT NOT NULL, origin_id TEXT, added_at INTEGER NOT NULL)`,
   `CREATE INDEX IF NOT EXISTS photos_by_source ON photos (source_id, added_at)`,
+  // The meal plan: one row per day and meal (src/server/meals.ts).
+  `CREATE TABLE IF NOT EXISTS meals (date TEXT NOT NULL, slot TEXT NOT NULL, text TEXT NOT NULL, updated_at INTEGER NOT NULL, updated_by TEXT NOT NULL, PRIMARY KEY (date, slot))`,
 ];
 
 // Columns added after a table was first created. SQLite has no ADD COLUMN IF NOT EXISTS, so each one runs on its own

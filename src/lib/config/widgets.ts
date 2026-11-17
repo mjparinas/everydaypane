@@ -119,6 +119,14 @@ export const WIDGETS: { [T in WidgetType]: WidgetInfo<T> } = {
     minSize: { w: 2, h: 2 },
     defaults: () => ({ count: 5 }),
   },
+  meals: {
+    label: "Meals",
+    description: "Breakfast, lunch and dinner from the meal plan",
+    icon: "🍽️",
+    size: { w: 3, h: 3 },
+    minSize: { w: 2, h: 1 },
+    defaults: () => ({ days: 1, slots: ["breakfast", "lunch", "dinner"] }),
+  },
   alerts: {
     label: "Alerts",
     description: "Emergency, weather, road and earthquake alerts",

@@ -30,6 +30,8 @@ node scripts/e2e.mjs   # Playwright browser tests against the build (CHROMIUM_PA
 - **Added the same day** (Melvin, 2026-11-17): offline mode, admin sign-in by magic link through Resend, Sentry,
   burn-in protection, UniFi Protect video (cameras and doorbell pop-ups), a family message board, and emergency alerts.
 - **Music** (Melvin, 2026-11-17): Spotify and Sonos controls on the wall, through Home Assistant.
+- **Meal planning** (Melvin, 2026-11-17): breakfast, lunch and dinner for each day, planned from a phone and shown on
+  the wall (see Architecture).
 - **Emergency alerts** (Melvin, 2026-11-17): urgent alerts for Langley, the Lower Mainland, BC and Canada (Alert
   Ready/NAAD, Environment Canada weather warnings, DriveBC road events for torrential rain or snow, Earthquakes Canada,
   tsunami and flooding). They show as a **red strip across the top of the screen that can be dismissed**, not a
@@ -92,6 +94,12 @@ panel can be complex if you need it to be."
 - **Family message board:** anyone on `ADMIN_EMAILS` or `FAMILY_EMAILS` posts notes from `/family/`; the author name is
   typed, never the email, because the wall is readable by anyone in the kitchen. Notes can expire; admins pin. Displays
   poll the board every 30 seconds with an ETag.
+- **Meal planning** (Melvin, 2026-11-17: "add meal planning", with breakfast, lunch and dinner for each day): one row
+  per day and meal in the `meals` table (`src/server/meals.ts`), planned by anyone on `ADMIN_EMAILS` or `FAMILY_EMAILS`
+  from the admin panel's Meals tab or `/family/`. A meal saves when its box loses focus (not with the settings Save
+  button, since it isn't part of the settings document), and recent meals are offered as suggestions. The meals widget
+  shows one day (the next meal highlighted; from 8 PM it shows tomorrow, `nextMeal` in `src/lib/meals.ts`) or up to a
+  week, and polls `/api/display/meals/` every minute. Plans older than 60 days are cleared as new ones are written.
 - **Google Calendar:** an admin connects one Google account from Settings (OAuth, `calendar.readonly`, redirect
   `<site>/api/google/callback/`); the refresh token is a stored secret, the chosen calendars and their colours live in
   `config.integrations.google.calendars`. The server fetches the month grid around today plus the next two weeks into
