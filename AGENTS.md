@@ -92,7 +92,9 @@ panel can be complex if you need it to be."
   dashboard's time zone (tzdata has B.C. on UTC−7 all year from 2026, so don't hard-code −08:00 in tests).
 - **Garbage pickup:** the Township of Langley's collection calendar (tol.ca) is Recycle Coach, project 521,
   district `LANGL`, with zones such as Monday A or Thursday B. The zone is looked up from the address in the admin
-  panel (or picked by hand) and the schedule is fetched and cached by the server.
+  panel (or picked by hand) and the schedule is fetched and cached by the server (12 hours). The API is Recycle Coach's
+  `zone-setup` endpoints on `ca-web` / `us-web.apigw.recyclecoach.com` (tried in that order), as the open-source Home
+  Assistant waste_collection_schedule integration uses them; this sandbox can't reach them, so tests use recorded shapes.
 - **Home Assistant and UniFi Protect:** the server calls Home Assistant (so it must be reachable from Vercel, e.g.
   through Nabu Casa or a tunnel). UniFi Protect cameras and the doorbell come through Home Assistant's UniFi Protect
   integration, because Protect itself is only on the local network.
