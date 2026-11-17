@@ -6,6 +6,7 @@ import { GooglePanel } from "./GooglePanel";
 import { HomeAssistantPanel } from "./HomeAssistantPanel";
 import { PhotosPanel } from "./PhotosPanel";
 import { useAdmin } from "./store";
+import { TasksPanel } from "./TasksPanel";
 import { TIME_ZONES } from "./WidgetSettings";
 
 export function SettingsPanel() {
@@ -62,6 +63,7 @@ export function SettingsPanel() {
       </Section>
 
       <GooglePanel />
+      <TasksPanel />
       <GarbagePanel />
       <PhotosPanel />
       <HomeAssistantPanel />

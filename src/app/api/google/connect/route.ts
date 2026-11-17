@@ -8,11 +8,12 @@ export async function GET(req: Request) {
   if (!(await adminFor(req))) return unauthorized();
   if (!googleConfigured()) return json({ error: "GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET aren't set" }, 503);
   const state = newState();
-  const origin = new URL(req.url).origin;
+  const url = new URL(req.url);
+  const origin = url.origin;
   return new Response(null, {
     status: 303,
     headers: {
-      Location: consentUrl(state, redirectUri(origin), new URL(req.url).searchParams.get("photos") === "1"),
+      Location: consentUrl(state, redirectUri(origin), url.searchParams.get("photos") === "1", url.searchParams.get("tasks") === "1"),
       "Set-Cookie": stateCookie(state),
       "Cache-Control": "no-store",
     },

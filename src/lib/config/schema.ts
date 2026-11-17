@@ -121,6 +121,16 @@ export const widgetSchema = z.discriminatedUnion("type", [
   z.object({ ...base, type: z.literal("messages"), count: z.number().int().min(1).max(20) }),
   // Emergency and severe weather alerts for the area (the full-screen takeover is configured in config.alerts).
   z.object({ ...base, type: z.literal("alerts"), showAllClear: z.boolean() }),
+  // Google Tasks (Melvin, 2026-11-17): the open tasks of some lists (none picked means every list switched on under
+  // Settings), which anyone at the wall can tick off when `allowCheck` is on.
+  z.object({
+    ...base,
+    type: z.literal("tasks"),
+    listIds: z.array(z.string().max(255)).max(20),
+    count: z.number().int().min(1).max(30),
+    showDue: z.boolean(),
+    allowCheck: z.boolean(),
+  }),
   // A UniFi Protect camera, through Home Assistant's UniFi Protect integration (camera.* entity).
   z.object({ ...base, type: z.literal("camera"), entityId: z.string().max(255), refreshSeconds: z.number().int().min(2).max(600) }),
 ]);
@@ -201,6 +211,11 @@ export const configSchema = z
       google: z.object({
         calendars: z.array(z.object({ id: z.string().max(255), name: z.string().max(120), color: hex, enabled: z.boolean() })).max(50),
       }),
+      // The Google Tasks lists of the connected account that widgets may show (src/server/googleTasks.ts). Defaults to
+      // none, so a document saved before Tasks existed still loads.
+      tasks: z
+        .object({ lists: z.array(z.object({ id: z.string().max(255), name: z.string().max(120), enabled: z.boolean() })).max(50) })
+        .default({ lists: [] }),
       garbage: z.object({
         projectId: z.string().max(20),
         districtId: z.string().max(20),

@@ -87,6 +87,23 @@ export interface CalendarData {
   connected?: boolean;
 }
 
+/** One open Google Task, trimmed by the server (src/server/googleTasks.ts). */
+export interface TaskItem {
+  id: string;
+  title: string;
+  /** YYYY-MM-DD (Google keeps only the date of a task's due time). */
+  due?: string;
+  /** A subtask: drawn indented under its parent. */
+  sub?: boolean;
+}
+
+export interface TasksData {
+  updatedAt: number;
+  /** False until an admin connects Google Tasks in the admin panel. */
+  connected: boolean;
+  lists: { id: string; name: string; tasks: TaskItem[] }[];
+}
+
 export type BinKind = "garbage" | "recycling" | "organics" | "glass" | "other";
 
 /** Upcoming collection days from the Township's calendar (src/server/garbage.ts). */

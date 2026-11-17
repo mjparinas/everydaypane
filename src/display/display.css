@@ -1201,3 +1201,89 @@ body {
     opacity: 0;
   }
 }
+
+/* Tasks (Google Tasks) */
+.w-tasks {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+  font-size: clamp(14px, 4.6cqw, 26px);
+}
+.tk-lists {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  mask-image: linear-gradient(#000 88%, transparent);
+}
+.tk-list {
+  margin: 0.5em 0 0.15em;
+  color: var(--muted);
+  font-size: 0.72em;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.tk-items {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.tk,
+.tk-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.55em;
+  width: 100%;
+}
+.tk {
+  padding: 0.22em 0;
+}
+.tk-btn {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.tk-sub {
+  padding-left: 1.4em;
+  font-size: 0.9em;
+}
+.tk-box {
+  flex: none;
+  width: 1.05em;
+  height: 1.05em;
+  border: 2px solid var(--muted);
+  border-radius: 50%;
+}
+.tk-title {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.tk-due {
+  flex: none;
+  color: var(--muted);
+  font-size: 0.75em;
+}
+.tk-overdue {
+  color: var(--danger);
+  font-weight: 700;
+}
+.tk-done .tk-box {
+  border-color: var(--accent);
+  background: var(--accent);
+}
+.tk-done .tk-title {
+  text-decoration: line-through;
+  opacity: 0.55;
+}
+.tk-msg {
+  color: var(--danger);
+  font-size: 0.75em;
+}
