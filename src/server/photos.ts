@@ -63,9 +63,19 @@ async function amazonJson(url: string, headers: Record<string, string> = {}): Pr
     headers: { Accept: "application/json", "User-Agent": "Mozilla/5.0 (Everydaypane photo frame)", ...headers },
     signal: AbortSignal.timeout(15_000),
   });
-  if (r.status === 401 || r.status === 403) throw new Error("Amazon refused: the album isn't shared with a link, or the sign-in expired");
-  if (!r.ok) throw new Error(`Amazon answered ${r.status}`);
-  return r.json() as Promise<unknown>;
+  if (!r.ok) {
+    // Logged with the path only (the query holds the share id), so the reason shows in Vercel's logs and Sentry.
+    console.error(`[photos] Amazon answered ${r.status} for ${new URL(url).pathname}: ${(await r.text().catch(() => "")).slice(0, 200)}`);
+    if (r.status === 401 || r.status === 403) throw new Error("Amazon refused: the album isn't shared with a link, or the sign-in expired");
+    throw new Error(`Amazon answered ${r.status}`);
+  }
+  const text = await r.text();
+  try {
+    return JSON.parse(text) as unknown;
+  } catch {
+    console.error(`[photos] Amazon sent ${r.headers.get("content-type") ?? "no type"} instead of JSON for ${new URL(url).pathname}`);
+    throw new Error("Amazon sent a web page instead of the album (it may be blocking our server)");
+  }
 }
 
 /** A photo node as we keep it, or null for videos, folders and anything without a link. */
@@ -93,7 +103,9 @@ async function listShare(url: string): Promise<Listed[]> {
   const photos: Listed[] = [];
   const folders: { id: string; depth: number }[] = [{ id: root, depth: 0 }];
   let visited = 0;
-  while (folders.length && photos.length < MAX_PHOTOS && visited < 100) {
+  // A big album with many folders must not keep a display waiting: list for at most 20 seconds and keep what came.
+  const deadline = Date.now() + 20_000;
+  while (folders.length && photos.length < MAX_PHOTOS && visited < 100 && Date.now() < deadline) {
     const folder = folders.shift();
     if (!folder) break;
     visited++;
@@ -237,6 +249,7 @@ export async function photosFeed(config: DashboardConfig, now = Date.now()): Pro
       r.status === "fulfilled"
         ? { photos: r.value.map((p): PhotoItem => [p.id, p.w, p.h, p.taken ?? ""]), error: null }
         : { photos: [], error: r.reason instanceof Error ? r.reason.message : "Couldn't load these photos" };
+    if (r.status === "rejected") console.error(`[photos] ${s.kind} source ${s.id} failed:`, r.reason);
   });
   return out;
 }
@@ -250,20 +263,58 @@ export async function photoImage(config: DashboardConfig, sourceId: string, phot
   if (!photo) return null;
   const w = Math.min(3840, Math.max(160, Math.round(width)));
   const sized = (p: Listed) => (source.kind === "urls" ? p.url : `${p.url}${p.url.includes("?") ? "&" : "?"}viewBox=${w},${w}`);
-  let r = await fetch(sized(photo), {
-    signal: AbortSignal.timeout(20_000),
-    headers: { "User-Agent": "Mozilla/5.0 (Everydaypane photo frame)" },
-  });
+  const get = (p: Listed) =>
+    fetch(sized(p), { signal: AbortSignal.timeout(20_000), headers: { "User-Agent": "Mozilla/5.0 (Everydaypane photo frame)" } });
+  let r = await get(photo);
   if ([403, 404, 410].includes(r.status) && source.kind !== "urls") {
     // Amazon's temporary links expire: list again and retry once.
     await forget(sourceKey(source));
     photo = await find();
     if (!photo) return null;
-    r = await fetch(sized(photo), { signal: AbortSignal.timeout(20_000) });
+    r = await get(photo);
   }
-  const type = r.headers.get("content-type") ?? "";
-  if (!r.ok || !type.startsWith("image/")) return null;
-  return new Response(r.body, {
+  if (!r.ok) {
+    console.error(`[photos] photo ${source.kind} answered ${r.status} (${r.headers.get("content-type") ?? "no type"})`);
+    return null;
+  }
+  // Amazon's download links often say "binary/octet-stream", so the type is read from the picture itself.
+  const bytes = new Uint8Array(await r.arrayBuffer());
+  const type = imageType(bytes, r.headers.get("content-type") ?? "");
+  if (!type) {
+    console.error(`[photos] photo ${source.kind} wasn't a picture the screen can show (${r.headers.get("content-type") ?? "no type"})`);
+    return null;
+  }
+  return new Response(bytes, {
     headers: { "Content-Type": type, "Cache-Control": "private, max-age=86400", "X-Content-Type-Options": "nosniff" },
   });
+}
+
+/** The image type from a picture's first bytes (JPEG, PNG, GIF, WebP, AVIF), or the header's if it names one. */
+export function imageType(b: Uint8Array, header: string): string | null {
+  if (b[0] === 0xff && b[1] === 0xd8 && b[2] === 0xff) return "image/jpeg";
+  if (b[0] === 0x89 && b[1] === 0x50 && b[2] === 0x4e && b[3] === 0x47) return "image/png";
+  if (b[0] === 0x47 && b[1] === 0x49 && b[2] === 0x46) return "image/gif";
+  const ascii = (from: number, to: number) => String.fromCharCode(...b.slice(from, to));
+  if (ascii(0, 4) === "RIFF" && ascii(8, 12) === "WEBP") return "image/webp";
+  if (ascii(4, 8) === "ftyp" && /^avi[fs]$/.test(ascii(8, 12))) return "image/avif";
+  // HEIC (iPhone photos) can't be drawn by most browsers, so it doesn't count.
+  return /^image\/(jpeg|png|gif|webp|avif)/.test(header) ? (header.split(";")[0] ?? null) : null;
+}
+
+/** For the admin panel: whether each source lists, and whether its first photo comes through. */
+export async function checkSources(
+  config: DashboardConfig,
+): Promise<Record<string, { count: number; error: string | null; image: string | null }>> {
+  const out: Record<string, { count: number; error: string | null; image: string | null }> = {};
+  for (const s of config.integrations.photos.sources) {
+    try {
+      const list = await listed(s);
+      const first = list[0];
+      const img = first ? await photoImage(config, s.id, first.id, 480).catch(() => null) : null;
+      out[s.id] = { count: list.length, error: null, image: first ? (img ? null : "Its photos didn't load: see the server log") : null };
+    } catch (error) {
+      out[s.id] = { count: 0, error: error instanceof Error ? error.message : "Couldn't list it", image: null };
+    }
+  }
+  return out;
 }

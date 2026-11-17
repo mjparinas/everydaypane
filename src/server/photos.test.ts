@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { GET as amazonGET, PUT as amazonPUT } from "@/app/api/admin/amazon/route";
+import { GET as checkGET } from "@/app/api/admin/photos/route";
 import { GET as photoGET } from "@/app/api/display/photo/route";
 import { GET as photosGET } from "@/app/api/display/photos/route";
 import type { PhotoData } from "@/lib/display/types";
@@ -9,7 +10,7 @@ import { cookieFor, req, useTestServer } from "@/test/server";
 import { clearMemoryCache } from "./cache";
 import { loadConfig, saveConfig } from "./config";
 import { addDevice } from "./devices";
-import { parseShareUrl, peopleFilter, photoFromNode, trimPeople } from "./photos";
+import { imageType, parseShareUrl, peopleFilter, photoFromNode, trimPeople } from "./photos";
 import { getSecret } from "./secrets";
 
 const SHARE = "https://www.amazon.ca/photos/share/AbCdEfGhIjKlMnOp1234";
@@ -64,10 +65,21 @@ describe("photo sources", () => {
   });
 });
 
+describe("picture types", () => {
+  it("reads the type from the bytes, and refuses HEIC and web pages", () => {
+    expect(imageType(new Uint8Array([0xff, 0xd8, 0xff, 0xdb]), "binary/octet-stream")).toBe("image/jpeg");
+    expect(imageType(new Uint8Array([0x89, 0x50, 0x4e, 0x47]), "")).toBe("image/png");
+    expect(imageType(new TextEncoder().encode("RIFF....WEBPVP8 "), "")).toBe("image/webp");
+    expect(imageType(new TextEncoder().encode("\0\0\0\x18ftypheic"), "binary/octet-stream")).toBeNull();
+    expect(imageType(new TextEncoder().encode("<html>"), "text/html")).toBeNull();
+  });
+});
+
 describe("photo routes", () => {
   useTestServer();
   afterEach(() => {
     vi.unstubAllGlobals();
+    vi.restoreAllMocks();
     clearMemoryCache();
   });
 
@@ -121,6 +133,46 @@ describe("photo routes", () => {
     // A temporary link that has expired is listed again; still gone, so the display gets a 404 and moves on.
     expired = true;
     expect((await photoGET(req(`/api/display/photo/?s=album&i=p1&t=${token}`))).status).toBe(404);
+  });
+
+  it("serves Amazon photos sent as binary/octet-stream, and says why an album fails in the admin panel", async () => {
+    const errors = vi.spyOn(console, "error").mockImplementation(() => undefined);
+    const JPEG = new Uint8Array([0xff, 0xd8, 0xff, 0xe0, 1, 2, 3]);
+    const HEIC = new Uint8Array([0, 0, 0, 24, ...new TextEncoder().encode("ftypheic")]);
+    vi.stubGlobal(
+      "fetch",
+      vi.fn((input: string | URL | Request) => {
+        const url = String(input);
+        if (url.includes("/shares/")) return Promise.resolve(Response.json({ nodeInfo: { id: "root" } }));
+        if (url.includes("/children")) return Promise.resolve(Response.json({ count: 2, data: [node("p1"), node("p2")] }));
+        const body = url.includes("/p1?") ? JPEG : HEIC;
+        return Promise.resolve(new Response(body, { headers: { "content-type": "binary/octet-stream" } }));
+      }),
+    );
+    const token = await withSources([{ id: "album", kind: "amazonShare", name: "Family", url: SHARE }]);
+    const ok = await photoGET(req(`/api/display/photo/?s=album&i=p1&w=800&t=${token}`));
+    expect(ok.status).toBe(200);
+    expect(ok.headers.get("content-type")).toBe("image/jpeg");
+    expect((await photoGET(req(`/api/display/photo/?s=album&i=p2&w=800&t=${token}`))).status).toBe(404);
+    expect(errors.mock.calls.flat().join(" ")).toMatch(/wasn't a picture the screen can show/);
+
+    const admin = await cookieFor("admin@example.com");
+    expect(await (await checkGET(req("/api/admin/photos/", { headers: { cookie: admin } }))).json()).toEqual({
+      album: { count: 2, error: null, image: null },
+    });
+    const kid = await cookieFor("kid@example.com");
+    expect((await checkGET(req("/api/admin/photos/", { headers: { cookie: kid } }))).status).toBe(401);
+  });
+
+  it("explains when Amazon sends a web page instead of the album", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => undefined);
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(() => Promise.resolve(new Response("<html>Sorry, robot</html>", { headers: { "content-type": "text/html" } }))),
+    );
+    const token = await withSources([{ id: "album", kind: "amazonShare", name: "Family", url: SHARE }]);
+    const data = (await (await photosGET(req("/api/display/photos/", { headers: { "x-display-token": token } }))).json()) as PhotoData;
+    expect(data.sources.album?.error).toMatch(/web page instead of the album/);
   });
 
   it("reports a source that fails without hiding the others", async () => {
