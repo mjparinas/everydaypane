@@ -2,7 +2,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { newWidget } from "@/lib/config/widgets";
-import type { DisplayPayload } from "@/lib/display/types";
+import type { DisplayPayload, TasksData } from "@/lib/display/types";
 
 import { shortTime } from "./format";
 import { kindOf, label, weatherIcon } from "./icons";
@@ -12,6 +12,7 @@ import { countdown } from "./widgets/countdown";
 import { controlFor, stateText } from "./widgets/ha";
 import { meals } from "./widgets/meals";
 import { F, media, nowPlaying, positionNow } from "./widgets/media";
+import { dueLabel, shownLists, tasks, UNDO_MS } from "./widgets/tasks";
 
 const ctx = { payload: {} as DisplayPayload, timeZone: "America/Vancouver", hour12: true };
 
@@ -230,6 +231,71 @@ describe("music widget", () => {
       { entity: player.id, action: "next" },
       { entity: player.id, action: "source", option: "CBC Radio One" },
     ]);
+    stop();
+    vi.unstubAllGlobals();
+  });
+});
+
+describe("tasks", () => {
+  const data: TasksData = {
+    updatedAt: 1,
+    connected: true,
+    lists: [
+      {
+        id: "groceries",
+        name: "Groceries",
+        tasks: [
+          { id: "t1", title: "Milk", due: "2026-11-16" },
+          { id: "t2", title: "Bread" },
+        ],
+      },
+      { id: "chores", name: "Chores", tasks: [{ id: "t3", title: "Feed the cat", due: "2026-11-18" }] },
+    ],
+  };
+
+  it("labels due dates", () => {
+    expect(dueLabel("2026-11-17", "2026-11-17")).toEqual({ text: "Today", overdue: false });
+    expect(dueLabel("2026-11-18", "2026-11-17")).toEqual({ text: "Tomorrow", overdue: false });
+    expect(dueLabel("2026-11-16", "2026-11-17")).toEqual({ text: "Yesterday", overdue: true });
+    expect(dueLabel("2026-11-01", "2026-11-17")).toEqual({ text: "Overdue", overdue: true });
+  });
+
+  it("shows the picked lists, up to the count in all", () => {
+    expect(shownLists(data, [], 2).map((l) => l.tasks.length)).toEqual([2, 0]);
+    expect(shownLists(data, ["chores"], 5).map((l) => l.name)).toEqual(["Chores"]);
+  });
+
+  it("ticks a task off after the undo time, and a second tap undoes it", async () => {
+    vi.useFakeTimers({ now: new Date("2026-11-17T20:00:00Z") });
+    const posts: unknown[] = [];
+    vi.stubGlobal(
+      "fetch",
+      vi.fn((_url: string, init?: RequestInit) => {
+        if (init?.method === "POST") {
+          posts.push(JSON.parse(String(init.body)));
+          return Promise.resolve(Response.json({ ok: true }));
+        }
+        return Promise.resolve(Response.json(data));
+      }),
+    );
+    const el = document.createElement("div");
+    const stop = tasks(el, newWidget("tasks", "tk", { x: 0, y: 0 }), ctx);
+    await vi.advanceTimersByTimeAsync(0);
+    expect([...el.querySelectorAll(".tk-title")].map((t) => t.textContent)).toEqual(["Milk", "Bread", "Feed the cat"]);
+    expect(el.querySelector(".tk-overdue")?.textContent).toBe("Yesterday");
+
+    const button = (title: string) =>
+      [...el.querySelectorAll<HTMLButtonElement>(".tk-btn")].find((b) => b.textContent?.includes(title)) as HTMLButtonElement;
+    button("Milk").click();
+    expect(el.querySelector(".tk-done")?.textContent).toContain("Milk");
+    button("Milk").click();
+    await vi.advanceTimersByTimeAsync(UNDO_MS + 100);
+    expect(posts).toEqual([]);
+
+    button("Bread").click();
+    await vi.advanceTimersByTimeAsync(UNDO_MS + 100);
+    expect(posts).toEqual([{ list: "groceries", task: "t2" }]);
+    expect([...el.querySelectorAll(".tk-title")].map((t) => t.textContent)).toEqual(["Milk", "Feed the cat"]);
     stop();
     vi.unstubAllGlobals();
   });

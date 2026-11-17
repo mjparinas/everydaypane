@@ -105,6 +105,12 @@ panel can be complex if you need it to be."
   `config.integrations.google.calendars`. The server fetches the month grid around today plus the next two weeks into
   one five-minute feed (`/api/display/calendar/`) that the schedule and month widgets share. Events are placed by the
   dashboard's time zone (tzdata has B.C. on UTC−7 all year from 2026, so don't hard-code −08:00 in tests).
+- **Google Tasks** (Melvin, 2026-11-17: he asked for Google Keep, which has no API for personal accounts, and chose
+  Tasks instead): the same Google connection, with the `tasks` scope asked for only by "Connect Google Tasks"
+  (`src/server/googleTasks.ts`). Settings › Google Tasks switches lists on (`config.integrations.tasks.lists`); a tasks
+  widget shows some of them (none picked means all). One one-minute feed (`/api/display/tasks/`) serves every widget.
+  A tap on the wall ticks a task off after a four-second undo window, through our own route, and only for a list that
+  a widget with `allowCheck` shows; nothing else is ever written to Google. Setup: `docs/google-tasks.md`.
 - **Calendar links** (Melvin, 2026-11-17: "can you add support for multiple calendars"): any iCal address (school,
   sports, someone else's Google or Outlook calendar through its secret address) can be added in Settings › Calendar
   links. The address is checked when pasted and stored as an encrypted secret (`ical.<id>`), because it often works as a

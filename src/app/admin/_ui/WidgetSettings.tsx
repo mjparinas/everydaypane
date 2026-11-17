@@ -363,6 +363,37 @@ function TypeSettings({
         </>
       );
     }
+    case "tasks": {
+      const e = edit<"tasks">();
+      const lists = config.integrations.tasks.lists.filter((l) => l.enabled);
+      return (
+        <>
+          <NumberInput label="Tasks shown" value={w.count} min={1} max={30} onChange={(v) => e((x) => void (x.count = v))} />
+          <Toggle label="Show due dates" checked={w.showDue} onChange={(v) => e((x) => void (x.showDue = v))} />
+          <Toggle
+            label="Tap to tick off"
+            hint="Anyone at the screen can mark a task done. A second tap within a few seconds undoes it."
+            checked={w.allowCheck}
+            onChange={(v) => e((x) => void (x.allowCheck = v))}
+          />
+          {lists.length === 0 ? (
+            <p className="text-xs text-soft">Connect Google Tasks and switch on some lists under Settings › Google Tasks.</p>
+          ) : (
+            <>
+              <p className="text-xs text-soft">Pick the lists to show. With none picked, it shows them all.</p>
+              {lists.map((l) => (
+                <Toggle
+                  key={l.id}
+                  label={l.name}
+                  checked={w.listIds.includes(l.id)}
+                  onChange={(on) => e((x) => void (x.listIds = on ? [...x.listIds, l.id] : x.listIds.filter((id) => id !== l.id)))}
+                />
+              ))}
+            </>
+          )}
+        </>
+      );
+    }
     case "alerts": {
       const e = edit<"alerts">();
       return (

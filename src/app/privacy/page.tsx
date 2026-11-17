@@ -42,6 +42,14 @@ export default function PrivacyPage() {
         , including the Limited Use requirements.
       </p>
 
+      <h2 className="text-lg font-semibold">Google Tasks</h2>
+      <p>
+        If a family admin also connects Google Tasks, Everydaypane asks for access to the account&rsquo;s task lists (<code>tasks</code>).
+        It reads the open tasks of the lists the admin picks to show them on the family&rsquo;s screens, and marks a task done when someone
+        ticks it off on a screen. It never creates, edits or deletes tasks or lists. Tasks are kept for a minute at most, and the same rules
+        as for the calendar apply: the token stays encrypted on our server, and nothing is sold, shared or used to train any model.
+      </p>
+
       <h2 className="text-lg font-semibold">Everything else</h2>
       <ul className="list-disc space-y-1 pl-6">
         <li>Sign-in is by emailed link, for addresses the family has listed. Sign-in links and sessions are stored only as hashes.</li>

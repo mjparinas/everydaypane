@@ -23,6 +23,9 @@ export const SCOPE = "https://www.googleapis.com/auth/calendar.readonly";
 // Google Photos through Google's own picker (Melvin, 2026-11-17): the admin picks photos in Google's window and we copy
 // them into our library. Asked for only when the admin connects Google Photos.
 export const PHOTOS_SCOPE = "https://www.googleapis.com/auth/photospicker.mediaitems.readonly";
+// Google Tasks (Melvin, 2026-11-17, in place of Google Keep, which has no API for personal accounts): read the lists and
+// tick tasks off from the wall. Asked for only when the admin connects Google Tasks (src/server/googleTasks.ts).
+export const TASKS_SCOPE = "https://www.googleapis.com/auth/tasks";
 export const STATE_COOKIE = "ep_google_state";
 const TTL = 5 * 60_000;
 
@@ -31,12 +34,12 @@ export const googleConfigured = () => Boolean(env.googleClientId() && env.google
 /** Where Google sends the admin back. Must match the redirect URI registered on the OAuth client. */
 export const redirectUri = (origin: string) => `${env.siteUrl() || origin}/api/google/callback/`;
 
-export function consentUrl(state: string, redirect: string, photos = false): string {
+export function consentUrl(state: string, redirect: string, photos = false, tasks = false): string {
   const p = new URLSearchParams({
     client_id: env.googleClientId(),
     redirect_uri: redirect,
     response_type: "code",
-    scope: photos ? `${SCOPE} ${PHOTOS_SCOPE}` : SCOPE,
+    scope: [SCOPE, ...(photos ? [PHOTOS_SCOPE] : []), ...(tasks ? [TASKS_SCOPE] : [])].join(" "),
     // offline + consent: Google returns a refresh token every time, even when the account was connected before.
     access_type: "offline",
     prompt: "consent",
@@ -94,6 +97,7 @@ export async function connect(code: string, redirect: string, now = Date.now()):
   await setSecret("google.scopes", t.scope ?? SCOPE, now);
   access = { token: t.access_token, expiresAt: now + (t.expires_in - 60) * 1000, refresh: t.refresh_token };
   await forget("calendar:");
+  await forget("tasks:");
 }
 
 export async function disconnect(): Promise<void> {
@@ -102,6 +106,7 @@ export async function disconnect(): Promise<void> {
   await setSecret("google.refreshToken", null);
   await setSecret("google.scopes", null);
   await forget("calendar:");
+  await forget("tasks:");
   if (refresh) {
     // Best effort: the token is already gone from our side either way.
     await fetch(`${REVOKE_URL}?${new URLSearchParams({ token: refresh })}`, { method: "POST", signal: AbortSignal.timeout(5000) }).catch(
@@ -113,6 +118,11 @@ export async function disconnect(): Promise<void> {
 /** Whether the connected Google account allowed Google Photos picking. */
 export async function photosGranted(): Promise<boolean> {
   return Boolean((await getSecret("google.refreshToken")) && (await getSecret("google.scopes"))?.split(" ").includes(PHOTOS_SCOPE));
+}
+
+/** Whether the connected Google account allowed Google Tasks. */
+export async function tasksGranted(): Promise<boolean> {
+  return Boolean((await getSecret("google.refreshToken")) && (await getSecret("google.scopes"))?.split(" ").includes(TASKS_SCOPE));
 }
 
 export async function accessToken(now = Date.now()): Promise<string> {

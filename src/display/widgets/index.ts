@@ -13,6 +13,7 @@ import { media } from "./media";
 import { messages } from "./messages";
 import { note } from "./note";
 import { photos } from "./photos";
+import { tasks } from "./tasks";
 import type { Cleanup, WidgetContext } from "./types";
 import { weather } from "./weather";
 import { wifiQr } from "./wifi";
@@ -52,6 +53,8 @@ export function mountWidget(el: HTMLElement, w: Widget, ctx: WidgetContext): Cle
       return haEntity(el, w, ctx);
     case "camera":
       return camera(el, w, ctx);
+    case "tasks":
+      return tasks(el, w, ctx);
     case "media":
       return media(el, w, ctx);
   }

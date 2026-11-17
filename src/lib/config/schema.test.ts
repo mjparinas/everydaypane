@@ -11,6 +11,13 @@ describe("config schema", () => {
     expect(r.success ? [] : r.error.issues).toEqual([]);
   });
 
+  it("loads a dashboard saved before Google Tasks existed", () => {
+    const c = defaultConfig() as unknown as { integrations: Record<string, unknown> };
+    delete c.integrations.tasks;
+    const r = configSchema.safeParse(c);
+    expect(r.success && r.data.integrations.tasks).toEqual({ lists: [] });
+  });
+
   it("rejects a widget that runs off its grid", () => {
     const c = defaultConfig();
     c.views[0]!.widgets[0]!.x = 11;

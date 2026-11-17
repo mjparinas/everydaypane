@@ -135,6 +135,14 @@ export const WIDGETS: { [T in WidgetType]: WidgetInfo<T> } = {
     minSize: { w: 2, h: 1 },
     defaults: () => ({ showAllClear: true }),
   },
+  tasks: {
+    label: "Tasks",
+    description: "To-do lists from Google Tasks",
+    icon: "✅",
+    size: { w: 3, h: 4 },
+    minSize: { w: 2, h: 2 },
+    defaults: () => ({ listIds: [], count: 8, showDue: true, allowCheck: true }),
+  },
   camera: {
     label: "Camera",
     description: "A UniFi Protect camera via Home Assistant",

@@ -118,6 +118,7 @@ export function defaultConfig(): DashboardConfig {
     },
     integrations: {
       google: { calendars: [] },
+      tasks: { lists: [] },
       icals: [],
       // Township of Langley's Recycle Coach calendar (tol.ca collection calendars). The zone is found from the address in
       // the admin panel, or picked by hand (Monday A, Tuesday B, …).
