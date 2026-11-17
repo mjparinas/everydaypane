@@ -110,6 +110,9 @@ panel can be complex if you need it to be."
   one check to require.
 - A bug fix comes with a test that fails without it. Flaky tests are fixed at the cause, never retried.
 - Test data is plain and readable; nothing random.
+- **Agents fix and merge their own pull requests** (Melvin, 2026-11-17: "auto fix and merge prs please"). An agent
+  fixes CI failures and review feedback on the pull requests it opens, and merges each one once "CI passed" is green.
+  Stacked pull requests merge in order, the base first, with a merge commit so the next one stays clean.
 - **Dependabot** (`.github/dependabot.yml`) opens weekly pull requests for npm (minor and patch grouped) and GitHub
   Actions.
 
