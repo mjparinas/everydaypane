@@ -1051,3 +1051,150 @@ body {
   position: relative;
   color: #c9d1e3;
 }
+
+/* Home Assistant tiles: a switch tile is one big tap target and lights up in the accent colour when on. */
+.w-ha {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4em;
+  height: 100%;
+  border-radius: var(--radius);
+  transition: opacity 0.3s;
+}
+.ha-toggle,
+.ha-light {
+  cursor: pointer;
+  user-select: none;
+}
+.ha-toggle.on .ha-value,
+.ha-light.on .ha-value {
+  color: var(--accent);
+}
+.w-ha.dead {
+  opacity: 0.55;
+}
+.ha-value {
+  font-size: clamp(16px, 22cqh, 56px);
+  font-weight: 700;
+  line-height: 1.1;
+}
+.ha-row,
+.ha-climate {
+  display: flex;
+  gap: 0.5em;
+  align-items: center;
+  margin-top: auto;
+}
+.ha-btn {
+  flex: 1;
+  min-height: 44px;
+  padding: 0.4em 0.8em;
+  border: 0;
+  border-radius: calc(var(--radius) * 0.6);
+  background: color-mix(in srgb, var(--accent) 18%, transparent);
+  color: var(--text);
+  font: inherit;
+  font-weight: 600;
+}
+.ha-btn:active {
+  transform: scale(0.96);
+}
+.ha-btn:disabled {
+  opacity: 0.4;
+}
+.ha-round {
+  flex: 0 0 auto;
+  width: 52px;
+  font-size: 24px;
+}
+.w-ha > .ha-btn {
+  flex: 0 0 auto;
+  margin-top: auto;
+}
+.w-ha > .ha-big {
+  flex: 1;
+  font-size: clamp(14px, 14cqh, 28px);
+}
+.ha-target {
+  flex: 1;
+  text-align: center;
+  font-weight: 600;
+}
+.ha-target small {
+  display: block;
+  color: var(--muted);
+  font-weight: 400;
+  text-transform: capitalize;
+}
+.ha-range {
+  width: 100%;
+  margin-top: auto;
+  accent-color: var(--accent);
+}
+.ha-msg {
+  color: var(--muted);
+  font-size: 14px;
+}
+
+/* Cameras and the doorbell pop-up. */
+.cell-camera {
+  padding: 0;
+  overflow: hidden;
+}
+.w-camera {
+  position: relative;
+  height: 100%;
+  border-radius: var(--radius);
+  overflow: hidden;
+  background: #000;
+}
+.cam-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.cam-label,
+.cam-status {
+  position: absolute;
+  left: 0.8em;
+  color: #fff;
+  font-size: clamp(12px, 2.2cqw, 18px);
+  text-shadow: 0 1px 6px rgb(0 0 0 / 0.7);
+}
+.cam-label {
+  top: 0.6em;
+}
+.cam-status {
+  bottom: 0.6em;
+}
+.bell {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  display: grid;
+  place-items: center;
+  background: #000;
+  animation: bell-in 0.3s ease-out;
+}
+.bell-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+.bell-title {
+  position: absolute;
+  top: 24px;
+  left: 50%;
+  translate: -50% 0;
+  padding: 10px 22px;
+  border-radius: 999px;
+  background: rgb(0 0 0 / 0.6);
+  color: #fff;
+  font-size: 28px;
+  font-weight: 700;
+}
+@keyframes bell-in {
+  from {
+    opacity: 0;
+  }
+}

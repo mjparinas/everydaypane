@@ -1,11 +1,12 @@
 import type { Palette, Period, Theme, View } from "@/lib/config/schema";
 import { currentPeriod, msUntilNextPeriod } from "@/lib/config/time";
-import type { DisplayPayload } from "@/lib/display/types";
+import type { DisplayPayload, HaData } from "@/lib/display/types";
 
 import { alertStrip } from "./alerts";
-import { get, offline, onOfflineChange, post, PREVIEW, TOKEN } from "./api";
+import { get, offline, onOfflineChange, post, PREVIEW, subscribe, TOKEN } from "./api";
 import { h } from "./dom";
 import { mountWidget } from "./widgets";
+import { cameraLoop, HA_EVERY } from "./widgets/ha";
 import type { Cleanup } from "./widgets/types";
 
 // The display. One module, no framework (AGENTS.md "Display: super lightweight"): it fetches its settings, draws the
@@ -112,6 +113,7 @@ async function loadState(): Promise<boolean> {
   render();
   burnIn();
   alerts();
+  doorbell();
   return true;
 }
 
@@ -133,6 +135,56 @@ function alerts() {
     strip.el.remove();
     strip = null;
   }
+}
+
+// ---- Doorbell: when the doorbell entity rings, the camera fills the screen for a while; a tap closes it. ----
+
+let bell: { key: string; stop: () => void } | null = null;
+let lastRing: string | null = null;
+let closeRing: (() => void) | null = null;
+
+function doorbell() {
+  const d = payload?.doorbell;
+  const key = d?.enabled ? `${d.entityId}|${d.cameraEntityId}|${d.seconds}` : "";
+  if (bell?.key === key) return;
+  bell?.stop();
+  bell = null;
+  lastRing = null;
+  if (!d?.enabled) return;
+  bell = {
+    key,
+    stop: subscribe<HaData>("ha", HA_EVERY, (data) => {
+      const e = data.entities[d.entityId];
+      if (!e || e.state === "unavailable" || e.state === "unknown") return;
+      // A binary_sensor rings by turning on; an event entity's state is the time of its last press.
+      const isEvent = d.entityId.startsWith("event.");
+      const ring = isEvent ? e.state : e.state === "on" ? `on@${e.changed}` : "off";
+      // The first look only learns the current state, so loading the page never rings.
+      if (lastRing !== null && ring !== lastRing && (isEvent || e.state === "on")) ringDoor(d.cameraEntityId, d.seconds);
+      lastRing = ring;
+    }),
+  };
+}
+
+function ringDoor(cameraEntityId: string, seconds: number) {
+  closeRing?.();
+  const img = h("img", { class: "bell-img", alt: "Front door camera" });
+  const el = h(
+    "div",
+    { class: "bell", role: "dialog", "aria-label": "Someone is at the door" },
+    img,
+    h("div", { class: "bell-title" }, "Someone's at the door"),
+  );
+  app.append(el);
+  const stopCam = cameraLoop(img, cameraEntityId, 1000, () => undefined);
+  const timer = window.setTimeout(() => closeRing?.(), seconds * 1000);
+  closeRing = () => {
+    stopCam();
+    window.clearTimeout(timer);
+    el.remove();
+    closeRing = null;
+  };
+  el.addEventListener("click", () => closeRing?.());
 }
 
 // ---- Burn-in protection: the whole layout drifts a few pixels every few minutes. ----

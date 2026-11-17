@@ -36,6 +36,11 @@ export function displayPayload(
     schedule: config.schedule,
     burnIn: config.burnIn,
     alerts: { enabled: config.alerts.enabled, banner: config.alerts.banner },
-    doorbell: { enabled: Boolean(doorbell.entityId && doorbell.cameraEntityId), seconds: doorbell.seconds },
+    doorbell: {
+      enabled: Boolean(doorbell.entityId && doorbell.cameraEntityId),
+      seconds: doorbell.seconds,
+      entityId: doorbell.entityId,
+      cameraEntityId: doorbell.cameraEntityId,
+    },
   };
 }

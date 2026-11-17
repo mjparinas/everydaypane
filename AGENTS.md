@@ -107,9 +107,22 @@ panel can be complex if you need it to be."
   panel (or picked by hand) and the schedule is fetched and cached by the server (12 hours). The API is Recycle Coach's
   `zone-setup` endpoints on `ca-web` / `us-web.apigw.recyclecoach.com` (tried in that order), as the open-source Home
   Assistant waste_collection_schedule integration uses them; this sandbox can't reach them, so tests use recorded shapes.
-- **Home Assistant and UniFi Protect:** the server calls Home Assistant (so it must be reachable from Vercel, e.g.
-  through Nabu Casa or a tunnel). UniFi Protect cameras and the doorbell come through Home Assistant's UniFi Protect
-  integration, because Protect itself is only on the local network.
+- **Home Assistant and UniFi Protect:** the server calls Home Assistant's REST API; displays never talk to it. It is
+  reached through a **free Cloudflare Tunnel** (the Home Assistant Cloudflared add-on) at `ha.getliftsmith.com`, not
+  Nabu Casa, which costs money (Melvin, 2026-11-17). The tunnel's hostname is locked with **Cloudflare Access**: a
+  "Service Auth" policy lets in only requests carrying our service token, which the server sends as
+  `CF-Access-Client-Id` / `CF-Access-Client-Secret`. Access answers anything else with a redirect, which we report as
+  "Cloudflare Access refused" rather than following. The Home Assistant token and the Access pair are encrypted secrets
+  (`homeAssistant.*`), set from Settings. Setup steps: `docs/home-assistant.md`.
+  - Only entities on a widget (or the doorbell settings) are read, and only widget entities can be controlled, with a
+    fixed set of actions per domain (`serviceFor`). **Locks can be locked, never unlocked** (Claude's default, 2026-11-17,
+    to be confirmed by Melvin), because anyone in the kitchen can tap the screen. States are one five-second feed
+    shared by every tile and the doorbell.
+  - UniFi Protect cameras and the doorbell come through Home Assistant's UniFi Protect integration, because Protect
+    itself is only on the local network. Camera pictures go through `/api/display/camera/` (snapshots from
+    `camera_proxy`, refreshed on a timer, never a video stream, which would be heavy for the UC-Display21).
+  - **Doorbell pop-up:** when the ring entity (an `event.` entity's new timestamp, or a `binary_sensor.` turning on)
+    changes, every display shows that camera full screen for the set seconds, refreshed each second; a tap closes it.
 
 ## Security
 

@@ -46,9 +46,19 @@ export async function get<T>(
 }
 
 export function post(path: string, payload: unknown): void {
+  void send(path, payload);
+}
+
+/** Posts and says whether the server took it. */
+export async function send(path: string, payload: unknown): Promise<boolean> {
   const headers: Record<string, string> = { "content-type": "application/json" };
   if (TOKEN) headers["x-display-token"] = TOKEN;
-  void fetch(apiUrl(path), { method: "POST", headers, body: JSON.stringify(payload), credentials: "same-origin" }).catch(() => undefined);
+  try {
+    const r = await fetch(apiUrl(path), { method: "POST", headers, body: JSON.stringify(payload), credentials: "same-origin" });
+    return r.ok;
+  } catch {
+    return false;
+  }
 }
 
 /** Image URLs can't send headers, so they carry the token as ?t= (only our own routes read it). */
@@ -62,16 +72,18 @@ interface Feed<T> {
   data: T | null;
   listeners: Set<(data: T) => void>;
   timer: number | undefined;
+  load: () => Promise<void>;
 }
 const feeds = new Map<string, Feed<unknown>>();
 
 export function subscribe<T>(path: string, everyMs: number, listener: (data: T) => void): () => void {
   let feed = feeds.get(path) as Feed<T> | undefined;
   if (!feed) {
-    const f: Feed<T> = { data: null, listeners: new Set(), timer: undefined };
+    const f: Feed<T> = { data: null, listeners: new Set(), timer: undefined, load: async () => undefined };
     feed = f;
     feeds.set(path, f as Feed<unknown>);
     const load = async () => {
+      window.clearTimeout(f.timer);
       const { data } = await get<T>(path);
       if (data) {
         f.data = data;
@@ -80,6 +92,7 @@ export function subscribe<T>(path: string, everyMs: number, listener: (data: T) 
       // Back off to a minute while offline, so a dead network isn't hammered.
       f.timer = window.setTimeout(() => void load(), offline ? Math.min(everyMs, 60_000) : everyMs);
     };
+    f.load = load;
     void load();
   } else if (feed.data) {
     listener(feed.data);
@@ -93,4 +106,9 @@ export function subscribe<T>(path: string, everyMs: number, listener: (data: T) 
       feeds.delete(path);
     }
   };
+}
+
+/** Fetches a feed now instead of at its next tick (after a tap changed something). */
+export function refresh(path: string): void {
+  void feeds.get(path)?.load();
 }
