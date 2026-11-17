@@ -3,7 +3,7 @@ import "server-only";
 import type { DashboardConfig, PhotoSource } from "@/lib/config/schema";
 import type { PhotoData, PhotoItem } from "@/lib/display/types";
 
-import { cached, forget } from "./cache";
+import { cached } from "./cache";
 import { getSecret } from "./secrets";
 
 // Photos (Melvin, 2026-11-17: Amazon Photos, choosable by person). Three kinds of source, all listed and cached by the
@@ -19,6 +19,14 @@ import { getSecret } from "./secrets";
 // The proxy only ever fetches photos it listed itself: a request names a source and a photo id, never a URL.
 
 const LIST_TTL = 30 * 60_000;
+// Amazon turns cloud servers away now and then (a 503 robot page, seen 2026-11-17). So Amazon albums are listed rarely,
+// the last good list is kept and served while Amazon refuses, a refusal isn't retried for a while, and requests are
+// spaced out. This only waits and tries again later, as a 503 asks; it never disguises who is asking.
+const AMAZON_TTL = 6 * 60 * 60_000;
+const RETRY_AFTER_FAILURE = 20 * 60_000;
+
+/** Waits between Amazon requests (tests make it instant). */
+export const timing = { pause: (ms: number) => new Promise<void>((r) => setTimeout(r, ms)) };
 const MAX_PHOTOS = 1500;
 const PAGE = 200;
 
@@ -59,14 +67,25 @@ interface AmazonNode {
 }
 
 async function amazonJson(url: string, headers: Record<string, string> = {}): Promise<unknown> {
-  const r = await fetch(url, {
-    headers: { Accept: "application/json", "User-Agent": "Mozilla/5.0 (Everydaypane photo frame)", ...headers },
-    signal: AbortSignal.timeout(15_000),
-  });
+  const get = () =>
+    fetch(url, {
+      headers: { Accept: "application/json", "User-Agent": "Mozilla/5.0 (Everydaypane photo frame)", ...headers },
+      signal: AbortSignal.timeout(15_000),
+    });
+  let r = await get();
+  // A 503 means "busy, come back later": wait as long as Amazon asks (a few seconds at most here) and try once more.
+  if (r.status === 503 || r.status === 429) {
+    const wait = Math.min(10, Math.max(2, Number(r.headers.get("retry-after")) || 4));
+    await r.body?.cancel().catch(() => undefined);
+    await timing.pause(wait * 1000);
+    r = await get();
+  }
   if (!r.ok) {
     // Logged with the path only (the query holds the share id), so the reason shows in Vercel's logs and Sentry.
     console.error(`[photos] Amazon answered ${r.status} for ${new URL(url).pathname}: ${(await r.text().catch(() => "")).slice(0, 200)}`);
     if (r.status === 401 || r.status === 403) throw new Error("Amazon refused: the album isn't shared with a link, or the sign-in expired");
+    if (r.status === 503 || r.status === 429)
+      throw new Error("Amazon is turning our server away right now (503). The dashboard will try again in a while.");
     throw new Error(`Amazon answered ${r.status}`);
   }
   const text = await r.text();
@@ -110,9 +129,17 @@ async function listShare(url: string): Promise<Listed[]> {
     if (!folder) break;
     visited++;
     for (let offset = 0; photos.length < MAX_PHOTOS;) {
-      const page = (await amazonJson(
-        `${api}/nodes/${folder.id}/children?asset=ALL&limit=${PAGE}&offset=${offset}&tempLink=true&searchOnFamily=false&${common}`,
-      )) as { data?: AmazonNode[]; count?: number };
+      await timing.pause(500);
+      let page: { data?: AmazonNode[]; count?: number };
+      try {
+        page = (await amazonJson(
+          `${api}/nodes/${folder.id}/children?asset=ALL&limit=${PAGE}&offset=${offset}&tempLink=true&searchOnFamily=false&${common}`,
+        )) as { data?: AmazonNode[]; count?: number };
+      } catch (error) {
+        // Part of an album beats none: keep what came before Amazon stopped answering.
+        if (photos.length) return photos;
+        throw error;
+      }
       const data = page.data ?? [];
       for (const n of data) {
         if (n.kind && n.kind !== "FILE") {
@@ -227,8 +254,32 @@ async function list(source: PhotoSource): Promise<Listed[]> {
 // Keyed by the source's settings too, so editing a source lists it again.
 const sourceKey = (s: PhotoSource) => `photos:${s.id}:${hash(JSON.stringify(s))}`;
 
+const failures = new Map<string, { at: number; error: unknown }>();
+
 async function listed(source: PhotoSource, now = Date.now()): Promise<Listed[]> {
-  return (await cached(sourceKey(source), LIST_TTL, () => list(source), now)).value;
+  const key = sourceKey(source);
+  const ttl = source.kind === "urls" ? LIST_TTL : AMAZON_TTL;
+  const failed = failures.get(key);
+  if (failed && now - failed.at < RETRY_AFTER_FAILURE) {
+    // Amazon refused a little while ago: serve the last good list if there is one, and don't ask again yet.
+    return (
+      await cached(
+        key,
+        Number.POSITIVE_INFINITY,
+        () => Promise.reject(failed.error instanceof Error ? failed.error : new Error("Couldn't load these photos")),
+        now,
+      )
+    ).value;
+  }
+  try {
+    const result = await cached(key, ttl, () => list(source), now);
+    if (result.stale) failures.set(key, { at: now, error: new Error("Amazon refused; showing the last list") });
+    else failures.delete(key);
+    return result.value;
+  } catch (error) {
+    failures.set(key, { at: now, error });
+    throw error;
+  }
 }
 
 function hash(s: string): string {
@@ -267,9 +318,14 @@ export async function photoImage(config: DashboardConfig, sourceId: string, phot
     fetch(sized(p), { signal: AbortSignal.timeout(20_000), headers: { "User-Agent": "Mozilla/5.0 (Everydaypane photo frame)" } });
   let r = await get(photo);
   if ([403, 404, 410].includes(r.status) && source.kind !== "urls") {
-    // Amazon's temporary links expire: list again and retry once.
-    await forget(sourceKey(source));
-    photo = await find();
+    // Amazon's temporary links expire: list again and retry once. The old list stays if Amazon refuses, and a recent
+    // refusal isn't asked again.
+    const key = sourceKey(source);
+    const failed = failures.get(key);
+    if (failed && Date.now() - failed.at < RETRY_AFTER_FAILURE) return null;
+    const fresh = await cached(key, 0, () => list(source));
+    if (fresh.stale) failures.set(key, { at: Date.now(), error: new Error("Amazon refused; showing the last list") });
+    photo = fresh.value.find((p) => p.id === photoId) ?? null;
     if (!photo) return null;
     r = await get(photo);
   }
@@ -287,6 +343,11 @@ export async function photoImage(config: DashboardConfig, sourceId: string, phot
   return new Response(bytes, {
     headers: { "Content-Type": type, "Cache-Control": "private, max-age=86400", "X-Content-Type-Options": "nosniff" },
   });
+}
+
+/** Tests only. */
+export function resetPhotosForTests(): void {
+  failures.clear();
 }
 
 /** The image type from a picture's first bytes (JPEG, PNG, GIF, WebP, AVIF), or the header's if it names one. */

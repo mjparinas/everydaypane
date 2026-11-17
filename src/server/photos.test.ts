@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { GET as amazonGET, PUT as amazonPUT } from "@/app/api/admin/amazon/route";
 import { GET as checkGET } from "@/app/api/admin/photos/route";
@@ -10,7 +10,7 @@ import { cookieFor, req, useTestServer } from "@/test/server";
 import { clearMemoryCache } from "./cache";
 import { loadConfig, saveConfig } from "./config";
 import { addDevice } from "./devices";
-import { imageType, parseShareUrl, peopleFilter, photoFromNode, trimPeople } from "./photos";
+import { imageType, parseShareUrl, peopleFilter, photoFromNode, photosFeed, resetPhotosForTests, timing, trimPeople } from "./photos";
 import { getSecret } from "./secrets";
 
 const SHARE = "https://www.amazon.ca/photos/share/AbCdEfGhIjKlMnOp1234";
@@ -77,10 +77,14 @@ describe("picture types", () => {
 
 describe("photo routes", () => {
   useTestServer();
+  beforeEach(() => {
+    timing.pause = () => Promise.resolve();
+  });
   afterEach(() => {
     vi.unstubAllGlobals();
     vi.restoreAllMocks();
     clearMemoryCache();
+    resetPhotosForTests();
   });
 
   async function withSources(sources: unknown[]) {
@@ -162,6 +166,57 @@ describe("photo routes", () => {
     });
     const kid = await cookieFor("kid@example.com");
     expect((await checkGET(req("/api/admin/photos/", { headers: { cookie: kid } }))).status).toBe(401);
+  });
+
+  it("waits and tries again when Amazon answers 503, and keeps the last good album while Amazon refuses", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => undefined);
+    let busy = 1;
+    let calls = 0;
+    vi.stubGlobal(
+      "fetch",
+      vi.fn((input: string | URL | Request) => {
+        calls++;
+        const url = String(input);
+        if (busy > 0) {
+          busy--;
+          return Promise.resolve(new Response("<html>Sorry</html>", { status: 503, headers: { "content-type": "text/html" } }));
+        }
+        if (url.includes("/shares/")) return Promise.resolve(Response.json({ nodeInfo: { id: "root" } }));
+        return Promise.resolve(Response.json({ count: 2, data: [node("p1"), node("p2")] }));
+      }),
+    );
+    await withSources([{ id: "album", kind: "amazonShare", name: "Family", url: SHARE }]);
+    const { config } = await loadConfig();
+    const t0 = Date.parse("2026-11-17T08:00:00Z");
+
+    // One 503, then Amazon answers: the album lists.
+    expect((await photosFeed(config, t0)).sources.album?.photos.map((p) => p[0])).toEqual(["p1", "p2"]);
+
+    // Seven hours later the list is due again, but Amazon refuses twice: the last good list is still shown...
+    busy = 2;
+    clearMemoryCache();
+    expect((await photosFeed(config, t0 + 7 * 3_600_000)).sources.album?.photos).toHaveLength(2);
+    // ...and Amazon isn't asked again for a while.
+    const before = calls;
+    expect((await photosFeed(config, t0 + 7 * 3_600_000 + 60_000)).sources.album?.photos).toHaveLength(2);
+    expect(calls).toBe(before);
+  });
+
+  it("says Amazon is turning the server away when it keeps answering 503, and doesn't hammer it", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => undefined);
+    const fetch = vi.fn(() =>
+      Promise.resolve(new Response("<html>Sorry</html>", { status: 503, headers: { "content-type": "text/html" } })),
+    );
+    vi.stubGlobal("fetch", fetch);
+    await withSources([{ id: "album", kind: "amazonShare", name: "Family", url: SHARE }]);
+    const { config } = await loadConfig();
+    const t0 = Date.parse("2026-11-17T08:00:00Z");
+    expect((await photosFeed(config, t0)).sources.album?.error).toMatch(/turning our server away/);
+    expect(fetch).toHaveBeenCalledTimes(2);
+    expect((await photosFeed(config, t0 + 5 * 60_000)).sources.album?.error).toMatch(/turning our server away/);
+    expect(fetch).toHaveBeenCalledTimes(2);
+    await photosFeed(config, t0 + 25 * 60_000);
+    expect(fetch).toHaveBeenCalledTimes(4);
   });
 
   it("explains when Amazon sends a web page instead of the album", async () => {
