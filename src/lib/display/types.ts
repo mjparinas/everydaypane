@@ -117,3 +117,11 @@ export interface AlertData {
   updatedAt: number;
   alerts: EmergencyAlert[];
 }
+
+/** One photo as a display gets it: [id, width, height, date taken (YYYY-MM-DD or "")]. Width and height are 0 when unknown. */
+export type PhotoItem = [string, number, number, string];
+
+export interface PhotoData {
+  updatedAt: number;
+  sources: Record<string, { photos: PhotoItem[]; error: string | null }>;
+}

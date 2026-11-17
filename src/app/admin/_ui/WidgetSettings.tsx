@@ -250,16 +250,19 @@ function TypeSettings({
           />
           <Toggle label="Show captions" checked={w.showCaption} onChange={(v) => e((x) => void (x.showCaption = v))} />
           {sources.length === 0 ? (
-            <p className="text-xs text-soft">Photo albums are connected in a later update.</p>
+            <p className="text-xs text-soft">Add photo albums under Settings › Photos.</p>
           ) : (
-            sources.map((s) => (
-              <Toggle
-                key={s.id}
-                label={s.name || "Album"}
-                checked={w.sourceIds.includes(s.id)}
-                onChange={(on) => e((x) => void (x.sourceIds = on ? [...x.sourceIds, s.id] : x.sourceIds.filter((id) => id !== s.id)))}
-              />
-            ))
+            <>
+              <p className="text-xs text-soft">Pick the albums to show. With none picked, it shows them all.</p>
+              {sources.map((s) => (
+                <Toggle
+                  key={s.id}
+                  label={s.name || "Album"}
+                  checked={w.sourceIds.includes(s.id)}
+                  onChange={(on) => e((x) => void (x.sourceIds = on ? [...x.sourceIds, s.id] : x.sourceIds.filter((id) => id !== s.id)))}
+                />
+              ))}
+            </>
           )}
         </>
       );
