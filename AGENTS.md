@@ -74,8 +74,8 @@ panel can be complex if you need it to be."
 - **One settings document** (`src/lib/config/schema.ts`, validated with zod on every save) holds views, widgets,
   themes, the schedule and integration settings. It is versioned: a save names the version it started from, a stale save
   is refused with 409, and every save bumps the version displays poll for (`src/server/config.ts`).
-- **Secrets are not in the document.** Tokens (Google refresh token, Amazon cookie, Home Assistant token) are stored
-  encrypted (AES-256-GCM, key from `SESSION_SECRET`) in the `secrets` table and never sent to a browser
+- **Secrets are not in the document.** Tokens (Google refresh token and its scopes, Amazon cookie, Home Assistant
+  token) are stored encrypted (AES-256-GCM, key from `SESSION_SECRET`) in the `secrets` table and never sent to a browser
   (`src/server/secrets.ts`). The WiFi password is the exception: showing it is the widget's job.
 - **Database:** Turso in production (`DATABASE_URL` + `DATABASE_AUTH_TOKEN`, or the `TURSO_*` pair Vercel's
   integration creates), `file:local.db` in development, memory in tests. Tables are created on first use; migrations only
@@ -109,6 +109,15 @@ panel can be complex if you need it to be."
   hours, a 503 is retried once after a pause, a refusal isn't retried for 20 minutes, and the last good list is served
   meanwhile. We wait and retry; we never disguise the server or route around Amazon's blocking (for example through
   the home network). Settings › Photos shows each album's photo count or error.
+- **Photo library** (Melvin, 2026-11-17, after Amazon turned our server away; he asked for both): a `library` photo
+  source keeps its own photos in a **private Vercel Blob store** (`everydaypane-photos`, `BLOB_READ_WRITE_TOKEN`), one
+  row each in the `photos` table (`src/server/library.ts`). Photos get in two ways: **uploads** from Settings › Photos,
+  shrunk in the admin's browser to at most 2048 px JPEG (so they fit Vercel's 4.5 MB request limit), and **Google
+  Photos through Google's Picker API** (`src/server/googlePhotos.ts`, scope `photospicker.mediaitems.readonly`, asked
+  for only by "Connect Google Photos"): the admin picks in Google's own window, then the panel has the server copy the
+  picks a page at a time (`=w2048-h2048`, with our token; Google's links last an hour, so photos are copied, not
+  linked). Videos are skipped and a Google photo is never copied twice into one album. Blobs are never public; displays
+  get them only through `/api/display/photo/`. Removing a library album deletes its photos. Setup: `docs/google-photos.md`.
 - **Garbage pickup:** the Township of Langley's collection calendar (tol.ca) is Recycle Coach, project 521,
   district `LANGL`, with zones such as Monday A or Thursday B. The zone is looked up from the address in the admin
   panel (or picked by hand) and the schedule is fetched and cached by the server (12 hours). The API is Recycle Coach's

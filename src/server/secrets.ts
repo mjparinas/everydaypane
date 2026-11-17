@@ -7,6 +7,8 @@ import { query, run } from "./db";
 // rest, never sent to a browser: the admin panel only learns whether each one is set.
 export type SecretKey =
   | "google.refreshToken"
+  // The scopes Google granted with it (space separated), to know whether Google Photos is allowed.
+  | "google.scopes"
   | "amazon.cookie"
   | "amazon.tld"
   | "homeAssistant.token"
@@ -36,6 +38,7 @@ export async function secretsSet(): Promise<Record<SecretKey, boolean>> {
   const set = new Set(rows.map((r) => r.key));
   return {
     "google.refreshToken": set.has("google.refreshToken"),
+    "google.scopes": set.has("google.scopes"),
     "amazon.cookie": set.has("amazon.cookie"),
     "amazon.tld": set.has("amazon.tld"),
     "homeAssistant.token": set.has("homeAssistant.token"),

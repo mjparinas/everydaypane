@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import type { PhotoSource } from "@/lib/config/schema";
 
 import { ConfirmButton, Section, Select, Text, TextArea, Toggle } from "./fields";
+import { LibraryAlbum } from "./LibraryAlbum";
 import { newId, useAdmin } from "./store";
 
 // Photos (Melvin, 2026-11-17: Amazon Photos, choosable by person). Sources are listed here and picked per photo
@@ -26,6 +27,7 @@ async function fetchAmazon(): Promise<AmazonStatus> {
 }
 
 const KINDS = [
+  { value: "library", label: "Upload, or pick from Google Photos" },
   { value: "amazonShare", label: "Amazon shared album (a link)" },
   { value: "amazonPeople", label: "Amazon photos of people" },
   { value: "urls", label: "A list of photo addresses" },
@@ -36,7 +38,7 @@ const SHARE_LINK = /^https:\/\/(www\.)?amazon\.[a-z.]+\/(photos|clouddrive)\/sha
 export function PhotosPanel() {
   const sources = useAdmin((s) => s.config.integrations.photos.sources);
   const edit = useAdmin((s) => s.edit);
-  const [kind, setKind] = useState<PhotoSource["kind"]>("amazonShare");
+  const [kind, setKind] = useState<PhotoSource["kind"]>("library");
   const [name, setName] = useState("");
   const [link, setLink] = useState("");
   const [urls, setUrls] = useState("");
@@ -77,6 +79,8 @@ export function PhotosPanel() {
         .filter((u) => /^https:\/\/\S+$/.test(u));
       if (!list.length) return setError("Add at least one https:// photo address, one per line.");
       source = { id, kind, name: name || "Photos", urls: list.slice(0, 500) };
+    } else if (kind === "library") {
+      source = { id, kind, name: name || "Family photos" };
     } else {
       source = { id, kind, name: name || "Family", personIds: [] };
     }
@@ -118,13 +122,16 @@ export function PhotosPanel() {
             </div>
             <ConfirmButton
               label="Remove"
-              onConfirm={() =>
+              onConfirm={() => {
+                // A library album's stored photos go with it.
+                if (s.kind === "library")
+                  void fetch(`/api/admin/library/?source=${encodeURIComponent(s.id)}`, { method: "DELETE" }).catch(() => undefined);
                 edit((c) => {
                   c.integrations.photos.sources = c.integrations.photos.sources.filter((x) => x.id !== s.id);
                   for (const v of c.views)
                     for (const w of v.widgets) if (w.type === "photos") w.sourceIds = w.sourceIds.filter((x) => x !== s.id);
-                })
-              }
+                });
+              }}
             />
           </div>
           <p className="truncate text-xs text-soft">
@@ -132,13 +139,16 @@ export function PhotosPanel() {
               ? s.url
               : s.kind === "urls"
                 ? `${s.urls.length} photo addresses`
-                : "Amazon photos of the people below"}
+                : s.kind === "library"
+                  ? "Kept by Everydaypane"
+                  : "Amazon photos of the people below"}
           </p>
           {checks?.[s.id] && (
             <p className={`text-sm ${checks[s.id]?.error || checks[s.id]?.image ? "text-bad" : "text-soft"}`}>
               {checks[s.id]?.error ?? checks[s.id]?.image ?? `${checks[s.id]?.count ?? 0} photos`}
             </p>
           )}
+          {s.kind === "library" && <LibraryAlbum sourceId={s.id} />}
           {s.kind === "amazonPeople" &&
             (amazon?.connected ? (
               amazon.people.length ? (
