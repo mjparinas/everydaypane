@@ -1,5 +1,6 @@
 "use client";
 
+import { CalendarLinksPanel } from "./CalendarLinksPanel";
 import { NumberInput, Section, Select, Text, Toggle } from "./fields";
 import { GarbagePanel } from "./GarbagePanel";
 import { GooglePanel } from "./GooglePanel";
@@ -62,6 +63,7 @@ export function SettingsPanel() {
       </Section>
 
       <GooglePanel />
+      <CalendarLinksPanel />
       <GarbagePanel />
       <PhotosPanel />
       <HomeAssistantPanel />
