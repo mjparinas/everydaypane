@@ -5,6 +5,7 @@ import { agenda, calendarMonth } from "./calendar";
 import { clock } from "./clock";
 import { countdown } from "./countdown";
 import { date } from "./date";
+import { garbage } from "./garbage";
 import { messages } from "./messages";
 import { note } from "./note";
 import { placeholder } from "./placeholder";
@@ -36,6 +37,7 @@ export function mountWidget(el: HTMLElement, w: Widget, ctx: WidgetContext): Cle
     case "calendarMonth":
       return calendarMonth(el, w, ctx);
     case "garbage":
+      return garbage(el, w, ctx);
     case "photos":
     case "haEntity":
     case "alerts":

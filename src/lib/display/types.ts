@@ -86,3 +86,13 @@ export interface CalendarData {
   /** False until an admin connects Google in the admin panel. */
   connected?: boolean;
 }
+
+export type BinKind = "garbage" | "recycling" | "organics" | "glass" | "other";
+
+/** Upcoming collection days from the Township's calendar (src/server/garbage.ts). */
+export interface GarbageData {
+  updatedAt: number;
+  /** False until an address is picked in the admin panel. */
+  configured: boolean;
+  pickups: { date: string; bins: { name: string; kind: BinKind }[] }[];
+}

@@ -1,6 +1,7 @@
 "use client";
 
 import { NumberInput, Section, Select, Text, Toggle } from "./fields";
+import { GarbagePanel } from "./GarbagePanel";
 import { GooglePanel } from "./GooglePanel";
 import { useAdmin } from "./store";
 import { TIME_ZONES } from "./WidgetSettings";
@@ -59,6 +60,7 @@ export function SettingsPanel() {
       </Section>
 
       <GooglePanel />
+      <GarbagePanel />
 
       <Section title="Screen care">
         <Toggle
