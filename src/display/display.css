@@ -91,8 +91,7 @@ body {
 .boot-logo {
   width: 64px;
   height: 64px;
-  border-radius: 18px;
-  background: linear-gradient(135deg, #5c7cfa, #3b5bdb);
+  background: url(/brand/mark.svg) center / contain no-repeat;
   animation: pulse 1.6s ease-in-out infinite;
 }
 @keyframes pulse {

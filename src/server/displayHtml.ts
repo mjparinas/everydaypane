@@ -21,7 +21,9 @@ export function displayHtml(opts: { token: string | null; title: string; preview
 <meta name="robots" content="noindex">
 <meta name="theme-color" content="#000000">
 <title>${esc(opts.title)} · Everydaypane</title>
-<link rel="icon" href="/icon.svg">
+<link rel="icon" href="/favicon.ico" sizes="48x48">
+<link rel="icon" href="/brand/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/apple-icon.png">
 <link rel="preload" href="/fonts/inter.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="/display/display.css?v=${v}">
 <script type="module" src="/display/display.js?v=${v}"></script>
