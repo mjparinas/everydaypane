@@ -1,24 +1,13 @@
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 
 import { GET as displayGET } from "@/app/api/display/messages/route";
 import { DELETE, PATCH } from "@/app/api/messages/[id]/route";
 import { GET, POST } from "@/app/api/messages/route";
-import { req, useTestServer } from "@/test/server";
+import { cookieFor, req, useTestServer } from "@/test/server";
 
-import { finishSignIn, sessionCookie, startSignIn } from "./auth";
 import { query } from "./db";
 import { addDevice } from "./devices";
 import { boardTag, listMessages, postMessage } from "./messages";
-
-async function cookieFor(email: string): Promise<string> {
-  const info = vi.spyOn(console, "info").mockImplementation(() => undefined);
-  await startSignIn(req("/api/auth/start/", { method: "POST" }), email, "http://localhost");
-  const printed = info.mock.calls.map((c) => String(c[0])).join("\n");
-  info.mockRestore();
-  const token = /token=([A-Za-z0-9_%-]+)/.exec(printed)?.[1];
-  const done = await finishSignIn(decodeURIComponent(token!));
-  return sessionCookie(done!.sessionToken).split(";")[0]!;
-}
 
 const note = { author: "Mom", text: "Soccer moved to 5", colour: "yellow", expiresInHours: 24 };
 const ctx = (id: string) => ({ params: Promise.resolve({ id }) });
