@@ -52,6 +52,22 @@ second policy (action **Allow**, include your email) for the browser, or keep th
 The tokens are stored encrypted on the server and are never shown again or sent to a screen. To change one, remove it
 and paste the new one.
 
+## Music: Sonos and Spotify
+
+The **Music** widget controls any Home Assistant `media_player`: play/pause, skip, volume, album art and, if you turn
+on *Sources to play*, a list to start something.
+
+- **Sonos:** Home Assistant finds Sonos speakers on its own (Settings › Devices & services › Sonos). Each room becomes
+  `media_player.<room>`. Its sources are your **Sonos favourites** (and line-in/TV), so save the playlists and stations
+  you want on the wall as favourites in the Sonos app.
+- **Spotify:** add the **Spotify** integration in Home Assistant (it asks you to sign in to Spotify; controlling
+  playback needs Spotify Premium). It makes `media_player.spotify_<name>`. Its sources are your **Spotify Connect
+  speakers**, so the list moves the music to another room. It shows something only while Spotify is playing on some
+  device.
+
+Add a **Music** widget to a view and pick the player from the suggestions. Album art comes through our server, never
+straight from Home Assistant.
+
 ## When it doesn't work
 
 - *Cloudflare Access refused the request*: the Client ID or secret is wrong, or the Access policy isn't **Service Auth**

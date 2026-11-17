@@ -10,6 +10,7 @@ import { aqhiBand, usAqiBand } from "./widgets/air";
 import { clock } from "./widgets/clock";
 import { countdown } from "./widgets/countdown";
 import { controlFor, stateText } from "./widgets/ha";
+import { F, media, nowPlaying, positionNow } from "./widgets/media";
 
 const ctx = { payload: {} as DisplayPayload, timeZone: "America/Vancouver", hour12: true };
 
@@ -106,5 +107,83 @@ describe("Home Assistant tiles", () => {
     expect(stateText(e("binary_sensor.hall", "off", { deviceClass: "motion" }))).toBe("Clear");
     expect(stateText(e("lock.front", "unlocked"))).toBe("Unlocked");
     expect(stateText(e("light.kitchen", "unavailable"))).toBe("Unavailable");
+  });
+});
+
+describe("music widget", () => {
+  const player = {
+    id: "media_player.kitchen",
+    state: "playing",
+    name: "Kitchen",
+    changed: 0,
+    media: {
+      title: "Here Comes the Sun",
+      artist: "The Beatles",
+      album: "Abbey Road",
+      art: "abc123",
+      duration: 185,
+      position: 60,
+      positionAt: Date.parse("2026-11-17T20:00:00Z"),
+      volume: 0.35,
+      muted: false,
+      source: "Morning mix",
+      sources: ["Morning mix", "CBC Radio One"],
+      features: F.pause | F.play | F.next | F.previous | F.volumeSet | F.mute | F.source,
+    },
+  };
+
+  it("moves the track on while playing, and holds it while paused", () => {
+    const later = Date.parse("2026-11-17T20:00:30Z");
+    expect(positionNow(player, later)).toBe(90);
+    expect(positionNow({ ...player, state: "paused" }, later)).toBe(60);
+    expect(positionNow(player, Date.parse("2026-11-17T21:00:00Z"))).toBe(185);
+  });
+
+  it("says when nothing is playing", () => {
+    expect(nowPlaying(player)).toEqual({ title: "Here Comes the Sun", detail: "The Beatles · Abbey Road" });
+    expect(nowPlaying({ ...player, state: "idle", media: { features: 0, source: "TV" } })).toEqual({
+      title: "Nothing playing",
+      detail: "TV",
+    });
+    expect(nowPlaying({ ...player, state: "unavailable" }).title).toBe("Unavailable");
+  });
+
+  it("shows what's playing and sends taps to the server", async () => {
+    document.body.dataset.token = "";
+    const posts: unknown[] = [];
+    vi.stubGlobal("fetch", (url: string, init: RequestInit = {}) => {
+      if (init.method === "POST") {
+        posts.push(JSON.parse(String(init.body)));
+        return Promise.resolve(Response.json({ ok: true }));
+      }
+      return Promise.resolve(Response.json({ updatedAt: 0, configured: true, entities: { [player.id]: player } }));
+    });
+    const el = document.createElement("div");
+    const w = { ...newWidget("media", "m", { x: 0, y: 0 }), entityId: player.id, showSources: true };
+    const stop = media(el, w, ctx);
+    await vi.waitFor(() => expect(el.querySelector(".mp-title")?.textContent).toBe("Here Comes the Sun"));
+    expect(el.querySelector(".mp-detail")?.textContent).toBe("The Beatles · Abbey Road");
+    expect(el.querySelector<HTMLImageElement>(".mp-art")?.getAttribute("src")).toBe("/api/display/art/?e=media_player.kitchen&k=abc123");
+    expect(el.querySelector<HTMLInputElement>(".mp-volume")?.value).toBe("35");
+    const select = el.querySelector<HTMLSelectElement>(".mp-sources");
+    expect(select?.value).toBe("Morning mix");
+
+    const play = el.querySelector<HTMLButtonElement>(".mp-play");
+    expect(play?.getAttribute("aria-label")).toBe("Pause");
+    play?.click();
+    expect(play?.getAttribute("aria-label")).toBe("Play");
+    el.querySelector<HTMLButtonElement>("[aria-label=Next]")?.click();
+    if (select) {
+      select.value = "CBC Radio One";
+      select.dispatchEvent(new Event("change"));
+    }
+    await vi.waitFor(() => expect(posts).toHaveLength(3));
+    expect(posts).toEqual([
+      { entity: player.id, action: "playPause" },
+      { entity: player.id, action: "next" },
+      { entity: player.id, action: "source", option: "CBC Radio One" },
+    ]);
+    stop();
+    vi.unstubAllGlobals();
   });
 });

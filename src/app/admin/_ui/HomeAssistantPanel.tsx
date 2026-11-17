@@ -45,8 +45,9 @@ export function HomeAssistantPanel() {
   return (
     <Section title="Home Assistant">
       <p className="text-sm text-soft">
-        Lights, switches, thermostats, sensors and UniFi Protect cameras come through Home Assistant. Our server talks to it, never the
-        screens, so it has to be reachable from the internet: a Cloudflare Tunnel with Cloudflare Access in front works for free.
+        Lights, switches, thermostats, sensors, UniFi Protect cameras and music (Sonos, Spotify) come through Home Assistant. Our server
+        talks to it, never the screens, so it has to be reachable from the internet: a Cloudflare Tunnel with Cloudflare Access in front
+        works for free.
       </p>
       <Text
         label="Home Assistant address"
