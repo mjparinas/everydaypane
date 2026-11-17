@@ -123,6 +123,17 @@ export const widgetSchema = z.discriminatedUnion("type", [
   z.object({ ...base, type: z.literal("alerts"), showAllClear: z.boolean() }),
   // A UniFi Protect camera, through Home Assistant's UniFi Protect integration (camera.* entity).
   z.object({ ...base, type: z.literal("camera"), entityId: z.string().max(255), refreshSeconds: z.number().int().min(2).max(600) }),
+  // Music (Melvin, 2026-11-17: Sonos and Spotify controls): a media_player entity through Home Assistant's Sonos or
+  // Spotify integration. Shows what's playing, with play/pause, skip, volume and the player's sources (Sonos
+  // favourites, or the Spotify Connect speakers to play on).
+  z.object({
+    ...base,
+    type: z.literal("media"),
+    entityId: z.string().max(255),
+    showArt: z.boolean(),
+    showVolume: z.boolean(),
+    showSources: z.boolean(),
+  }),
 ]);
 export type Widget = z.infer<typeof widgetSchema>;
 export type WidgetType = Widget["type"];

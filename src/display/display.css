@@ -1205,3 +1205,124 @@ body {
     opacity: 0;
   }
 }
+
+/* Music: album art beside what's playing, with big round buttons that are easy to hit from across the kitchen. */
+.w-media {
+  display: flex;
+  gap: 0.9em;
+  height: 100%;
+  min-height: 0;
+  transition: opacity 0.3s;
+}
+.w-media.dead {
+  opacity: 0.55;
+}
+.w-media [hidden] {
+  display: none !important;
+}
+.mp-artbox {
+  flex: 0 0 auto;
+  height: 100%;
+  max-width: 45%;
+  aspect-ratio: 1;
+  border-radius: calc(var(--radius) * 0.6);
+  overflow: hidden;
+  background: color-mix(in srgb, var(--text) 8%, transparent);
+}
+.mp-artbox.none {
+  display: none;
+}
+.mp-art {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.mp-body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 0.35em;
+  min-width: 0;
+}
+.mp-title,
+.mp-detail {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.mp-title {
+  font-size: clamp(16px, 14cqh, 34px);
+  font-weight: 700;
+  line-height: 1.15;
+}
+.mp-detail {
+  color: var(--muted);
+}
+.mp-track {
+  height: 4px;
+  border-radius: 2px;
+  background: color-mix(in srgb, var(--text) 15%, transparent);
+  overflow: hidden;
+}
+.mp-bar {
+  height: 100%;
+  background: var(--accent);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 1s linear;
+}
+.mp-controls,
+.mp-row {
+  display: flex;
+  gap: 0.5em;
+  align-items: center;
+}
+.mp-controls {
+  margin-top: auto;
+}
+.mp-btn {
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--accent) 18%, transparent);
+  color: var(--text);
+}
+.mp-btn .icon,
+.mp-btn svg {
+  width: 26px;
+  height: 26px;
+}
+.mp-play {
+  width: 60px;
+  height: 60px;
+  background: var(--accent);
+  color: var(--bg);
+}
+.mp-btn:active {
+  transform: scale(0.94);
+}
+.mp-btn:disabled {
+  opacity: 0.4;
+}
+.mp-mute {
+  width: 40px;
+  height: 40px;
+}
+.mp-volume {
+  flex: 1;
+  margin: 0;
+}
+.mp-sources {
+  min-height: 40px;
+  padding: 0 0.6em;
+  border: 0;
+  border-radius: calc(var(--radius) * 0.6);
+  background: color-mix(in srgb, var(--text) 8%, transparent);
+  color: var(--text);
+  font: inherit;
+}

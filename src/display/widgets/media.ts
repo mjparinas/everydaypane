@@ -1,0 +1,178 @@
+import type { HaData, HaEntity, HaMedia } from "@/lib/display/types";
+
+import { imageUrl, refresh, send, subscribe } from "../api";
+import { fill, h, setText, svg } from "../dom";
+import { HA_EVERY } from "./ha";
+import type { Mount } from "./types";
+
+// Music (Melvin, 2026-11-17): a Sonos speaker or Spotify, as a Home Assistant media_player. What's playing, play/pause,
+// skip, volume, and the player's sources (Sonos favourites, or the Spotify Connect speakers to play on). States come
+// from the shared Home Assistant feed; the progress bar moves on its own between polls.
+
+// Home Assistant's MediaPlayerEntityFeature bits.
+export const F = { pause: 1, volumeSet: 4, mute: 8, previous: 16, next: 32, source: 2048, play: 16384 } as const;
+
+const icon = (d: string) => `<svg viewBox="0 0 24 24" fill="currentColor"><path d="${d}"/></svg>`;
+const PLAY = icon("M8 5.5v13l10.5-6.5z");
+const PAUSE = icon("M7 5h3.5v14H7zm6.5 0H17v14h-3.5z");
+const NEXT = icon("M6 6v12l8.5-6zm9.5 0H18v12h-2.5z");
+const PREV = icon("M18 6v12l-8.5-6zM6 6h2.5v12H6z");
+const SPEAKER = icon("M4 9v6h4l5 4V5L8 9zm12.5 3A4.5 4.5 0 0 0 14 8v8a4.5 4.5 0 0 0 2.5-4z");
+const MUTED = icon("M4 9v6h4l5 4V5L8 9zm12.6-.4L15.2 10l2 2-2 2 1.4 1.4 2-2 2 2 1.4-1.4-2-2 2-2-1.4-1.4-2 2z");
+
+const has = (m: HaMedia, bit: number) => (m.features & bit) !== 0;
+
+/** Where the track is now, in seconds: the last reading plus the time since, while playing. */
+export function positionNow(e: HaEntity, now: number): number | null {
+  const m = e.media;
+  if (!m?.duration || m.position === undefined) return null;
+  const since = e.state === "playing" && m.positionAt ? (now - m.positionAt) / 1000 : 0;
+  return Math.min(m.duration, Math.max(0, m.position + since));
+}
+
+/** A player with nothing on it says so rather than showing an empty title. */
+export function nowPlaying(e: HaEntity): { title: string; detail: string } {
+  const m = e.media;
+  if (e.state === "unavailable" || e.state === "unknown") return { title: "Unavailable", detail: "" };
+  if (e.state === "off" || !m?.title) return { title: "Nothing playing", detail: m?.source ?? "" };
+  return { title: m.title, detail: [m.artist, m.album].filter(Boolean).join(" · ") };
+}
+
+export const media: Mount<"media"> = (el, w) => {
+  if (!w.entityId.startsWith("media_player.")) {
+    el.append(h("div", { class: "w-empty" }, "Pick a Sonos or Spotify player for this widget."));
+    return () => undefined;
+  }
+  const root = h("div", { class: "w-media", hidden: true });
+  const empty = h("div", { class: "w-empty" }, "Loading…");
+  el.append(root, empty);
+
+  const art = h("img", { class: "mp-art", alt: "" });
+  const artBox = h("div", { class: "mp-artbox" }, art);
+  const name = h("div", { class: "w-label" });
+  const title = h("div", { class: "mp-title" });
+  const detail = h("div", { class: "mp-detail" });
+  const bar = h("div", { class: "mp-bar" });
+  const track = h("div", { class: "mp-track" }, bar);
+  const btn = (markup: string, label: string, cls = "mp-btn") => {
+    const b = h("button", { type: "button", class: cls, "aria-label": label });
+    b.append(svg(markup));
+    return b;
+  };
+  const prev = btn(PREV, "Previous");
+  const play = btn(PLAY, "Play", "mp-btn mp-play");
+  const next = btn(NEXT, "Next");
+  const mute = btn(SPEAKER, "Mute", "mp-btn mp-mute");
+  const volume = h("input", { type: "range", class: "ha-range mp-volume", min: 0, max: 100, "aria-label": "Volume" });
+  const sources = h("select", { class: "mp-sources", "aria-label": w.entityId.includes("spotify") ? "Play on" : "Play" });
+  const msg = h("div", { class: "ha-msg" });
+  const controls = h("div", { class: "mp-controls" }, prev, play, next);
+  const volumeRow = h("div", { class: "mp-row" }, mute, volume);
+  art.addEventListener("error", () => artBox.classList.add("none"));
+  art.addEventListener("load", () => artBox.classList.remove("none"));
+
+  let entity: HaEntity | null = null;
+  let artKey = "";
+  let sourcesKey = "";
+  let msgTimer: number | undefined;
+
+  const act = async (action: string, extra: { value?: number; option?: string } = {}) => {
+    const ok = await send("ha", { entity: w.entityId, action, ...extra });
+    setText(msg, ok ? "" : "Couldn't reach Home Assistant");
+    window.clearTimeout(msgTimer);
+    if (!ok) msgTimer = window.setTimeout(() => setText(msg, ""), 4000);
+    window.setTimeout(() => refresh("ha"), 500);
+  };
+  play.addEventListener("click", () => {
+    // Show the change at once; the next poll confirms it.
+    if (entity) {
+      entity = { ...entity, state: entity.state === "playing" ? "paused" : "playing" };
+      draw();
+    }
+    void act("playPause");
+  });
+  prev.addEventListener("click", () => void act("previous"));
+  next.addEventListener("click", () => void act("next"));
+  mute.addEventListener("click", () => void act(entity?.media?.muted ? "unmute" : "mute"));
+  volume.addEventListener("change", () => void act("volume", { value: Number(volume.value) }));
+  sources.addEventListener("change", () => {
+    if (sources.value) void act("source", { option: sources.value });
+  });
+
+  const moveBar = () => {
+    const p = entity ? positionNow(entity, Date.now()) : null;
+    const d = entity?.media?.duration;
+    track.hidden = p === null || !d;
+    if (p !== null && d) bar.style.transform = `scaleX(${(p / d).toFixed(4)})`;
+  };
+
+  const draw = () => {
+    const e = entity;
+    if (!e) return;
+    const m: HaMedia = e.media ?? { features: 0 };
+    const dead = e.state === "unavailable" || e.state === "unknown";
+    const playing = e.state === "playing";
+    const said = nowPlaying(e);
+    root.classList.toggle("dead", dead);
+    root.classList.toggle("playing", playing);
+    setText(name, w.title || e.name);
+    setText(title, said.title);
+    setText(detail, said.detail);
+
+    const key = w.showArt && m.art && m.title ? m.art : "";
+    if (key !== artKey) {
+      artKey = key;
+      artBox.classList.toggle("none", !key);
+      if (key) art.src = imageUrl("art", { e: w.entityId, k: key });
+      else art.removeAttribute("src");
+    }
+
+    play.replaceChildren(svg(playing ? PAUSE : PLAY));
+    play.setAttribute("aria-label", playing ? "Pause" : "Play");
+    play.disabled = dead || !has(m, playing ? F.pause : F.play);
+    prev.hidden = !has(m, F.previous);
+    next.hidden = !has(m, F.next);
+    prev.disabled = next.disabled = dead || !m.title;
+
+    volumeRow.hidden = !w.showVolume || m.volume === undefined || !has(m, F.volumeSet);
+    if (m.volume !== undefined && document.activeElement !== volume) volume.value = String(Math.round(m.volume * 100));
+    mute.hidden = !has(m, F.mute);
+    mute.replaceChildren(svg(m.muted ? MUTED : SPEAKER));
+    mute.setAttribute("aria-label", m.muted ? "Unmute" : "Mute");
+
+    const list = w.showSources && has(m, F.source) ? (m.sources ?? []) : [];
+    sources.hidden = !list.length;
+    const sk = `${list.join("\n")}|${m.source ?? ""}`;
+    if (sk !== sourcesKey && document.activeElement !== sources) {
+      sourcesKey = sk;
+      const current = m.source && list.includes(m.source) ? m.source : "";
+      fill(
+        sources,
+        h("option", { value: "", selected: !current }, sources.getAttribute("aria-label") + "…"),
+        ...list.map((s) => h("option", { value: s, selected: s === current }, s)),
+      );
+    }
+    moveBar();
+  };
+
+  fill(root, artBox, h("div", { class: "mp-body" }, name, title, detail, track, controls, volumeRow, sources, msg));
+
+  const stop = subscribe<HaData>("ha", HA_EVERY, (d) => {
+    const e = d.configured ? d.entities[w.entityId] : undefined;
+    root.hidden = !e;
+    empty.hidden = Boolean(e);
+    if (!d.configured) setText(empty, "Set up Home Assistant under Settings in the admin panel.");
+    else if (!e) setText(empty, `${w.entityId} wasn't found`);
+    entity = e ?? null;
+    draw();
+  });
+  // The progress bar moves every second while playing; transform only, so no layout.
+  const tick = window.setInterval(() => {
+    if (entity?.state === "playing" && !document.hidden) moveBar();
+  }, 1000);
+  return () => {
+    stop();
+    window.clearInterval(tick);
+    window.clearTimeout(msgTimer);
+  };
+};

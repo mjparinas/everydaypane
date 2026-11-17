@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { GET as adminGET, PUT as adminPUT } from "@/app/api/admin/ha/route";
+import { GET as artGET } from "@/app/api/display/art/route";
 import { GET as cameraGET } from "@/app/api/display/camera/route";
 import { GET as haGET, POST as haPOST } from "@/app/api/display/ha/route";
 import type { DashboardConfig } from "@/lib/config/schema";
@@ -9,7 +10,7 @@ import { cookieFor, req, useTestServer } from "@/test/server";
 
 import { loadConfig, saveConfig } from "./config";
 import { addDevice } from "./devices";
-import { resetHaForTests, serviceFor, trimState, usedEntities } from "./homeassistant";
+import { resetHaForTests, serviceFor, trimMedia, trimState, usedEntities } from "./homeassistant";
 import { getSecret, setSecret } from "./secrets";
 
 const HA = "https://ha.example.com";
@@ -30,6 +31,39 @@ describe("Home Assistant actions", () => {
   it("can lock a door but never unlock it", () => {
     expect(serviceFor("lock.front", "lock")?.path).toBe("/api/services/lock/lock");
     for (const action of ["toggle", "on", "off", "open", "press"] as const) expect(serviceFor("lock.front", action)).toBeNull();
+  });
+
+  it("plays, skips, sets the volume and picks a source on a media player", () => {
+    expect(serviceFor("media_player.kitchen", "playPause")?.path).toBe("/api/services/media_player/media_play_pause");
+    expect(serviceFor("media_player.kitchen", "next")?.path).toBe("/api/services/media_player/media_next_track");
+    expect(serviceFor("media_player.kitchen", "previous")?.path).toBe("/api/services/media_player/media_previous_track");
+    expect(serviceFor("media_player.kitchen", "volume", 35)?.body).toEqual({ entity_id: "media_player.kitchen", volume_level: 0.35 });
+    expect(serviceFor("media_player.kitchen", "volume", 400)?.body).toMatchObject({ volume_level: 1 });
+    expect(serviceFor("media_player.kitchen", "mute")?.body).toMatchObject({ is_volume_muted: true });
+    expect(serviceFor("media_player.spotify_melvin", "source", undefined, "Kitchen")).toEqual({
+      path: "/api/services/media_player/select_source",
+      body: { entity_id: "media_player.spotify_melvin", source: "Kitchen" },
+    });
+    expect(serviceFor("media_player.kitchen", "source")).toBeNull();
+    expect(serviceFor("light.kitchen", "next")).toBeNull();
+  });
+
+  it("never passes on the art link's access token", () => {
+    const m = trimMedia({
+      media_title: "Here Comes the Sun",
+      media_artist: "The Beatles",
+      entity_picture: "/api/media_player_proxy/media_player.kitchen?token=secret-ha-token&cache=1",
+      media_position: 12.5,
+      media_position_updated_at: "2026-11-17T20:00:00+00:00",
+      volume_level: 0.4,
+      source_list: ["Morning mix", 7, "CBC Radio One"],
+      supported_features: 4127295,
+    });
+    expect(m).toMatchObject({ title: "Here Comes the Sun", artist: "The Beatles", position: 12.5, volume: 0.4, features: 4127295 });
+    expect(m.positionAt).toBe(Date.parse("2026-11-17T20:00:00Z"));
+    expect(m.sources).toEqual(["Morning mix", "CBC Radio One"]);
+    expect(m.art).toMatch(/^[0-9a-f]{16}$/);
+    expect(JSON.stringify(m)).not.toContain("secret-ha-token");
   });
 
   it("keeps only what a tile needs from a state", () => {
@@ -61,6 +95,18 @@ describe("Home Assistant routes", () => {
       { id: "w1", type: "haEntity", x: 0, y: 0, w: 2, h: 1, entityId: "light.kitchen", control: "auto" },
       { id: "w2", type: "haEntity", x: 2, y: 0, w: 2, h: 1, entityId: "lock.front", control: "auto" },
       { id: "w3", type: "camera", x: 4, y: 0, w: 2, h: 2, entityId: "camera.driveway", refreshSeconds: 10 },
+      {
+        id: "w4",
+        type: "media",
+        x: 6,
+        y: 0,
+        w: 4,
+        h: 2,
+        entityId: "media_player.kitchen",
+        showArt: true,
+        showVolume: true,
+        showSources: true,
+      },
     ];
     config.integrations.homeAssistant = {
       url: HA,
@@ -71,7 +117,7 @@ describe("Home Assistant routes", () => {
     await setSecret("homeAssistant.accessId", "cf-id.access");
     await setSecret("homeAssistant.accessSecret", "cf-secret");
     expect(usedEntities(config).all).toEqual(
-      new Set(["light.kitchen", "lock.front", "camera.driveway", "camera.front_door", "event.doorbell_ring"]),
+      new Set(["light.kitchen", "lock.front", "media_player.kitchen", "camera.driveway", "camera.front_door", "event.doorbell_ring"]),
     );
     return (await addDevice("Kitchen", null)).token;
   }
@@ -127,6 +173,40 @@ describe("Home Assistant routes", () => {
       body: JSON.stringify({ entity: "light.kitchen", action: "toggle" }),
     });
     expect((await haPOST(other)).status).toBe(403);
+  });
+
+  it("passes on music taps for the players a widget shows", async () => {
+    const token = await setUp();
+    const posted: { url: string; body: unknown }[] = [];
+    vi.stubGlobal("fetch", (url: string, init: RequestInit) => {
+      posted.push({ url, body: JSON.parse(String(init.body)) });
+      return Promise.resolve(Response.json([]));
+    });
+    const tap = (body: object) =>
+      haPOST(req("/api/display/ha/", { method: "POST", headers: { "x-display-token": token }, body: JSON.stringify(body) }));
+    expect((await tap({ entity: "media_player.kitchen", action: "playPause" })).status).toBe(200);
+    expect((await tap({ entity: "media_player.kitchen", action: "source", option: "CBC Radio One" })).status).toBe(200);
+    expect((await tap({ entity: "media_player.living_room", action: "playPause" })).status).toBe(403);
+    expect((await tap({ entity: "light.kitchen", action: "next" })).status).toBe(403);
+    expect(posted).toEqual([
+      { url: `${HA}/api/services/media_player/media_play_pause`, body: { entity_id: "media_player.kitchen" } },
+      { url: `${HA}/api/services/media_player/select_source`, body: { entity_id: "media_player.kitchen", source: "CBC Radio One" } },
+    ]);
+  });
+
+  it("serves album art only for the players the dashboard shows", async () => {
+    const token = await setUp();
+    const urls: string[] = [];
+    vi.stubGlobal("fetch", (url: string) => {
+      urls.push(url);
+      return Promise.resolve(new Response(new Uint8Array([1, 2, 3]), { headers: { "content-type": "image/jpeg" } }));
+    });
+    const ok = await artGET(req(`/api/display/art/?e=media_player.kitchen&k=abc&t=${token}`));
+    expect(ok.status).toBe(200);
+    expect(ok.headers.get("cache-control")).toContain("max-age");
+    expect((await artGET(req(`/api/display/art/?e=media_player.living_room&t=${token}`))).status).toBe(404);
+    expect((await artGET(req(`/api/display/art/?e=media_player.kitchen`))).status).toBe(401);
+    expect(urls).toEqual([`${HA}/api/media_player_proxy/media_player.kitchen`]);
   });
 
   it("explains a Cloudflare Access refusal instead of following it to the sign-in page", async () => {

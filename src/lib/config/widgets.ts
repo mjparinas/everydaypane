@@ -135,6 +135,14 @@ export const WIDGETS: { [T in WidgetType]: WidgetInfo<T> } = {
     minSize: { w: 2, h: 2 },
     defaults: () => ({ entityId: "", refreshSeconds: 10 }),
   },
+  media: {
+    label: "Music",
+    description: "Sonos or Spotify via Home Assistant",
+    icon: "🎵",
+    size: { w: 4, h: 2 },
+    minSize: { w: 2, h: 2 },
+    defaults: () => ({ entityId: "", showArt: true, showVolume: true, showSources: false }),
+  },
 };
 
 export const WIDGET_TYPES = Object.keys(WIDGETS) as WidgetType[];
