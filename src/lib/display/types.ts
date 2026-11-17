@@ -144,6 +144,28 @@ export interface HaEntity {
   max?: number;
   step?: number;
   action?: string;
+  /** Media players (Sonos, Spotify): what's playing and how loud. Only for media_player entities. */
+  media?: HaMedia;
+}
+
+export interface HaMedia {
+  title?: string;
+  artist?: string;
+  album?: string;
+  /** Changes when the album art does; the picture itself comes through /api/display/art/. */
+  art?: string;
+  /** Seconds. */
+  duration?: number;
+  position?: number;
+  /** Epoch ms when `position` was read. */
+  positionAt?: number;
+  /** 0 to 1. */
+  volume?: number;
+  muted?: boolean;
+  source?: string;
+  sources?: string[];
+  /** Home Assistant's supported_features bit mask. */
+  features: number;
 }
 
 export interface HaData {

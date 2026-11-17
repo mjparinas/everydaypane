@@ -26,7 +26,11 @@ const MIGRATIONS = [
 
 // Columns added after a table was first created. SQLite has no ADD COLUMN IF NOT EXISTS, so each one runs on its own
 // and "duplicate column" means it is already there.
-const COLUMNS = [`ALTER TABLE messages ADD COLUMN posted_by TEXT`];
+const COLUMNS = [
+  `ALTER TABLE messages ADD COLUMN posted_by TEXT`,
+  // The display's token, encrypted, so an admin can see its address again (Melvin, 2026-11-17).
+  `ALTER TABLE devices ADD COLUMN token_sealed TEXT`,
+];
 
 async function migrate(c: Client): Promise<void> {
   await c.batch(MIGRATIONS, "write");

@@ -28,7 +28,10 @@ node scripts/e2e.mjs   # Playwright browser tests against the build (CHROMIUM_PA
   (morning, afternoon, evening, night), day and night mode, customizable colour schemes and every widget's settings,
   a drag-and-drop grid with a chosen number of rows and columns.
 - **Added the same day** (Melvin, 2026-11-17): offline mode, admin sign-in by magic link through Resend, Sentry,
-  burn-in protection, UniFi Protect video (cameras and doorbell pop-ups), a family message board, and emergency alerts. Meal planning followed the same day.
+  burn-in protection, UniFi Protect video (cameras and doorbell pop-ups), a family message board, and emergency alerts.
+- **Music** (Melvin, 2026-11-17): Spotify and Sonos controls on the wall, through Home Assistant.
+- **Meal planning** (Melvin, 2026-11-17): breakfast, lunch and dinner for each day, planned from a phone and shown on
+  the wall (see Architecture).
 - **Emergency alerts** (Melvin, 2026-11-17): urgent alerts for Langley, the Lower Mainland, BC and Canada (Alert
   Ready/NAAD, Environment Canada weather warnings, DriveBC road events for torrential rain or snow, Earthquakes Canada,
   tsunami and flooding). They show as a **red strip across the top of the screen that can be dismissed**, not a
@@ -80,8 +83,11 @@ panel can be complex if you need it to be."
 - **Database:** Turso in production (`DATABASE_URL` + `DATABASE_AUTH_TOKEN`, or the `TURSO_*` pair Vercel's
   integration creates), `file:local.db` in development, memory in tests. Tables are created on first use; migrations only
   ever add (`src/server/db.ts`).
-- **Displays** are devices with their own secret address `/d/<token>/` (only the hash is stored). A device shows one
-  view, or follows the time-of-day schedule. Deleting a device signs that screen out.
+- **Displays** are devices with their own secret address `/d/<token>/`. Requests are matched by the token's hash; the
+  token is also kept encrypted (`token_sealed`, like the other secrets) so an admin can show and copy the address again
+  from the Displays tab any time (Melvin, 2026-11-17, who didn't want it shown only once). "New link" replaces the
+  address and the old one stops working. A device shows one view, or follows the time-of-day schedule. Deleting a
+  device signs that screen out.
 - **Admin panel** (`src/app/admin/_ui/`): one page with tabs (a bottom tab bar on phones). Edits collect in a working
   copy (a Zustand store per page) and go out together with Save. The grid editor drags with pointer events (mouse and
   touch) and also moves and resizes with the keyboard; widgets never overlap or leave the grid (`src/lib/config/grid.ts`).
@@ -145,6 +151,11 @@ panel can be complex if you need it to be."
     `camera_proxy`, refreshed on a timer, never a video stream, which would be heavy for the UC-Display21).
   - **Doorbell pop-up:** when the ring entity (an `event.` entity's new timestamp, or a `binary_sensor.` turning on)
     changes, every display shows that camera full screen for the set seconds, refreshed each second; a tap closes it.
+  - **Music** (Melvin, 2026-11-17: Spotify and Sonos controls): the Music widget drives a `media_player` from Home
+    Assistant's Sonos or Spotify integration, so there is no Spotify or Sonos sign-in of our own. It shows what's
+    playing (from the shared five-second feed), play/pause, skip, volume and the player's sources (Sonos favourites,
+    Spotify Connect speakers). Album art comes through `/api/display/art/` (Home Assistant's `media_player_proxy`,
+    players on a widget only); only a hash of the art link reaches displays, because the link carries a token.
 
 ## Security
 

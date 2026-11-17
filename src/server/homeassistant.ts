@@ -1,7 +1,9 @@
 import "server-only";
 
+import { createHash } from "node:crypto";
+
 import type { DashboardConfig } from "@/lib/config/schema";
-import type { HaData, HaEntity } from "@/lib/display/types";
+import type { HaData, HaEntity, HaMedia } from "@/lib/display/types";
 
 import { getSecret } from "./secrets";
 
@@ -13,6 +15,10 @@ import { getSecret } from "./secrets";
 //
 // Only entities that appear on some widget (or the doorbell settings) are read, and only those can be controlled, with
 // a fixed list of actions per domain. Unlocking is never offered from a wall screen anyone in the kitchen can tap.
+//
+// Music (Melvin, 2026-11-17: Sonos and Spotify controls) comes the same way: Home Assistant's Sonos and Spotify
+// integrations make media_player entities, so no Spotify or Sonos sign-in lives here. Album art is fetched through
+// Home Assistant's media_player_proxy by our server (/api/display/art/), never linked.
 
 export class HaNotConfigured extends Error {
   constructor() {
@@ -59,19 +65,29 @@ export async function testConnection(config: DashboardConfig): Promise<string> {
 // ---- Which entities ----
 
 /** Every entity a widget or the doorbell uses: the only ones read and the only ones that can be controlled. */
-export function usedEntities(config: DashboardConfig): { controls: Set<string>; cameras: Set<string>; all: Set<string> } {
+export function usedEntities(config: DashboardConfig): {
+  controls: Set<string>;
+  cameras: Set<string>;
+  players: Set<string>;
+  all: Set<string>;
+} {
   const controls = new Set<string>();
   const cameras = new Set<string>();
+  const players = new Set<string>();
   for (const v of config.views)
     for (const w of v.widgets) {
       if (w.type === "haEntity" && w.entityId) controls.add(w.entityId);
       if (w.type === "camera" && w.entityId) cameras.add(w.entityId);
+      if (w.type === "media" && w.entityId.startsWith("media_player.")) {
+        players.add(w.entityId);
+        controls.add(w.entityId);
+      }
     }
   const d = config.integrations.homeAssistant.doorbell;
   if (d.cameraEntityId) cameras.add(d.cameraEntityId);
   const all = new Set([...controls, ...cameras]);
   if (d.entityId) all.add(d.entityId);
-  return { controls, cameras, all };
+  return { controls, cameras, players, all };
 }
 
 // ---- States ----
@@ -85,6 +101,29 @@ interface RawState {
 
 const num = (v: unknown) => (typeof v === "number" && Number.isFinite(v) ? v : undefined);
 const str = (v: unknown) => (typeof v === "string" ? v.slice(0, 80) : undefined);
+
+const bool = (v: unknown) => (typeof v === "boolean" ? v : undefined);
+
+/** What a music widget needs from a media player. The art link carries Home Assistant's access token, so only a hash of it leaves. */
+export function trimMedia(a: Record<string, unknown>): HaMedia {
+  const picture = typeof a.entity_picture === "string" ? a.entity_picture : "";
+  const updated = typeof a.media_position_updated_at === "string" ? Date.parse(a.media_position_updated_at) : NaN;
+  const sources = Array.isArray(a.source_list) ? a.source_list.filter((x): x is string => typeof x === "string").slice(0, 40) : [];
+  return {
+    title: str(a.media_title),
+    artist: str(a.media_artist) ?? str(a.media_album_artist),
+    album: str(a.media_album_name),
+    art: picture ? createHash("sha256").update(picture).digest("hex").slice(0, 16) : undefined,
+    duration: num(a.media_duration),
+    position: num(a.media_position),
+    positionAt: Number.isFinite(updated) ? updated : undefined,
+    volume: num(a.volume_level),
+    muted: bool(a.is_volume_muted),
+    source: str(a.source),
+    sources: sources.length ? sources.map((x) => x.slice(0, 80)) : undefined,
+    features: num(a.supported_features) ?? 0,
+  };
+}
 
 export function trimState(s: RawState): HaEntity | null {
   if (!s.entity_id || typeof s.state !== "string") return null;
@@ -103,6 +142,7 @@ export function trimState(s: RawState): HaEntity | null {
     max: num(a.max_temp),
     step: num(a.target_temp_step),
     action: str(a.hvac_action),
+    media: s.entity_id.startsWith("media_player.") ? trimMedia(a) : undefined,
   };
 }
 
@@ -144,16 +184,50 @@ export async function listEntities(config: DashboardConfig): Promise<{ id: strin
 
 // ---- Actions ----
 
-export type HaAction = "toggle" | "on" | "off" | "brightness" | "open" | "close" | "stop" | "lock" | "press" | "temperature";
+export const HA_ACTIONS = [
+  "toggle",
+  "on",
+  "off",
+  "brightness",
+  "open",
+  "close",
+  "stop",
+  "lock",
+  "press",
+  "temperature",
+  // Media players.
+  "playPause",
+  "next",
+  "previous",
+  "volume",
+  "mute",
+  "unmute",
+  "source",
+] as const;
+export type HaAction = (typeof HA_ACTIONS)[number];
 
 /** The Home Assistant service for an action on an entity, or null when that action isn't allowed for its domain. */
-export function serviceFor(entityId: string, action: HaAction, value?: number): { path: string; body: Record<string, unknown> } | null {
+export function serviceFor(
+  entityId: string,
+  action: HaAction,
+  value?: number,
+  option?: string,
+): { path: string; body: Record<string, unknown> } | null {
   const domain = entityId.split(".")[0] ?? "";
   const body: Record<string, unknown> = { entity_id: entityId };
   const call = (service: string, extra: Record<string, unknown> = {}) => ({
     path: `/api/services/${domain}/${service}`,
     body: { ...body, ...extra },
   });
+  if (domain === "media_player") {
+    if (action === "playPause") return call("media_play_pause");
+    if (action === "next") return call("media_next_track");
+    if (action === "previous") return call("media_previous_track");
+    if (action === "volume" && value !== undefined && Number.isFinite(value))
+      return call("volume_set", { volume_level: Math.min(100, Math.max(0, Math.round(value))) / 100 });
+    if (action === "mute" || action === "unmute") return call("volume_mute", { is_volume_muted: action === "mute" });
+    if (action === "source") return option ? call("select_source", { source: option }) : null;
+  }
   const switchy = ["light", "switch", "fan", "input_boolean", "media_player", "humidifier", "siren"];
   if (switchy.includes(domain)) {
     if (action === "toggle") return call("toggle");
@@ -179,9 +253,15 @@ export function serviceFor(entityId: string, action: HaAction, value?: number): 
   return null;
 }
 
-export async function act(config: DashboardConfig, entityId: string, action: HaAction, value?: number): Promise<"ok" | "forbidden"> {
+export async function act(
+  config: DashboardConfig,
+  entityId: string,
+  action: HaAction,
+  value?: number,
+  option?: string,
+): Promise<"ok" | "forbidden"> {
   if (!usedEntities(config).controls.has(entityId)) return "forbidden";
-  const service = serviceFor(entityId, action, value);
+  const service = serviceFor(entityId, action, value, option);
   if (!service) return "forbidden";
   await ha(config, service.path, { method: "POST", body: JSON.stringify(service.body) });
   memo = null;
@@ -195,6 +275,18 @@ export async function cameraImage(config: DashboardConfig, entityId: string): Pr
   const type = r.headers.get("content-type") ?? "";
   if (!type.startsWith("image/")) return null;
   return new Response(r.body, { headers: { "Content-Type": type, "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff" } });
+}
+
+/** A music widget's album art, through Home Assistant's media player proxy. Only players the dashboard shows. */
+export async function albumArt(config: DashboardConfig, entityId: string): Promise<Response | null> {
+  if (!usedEntities(config).players.has(entityId) || !/^media_player\.[a-z0-9_]+$/.test(entityId)) return null;
+  const r = await ha(config, `/api/media_player_proxy/${entityId}`, {}, 10_000);
+  const type = r.headers.get("content-type") ?? "";
+  if (!type.startsWith("image/") || Number(r.headers.get("content-length") ?? 0) > 5_000_000) return null;
+  // The address names the track's art (?k=), so the picture can be kept until the track changes.
+  return new Response(r.body, {
+    headers: { "Content-Type": type, "Cache-Control": "private, max-age=86400", "X-Content-Type-Options": "nosniff" },
+  });
 }
 
 /** Tests only. */

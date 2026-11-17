@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 import { loadConfig } from "@/server/config";
-import { act, haFeed } from "@/server/homeassistant";
+import { act, HA_ACTIONS, haFeed } from "@/server/homeassistant";
 import { json, readJson, sameOrigin, unauthorized } from "@/server/http";
 import { viewerFor } from "@/server/viewer";
 
@@ -17,8 +17,10 @@ export async function GET(req: Request) {
 
 const body = z.object({
   entity: z.string().regex(/^[a-z_]+\.[a-z0-9_]+$/),
-  action: z.enum(["toggle", "on", "off", "brightness", "open", "close", "stop", "lock", "press", "temperature"]),
+  action: z.enum(HA_ACTIONS),
   value: z.number().optional(),
+  // A media player's source by name (a Sonos favourite, a Spotify Connect speaker).
+  option: z.string().min(1).max(120).optional(),
 });
 
 /** A tap on a display: one of a fixed set of actions, on an entity that a widget shows. */
@@ -28,7 +30,7 @@ export async function POST(req: Request) {
   const parsed = body.safeParse(await readJson(req, 2000).catch(() => null));
   if (!parsed.success) return json({ error: "Bad request" }, 400);
   try {
-    const result = await act((await loadConfig()).config, parsed.data.entity, parsed.data.action, parsed.data.value);
+    const result = await act((await loadConfig()).config, parsed.data.entity, parsed.data.action, parsed.data.value, parsed.data.option);
     return result === "ok" ? json({ ok: true }) : json({ error: "Not allowed" }, 403);
   } catch (error) {
     return json({ error: error instanceof Error ? error.message : "Home Assistant didn't answer" }, 502);

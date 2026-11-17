@@ -227,4 +227,35 @@ export const flows = [
       await context.close();
     },
   },
+  {
+    name: "a busy day in the month view keeps full-height rows and says how many more",
+    async run({ browser, page, base, expect }) {
+      const url = await addDevice(page, base, "calendar");
+      const context = await browser.newContext({ viewport: VIEWPORT });
+      // Twelve timed events on one day: far more than a day's box holds on a 1080p screen.
+      const day = new Date().toLocaleDateString("en-CA", { timeZone: "America/Vancouver" });
+      const events = Array.from({ length: 12 }, (_, i) => ({
+        id: `e${i}`,
+        title: `Event number ${i + 1}`,
+        start: `${day}T${String(8 + i).padStart(2, "0")}:00:00-08:00`,
+        end: `${day}T${String(8 + i).padStart(2, "0")}:30:00-08:00`,
+        allDay: false,
+        color: "#3b82f6",
+        calendar: "family",
+      }));
+      await context.route("**/api/display/calendar/**", (r) =>
+        r.fulfill({ json: { updatedAt: 1, from: "2000-01-01", to: "2100-01-01", events, connected: true } }),
+      );
+      const d = await context.newPage();
+      await d.goto(url);
+      const today = d.locator(".mo-today");
+      await today.locator(".mo-more").waitFor();
+      const rows = await today.locator(".mo-ev").evaluateAll((els) => els.map((e) => [e.clientHeight, e.scrollHeight]));
+      expect(rows.length > 0 && rows.length < 12, `expected some rows hidden, got ${rows.length}`);
+      for (const [shown, needed] of rows) expect(shown >= needed, `a row is squished (${shown}px of ${needed}px)`);
+      const more = await today.locator(".mo-more").textContent();
+      expect(more === `+${12 - rows.length} more`, `wrong count: ${more}`);
+      await context.close();
+    },
+  },
 ];

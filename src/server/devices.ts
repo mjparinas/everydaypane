@@ -1,11 +1,13 @@
 import "server-only";
 
-import { randomToken, sha256 } from "./crypto";
+import { decrypt, encrypt, randomToken, sha256 } from "./crypto";
 import { query, run } from "./db";
 
 // A display (the UC-Display21 in the kitchen, a tablet in the hall). Each one opens its own secret address,
-// /d/<token>/, so it can be signed out alone by deleting it. Only the token's hash is stored; the address is shown
-// once, when the device is added. A device shows its own view, or follows the time-of-day schedule (view_id null).
+// /d/<token>/, so it can be signed out alone by deleting it or giving it a new link. Displays are found by the token's
+// hash; the token itself is also kept encrypted (like the other stored secrets) so a signed-in admin can see and copy
+// the address again any time (Melvin, 2026-11-17: the address shouldn't be shown only once). A device shows its own
+// view, or follows the time-of-day schedule (view_id null).
 
 export interface Device {
   id: string;
@@ -31,10 +33,11 @@ export async function listDevices(): Promise<Device[]> {
 export async function addDevice(name: string, viewId: string | null, now = Date.now()): Promise<{ device: Device; token: string }> {
   const id = randomToken(9);
   const token = randomToken(18);
-  await run("INSERT INTO devices (id, name, token_hash, view_id, created_at) VALUES (?, ?, ?, ?, ?)", [
+  await run("INSERT INTO devices (id, name, token_hash, token_sealed, view_id, created_at) VALUES (?, ?, ?, ?, ?, ?)", [
     id,
     name,
     sha256(token),
+    encrypt(token),
     viewId,
     now,
   ]);
@@ -54,6 +57,22 @@ export async function updateDevice(id: string, patch: { name?: string; viewId?: 
   }
   if (sets.length === 0) return true;
   return (await run(`UPDATE devices SET ${sets.join(", ")} WHERE id = ?`, [...args, id])) === 1;
+}
+
+/**
+ * The display's token, for showing its address to an admin again. Null for a device added before tokens were kept
+ * (only a new link can show one) or one that doesn't exist.
+ */
+export async function deviceToken(id: string): Promise<string | null> {
+  const row = (await query<{ token_sealed: string | null }>("SELECT token_sealed FROM devices WHERE id = ?", [id]))[0];
+  return row?.token_sealed ? decrypt(row.token_sealed) : null;
+}
+
+/** Gives a display a new address. The old one stops working at once, so a leaked link can be shut off. */
+export async function newDeviceToken(id: string): Promise<string | null> {
+  const token = randomToken(18);
+  const changed = await run("UPDATE devices SET token_hash = ?, token_sealed = ? WHERE id = ?", [sha256(token), encrypt(token), id]);
+  return changed === 1 ? token : null;
 }
 
 export async function removeDevice(id: string): Promise<boolean> {

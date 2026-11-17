@@ -9,6 +9,7 @@ import { date } from "./date";
 import { garbage } from "./garbage";
 import { camera, haEntity } from "./ha";
 import { meals } from "./meals";
+import { media } from "./media";
 import { messages } from "./messages";
 import { note } from "./note";
 import { photos } from "./photos";
@@ -51,5 +52,7 @@ export function mountWidget(el: HTMLElement, w: Widget, ctx: WidgetContext): Cle
       return haEntity(el, w, ctx);
     case "camera":
       return camera(el, w, ctx);
+    case "media":
+      return media(el, w, ctx);
   }
 }
