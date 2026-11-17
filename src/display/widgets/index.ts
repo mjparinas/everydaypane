@@ -8,6 +8,7 @@ import { countdown } from "./countdown";
 import { date } from "./date";
 import { garbage } from "./garbage";
 import { camera, haEntity } from "./ha";
+import { media } from "./media";
 import { messages } from "./messages";
 import { note } from "./note";
 import { photos } from "./photos";
@@ -51,5 +52,7 @@ export function mountWidget(el: HTMLElement, w: Widget, ctx: WidgetContext): Cle
       return camera(el, w, ctx);
     case "tasks":
       return tasks(el, w, ctx);
+    case "media":
+      return media(el, w, ctx);
   }
 }

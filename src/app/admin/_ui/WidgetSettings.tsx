@@ -389,6 +389,33 @@ function TypeSettings({
         </>
       );
     }
+    case "media": {
+      const e = edit<"media">();
+      return (
+        <>
+          <Text
+            label="Player"
+            value={w.entityId}
+            maxLength={255}
+            placeholder="media_player.kitchen"
+            list="ha-players"
+            onChange={(v) => e((x) => void (x.entityId = v.trim()))}
+          />
+          <HaEntityList id="ha-players" only="media_player." />
+          <p className="text-xs text-soft">
+            A Sonos speaker or Spotify (media_player.spotify_…) from Home Assistant&rsquo;s Sonos or Spotify integration.
+          </p>
+          <Toggle label="Album art" checked={w.showArt} onChange={(v) => e((x) => void (x.showArt = v))} />
+          <Toggle label="Volume" checked={w.showVolume} onChange={(v) => e((x) => void (x.showVolume = v))} />
+          <Toggle
+            label="Sources to play"
+            checked={w.showSources}
+            hint="Sonos favourites, or for Spotify the speakers to play on."
+            onChange={(v) => e((x) => void (x.showSources = v))}
+          />
+        </>
+      );
+    }
   }
 }
 
