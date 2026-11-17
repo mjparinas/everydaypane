@@ -32,7 +32,7 @@ const builds = [
     entryPoints: ["src/display/display.css"],
     outfile: "public/display/display.css",
     loader: { ".woff2": "empty" },
-    external: ["/fonts/*"],
+    external: ["/fonts/*", "/brand/*"],
   },
 ];
 

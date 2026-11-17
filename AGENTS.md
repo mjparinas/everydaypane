@@ -36,6 +36,10 @@ node scripts/e2e.mjs   # Playwright browser tests against the build (CHROMIUM_PA
 - **Admin changes reach displays by polling** (Melvin, 2026-11-17: "we dont need real time push for now, polling is
   ok"). Every display asks for the settings version every 30 seconds (a tiny request answered with 304 when nothing
   changed) and reloads its settings when it moves. No WebSocket or push service.
+- **Logo** (Melvin asked for one, 2026-11-17): a rounded blue square holding three panes (a tall white one with clock
+  hands, an amber "sun" pane, a pale one), and the wordmark "everyday**pane**" in Manrope 800 with "pane" in the brand
+  blue. Sources are SVGs in `public/brand/` (mark, simplified 16–32 px favicon, maskable, light and dark wordmarks);
+  the PNG icons, `favicon.ico` and the web app manifest (`src/app/manifest.ts`) are made from them.
 - **Canadian English** in everything a person reads (colour, centre, favourite), as in Liftsmith.
 
 ## Display: super lightweight (rule, Melvin, 2026-11-17)
