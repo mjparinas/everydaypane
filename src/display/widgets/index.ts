@@ -4,6 +4,7 @@ import { airQuality } from "./air";
 import { clock } from "./clock";
 import { countdown } from "./countdown";
 import { date } from "./date";
+import { messages } from "./messages";
 import { note } from "./note";
 import { placeholder } from "./placeholder";
 import type { Cleanup, WidgetContext } from "./types";
@@ -27,12 +28,13 @@ export function mountWidget(el: HTMLElement, w: Widget, ctx: WidgetContext): Cle
       return countdown(el, w, ctx);
     case "note":
       return note(el, w, ctx);
+    case "messages":
+      return messages(el, w, ctx);
     case "agenda":
     case "calendarMonth":
     case "garbage":
     case "photos":
     case "haEntity":
-    case "messages":
     case "alerts":
     case "camera":
       return placeholder(el, w.type);

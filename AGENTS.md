@@ -75,6 +75,12 @@ panel can be complex if you need it to be."
   ever add (`src/server/db.ts`).
 - **Displays** are devices with their own secret address `/d/<token>/` (only the hash is stored). A device shows one
   view, or follows the time-of-day schedule. Deleting a device signs that screen out.
+- **Admin panel** (`src/app/admin/_ui/`): one page with tabs (a bottom tab bar on phones). Edits collect in a working
+  copy (a Zustand store per page) and go out together with Save. The grid editor drags with pointer events (mouse and
+  touch) and also moves and resizes with the keyboard; widgets never overlap or leave the grid (`src/lib/config/grid.ts`).
+- **Family message board:** anyone on `ADMIN_EMAILS` or `FAMILY_EMAILS` posts notes from `/family/`; the author name is
+  typed, never the email, because the wall is readable by anyone in the kitchen. Notes can expire; admins pin. Displays
+  poll the board every 30 seconds with an ETag.
 - **Garbage pickup:** the Township of Langley's collection calendar (tol.ca) is Recycle Coach, project 521,
   district `LANGL`, with zones such as Monday A or Thursday B. The zone is looked up from the address in the admin
   panel (or picked by hand) and the schedule is fetched and cached by the server.
@@ -124,6 +130,9 @@ panel can be complex if you need it to be."
 - **Preview deployments are off**, as in Liftsmith; CI's own build and browser tests cover pull requests.
 - **Vercel Authentication is off** for this project: a display can't sign in to Vercel, and every page and API route
   checks its own session or display token.
+- **Address:** `pane.getliftsmith.com` until everydaypane.com is bought (Melvin, 2026-11-17). getliftsmith.com's DNS is
+  on Cloudflare, so the record there is a DNS-only (grey cloud) CNAME `pane` → `cname.vercel-dns.com`.
+  `NEXT_PUBLIC_SITE_URL` in Vercel holds the address used in sign-in links.
 - **Sign-in email** is sent from `hello@getliftsmith.com` (verified in Resend, click tracking off so links aren't
   rewritten) until everydaypane.com is bought (Melvin, 2026-11-17). `ADMIN_EMAILS` is Melvin's own address.
 - **Database:** a Turso database from the Vercel Marketplace integration, connected to the project (its `TURSO_*`

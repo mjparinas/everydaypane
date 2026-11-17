@@ -103,4 +103,62 @@ export const flows = [
       expect(bytes < 120_000, `display.js is ${bytes} bytes before gzip`);
     },
   },
+  {
+    name: "the admin panel resizes a widget and saves it",
+    async run({ page, base, expect }) {
+      // A fresh load: earlier flows changed the settings behind this page's back.
+      await page.goto(`${base}/admin/`);
+      await page.reload();
+      await page.getByTestId("grid-editor").waitFor();
+      const widget = page.locator('[data-widget="home-countdown"]');
+      // The keyboard resizes a widget the same way dragging its corner does, and is steadier in a test.
+      await widget.focus();
+      await page.keyboard.press("Shift+ArrowLeft");
+      const after = await widget.getAttribute("aria-label");
+      expect(after.includes("2 by 3"), `the widget didn't shrink: ${after}`);
+      await page.getByRole("button", { name: "Save", exact: true }).click();
+      await page.getByText("Saved. Displays update within 30 seconds.").waitFor();
+      const { config } = await (await page.request.get(`${base}/api/admin/config/`)).json();
+      const saved = config.views.find((v) => v.id === "home").widgets.find((w) => w.id === "home-countdown");
+      expect(saved.w === 2 && saved.h === 3, `saved as ${saved.w} by ${saved.h}`);
+    },
+  },
+  {
+    name: "the admin panel works on a phone",
+    async run({ browser, page, base, expect }) {
+      const phone = await browser.newContext({ viewport: { width: 390, height: 844 }, storageState: await page.context().storageState() });
+      const p = await phone.newPage();
+      await p.goto(`${base}/admin/`);
+      await p.getByTestId("grid-editor").waitFor();
+      await p.getByRole("navigation", { name: "Sections" }).last().getByRole("button", { name: "Colours" }).click();
+      await p.getByRole("button", { name: "Copy this scheme" }).waitFor();
+      const overflow = await p.evaluate(() => document.documentElement.scrollWidth > innerWidth);
+      expect(!overflow, "the admin panel scrolls sideways on a phone");
+      await phone.close();
+    },
+  },
+  {
+    name: "a family note reaches the display",
+    async run({ browser, page, base, expect }) {
+      const r = await page.request.post(`${base}/api/messages/`, {
+        headers: { origin: base },
+        data: { author: "Mom", text: "Soccer moved to 5", colour: "pink", expiresInHours: 24 },
+      });
+      expect(r.status() === 201, `post: ${r.status()}`);
+      const { config, version } = await (await page.request.get(`${base}/api/admin/config/`)).json();
+      const home = config.views.find((v) => v.id === "home");
+      home.widgets = home.widgets.filter((w) => w.id !== "home-photos");
+      home.widgets.push({ id: "e2e-board", type: "messages", x: 4, y: 3, w: 5, h: 5, count: 5 });
+      const saved = await page.request.put(`${base}/api/admin/config/`, {
+        headers: { origin: base },
+        data: { baseVersion: version, config },
+      });
+      expect(saved.ok(), `save: ${saved.status()}`);
+      const url = await addDevice(page, base, "home");
+      const d = await openDisplay(browser, url);
+      await d.page.locator(".msg-pink").getByText("Soccer moved to 5").waitFor();
+      expect(d.errors.length === 0, d.errors.join("\n"));
+      await d.context.close();
+    },
+  },
 ];
