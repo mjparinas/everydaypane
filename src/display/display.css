@@ -811,6 +811,10 @@ body {
 .mo-past .mo-ev {
   opacity: 0.6;
 }
+.mo-day > * {
+  /* Rows keep their full height; trimDay hides what doesn't fit behind "+N more" instead of the column squeezing them. */
+  flex-shrink: 0;
+}
 .mo-num {
   font-size: 0.95em;
   font-weight: 600;

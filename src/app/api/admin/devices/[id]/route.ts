@@ -1,10 +1,27 @@
 import { z } from "zod";
 
-import { removeDevice, updateDevice } from "@/server/devices";
+import { deviceToken, newDeviceToken, removeDevice, updateDevice } from "@/server/devices";
 import { json, notFound, readJson, sameOrigin, unauthorized } from "@/server/http";
 import { adminFor } from "@/server/viewer";
 
 const patch = z.object({ name: z.string().trim().min(1).max(40).optional(), viewId: z.string().max(64).nullable().optional() });
+
+const linkFor = (req: Request, token: string) => `${new URL(req.url).origin}/d/${token}/`;
+
+/** The display's address, for the signed-in admin to see or copy again. */
+export async function GET(req: Request, ctx: { params: Promise<{ id: string }> }) {
+  if (!(await adminFor(req))) return unauthorized();
+  const token = await deviceToken((await ctx.params).id);
+  return token ? json({ url: linkFor(req, token) }) : notFound();
+}
+
+/** Gives the display a new address; the old one stops working straight away. */
+export async function POST(req: Request, ctx: { params: Promise<{ id: string }> }) {
+  if (!sameOrigin(req)) return json({ error: "Not allowed" }, 403);
+  if (!(await adminFor(req))) return unauthorized();
+  const token = await newDeviceToken((await ctx.params).id);
+  return token ? json({ url: linkFor(req, token) }) : notFound();
+}
 
 export async function PATCH(req: Request, ctx: { params: Promise<{ id: string }> }) {
   if (!sameOrigin(req)) return json({ error: "Not allowed" }, 403);

@@ -241,7 +241,7 @@ export function Colour({ label, value, onChange }: { label: string; value: strin
 
 export function Section({ title, children, actions }: { title: string; children: ReactNode; actions?: ReactNode }) {
   return (
-    <section className="card grid gap-4">
+    <section className="card grid content-start gap-4">
       <div className="flex items-center justify-between gap-2">
         <h2 className="text-lg font-semibold">{title}</h2>
         {actions}
