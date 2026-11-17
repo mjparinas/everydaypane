@@ -7,7 +7,7 @@
     "node": ">=22"
   },
   "scripts": {
-    "dev": "next dev",
+    "dev": "node scripts/build-display.mjs --watch & next dev",
     "build": "next build",
     "start": "next start",
     "lint": "eslint --max-warnings 0",
@@ -16,7 +16,11 @@
     "test:coverage": "vitest run --coverage",
     "e2e": "node scripts/e2e.mjs",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "predev": "node scripts/build-display.mjs",
+    "prebuild": "node scripts/build-display.mjs",
+    "build:display": "node scripts/build-display.mjs",
+    "bundle:check": "node scripts/bundle-check.mjs"
   },
   "dependencies": {
     "@libsql/client": "0.18.0",
@@ -32,6 +36,9 @@
     "zustand": "5.1.0"
   },
   "devDependencies": {
+    "@fontsource-variable/inter": "5.3.0",
+    "@fontsource-variable/manrope": "5.3.0",
+    "@fontsource-variable/space-grotesk": "5.3.0",
     "@ianvs/prettier-plugin-sort-imports": "4.7.1",
     "@tailwindcss/postcss": "4.3.5",
     "@testing-library/jest-dom": "7.0.1",

@@ -18,5 +18,5 @@ export default defineConfig([
       "@typescript-eslint/consistent-type-imports": ["error", { fixStyle: "inline-type-imports" }],
     },
   },
-  globalIgnores(["**/.next/**", "out/**", "coverage/**", "next-env.d.ts", "reports/**"]),
+  globalIgnores(["**/.next/**", "out/**", "public/display/**", "coverage/**", "next-env.d.ts", "reports/**"]),
 ]);

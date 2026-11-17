@@ -61,6 +61,8 @@ jobs:
       - run: npm run build
         env:
           SESSION_SECRET: ci-only-session-secret-0123456789abcdef
+      - name: Display bundle budget
+        run: node scripts/bundle-check.mjs
       - name: Install Chromium
         run: npx playwright install --with-deps chromium
       - name: Browser tests

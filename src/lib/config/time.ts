@@ -1,4 +1,5 @@
-import { PERIODS, type DashboardConfig, type Period } from "./schema";
+import { PERIODS, type Period } from "./periods";
+import type { DashboardConfig } from "./schema";
 
 // Minutes since midnight in a time zone, for "which part of the day is it" questions.
 export function minutesInZone(now: Date, timeZone: string): number {

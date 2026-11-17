@@ -1,0 +1,589 @@
+/* The display's whole stylesheet. Sizes inside widgets use container units (cqh/cqw) so every widget scales to its
+   cell with no script. Only transform and opacity animate. */
+
+@font-face {
+  font-family: "Inter";
+  src: url(/fonts/inter.woff2) format("woff2");
+  font-weight: 100 900;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Manrope";
+  src: url(/fonts/manrope.woff2) format("woff2");
+  font-weight: 200 800;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Space Grotesk";
+  src: url(/fonts/space-grotesk.woff2) format("woff2");
+  font-weight: 300 700;
+  font-display: swap;
+}
+
+:root {
+  --bg: #070b14;
+  --bg2: #111827;
+  --surface: #121a2b;
+  --text: #e8edf7;
+  --muted: #93a1bb;
+  --accent: #8ea2ff;
+  --danger: #ff8787;
+  --radius: 24px;
+  --surface-alpha: 0.72;
+  --sun: #ffc531;
+  --moon: #f3e3a3;
+  --cloud: #e9eef6;
+  --cloud-shade: #b8c4d6;
+  --rain: #4dabf7;
+  --snow: #e7f5ff;
+  --bolt: #ffd43b;
+  --font: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  color-scheme: dark;
+}
+:root[data-mode="day"] {
+  color-scheme: light;
+  --cloud: #dfe6ef;
+  --cloud-shade: #a7b4c6;
+  --snow: #a5d8ff;
+  --moon: #f0c419;
+}
+:root[data-font="manrope"] {
+  --font: "Manrope", ui-sans-serif, system-ui, sans-serif;
+}
+:root[data-font="space-grotesk"] {
+  --font: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
+}
+:root[data-font="system"] {
+  --font: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+}
+html,
+body {
+  height: 100%;
+  overflow: hidden;
+}
+body {
+  background: radial-gradient(120% 120% at 0% 0%, var(--bg2), var(--bg) 60%);
+  color: var(--text);
+  font-family: var(--font);
+  font-feature-settings:
+    "tnum" 1,
+    "cv11" 1;
+  -webkit-font-smoothing: antialiased;
+  user-select: none;
+  cursor: none;
+}
+@media (hover: hover) {
+  body {
+    cursor: default;
+  }
+}
+
+.boot {
+  display: grid;
+  place-items: center;
+  height: 100%;
+}
+.boot-logo {
+  width: 64px;
+  height: 64px;
+  border-radius: 18px;
+  background: linear-gradient(135deg, #5c7cfa, #3b5bdb);
+  animation: pulse 1.6s ease-in-out infinite;
+}
+@keyframes pulse {
+  50% {
+    opacity: 0.4;
+    transform: scale(0.94);
+  }
+}
+
+.app {
+  position: relative;
+  height: 100dvh;
+  width: 100vw;
+  overflow: hidden;
+}
+.stage {
+  display: grid;
+  height: 100%;
+  width: 100%;
+  transition: translate 3s ease-in-out;
+}
+.connecting {
+  grid-column: 1 / -1;
+  grid-row: 1 / -1;
+  display: grid;
+  place-items: center;
+  color: var(--muted);
+  font-size: 2rem;
+}
+
+.cell {
+  position: relative;
+  container-type: size;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  border-radius: var(--radius);
+  background: color-mix(in srgb, var(--surface) calc(var(--surface-alpha) * 100%), transparent);
+  box-shadow:
+    0 1px 0 color-mix(in srgb, var(--text) 6%, transparent) inset,
+    0 10px 30px -18px rgb(0 0 0 / 0.5);
+  padding: clamp(10px, 6cqmin, 28px);
+  animation: rise 0.5s ease-out both;
+}
+.glass .cell {
+  backdrop-filter: blur(18px) saturate(1.2);
+}
+.cell-clock,
+.cell-date {
+  background: transparent;
+  box-shadow: none;
+}
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+
+.dim {
+  position: absolute;
+  inset: 0;
+  background: #000;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 4s;
+}
+.offline {
+  position: absolute;
+  right: 16px;
+  bottom: 12px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 14px;
+  background: color-mix(in srgb, var(--surface) 90%, transparent);
+  color: var(--muted);
+  opacity: 0;
+  transform: translateY(8px);
+  transition:
+    opacity 0.4s,
+    transform 0.4s;
+}
+.offline.show {
+  opacity: 1;
+  transform: none;
+}
+
+.icon {
+  display: inline-block;
+  line-height: 0;
+}
+.icon svg {
+  width: 100%;
+  height: 100%;
+}
+
+.w-label {
+  color: var(--muted);
+  font-size: clamp(12px, 9cqh, 22px);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+.w-sub {
+  color: var(--muted);
+  font-size: clamp(11px, 7cqh, 18px);
+}
+.w-empty {
+  color: var(--muted);
+  display: grid;
+  place-items: center;
+  height: 100%;
+  text-align: center;
+  font-size: clamp(12px, 8cqh, 20px);
+}
+
+/* Clock */
+.w-clock {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  height: 100%;
+}
+.c-time {
+  display: flex;
+  align-items: baseline;
+  gap: 0.06em;
+  font-weight: 700;
+  letter-spacing: -0.04em;
+  line-height: 0.9;
+  font-size: min(70cqh, 26cqw);
+}
+.c-s {
+  font-size: 0.38em;
+  color: var(--muted);
+  font-weight: 600;
+  letter-spacing: 0;
+  margin-left: 0.1em;
+}
+.c-ampm {
+  font-size: 0.28em;
+  color: var(--muted);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  margin-left: 0.18em;
+}
+.w-clock .w-label {
+  margin-top: 0.4em;
+}
+.analog-wrap {
+  align-items: center;
+  gap: 4cqh;
+}
+.analog {
+  height: 80cqh;
+  aspect-ratio: 1;
+  max-width: 100%;
+}
+.analog svg {
+  width: 100%;
+  height: 100%;
+}
+.a-face {
+  fill: color-mix(in srgb, var(--surface) 70%, transparent);
+  stroke: color-mix(in srgb, var(--text) 12%, transparent);
+  stroke-width: 1;
+}
+.a-tick {
+  stroke: var(--muted);
+  stroke-width: 1.6;
+  stroke-linecap: round;
+}
+.a-hour {
+  stroke: var(--text);
+  stroke-width: 4.5;
+  stroke-linecap: round;
+}
+.a-min {
+  stroke: var(--text);
+  stroke-width: 3;
+  stroke-linecap: round;
+}
+.a-sec {
+  stroke: var(--accent);
+  stroke-width: 1.4;
+  stroke-linecap: round;
+}
+.a-pin {
+  fill: var(--accent);
+}
+
+/* Date */
+.w-date {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  height: 100%;
+  line-height: 1.05;
+}
+.d-day {
+  font-weight: 700;
+  font-size: min(40cqh, 16cqw);
+  letter-spacing: -0.02em;
+}
+.d-rest {
+  color: var(--muted);
+  font-weight: 500;
+  font-size: min(28cqh, 11cqw);
+}
+
+/* Weather */
+.w-weather {
+  display: flex;
+  flex-direction: column;
+  gap: 5cqh;
+  height: 100%;
+}
+.wx-now {
+  display: flex;
+  align-items: center;
+  gap: 3cqw;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+.wx-now-icon {
+  height: min(100%, 38cqh);
+  aspect-ratio: 1;
+  flex: none;
+}
+.wx-now-text {
+  min-width: 0;
+}
+.wx-temp {
+  font-size: min(30cqh, 14cqw);
+  font-weight: 700;
+  letter-spacing: -0.04em;
+  line-height: 0.95;
+}
+.wx-desc {
+  font-size: min(9cqh, 5cqw);
+  font-weight: 600;
+}
+.wx-meta {
+  color: var(--muted);
+  font-size: min(6.5cqh, 3.4cqw);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.wx-hilo {
+  margin-left: auto;
+  display: grid;
+  gap: 0.2em;
+  text-align: right;
+  font-size: min(8cqh, 4cqw);
+  font-weight: 600;
+}
+.wx-hi {
+  color: var(--text);
+}
+.wx-lo {
+  color: var(--muted);
+}
+.wx-pop {
+  color: var(--rain);
+  font-size: 0.85em;
+}
+.wx-hours,
+.wx-days {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
+  gap: 1cqw;
+}
+.wx-days {
+  flex: 0 1 auto;
+  min-height: 0;
+}
+.wx-hour,
+.wx-day {
+  display: grid;
+  justify-items: center;
+  align-content: start;
+  gap: 0.3em;
+  text-align: center;
+  font-size: min(6.5cqh, 3cqw);
+  font-weight: 600;
+}
+.wx-day .icon,
+.wx-hour .icon {
+  width: min(14cqh, 7cqw);
+  aspect-ratio: 1;
+}
+.wx-dn,
+.wx-t {
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-size: 0.85em;
+}
+.wx-dt {
+  display: flex;
+  gap: 0.5em;
+}
+
+/* Air */
+.w-air {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 4cqh;
+  height: 100%;
+}
+.air-row {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5em;
+}
+.air-value {
+  font-size: min(42cqh, 22cqw);
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.03em;
+}
+.air-name {
+  font-size: min(13cqh, 7cqw);
+  font-weight: 600;
+}
+.air-bar {
+  height: max(6px, 5cqh);
+  border-radius: 999px;
+  overflow: hidden;
+  background: linear-gradient(90deg, #40c057, #fab005 40%, #fd7e14 65%, #e03131 85%, #862e9c);
+  opacity: 0.35;
+  position: relative;
+}
+.air-fill {
+  position: absolute;
+  inset: 0;
+  background: inherit;
+  opacity: 1;
+  transform-origin: left;
+}
+.w-air[data-level="1"] .air-value {
+  color: #40c057;
+}
+.w-air[data-level="2"] .air-value {
+  color: #fab005;
+}
+.w-air[data-level="3"] .air-value {
+  color: #fd7e14;
+}
+.w-air[data-level="4"] .air-value,
+.w-air[data-level="5"] .air-value {
+  color: #fa5252;
+}
+@container (max-height: 120px) {
+  .air-bar,
+  .w-air .w-sub {
+    display: none;
+  }
+}
+
+/* Wi-Fi */
+.w-wifi {
+  display: flex;
+  align-items: center;
+  gap: 6cqmin;
+  height: 100%;
+}
+.wifi-qr {
+  height: 100%;
+  max-height: 100cqh;
+  max-width: 55cqw;
+  aspect-ratio: 1;
+  border-radius: calc(var(--radius) / 2);
+  background: #fff;
+  padding: 2cqmin;
+}
+.wifi-text {
+  min-width: 0;
+}
+.wifi-ssid {
+  font-size: min(16cqh, 9cqw);
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+@container (max-aspect-ratio: 1.1) {
+  .w-wifi {
+    flex-direction: column;
+    justify-content: center;
+  }
+  .wifi-qr {
+    height: 70cqh;
+    max-width: 100%;
+  }
+  .wifi-text {
+    text-align: center;
+  }
+}
+
+/* Countdown */
+.w-countdown {
+  display: flex;
+  flex-direction: column;
+  gap: 3cqh;
+  height: 100%;
+}
+.cd-row {
+  display: flex;
+  align-items: center;
+  gap: 0.6em;
+  font-size: min(9cqh, 6.5cqw);
+  min-width: 0;
+}
+.cd-first {
+  font-size: min(13cqh, 8cqw);
+  font-weight: 600;
+}
+.cd-emoji {
+  flex: none;
+}
+.cd-name {
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.cd-turning {
+  color: var(--muted);
+  font-weight: 500;
+}
+.cd-days {
+  color: var(--muted);
+  white-space: nowrap;
+}
+.cd-days b {
+  color: var(--accent);
+  font-weight: 700;
+}
+
+/* Note */
+.w-note {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4em;
+  height: 100%;
+  justify-content: center;
+}
+.note-text {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font-weight: 600;
+  line-height: 1.2;
+}
+.note-s .note-text {
+  font-size: min(10cqh, 6cqw);
+}
+.note-m .note-text {
+  font-size: min(16cqh, 9cqw);
+}
+.note-l .note-text {
+  font-size: min(24cqh, 13cqw);
+}
+.note-xl .note-text {
+  font-size: min(36cqh, 18cqw);
+}
+
+/* Placeholder */
+.w-placeholder {
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 0.3em;
+  height: 100%;
+  text-align: center;
+  opacity: 0.7;
+}
+.ph-icon {
+  font-size: min(30cqh, 20cqw);
+}
+
+/* A clock or date stretched across a wide cell (the night view) sits in the middle. */
+@container (min-aspect-ratio: 3.5) {
+  .w-clock,
+  .w-date {
+    align-items: center;
+    text-align: center;
+  }
+  .c-time {
+    justify-content: center;
+  }
+}

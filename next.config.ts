@@ -10,7 +10,16 @@ const nextConfig: NextConfig = {
   // The display page is plain HTML plus one small script (public/display/), not a React page: see AGENTS.md "Display".
   headers: async () => [
     { source: "/:path*", headers: SECURITY_HEADERS },
-    { source: "/display/:file*", headers: [{ key: "Cache-Control", value: "public, max-age=300, stale-while-revalidate=86400" }] },
+    // Display assets are versioned by ?v=<commit>, so they can be cached for a year.
+    { source: "/display/:file*", headers: [{ key: "Cache-Control", value: "public, max-age=31536000, immutable" }] },
+    {
+      source: "/display/sw.js",
+      headers: [
+        { key: "Service-Worker-Allowed", value: "/d/" },
+        { key: "Cache-Control", value: "no-cache" },
+      ],
+    },
+    { source: "/fonts/:file*", headers: [{ key: "Cache-Control", value: "public, max-age=31536000, immutable" }] },
   ],
   env: { NEXT_PUBLIC_COMMIT_SHA: process.env.VERCEL_GIT_COMMIT_SHA ?? process.env.GITHUB_SHA ?? "" },
 };

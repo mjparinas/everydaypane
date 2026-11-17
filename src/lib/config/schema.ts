@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { PERIODS } from "./periods";
+
 // The whole dashboard setup, as the admin panel edits it and every display reads it. One JSON document, validated
 // here on every save (src/server/config.ts), versioned so displays know when to reload. Secrets (tokens, cookies,
 // passwords) never live here: they are in the secrets table (src/server/secrets.ts) and stay on the server.
@@ -140,8 +142,7 @@ export type View = z.infer<typeof viewSchema>;
 
 // ---- The day ----
 
-export const PERIODS = ["morning", "afternoon", "evening", "night"] as const;
-export type Period = (typeof PERIODS)[number];
+export { PERIODS, type Period } from "./periods";
 
 export const periodSchema = z.object({
   start: hhmm,

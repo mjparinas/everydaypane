@@ -11,3 +11,5 @@ next-env.d.ts
 *.db-*
 .vercel
 e2e.db
+public/display
+public/fonts
