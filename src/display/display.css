@@ -65,6 +65,9 @@ html,
 body {
   height: 100%;
   overflow: hidden;
+  /* No pinch or double-tap zoom on the wall screen (Melvin, 2026-11-17); taps and sliders still work. */
+  touch-action: pan-x pan-y;
+  overscroll-behavior: none;
 }
 body {
   background: radial-gradient(120% 120% at 0% 0%, var(--bg2), var(--bg) 60%);

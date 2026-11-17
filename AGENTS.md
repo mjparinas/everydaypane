@@ -54,6 +54,9 @@ panel can be complex if you need it to be."
   a CI step). A new dependency on the display needs a very good reason.
 - All heavy lifting happens on the server: API calls to Google, weather, Recycle Coach, Amazon and Home Assistant are
   made, cached and trimmed by our routes, and the display fetches small JSON. Images are proxied at display size.
+- **No zooming** (Melvin, 2026-11-17: "dont allow pinch zoom on the dashboard"): the display's viewport meta has
+  `maximum-scale=1,user-scalable=no`, the page has `touch-action: pan-x pan-y`, and `main.ts` cancels gesture events,
+  two-finger moves and ctrl + wheel. The admin panel can still be zoomed.
 - Animations use `transform` and `opacity` only. Backdrop blur ("glass") is off by default because it costs GPU time.
 - The admin panel and backend may be as complex as needed (Next.js, React, Zustand).
 
