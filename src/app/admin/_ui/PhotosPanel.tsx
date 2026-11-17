@@ -17,6 +17,8 @@ interface AmazonStatus {
   error?: string;
 }
 
+type SourceCheck = Record<string, { count: number; error: string | null; image: string | null }>;
+
 async function fetchAmazon(): Promise<AmazonStatus> {
   const r = await fetch("/api/admin/amazon/");
   if (!r.ok) throw new Error(String(r.status));
@@ -42,6 +44,7 @@ export function PhotosPanel() {
   const [cookie, setCookie] = useState("");
   const [tld, setTld] = useState<"ca" | "com">("ca");
   const [error, setError] = useState("");
+  const [checks, setChecks] = useState<SourceCheck | null>(null);
 
   useEffect(() => {
     let live = true;
@@ -49,6 +52,11 @@ export function PhotosPanel() {
       (s) => live && setAmazon(s),
       () => live && setAmazon({ connected: false, people: [] }),
     );
+    // How each saved source is doing, so a broken album says why here rather than "Loading photos…" on the wall.
+    fetch("/api/admin/photos/")
+      .then((r) => (r.ok ? (r.json() as Promise<SourceCheck>) : null))
+      .then((c) => live && setChecks(c))
+      .catch(() => undefined);
     return () => {
       live = false;
     };
@@ -126,6 +134,11 @@ export function PhotosPanel() {
                 ? `${s.urls.length} photo addresses`
                 : "Amazon photos of the people below"}
           </p>
+          {checks?.[s.id] && (
+            <p className={`text-sm ${checks[s.id]?.error || checks[s.id]?.image ? "text-bad" : "text-soft"}`}>
+              {checks[s.id]?.error ?? checks[s.id]?.image ?? `${checks[s.id]?.count ?? 0} photos`}
+            </p>
+          )}
           {s.kind === "amazonPeople" &&
             (amazon?.connected ? (
               amazon.people.length ? (

@@ -38,6 +38,7 @@ export const photos: Mount<"photos"> = (el, w) => {
   let front = 0;
   let timer: number | undefined;
   let signature = "";
+  let failures = 0;
 
   const next = (): Pick | undefined => {
     if (!queue.length) queue = shuffle(deck);
@@ -52,14 +53,21 @@ export const photos: Mount<"photos"> = (el, w) => {
     const [id, , , taken] = pick.photo;
     const done = () => {
       back.onload = back.onerror = null;
+      if (!back.naturalWidth && ++failures >= Math.min(3, deck.length)) {
+        // Every photo tried so far failed: say so rather than "Loading photos…" forever.
+        note.textContent = "These photos didn't load. Check the album under Settings › Photos.";
+        if (!root.contains(note)) root.append(note);
+      }
       if (back.naturalWidth) {
+        failures = 0;
         back.classList.add("on");
         layers[front]?.classList.remove("on");
         front = 1 - front;
         caption.textContent = w.showCaption && taken ? formatDate(taken) : "";
         note.remove();
       }
-      timer = window.setTimeout(show, w.intervalSeconds * 1000);
+      // After a failure, try the next photo soon rather than after a whole interval.
+      timer = window.setTimeout(show, back.naturalWidth ? w.intervalSeconds * 1000 : Math.min(w.intervalSeconds * 1000, 15_000));
     };
     back.onload = back.onerror = done;
     back.src = imageUrl("photo", { s: pick.source, i: id, w: String(widthFor(el)) });
