@@ -1,6 +1,7 @@
 "use client";
 
 import { NumberInput, Section, Select, Text, Toggle } from "./fields";
+import { GooglePanel } from "./GooglePanel";
 import { useAdmin } from "./store";
 import { TIME_ZONES } from "./WidgetSettings";
 
@@ -56,6 +57,8 @@ export function SettingsPanel() {
           onChange={(v) => edit((c) => void (c.location.timeZone = v))}
         />
       </Section>
+
+      <GooglePanel />
 
       <Section title="Screen care">
         <Toggle

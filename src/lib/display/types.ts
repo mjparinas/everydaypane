@@ -62,3 +62,27 @@ export interface BoardMessage {
   pinned: boolean;
   createdAt: number;
 }
+
+/** A Google Calendar event, trimmed by the server (src/server/google.ts). */
+export interface CalendarEvent {
+  id: string;
+  title: string;
+  /** An ISO date-time with its offset, or a YYYY-MM-DD date for all-day events. */
+  start: string;
+  /** Exclusive: an all-day event on the 17th ends on the 18th, as Google sends it. */
+  end: string;
+  allDay: boolean;
+  color: string;
+  calendar: string;
+  location?: string;
+}
+
+export interface CalendarData {
+  updatedAt: number;
+  /** The days covered (local dates, inclusive of from, exclusive of to). */
+  from: string;
+  to: string;
+  events: CalendarEvent[];
+  /** False until an admin connects Google in the admin panel. */
+  connected?: boolean;
+}

@@ -81,6 +81,11 @@ panel can be complex if you need it to be."
 - **Family message board:** anyone on `ADMIN_EMAILS` or `FAMILY_EMAILS` posts notes from `/family/`; the author name is
   typed, never the email, because the wall is readable by anyone in the kitchen. Notes can expire; admins pin. Displays
   poll the board every 30 seconds with an ETag.
+- **Google Calendar:** an admin connects one Google account from Settings (OAuth, `calendar.readonly`, redirect
+  `<site>/api/google/callback/`); the refresh token is a stored secret, the chosen calendars and their colours live in
+  `config.integrations.google.calendars`. The server fetches the month grid around today plus the next two weeks into
+  one five-minute feed (`/api/display/calendar/`) that the schedule and month widgets share. Events are placed by the
+  dashboard's time zone (tzdata has B.C. on UTC−7 all year from 2026, so don't hard-code −08:00 in tests).
 - **Garbage pickup:** the Township of Langley's collection calendar (tol.ca) is Recycle Coach, project 521,
   district `LANGL`, with zones such as Monday A or Thursday B. The zone is looked up from the address in the admin
   panel (or picked by hand) and the schedule is fetched and cached by the server.

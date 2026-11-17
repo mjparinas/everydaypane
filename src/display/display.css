@@ -698,3 +698,153 @@ body {
   font-size: 0.7em;
   opacity: 0.65;
 }
+
+/* Schedule (Google Calendar) */
+.w-agenda {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6em;
+  height: 100%;
+  overflow: hidden;
+  font-size: clamp(14px, 4.4cqw, 26px);
+  mask-image: linear-gradient(#000 88%, transparent);
+}
+.ag-head {
+  margin: 0 0 0.3em;
+  color: var(--muted);
+  font-size: 0.72em;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.ag-list {
+  display: grid;
+  gap: 0.45em;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.ag-row {
+  display: grid;
+  grid-template-columns: auto 5.2em minmax(0, 1fr);
+  align-items: baseline;
+  gap: 0.5em;
+}
+.ag-dot {
+  width: 0.55em;
+  height: 0.55em;
+  border-radius: 50%;
+  transform: translateY(-0.05em);
+}
+.ag-time {
+  color: var(--muted);
+  font-size: 0.82em;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.ag-title {
+  overflow: hidden;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ag-where {
+  color: var(--muted);
+  font-weight: 400;
+}
+.ag-past {
+  opacity: 0.45;
+}
+.ag-free {
+  font-size: 1em;
+}
+
+/* Month calendar */
+.w-month {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  font-size: clamp(11px, 1.6cqw, 18px);
+}
+.mo-title {
+  margin-bottom: 0.4em;
+  font-size: 1.6em;
+  font-weight: 700;
+}
+.mo-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 3px;
+}
+.mo-names {
+  margin-bottom: 3px;
+}
+.mo-name {
+  color: var(--muted);
+  font-size: 0.8em;
+  font-weight: 600;
+  text-align: center;
+  text-transform: uppercase;
+}
+.mo-days {
+  flex: 1;
+  min-height: 0;
+}
+.mo-day {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  overflow: hidden;
+  padding: 3px 4px;
+  border-radius: calc(var(--radius) / 3);
+  background: color-mix(in srgb, var(--text) 4%, transparent);
+}
+.mo-out {
+  opacity: 0.4;
+}
+.mo-past .mo-ev {
+  opacity: 0.6;
+}
+.mo-num {
+  font-size: 0.95em;
+  font-weight: 600;
+  line-height: 1.3;
+}
+.mo-today {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+.mo-today .mo-num {
+  color: var(--accent);
+}
+.mo-ev {
+  overflow: hidden;
+  padding: 0 4px;
+  border-left: 3px solid var(--c);
+  border-radius: 3px;
+  font-size: 0.82em;
+  line-height: 1.45;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.mo-all {
+  background: color-mix(in srgb, var(--c) 30%, transparent);
+}
+.mo-t {
+  margin-right: 0.3em;
+  color: var(--muted);
+}
+.mo-more {
+  color: var(--muted);
+  font-size: 0.75em;
+}
+.mo-dots {
+  display: flex;
+  gap: 2px;
+}
+.mo-dots i {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
