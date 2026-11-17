@@ -20,6 +20,9 @@ const TOKEN_URL = "https://oauth2.googleapis.com/token";
 const REVOKE_URL = "https://oauth2.googleapis.com/revoke";
 const API = "https://www.googleapis.com/calendar/v3";
 export const SCOPE = "https://www.googleapis.com/auth/calendar.readonly";
+// Google Photos through Google's own picker (Melvin, 2026-11-17): the admin picks photos in Google's window and we copy
+// them into our library. Asked for only when the admin connects Google Photos.
+export const PHOTOS_SCOPE = "https://www.googleapis.com/auth/photospicker.mediaitems.readonly";
 export const STATE_COOKIE = "ep_google_state";
 const TTL = 5 * 60_000;
 
@@ -28,12 +31,12 @@ export const googleConfigured = () => Boolean(env.googleClientId() && env.google
 /** Where Google sends the admin back. Must match the redirect URI registered on the OAuth client. */
 export const redirectUri = (origin: string) => `${env.siteUrl() || origin}/api/google/callback/`;
 
-export function consentUrl(state: string, redirect: string): string {
+export function consentUrl(state: string, redirect: string, photos = false): string {
   const p = new URLSearchParams({
     client_id: env.googleClientId(),
     redirect_uri: redirect,
     response_type: "code",
-    scope: SCOPE,
+    scope: photos ? `${SCOPE} ${PHOTOS_SCOPE}` : SCOPE,
     // offline + consent: Google returns a refresh token every time, even when the account was connected before.
     access_type: "offline",
     prompt: "consent",
@@ -58,7 +61,12 @@ export class GoogleDisconnected extends Error {
   }
 }
 
-const tokenSchema = z.object({ access_token: z.string(), expires_in: z.number(), refresh_token: z.string().optional() });
+const tokenSchema = z.object({
+  access_token: z.string(),
+  expires_in: z.number(),
+  refresh_token: z.string().optional(),
+  scope: z.string().optional(),
+});
 
 async function tokenRequest(params: Record<string, string>): Promise<z.infer<typeof tokenSchema>> {
   const r = await fetch(TOKEN_URL, {
@@ -83,6 +91,7 @@ export async function connect(code: string, redirect: string, now = Date.now()):
   const t = await tokenRequest({ grant_type: "authorization_code", code, redirect_uri: redirect });
   if (!t.refresh_token) throw new Error("Google didn't send a refresh token");
   await setSecret("google.refreshToken", t.refresh_token, now);
+  await setSecret("google.scopes", t.scope ?? SCOPE, now);
   access = { token: t.access_token, expiresAt: now + (t.expires_in - 60) * 1000, refresh: t.refresh_token };
   await forget("calendar:");
 }
@@ -91,6 +100,7 @@ export async function disconnect(): Promise<void> {
   const refresh = await getSecret("google.refreshToken");
   access = null;
   await setSecret("google.refreshToken", null);
+  await setSecret("google.scopes", null);
   await forget("calendar:");
   if (refresh) {
     // Best effort: the token is already gone from our side either way.
@@ -100,7 +110,12 @@ export async function disconnect(): Promise<void> {
   }
 }
 
-async function accessToken(now = Date.now()): Promise<string> {
+/** Whether the connected Google account allowed Google Photos picking. */
+export async function photosGranted(): Promise<boolean> {
+  return Boolean((await getSecret("google.refreshToken")) && (await getSecret("google.scopes"))?.split(" ").includes(PHOTOS_SCOPE));
+}
+
+export async function accessToken(now = Date.now()): Promise<string> {
   const refresh = await getSecret("google.refreshToken");
   if (!refresh) throw new GoogleDisconnected();
   if (access && access.refresh === refresh && access.expiresAt > now) return access.token;

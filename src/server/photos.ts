@@ -4,6 +4,7 @@ import type { DashboardConfig, PhotoSource } from "@/lib/config/schema";
 import type { PhotoData, PhotoItem } from "@/lib/display/types";
 
 import { cached } from "./cache";
+import { libraryImage, listLibrary } from "./library";
 import { getSecret } from "./secrets";
 
 // Photos (Melvin, 2026-11-17: Amazon Photos, choosable by person). Three kinds of source, all listed and cached by the
@@ -248,6 +249,8 @@ async function list(source: PhotoSource): Promise<Listed[]> {
       return listPeople(source.personIds);
     case "urls":
       return listUrls(source.urls);
+    case "library":
+      return (await listLibrary(source.id)).map((p) => ({ id: p.id, url: p.pathname, w: p.w, h: p.h, taken: p.taken }));
   }
 }
 
@@ -257,6 +260,8 @@ const sourceKey = (s: PhotoSource) => `photos:${s.id}:${hash(JSON.stringify(s))}
 const failures = new Map<string, { at: number; error: unknown }>();
 
 async function listed(source: PhotoSource, now = Date.now()): Promise<Listed[]> {
+  // Our own library is a quick database read, and must show a new upload at once: never cached.
+  if (source.kind === "library") return list(source);
   const key = sourceKey(source);
   const ttl = source.kind === "urls" ? LIST_TTL : AMAZON_TTL;
   const failed = failures.get(key);
@@ -312,6 +317,7 @@ export async function photoImage(config: DashboardConfig, sourceId: string, phot
   const find = async () => (await listed(source)).find((p) => p.id === photoId) ?? null;
   let photo = await find();
   if (!photo) return null;
+  if (source.kind === "library") return libraryImage(photo.url);
   const w = Math.min(3840, Math.max(160, Math.round(width)));
   const sized = (p: Listed) => (source.kind === "urls" ? p.url : `${p.url}${p.url.includes("?") ? "&" : "?"}viewBox=${w},${w}`);
   const get = (p: Listed) =>

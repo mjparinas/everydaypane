@@ -26,6 +26,7 @@
     "@libsql/client": "0.18.0",
     "@sentry/nextjs": "11.13.0",
     "@vercel/analytics": "2.0.1",
+    "@vercel/blob": "2.9.0",
     "jose": "6.2.17",
     "next": "16.4.6",
     "qrcode-generator": "2.0.4",
@@ -56,5 +57,10 @@
     "tailwindcss": "4.3.5",
     "typescript": "npm:@typescript/typescript6@6.0.2",
     "vitest": "5.1.0"
+  },
+  "overrides": {
+    "@vercel/cli-config": {
+      "zod": "$zod"
+    }
   }
 }

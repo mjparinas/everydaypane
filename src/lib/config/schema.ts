@@ -156,6 +156,8 @@ export const photoSourceSchema = z.discriminatedUnion("kind", [
   z.object({ id, kind: z.literal("amazonShare"), name: z.string().max(60), url: z.url() }),
   z.object({ id, kind: z.literal("amazonPeople"), name: z.string().max(60), personIds: z.array(z.string().max(128)).max(20) }),
   z.object({ id, kind: z.literal("urls"), name: z.string().max(60), urls: z.array(z.url()).max(500) }),
+  // Photos kept by Everydaypane itself: uploaded from the admin panel or picked in Google Photos (src/server/library.ts).
+  z.object({ id, kind: z.literal("library"), name: z.string().max(60) }),
 ]);
 export type PhotoSource = z.infer<typeof photoSourceSchema>;
 

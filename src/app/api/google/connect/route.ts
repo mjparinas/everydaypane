@@ -11,6 +11,10 @@ export async function GET(req: Request) {
   const origin = new URL(req.url).origin;
   return new Response(null, {
     status: 303,
-    headers: { Location: consentUrl(state, redirectUri(origin)), "Set-Cookie": stateCookie(state), "Cache-Control": "no-store" },
+    headers: {
+      Location: consentUrl(state, redirectUri(origin), new URL(req.url).searchParams.get("photos") === "1"),
+      "Set-Cookie": stateCookie(state),
+      "Cache-Control": "no-store",
+    },
   });
 }
