@@ -2,6 +2,7 @@ import type { Palette, Period, Theme, View } from "@/lib/config/schema";
 import { currentPeriod, msUntilNextPeriod } from "@/lib/config/time";
 import type { DisplayPayload } from "@/lib/display/types";
 
+import { alertStrip } from "./alerts";
 import { get, offline, onOfflineChange, post, PREVIEW, TOKEN } from "./api";
 import { h } from "./dom";
 import { mountWidget } from "./widgets";
@@ -110,12 +111,28 @@ async function loadState(): Promise<boolean> {
   etag = r.etag ?? undefined;
   render();
   burnIn();
+  alerts();
   return true;
 }
 
 async function poll() {
   await loadState();
   window.setTimeout(() => void poll(), 30_000);
+}
+
+// ---- Emergency strip: polled every minute while alerts are on. ----
+
+let strip: { el: HTMLElement; stop: () => void } | null = null;
+function alerts() {
+  const on = payload?.alerts.enabled === true && payload.alerts.banner !== "never";
+  if (on && !strip) {
+    strip = alertStrip(() => payload);
+    app.prepend(strip.el);
+  } else if (!on && strip) {
+    strip.stop();
+    strip.el.remove();
+    strip = null;
+  }
 }
 
 // ---- Burn-in protection: the whole layout drifts a few pixels every few minutes. ----

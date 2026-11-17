@@ -161,4 +161,38 @@ export const flows = [
       await d.context.close();
     },
   },
+  {
+    name: "an emergency alert shows as a red strip that a tap dismisses",
+    async run({ browser, page, base, expect }) {
+      const url = await addDevice(page, base, "home");
+      const context = await browser.newContext({ viewport: VIEWPORT });
+      const alert = {
+        id: "naad:e2e",
+        source: "weather",
+        severity: "severe",
+        title: "Orange warning - rainfall - in effect",
+        area: "Metro Vancouver",
+        description: "Rainfall amounts of 80 to 100 mm.",
+        sent: 1,
+        expires: null,
+      };
+      await context.route("**/api/display/alerts/**", (r) => r.fulfill({ json: { updatedAt: 1, alerts: [alert] } }));
+      const d = await context.newPage();
+      await d.goto(url);
+      const strip = d.locator(".alert-strip.show");
+      await strip.getByText("Orange warning - rainfall - in effect").waitFor();
+      // The strip pushes the layout down instead of covering it.
+      const stripBottom = (await strip.boundingBox()).y + (await strip.boundingBox()).height;
+      const firstCell = await d.locator(".cell").first().boundingBox();
+      expect(firstCell.y >= stripBottom - 1, "the strip covers the widgets");
+      await strip.click();
+      await d.locator(".alert-strip.show").waitFor({ state: "detached" });
+      // Dismissed stays dismissed on this screen after a reload.
+      await d.reload();
+      await d.locator(".cell-clock .c-hm").first().waitFor();
+      await d.waitForTimeout(1500);
+      expect((await d.locator(".alert-strip.show").count()) === 0, "dismissed alert came back");
+      await context.close();
+    },
+  },
 ];

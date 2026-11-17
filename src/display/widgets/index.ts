@@ -1,6 +1,7 @@
 import type { Widget } from "@/lib/config/schema";
 
 import { airQuality } from "./air";
+import { alerts } from "./alerts";
 import { agenda, calendarMonth } from "./calendar";
 import { clock } from "./clock";
 import { countdown } from "./countdown";
@@ -38,9 +39,10 @@ export function mountWidget(el: HTMLElement, w: Widget, ctx: WidgetContext): Cle
       return calendarMonth(el, w, ctx);
     case "garbage":
       return garbage(el, w, ctx);
+    case "alerts":
+      return alerts(el, w, ctx);
     case "photos":
     case "haEntity":
-    case "alerts":
     case "camera":
       return placeholder(el, w.type);
   }

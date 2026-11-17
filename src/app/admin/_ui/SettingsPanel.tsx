@@ -144,7 +144,10 @@ export function SettingsPanel() {
                 onChange={(v) => edit((c) => void (c.alerts.minMagnitude = v))}
               />
             </div>
-            <p className="text-xs text-soft">The alert feeds are connected in a later update.</p>
+            <p className="text-xs text-soft">
+              Alert Ready and weather warnings count when they cover your location; road events and earthquakes count within the distance
+              above.
+            </p>
           </>
         )}
       </Section>
