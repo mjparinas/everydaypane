@@ -85,6 +85,12 @@ try {
     expect(r.headers.get("content-security-policy")?.includes("frame-ancestors 'none'"), "missing CSP");
   });
 
+  await step("the privacy policy is public (Google's consent screen links to it)", async () => {
+    const r = await fetch(`${BASE}/privacy/`, { redirect: "manual" });
+    expect(r.status === 200, `status ${r.status}`);
+    expect((await r.text()).includes("calendar.readonly"), "missing the Google Calendar section");
+  });
+
   await step("admin signs in with a magic link", async () => {
     await signIn(page, "admin@example.com");
     await page.waitForURL(/\/admin\//);
