@@ -2,15 +2,16 @@ import type { Metadata } from "next";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
+import { MealPlanner } from "@/components/MealPlanner";
 import { MessageBoard } from "@/components/MessageBoard";
 import { Mark } from "@/components/Wordmark";
 import { SESSION_COOKIE, sessionFor } from "@/server/auth";
 
 import { SignOut } from "./SignOut";
 
-export const metadata: Metadata = { title: "Message board" };
+export const metadata: Metadata = { title: "Family" };
 
-// The family's page (FAMILY_EMAILS): just the message board, made for a phone.
+// The family's page (FAMILY_EMAILS): the message board and the meal plan, made for a phone.
 export default async function FamilyPage() {
   const session = await sessionFor((await cookies()).get(SESSION_COOKIE)?.value);
   if (!session) redirect("/signin/?next=/family/");
@@ -19,7 +20,7 @@ export default async function FamilyPage() {
       <header className="flex items-center justify-between gap-2">
         <div className="flex min-w-0 items-center gap-3">
           <Mark size={32} />
-          <h1 className="text-xl font-bold">Message board</h1>
+          <h1 className="text-xl font-bold">Family</h1>
         </div>
         <div className="flex shrink-0 gap-2 whitespace-nowrap">
           {session.role === "admin" && (
@@ -31,6 +32,12 @@ export default async function FamilyPage() {
         </div>
       </header>
       <MessageBoard />
+      <section className="grid gap-3" aria-labelledby="meals-heading">
+        <h2 id="meals-heading" className="text-lg font-bold">
+          Meal plan
+        </h2>
+        <MealPlanner />
+      </section>
     </main>
   );
 }

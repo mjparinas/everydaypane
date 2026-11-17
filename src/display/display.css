@@ -704,6 +704,70 @@ body {
   opacity: 0.65;
 }
 
+/* Meals */
+.w-meals {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45em;
+  height: 100%;
+  overflow: hidden;
+  font-size: clamp(13px, min(4.6cqw, 9cqh), 26px);
+  mask-image: linear-gradient(#000 90%, transparent);
+}
+.ml-one {
+  justify-content: space-evenly;
+  font-size: clamp(14px, min(6.5cqw, 11cqh), 40px);
+  mask-image: none;
+}
+.ml-day {
+  display: grid;
+  gap: 0.15em;
+}
+.ml-date {
+  color: var(--muted);
+  font-size: 0.75em;
+  font-weight: 600;
+}
+.ml-today .ml-date {
+  color: var(--accent);
+}
+.ml-row {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5em;
+  min-width: 0;
+}
+.ml-one .ml-row {
+  display: grid;
+  gap: 0.05em;
+}
+.ml-slot {
+  flex: none;
+  min-width: 6.2em;
+  color: var(--muted);
+  font-size: 0.7em;
+}
+.ml-text {
+  min-width: 0;
+  overflow: hidden;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ml-one .ml-text {
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+.ml-next .ml-text,
+.ml-next .ml-slot {
+  color: var(--accent);
+}
+.ml-empty .ml-text,
+.ml-none {
+  color: var(--muted);
+  font-weight: 400;
+}
+
 /* Schedule (Google Calendar) */
 .w-agenda {
   display: flex;

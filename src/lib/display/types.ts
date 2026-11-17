@@ -152,3 +152,9 @@ export interface HaData {
   configured: boolean;
   entities: Record<string, HaEntity>;
 }
+
+/** The meal plan from today (src/app/api/display/meals/): local date → that day's meals. */
+export interface MealsData {
+  today: string;
+  meals: Record<string, Partial<Record<"breakfast" | "lunch" | "dinner", string>>>;
+}
