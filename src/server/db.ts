@@ -5,8 +5,8 @@ import { createClient, type Client, type InArgs, type Row } from "@libsql/client
 import { env } from "./env";
 
 // One libsql database (Turso in production, as in Liftsmith and Gradelings; a local file in development; memory in
-// tests). The schema is created on first use and only ever grows: add a CREATE TABLE IF NOT EXISTS or an
-// ALTER TABLE to MIGRATIONS, never edit an old one.
+// tests). The schema is created on first use and only ever grows: add a CREATE TABLE IF NOT EXISTS to MIGRATIONS or
+// an ADD COLUMN to COLUMNS, never edit an old one.
 
 const MIGRATIONS = [
   `CREATE TABLE IF NOT EXISTS config (id INTEGER PRIMARY KEY CHECK (id = 1), json TEXT NOT NULL, version INTEGER NOT NULL, updated_at INTEGER NOT NULL)`,
@@ -19,6 +19,21 @@ const MIGRATIONS = [
   `CREATE TABLE IF NOT EXISTS cache (key TEXT PRIMARY KEY, json TEXT NOT NULL, fetched_at INTEGER NOT NULL)`,
 ];
 
+// Columns added after a table was first created. SQLite has no ADD COLUMN IF NOT EXISTS, so each one runs on its own
+// and "duplicate column" means it is already there.
+const COLUMNS = [`ALTER TABLE messages ADD COLUMN posted_by TEXT`];
+
+async function migrate(c: Client): Promise<void> {
+  await c.batch(MIGRATIONS, "write");
+  for (const sql of COLUMNS) {
+    try {
+      await c.execute(sql);
+    } catch (e) {
+      if (!/duplicate column/i.test(String(e))) throw e;
+    }
+  }
+}
+
 let client: Client | null = null;
 let ready: Promise<void> | null = null;
 
@@ -30,7 +45,7 @@ function open(): Client {
 
 async function db(): Promise<Client> {
   client ??= open();
-  ready ??= client.batch(MIGRATIONS, "write").then(() => undefined);
+  ready ??= migrate(client);
   await ready;
   return client;
 }

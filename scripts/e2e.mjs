@@ -88,7 +88,7 @@ try {
   await step("admin signs in with a magic link", async () => {
     await signIn(page, "admin@example.com");
     await page.waitForURL(/\/admin\//);
-    await page.getByText("Signed in as").waitFor();
+    await page.getByText("admin@example.com").waitFor();
   });
 
   await step("a used link can't sign in again", async () => {
@@ -96,7 +96,7 @@ try {
     const other = await browser.newPage();
     await other.goto(link);
     await other.getByRole("button", { name: "Sign in" }).click();
-    await other.getByRole("alert").waitFor();
+    await other.getByText("That link has expired").waitFor();
     await other.close();
   });
 

@@ -52,3 +52,13 @@ export interface AirData {
   usAqi: number;
   pm25: number;
 }
+
+/** A note on the family message board, as a display gets it (no emails). */
+export interface BoardMessage {
+  id: string;
+  author: string;
+  text: string;
+  colour: "yellow" | "pink" | "blue" | "green" | "purple";
+  pinned: boolean;
+  createdAt: number;
+}

@@ -3,6 +3,8 @@ import "server-only";
 import { requestSession, type Session } from "./auth";
 import { deviceForToken, type Device } from "./devices";
 
+export { requestSession };
+
 /** Who may read dashboard data: a display (its token in the `x-display-token` header or `?t=`) or a signed-in person. */
 export type Viewer = { kind: "device"; device: Device } | { kind: "person"; session: Session };
 
