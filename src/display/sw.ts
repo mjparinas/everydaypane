@@ -1,0 +1,100 @@
+// Offline mode (Melvin, 2026-11-17). The display keeps working when the internet drops: its page, script, styles and
+// fonts come from this cache, and every data request falls back to the last good answer (marked x-offline: 1, so the
+// display shows a small "Offline" note). Data is fetched network-first, so nothing stale is shown while online.
+//
+// Typed with a small local interface rather than the WebWorker lib, which can't share a program with the DOM lib.
+
+interface FetchEventLike extends Event {
+  request: Request;
+  respondWith(r: Promise<Response>): void;
+}
+interface ExtendableEventLike extends Event {
+  waitUntil(p: Promise<unknown>): void;
+}
+interface ServiceWorkerScope {
+  location: Location;
+  skipWaiting(): Promise<void>;
+  clients: { claim(): Promise<void> };
+  addEventListener(type: "install" | "activate", l: (e: ExtendableEventLike) => void): void;
+  addEventListener(type: "fetch", l: (e: FetchEventLike) => void): void;
+}
+
+const sw = self as unknown as ServiceWorkerScope;
+const VERSION = new URLSearchParams(sw.location.search).get("v") ?? "dev";
+const SHELL = `ep-shell-${VERSION}`;
+const DATA = "ep-data";
+const FONTS = ["/fonts/inter.woff2", "/fonts/manrope.woff2", "/fonts/space-grotesk.woff2"];
+
+sw.addEventListener("install", (e) => {
+  e.waitUntil(
+    caches
+      .open(SHELL)
+      .then((c) => c.addAll([`/display/display.js?v=${VERSION}`, `/display/display.css?v=${VERSION}`, "/icon.svg", ...FONTS]))
+      .then(() => sw.skipWaiting()),
+  );
+});
+
+sw.addEventListener("activate", (e) => {
+  e.waitUntil(
+    caches
+      .keys()
+      .then((keys) => Promise.all(keys.filter((k) => k.startsWith("ep-shell-") && k !== SHELL).map((k) => caches.delete(k))))
+      .then(() => sw.clients.claim()),
+  );
+});
+
+function timeout(ms: number): Promise<never> {
+  return new Promise((_, reject) => setTimeout(() => reject(new Error("timeout")), ms));
+}
+
+async function offlineCopy(req: Request): Promise<Response | undefined> {
+  const hit = await (await caches.open(DATA)).match(req, { ignoreVary: true });
+  if (!hit) return undefined;
+  const headers = new Headers(hit.headers);
+  headers.set("x-offline", "1");
+  headers.delete("etag");
+  return new Response(hit.body, { status: hit.status, headers });
+}
+
+async function networkFirst(req: Request, key: Request, ms: number): Promise<Response> {
+  try {
+    const r = await Promise.race([fetch(req), timeout(ms)]);
+    if (r.status === 200) {
+      const copy = r.clone();
+      void caches.open(DATA).then((c) => c.put(key, copy));
+    }
+    if (r.status >= 500) return (await offlineCopy(key)) ?? r;
+    return r;
+  } catch {
+    return (
+      (await offlineCopy(key)) ??
+      new Response(JSON.stringify({ error: "offline" }), { status: 503, headers: { "content-type": "application/json", "x-offline": "1" } })
+    );
+  }
+}
+
+async function cacheFirst(req: Request): Promise<Response> {
+  const hit = await caches.match(req);
+  if (hit) return hit;
+  const r = await fetch(req);
+  if (r.ok) {
+    const copy = r.clone();
+    void caches.open(SHELL).then((c) => c.put(req, copy));
+  }
+  return r;
+}
+
+sw.addEventListener("fetch", (e) => {
+  const req = e.request;
+  if (req.method !== "GET") return;
+  const url = new URL(req.url);
+  if (url.origin !== sw.location.origin) return;
+  if (req.mode === "navigate" && url.pathname.startsWith("/d/")) {
+    e.respondWith(networkFirst(req, new Request(url.pathname), 6000));
+  } else if (url.pathname.startsWith("/api/display/")) {
+    // Keyed by URL alone (the token header is the same for every request from this device).
+    e.respondWith(networkFirst(req, new Request(url.pathname + url.search), 10000));
+  } else if (url.pathname.startsWith("/display/") || url.pathname.startsWith("/fonts/")) {
+    e.respondWith(cacheFirst(req));
+  }
+});

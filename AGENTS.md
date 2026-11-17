@@ -115,8 +115,16 @@ panel can be complex if you need it to be."
 
 ## Hosting (Melvin, 2026-11-17)
 
-- **Vercel**, deployed by Vercel's GitHub integration: a merge to `main` deploys to production. Environment variables
-  live in Vercel, never in the repo (`.env.example` lists them).
+- **Vercel**, deployed by Vercel's GitHub integration: a merge to `main` deploys to production. The project is
+  `everydaypane` in team `melvins-projects-b69f55c3` (created 2026-11-17). Environment variables live in Vercel, never in
+  the repo (`.env.example` lists them).
+- **Preview deployments are off**, as in Liftsmith; CI's own build and browser tests cover pull requests.
+- **Vercel Authentication is off** for this project: a display can't sign in to Vercel, and every page and API route
+  checks its own session or display token.
+- **Sign-in email** is sent from `hello@getliftsmith.com` (verified in Resend, click tracking off so links aren't
+  rewritten) until everydaypane.com is bought (Melvin, 2026-11-17). `ADMIN_EMAILS` is Melvin's own address.
+- **Database:** a Turso database from the Vercel Marketplace integration, connected to the project (its `TURSO_*`
+  variables are read by `src/server/db.ts`).
 
 ## Code conventions
 

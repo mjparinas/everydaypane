@@ -5,3 +5,5 @@ package-lock.json
 *.md
 next-env.d.ts
 reports
+public/display
+public/fonts
