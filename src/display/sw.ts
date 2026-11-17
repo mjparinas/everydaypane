@@ -89,6 +89,9 @@ sw.addEventListener("fetch", (e) => {
   if (req.method !== "GET") return;
   const url = new URL(req.url);
   if (url.origin !== sw.location.origin) return;
+  // Camera frames are live (every one has its own URL): an old frame offline would mislead, and keeping each one
+  // would fill the cache.
+  if (url.pathname.startsWith("/api/display/camera/")) return;
   if (req.mode === "navigate" && url.pathname.startsWith("/d/")) {
     e.respondWith(networkFirst(req, new Request(url.pathname), 6000));
   } else if (url.pathname.startsWith("/api/display/")) {

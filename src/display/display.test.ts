@@ -9,6 +9,7 @@ import { kindOf, label, weatherIcon } from "./icons";
 import { aqhiBand, usAqiBand } from "./widgets/air";
 import { clock } from "./widgets/clock";
 import { countdown } from "./widgets/countdown";
+import { controlFor, stateText } from "./widgets/ha";
 
 const ctx = { payload: {} as DisplayPayload, timeZone: "America/Vancouver", hour12: true };
 
@@ -84,5 +85,26 @@ describe("widgets", () => {
     const rows = [...el.querySelectorAll(".cd-row")].map((r) => r.textContent);
     expect(rows).toEqual(["🎂Sam turns 11Tomorrow", "🎄Christmas38 days"]);
     stop();
+  });
+});
+
+describe("Home Assistant tiles", () => {
+  it("picks a control from the entity's domain", () => {
+    expect(controlFor("light.kitchen", "auto")).toBe("light");
+    expect(controlFor("switch.kettle", "auto")).toBe("toggle");
+    expect(controlFor("lock.front", "auto")).toBe("lock");
+    expect(controlFor("scene.movie", "auto")).toBe("button");
+    expect(controlFor("sensor.outside", "auto")).toBe("sensor");
+    expect(controlFor("light.kitchen", "sensor")).toBe("sensor");
+  });
+
+  it("says states the way people do", () => {
+    const e = (id: string, state: string, extra = {}) => ({ id, state, name: id, changed: 0, ...extra });
+    expect(stateText(e("sensor.outside", "7.4567", { unit: "°C" }))).toBe("7.5 °C");
+    expect(stateText(e("sensor.humidity", "48", { unit: "%" }))).toBe("48%");
+    expect(stateText(e("binary_sensor.garage", "on", { deviceClass: "garage_door" }))).toBe("Open");
+    expect(stateText(e("binary_sensor.hall", "off", { deviceClass: "motion" }))).toBe("Clear");
+    expect(stateText(e("lock.front", "unlocked"))).toBe("Unlocked");
+    expect(stateText(e("light.kitchen", "unavailable"))).toBe("Unavailable");
   });
 });

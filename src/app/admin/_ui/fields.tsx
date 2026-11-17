@@ -25,6 +25,7 @@ export function Text({
   maxLength,
   placeholder,
   type = "text",
+  list,
 }: {
   label: string;
   value: string;
@@ -33,6 +34,8 @@ export function Text({
   maxLength?: number;
   placeholder?: string;
   type?: "text" | "password" | "url" | "time" | "date";
+  /** The id of a <datalist> of suggestions. */
+  list?: string;
 }) {
   return (
     <Field label={label} hint={hint}>
@@ -44,6 +47,7 @@ export function Text({
           value={value}
           maxLength={maxLength}
           placeholder={placeholder}
+          list={list}
           onChange={(e) => onChange(e.target.value)}
           autoComplete="off"
         />

@@ -5,7 +5,14 @@ import { query, run } from "./db";
 
 // Tokens the admin panel saves (Google refresh token, Amazon session cookie, Home Assistant token). Encrypted at
 // rest, never sent to a browser: the admin panel only learns whether each one is set.
-export type SecretKey = "google.refreshToken" | "amazon.cookie" | "amazon.tld" | "homeAssistant.token";
+export type SecretKey =
+  | "google.refreshToken"
+  | "amazon.cookie"
+  | "amazon.tld"
+  | "homeAssistant.token"
+  // A Cloudflare Access service token in front of Home Assistant's tunnel.
+  | "homeAssistant.accessId"
+  | "homeAssistant.accessSecret";
 
 export async function getSecret(k: SecretKey): Promise<string | null> {
   const rows = await query<{ value: string }>("SELECT value FROM secrets WHERE key = ?", [k]);
@@ -32,5 +39,7 @@ export async function secretsSet(): Promise<Record<SecretKey, boolean>> {
     "amazon.cookie": set.has("amazon.cookie"),
     "amazon.tld": set.has("amazon.tld"),
     "homeAssistant.token": set.has("homeAssistant.token"),
+    "homeAssistant.accessId": set.has("homeAssistant.accessId"),
+    "homeAssistant.accessSecret": set.has("homeAssistant.accessSecret"),
   };
 }

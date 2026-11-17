@@ -7,10 +7,10 @@ import { clock } from "./clock";
 import { countdown } from "./countdown";
 import { date } from "./date";
 import { garbage } from "./garbage";
+import { camera, haEntity } from "./ha";
 import { messages } from "./messages";
 import { note } from "./note";
 import { photos } from "./photos";
-import { placeholder } from "./placeholder";
 import type { Cleanup, WidgetContext } from "./types";
 import { weather } from "./weather";
 import { wifiQr } from "./wifi";
@@ -45,7 +45,8 @@ export function mountWidget(el: HTMLElement, w: Widget, ctx: WidgetContext): Cle
     case "photos":
       return photos(el, w, ctx);
     case "haEntity":
+      return haEntity(el, w, ctx);
     case "camera":
-      return placeholder(el, w.type);
+      return camera(el, w, ctx);
   }
 }

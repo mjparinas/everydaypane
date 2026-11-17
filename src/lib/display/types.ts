@@ -18,7 +18,7 @@ export interface DisplayPayload {
   schedule: DashboardConfig["schedule"];
   burnIn: DashboardConfig["burnIn"];
   alerts: Pick<DashboardConfig["alerts"], "enabled" | "banner">;
-  doorbell: { enabled: boolean; seconds: number };
+  doorbell: { enabled: boolean; seconds: number; entityId: string; cameraEntityId: string };
 }
 
 export interface WeatherDay {
@@ -124,4 +124,31 @@ export type PhotoItem = [string, number, number, string];
 export interface PhotoData {
   updatedAt: number;
   sources: Record<string, { photos: PhotoItem[]; error: string | null }>;
+}
+
+/** A Home Assistant entity as a display gets it (src/server/homeassistant.ts). */
+export interface HaEntity {
+  id: string;
+  state: string;
+  name: string;
+  /** Epoch ms of the last state change. */
+  changed: number;
+  unit?: string;
+  deviceClass?: string;
+  /** Lights: 0 to 255. */
+  brightness?: number;
+  /** Thermostats. */
+  current?: number;
+  target?: number;
+  min?: number;
+  max?: number;
+  step?: number;
+  action?: string;
+}
+
+export interface HaData {
+  updatedAt: number;
+  /** False until a URL and token are set in the admin panel. */
+  configured: boolean;
+  entities: Record<string, HaEntity>;
 }

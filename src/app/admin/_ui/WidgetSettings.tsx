@@ -4,6 +4,7 @@ import type { CountdownEvent, DashboardConfig, Widget } from "@/lib/config/schem
 import { WIDGETS } from "@/lib/config/widgets";
 
 import { NumberInput, Select, Text, TextArea, Toggle } from "./fields";
+import { HaEntityList } from "./haEntities";
 import { newId } from "./store";
 
 // Every widget's own settings (Melvin, 2026-11-17: "settings for every feature"). One form per widget type; each
@@ -276,8 +277,10 @@ function TypeSettings({
             value={w.entityId}
             maxLength={255}
             placeholder="light.kitchen"
+            list="ha-controls"
             onChange={(v) => e((x) => void (x.entityId = v.trim()))}
           />
+          <HaEntityList id="ha-controls" />
           <Select
             label="Control"
             value={w.control}
@@ -341,8 +344,10 @@ function TypeSettings({
             value={w.entityId}
             maxLength={255}
             placeholder="camera.front_door"
+            list="ha-cameras"
             onChange={(v) => e((x) => void (x.entityId = v.trim()))}
           />
+          <HaEntityList id="ha-cameras" only="camera." />
           <NumberInput
             label="Refresh every (seconds)"
             value={w.refreshSeconds}
