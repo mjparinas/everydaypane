@@ -14,7 +14,9 @@ export type SecretKey =
   | "homeAssistant.token"
   // A Cloudflare Access service token in front of Home Assistant's tunnel.
   | "homeAssistant.accessId"
-  | "homeAssistant.accessSecret";
+  | "homeAssistant.accessSecret"
+  // A calendar link's address (src/server/ical.ts), one per link.
+  | `ical.${string}`;
 
 export async function getSecret(k: SecretKey): Promise<string | null> {
   const rows = await query<{ value: string }>("SELECT value FROM secrets WHERE key = ?", [k]);

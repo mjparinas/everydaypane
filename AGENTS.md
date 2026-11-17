@@ -103,6 +103,13 @@ panel can be complex if you need it to be."
   widget shows some of them (none picked means all). One one-minute feed (`/api/display/tasks/`) serves every widget.
   A tap on the wall ticks a task off after a four-second undo window, through our own route, and only for a list that
   a widget with `allowCheck` shows; nothing else is ever written to Google. Setup: `docs/google-tasks.md`.
+- **Calendar links** (Melvin, 2026-11-17: "can you add support for multiple calendars"): any iCal address (school,
+  sports, someone else's Google or Outlook calendar through its secret address) can be added in Settings › Calendar
+  links. The address is checked when pasted and stored as an encrypted secret (`ical.<id>`), because it often works as a
+  password; the settings document keeps only `integrations.icals` (name, colour, on/off). The server reads each link
+  with ical.js (recurring events, exceptions and the file's own time zones; floating times in the dashboard's zone),
+  caches it 15 minutes, and merges it into the same calendar feed as Google (`src/server/calendars.ts`). A link that
+  fails never hides Google's events or the other links. Only public https addresses are fetched.
 - **Emergency alerts:** `src/server/alerts.ts` reads NAAD's Atom feed (Alert Ready, and Environment Canada's warnings,
   whose own GeoMet API refuses automated readers), DriveBC Open511 (major events and weather conditions) and Earthquakes
   Canada's FDSN text service (the last 24 hours; its distance filter is ignored, so distance is checked here). Each

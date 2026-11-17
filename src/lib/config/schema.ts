@@ -227,6 +227,12 @@ export const configSchema = z
       tasks: z
         .object({ lists: z.array(z.object({ id: z.string().max(255), name: z.string().max(120), enabled: z.boolean() })).max(50) })
         .default({ lists: [] }),
+      // Calendar links (iCal), shown with Google's events. Their addresses are stored secrets (src/server/ical.ts).
+      icals: z
+        .array(
+          z.object({ id: z.string().regex(/^[a-z0-9]{6,20}$/), name: z.string().trim().min(1).max(60), color: hex, enabled: z.boolean() }),
+        )
+        .max(20),
       garbage: z.object({
         projectId: z.string().max(20),
         districtId: z.string().max(20),
