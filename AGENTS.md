@@ -96,6 +96,13 @@ panel can be complex if you need it to be."
   `config.integrations.google.calendars`. The server fetches the month grid around today plus the next two weeks into
   one five-minute feed (`/api/display/calendar/`) that the schedule and month widgets share. Events are placed by the
   dashboard's time zone (tzdata has B.C. on UTC−7 all year from 2026, so don't hard-code −08:00 in tests).
+- **Calendar links** (Melvin, 2026-11-17: "can you add support for multiple calendars"): any iCal address (school,
+  sports, someone else's Google or Outlook calendar through its secret address) can be added in Settings › Calendar
+  links. The address is checked when pasted and stored as an encrypted secret (`ical.<id>`), because it often works as a
+  password; the settings document keeps only `integrations.icals` (name, colour, on/off). The server reads each link
+  with ical.js (recurring events, exceptions and the file's own time zones; floating times in the dashboard's zone),
+  caches it 15 minutes, and merges it into the same calendar feed as Google (`src/server/calendars.ts`). A link that
+  fails never hides Google's events or the other links. Only public https addresses are fetched.
 - **Emergency alerts:** `src/server/alerts.ts` reads NAAD's Atom feed (Alert Ready, and Environment Canada's warnings,
   whose own GeoMet API refuses automated readers), DriveBC Open511 (major events and weather conditions) and Earthquakes
   Canada's FDSN text service (the last 24 hours; its distance filter is ignored, so distance is checked here). Each
