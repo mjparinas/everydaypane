@@ -1,0 +1,75 @@
+import "server-only";
+
+import { defaultConfig } from "@/lib/config/defaults";
+import { configSchema, type DashboardConfig } from "@/lib/config/schema";
+
+import { query, run } from "./db";
+
+export interface StoredConfig {
+  config: DashboardConfig;
+  version: number;
+  updatedAt: number;
+}
+
+/** The saved dashboard, or the default one before the first save. A stored document that no longer validates
+ *  (after a schema change) is upgraded by filling defaults; if even that fails, the default is served. */
+export async function loadConfig(): Promise<StoredConfig> {
+  const rows = await query<{ json: string; version: number; updated_at: number }>(
+    "SELECT json, version, updated_at FROM config WHERE id = 1",
+  );
+  const row = rows[0];
+  if (!row) return { config: defaultConfig(), version: 0, updatedAt: 0 };
+  const parsed = configSchema.safeParse(upgrade(JSON.parse(row.json) as unknown));
+  return { config: parsed.success ? parsed.data : defaultConfig(), version: Number(row.version), updatedAt: Number(row.updated_at) };
+}
+
+export async function configVersion(): Promise<number> {
+  const rows = await query<{ version: number }>("SELECT version FROM config WHERE id = 1");
+  return Number(rows[0]?.version ?? 0);
+}
+
+export type SaveResult = { ok: true; version: number } | { ok: false; status: 409 | 422; error: string; issues?: unknown };
+
+/**
+ * Saves the whole document if `baseVersion` is still the latest (so two admin tabs can't silently overwrite each
+ * other), bumping the version every display polls for.
+ */
+export async function saveConfig(input: unknown, baseVersion: number, now = Date.now()): Promise<SaveResult> {
+  const parsed = configSchema.safeParse(input);
+  if (!parsed.success) return { ok: false, status: 422, error: "The dashboard settings aren't valid", issues: parsed.error.issues };
+  const json = JSON.stringify(parsed.data);
+  if (baseVersion === 0) {
+    const inserted = await run("INSERT INTO config (id, json, version, updated_at) VALUES (1, ?, 1, ?) ON CONFLICT (id) DO NOTHING", [
+      json,
+      now,
+    ]);
+    if (inserted === 1) return { ok: true, version: 1 };
+  } else {
+    const updated = await run("UPDATE config SET json = ?, version = version + 1, updated_at = ? WHERE id = 1 AND version = ?", [
+      json,
+      now,
+      baseVersion,
+    ]);
+    if (updated === 1) return { ok: true, version: baseVersion + 1 };
+  }
+  return { ok: false, status: 409, error: "Someone else changed the dashboard. Reload to see their changes." };
+}
+
+/** Bumps the version without changing the document, so displays reload (e.g. after a device is reassigned). */
+export async function touchConfig(now = Date.now()): Promise<void> {
+  const changed = await run("UPDATE config SET version = version + 1, updated_at = ? WHERE id = 1", [now]);
+  if (changed === 0)
+    await run("INSERT INTO config (id, json, version, updated_at) VALUES (1, ?, 1, ?)", [JSON.stringify(defaultConfig()), now]);
+}
+
+/** Fills in sections added after a document was saved, from the defaults. */
+function upgrade(stored: unknown): unknown {
+  if (typeof stored !== "object" || stored === null) return stored;
+  const d = defaultConfig() as unknown as Record<string, unknown>;
+  const s = stored as Record<string, unknown>;
+  const out: Record<string, unknown> = { ...d, ...s };
+  for (const k of ["integrations", "burnIn", "alerts", "schedule", "location"]) {
+    if (typeof s[k] === "object" && s[k] !== null) out[k] = { ...(d[k] as object), ...(s[k] as object) };
+  }
+  return out;
+}

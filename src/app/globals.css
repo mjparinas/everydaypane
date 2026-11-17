@@ -1,0 +1,55 @@
+@import "tailwindcss";
+
+/* The admin panel and sign-in pages. The display has its own small stylesheet (src/display/display.css). */
+@theme {
+  --font-sans: "Inter Variable", "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --color-bg: #f6f7fb;
+  --color-panel: #ffffff;
+  --color-line: #e4e7ef;
+  --color-ink: #0f172a;
+  --color-soft: #526077;
+  --color-brand: #3b5bdb;
+  --color-brand-ink: #ffffff;
+  --color-good: #2b8a3e;
+  --color-bad: #c92a2a;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-bg: #0a0e17;
+    --color-panel: #121826;
+    --color-line: #232c3f;
+    --color-ink: #e8edf7;
+    --color-soft: #97a3ba;
+    --color-brand: #8ea2ff;
+    --color-brand-ink: #0a0e17;
+    --color-good: #69db7c;
+    --color-bad: #ff8787;
+  }
+}
+
+html {
+  background: var(--color-bg);
+  color: var(--color-ink);
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  min-height: 100dvh;
+}
+
+@utility btn {
+  @apply inline-flex min-h-11 items-center justify-center gap-2 rounded-xl px-4 font-semibold transition active:scale-[0.98] disabled:opacity-50;
+}
+@utility btn-primary {
+  @apply btn bg-brand text-brand-ink hover:brightness-110;
+}
+@utility btn-ghost {
+  @apply btn border border-line bg-panel hover:bg-bg;
+}
+@utility field {
+  @apply min-h-11 w-full rounded-xl border border-line bg-panel px-3 text-ink outline-none focus:border-brand focus:ring-2 focus:ring-brand/30;
+}
+@utility card {
+  @apply rounded-2xl border border-line bg-panel p-5 shadow-sm;
+}
