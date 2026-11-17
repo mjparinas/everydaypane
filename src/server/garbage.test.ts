@@ -27,8 +27,20 @@ const schedules = {
         {
           events: [
             { date: "2026-11-12", collections: [{ id: 1, status: "is_scheduled" }] },
-            { date: "2026-11-19", collections: [{ id: 3, status: "is_scheduled" }, { id: 1, status: "is_scheduled" }] },
-            { date: "2026-11-26", collections: [{ id: 2, status: "is_scheduled" }, { id: 1, status: "is_none" }] },
+            {
+              date: "2026-11-19",
+              collections: [
+                { id: 3, status: "is_scheduled" },
+                { id: 1, status: "is_scheduled" },
+              ],
+            },
+            {
+              date: "2026-11-26",
+              collections: [
+                { id: 2, status: "is_scheduled" },
+                { id: 1, status: "is_none" },
+              ],
+            },
             { date: "2027-02-04", collections: [{ id: 2, status: "is_scheduled" }] },
           ],
         },
@@ -116,7 +128,9 @@ describe("garbage pickup routes", () => {
     const r = await displayGET(req("/api/display/garbage/", { headers: { "x-display-token": token } }));
     const data = (await r.json()) as GarbageData;
     expect(data.configured).toBe(true);
-    expect(seen.some((u) => u.includes("project_id=521") && u.includes("district_id=LANGL") && u.includes("zone_id=zone-z5503"))).toBe(true);
+    expect(seen.some((u) => u.includes("project_id=521") && u.includes("district_id=LANGL") && u.includes("zone_id=zone-z5503"))).toBe(
+      true,
+    );
     expect(seen.some((u) => u.startsWith("https://us-web."))).toBe(true);
   });
 
