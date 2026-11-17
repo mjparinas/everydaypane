@@ -33,6 +33,13 @@ function report(message: string, stack?: string) {
 window.addEventListener("error", (e) => report(e.message, e.error instanceof Error ? e.error.stack : undefined));
 window.addEventListener("unhandledrejection", (e) => report(String(e.reason), e.reason instanceof Error ? e.reason.stack : undefined));
 
+// ---- No zooming (Melvin, 2026-11-17: "dont allow pinch zoom on the dashboard") ----
+// The viewport meta and touch-action stop most browsers; these catch the rest: Safari's gesture events, two-finger
+// touches, and trackpad pinches (which arrive as ctrl + wheel).
+for (const type of ["gesturestart", "gesturechange", "gestureend"]) document.addEventListener(type, (e) => e.preventDefault());
+document.addEventListener("touchmove", (e) => e.touches.length > 1 && e.preventDefault(), { passive: false });
+document.addEventListener("wheel", (e) => e.ctrlKey && e.preventDefault(), { passive: false });
+
 // ---- What to show now ----
 
 function pick(
