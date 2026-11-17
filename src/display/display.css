@@ -103,13 +103,16 @@ body {
 
 .app {
   position: relative;
+  display: flex;
+  flex-direction: column;
   height: 100dvh;
   width: 100vw;
   overflow: hidden;
 }
 .stage {
   display: grid;
-  height: 100%;
+  flex: 1;
+  min-height: 0;
   width: 100%;
   transition: translate 3s ease-in-out;
 }
@@ -915,5 +918,94 @@ body {
 .gb-date {
   flex: none;
   min-width: 6.5em;
+  color: var(--muted);
+}
+
+/* Emergency strip: across the top, pushing the layout down rather than covering it or the whole screen. */
+.alert-strip {
+  position: relative;
+  z-index: 50;
+  flex: none;
+  display: none;
+  align-items: center;
+  gap: 0.8em;
+  padding: 0.7em 1.2em;
+  background: #c92a2a;
+  color: #fff;
+  font-size: clamp(16px, 1.6vw, 30px);
+  box-shadow: 0 4px 24px rgb(0 0 0 / 0.35);
+  cursor: pointer;
+}
+.alert-strip.show {
+  display: flex;
+  animation: strip-in 0.4s ease-out;
+}
+@keyframes strip-in {
+  from {
+    transform: translateY(-100%);
+  }
+}
+.as-icon {
+  font-size: 1.3em;
+}
+.as-text {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.as-more,
+.as-close {
+  opacity: 0.85;
+}
+.as-close {
+  flex: none;
+  font-size: 0.75em;
+}
+
+/* Alerts widget */
+.w-alerts {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5em;
+  height: 100%;
+  overflow: hidden;
+  font-size: clamp(13px, 4cqw, 24px);
+  mask-image: linear-gradient(#000 85%, transparent);
+}
+.al-list {
+  display: grid;
+  gap: 0.6em;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.al-item {
+  padding-left: 0.7em;
+  border-left: 4px solid #e8a33d;
+}
+.al-extreme,
+.al-severe {
+  border-color: #e03131;
+}
+.al-moderate {
+  border-color: #f08c00;
+}
+.al-title {
+  font-weight: 700;
+}
+.al-area,
+.al-desc {
+  color: var(--muted);
+  font-size: 0.8em;
+}
+.al-desc {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+}
+.al-clear {
   color: var(--muted);
 }

@@ -96,3 +96,24 @@ export interface GarbageData {
   configured: boolean;
   pickups: { date: string; bins: { name: string; kind: BinKind }[] }[];
 }
+
+export type AlertSeverity = "extreme" | "severe" | "moderate" | "minor";
+export type AlertSource = "alertReady" | "weather" | "roads" | "earthquakes";
+
+/** One emergency alert for the area, from any source (src/server/alerts.ts). */
+export interface EmergencyAlert {
+  id: string;
+  source: AlertSource;
+  severity: AlertSeverity;
+  title: string;
+  area: string;
+  description: string;
+  /** Epoch ms. */
+  sent: number;
+  expires: number | null;
+}
+
+export interface AlertData {
+  updatedAt: number;
+  alerts: EmergencyAlert[];
+}
