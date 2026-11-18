@@ -5,6 +5,7 @@ import { NumberInput, Section, Select, Text, Toggle } from "./fields";
 import { GarbagePanel } from "./GarbagePanel";
 import { GooglePanel } from "./GooglePanel";
 import { HomeAssistantPanel } from "./HomeAssistantPanel";
+import { MusicPanel } from "./MusicPanel";
 import { PhotosPanel } from "./PhotosPanel";
 import { useAdmin } from "./store";
 import { TasksPanel } from "./TasksPanel";
@@ -69,6 +70,7 @@ export function SettingsPanel() {
       <GarbagePanel />
       <PhotosPanel />
       <HomeAssistantPanel />
+      <MusicPanel />
 
       <Section title="Screen care">
         <Toggle

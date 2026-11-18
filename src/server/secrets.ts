@@ -15,6 +15,9 @@ export type SecretKey =
   // A Cloudflare Access service token in front of Home Assistant's tunnel.
   | "homeAssistant.accessId"
   | "homeAssistant.accessSecret"
+  // Spotify and Sonos signed in directly (src/server/musicAuth.ts).
+  | "spotify.refreshToken"
+  | "sonos.refreshToken"
   // A calendar link's address (src/server/ical.ts), one per link.
   | `ical.${string}`;
 
@@ -46,5 +49,7 @@ export async function secretsSet(): Promise<Record<SecretKey, boolean>> {
     "homeAssistant.token": set.has("homeAssistant.token"),
     "homeAssistant.accessId": set.has("homeAssistant.accessId"),
     "homeAssistant.accessSecret": set.has("homeAssistant.accessSecret"),
+    "spotify.refreshToken": set.has("spotify.refreshToken"),
+    "sonos.refreshToken": set.has("sonos.refreshToken"),
   };
 }

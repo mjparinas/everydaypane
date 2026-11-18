@@ -6,6 +6,7 @@ import { MEAL_LABELS, MEAL_SLOTS } from "@/lib/meals";
 
 import { NumberInput, Select, Text, TextArea, Toggle } from "./fields";
 import { HaEntityList } from "./haEntities";
+import { useMusic } from "./music";
 import { newId } from "./store";
 
 // Every widget's own settings (Melvin, 2026-11-17: "settings for every feature"). One form per widget type; each
@@ -427,18 +428,37 @@ function TypeSettings({
       const e = edit<"media">();
       return (
         <>
-          <Text
-            label="Player"
-            value={w.entityId}
-            maxLength={255}
-            placeholder="media_player.kitchen"
-            list="ha-players"
-            onChange={(v) => e((x) => void (x.entityId = v.trim()))}
+          <Select
+            label="Player from"
+            value={w.provider}
+            options={[
+              { value: "homeAssistant", label: "Home Assistant" },
+              { value: "spotify", label: "Spotify (signed in directly)" },
+              { value: "sonos", label: "Sonos (signed in directly)" },
+            ]}
+            hint="Connect Spotify or Sonos under Settings › Music to use them without Home Assistant."
+            onChange={(v) => e((x) => void (x.provider = v))}
           />
-          <HaEntityList id="ha-players" only="media_player." />
-          <p className="text-xs text-soft">
-            A Sonos speaker or Spotify (media_player.spotify_…) from Home Assistant&rsquo;s Sonos or Spotify integration.
-          </p>
+          {w.provider === "homeAssistant" && (
+            <>
+              <Text
+                label="Player"
+                value={w.entityId}
+                maxLength={255}
+                placeholder="media_player.kitchen"
+                list="ha-players"
+                onChange={(v) => e((x) => void (x.entityId = v.trim()))}
+              />
+              <HaEntityList id="ha-players" only="media_player." />
+              <p className="text-xs text-soft">
+                A Sonos speaker or Spotify (media_player.spotify_…) from Home Assistant&rsquo;s Sonos or Spotify integration.
+              </p>
+            </>
+          )}
+          {w.provider === "spotify" && (
+            <p className="text-xs text-soft">Follows whatever the connected Spotify account is playing, on any speaker.</p>
+          )}
+          {w.provider === "sonos" && <SonosSpeaker value={w.playerId} onChange={(v) => e((x) => void (x.playerId = v))} />}
           <Toggle label="Album art" checked={w.showArt} onChange={(v) => e((x) => void (x.showArt = v))} />
           <Toggle label="Volume" checked={w.showVolume} onChange={(v) => e((x) => void (x.showVolume = v))} />
           <Toggle
@@ -451,6 +471,28 @@ function TypeSettings({
       );
     }
   }
+}
+
+function SonosSpeaker({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const status = useMusic();
+  const players = status?.sonos.players ?? [];
+  if (!status) return <p className="text-xs text-soft">Loading the Sonos speakers…</p>;
+  if (!status.sonos.connected) return <p className="text-xs text-soft">Connect Sonos under Settings › Music first.</p>;
+  // A saved speaker Sonos no longer lists stays selectable, so it can be seen and changed.
+  const options = [
+    { value: "", label: "Pick a speaker" },
+    ...players.map((p) => ({ value: p.id, label: p.name })),
+    ...(value && !players.some((p) => p.id === value) ? [{ value, label: `${value} (not found)` }] : []),
+  ];
+  return (
+    <Select
+      label="Speaker"
+      value={value}
+      options={options}
+      hint="Plays, pauses and sets the volume for whatever group this speaker is in."
+      onChange={onChange}
+    />
+  );
 }
 
 function CountdownEvents({ events, count, onChange }: { events: CountdownEvent[]; count: number; onChange: Edit<"countdown"> }) {

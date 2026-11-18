@@ -236,6 +236,64 @@ describe("music widget", () => {
   });
 });
 
+describe("music widget with Spotify or Sonos signed in directly", () => {
+  const spotify = {
+    id: "spotify",
+    state: "playing",
+    name: "Kitchen",
+    changed: 0,
+    media: {
+      title: "Song",
+      artist: "Band",
+      art: "0123456789abcdef",
+      sources: ["Kitchen", "Car"],
+      source: "Kitchen",
+      features: F.pause | F.next | F.source,
+    },
+  };
+
+  it("uses the music feed and its own player keys", async () => {
+    document.body.dataset.token = "";
+    const posts: unknown[] = [];
+    const gets: string[] = [];
+    vi.stubGlobal("fetch", (url: string, init: RequestInit = {}) => {
+      if (init.method === "POST") {
+        posts.push(JSON.parse(String(init.body)));
+        return Promise.resolve(Response.json({ error: "Controlling Spotify needs Premium" }, { status: 502 }));
+      }
+      gets.push(url);
+      return Promise.resolve(Response.json({ updatedAt: 0, services: { spotify: { connected: true } }, players: { spotify } }));
+    });
+    const el = document.createElement("div");
+    const w = { ...newWidget("media", "m", { x: 0, y: 0 }), provider: "spotify" as const, showSources: true };
+    const stop = media(el, w, ctx);
+    await vi.waitFor(() => expect(el.querySelector(".mp-title")?.textContent).toBe("Song"));
+    expect(gets[0]).toBe("/api/display/music/");
+    expect(el.querySelector<HTMLImageElement>(".mp-art")?.getAttribute("src")).toBe("/api/display/art/?p=spotify&k=0123456789abcdef");
+    expect(el.querySelector(".mp-sources")?.getAttribute("aria-label")).toBe("Play on");
+    el.querySelector<HTMLButtonElement>("[aria-label=Next]")?.click();
+    await vi.waitFor(() => expect(el.querySelector(".ha-msg")?.textContent).toBe("Controlling Spotify needs Premium"));
+    expect(posts).toEqual([{ player: "spotify", action: "next" }]);
+    stop();
+    vi.unstubAllGlobals();
+  });
+
+  it("asks for Sonos to be connected, or a speaker to be picked", async () => {
+    vi.stubGlobal("fetch", () => Promise.resolve(Response.json({ updatedAt: 0, services: { sonos: { connected: false } }, players: {} })));
+    const el = document.createElement("div");
+    const base = { ...newWidget("media", "m", { x: 0, y: 0 }), provider: "sonos" as const };
+    const stop = media(el, { ...base, playerId: "RINCON_A" }, ctx);
+    await vi.waitFor(() =>
+      expect(el.querySelector(".w-empty:not([hidden])")?.textContent).toBe("Connect Sonos under Settings in the admin panel."),
+    );
+    stop();
+    const none = document.createElement("div");
+    media(none, base, ctx)();
+    expect(none.textContent).toBe("Pick a Sonos or Spotify player for this widget.");
+    vi.unstubAllGlobals();
+  });
+});
+
 describe("tasks", () => {
   const data: TasksData = {
     updatedAt: 1,

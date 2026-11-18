@@ -78,7 +78,7 @@ export function usedEntities(config: DashboardConfig): {
     for (const w of v.widgets) {
       if (w.type === "haEntity" && w.entityId) controls.add(w.entityId);
       if (w.type === "camera" && w.entityId) cameras.add(w.entityId);
-      if (w.type === "media" && w.entityId.startsWith("media_player.")) {
+      if (w.type === "media" && w.provider === "homeAssistant" && w.entityId.startsWith("media_player.")) {
         players.add(w.entityId);
         controls.add(w.entityId);
       }

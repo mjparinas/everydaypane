@@ -61,6 +61,20 @@ export async function send(path: string, payload: unknown): Promise<boolean> {
   }
 }
 
+/** Posts and returns null when the server took it, or why not (the server's own words when it gave some). */
+export async function sendExplained(path: string, payload: unknown): Promise<string | null> {
+  const headers: Record<string, string> = { "content-type": "application/json" };
+  if (TOKEN) headers["x-display-token"] = TOKEN;
+  try {
+    const r = await fetch(apiUrl(path), { method: "POST", headers, body: JSON.stringify(payload), credentials: "same-origin" });
+    if (r.ok) return null;
+    const body = (await r.json().catch(() => ({}))) as { error?: unknown };
+    return r.status === 502 && typeof body.error === "string" ? body.error.slice(0, 80) : "";
+  } catch {
+    return "";
+  }
+}
+
 /** Image URLs can't send headers, so they carry the token as ?t= (only our own routes read it). */
 export function imageUrl(path: string, params: Record<string, string>): string {
   return apiUrl(path, TOKEN ? { ...params, t: TOKEN } : params);
