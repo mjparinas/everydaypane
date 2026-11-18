@@ -153,11 +153,18 @@ export const WIDGETS: { [T in WidgetType]: WidgetInfo<T> } = {
   },
   media: {
     label: "Music",
-    description: "Sonos or Spotify via Home Assistant",
+    description: "Spotify or Sonos, directly or via Home Assistant",
     icon: "🎵",
     size: { w: 4, h: 2 },
     minSize: { w: 2, h: 2 },
-    defaults: () => ({ entityId: "", showArt: true, showVolume: true, showSources: false }),
+    defaults: () => ({
+      provider: "homeAssistant" as const,
+      entityId: "",
+      playerId: "",
+      showArt: true,
+      showVolume: true,
+      showSources: false,
+    }),
   },
 };
 

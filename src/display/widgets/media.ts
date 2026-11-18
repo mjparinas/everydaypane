@@ -1,16 +1,68 @@
-import type { HaData, HaEntity, HaMedia } from "@/lib/display/types";
+import { F } from "@/lib/display/mediaFeatures";
+import type { HaData, HaEntity, HaMedia, MusicData } from "@/lib/display/types";
 
-import { imageUrl, refresh, send, subscribe } from "../api";
+import { imageUrl, refresh, sendExplained, subscribe } from "../api";
 import { fill, h, setText, svg } from "../dom";
 import { HA_EVERY } from "./ha";
 import type { Mount } from "./types";
 
 // Music (Melvin, 2026-11-17): a Sonos speaker or Spotify, as a Home Assistant media_player. What's playing, play/pause,
 // skip, volume, and the player's sources (Sonos favourites, or the Spotify Connect speakers to play on). States come
-// from the shared Home Assistant feed; the progress bar moves on its own between polls.
+// from the shared Home Assistant feed, or for Spotify and Sonos signed in directly (Melvin, 2026-11-18) from the
+// shared music feed, which describes its players the same way; the progress bar moves on its own between polls.
 
-// Home Assistant's MediaPlayerEntityFeature bits.
-export const F = { pause: 1, volumeSet: 4, mute: 8, previous: 16, next: 32, source: 2048, play: 16384 } as const;
+export { F };
+export const MUSIC_EVERY = 5000;
+
+interface Source {
+  feed: string;
+  every: number;
+  /** The player's key in its feed, and in taps and art requests. */
+  key: string;
+  label: string;
+  art: (k: string) => Record<string, string>;
+  tap: (action: string, extra: { value?: number; option?: string }) => Record<string, unknown>;
+  /** The player from a feed answer, or what to say instead. */
+  pick: (d: unknown) => HaEntity | string;
+}
+
+/** Where a widget's player comes from: Home Assistant, or Spotify or Sonos directly. Null when none is picked. */
+export function sourceFor(w: { provider: "homeAssistant" | "spotify" | "sonos"; entityId: string; playerId: string }): Source | null {
+  if (w.provider === "homeAssistant") {
+    if (!w.entityId.startsWith("media_player.")) return null;
+    return {
+      feed: "ha",
+      every: HA_EVERY,
+      key: w.entityId,
+      label: "Home Assistant",
+      art: (k) => ({ e: w.entityId, k }),
+      tap: (action, extra) => ({ entity: w.entityId, action, ...extra }),
+      pick: (raw) => {
+        const d = raw as HaData;
+        if (!d.configured) return "Set up Home Assistant under Settings in the admin panel.";
+        return d.entities[w.entityId] ?? `${w.entityId} wasn't found`;
+      },
+    };
+  }
+  if (w.provider === "sonos" && !w.playerId) return null;
+  const key = w.provider === "spotify" ? "spotify" : `sonos:${w.playerId}`;
+  const label = w.provider === "spotify" ? "Spotify" : "Sonos";
+  const service = w.provider;
+  return {
+    feed: "music",
+    every: MUSIC_EVERY,
+    key,
+    label,
+    art: (k) => ({ p: key, k }),
+    tap: (action, extra) => ({ player: key, action, ...extra }),
+    pick: (raw) => {
+      const d = raw as MusicData;
+      const s = d.services[service];
+      if (!s?.connected) return `Connect ${label} under Settings in the admin panel.`;
+      return d.players[key] ?? s.error ?? "Loading…";
+    },
+  };
+}
 
 const icon = (d: string) => `<svg viewBox="0 0 24 24" fill="currentColor"><path d="${d}"/></svg>`;
 const PLAY = icon("M8 5.5v13l10.5-6.5z");
@@ -39,7 +91,8 @@ export function nowPlaying(e: HaEntity): { title: string; detail: string } {
 }
 
 export const media: Mount<"media"> = (el, w) => {
-  if (!w.entityId.startsWith("media_player.")) {
+  const src = sourceFor(w);
+  if (!src) {
     el.append(h("div", { class: "w-empty" }, "Pick a Sonos or Spotify player for this widget."));
     return () => undefined;
   }
@@ -64,7 +117,10 @@ export const media: Mount<"media"> = (el, w) => {
   const next = btn(NEXT, "Next");
   const mute = btn(SPEAKER, "Mute", "mp-btn mp-mute");
   const volume = h("input", { type: "range", class: "ha-range mp-volume", min: 0, max: 100, "aria-label": "Volume" });
-  const sources = h("select", { class: "mp-sources", "aria-label": w.entityId.includes("spotify") ? "Play on" : "Play" });
+  const sources = h("select", {
+    class: "mp-sources",
+    "aria-label": w.provider === "spotify" || w.entityId.includes("spotify") ? "Play on" : "Play",
+  });
   const msg = h("div", { class: "ha-msg" });
   const controls = h("div", { class: "mp-controls" }, prev, play, next);
   const volumeRow = h("div", { class: "mp-row" }, mute, volume);
@@ -77,11 +133,13 @@ export const media: Mount<"media"> = (el, w) => {
   let msgTimer: number | undefined;
 
   const act = async (action: string, extra: { value?: number; option?: string } = {}) => {
-    const ok = await send("ha", { entity: w.entityId, action, ...extra });
-    setText(msg, ok ? "" : "Couldn't reach Home Assistant");
+    const why = await sendExplained(src.feed, src.tap(action, extra));
+    const ok = why === null;
+    // Spotify says why it refused (no Premium, nothing playing anywhere), which helps more than "couldn't reach".
+    setText(msg, ok ? "" : why || `Couldn't reach ${src.label}`);
     window.clearTimeout(msgTimer);
     if (!ok) msgTimer = window.setTimeout(() => setText(msg, ""), 4000);
-    window.setTimeout(() => refresh("ha"), 500);
+    window.setTimeout(() => refresh(src.feed), 500);
   };
   play.addEventListener("click", () => {
     // Show the change at once; the next poll confirms it.
@@ -123,7 +181,7 @@ export const media: Mount<"media"> = (el, w) => {
     if (key !== artKey) {
       artKey = key;
       artBox.classList.toggle("none", !key);
-      if (key) art.src = imageUrl("art", { e: w.entityId, k: key });
+      if (key) art.src = imageUrl("art", src.art(key));
       else art.removeAttribute("src");
     }
 
@@ -157,13 +215,13 @@ export const media: Mount<"media"> = (el, w) => {
 
   fill(root, artBox, h("div", { class: "mp-body" }, name, title, detail, track, controls, volumeRow, sources, msg));
 
-  const stop = subscribe<HaData>("ha", HA_EVERY, (d) => {
-    const e = d.configured ? d.entities[w.entityId] : undefined;
+  const stop = subscribe<unknown>(src.feed, src.every, (d) => {
+    const picked = src.pick(d);
+    const e = typeof picked === "string" ? null : picked;
     root.hidden = !e;
     empty.hidden = Boolean(e);
-    if (!d.configured) setText(empty, "Set up Home Assistant under Settings in the admin panel.");
-    else if (!e) setText(empty, `${w.entityId} wasn't found`);
-    entity = e ?? null;
+    if (typeof picked === "string") setText(empty, picked);
+    entity = e;
     draw();
   });
   // The progress bar moves every second while playing; transform only, so no layout.

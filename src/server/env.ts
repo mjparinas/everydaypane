@@ -18,6 +18,11 @@ export const env = {
     (process.env.VERCEL_PROJECT_PRODUCTION_URL ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}` : ""),
   googleClientId: () => process.env.GOOGLE_CLIENT_ID ?? "",
   googleClientSecret: () => process.env.GOOGLE_CLIENT_SECRET ?? "",
+  // Direct Spotify and Sonos (docs/music.md): each from its own developer app.
+  spotifyClientId: () => process.env.SPOTIFY_CLIENT_ID ?? "",
+  spotifyClientSecret: () => process.env.SPOTIFY_CLIENT_SECRET ?? "",
+  sonosClientId: () => process.env.SONOS_CLIENT_ID ?? "",
+  sonosClientSecret: () => process.env.SONOS_CLIENT_SECRET ?? "",
   cronSecret: () => process.env.CRON_SECRET ?? "",
   isProduction: () => process.env.VERCEL_ENV === "production",
 };

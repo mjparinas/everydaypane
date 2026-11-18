@@ -165,10 +165,21 @@ panel can be complex if you need it to be."
   - **Doorbell pop-up:** when the ring entity (an `event.` entity's new timestamp, or a `binary_sensor.` turning on)
     changes, every display shows that camera full screen for the set seconds, refreshed each second; a tap closes it.
   - **Music** (Melvin, 2026-11-17: Spotify and Sonos controls): the Music widget drives a `media_player` from Home
-    Assistant's Sonos or Spotify integration, so there is no Spotify or Sonos sign-in of our own. It shows what's
+    Assistant's Sonos or Spotify integration, so that route needs no Spotify or Sonos sign-in of our own. It shows what's
     playing (from the shared five-second feed), play/pause, skip, volume and the player's sources (Sonos favourites,
     Spotify Connect speakers). Album art comes through `/api/display/art/` (Home Assistant's `media_player_proxy`,
     players on a widget only); only a hash of the art link reaches displays, because the link carries a token.
+  - **Spotify and Sonos signed in directly** (Melvin, 2026-11-18: asked for music without Home Assistant, "build along
+    side it"): a Music widget's `provider` is `homeAssistant` (the default, unchanged), `spotify` (whatever the
+    connected account plays, on any speaker; its sources are the Spotify Connect devices) or `sonos` (one speaker,
+    controlled with the group it is in; its sources are the Sonos favourites). Each account is connected once from
+    Settings › Music (OAuth with the client secret as Basic auth, `src/server/musicAuth.ts`; developer apps from
+    `SPOTIFY_*` / `SONOS_*` in Vercel); the refresh tokens are encrypted secrets. The server reads Spotify's Web API
+    and Sonos's cloud Control API into one feed shaped like Home Assistant's media players (`/api/display/music/`,
+    polled every five seconds, a few seconds' server cache), so the widget draws both the same way. Only players on a
+    widget, a fixed set of actions, and speakers or favourites from the account's own list; art only from addresses
+    the feed read, public https only. Controlling Spotify needs Premium, and the widget says so when Spotify refuses.
+    Setup: `docs/music.md`.
 
 ## Security
 

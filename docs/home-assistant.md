@@ -68,6 +68,9 @@ on *Sources to play*, a list to start something.
 Add a **Music** widget to a view and pick the player from the suggestions. Album art comes through our server, never
 straight from Home Assistant.
 
+To use Spotify or Sonos without Home Assistant, see [music.md](music.md); a widget's **Player from** setting picks
+which.
+
 ## When it doesn't work
 
 - *Cloudflare Access refused the request*: the Client ID or secret is wrong, or the Access policy isn't **Service Auth**

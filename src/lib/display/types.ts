@@ -192,6 +192,18 @@ export interface HaData {
   entities: Record<string, HaEntity>;
 }
 
+export type MusicService = "spotify" | "sonos";
+
+/**
+ * Spotify and Sonos signed in directly (src/server/music.ts), without Home Assistant. Players are keyed "spotify" or
+ * "sonos:<player id>" and look like Home Assistant media players, so the music widget draws them the same way.
+ */
+export interface MusicData {
+  updatedAt: number;
+  services: Partial<Record<MusicService, { connected: boolean; error?: string }>>;
+  players: Record<string, HaEntity>;
+}
+
 /** The meal plan from today (src/app/api/display/meals/): local date → that day's meals. */
 export interface MealsData {
   today: string;

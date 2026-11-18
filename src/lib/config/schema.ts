@@ -148,10 +148,15 @@ export const widgetSchema = z.discriminatedUnion("type", [
   // Music (Melvin, 2026-11-17: Sonos and Spotify controls): a media_player entity through Home Assistant's Sonos or
   // Spotify integration. Shows what's playing, with play/pause, skip, volume and the player's sources (Sonos
   // favourites, or the Spotify Connect speakers to play on).
+  // Direct Spotify and Sonos (Melvin, 2026-11-18: "build along side it"): `provider` picks Home Assistant (entityId),
+  // the connected Spotify account (whatever it is playing on), or one Sonos speaker (playerId) and the group it is in.
+  // Both default so a widget saved before this existed still loads as a Home Assistant one.
   z.object({
     ...base,
     type: z.literal("media"),
+    provider: z.enum(["homeAssistant", "spotify", "sonos"]).default("homeAssistant"),
     entityId: z.string().max(255),
+    playerId: z.string().max(120).default(""),
     showArt: z.boolean(),
     showVolume: z.boolean(),
     showSources: z.boolean(),
