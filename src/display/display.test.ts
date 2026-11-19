@@ -9,6 +9,7 @@ import { kindOf, label, weatherIcon } from "./icons";
 import { aqhiBand, usAqiBand } from "./widgets/air";
 import { calendarMonth } from "./widgets/calendar";
 import { clock } from "./widgets/clock";
+import { commute, distance, duration, timing, trafficLevel } from "./widgets/commute";
 import { countdown } from "./widgets/countdown";
 import { controlFor, stateText } from "./widgets/ha";
 import { meals } from "./widgets/meals";
@@ -380,5 +381,85 @@ describe("month calendar", () => {
 
   it("leaves the title out when it is switched off, keeping the grid", async () => {
     expect(await month(false)).toEqual({ title: null, days: 35 });
+  });
+});
+
+describe("commute", () => {
+  const work = {
+    id: "work",
+    name: "Work",
+    emoji: "🏢",
+    arriveBy: "",
+    seconds: 2460,
+    freeFlowSeconds: 1920,
+    delaySeconds: 540,
+    meters: 38_200,
+  };
+
+  it("writes drive times the way people say them", () => {
+    expect(duration(20)).toBe("1 min");
+    expect(duration(2460)).toBe("41 min");
+    expect(duration(3600)).toBe("1 h");
+    expect(duration(4500)).toBe("1 h 15 min");
+    expect(distance(38_200, "metric")).toBe("38 km");
+    expect(distance(8_000, "imperial")).toBe("5.0 mi");
+  });
+
+  it("colours a drive by how much traffic adds to it", () => {
+    expect(trafficLevel({ seconds: 1900, freeFlowSeconds: 1800, delaySeconds: 100 })).toBe(1);
+    expect(trafficLevel({ seconds: 600, freeFlowSeconds: 420, delaySeconds: 170 })).toBe(1); // under three minutes
+    expect(trafficLevel({ seconds: 2460, freeFlowSeconds: 1920, delaySeconds: 540 })).toBe(2);
+    expect(trafficLevel({ seconds: 3000, freeFlowSeconds: 1920, delaySeconds: 1080 })).toBe(3);
+  });
+
+  it("says when to leave before a be-there-by time, and when you'd arrive otherwise", () => {
+    const school = { ...work, arriveBy: "08:30", seconds: 900 };
+    expect(timing(school, "07:40", true, true)).toBe("Leave by 8:15 AM");
+    expect(timing(school, "08:20", true, true)).toBe("Leave now");
+    expect(timing(school, "04:00", true, true)).toBe("Arrive 4:15 AM"); // more than three hours ahead
+    expect(timing(school, "09:00", false, true)).toBe("Arrive 09:15");
+    expect(timing(work, "23:30", true, true)).toBe("Arrive 12:11 AM");
+    expect(timing(work, "07:40", true, false)).toBe("");
+  });
+
+  it("draws the picked places, and doesn't pass off old traffic as live", async () => {
+    vi.useFakeTimers({ now: new Date("2026-11-19T14:40:00Z") }); // 7:40 AM in Vancouver (UTC−7 all year from 2026)
+    const now = Date.now();
+    const routes = [
+      { ...work, at: now - 60_000 },
+      {
+        id: "gym",
+        name: "Gym",
+        emoji: "",
+        arriveBy: "",
+        seconds: 600,
+        freeFlowSeconds: 600,
+        delaySeconds: 0,
+        meters: 4000,
+        at: now - 3_600_000,
+      },
+      { id: "school", name: "School", emoji: "", arriveBy: "08:30", seconds: 900, freeFlowSeconds: 900, delaySeconds: 0, at: now },
+    ];
+    vi.stubGlobal("fetch", () => Promise.resolve(Response.json({ updatedAt: now, missing: "", routes })));
+    const el = document.createElement("div");
+    const w = { ...newWidget("commute", "cm", { x: 0, y: 0 }), destinationIds: ["work", "gym"] };
+    const stop = commute(el, w, ctx);
+    await vi.advanceTimersByTimeAsync(0);
+    const rows = [...el.querySelectorAll(".cm-row")];
+    expect(rows.map((r) => r.className)).toEqual(["cm-row cm-2", "cm-row cm-0"]);
+    expect(rows.map((r) => r.textContent)).toEqual(["🏢 Work41 min+9 min traffic · Arrive 8:21 AM", "Gym–No traffic info right now"]);
+    stop();
+    vi.unstubAllGlobals();
+  });
+
+  it("says what to set up when nothing is", async () => {
+    vi.useFakeTimers({ now: new Date("2026-11-19T15:40:00Z") });
+    vi.stubGlobal("fetch", () => Promise.resolve(Response.json({ updatedAt: 1, missing: "key", routes: [] })));
+    const el = document.createElement("div");
+    const stop = commute(el, { ...newWidget("commute", "cm2", { x: 0, y: 0 }) }, ctx);
+    await vi.advanceTimersByTimeAsync(0);
+    expect(el.textContent).toBe("Add a TomTom key to show commute times.");
+    stop();
+    vi.unstubAllGlobals();
   });
 });

@@ -125,6 +125,7 @@ export function defaultConfig(): DashboardConfig {
       // the admin panel, or picked by hand (Monday A, Tuesday B, …).
       garbage: { projectId: "521", districtId: "LANGL", zoneId: "", zoneLabel: "" },
       photos: { sources: [] },
+      commute: { home: null, destinations: [] },
       homeAssistant: { url: "", doorbell: { entityId: "", cameraEntityId: "", seconds: 30 } },
     },
   };

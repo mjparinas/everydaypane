@@ -114,6 +114,30 @@ export interface GarbageData {
   pickups: { date: string; bins: { name: string; kind: BinKind }[] }[];
 }
 
+/** One drive from home, with live traffic (src/server/commute.ts). Times in seconds, distance in metres. */
+export interface CommuteRoute {
+  id: string;
+  name: string;
+  emoji: string;
+  /** HH:MM, or "" when nobody needs to be there by a set time. */
+  arriveBy: string;
+  /** Absent when this route couldn't be read; the others still show. */
+  seconds?: number;
+  /** The same drive on empty roads. */
+  freeFlowSeconds?: number;
+  delaySeconds?: number;
+  meters?: number;
+  /** Epoch ms when the traffic was read. */
+  at?: number;
+}
+
+export interface CommuteData {
+  updatedAt: number;
+  /** "key": TOMTOM_API_KEY isn't set; "places": no home or no destination yet; "": ready. */
+  missing: "" | "key" | "places";
+  routes: CommuteRoute[];
+}
+
 export type AlertSeverity = "extreme" | "severe" | "moderate" | "minor";
 export type AlertSource = "alertReady" | "weather" | "roads" | "earthquakes" | "power";
 

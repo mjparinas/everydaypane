@@ -4,6 +4,7 @@ import { airQuality } from "./air";
 import { alerts } from "./alerts";
 import { agenda, calendarMonth } from "./calendar";
 import { clock } from "./clock";
+import { commute } from "./commute";
 import { countdown } from "./countdown";
 import { date } from "./date";
 import { garbage } from "./garbage";
@@ -57,5 +58,7 @@ export function mountWidget(el: HTMLElement, w: Widget, ctx: WidgetContext): Cle
       return tasks(el, w, ctx);
     case "media":
       return media(el, w, ctx);
+    case "commute":
+      return commute(el, w, ctx);
   }
 }

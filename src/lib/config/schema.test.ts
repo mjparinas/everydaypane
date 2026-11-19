@@ -18,6 +18,22 @@ describe("config schema", () => {
     expect(r.success && r.data.integrations.tasks).toEqual({ lists: [] });
   });
 
+  it("loads a dashboard saved before commute times existed", () => {
+    const c = defaultConfig() as unknown as { integrations: Record<string, unknown> };
+    delete c.integrations.commute;
+    const r = configSchema.safeParse(c);
+    expect(r.success && r.data.integrations.commute).toEqual({ home: null, destinations: [] });
+  });
+
+  it("refuses more than six commute places, which would outrun TomTom's free tier", () => {
+    const c = defaultConfig();
+    const place = { label: "4700 Kingsway, Burnaby", latitude: 49.23, longitude: -123.0, name: "Work", emoji: "", arriveBy: "" };
+    c.integrations.commute.destinations = Array.from({ length: 7 }, (_, i) => ({ ...place, id: `p${i}` }));
+    expect(configSchema.safeParse(c).success).toBe(false);
+    c.integrations.commute.destinations.pop();
+    expect(configSchema.safeParse(c).success).toBe(true);
+  });
+
   it("shows the month title on month calendars saved before the toggle existed", () => {
     const c = defaultConfig();
     const month = c.views.flatMap((v) => v.widgets).find((w) => w.type === "calendarMonth") as unknown as Record<string, unknown>;
