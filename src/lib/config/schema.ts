@@ -168,6 +168,15 @@ export const widgetSchema = z.discriminatedUnion("type", [
     showVolume: z.boolean(),
     showSources: z.boolean(),
   }),
+  // Commute time (Melvin, 2026-11-19): live-traffic drive times from home to the places under Settings › Commute
+  // (none picked means all of them).
+  z.object({
+    ...base,
+    type: z.literal("commute"),
+    destinationIds: z.array(id).max(6),
+    showDistance: z.boolean(),
+    showArrival: z.boolean(),
+  }),
 ]);
 export type Widget = z.infer<typeof widgetSchema>;
 export type WidgetType = Widget["type"];
@@ -205,6 +214,23 @@ export const photoSourceSchema = z.discriminatedUnion("kind", [
   z.object({ id, kind: z.literal("library"), name: z.string().max(60) }),
 ]);
 export type PhotoSource = z.infer<typeof photoSourceSchema>;
+
+// A place for the commute widget, found from its address in the admin panel (src/server/commute.ts). The address is
+// kept as a label for the admin panel only; displays get the name and the drive time.
+const placeSchema = z.object({
+  label: z.string().max(120),
+  latitude: z.number().min(-90).max(90),
+  longitude: z.number().min(-180).max(180),
+});
+
+export const commuteDestinationSchema = placeSchema.extend({
+  id,
+  name: z.string().trim().min(1).max(40),
+  emoji: z.string().max(8),
+  // When someone needs to be there (school at 08:30); the widget then says when to leave. Empty for none.
+  arriveBy: z.union([hhmm, z.literal("")]),
+});
+export type CommuteDestination = z.infer<typeof commuteDestinationSchema>;
 
 export const configSchema = z
   .object({
@@ -264,6 +290,11 @@ export const configSchema = z
         zoneLabel: z.string().max(80),
       }),
       photos: z.object({ sources: z.array(photoSourceSchema).max(20) }),
+      // Commute time (Melvin, 2026-11-19): from home to up to six places, by car with live traffic (TomTom). Six keeps
+      // a five-minute refresh inside TomTom's free 2,500 requests a day. Defaults so older documents still load.
+      commute: z
+        .object({ home: placeSchema.nullable(), destinations: z.array(commuteDestinationSchema).max(6) })
+        .default({ home: null, destinations: [] }),
       homeAssistant: z.object({
         url: z.union([z.url(), z.literal("")]),
         // Doorbell pop-up: when this binary_sensor or event entity turns on, every display shows the camera full screen.

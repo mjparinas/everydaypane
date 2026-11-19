@@ -992,6 +992,51 @@ body {
   color: var(--muted);
 }
 
+/* Commute: name and time on one line, traffic and timing under it; the time turns amber or red as traffic builds. */
+.w-commute {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4em;
+  height: 100%;
+  overflow: hidden;
+  font-size: clamp(13px, min(5cqw, 12cqh), 28px);
+}
+.cm-list {
+  display: grid;
+  gap: 0.5em;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.cm-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  column-gap: 0.6em;
+  align-items: baseline;
+}
+.cm-name {
+  overflow: hidden;
+  font-weight: 600;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.cm-time {
+  font-size: 1.5em;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.cm-sub {
+  grid-column: 1 / -1;
+  color: var(--muted);
+  font-size: 0.8em;
+}
+.cm-2 .cm-time {
+  color: #f0a020;
+}
+.cm-3 .cm-time {
+  color: var(--danger);
+}
+
 /* Emergency strip: across the top, pushing the layout down rather than covering it or the whole screen. */
 .alert-strip {
   position: relative;

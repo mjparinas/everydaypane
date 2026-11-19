@@ -233,6 +233,33 @@ function TypeSettings({
       const e = edit<"garbage">();
       return <NumberInput label="Weeks ahead" value={w.weeks} min={1} max={8} onChange={(v) => e((x) => void (x.weeks = v))} />;
     }
+    case "commute": {
+      const e = edit<"commute">();
+      const places = config.integrations.commute.destinations;
+      return (
+        <>
+          <Toggle label="Show arrival time" checked={w.showArrival} onChange={(v) => e((x) => void (x.showArrival = v))} />
+          <Toggle label="Show distance" checked={w.showDistance} onChange={(v) => e((x) => void (x.showDistance = v))} />
+          {places.length === 0 ? (
+            <p className="text-xs text-soft">Add home and the places to drive to under Settings › Commute.</p>
+          ) : (
+            <>
+              <p className="text-xs text-soft">Pick the places to show. With none picked, it shows them all.</p>
+              {places.map((p) => (
+                <Toggle
+                  key={p.id}
+                  label={`${p.emoji} ${p.name}`.trim()}
+                  checked={w.destinationIds.includes(p.id)}
+                  onChange={(on) =>
+                    e((x) => void (x.destinationIds = on ? [...x.destinationIds, p.id] : x.destinationIds.filter((id) => id !== p.id)))
+                  }
+                />
+              ))}
+            </>
+          )}
+        </>
+      );
+    }
     case "photos": {
       const e = edit<"photos">();
       const sources = config.integrations.photos.sources;

@@ -45,6 +45,9 @@ node scripts/e2e.mjs   # Playwright browser tests against the build (CHROMIUM_PA
   the PNG icons, `favicon.ico` and the web app manifest (`src/app/manifest.ts`) are made from them.
 - **Month calendar title** (Melvin, 2026-11-19: "add a toggle to show/hide month title"): the month widget's
   "November 2026" line can be switched off in its settings (`showTitle`, on by default); the grid takes the space.
+- **Commute time** (Melvin, 2026-11-19): drive times with live traffic from home to up to six places (work, school),
+  set up in Settings › Commute; a place can have a "be there by" time, and the widget then says when to leave (see
+  Architecture).
 - **Canadian English** in everything a person reads (colour, centre, favourite), as in Liftsmith.
 
 ## Display: super lightweight (rule, Melvin, 2026-11-17)
@@ -145,6 +148,13 @@ panel can be complex if you need it to be."
   picks a page at a time (`=w2048-h2048`, with our token; Google's links last an hour, so photos are copied, not
   linked). Videos are skipped and a Google photo is never copied twice into one album. Blobs are never public; displays
   get them only through `/api/display/photo/`. Removing a library album deletes its photos. Setup: `docs/google-photos.md`.
+- **Commute time:** TomTom's Routing API (`traffic=true`, car, fastest) through `src/server/commute.ts`, with the key in
+  `TOMTOM_API_KEY` (Vercel). TomTom was Claude's pick (2026-11-19): free 2,500 requests a day with no credit card, where
+  Google's Routes API needs billing for traffic. Home and each place are geocoded once in the admin panel with TomTom's
+  Search API; the settings document keeps a label and coordinates (`integrations.commute`), and displays get only names
+  and times from `/api/display/commute/`. Each drive is cached five minutes, shared by every display, and six places at
+  most keeps that inside the free tier. One route failing never hides the others; readings older than 20 minutes aren't
+  shown as live. TomTom takes its key only in the query string, so its URLs are never logged. Setup: `docs/commute.md`.
 - **Garbage pickup:** the Township of Langley's collection calendar (tol.ca) is Recycle Coach, project 521,
   district `LANGL`, with zones such as Monday A or Thursday B. The zone is looked up from the address in the admin
   panel (or picked by hand) and the schedule is fetched and cached by the server (12 hours). The API is Recycle Coach's

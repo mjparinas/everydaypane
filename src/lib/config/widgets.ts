@@ -166,6 +166,14 @@ export const WIDGETS: { [T in WidgetType]: WidgetInfo<T> } = {
       showSources: false,
     }),
   },
+  commute: {
+    label: "Commute",
+    description: "Drive time with live traffic to work or school",
+    icon: "🚗",
+    size: { w: 3, h: 2 },
+    minSize: { w: 2, h: 1 },
+    defaults: () => ({ destinationIds: [], showDistance: false, showArrival: true }),
+  },
 };
 
 export const WIDGET_TYPES = Object.keys(WIDGETS) as WidgetType[];

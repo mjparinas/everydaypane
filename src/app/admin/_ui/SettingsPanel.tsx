@@ -1,6 +1,7 @@
 "use client";
 
 import { CalendarLinksPanel } from "./CalendarLinksPanel";
+import { CommutePanel } from "./CommutePanel";
 import { NumberInput, Section, Select, Text, Toggle } from "./fields";
 import { GarbagePanel } from "./GarbagePanel";
 import { GooglePanel } from "./GooglePanel";
@@ -68,6 +69,7 @@ export function SettingsPanel() {
       <TasksPanel />
       <CalendarLinksPanel />
       <GarbagePanel />
+      <CommutePanel />
       <PhotosPanel />
       <HomeAssistantPanel />
       <MusicPanel />
