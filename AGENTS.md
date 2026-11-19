@@ -6,6 +6,65 @@ and any other screen with a browser, and is set up from an admin panel that work
 decisions behind it, with who made them and when. Follow them; if a task seems to need one changed, raise it with
 Melvin first, and update this file in the same change when a decision changes.
 
+## Before proposing or building a feature (rule, Melvin, 2026-11-19)
+
+Melvin, 2026-11-19: "i feel like you keep repeating things that already exist." Before suggesting or starting a feature,
+read **What already exists** below (and `widgetSchema` in `src/lib/config/schema.ts`, which is the source of truth
+for widgets). Don't suggest anything listed there as new; if an idea extends something that exists, say which part
+and what it adds. Every pull request that adds a widget, an integration or a display behaviour updates this list in the
+same change, and moves it out of **In progress** when it merges.
+
+## What already exists (checked against the code, 2026-11-19)
+
+**Widgets** (`widgetSchema`, drawn by `src/display/widgets/`):
+
+| Widget (`type`) | What it shows | Data source |
+| --- | --- | --- |
+| Clock (`clock`) | Digital or analogue, any time zone, label, seconds (Vancouver and Toronto clocks) | Device clock |
+| Date (`date`) | Today's date in a time zone | Device clock |
+| Weather (`weather`) | Current conditions, hourly, up to 7 days, with icons | Open-Meteo forecast |
+| Air quality (`airQuality`) | AQHI or US AQI | Open-Meteo air quality |
+| WiFi QR (`wifiQr`) | Join code, optionally the password | Settings document |
+| Countdowns (`countdown`) | Days until holidays, birthdays and events, yearly ones roll over | Settings document |
+| Schedule (`agenda`) | Today, or the next 1 to 14 days | Google Calendar + iCal links |
+| Month calendar (`calendarMonth`) | Month grid, week start, title toggle | Google Calendar + iCal links |
+| Garbage day (`garbage`) | Next pickups, 1 to 8 weeks | Township of Langley (Recycle Coach) |
+| Photos (`photos`) | Slideshow, cover or contain, captions | Amazon shared albums, Amazon people, URL lists, photo library (uploads and Google Photos picks) |
+| Home Assistant tile (`haEntity`) | Toggle, light, sensor, climate, cover, lock (lock only), button | Home Assistant |
+| Camera (`camera`) | UniFi Protect snapshot on a timer | Home Assistant |
+| Music (`media`) | Now playing, play/pause, skip, volume, sources | Home Assistant, Spotify or Sonos |
+| Note (`note`) | Fixed text from the admin | Settings document |
+| Message board (`messages`) | Family notes posted from phones | `messages` table |
+| Meals (`meals`) | Breakfast, lunch, dinner for a day or a week | `meals` table |
+| Alerts (`alerts`) | Current emergency alerts, optional "all clear" | See alerts below |
+| To-dos (`tasks`) | Open Google Tasks; **tap to tick off, synced back to Google** (`allowCheck`, 4 s undo) | Google Tasks |
+
+**Display behaviour:** several views on a drag-and-drop grid (chosen rows and columns), a time-of-day schedule
+(morning, afternoon, evening, night) choosing the view, theme, day or night mode and dimming; themes with colour
+palettes, fonts, corner radius, opacity and optional glass; burn-in protection (pixel shift); offline mode (service
+worker serves the last good data and shows "Offline"); doorbell pop-up full screen; the red, dismissible alert strip;
+no pinch zoom; settings reach displays by polling every 30 seconds.
+
+**Alerts** (`src/server/alerts.ts`): Alert Ready (NAAD), **Environment Canada weather warnings** (through NAAD),
+DriveBC road events and weather conditions, Earthquakes Canada. Each switchable in `config.alerts.sources`.
+
+**Admin and family:** magic-link sign-in (Resend), admin panel tabs (views and grid editor, themes, displays with
+copyable addresses, meals, settings for every integration), `/family/` for the message board and meals, Sentry.
+
+**Integrations connected from Settings:** Google Calendar, Google Tasks, Google Photos (Picker), iCal calendar links,
+Amazon Photos, the photo library (Vercel Blob), Home Assistant (Cloudflare Tunnel + Access), Spotify, Sonos, garbage
+zone lookup.
+
+## In progress (2026-11-19)
+
+Being built in other threads now; check the merged code before starting any of these again, and move each to **What
+already exists** when it merges:
+
+- **TransLink** departures for nearby stops.
+- **BC Hydro outages**, and more weather alerts (Environment Canada warnings already come through NAAD, see above).
+- **Tappable to-dos** (the `tasks` widget already ticks off Google Tasks from the wall; this work extends it).
+- **Commute time.**
+
 ## Commands
 
 ```bash
