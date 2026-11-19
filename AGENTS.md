@@ -43,6 +43,8 @@ node scripts/e2e.mjs   # Playwright browser tests against the build (CHROMIUM_PA
   hands, an amber "sun" pane, a pale one), and the wordmark "everyday**pane**" in Manrope 800 with "pane" in the brand
   blue. Sources are SVGs in `public/brand/` (mark, simplified 16–32 px favicon, maskable, light and dark wordmarks);
   the PNG icons, `favicon.ico` and the web app manifest (`src/app/manifest.ts`) are made from them.
+- **Month calendar title** (Melvin, 2026-11-19: "add a toggle to show/hide month title"): the month widget's
+  "November 2026" line can be switched off in its settings (`showTitle`, on by default); the grid takes the space.
 - **Canadian English** in everything a person reads (colour, centre, favourite), as in Liftsmith.
 
 ## Display: super lightweight (rule, Melvin, 2026-11-17)

@@ -7,6 +7,7 @@ import type { DisplayPayload, TasksData } from "@/lib/display/types";
 import { shortTime } from "./format";
 import { kindOf, label, weatherIcon } from "./icons";
 import { aqhiBand, usAqiBand } from "./widgets/air";
+import { calendarMonth } from "./widgets/calendar";
 import { clock } from "./widgets/clock";
 import { countdown } from "./widgets/countdown";
 import { controlFor, stateText } from "./widgets/ha";
@@ -356,5 +357,28 @@ describe("tasks", () => {
     expect([...el.querySelectorAll(".tk-title")].map((t) => t.textContent)).toEqual(["Milk", "Feed the cat"]);
     stop();
     vi.unstubAllGlobals();
+  });
+});
+
+describe("month calendar", () => {
+  const month = async (showTitle: boolean) => {
+    vi.useFakeTimers({ now: new Date("2026-11-17T20:00:00Z") });
+    vi.stubGlobal("fetch", () => Promise.resolve(Response.json({ connected: true, updatedAt: 1, events: [] })));
+    const el = document.createElement("div");
+    const stop = calendarMonth(el, { ...newWidget("calendarMonth", `mo-${String(showTitle)}`, { x: 0, y: 0 }), showTitle }, ctx);
+    await vi.advanceTimersByTimeAsync(0);
+    const title = el.querySelector(".mo-title")?.textContent ?? null;
+    const days = el.querySelectorAll(".mo-day").length;
+    stop();
+    vi.unstubAllGlobals();
+    return { title, days };
+  };
+
+  it("shows the month title by default", async () => {
+    expect(await month(true)).toEqual({ title: "November 2026", days: 35 });
+  });
+
+  it("leaves the title out when it is switched off, keeping the grid", async () => {
+    expect(await month(false)).toEqual({ title: null, days: 35 });
   });
 });

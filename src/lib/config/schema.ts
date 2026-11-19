@@ -106,7 +106,14 @@ export const widgetSchema = z.discriminatedUnion("type", [
     count: z.number().int().min(1).max(12),
   }),
   z.object({ ...base, type: z.literal("agenda"), range: z.enum(["today", "upcoming"]), days: z.number().int().min(1).max(14) }),
-  z.object({ ...base, type: z.literal("calendarMonth"), weekStartsOn: z.union([z.literal(0), z.literal(1)]) }),
+  z.object({
+    ...base,
+    type: z.literal("calendarMonth"),
+    weekStartsOn: z.union([z.literal(0), z.literal(1)]),
+    // The "November 2026" line above the grid (Melvin, 2026-11-19: a toggle to hide it). Shown unless switched off, so
+    // month widgets saved before the toggle existed look the same.
+    showTitle: z.boolean().default(true),
+  }),
   z.object({ ...base, type: z.literal("garbage"), weeks: z.number().int().min(1).max(8) }),
   z.object({
     ...base,

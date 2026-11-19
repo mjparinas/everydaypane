@@ -215,15 +215,18 @@ function TypeSettings({
     case "calendarMonth": {
       const e = edit<"calendarMonth">();
       return (
-        <Select
-          label="Weeks start on"
-          value={String(w.weekStartsOn) as "0" | "1"}
-          options={[
-            { value: "0", label: "Sunday" },
-            { value: "1", label: "Monday" },
-          ]}
-          onChange={(v) => e((x) => void (x.weekStartsOn = v === "1" ? 1 : 0))}
-        />
+        <>
+          <Select
+            label="Weeks start on"
+            value={String(w.weekStartsOn) as "0" | "1"}
+            options={[
+              { value: "0", label: "Sunday" },
+              { value: "1", label: "Monday" },
+            ]}
+            onChange={(v) => e((x) => void (x.weekStartsOn = v === "1" ? 1 : 0))}
+          />
+          <Toggle label="Show the month title" checked={w.showTitle} onChange={(v) => e((x) => void (x.showTitle = v))} />
+        </>
       );
     }
     case "garbage": {
