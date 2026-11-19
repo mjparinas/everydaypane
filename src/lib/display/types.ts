@@ -115,7 +115,7 @@ export interface GarbageData {
 }
 
 export type AlertSeverity = "extreme" | "severe" | "moderate" | "minor";
-export type AlertSource = "alertReady" | "weather" | "roads" | "earthquakes";
+export type AlertSource = "alertReady" | "weather" | "roads" | "earthquakes" | "power";
 
 /** One emergency alert for the area, from any source (src/server/alerts.ts). */
 export interface EmergencyAlert {

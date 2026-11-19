@@ -4,7 +4,7 @@ import { meetsBanner } from "@/lib/alerts";
 import { defaultConfig } from "@/lib/config/defaults";
 import { useTestServer } from "@/test/server";
 
-import { alertsFeed, decodeXml, parseNaad, parseOpen511, parseQuakes } from "./alerts";
+import { alertsFeed, decodeXml, parseHydro, parseNaad, parseOpen511, parseQuakes } from "./alerts";
 import { clearMemoryCache } from "./cache";
 
 const langley = { lat: 49.1044, lon: -122.6604 };
@@ -173,6 +173,71 @@ describe("Earthquakes Canada", () => {
   });
 });
 
+describe("BC Hydro outages", () => {
+  // The shape of BC Hydro's outage map data (outages-map-data.json): times in epoch ms, polygons as flat lon, lat lists.
+  // This sandbox can't reach bchydro.com, so these are recorded shapes.
+  const square = (lat: number, lon: number, d: number) => [lon - d, lat - d, lon + d, lat - d, lon + d, lat + d, lon - d, lat + d];
+  const outages = [
+    {
+      id: 101,
+      municipality: "Langley",
+      area: "Walnut Grove",
+      cause: "Tree down across our wires",
+      numCustomersOut: 2412,
+      crewStatusDescription: "Crew on-site",
+      crewEtr: Date.parse("2026-11-17T09:30:00Z"),
+      showEtr: true,
+      dateOff: Date.parse("2026-11-17T05:10:00Z"),
+      dateOn: null,
+      lastUpdated: Date.parse("2026-11-17T05:40:00Z"),
+      latitude: 49.104,
+      longitude: -122.66,
+      polygon: square(49.1044, -122.6604, 0.01),
+    },
+    {
+      id: 102,
+      municipality: "Surrey",
+      area: "Cloverdale",
+      numCustomersOut: 40,
+      crewStatusDescription: "Crew on their way",
+      dateOn: null,
+      lastUpdated: 0,
+      latitude: 49.11,
+      longitude: -122.7,
+      polygon: square(49.11, -122.7, 0.002),
+    },
+    { id: 103, municipality: "Prince George", area: "Hart", numCustomersOut: 5000, latitude: 54.02, longitude: -123.09, polygon: [] },
+    {
+      id: 104,
+      municipality: "Langley",
+      area: "Murrayville",
+      numCustomersOut: 900,
+      dateOn: Date.parse("2026-11-17T05:00:00Z"),
+      latitude: 49.1,
+      longitude: -122.65,
+      polygon: [],
+    },
+  ];
+
+  it("keeps outages covering the home or nearby, and leaves out restored and faraway ones", () => {
+    const list = parseHydro(outages, langley, 5, "America/Vancouver", now);
+    expect(list.map((a) => [a.id, a.severity, a.title])).toEqual([
+      ["bchydro:101", "severe", "Power outage here: 2,412 customers"],
+      ["bchydro:102", "minor", "Power outage nearby: 40 customers"],
+    ]);
+    expect(list[0]).toMatchObject({ source: "power", area: "Walnut Grove, Langley", expires: null });
+    expect(list[0]?.description).toBe("Tree down across our wires. Crew on-site. Power back by about Tue 2:30 a.m.");
+    expect(list[1]).toMatchObject({ area: "Cloverdale, Surrey", description: "Crew on their way." });
+  });
+
+  it("marks a big nearby outage moderate, and ignores anything that isn't a list", () => {
+    const big = { ...outages[1], numCustomersOut: 1200 };
+    expect(parseHydro([big], langley, 5, "America/Vancouver", now)[0]?.severity).toBe("moderate");
+    expect(parseHydro([big], langley, 1, "America/Vancouver", now)).toEqual([]);
+    expect(parseHydro({ error: "nope" }, langley, 5, "America/Vancouver", now)).toEqual([]);
+  });
+});
+
 describe("the alerts feed", () => {
   useTestServer();
   afterEach(() => {
@@ -193,6 +258,8 @@ describe("the alerts feed", () => {
               "#EventID|Time|Latitude|Longitude|Depth/km|MagType|Magnitude|EventLocationName\nq1|2026-11-17T04:00:00.000Z|49.0|-122.7|20|Mw|5.6|Near Langley, BC/Près de Langley, BC",
             ),
           );
+        if (url === "https://www.bchydro.com/power-outages/app/outages-map-data.json")
+          return Promise.resolve(Response.json([{ id: 7, area: "Brookswood", numCustomersOut: 12, latitude: 49.09, longitude: -122.65 }]));
         return Promise.resolve(new Response("unexpected", { status: 500 }));
       }),
     );
@@ -200,6 +267,7 @@ describe("the alerts feed", () => {
     expect(data.alerts.map((a) => [a.source, a.severity])).toEqual([
       ["weather", "severe"],
       ["earthquakes", "severe"],
+      ["power", "minor"],
     ]);
   });
 
