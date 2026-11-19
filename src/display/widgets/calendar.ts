@@ -99,7 +99,13 @@ export const calendarMonth: Mount<"calendarMonth"> = (el, w, ctx) => {
 
     fill(
       root,
-      h("div", { class: "mo-title" }, w.title || fmt("UTC", { month: "long", year: "numeric" }).format(Date.parse(`${today}T12:00:00Z`))),
+      w.showTitle
+        ? h(
+            "div",
+            { class: "mo-title" },
+            w.title || fmt("UTC", { month: "long", year: "numeric" }).format(Date.parse(`${today}T12:00:00Z`)),
+          )
+        : null,
       h("div", { class: "mo-grid mo-names", "aria-hidden": "true" }, ...weekdayNames.map((n) => h("div", { class: "mo-name" }, n))),
       h(
         "div",

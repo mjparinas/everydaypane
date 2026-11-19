@@ -18,6 +18,15 @@ describe("config schema", () => {
     expect(r.success && r.data.integrations.tasks).toEqual({ lists: [] });
   });
 
+  it("shows the month title on month calendars saved before the toggle existed", () => {
+    const c = defaultConfig();
+    const month = c.views.flatMap((v) => v.widgets).find((w) => w.type === "calendarMonth") as unknown as Record<string, unknown>;
+    delete month.showTitle;
+    const r = configSchema.safeParse(c);
+    const parsed = r.success ? r.data.views.flatMap((v) => v.widgets).find((w) => w.type === "calendarMonth") : undefined;
+    expect(parsed).toMatchObject({ showTitle: true });
+  });
+
   it("rejects a widget that runs off its grid", () => {
     const c = defaultConfig();
     c.views[0]!.widgets[0]!.x = 11;
