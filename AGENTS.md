@@ -36,6 +36,9 @@ node scripts/e2e.mjs   # Playwright browser tests against the build (CHROMIUM_PA
   Ready/NAAD, Environment Canada weather warnings, DriveBC road events for torrential rain or snow, Earthquakes Canada,
   tsunami and flooding). They show as a **red strip across the top of the screen that can be dismissed**, not a
   full-screen takeover (`config.alerts.banner` sets the lowest severity that gets the strip).
+- **BC Hydro power outages** (Melvin, 2026-11-19: "do bc hydro outages and weather alerts"): outages from BC Hydro's
+  outage map join the same alert strip and alerts widget (see Architecture). Weather alerts already existed
+  (Environment Canada through NAAD, since 2026-11-17), so that half of the ask needed nothing new.
 - **Admin changes reach displays by polling** (Melvin, 2026-11-17: "we dont need real time push for now, polling is
   ok"). Every display asks for the settings version every 30 seconds (a tiny request answered with 304 when nothing
   changed) and reloads its settings when it moves. No WebSocket or push service.
@@ -122,7 +125,10 @@ panel can be complex if you need it to be."
   fails never hides Google's events or the other links. Only public https addresses are fetched.
 - **Emergency alerts:** `src/server/alerts.ts` reads NAAD's Atom feed (Alert Ready, and Environment Canada's warnings,
   whose own GeoMet API refuses automated readers), DriveBC Open511 (major events and weather conditions) and Earthquakes
-  Canada's FDSN text service (the last 24 hours; its distance filter is ignored, so distance is checked here). Each
+  Canada's FDSN text service (the last 24 hours; its distance filter is ignored, so distance is checked here) and BC
+  Hydro's outage map data (`outages-map-data.json`, no sign-in; times in epoch ms, polygons as flat longitude, latitude
+  lists). An outage whose area covers the home is "severe" (on the strip by default), one within `alerts.powerKm`
+  (default 5 km) is "moderate" from 1,000 customers out and "minor" below; restored outages drop out. Each
   source is cached on its own and one failing never hides the others. The red strip sits in the layout's flow, so it
   pushes the widgets down rather than covering them; a tap dismisses it on that screen (localStorage) until a new
   alert arrives.

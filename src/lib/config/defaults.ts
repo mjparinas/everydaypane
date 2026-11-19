@@ -103,10 +103,11 @@ export function defaultConfig(): DashboardConfig {
     views: structuredClone([home, morning, calendar, night]),
     alerts: {
       enabled: true,
-      sources: { alertReady: true, weather: true, roads: true, earthquakes: true },
+      sources: { alertReady: true, weather: true, roads: true, earthquakes: true, power: true },
       banner: "moderate",
       radiusKm: 100,
       minMagnitude: 4,
+      powerKm: 5,
     },
     burnIn: { shift: true, maxPixels: 6, minutes: 3 },
     schedule: {

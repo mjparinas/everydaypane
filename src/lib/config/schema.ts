@@ -220,16 +220,25 @@ export const configSchema = z
     themeId: id,
     themes: z.array(themeSchema).min(1).max(30),
     views: z.array(viewSchema).min(1).max(30),
-    // Emergency alerts (Melvin, 2026-11-17): Alert Ready (NAAD), Environment Canada weather alerts, DriveBC road events
-    // and Earthquakes Canada, for the area around location. Alerts at or above `banner` show as a red strip across the
+    // Emergency alerts (Melvin, 2026-11-17): Alert Ready (NAAD), Environment Canada weather alerts, DriveBC road events,
+    // Earthquakes Canada and BC Hydro outages, for the area around location. Alerts at or above `banner` show as a red strip across the
     // top of every screen until someone taps to dismiss it (Melvin, 2026-11-17: a strip, not a full-screen takeover);
     // the alerts widget lists them all.
     alerts: z.object({
       enabled: z.boolean(),
-      sources: z.object({ alertReady: z.boolean(), weather: z.boolean(), roads: z.boolean(), earthquakes: z.boolean() }),
+      // BC Hydro power outages (Melvin, 2026-11-19) default on, so a document saved before they existed still loads.
+      sources: z.object({
+        alertReady: z.boolean(),
+        weather: z.boolean(),
+        roads: z.boolean(),
+        earthquakes: z.boolean(),
+        power: z.boolean().default(true),
+      }),
       banner: z.enum(["extreme", "severe", "moderate", "minor", "never"]),
       radiusKm: z.number().int().min(10).max(500),
       minMagnitude: z.number().min(2).max(9),
+      // Power outages count when their area covers the home or is within this many km of it.
+      powerKm: z.number().int().min(0).max(50).default(5),
     }),
     // Burn-in protection: the whole layout drifts a few pixels every few minutes so static edges never sit on the same
     // pixels for hours, and night periods can dim the screen (periodSchema.dim).

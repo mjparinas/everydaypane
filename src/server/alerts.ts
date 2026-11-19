@@ -14,12 +14,15 @@ import { cached } from "./cache";
 //   (Environment Canada's own GeoMet API refuses automated readers; NAAD carries the same CAP messages.)
 // - DriveBC road events from Open511: closures and major incidents (washouts, snow, torrential rain) within the radius.
 // - Earthquakes Canada (NRCan's FDSN service): the last 24 hours, at or above the magnitude set, within the radius.
+// - BC Hydro power outages (Melvin, 2026-11-19): the outage map's own JSON, outages whose area covers the home or is
+//   within `powerKm` of it.
 //
 // Each source is fetched and cached on its own, so one being down never hides the others.
 
 const NAAD_FEED = "https://rss.naad-adna.pelmorex.com/";
 const OPEN511 = "https://api.open511.gov.bc.ca/events";
 const QUAKES = "https://earthquakescanada.nrcan.gc.ca/fdsnws/event/1/query";
+const BC_HYDRO = "https://www.bchydro.com/power-outages/app/outages-map-data.json";
 
 async function getText(url: string): Promise<string> {
   const r = await fetch(url, { headers: { "User-Agent": "Everydaypane/1.0" }, signal: AbortSignal.timeout(10_000) });
@@ -204,6 +207,77 @@ export function parseQuakes(text: string, at: { lat: number; lon: number }, radi
   return out;
 }
 
+// ---- BC Hydro ----
+
+interface HydroOutage {
+  id?: number | string;
+  municipality?: string;
+  area?: string;
+  cause?: string;
+  numCustomersOut?: number;
+  crewStatusDescription?: string;
+  crewEtr?: number | null;
+  showEtr?: boolean;
+  dateOff?: number;
+  dateOn?: number | null;
+  lastUpdated?: number;
+  latitude?: number;
+  longitude?: number;
+  polygon?: number[];
+}
+
+/**
+ * The outage map's list (a JSON array; times in epoch ms; `polygon` a flat list of longitude, latitude pairs). An outage
+ * whose area covers the home is severe, so it reaches the red strip by default; one nearby is moderate when it leaves
+ * 1,000 or more customers in the dark, minor otherwise. Restored outages are left out.
+ */
+export function parseHydro(
+  raw: unknown,
+  at: { lat: number; lon: number },
+  radiusKm: number,
+  timeZone: string,
+  now: number,
+): EmergencyAlert[] {
+  if (!Array.isArray(raw)) return [];
+  const time = new Intl.DateTimeFormat("en-CA", { timeZone, hour: "numeric", minute: "2-digit", weekday: "short" });
+  const out: EmergencyAlert[] = [];
+  for (const o of raw as HydroOutage[]) {
+    if (o.id === undefined || (typeof o.dateOn === "number" && o.dateOn <= now)) continue;
+    const flat = Array.isArray(o.polygon) ? o.polygon.filter((n) => typeof n === "number") : [];
+    const poly: [number, number][] = [];
+    for (let i = 0; i + 1 < flat.length; i += 2) poly.push([flat[i + 1] ?? 0, flat[i] ?? 0]);
+    const here = poly.length >= 3 && insidePolygon(at.lat, at.lon, poly);
+    const points: [number, number][] = [...poly];
+    if (typeof o.latitude === "number" && typeof o.longitude === "number") points.push([o.latitude, o.longitude]);
+    const km = Math.min(Infinity, ...points.map(([la, lo]) => distanceKm(at.lat, at.lon, la, lo)));
+    if (!here && !(km <= radiusKm)) continue;
+    const customers = Math.max(0, Math.round(Number(o.numCustomersOut) || 0));
+    const place = (o.area || o.municipality || "").trim();
+    const details = [
+      o.cause?.trim(),
+      o.crewStatusDescription?.trim(),
+      o.showEtr !== false && typeof o.crewEtr === "number" && o.crewEtr > now ? `Power back by about ${time.format(o.crewEtr)}` : "",
+    ].filter(Boolean);
+    out.push({
+      id: `bchydro:${o.id}`,
+      source: "power",
+      severity: here ? "severe" : customers >= 1000 ? "moderate" : "minor",
+      title: clip(
+        `${here ? "Power outage here" : "Power outage nearby"}: ${customers.toLocaleString("en-CA")} ${customers === 1 ? "customer" : "customers"}`,
+        120,
+      ),
+      area: clip(
+        [place, place && o.municipality && !place.includes(o.municipality) ? o.municipality : ""].filter(Boolean).join(", ") || "BC Hydro",
+        160,
+      ),
+      description: clip(details.map((d) => (d && /[.!?]$/.test(d) ? d : `${d}.`)).join(" "), 700),
+      sent: Number(o.lastUpdated) || Number(o.dateOff) || now,
+      expires: null,
+    });
+  }
+  return out;
+}
+
 // ---- Together ----
 
 const sortAlerts = (list: EmergencyAlert[]) => [...list].sort((a, b) => rank(a.severity) - rank(b.severity) || b.sent - a.sent);
@@ -245,6 +319,17 @@ export async function alertsFeed(config: DashboardConfig, now = Date.now()): Pro
         `alerts:quakes:${loc}:${a.radiusKm}:${a.minMagnitude}`,
         5 * 60_000,
         async () => parseQuakes(await getText(url), at, a.radiusKm, a.minMagnitude),
+        now,
+      ).then((r) => r.value),
+    );
+  }
+
+  if (a.sources.power) {
+    jobs.push(
+      cached(
+        `alerts:power:${loc}:${a.powerKm}`,
+        5 * 60_000,
+        async () => parseHydro(JSON.parse(await getText(BC_HYDRO)), at, a.powerKm, config.location.timeZone, now),
         now,
       ).then((r) => r.value),
     );
