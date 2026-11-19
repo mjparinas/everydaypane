@@ -2,7 +2,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { newWidget } from "@/lib/config/widgets";
-import type { DisplayPayload, TasksData } from "@/lib/display/types";
+import type { DisplayPayload, TasksData, TransitData, TransitDeparture } from "@/lib/display/types";
 
 import { shortTime } from "./format";
 import { kindOf, label, weatherIcon } from "./icons";
@@ -14,6 +14,7 @@ import { controlFor, stateText } from "./widgets/ha";
 import { meals } from "./widgets/meals";
 import { F, media, nowPlaying, positionNow } from "./widgets/media";
 import { dueLabel, shownLists, tasks, UNDO_MS } from "./widgets/tasks";
+import { delayLabel, minutesLabel, shownDepartures, transit } from "./widgets/transit";
 
 const ctx = { payload: {} as DisplayPayload, timeZone: "America/Vancouver", hour12: true };
 
@@ -380,5 +381,62 @@ describe("month calendar", () => {
 
   it("leaves the title out when it is switched off, keeping the grid", async () => {
     expect(await month(false)).toEqual({ title: null, days: 35 });
+  });
+});
+
+describe("TransLink departures", () => {
+  const NOW = 1_795_000_000;
+  const dep = (route: string, inMin: number, delay: number | null = 0, live = true): TransitDeparture => ({
+    route,
+    headsign: route === "502" ? "Langley Centre" : "Aldergrove",
+    time: NOW + inMin * 60,
+    delay,
+    live,
+  });
+
+  it("labels minutes to go and how late a bus is", () => {
+    expect(minutesLabel(NOW + 30, NOW, "3:07")).toBe("Now");
+    expect(minutesLabel(NOW + 4 * 60 + 59, NOW, "3:10")).toBe("4 min");
+    expect(minutesLabel(NOW + 75 * 60, NOW, "4:21")).toBe("4:21");
+    expect(delayLabel(dep("502", 5, 180))).toEqual({ text: "3 min late", cls: "tl-late" });
+    expect(delayLabel(dep("502", 5, -120))).toEqual({ text: "2 min early", cls: "tl-early" });
+    expect(delayLabel(dep("502", 5, 20))).toEqual({ text: "On time", cls: "tl-ontime" });
+    expect(delayLabel(dep("502", 5, null, false))).toEqual({ text: "Scheduled", cls: "" });
+  });
+
+  it("keeps the widget's routes, drops buses too soon to walk to, and cuts to the count", () => {
+    const list = [dep("502", 2), dep("503", 6), dep("502", 9), dep("502", 20), dep("502", 30)];
+    expect(shownDepartures(list, { routes: [], count: 3, walkMinutes: 0 }, NOW).map((d) => d.time - NOW)).toEqual([120, 360, 540]);
+    expect(shownDepartures(list, { routes: ["502"], count: 2, walkMinutes: 5 }, NOW).map((d) => d.time - NOW)).toEqual([540, 1200]);
+  });
+
+  it("draws each stop's next buses from the shared feed", async () => {
+    vi.useFakeTimers({ now: NOW * 1000, toFake: ["Date"] });
+    const data: TransitData = { updatedAt: 0, configured: true, stops: { "100": [dep("502", 4, 180), dep("503", 12, null, false)] } };
+    const gets: string[] = [];
+    vi.stubGlobal("fetch", (url: string) => {
+      gets.push(url);
+      return Promise.resolve(Response.json(data));
+    });
+    const el = document.createElement("div");
+    const w = { ...newWidget("transit", "t", { x: 0, y: 0 }), stops: [{ id: "100", code: "55210", name: "Fraser Hwy @ 200 St" }] };
+    const stop = transit(el, w, ctx);
+    await vi.waitFor(() => expect(el.querySelectorAll(".tl-row")).toHaveLength(2));
+    expect(gets[0]).toBe("/api/display/transit/");
+    expect(el.querySelector(".tl-name")?.textContent).toBe("Fraser Hwy @ 200 St #55210");
+    const rows = [...el.querySelectorAll(".tl-row")].map((r) => r.textContent);
+    expect(rows).toEqual(["502Langley Centre4:10 a.m. · 3 min late4 min", "503Aldergrove4:18 a.m. · Scheduled12 min"]);
+    expect(el.textContent).toContain("TransLink");
+    stop();
+    vi.unstubAllGlobals();
+  });
+
+  it("says what to set up first", async () => {
+    vi.stubGlobal("fetch", () => Promise.resolve(Response.json({ updatedAt: 0, configured: false, stops: {} })));
+    const el = document.createElement("div");
+    const stop = transit(el, newWidget("transit", "t2", { x: 0, y: 0 }), ctx);
+    await vi.waitFor(() => expect(el.textContent).toContain("TransLink API key"));
+    stop();
+    vi.unstubAllGlobals();
   });
 });

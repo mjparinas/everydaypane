@@ -45,6 +45,8 @@ node scripts/e2e.mjs   # Playwright browser tests against the build (CHROMIUM_PA
   the PNG icons, `favicon.ico` and the web app manifest (`src/app/manifest.ts`) are made from them.
 - **Month calendar title** (Melvin, 2026-11-19: "add a toggle to show/hide month title"): the month widget's
   "November 2026" line can be switched off in its settings (`showTitle`, on by default); the grid takes the space.
+- **TransLink departures** (Melvin, 2026-11-19: "add translink"): a TransLink widget with the next buses from up to six
+  picked stops, live from TransLink's GTFS-realtime feed (see Architecture).
 - **Canadian English** in everything a person reads (colour, centre, favourite), as in Liftsmith.
 
 ## Display: super lightweight (rule, Melvin, 2026-11-17)
@@ -120,6 +122,15 @@ panel can be complex if you need it to be."
   with ical.js (recurring events, exceptions and the file's own time zones; floating times in the dashboard's zone),
   caches it 15 minutes, and merges it into the same calendar feed as Google (`src/server/calendars.ts`). A link that
   fails never hides Google's events or the other links. Only public https addresses are fetched.
+- **TransLink:** departure times come only from the GTFS-realtime trip updates
+  (`gtfsapi.translink.ca/v3/gtfsrealtime`, key in `TRANSLINK_API_KEY` in Vercel), decoded by a small hand-written
+  protobuf reader (`src/server/gtfs.ts`, no protobuf dependency). Route numbers, headsigns and the stop list come from
+  the static GTFS zip, read with HTTP range requests (only `routes.txt`, `trips.txt`, `stops.txt`; never
+  `stop_times.txt`) and cached three days. A widget stores its stops (`id`, the stop number on the sign, name), so only
+  stops on widgets are kept from the region-wide feed. One 30-second read of TransLink is shared by every display
+  (`/api/display/transit/`, polled every 30 seconds); the wall counts minutes down from absolute times between reads.
+  TransLink's licence notice is shown in the widget's settings and as "Live times from TransLink" on the wall.
+  Setup: `docs/translink.md`.
 - **Emergency alerts:** `src/server/alerts.ts` reads NAAD's Atom feed (Alert Ready, and Environment Canada's warnings,
   whose own GeoMet API refuses automated readers), DriveBC Open511 (major events and weather conditions) and Earthquakes
   Canada's FDSN text service (the last 24 hours; its distance filter is ignored, so distance is checked here). Each

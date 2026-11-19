@@ -14,6 +14,7 @@ import { messages } from "./messages";
 import { note } from "./note";
 import { photos } from "./photos";
 import { tasks } from "./tasks";
+import { transit } from "./transit";
 import type { Cleanup, WidgetContext } from "./types";
 import { weather } from "./weather";
 import { wifiQr } from "./wifi";
@@ -57,5 +58,7 @@ export function mountWidget(el: HTMLElement, w: Widget, ctx: WidgetContext): Cle
       return tasks(el, w, ctx);
     case "media":
       return media(el, w, ctx);
+    case "transit":
+      return transit(el, w, ctx);
   }
 }

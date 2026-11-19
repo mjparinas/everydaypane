@@ -1,5 +1,7 @@
 "use client";
 
+import { useState } from "react";
+
 import type { CountdownEvent, DashboardConfig, Widget } from "@/lib/config/schema";
 import { WIDGETS } from "@/lib/config/widgets";
 import { MEAL_LABELS, MEAL_SLOTS } from "@/lib/meals";
@@ -473,6 +475,28 @@ function TypeSettings({
         </>
       );
     }
+    case "transit": {
+      const e = edit<"transit">();
+      return (
+        <>
+          <TransitStops
+            stops={w.stops}
+            onAdd={(s) => e((x) => void (x.stops = [...x.stops, s]))}
+            onRemove={(id) => e((x) => void (x.stops = x.stops.filter((s) => s.id !== id)))}
+          />
+          <RoutesField routes={w.routes} onChange={(routes) => e((x) => void (x.routes = routes))} />
+          <NumberInput label="Departures per stop" value={w.count} min={1} max={12} onChange={(v) => e((x) => void (x.count = v))} />
+          <NumberInput
+            label="Walk to the stop (minutes)"
+            value={w.walkMinutes}
+            min={0}
+            max={60}
+            hint="Buses leaving sooner than this are left out, since nobody could catch them."
+            onChange={(v) => e((x) => void (x.walkMinutes = v))}
+          />
+        </>
+      );
+    }
   }
 }
 
@@ -558,5 +582,119 @@ function CountdownEvents({ events, count, onChange }: { events: CountdownEvent[]
         Add a date
       </button>
     </>
+  );
+}
+
+interface StopMatch {
+  id: string;
+  code: string;
+  name: string;
+  km: number;
+}
+type TransitStop = { id: string; code: string; name: string };
+
+/** Finds TransLink stops by the number on the stop's sign or by name; with nothing typed, the ones nearest home. */
+function TransitStops({
+  stops,
+  onAdd,
+  onRemove,
+}: {
+  stops: TransitStop[];
+  onAdd: (s: TransitStop) => void;
+  onRemove: (id: string) => void;
+}) {
+  const [q, setQ] = useState("");
+  const [matches, setMatches] = useState<StopMatch[] | null>(null);
+  const [note, setNote] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  async function search(e?: React.FormEvent) {
+    e?.preventDefault();
+    setBusy(true);
+    setNote("");
+    const r = await fetch(`/api/admin/transit/?${new URLSearchParams({ q: q.trim() })}`).catch(() => null);
+    const body = (await r?.json().catch(() => ({}))) as { stops?: StopMatch[]; keySet?: boolean; error?: string } | undefined;
+    setBusy(false);
+    setMatches(body?.stops ?? []);
+    if (!r?.ok) setNote(body?.error ?? "Couldn't search TransLink's stops.");
+    else if (body?.keySet === false) setNote("Departures show once TRANSLINK_API_KEY is set in Vercel (docs/translink.md).");
+  }
+
+  return (
+    <div className="grid gap-2">
+      <p className="text-sm font-medium">Stops</p>
+      {stops.length === 0 && <p className="text-xs text-soft">No stops yet. Find one below.</p>}
+      {stops.map((s) => (
+        <div key={s.id} className="flex items-center justify-between gap-2 text-sm">
+          <span className="min-w-0 truncate">
+            {s.name} {s.code && <span className="text-soft">#{s.code}</span>}
+          </span>
+          <button type="button" className="btn-ghost" onClick={() => onRemove(s.id)}>
+            Remove
+          </button>
+        </div>
+      ))}
+      {stops.length < 6 && (
+        <form className="flex items-end gap-2" onSubmit={(e) => void search(e)}>
+          <div className="min-w-0 flex-1">
+            <Text label="Find a stop" value={q} maxLength={60} placeholder="Stop number or name; empty for the nearest" onChange={setQ} />
+          </div>
+          <button className="btn-primary" disabled={busy}>
+            {busy ? "Finding…" : "Find"}
+          </button>
+        </form>
+      )}
+      {note && <p className="text-xs text-soft">{note}</p>}
+      {matches && stops.length < 6 && (
+        <div className="grid gap-1">
+          {matches.length === 0 && !note && <p className="text-xs text-soft">No stops matched.</p>}
+          {matches
+            .filter((m) => !stops.some((s) => s.id === m.id))
+            .map((m) => (
+              <button
+                key={m.id}
+                type="button"
+                className="btn-ghost justify-start text-left"
+                onClick={() => onAdd({ id: m.id, code: m.code, name: m.name })}
+              >
+                {m.name} {m.code && <span className="text-soft">#{m.code}</span>} <span className="text-soft">· {m.km} km</span>
+              </button>
+            ))}
+        </div>
+      )}
+      <p className="text-xs text-soft">
+        Route and arrival data used in this product or service is provided by permission of TransLink. TransLink assumes no responsibility
+        for the accuracy or currency of the Data used in this product or service.
+      </p>
+    </div>
+  );
+}
+
+/** Route numbers to show, typed as "502, 503"; kept as typed until it parses, so a trailing comma isn't eaten. */
+function RoutesField({ routes, onChange }: { routes: string[]; onChange: (routes: string[]) => void }) {
+  const [text, setText] = useState(routes.join(", "));
+  return (
+    <Text
+      label="Only these routes"
+      value={text}
+      maxLength={200}
+      placeholder="All routes"
+      hint="Route numbers separated by commas, like 502, 503. Empty shows every route."
+      onChange={(v) => {
+        setText(v);
+        onChange(
+          [
+            ...new Set(
+              v
+                .split(/[\s,]+/)
+                .map((r) => r.trim().toUpperCase())
+                .filter(Boolean),
+            ),
+          ]
+            .slice(0, 30)
+            .map((r) => r.slice(0, 12)),
+        );
+      }}
+    />
   );
 }

@@ -992,6 +992,89 @@ body {
   color: var(--muted);
 }
 
+/* TransLink departures */
+.w-transit {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45em;
+  height: 100%;
+  overflow: hidden;
+  font-size: clamp(13px, min(4.5cqw, 9cqh), 26px);
+}
+.tl-stop {
+  display: grid;
+  gap: 0.25em;
+  min-height: 0;
+}
+.tl-name {
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 0.8em;
+  font-weight: 600;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.tl-list {
+  display: grid;
+  gap: 0.3em;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.tl-row {
+  display: flex;
+  align-items: center;
+  gap: 0.55em;
+  min-width: 0;
+}
+.tl-route {
+  flex: none;
+  min-width: 2.6em;
+  padding: 0.1em 0.4em;
+  border-radius: 0.35em;
+  background: #0b5fa5;
+  color: #fff;
+  font-weight: 700;
+  text-align: center;
+}
+.tl-where {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+  line-height: 1.15;
+}
+.tl-sign,
+.tl-delay {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.tl-delay {
+  color: var(--muted);
+  font-size: 0.7em;
+}
+.tl-late {
+  color: var(--danger);
+}
+.tl-ontime {
+  color: #2e9b57;
+}
+.tl-mins {
+  flex: none;
+  font-size: 1.15em;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.tl-none {
+  color: var(--muted);
+  font-size: 0.8em;
+}
+.tl-src {
+  margin-top: auto;
+  color: var(--muted);
+  font-size: 0.6em;
+}
+
 /* Emergency strip: across the top, pushing the layout down rather than covering it or the whole screen. */
 .alert-strip {
   position: relative;

@@ -23,6 +23,8 @@ export const env = {
   spotifyClientSecret: () => process.env.SPOTIFY_CLIENT_SECRET ?? "",
   sonosClientId: () => process.env.SONOS_CLIENT_ID ?? "",
   sonosClientSecret: () => process.env.SONOS_CLIENT_SECRET ?? "",
+  // TransLink's open API (docs/translink.md): one key for the realtime departures feed.
+  translinkKey: () => process.env.TRANSLINK_API_KEY ?? "",
   cronSecret: () => process.env.CRON_SECRET ?? "",
   isProduction: () => process.env.VERCEL_ENV === "production",
 };
