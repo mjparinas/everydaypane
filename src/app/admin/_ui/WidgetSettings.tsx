@@ -1,6 +1,6 @@
 "use client";
 
-import type { CountdownEvent, DashboardConfig, Widget } from "@/lib/config/schema";
+import type { CountdownEvent, DashboardConfig, TimerPreset, Widget } from "@/lib/config/schema";
 import { WIDGETS } from "@/lib/config/widgets";
 import { FERRY_ROUTES, ferryRouteName } from "@/lib/ferries";
 import { MEAL_LABELS, MEAL_SLOTS } from "@/lib/meals";
@@ -544,7 +544,134 @@ function TypeSettings({
         </>
       );
     }
+    case "timer": {
+      const e = edit<"timer">();
+      return (
+        <>
+          <TimerPresets presets={w.presets} onChange={e} />
+          <AlertSettings w={w} onChange={e} />
+        </>
+      );
+    }
+    case "pomodoro": {
+      const e = edit<"pomodoro">();
+      return (
+        <>
+          <div className="grid grid-cols-3 gap-2">
+            <NumberInput label="Focus (min)" value={w.workMinutes} min={1} max={120} onChange={(v) => e((x) => void (x.workMinutes = v))} />
+            <NumberInput
+              label="Break (min)"
+              value={w.shortBreakMinutes}
+              min={1}
+              max={60}
+              onChange={(v) => e((x) => void (x.shortBreakMinutes = v))}
+            />
+            <NumberInput
+              label="Long break (min)"
+              value={w.longBreakMinutes}
+              min={1}
+              max={90}
+              onChange={(v) => e((x) => void (x.longBreakMinutes = v))}
+            />
+          </div>
+          <NumberInput
+            label="Focus rounds before the long break"
+            value={w.rounds}
+            min={1}
+            max={12}
+            onChange={(v) => e((x) => void (x.rounds = v))}
+          />
+          <Toggle
+            label="Start the next phase by itself"
+            checked={w.autoStart}
+            hint="Off: it waits for a tap on Start after each focus round and break."
+            onChange={(v) => e((x) => void (x.autoStart = v))}
+          />
+          <AlertSettings w={w} onChange={e} />
+        </>
+      );
+    }
   }
+}
+
+type Alerting = Extract<Widget, { type: "timer" | "pomodoro" }>;
+
+/** How a timer or the pomodoro says it's done. The widget itself always flashes. */
+function AlertSettings<T extends Alerting>({ w, onChange }: { w: T; onChange: (change: (x: T) => void) => void }) {
+  return (
+    <>
+      <Toggle label="Sound" checked={w.sound} onChange={(v) => onChange((x) => void (x.sound = v))} />
+      <Toggle
+        label="Full-screen alert"
+        checked={w.fullScreen}
+        hint="Flashes the whole screen with what's done, until someone taps."
+        onChange={(v) => onChange((x) => void (x.fullScreen = v))}
+      />
+      <NumberInput
+        label="Stop alerting after (seconds)"
+        value={w.ringSeconds}
+        min={5}
+        max={600}
+        onChange={(v) => onChange((x) => void (x.ringSeconds = v))}
+      />
+    </>
+  );
+}
+
+function TimerPresets({ presets, onChange }: { presets: TimerPreset[]; onChange: Edit<"timer"> }) {
+  const setLength = (i: number, minutes: number, seconds: number) =>
+    onChange((x) => void (x.presets[i]!.seconds = Math.min(86_400, Math.max(5, minutes * 60 + seconds))));
+  return (
+    <div className="grid gap-3">
+      <p className="text-xs text-soft">The buttons on the wall. A tap starts a timer; up to six run at once.</p>
+      {presets.map((p, i) => (
+        <div key={p.id} className="grid gap-2 rounded-xl border border-line p-3">
+          <div className="grid grid-cols-[4rem_1fr] gap-2">
+            <Text label="Emoji" value={p.emoji} maxLength={8} onChange={(v) => onChange((x) => void (x.presets[i]!.emoji = v))} />
+            <Text
+              label="Name"
+              value={p.label}
+              maxLength={30}
+              placeholder="Just the time"
+              onChange={(v) => onChange((x) => void (x.presets[i]!.label = v))}
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <NumberInput
+              label="Minutes"
+              value={Math.floor(p.seconds / 60)}
+              min={0}
+              max={1440}
+              onChange={(v) => setLength(i, v, p.seconds % 60)}
+            />
+            <NumberInput
+              label="Seconds"
+              value={p.seconds % 60}
+              min={0}
+              max={59}
+              onChange={(v) => setLength(i, Math.floor(p.seconds / 60), v)}
+            />
+          </div>
+          <button
+            type="button"
+            className="btn-ghost justify-self-start text-bad"
+            onClick={() => onChange((x) => void x.presets.splice(i, 1))}
+          >
+            Remove
+          </button>
+        </div>
+      ))}
+      {presets.length < 12 && (
+        <button
+          type="button"
+          className="btn-ghost justify-self-start"
+          onClick={() => onChange((x) => void x.presets.push({ id: newId("tm"), label: "", emoji: "", seconds: 300 }))}
+        >
+          Add a timer button
+        </button>
+      )}
+    </div>
+  );
 }
 
 function SonosSpeaker({ value, onChange }: { value: string; onChange: (v: string) => void }) {
