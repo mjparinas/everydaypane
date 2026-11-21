@@ -304,3 +304,25 @@ export interface ChoresData {
   chores: { id: string; name: string; emoji: string; stars: number }[];
   due: { choreId: string; personId: string; done: boolean }[];
 }
+
+/** One bus (or train) leaving a stop, from TransLink's live feed (src/server/translink.ts). */
+export interface TransitDeparture {
+  /** The number riders know, like "502" or "R1". */
+  route: string;
+  /** Where it's going, without the route number ("Langley Centre"). */
+  headsign: string;
+  /** Epoch seconds of the predicted departure. */
+  time: number;
+  /** Seconds late (negative: early), when TransLink says. */
+  delay: number | null;
+  /** A vehicle is on the trip, so the time is a live prediction rather than the timetable. */
+  live: boolean;
+}
+
+export interface TransitData {
+  updatedAt: number;
+  /** False until TRANSLINK_API_KEY is set in Vercel. */
+  configured: boolean;
+  /** Stop id → its next departures, soonest first. */
+  stops: Record<string, TransitDeparture[]>;
+}

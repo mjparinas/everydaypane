@@ -143,6 +143,14 @@ export const WIDGETS: { [T in WidgetType]: WidgetInfo<T> } = {
     minSize: { w: 2, h: 2 },
     defaults: () => ({ listIds: [], count: 8, showDue: true, allowCheck: true }),
   },
+  transit: {
+    label: "TransLink",
+    description: "Next buses from your stops, live",
+    icon: "🚌",
+    size: { w: 4, h: 3 },
+    minSize: { w: 2, h: 2 },
+    defaults: () => ({ stops: [], routes: [], count: 4, walkMinutes: 0 }),
+  },
   camera: {
     label: "Camera",
     description: "A UniFi Protect camera via Home Assistant",
