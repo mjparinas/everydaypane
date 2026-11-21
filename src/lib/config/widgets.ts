@@ -77,7 +77,7 @@ export const WIDGETS: { [T in WidgetType]: WidgetInfo<T> } = {
     icon: "📆",
     size: { w: 8, h: 6 },
     minSize: { w: 4, h: 4 },
-    defaults: () => ({ weekStartsOn: 0, showTitle: true }),
+    defaults: () => ({ weekStartsOn: 0, showTitle: true, showWeekends: true }),
   },
   garbage: {
     label: "Garbage day",
@@ -181,6 +181,14 @@ export const WIDGETS: { [T in WidgetType]: WidgetInfo<T> } = {
     size: { w: 4, h: 4 },
     minSize: { w: 2, h: 2 },
     defaults: () => ({ precip: "rain" as const, zoom: 8, pastMinutes: 60, forecastMinutes: 60, animate: true }),
+  },
+  ferries: {
+    label: "BC Ferries",
+    description: "Next sailings and how full they are",
+    icon: "⛴️",
+    size: { w: 4, h: 3 },
+    minSize: { w: 2, h: 2 },
+    defaults: () => ({ routes: ["TSASWB" as const], count: 3, showVessel: false }),
   },
 };
 

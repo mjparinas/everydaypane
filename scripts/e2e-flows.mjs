@@ -111,16 +111,53 @@ export const flows = [
       await page.reload();
       await page.getByTestId("grid-editor").waitFor();
       const widget = page.locator('[data-widget="home-countdown"]');
-      // The keyboard resizes a widget the same way dragging its corner does, and is steadier in a test.
+      // The keyboard moves the bottom-right corner, as dragging that corner does.
       await widget.focus();
       await page.keyboard.press("Shift+ArrowLeft");
       const after = await widget.getAttribute("aria-label");
       expect(after.includes("2 by 3"), `the widget didn't shrink: ${after}`);
+      // Any corner resizes (Melvin, 2026-11-21). Dragging the top-left one a cell left grows the widget onto the
+      // photos, which other widgets may cover, while its bottom-right corner stays put.
+      const grid = await page.getByTestId("grid-editor").boundingBox();
+      const handle = await widget.locator('[data-corner="nw"]').boundingBox();
+      const cell = grid.width / 12;
+      await page.mouse.move(handle.x + handle.width / 2, handle.y + handle.height / 2);
+      await page.mouse.down();
+      await page.mouse.move(handle.x + handle.width / 2 - cell, handle.y + handle.height / 2, { steps: 5 });
+      await page.mouse.up();
+      const grown = await widget.getAttribute("aria-label");
+      expect(grown.includes("3 by 3 at column 9, row 6"), `the top-left corner didn't resize: ${grown}`);
       await page.getByRole("button", { name: "Save", exact: true }).click();
       await page.getByText("Saved. Displays update within 30 seconds.").waitFor();
       const { config } = await (await page.request.get(`${base}/api/admin/config/`)).json();
       const saved = config.views.find((v) => v.id === "home").widgets.find((w) => w.id === "home-countdown");
-      expect(saved.w === 2 && saved.h === 3, `saved as ${saved.w} by ${saved.h}`);
+      expect(saved.x === 8 && saved.w === 3 && saved.h === 3, `saved as ${saved.w} by ${saved.h} at ${saved.x}`);
+    },
+  },
+  {
+    name: "settings download as a backup file and restore from it",
+    async run({ page, base, expect }) {
+      await page.goto(`${base}/admin/#settings`);
+      await page.reload();
+      const [download] = await Promise.all([page.waitForEvent("download"), page.getByRole("link", { name: "Download backup" }).click()]);
+      expect(/^everydaypane-settings-\d{4}-\d{2}-\d{2}\.json$/.test(download.suggestedFilename()), download.suggestedFilename());
+      const file = await download.path();
+      // Change the settings behind the page's back, then put the backup's back.
+      const before = await (await page.request.get(`${base}/api/admin/config/`)).json();
+      const renamed = { ...before.config, name: "Renamed after the backup" };
+      const put = await page.request.put(`${base}/api/admin/config/`, {
+        headers: { origin: base },
+        data: { baseVersion: before.version, config: renamed },
+      });
+      expect(put.ok(), `status ${put.status()}`);
+      await page.reload();
+      await page.locator('input[type="file"][accept*="json"]').setInputFiles(file);
+      await page.getByTestId("restore-confirm").waitFor();
+      await page.getByRole("button", { name: "Restore these settings" }).click();
+      await page.getByText(/^Restored .*Displays pick it up within 30 seconds\.$/).waitFor();
+      const after = await (await page.request.get(`${base}/api/admin/config/`)).json();
+      expect(after.config.name === before.config.name, `name is ${after.config.name}`);
+      expect(after.version === before.version + 2, `version ${after.version}`);
     },
   },
   {

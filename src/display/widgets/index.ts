@@ -7,6 +7,7 @@ import { clock } from "./clock";
 import { commute } from "./commute";
 import { countdown } from "./countdown";
 import { date } from "./date";
+import { ferries } from "./ferries";
 import { garbage } from "./garbage";
 import { camera, haEntity } from "./ha";
 import { meals } from "./meals";
@@ -63,5 +64,7 @@ export function mountWidget(el: HTMLElement, w: Widget, ctx: WidgetContext): Cle
       return commute(el, w, ctx);
     case "radar":
       return radar(el, w, ctx);
+    case "ferries":
+      return ferries(el, w, ctx);
   }
 }

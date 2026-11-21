@@ -866,6 +866,9 @@ body {
   grid-template-columns: repeat(7, minmax(0, 1fr));
   gap: 3px;
 }
+.mo-5 {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
 .mo-names {
   margin-bottom: 3px;
 }
@@ -1056,6 +1059,97 @@ body {
 }
 .cm-3 .cm-time {
   color: var(--danger);
+}
+
+/* BC Ferries: each route's name, then its next sailings with a bar for how full each one is. */
+.w-ferries {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6em;
+  height: 100%;
+  overflow: hidden;
+  font-size: clamp(12px, min(4.5cqw, 9cqh), 26px);
+}
+.fe-route {
+  display: grid;
+  gap: 0.3em;
+}
+.fe-name {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.6em;
+  overflow: hidden;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.fe-dur,
+.fe-sub,
+.fe-none,
+.fe-asof {
+  color: var(--muted);
+  font-size: 0.8em;
+  font-weight: 400;
+}
+.fe-list {
+  display: grid;
+  gap: 0.3em;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.fe-row {
+  display: grid;
+  grid-template-columns: 5em 1fr;
+  column-gap: 0.6em;
+  align-items: center;
+}
+.fe-time {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.fe-cancelled .fe-time {
+  color: var(--muted);
+  text-decoration: line-through;
+}
+.fe-fill {
+  display: grid;
+  grid-template-columns: 1fr 4.5em;
+  gap: 0.5em;
+  align-items: center;
+}
+.fe-bar {
+  height: 0.5em;
+  overflow: hidden;
+  border-radius: 1em;
+  background: color-mix(in srgb, currentColor 15%, transparent);
+}
+.fe-bar-in {
+  display: block;
+  height: 100%;
+  background: var(--accent);
+  transform-origin: left;
+}
+.fe-pct {
+  font-size: 0.85em;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.fe-2 .fe-bar-in {
+  background: #f0a020;
+}
+.fe-3 .fe-bar-in {
+  background: var(--danger);
+}
+.fe-3 .fe-pct,
+.fe-bad,
+.fe-delayed .fe-sub {
+  color: var(--danger);
+}
+.fe-sub {
+  grid-column: 2;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 
 /* Emergency strip: across the top, pushing the layout down rather than covering it or the whole screen. */

@@ -2,6 +2,7 @@
 
 import type { CountdownEvent, DashboardConfig, Widget } from "@/lib/config/schema";
 import { WIDGETS } from "@/lib/config/widgets";
+import { FERRY_ROUTES, ferryRouteName } from "@/lib/ferries";
 import { MEAL_LABELS, MEAL_SLOTS } from "@/lib/meals";
 
 import { NumberInput, Select, Text, TextArea, Toggle } from "./fields";
@@ -31,6 +32,13 @@ export const TIME_ZONES = [
   { value: "Australia/Sydney", label: "Sydney" },
   { value: "UTC", label: "UTC" },
 ] as const;
+
+// The month calendar shows the whole month, or 1 to 6 weeks starting with this one (Melvin, 2026-11-21).
+type WeeksChoice = "month" | "1" | "2" | "3" | "4" | "5" | "6";
+const WEEKS_OPTIONS: { value: WeeksChoice; label: string }[] = [
+  { value: "month", label: "The whole month" },
+  ...(["1", "2", "3", "4", "5", "6"] as const).map((n) => ({ value: n, label: n === "1" ? "This week" : `${n} weeks from this one` })),
+];
 
 function zoneOptions(current: string) {
   return TIME_ZONES.some((z) => z.value === current) ? TIME_ZONES : [{ value: current, label: current }, ...TIME_ZONES];
@@ -225,6 +233,18 @@ function TypeSettings({
             ]}
             onChange={(v) => e((x) => void (x.weekStartsOn = v === "1" ? 1 : 0))}
           />
+          <Select
+            label="Show"
+            value={w.weeks === undefined ? "month" : (String(w.weeks) as WeeksChoice)}
+            options={WEEKS_OPTIONS}
+            onChange={(v) =>
+              e((x) => {
+                if (v === "month") delete x.weeks;
+                else x.weeks = Number(v);
+              })
+            }
+          />
+          <Toggle label="Show weekends" checked={w.showWeekends} onChange={(v) => e((x) => void (x.showWeekends = v))} />
           <Toggle label="Show the month title" checked={w.showTitle} onChange={(v) => e((x) => void (x.showTitle = v))} />
         </>
       );
@@ -305,6 +325,30 @@ function TypeSettings({
             hint="Environment Canada's extrapolation of where the rain is moving."
           />
           <Toggle label="Animate" checked={w.animate} onChange={(v) => e((x) => void (x.animate = v))} />
+        </>
+      );
+    }
+    case "ferries": {
+      const e = edit<"ferries">();
+      return (
+        <>
+          <NumberInput label="Sailings per route" value={w.count} min={1} max={8} onChange={(v) => e((x) => void (x.count = v))} />
+          <Toggle label="Show the ship's name" checked={w.showVessel} onChange={(v) => e((x) => void (x.showVessel = v))} />
+          <p className="text-xs text-soft">Pick up to four routes. These are the ones BC Ferries says how full they are for.</p>
+          {FERRY_ROUTES.map((code) => (
+            <Toggle
+              key={code}
+              label={ferryRouteName(code)}
+              checked={w.routes.includes(code)}
+              onChange={(on) =>
+                e((x) => {
+                  const next = on ? [...x.routes, code] : x.routes.filter((c) => c !== code);
+                  // At least one route, at most four (the schema refuses anything else).
+                  if (next.length >= 1 && next.length <= 4) x.routes = next;
+                })
+              }
+            />
+          ))}
         </>
       );
     }
