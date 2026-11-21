@@ -70,11 +70,11 @@ describe("Google Calendar data", () => {
     ]);
   });
 
-  it("covers the month grid around today and the next two weeks", () => {
+  it("covers the month grid around today and the next six weeks", () => {
     const now = Date.parse("2026-11-17T20:00:00Z");
-    expect(feedRange(now, "America/Vancouver")).toEqual({ from: "2026-10-25", to: "2026-12-08", today: "2026-11-17" });
-    // Late in the month the next two weeks reach past the grid.
-    expect(feedRange(Date.parse("2026-11-29T20:00:00Z"), "America/Vancouver").to).toBe("2026-12-14");
+    // Six weeks from this one (Sunday Nov 15 to Saturday Dec 26) reach past the month grid.
+    expect(feedRange(now, "America/Vancouver")).toEqual({ from: "2026-10-25", to: "2026-12-30", today: "2026-11-17" });
+    expect(feedRange(Date.parse("2026-11-29T20:00:00Z"), "America/Vancouver").to).toBe("2027-01-11");
   });
 });
 

@@ -81,6 +81,29 @@ export function findSpot(size: { w: number; h: number; type?: string }, grid: Gr
   return search(others.map((o) => ({ ...o, type: size.type }))) ?? search(others);
 }
 
+/** A widget's corners, which the editor's resize handles sit on. */
+export type Corner = "nw" | "ne" | "sw" | "se";
+export const CORNERS: Corner[] = ["nw", "ne", "sw", "se"];
+
+/**
+ * The rectangle after dragging one of its corners to `cell` (Melvin, 2026-11-21: "allow any corner of a widget to
+ * adjust the size"). The opposite corner stays where it is, the widget never gets smaller than `min`, and it never
+ * leaves the grid; whether the new size collides with other widgets is left to `fits`.
+ */
+export function resizeFrom(r: Cells, corner: Corner, cell: { x: number; y: number }, grid: Grid, min = { w: 1, h: 1 }): Cells {
+  const minW = Math.min(min.w, grid.cols);
+  const minH = Math.min(min.h, grid.rows);
+  const right = r.x + r.w - 1;
+  const bottom = r.y + r.h - 1;
+  const [left, newRight] = corner.endsWith("w")
+    ? [Math.max(0, Math.min(cell.x, right - minW + 1)), right]
+    : [r.x, Math.min(grid.cols - 1, Math.max(cell.x, r.x + minW - 1))];
+  const [top, newBottom] = corner.startsWith("n")
+    ? [Math.max(0, Math.min(cell.y, bottom - minH + 1)), bottom]
+    : [r.y, Math.min(grid.rows - 1, Math.max(cell.y, r.y + minH - 1))];
+  return { x: left, y: top, w: newRight - left + 1, h: newBottom - top + 1 };
+}
+
 /** The cell under a point, for a grid drawn in a box of this size with this gap between cells. */
 export function cellAt(px: number, py: number, box: { width: number; height: number }, grid: Grid, gap: number): { x: number; y: number } {
   const cw = (box.width - gap * (grid.cols - 1)) / grid.cols;

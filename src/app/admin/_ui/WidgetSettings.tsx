@@ -33,6 +33,13 @@ export const TIME_ZONES = [
   { value: "UTC", label: "UTC" },
 ] as const;
 
+// The month calendar shows the whole month, or 1 to 6 weeks starting with this one (Melvin, 2026-11-21).
+type WeeksChoice = "month" | "1" | "2" | "3" | "4" | "5" | "6";
+const WEEKS_OPTIONS: { value: WeeksChoice; label: string }[] = [
+  { value: "month", label: "The whole month" },
+  ...(["1", "2", "3", "4", "5", "6"] as const).map((n) => ({ value: n, label: n === "1" ? "This week" : `${n} weeks from this one` })),
+];
+
 function zoneOptions(current: string) {
   return TIME_ZONES.some((z) => z.value === current) ? TIME_ZONES : [{ value: current, label: current }, ...TIME_ZONES];
 }
@@ -226,6 +233,18 @@ function TypeSettings({
             ]}
             onChange={(v) => e((x) => void (x.weekStartsOn = v === "1" ? 1 : 0))}
           />
+          <Select
+            label="Show"
+            value={w.weeks === undefined ? "month" : (String(w.weeks) as WeeksChoice)}
+            options={WEEKS_OPTIONS}
+            onChange={(v) =>
+              e((x) => {
+                if (v === "month") delete x.weeks;
+                else x.weeks = Number(v);
+              })
+            }
+          />
+          <Toggle label="Show weekends" checked={w.showWeekends} onChange={(v) => e((x) => void (x.showWeekends = v))} />
           <Toggle label="Show the month title" checked={w.showTitle} onChange={(v) => e((x) => void (x.showTitle = v))} />
         </>
       );

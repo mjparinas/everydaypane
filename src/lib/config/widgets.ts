@@ -77,7 +77,7 @@ export const WIDGETS: { [T in WidgetType]: WidgetInfo<T> } = {
     icon: "📆",
     size: { w: 8, h: 6 },
     minSize: { w: 4, h: 4 },
-    defaults: () => ({ weekStartsOn: 0, showTitle: true }),
+    defaults: () => ({ weekStartsOn: 0, showTitle: true, showWeekends: true }),
   },
   garbage: {
     label: "Garbage day",

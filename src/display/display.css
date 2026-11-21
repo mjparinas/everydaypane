@@ -866,6 +866,9 @@ body {
   grid-template-columns: repeat(7, minmax(0, 1fr));
   gap: 3px;
 }
+.mo-5 {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
 .mo-names {
   margin-bottom: 3px;
 }

@@ -114,6 +114,11 @@ export const widgetSchema = z.discriminatedUnion("type", [
     // The "November 2026" line above the grid (Melvin, 2026-11-19: a toggle to hide it). Shown unless switched off, so
     // month widgets saved before the toggle existed look the same.
     showTitle: z.boolean().default(true),
+    // How many weeks to show, starting with this one (Melvin, 2026-11-21: "minimum 1, max is 6"). Left out, the widget
+    // shows the whole month as it always has, so month widgets saved before this setting look the same.
+    weeks: z.number().int().min(1).max(6).optional(),
+    // Saturday and Sunday columns (Melvin, 2026-11-21: "allow calendar to hide or show weekends"). Shown by default.
+    showWeekends: z.boolean().default(true),
   }),
   z.object({ ...base, type: z.literal("garbage"), weeks: z.number().int().min(1).max(8) }),
   z.object({
