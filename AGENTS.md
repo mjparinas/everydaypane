@@ -37,6 +37,7 @@ same change, and moves it out of **In progress** when it merges.
 | Message board (`messages`) | Family notes posted from phones | `messages` table |
 | Meals (`meals`) | Breakfast, lunch, dinner for a day or a week | `meals` table |
 | Alerts (`alerts`) | Current emergency alerts, optional "all clear" | See alerts below |
+| Chore chart (`chores`) | Each kid's chores today, **tap to tick off** (tap again to take back), stars this week and a weekly goal | Settings document + `chores_done` table |
 | To-dos (`tasks`) | Open Google Tasks; **tap to tick off, synced back to Google** (`allowCheck`, 4 s undo) | Google Tasks |
 
 **Display behaviour:** several views on a drag-and-drop grid (chosen rows and columns), **widgets layered on top of a photos widget**
@@ -50,7 +51,7 @@ no pinch zoom; settings reach displays by polling every 30 seconds.
 DriveBC road events and weather conditions, Earthquakes Canada. Each switchable in `config.alerts.sources`.
 
 **Admin and family:** magic-link sign-in (Resend), admin panel tabs (views and grid editor, themes, displays with
-copyable addresses, meals, settings for every integration), `/family/` for the message board and meals, Sentry.
+copyable addresses, meals, settings for every integration, Settings › Chores for the kids and their chores), `/family/` for the message board and meals, Sentry.
 
 **Integrations connected from Settings:** Google Calendar, Google Tasks, Google Photos (Picker), iCal calendar links,
 Amazon Photos, the photo library (Vercel Blob), Home Assistant (Cloudflare Tunnel + Access), Spotify, Sonos, garbage
@@ -111,6 +112,9 @@ node scripts/e2e.mjs   # Playwright browser tests against the build (CHROMIUM_PA
 - **Commute time** (Melvin, 2026-11-19): drive times with live traffic from home to up to six places (work, school),
   set up in Settings › Commute; a place can have a "be there by" time, and the widget then says when to leave (see
   Architecture).
+- **Chore chart** (Melvin, 2026-11-21): recurring chores for the kids, on chosen weekdays, done by everyone picked or
+  rotated between them (each time it's due, or a week each), ticked off with a tap on the wall, with stars per chore
+  counted per kid for the week and an optional weekly goal. Separate from Google Tasks (see Architecture).
 - **Canadian English** in everything a person reads (colour, centre, favourite), as in Liftsmith.
 
 ## Display: super lightweight (rule, Melvin, 2026-11-17)
@@ -220,6 +224,14 @@ panel can be complex if you need it to be."
   picks a page at a time (`=w2048-h2048`, with our token; Google's links last an hour, so photos are copied, not
   linked). Videos are skipped and a Google photo is never copied twice into one album. Blobs are never public; displays
   get them only through `/api/display/photo/`. Removing a library album deletes its photos. Setup: `docs/google-photos.md`.
+- **Chore chart:** the kids and chores are in the settings document (`config.chores`, edited in Settings › Chores and
+  saved with Save); ticks are rows in `chores_done` (one per day, chore and person, with the stars the chore was worth
+  then, so changing a chore later doesn't rewrite the week; kept 60 days), `src/server/chores.ts`. Who has a chore on a
+  day is worked out, never stored (`assignees` in `src/lib/chores.ts`): turns count from a fixed Monday (2024-01-01),
+  so a Monday, Wednesday, Friday chore alternates every time it's due, and changing who is on it starts the turns over.
+  Weeks start on Monday. Displays poll `/api/display/chores/` every minute with an ETag; a tap ticks at once (no undo
+  delay: a second tap takes it back) and the server accepts only a chore due today for that person, shown by a chores
+  widget with `allowCheck`.
 - **Commute time:** TomTom's Routing API (`traffic=true`, car, fastest) through `src/server/commute.ts`, with the key in
   `TOMTOM_API_KEY` (Vercel). TomTom was Claude's pick (2026-11-19): free 2,500 requests a day with no credit card, where
   Google's Routes API needs billing for traffic. Home and each place are geocoded once in the admin panel with TomTom's

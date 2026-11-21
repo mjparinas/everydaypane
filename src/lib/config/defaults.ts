@@ -109,6 +109,7 @@ export function defaultConfig(): DashboardConfig {
       minMagnitude: 4,
       powerKm: 5,
     },
+    chores: { people: [], items: [] },
     burnIn: { shift: true, maxPixels: 6, minutes: 3 },
     schedule: {
       enabled: true,

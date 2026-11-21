@@ -340,4 +340,71 @@ export const flows = [
       await context.close();
     },
   },
+  {
+    name: "a kid ticks a chore off on the wall and earns its stars",
+    async run({ browser, page, base, expect }) {
+      // Settings › Chores on a phone: add a kid, then a chore for them.
+      const phone = await browser.newContext({ viewport: { width: 390, height: 844 }, storageState: await page.context().storageState() });
+      const p = await phone.newPage();
+      await p.goto(`${base}/admin/`);
+      await p.getByRole("navigation", { name: "Sections" }).last().getByRole("button", { name: "Settings" }).click();
+      await p.getByLabel("Add a kid").fill("Ana");
+      await p.getByLabel("Add a kid").press("Enter");
+      await p.getByLabel("Add a chore").fill("Make the bed");
+      await p.getByLabel("Add a chore").press("Enter");
+      await p.getByRole("group", { name: "Who" }).getByRole("button", { name: "Ana", pressed: true }).waitFor();
+      const overflow = await p.evaluate(() => document.documentElement.scrollWidth > innerWidth);
+      expect(!overflow, "Settings › Chores scrolls sideways on a phone");
+      await phone.close();
+
+      const { config, version } = await (await page.request.get(`${base}/api/admin/config/`)).json();
+      config.chores = {
+        people: [
+          { id: "ana", name: "Ana", emoji: "🦊", color: "#e8590c", goal: 10 },
+          { id: "ben", name: "Ben", emoji: "🐻", color: "#1c7ed6", goal: 0 },
+        ],
+        items: [
+          {
+            id: "bed",
+            name: "Make the bed",
+            emoji: "🛏️",
+            stars: 2,
+            days: [0, 1, 2, 3, 4, 5, 6],
+            personIds: ["ana", "ben"],
+            rotate: "none",
+          },
+          { id: "cat", name: "Feed the cat", emoji: "🐈", stars: 1, days: [0, 1, 2, 3, 4, 5, 6], personIds: ["ana", "ben"], rotate: "day" },
+        ],
+      };
+      config.views.push({
+        id: "e2e-chores",
+        name: "Chores",
+        cols: 12,
+        rows: 8,
+        gap: 16,
+        padding: 24,
+        themeId: null,
+        widgets: [{ id: "c-chart", type: "chores", x: 0, y: 0, w: 8, h: 6, personIds: [], showStars: true, allowCheck: true }],
+      });
+      const put = await page.request.put(`${base}/api/admin/config/`, {
+        headers: { origin: base },
+        data: { baseVersion: version, config },
+      });
+      expect(put.ok(), `save: ${put.status()}`);
+      const d = await openDisplay(browser, await addDevice(page, base, "e2e-chores"));
+      const ana = d.page.locator(".ch-col").filter({ hasText: "Ana" });
+      await ana.getByText("Make the bed").waitFor();
+      const saved = d.page.waitForResponse((r) => r.url().includes("/api/display/chores/") && r.request().method() === "POST");
+      await ana.getByRole("button", { name: /Make the bed/ }).click();
+      expect((await saved).ok(), "the tick wasn't saved");
+      await ana.locator(".ch-stars").getByText("⭐ 2 / 10").waitFor();
+      if (process.env.E2E_SHOTS) await d.page.screenshot({ path: `${process.env.E2E_SHOTS}/chore-chart.png` });
+      // Another screen sees it.
+      const other = await openDisplay(browser, await addDevice(page, base, "e2e-chores"));
+      await other.page.locator(".ch-col").filter({ hasText: "Ana" }).locator(".ch-done").getByText("Make the bed").waitFor();
+      expect(d.errors.length === 0 && other.errors.length === 0, [...d.errors, ...other.errors].join("\n"));
+      await d.context.close();
+      await other.context.close();
+    },
+  },
 ];
