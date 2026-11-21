@@ -378,6 +378,39 @@ export const flows = [
     },
   },
   {
+    name: "the screen saver goes dark when nobody uses the screen, and a tap brings the dashboard back",
+    async run({ browser, page, base, expect }) {
+      const url = await addDevice(page, base, "home");
+      const context = await browser.newContext({ viewport: VIEWPORT });
+      // Switched on for this screen only, by changing the settings it receives, so other flows keep theirs.
+      await context.route("**/api/display/state/**", async (r) => {
+        try {
+          const res = await r.fetch();
+          if (res.status() !== 200) return await r.fulfill({ response: res });
+          const json = await res.json();
+          json.screenSaver = { ...json.screenSaver, idle: true, shows: "dark", minutes: 1 };
+          await r.fulfill({ response: res, json });
+        } catch {
+          // The page closed while this request was in flight.
+        }
+      });
+      await context.clock.install();
+      const d = await context.newPage();
+      await d.goto(url);
+      await d.locator(".cell-clock .c-hm").first().waitFor();
+      expect((await d.locator(".saver.show").count()) === 0, "the saver showed straight away");
+      // runFor fires every timer on the way (fastForward fires each due timer at most once, at its old due time, so
+      // the 15-second check could run only before the idle minute is up).
+      await d.clock.runFor("01:20");
+      await d.locator(".saver.show.saver-dark").waitFor();
+      expect(await d.locator(".stage").evaluate((el) => getComputedStyle(el).visibility === "hidden"), "the dashboard still paints");
+      await d.locator(".saver.show").click();
+      await d.locator(".saver.show").waitFor({ state: "detached" });
+      expect(await d.locator(".cell-clock").first().isVisible(), "the dashboard didn't come back");
+      await context.close();
+    },
+  },
+  {
     name: "a kid ticks a chore off on the wall and earns its stars",
     async run({ browser, page, base, expect }) {
       // Settings › Chores on a phone: add a kid, then a chore for them.

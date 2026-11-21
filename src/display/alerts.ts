@@ -28,15 +28,20 @@ function remember(ids: string[]) {
 
 const key = (a: EmergencyAlert) => `${a.id}@${a.sent}`;
 
-export function alertStrip(getPayload: () => DisplayPayload | null): { el: HTMLElement; stop: () => void } {
+/** `onNew` hears about each alert the first time the strip shows it (the screen saver wakes for it). */
+export function alertStrip(getPayload: () => DisplayPayload | null, onNew?: () => void): { el: HTMLElement; stop: () => void } {
   const el = h("div", { class: "alert-strip", role: "alert", "aria-live": "assertive" });
   let current: EmergencyAlert[] = [];
+  const seen = new Set<string>();
 
   const draw = () => {
     const banner = getPayload()?.alerts.banner ?? "never";
     const hidden = dismissed();
     const show = current.filter((a) => meetsBanner(a.severity, banner) && !hidden.has(key(a)));
     el.classList.toggle("show", show.length > 0);
+    const fresh = show.filter((a) => !seen.has(key(a)));
+    for (const a of fresh) seen.add(key(a));
+    if (fresh.length) onNew?.();
     const [top] = show;
     if (!top) return fill(el);
     fill(

@@ -10,6 +10,7 @@ import { GooglePanel } from "./GooglePanel";
 import { HomeAssistantPanel } from "./HomeAssistantPanel";
 import { MusicPanel } from "./MusicPanel";
 import { PhotosPanel } from "./PhotosPanel";
+import { ScreenSaverPanel } from "./ScreenSaverPanel";
 import { useAdmin } from "./store";
 import { TasksPanel } from "./TasksPanel";
 import { TIME_ZONES } from "./WidgetSettings";
@@ -104,6 +105,8 @@ export function SettingsPanel() {
         )}
         <p className="text-xs text-soft">Night dimming is set for each part of the day under Schedule.</p>
       </Section>
+
+      <ScreenSaverPanel />
 
       <Section title="Emergency alerts">
         <Toggle label="Show alerts" checked={alerts.enabled} onChange={(v) => edit((c) => void (c.alerts.enabled = v))} />
