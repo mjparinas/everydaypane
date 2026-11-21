@@ -174,6 +174,14 @@ export const WIDGETS: { [T in WidgetType]: WidgetInfo<T> } = {
     minSize: { w: 2, h: 1 },
     defaults: () => ({ destinationIds: [], showDistance: false, showArrival: true }),
   },
+  radar: {
+    label: "Rain radar",
+    description: "Environment Canada's radar, the past hour and what's coming",
+    icon: "🌧️",
+    size: { w: 4, h: 4 },
+    minSize: { w: 2, h: 2 },
+    defaults: () => ({ precip: "rain" as const, zoom: 8, pastMinutes: 60, forecastMinutes: 60, animate: true }),
+  },
 };
 
 export const WIDGET_TYPES = Object.keys(WIDGETS) as WidgetType[];

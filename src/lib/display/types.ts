@@ -233,3 +233,30 @@ export interface MealsData {
   today: string;
   meals: Record<string, Partial<Record<"breakfast" | "lunch" | "dinner", string>>>;
 }
+
+/** Times (epoch ms) of the radar pictures Environment Canada has for one kind of precipitation (src/server/radar.ts). */
+export interface RadarTimes {
+  /** Observed, oldest first, up to three hours back. */
+  past: number[];
+  /** Environment Canada's extrapolation of the radar, after the last observed picture. */
+  forecast: number[];
+  /** Why the times couldn't be read; the widget says so. */
+  error?: string;
+}
+
+export interface RadarMap {
+  x: number;
+  y: number;
+  homeX: number;
+  homeY: number;
+}
+
+export interface RadarData {
+  updatedAt: number;
+  /**
+   * The map around home for each zoom a widget uses: its top-left tile, and home's pixel on it. Displays get these,
+   * never the dashboard's coordinates.
+   */
+  maps: Record<string, RadarMap>;
+  layers: Partial<Record<"rain" | "snow", RadarTimes>>;
+}

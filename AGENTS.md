@@ -38,6 +38,7 @@ same change, and moves it out of **In progress** when it merges.
 | Meals (`meals`) | Breakfast, lunch, dinner for a day or a week | `meals` table |
 | Alerts (`alerts`) | Current emergency alerts, optional "all clear" | See alerts below |
 | To-dos (`tasks`) | Open Google Tasks; **tap to tick off, synced back to Google** (`allowCheck`, 4 s undo) | Google Tasks |
+| Rain radar (`radar`) | Animated radar over a map around home: the past 30 min to 3 h, then up to 3 h of forecast; rain or snow, five map areas, still or looping | Environment Canada (MSC GeoMet), CARTO map |
 
 **Display behaviour:** several views on a drag-and-drop grid (chosen rows and columns), **widgets layered on top of a photos widget**
 (photos as the backdrop), a time-of-day schedule
@@ -111,6 +112,8 @@ node scripts/e2e.mjs   # Playwright browser tests against the build (CHROMIUM_PA
 - **Commute time** (Melvin, 2026-11-19): drive times with live traffic from home to up to six places (work, school),
   set up in Settings › Commute; a place can have a "be there by" time, and the widget then says when to leave (see
   Architecture).
+- **Rain radar** (Melvin, 2026-11-21): an animated radar map for the Lower Mainland, the past hour and a short-term
+  forecast, from a free source with no key (see Architecture).
 - **Canadian English** in everything a person reads (colour, centre, favourite), as in Liftsmith.
 
 ## Display: super lightweight (rule, Melvin, 2026-11-17)
@@ -227,6 +230,20 @@ panel can be complex if you need it to be."
   and times from `/api/display/commute/`. Each drive is cached five minutes, shared by every display, and six places at
   most keeps that inside the free tier. One route failing never hides the others; readings older than 20 minutes aren't
   shown as live. TomTom takes its key only in the query string, so its URLs are never logged. Setup: `docs/commute.md`.
+- **Rain radar:** Environment Canada's 1 km North American radar composite through MSC GeoMet's WMS
+  (`geo.weather.gc.ca/geomet`, no key): `RADAR_1KM_RRAI` (rain) or `RADAR_1KM_RSNO` (snow), every six minutes for the
+  last three hours, and GeoMet's extrapolation (`Radar_1km_RainPrecipRate-Extrapolation`, `…SnowPrecipRate…`) for the
+  forecast (`src/server/radar.ts`). RainViewer, the usual free choice, closed its free API at the start of 2026 (Claude's
+  pick of GeoMet, 2026-11-21). The map underneath is CARTO's basemap (OpenStreetMap data): land without names under the
+  radar and the names on top, light by day and dark in night mode; both credits show on the widget. The map is a square
+  of 5 × 5 Web Mercator tiles with home in the middle (`src/lib/radar.ts`); each radar picture is one GetMap of exactly
+  that square in EPSG:3857, so it lines up with the tiles. Times come from GetCapabilities filtered to one layer
+  (cached two minutes). Displays get only the times and, per zoom, the map's tiles and home's pixel (never the
+  coordinates); pictures and tiles come through `/api/display/radar/frame/` and `/radar/tile/`, which accept only a
+  listed time and tiles of that square and build the upstream address themselves. Observed pictures are kept a day by
+  the browser, forecast ones five minutes, tiles a week; the service worker leaves radar pictures alone. The widget stacks
+  the pictures and switches their opacity (at most 10 observed and 6 forecast), resting two seconds on the latest and the
+  last. This sandbox can't reach GeoMet or CARTO, so tests use shapes from MSC's documentation.
 - **Garbage pickup:** the Township of Langley's collection calendar (tol.ca) is Recycle Coach, project 521,
   district `LANGL`, with zones such as Monday A or Thursday B. The zone is looked up from the address in the admin
   panel (or picked by hand) and the schedule is fetched and cached by the server (12 hours). The API is Recycle Coach's

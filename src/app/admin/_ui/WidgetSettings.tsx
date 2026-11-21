@@ -260,6 +260,54 @@ function TypeSettings({
         </>
       );
     }
+    case "radar": {
+      const e = edit<"radar">();
+      const minutes = (list: number[], none?: string) =>
+        list.map((m) => ({
+          value: String(m),
+          label: m === 0 && none ? none : m < 60 ? `${m} minutes` : `${m / 60} hour${m > 60 ? "s" : ""}`,
+        }));
+      return (
+        <>
+          <Select
+            label="Show"
+            value={w.precip}
+            options={[
+              { value: "rain", label: "Rain" },
+              { value: "snow", label: "Snow" },
+            ]}
+            onChange={(v) => e((x) => void (x.precip = v))}
+          />
+          <Select
+            label="Map area"
+            value={String(w.zoom)}
+            options={[
+              { value: "6", label: "Southern B.C." },
+              { value: "7", label: "South coast" },
+              { value: "8", label: "Lower Mainland" },
+              { value: "9", label: "Fraser Valley" },
+              { value: "10", label: "Close to home" },
+            ]}
+            onChange={(v) => e((x) => void (x.zoom = Number(v)))}
+            hint="The map is centred on the dashboard's location (Settings)."
+          />
+          <Select
+            label="Radar from the past"
+            value={String(w.pastMinutes)}
+            options={minutes([30, 60, 90, 120, 180])}
+            onChange={(v) => e((x) => void (x.pastMinutes = Number(v)))}
+          />
+          <Select
+            label="Forecast ahead"
+            value={String(w.forecastMinutes)}
+            options={minutes([0, 30, 60, 120, 180], "No forecast")}
+            onChange={(v) => e((x) => void (x.forecastMinutes = Number(v)))}
+            hint="Environment Canada's extrapolation of where the rain is moving."
+          />
+          <Toggle label="Animate" checked={w.animate} onChange={(v) => e((x) => void (x.animate = v))} />
+        </>
+      );
+    }
     case "photos": {
       const e = edit<"photos">();
       const sources = config.integrations.photos.sources;
