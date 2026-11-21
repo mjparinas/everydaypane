@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+import { FERRY_ROUTES } from "../ferries";
 import { MEAL_SLOTS } from "../meals";
 import { PERIODS } from "./periods";
 
@@ -68,6 +69,23 @@ export const countdownEventSchema = z.object({
 });
 export type CountdownEvent = z.infer<typeof countdownEventSchema>;
 
+// A kitchen timer's button: a name ("Eggs") and a length. Up to a day.
+export const timerPresetSchema = z.object({
+  id,
+  label: z.string().trim().max(30),
+  emoji: z.string().max(8),
+  seconds: z.number().int().min(5).max(86_400),
+});
+export type TimerPreset = z.infer<typeof timerPresetSchema>;
+
+// How a timer or pomodoro tells you it's done (Melvin, 2026-11-21: "visual and sound alerts"). The widget always
+// flashes; the screen-wide notice and the beeps can each be switched off, and both stop by themselves after a while.
+const alertFields = {
+  sound: z.boolean(),
+  fullScreen: z.boolean(),
+  ringSeconds: z.number().int().min(5).max(600),
+};
+
 export const haControlSchema = z.enum(["auto", "toggle", "light", "sensor", "climate", "cover", "lock", "button"]);
 export type HaControl = z.infer<typeof haControlSchema>;
 
@@ -113,6 +131,11 @@ export const widgetSchema = z.discriminatedUnion("type", [
     // The "November 2026" line above the grid (Melvin, 2026-11-19: a toggle to hide it). Shown unless switched off, so
     // month widgets saved before the toggle existed look the same.
     showTitle: z.boolean().default(true),
+    // How many weeks to show, starting with this one (Melvin, 2026-11-21: "minimum 1, max is 6"). Left out, the widget
+    // shows the whole month as it always has, so month widgets saved before this setting look the same.
+    weeks: z.number().int().min(1).max(6).optional(),
+    // Saturday and Sunday columns (Melvin, 2026-11-21: "allow calendar to hide or show weekends"). Shown by default.
+    showWeekends: z.boolean().default(true),
   }),
   z.object({ ...base, type: z.literal("garbage"), weeks: z.number().int().min(1).max(8) }),
   z.object({
@@ -183,6 +206,45 @@ export const widgetSchema = z.discriminatedUnion("type", [
     showVolume: z.boolean(),
     showSources: z.boolean(),
   }),
+  // The kids' chore chart (Melvin, 2026-11-21): today's chores for the people under Settings › Chores (none picked means
+  // everyone), ticked off with a tap when `allowCheck` is on, with each person's stars this week.
+  z.object({
+    ...base,
+    type: z.literal("chores"),
+    personIds: z.array(id).max(8),
+    showStars: z.boolean(),
+    allowCheck: z.boolean(),
+  }),
+  // Commute time (Melvin, 2026-11-19): live-traffic drive times from home to the places under Settings › Commute
+  // (none picked means all of them).
+  z.object({
+    ...base,
+    type: z.literal("commute"),
+    destinationIds: z.array(id).max(6),
+    showDistance: z.boolean(),
+    showArrival: z.boolean(),
+  }),
+  // Kitchen timers (Melvin, 2026-11-21): tap a button on the wall to start one; several can run at once.
+  z.object({ ...base, type: z.literal("timer"), presets: z.array(timerPresetSchema).max(12), ...alertFields }),
+  // A pomodoro (Melvin, 2026-11-21: "a separate pomodoro"): focus rounds and breaks, a long break after the last round.
+  z.object({
+    ...base,
+    type: z.literal("pomodoro"),
+    workMinutes: z.number().int().min(1).max(120),
+    shortBreakMinutes: z.number().int().min(1).max(60),
+    longBreakMinutes: z.number().int().min(1).max(90),
+    rounds: z.number().int().min(1).max(12),
+    autoStart: z.boolean(),
+    ...alertFields,
+  }),
+  // BC Ferries (Melvin, 2026-11-21): the next sailings and how full they are, for up to four routes (src/server/ferries.ts).
+  z.object({
+    ...base,
+    type: z.literal("ferries"),
+    routes: z.array(z.enum(FERRY_ROUTES)).min(1).max(4),
+    count: z.number().int().min(1).max(8),
+    showVessel: z.boolean(),
+  }),
 ]);
 export type Widget = z.infer<typeof widgetSchema>;
 export type WidgetType = Widget["type"];
@@ -221,6 +283,52 @@ export const photoSourceSchema = z.discriminatedUnion("kind", [
 ]);
 export type PhotoSource = z.infer<typeof photoSourceSchema>;
 
+// A place for the commute widget, found from its address in the admin panel (src/server/commute.ts). The address is
+// kept as a label for the admin panel only; displays get the name and the drive time.
+const placeSchema = z.object({
+  label: z.string().max(120),
+  latitude: z.number().min(-90).max(90),
+  longitude: z.number().min(-180).max(180),
+});
+
+export const commuteDestinationSchema = placeSchema.extend({
+  id,
+  name: z.string().trim().min(1).max(40),
+  emoji: z.string().max(8),
+  // When someone needs to be there (school at 08:30); the widget then says when to leave. Empty for none.
+  arriveBy: z.union([hhmm, z.literal("")]),
+});
+export type CommuteDestination = z.infer<typeof commuteDestinationSchema>;
+
+// The chore chart (Melvin, 2026-11-21): the people who do chores, and recurring chores that are shared by everyone on
+// them or rotate between them by day or by week (src/lib/chores.ts). Who ticked what off lives in the chores_done table.
+export const chorePersonSchema = z.object({
+  id,
+  name: z.string().trim().min(1).max(30),
+  emoji: z.string().max(8),
+  color: hex,
+  // Stars to aim for each week (0 for no goal); the widget draws a bar towards it.
+  goal: z.number().int().min(0).max(500),
+});
+export type ChorePerson = z.infer<typeof chorePersonSchema>;
+
+export const choreSchema = z.object({
+  id,
+  name: z.string().trim().min(1).max(40),
+  emoji: z.string().max(8),
+  stars: z.number().int().min(1).max(5),
+  // Weekdays it's due, 0 = Sunday.
+  days: z
+    .array(z.number().int().min(0).max(6))
+    .min(1, "Pick at least one day")
+    .max(7)
+    .refine((d) => new Set(d).size === d.length, "Each day once"),
+  personIds: z.array(id).min(1, "Pick who does it").max(8),
+  // "none": everyone picked does it; "day": one of them each time it's due, in turn; "week": one of them all week.
+  rotate: z.enum(["none", "day", "week"]),
+});
+export type Chore = z.infer<typeof choreSchema>;
+
 export const configSchema = z
   .object({
     name: z.string().min(1).max(60),
@@ -235,17 +343,28 @@ export const configSchema = z
     themeId: id,
     themes: z.array(themeSchema).min(1).max(30),
     views: z.array(viewSchema).min(1).max(30),
-    // Emergency alerts (Melvin, 2026-11-17): Alert Ready (NAAD), Environment Canada weather alerts, DriveBC road events
-    // and Earthquakes Canada, for the area around location. Alerts at or above `banner` show as a red strip across the
+    // Emergency alerts (Melvin, 2026-11-17): Alert Ready (NAAD), Environment Canada weather alerts, DriveBC road events,
+    // Earthquakes Canada and BC Hydro outages, for the area around location. Alerts at or above `banner` show as a red strip across the
     // top of every screen until someone taps to dismiss it (Melvin, 2026-11-17: a strip, not a full-screen takeover);
     // the alerts widget lists them all.
     alerts: z.object({
       enabled: z.boolean(),
-      sources: z.object({ alertReady: z.boolean(), weather: z.boolean(), roads: z.boolean(), earthquakes: z.boolean() }),
+      // BC Hydro power outages (Melvin, 2026-11-19) default on, so a document saved before they existed still loads.
+      sources: z.object({
+        alertReady: z.boolean(),
+        weather: z.boolean(),
+        roads: z.boolean(),
+        earthquakes: z.boolean(),
+        power: z.boolean().default(true),
+      }),
       banner: z.enum(["extreme", "severe", "moderate", "minor", "never"]),
       radiusKm: z.number().int().min(10).max(500),
       minMagnitude: z.number().min(2).max(9),
+      // Power outages count when their area covers the home or is within this many km of it.
+      powerKm: z.number().int().min(0).max(50).default(5),
     }),
+    // Defaults to none, so a document saved before the chore chart existed still loads.
+    chores: z.object({ people: z.array(chorePersonSchema).max(8), items: z.array(choreSchema).max(40) }).default({ people: [], items: [] }),
     // Burn-in protection: the whole layout drifts a few pixels every few minutes so static edges never sit on the same
     // pixels for hours, and night periods can dim the screen (periodSchema.dim).
     burnIn: z.object({ shift: z.boolean(), maxPixels: z.number().int().min(1).max(24), minutes: z.number().int().min(1).max(60) }),
@@ -279,6 +398,11 @@ export const configSchema = z
         zoneLabel: z.string().max(80),
       }),
       photos: z.object({ sources: z.array(photoSourceSchema).max(20) }),
+      // Commute time (Melvin, 2026-11-19): from home to up to six places, by car with live traffic (TomTom). Six keeps
+      // a five-minute refresh inside TomTom's free 2,500 requests a day. Defaults so older documents still load.
+      commute: z
+        .object({ home: placeSchema.nullable(), destinations: z.array(commuteDestinationSchema).max(6) })
+        .default({ home: null, destinations: [] }),
       homeAssistant: z.object({
         url: z.union([z.url(), z.literal("")]),
         // Doorbell pop-up: when this binary_sensor or event entity turns on, every display shows the camera full screen.

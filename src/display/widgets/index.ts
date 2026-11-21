@@ -3,9 +3,12 @@ import type { Widget } from "@/lib/config/schema";
 import { airQuality } from "./air";
 import { alerts } from "./alerts";
 import { agenda, calendarMonth } from "./calendar";
+import { chores } from "./chores";
 import { clock } from "./clock";
+import { commute } from "./commute";
 import { countdown } from "./countdown";
 import { date } from "./date";
+import { ferries } from "./ferries";
 import { garbage } from "./garbage";
 import { camera, haEntity } from "./ha";
 import { meals } from "./meals";
@@ -13,7 +16,9 @@ import { media } from "./media";
 import { messages } from "./messages";
 import { note } from "./note";
 import { photos } from "./photos";
+import { pomodoro } from "./pomodoro";
 import { tasks } from "./tasks";
+import { timer } from "./timer";
 import { transit } from "./transit";
 import type { Cleanup, WidgetContext } from "./types";
 import { weather } from "./weather";
@@ -58,6 +63,16 @@ export function mountWidget(el: HTMLElement, w: Widget, ctx: WidgetContext): Cle
       return tasks(el, w, ctx);
     case "media":
       return media(el, w, ctx);
+    case "commute":
+      return commute(el, w, ctx);
+    case "chores":
+      return chores(el, w, ctx);
+    case "timer":
+      return timer(el, w, ctx);
+    case "pomodoro":
+      return pomodoro(el, w, ctx);
+    case "ferries":
+      return ferries(el, w, ctx);
     case "transit":
       return transit(el, w, ctx);
   }

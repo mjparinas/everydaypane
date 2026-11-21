@@ -141,6 +141,7 @@ body {
     0 10px 30px -18px rgb(0 0 0 / 0.5);
   padding: clamp(10px, 6cqmin, 28px);
   animation: rise 0.5s ease-out both;
+  z-index: 1;
 }
 .glass .cell {
   backdrop-filter: blur(18px) saturate(1.2);
@@ -149,6 +150,26 @@ body {
 .cell-date {
   background: transparent;
   box-shadow: none;
+}
+/* Widgets on top of a photos widget (Melvin, 2026-11-21). Photos sit underneath; the panel behind a widget is never
+   thinner than 55 % so text stays readable on a busy picture. The clock and the date have no panel, so over a photo
+   they turn white with a soft shadow, like a photo frame's. */
+.cell-photos {
+  z-index: 0;
+}
+.cell.on-photo {
+  background: color-mix(in srgb, var(--surface) calc(max(var(--surface-alpha), 0.55) * 100%), transparent);
+}
+.cell-clock.on-photo,
+.cell-date.on-photo {
+  --text: #fff;
+  --muted: rgb(255 255 255 / 0.82);
+  --surface: #0b0f18; /* the analogue clock's face */
+  color: var(--text);
+  background: transparent;
+  text-shadow:
+    0 1px 3px rgb(0 0 0 / 0.55),
+    0 2px 18px rgb(0 0 0 / 0.45);
 }
 @keyframes rise {
   from {
@@ -845,6 +866,9 @@ body {
   grid-template-columns: repeat(7, minmax(0, 1fr));
   gap: 3px;
 }
+.mo-5 {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
 .mo-names {
   margin-bottom: 3px;
 }
@@ -990,6 +1014,142 @@ body {
   flex: none;
   min-width: 6.5em;
   color: var(--muted);
+}
+
+/* Commute: name and time on one line, traffic and timing under it; the time turns amber or red as traffic builds. */
+.w-commute {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4em;
+  height: 100%;
+  overflow: hidden;
+  font-size: clamp(13px, min(5cqw, 12cqh), 28px);
+}
+.cm-list {
+  display: grid;
+  gap: 0.5em;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.cm-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  column-gap: 0.6em;
+  align-items: baseline;
+}
+.cm-name {
+  overflow: hidden;
+  font-weight: 600;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.cm-time {
+  font-size: 1.5em;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.cm-sub {
+  grid-column: 1 / -1;
+  color: var(--muted);
+  font-size: 0.8em;
+}
+.cm-2 .cm-time {
+  color: #f0a020;
+}
+.cm-3 .cm-time {
+  color: var(--danger);
+}
+
+/* BC Ferries: each route's name, then its next sailings with a bar for how full each one is. */
+.w-ferries {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6em;
+  height: 100%;
+  overflow: hidden;
+  font-size: clamp(12px, min(4.5cqw, 9cqh), 26px);
+}
+.fe-route {
+  display: grid;
+  gap: 0.3em;
+}
+.fe-name {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.6em;
+  overflow: hidden;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.fe-dur,
+.fe-sub,
+.fe-none,
+.fe-asof {
+  color: var(--muted);
+  font-size: 0.8em;
+  font-weight: 400;
+}
+.fe-list {
+  display: grid;
+  gap: 0.3em;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.fe-row {
+  display: grid;
+  grid-template-columns: 5em 1fr;
+  column-gap: 0.6em;
+  align-items: center;
+}
+.fe-time {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.fe-cancelled .fe-time {
+  color: var(--muted);
+  text-decoration: line-through;
+}
+.fe-fill {
+  display: grid;
+  grid-template-columns: 1fr 4.5em;
+  gap: 0.5em;
+  align-items: center;
+}
+.fe-bar {
+  height: 0.5em;
+  overflow: hidden;
+  border-radius: 1em;
+  background: color-mix(in srgb, currentColor 15%, transparent);
+}
+.fe-bar-in {
+  display: block;
+  height: 100%;
+  background: var(--accent);
+  transform-origin: left;
+}
+.fe-pct {
+  font-size: 0.85em;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.fe-2 .fe-bar-in {
+  background: #f0a020;
+}
+.fe-3 .fe-bar-in {
+  background: var(--danger);
+}
+.fe-3 .fe-pct,
+.fe-bad,
+.fe-delayed .fe-sub {
+  color: var(--danger);
+}
+.fe-sub {
+  grid-column: 2;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 
 /* TransLink departures */
@@ -1558,4 +1718,407 @@ body {
 .tk-msg {
   color: var(--danger);
   font-size: 0.75em;
+}
+
+/* Kitchen timers and the pomodoro (Melvin, 2026-11-21). Big buttons for a wet hand from across the kitchen. A timer
+   that is done flashes (opacity only, like every animation here), and the full-screen alert flashes the screen. */
+.w-timer,
+.w-pomodoro {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5em;
+  height: 100%;
+  min-height: 0;
+  font-size: clamp(13px, 5cqmin, 24px);
+}
+.tm-list {
+  display: grid;
+  gap: 0.4em;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.tm {
+  position: relative;
+  display: flex;
+  gap: 0.4em;
+  align-items: stretch;
+}
+.tm-main,
+.tm-btn,
+.tm-preset,
+.pm-btn {
+  border: 0;
+  border-radius: calc(var(--radius) * 0.6);
+  background: color-mix(in srgb, var(--text) 9%, transparent);
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+.tm-main {
+  position: relative;
+  display: grid;
+  flex: 1;
+  grid-template-columns: 1fr auto;
+  align-items: baseline;
+  min-width: 0;
+  padding: 0.35em 0.6em 0.5em;
+  overflow: hidden;
+  text-align: left;
+}
+.tm-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.tm-time {
+  font-size: 1.5em;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.tm-paused .tm-time {
+  opacity: 0.5;
+}
+.tm-track,
+.pm-track {
+  grid-column: 1 / -1;
+  height: 4px;
+  border-radius: 2px;
+  background: color-mix(in srgb, var(--text) 14%, transparent);
+  overflow: hidden;
+}
+.tm-bar,
+.pm-bar {
+  display: block;
+  height: 100%;
+  background: var(--accent);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 1s linear;
+}
+.tm-btn {
+  min-width: 2.6em;
+  font-weight: 700;
+}
+.tm-done .tm-main {
+  background: var(--danger);
+  color: #fff;
+}
+.tm-ringing .tm-main,
+.pm-ringing .pm-time {
+  animation: blink 0.8s steps(2, jump-none) infinite;
+}
+@keyframes blink {
+  50% {
+    opacity: 0.35;
+  }
+}
+.tm-presets {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(6.2em, 1fr));
+  gap: 0.4em;
+  margin-top: auto;
+}
+.tm-only {
+  flex: 1;
+  align-content: center;
+}
+.tm-preset {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5em 0.4em;
+  font-weight: 600;
+}
+.tm-pname {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.tm-plen {
+  color: var(--muted);
+  font-size: 0.8em;
+}
+.tm-preset:disabled {
+  opacity: 0.4;
+}
+.tm-main:active,
+.tm-btn:active,
+.tm-preset:active,
+.pm-btn:active {
+  transform: scale(0.96);
+}
+.pm-head {
+  display: flex;
+  gap: 0.6em;
+  align-items: center;
+  justify-content: space-between;
+  color: var(--muted);
+  font-weight: 600;
+}
+.pm-dots {
+  display: flex;
+  gap: 0.3em;
+}
+.pm-dot {
+  width: 0.6em;
+  height: 0.6em;
+  border: 2px solid currentColor;
+  border-radius: 50%;
+}
+.pm-dot.on {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+.pm-dot.now {
+  border-color: var(--accent);
+}
+.pm-time {
+  display: grid;
+  flex: 1;
+  place-items: center;
+  font-size: clamp(32px, 26cqmin, 140px);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+.pm-paused .pm-time {
+  opacity: 0.6;
+}
+.w-pomodoro:not([data-phase="work"]) .pm-bar,
+.w-pomodoro:not([data-phase="work"]) .pm-dot.on {
+  background: #3fb27f;
+  border-color: #3fb27f;
+}
+.pm-controls {
+  display: flex;
+  gap: 0.4em;
+}
+.pm-btn {
+  flex: 1;
+  padding: 0.6em 0.4em;
+  font-weight: 600;
+}
+.pm-go {
+  flex: 2;
+  background: var(--accent);
+  color: #fff;
+}
+.ring {
+  position: fixed;
+  inset: 0;
+  z-index: 25;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  align-items: center;
+  justify-content: center;
+  background: rgb(0 0 0 / 0.85);
+  color: #fff;
+  text-align: center;
+  animation: bell-in 0.3s ease-out;
+}
+.ring-flash {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: var(--danger);
+  animation: blink 1s steps(2, jump-none) infinite;
+}
+.ring-icon {
+  font-size: 96px;
+}
+.ring-title {
+  font-size: clamp(32px, 6vw, 80px);
+  font-weight: 800;
+}
+.ring-hint {
+  font-size: 24px;
+  opacity: 0.8;
+}
+
+/* Chore chart */
+.w-chores {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4em;
+  height: 100%;
+  overflow: hidden;
+  font-size: clamp(13px, min(calc(14cqw / var(--n, 1)), 6.5cqh), 28px);
+}
+.ch-cols {
+  display: grid;
+  flex: 1;
+  grid-template-columns: repeat(var(--n), minmax(0, 1fr));
+  gap: 0.6em;
+  min-height: 0;
+}
+.ch-col {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45em;
+  min-width: 0;
+  padding: 0.55em 0.6em;
+  border-top: 0.25em solid var(--kid);
+  border-radius: calc(var(--radius) / 2);
+  background: color-mix(in srgb, var(--kid) 10%, transparent);
+}
+.ch-head {
+  display: flex;
+  align-items: center;
+  gap: 0.4em;
+  min-width: 0;
+}
+.ch-avatar {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 1.8em;
+  height: 1.8em;
+  border-radius: 50%;
+  background: var(--kid);
+  color: #fff;
+  font-weight: 800;
+}
+.ch-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  font-size: 1.15em;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ch-stars {
+  flex: none;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.ch-bar {
+  height: 0.35em;
+  overflow: hidden;
+  border-radius: 1em;
+  background: color-mix(in srgb, var(--text) 12%, transparent);
+}
+.ch-bar i {
+  display: block;
+  height: 100%;
+  background: var(--kid);
+  transform-origin: left;
+  transition: transform 0.6s;
+}
+.ch-list {
+  display: grid;
+  gap: 0.3em;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  list-style: none;
+}
+.ch-item,
+.ch-btn {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
+  width: 100%;
+  min-height: 2.2em;
+}
+.ch-btn {
+  padding: 0 0.4em;
+  border: 0;
+  border-radius: calc(var(--radius) / 3);
+  background: color-mix(in srgb, var(--surface) 70%, transparent);
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  touch-action: manipulation;
+  transition: transform 0.15s;
+}
+.ch-btn:active {
+  transform: scale(0.97);
+}
+.ch-check {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 1.3em;
+  height: 1.3em;
+  border: 2px solid var(--kid);
+  border-radius: 50%;
+  color: #fff;
+  font-size: 0.9em;
+  font-weight: 800;
+}
+.ch-done .ch-check {
+  background: var(--kid);
+  animation: ch-tick 0.35s;
+}
+.ch-title {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ch-done .ch-title {
+  text-decoration: line-through;
+  opacity: 0.55;
+}
+.ch-worth {
+  flex: none;
+  color: #f5b301;
+  font-size: 0.7em;
+}
+.ch-free {
+  color: var(--muted);
+}
+.ch-all {
+  margin-top: auto;
+  font-weight: 800;
+  text-align: center;
+  animation: ch-tick 0.5s;
+}
+.ch-pop {
+  position: absolute;
+  right: 0.4em;
+  font-weight: 800;
+  pointer-events: none;
+  animation: ch-rise 1.2s forwards;
+}
+.ch-burst {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+}
+.ch-burst i {
+  grid-area: 1 / 1;
+  font-style: normal;
+  animation: ch-fly 1.5s forwards;
+}
+@keyframes ch-tick {
+  50% {
+    transform: scale(1.25);
+  }
+}
+@keyframes ch-rise {
+  to {
+    opacity: 0;
+    transform: translateY(-1.8em);
+  }
+}
+@keyframes ch-fly {
+  from {
+    transform: rotate(var(--a)) translateY(0) scale(0.5);
+  }
+  to {
+    opacity: 0;
+    transform: rotate(var(--a)) translateY(-5em) scale(1.4);
+  }
 }

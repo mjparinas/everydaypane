@@ -114,8 +114,67 @@ export interface GarbageData {
   pickups: { date: string; bins: { name: string; kind: BinKind }[] }[];
 }
 
+/** One drive from home, with live traffic (src/server/commute.ts). Times in seconds, distance in metres. */
+export interface CommuteRoute {
+  id: string;
+  name: string;
+  emoji: string;
+  /** HH:MM, or "" when nobody needs to be there by a set time. */
+  arriveBy: string;
+  /** Absent when this route couldn't be read; the others still show. */
+  seconds?: number;
+  /** The same drive on empty roads. */
+  freeFlowSeconds?: number;
+  delaySeconds?: number;
+  meters?: number;
+  /** Epoch ms when the traffic was read. */
+  at?: number;
+}
+
+export interface CommuteData {
+  updatedAt: number;
+  /** "key": TOMTOM_API_KEY isn't set; "places": no home or no destination yet; "": ready. */
+  missing: "" | "key" | "places";
+  routes: CommuteRoute[];
+}
+
+/** One BC Ferries sailing (src/server/ferries.ts). Times are HH:MM in Pacific time. */
+export interface FerrySailing {
+  time: string;
+  /** HH:MM, or "" when BC Ferries gives none (or says "Variable"). */
+  arrive: string;
+  /** Sailings that have left are left out. */
+  state: "scheduled" | "delayed" | "cancelled";
+  /** Percent full, overall and for cars; absent when BC Ferries hasn't said. */
+  fill?: number;
+  carFill?: number;
+  vessel: string;
+  delayMinutes?: number;
+  /** BC Ferries' own note on the sailing ("Delayed due to heavy traffic"). */
+  note: string;
+}
+
+export interface FerryRouteData {
+  code: string;
+  name: string;
+  /** "1h 35m" as BC Ferries writes it. */
+  duration: string;
+  /** "no-service" when nothing sails today; "" otherwise. */
+  status: "" | "no-service";
+  sailings: FerrySailing[];
+}
+
+export interface FerriesData {
+  updatedAt: number;
+  /** Epoch ms when BC Ferries' conditions were read (from the community API). */
+  at: number;
+  /** true when BC Ferries' data couldn't be read at all. */
+  down: boolean;
+  routes: FerryRouteData[];
+}
+
 export type AlertSeverity = "extreme" | "severe" | "moderate" | "minor";
-export type AlertSource = "alertReady" | "weather" | "roads" | "earthquakes";
+export type AlertSource = "alertReady" | "weather" | "roads" | "earthquakes" | "power";
 
 /** One emergency alert for the area, from any source (src/server/alerts.ts). */
 export interface EmergencyAlert {
@@ -208,6 +267,15 @@ export interface MusicData {
 export interface MealsData {
   today: string;
   meals: Record<string, Partial<Record<"breakfast" | "lunch" | "dinner", string>>>;
+}
+
+/** Today's chore chart (src/server/chores.ts): who does what today, what's done, and each person's stars this week. */
+export interface ChoresData {
+  today: string;
+  people: { id: string; name: string; emoji: string; color: string; goal: number; stars: number }[];
+  /** Only the chores due today. */
+  chores: { id: string; name: string; emoji: string; stars: number }[];
+  due: { choreId: string; personId: string; done: boolean }[];
 }
 
 /** One bus (or train) leaving a stop, from TransLink's live feed (src/server/translink.ts). */

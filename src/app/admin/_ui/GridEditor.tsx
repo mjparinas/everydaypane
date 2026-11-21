@@ -2,16 +2,18 @@
 
 import { useRef, useState } from "react";
 
-import { cellAt, clampRect, fits, type Rect } from "@/lib/config/grid";
+import { cellAt, clampRect, CORNERS, fits, isBackdrop, resizeFrom, type Corner, type Rect } from "@/lib/config/grid";
 import type { View, Widget } from "@/lib/config/schema";
 import { WIDGETS } from "@/lib/config/widgets";
 
 // The drag-and-drop layout editor (Melvin, 2026-11-17: a grid with a chosen number of rows and columns). Drag a widget
-// to move it, drag its corner to resize it, tap it to edit its settings. Works with a mouse, a finger (pointer events)
-// and the keyboard (arrows move, Shift + arrows resize). A move or resize that would overlap another widget or leave
-// the grid is shown in red and not applied.
+// to move it, drag any of its four corners to resize it (Melvin, 2026-11-21: "allow any corner of a widget to adjust
+// the size"; the opposite corner stays put), tap it to edit its settings. Works with a mouse, a finger (pointer events)
+// and the keyboard (arrows move, Shift + arrows move the bottom-right corner, Shift + Alt + arrows the top-left). A move or resize that would overlap another widget or leave
+// the grid is shown in red and not applied. Photos widgets are the exception (Melvin, 2026-11-21): they're drawn
+// underneath, and other widgets can be dropped on top of them.
 
-type Drag = { id: string; mode: "move" | "resize"; offset: { x: number; y: number }; pointer: number; moved: boolean; rect: Rect };
+type Drag = { id: string; mode: "move" | Corner; offset: { x: number; y: number }; pointer: number; moved: boolean; rect: Rect };
 
 export function GridEditor({
   view,
@@ -61,7 +63,7 @@ export function GridEditor({
     const rect =
       drag.mode === "move"
         ? clampRect({ x: c.x - drag.offset.x, y: c.y - drag.offset.y, w: w.w, h: w.h }, grid)
-        : clampRect({ x: w.x, y: w.y, w: c.x - w.x + 1, h: c.y - w.y + 1 }, grid, minOf(w));
+        : resizeFrom(w, drag.mode, c, grid, minOf(w));
     if (rect.x !== drag.rect.x || rect.y !== drag.rect.y || rect.w !== drag.rect.w || rect.h !== drag.rect.h) {
       setDrag({ ...drag, rect, moved: true });
     }
@@ -70,7 +72,7 @@ export function GridEditor({
   function end(e: React.PointerEvent, w: Widget) {
     if (!drag || drag.pointer !== e.pointerId) return;
     if (!drag.moved) onSelect(w.id);
-    else if (fits(drag.rect, grid, others(w.id))) onChange(w.id, drag.rect);
+    else if (fits({ ...drag.rect, type: w.type }, grid, others(w.id))) onChange(w.id, drag.rect);
     setDrag(null);
   }
 
@@ -85,10 +87,13 @@ export function GridEditor({
     }
     e.preventDefault();
     const [dx = 0, dy = 0] = d;
-    const next = e.shiftKey ? { x: w.x, y: w.y, w: w.w + dx, h: w.h + dy } : { x: w.x + dx, y: w.y + dy, w: w.w, h: w.h };
-    const min = minOf(w);
-    if (next.w < min.w || next.h < min.h) return;
-    if (fits(next, grid, others(w.id))) onChange(w.id, next);
+    const next = !e.shiftKey
+      ? { x: w.x + dx, y: w.y + dy, w: w.w, h: w.h }
+      : e.altKey
+        ? resizeFrom(w, "nw", { x: w.x + dx, y: w.y + dy }, grid, minOf(w))
+        : resizeFrom(w, "se", { x: w.x + w.w - 1 + dx, y: w.y + w.h - 1 + dy }, grid, minOf(w));
+    if (next.x === w.x && next.y === w.y && next.w === w.w && next.h === w.h) return;
+    if (fits({ ...next, type: w.type }, grid, others(w.id))) onChange(w.id, next);
   }
 
   const cells = [];
@@ -115,7 +120,8 @@ export function GridEditor({
       {view.widgets.map((w) => {
         const dragging = drag?.id === w.id && drag.moved;
         const r = dragging ? drag.rect : w;
-        const ok = !dragging || fits(drag.rect, grid, others(w.id));
+        const ok = !dragging || fits({ ...drag.rect, type: w.type }, grid, others(w.id));
+        const backdrop = isBackdrop(w);
         const info = WIDGETS[w.type];
         const selected = selectedId === w.id;
         return (
@@ -126,9 +132,11 @@ export function GridEditor({
             aria-label={`${w.title || info.label}, ${w.w} by ${w.h} at column ${w.x + 1}, row ${w.y + 1}`}
             aria-pressed={selected}
             data-widget={w.id}
-            className={`relative flex min-w-0 cursor-grab touch-none flex-col items-center justify-center overflow-hidden rounded-lg border-2 bg-panel p-1 text-center shadow-sm transition-[box-shadow] outline-none focus-visible:ring-2 focus-visible:ring-brand/50 active:cursor-grabbing ${
-              selected ? "border-brand" : "border-line"
-            } ${dragging ? (ok ? "z-10 opacity-90 shadow-lg" : "z-10 border-bad opacity-80") : ""}`}
+            className={`group relative flex min-w-0 cursor-grab touch-none flex-col overflow-hidden rounded-lg border-2 p-1 shadow-sm transition-[box-shadow] outline-none focus-visible:ring-2 focus-visible:ring-brand/50 active:cursor-grabbing ${
+              backdrop ? "items-start justify-start bg-line/60 text-left" : "items-center justify-center bg-panel text-center"
+            } ${dragging ? "z-10" : backdrop ? "z-0" : "z-[1]"} ${dragging && !ok ? "border-bad opacity-80" : selected ? "border-brand" : "border-line"} ${
+              dragging && ok ? "opacity-90 shadow-lg" : ""
+            }`}
             style={{ gridColumn: `${r.x + 1} / span ${r.w}`, gridRow: `${r.y + 1} / span ${r.h}` }}
             onPointerDown={(e) => start(e, w, "move")}
             onPointerMove={(e) => move(e, w)}
@@ -140,19 +148,35 @@ export function GridEditor({
               {info.icon}
             </span>
             <span className="mt-1 w-full truncate text-xs font-medium">{w.title || widgetName(w)}</span>
-            <span
-              aria-hidden="true"
-              className="absolute right-0 bottom-0 h-6 w-6 cursor-nwse-resize touch-none rounded-tl-md bg-line/80 after:absolute after:right-1 after:bottom-1 after:h-2 after:w-2 after:border-r-2 after:border-b-2 after:border-soft"
-              onPointerDown={(e) => start(e, w, "resize")}
-              onPointerMove={(e) => move(e, w)}
-              onPointerUp={(e) => end(e, w)}
-            />
+            {/* The bottom-right handle is always there; the other three show on the selected widget (tap it on a phone)
+                or under the mouse, so they don't crowd small widgets and leave room to grab one and move it. */}
+            {CORNERS.map((corner) => (
+              <span
+                key={corner}
+                aria-hidden="true"
+                data-corner={corner}
+                className={`absolute h-5 w-5 touch-none bg-line/80 after:absolute after:h-2 after:w-2 after:border-soft ${HANDLE[corner]} ${
+                  corner === "se" || selected || dragging ? "" : "hidden group-hover:block group-focus:block"
+                }`}
+                onPointerDown={(e) => start(e, w, corner)}
+                onPointerMove={(e) => move(e, w)}
+                onPointerUp={(e) => end(e, w)}
+              />
+            ))}
           </div>
         );
       })}
     </div>
   );
 }
+
+// Where each resize handle sits, its cursor, and the little bracket drawn inside it.
+const HANDLE: Record<Corner, string> = {
+  nw: "top-0 left-0 cursor-nwse-resize rounded-br-md after:top-1 after:left-1 after:border-t-2 after:border-l-2",
+  ne: "top-0 right-0 cursor-nesw-resize rounded-bl-md after:top-1 after:right-1 after:border-t-2 after:border-r-2",
+  sw: "bottom-0 left-0 cursor-nesw-resize rounded-tr-md after:bottom-1 after:left-1 after:border-b-2 after:border-l-2",
+  se: "right-0 bottom-0 cursor-nwse-resize rounded-tl-md after:right-1 after:bottom-1 after:border-r-2 after:border-b-2",
+};
 
 /** A widget's name in lists: its title, or what it shows ("Clock · Toronto"). */
 export function widgetName(w: Widget): string {

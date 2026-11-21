@@ -111,16 +111,53 @@ export const flows = [
       await page.reload();
       await page.getByTestId("grid-editor").waitFor();
       const widget = page.locator('[data-widget="home-countdown"]');
-      // The keyboard resizes a widget the same way dragging its corner does, and is steadier in a test.
+      // The keyboard moves the bottom-right corner, as dragging that corner does.
       await widget.focus();
       await page.keyboard.press("Shift+ArrowLeft");
       const after = await widget.getAttribute("aria-label");
       expect(after.includes("2 by 3"), `the widget didn't shrink: ${after}`);
+      // Any corner resizes (Melvin, 2026-11-21). Dragging the top-left one a cell left grows the widget onto the
+      // photos, which other widgets may cover, while its bottom-right corner stays put.
+      const grid = await page.getByTestId("grid-editor").boundingBox();
+      const handle = await widget.locator('[data-corner="nw"]').boundingBox();
+      const cell = grid.width / 12;
+      await page.mouse.move(handle.x + handle.width / 2, handle.y + handle.height / 2);
+      await page.mouse.down();
+      await page.mouse.move(handle.x + handle.width / 2 - cell, handle.y + handle.height / 2, { steps: 5 });
+      await page.mouse.up();
+      const grown = await widget.getAttribute("aria-label");
+      expect(grown.includes("3 by 3 at column 9, row 6"), `the top-left corner didn't resize: ${grown}`);
       await page.getByRole("button", { name: "Save", exact: true }).click();
       await page.getByText("Saved. Displays update within 30 seconds.").waitFor();
       const { config } = await (await page.request.get(`${base}/api/admin/config/`)).json();
       const saved = config.views.find((v) => v.id === "home").widgets.find((w) => w.id === "home-countdown");
-      expect(saved.w === 2 && saved.h === 3, `saved as ${saved.w} by ${saved.h}`);
+      expect(saved.x === 8 && saved.w === 3 && saved.h === 3, `saved as ${saved.w} by ${saved.h} at ${saved.x}`);
+    },
+  },
+  {
+    name: "settings download as a backup file and restore from it",
+    async run({ page, base, expect }) {
+      await page.goto(`${base}/admin/#settings`);
+      await page.reload();
+      const [download] = await Promise.all([page.waitForEvent("download"), page.getByRole("link", { name: "Download backup" }).click()]);
+      expect(/^everydaypane-settings-\d{4}-\d{2}-\d{2}\.json$/.test(download.suggestedFilename()), download.suggestedFilename());
+      const file = await download.path();
+      // Change the settings behind the page's back, then put the backup's back.
+      const before = await (await page.request.get(`${base}/api/admin/config/`)).json();
+      const renamed = { ...before.config, name: "Renamed after the backup" };
+      const put = await page.request.put(`${base}/api/admin/config/`, {
+        headers: { origin: base },
+        data: { baseVersion: before.version, config: renamed },
+      });
+      expect(put.ok(), `status ${put.status()}`);
+      await page.reload();
+      await page.locator('input[type="file"][accept*="json"]').setInputFiles(file);
+      await page.getByTestId("restore-confirm").waitFor();
+      await page.getByRole("button", { name: "Restore these settings" }).click();
+      await page.getByText(/^Restored .*Displays pick it up within 30 seconds\.$/).waitFor();
+      const after = await (await page.request.get(`${base}/api/admin/config/`)).json();
+      expect(after.config.name === before.config.name, `name is ${after.config.name}`);
+      expect(after.version === before.version + 2, `version ${after.version}`);
     },
   },
   {
@@ -167,8 +204,9 @@ export const flows = [
       const phone = await browser.newContext({ viewport: { width: 390, height: 844 }, storageState: await page.context().storageState() });
       const p = await phone.newPage();
       await p.goto(`${base}/family/`);
-      const today = p.getByRole("region", { name: /^Today/ });
-      const dinner = today.getByRole("combobox", { name: /Dinner/ });
+      // Tomorrow, not today: from 8 PM the widget starts at tomorrow, so a meal planned for today drops off in the evening.
+      const tomorrow = p.getByRole("region", { name: /^Tomorrow/ });
+      const dinner = tomorrow.getByRole("combobox", { name: /Dinner/ });
       await dinner.fill("Tacos");
       const saved = p.waitForResponse((r) => r.url().includes("/api/meals/") && r.request().method() === "PUT");
       await dinner.press("Enter");
@@ -191,6 +229,87 @@ export const flows = [
       await d.page.locator(".w-meals").getByText("Tacos").waitFor();
       expect(d.errors.length === 0, d.errors.join("\n"));
       await d.context.close();
+    },
+  },
+  {
+    name: "widgets on top of a photos widget are drawn above the photo and stay readable",
+    async run({ browser, page, base, expect }) {
+      const { config, version } = await (await page.request.get(`${base}/api/admin/config/`)).json();
+      const home = config.views.find((v) => v.id === "home");
+      const countdown = home.widgets.find((w) => w.type === "countdown");
+      config.views.push({
+        id: "e2e-frame",
+        name: "Photo frame",
+        cols: 12,
+        rows: 8,
+        gap: 16,
+        padding: 24,
+        themeId: null,
+        widgets: [
+          {
+            id: "f-photos",
+            type: "photos",
+            x: 0,
+            y: 0,
+            w: 12,
+            h: 8,
+            sourceIds: [],
+            intervalSeconds: 600,
+            fit: "cover",
+            showCaption: false,
+          },
+          {
+            id: "f-clock",
+            type: "clock",
+            x: 0,
+            y: 5,
+            w: 4,
+            h: 2,
+            timeZone: "America/Vancouver",
+            label: "",
+            showSeconds: false,
+            style: "digital",
+          },
+          { id: "f-date", type: "date", x: 0, y: 7, w: 4, h: 1, timeZone: "America/Vancouver", showYear: false },
+          { ...countdown, id: "f-countdown", x: 9, y: 0, w: 3, h: 3 },
+        ],
+      });
+      const saved = await page.request.put(`${base}/api/admin/config/`, {
+        headers: { origin: base },
+        data: { baseVersion: version, config },
+      });
+      expect(saved.ok(), `save: ${saved.status()}`);
+      const url = await addDevice(page, base, "e2e-frame");
+      const context = await browser.newContext({ viewport: VIEWPORT });
+      // A drawn landscape stands in for an album, so the test needs no photo service.
+      const picture = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1080"><defs><linearGradient id="s" x2="0" y2="1"><stop offset="0" stop-color="#f6b26b"/><stop offset=".55" stop-color="#f9e0b0"/></linearGradient></defs><rect width="1920" height="1080" fill="url(#s)"/><circle cx="1350" cy="520" r="120" fill="#fff3d6"/><path d="M0 700 420 380 760 640 1100 300 1500 620 1920 420V1080H0Z" fill="#5a6e8c"/><path d="M0 820 520 600 980 800 1400 640 1920 780V1080H0Z" fill="#2f4058"/><rect y="900" width="1920" height="180" fill="#1d2a3d"/></svg>`;
+      await context.route("**/api/display/photos/**", (r) =>
+        r.fulfill({ json: { updatedAt: 1, sources: { lib: { photos: [["p1", 1920, 1080, "2026-08-01"]], error: null } } } }),
+      );
+      await context.route("**/api/display/photo/**", (r) => r.fulfill({ contentType: "image/svg+xml", body: picture }));
+      const d = await context.newPage();
+      const errors = [];
+      d.on("pageerror", (e) => errors.push(e.message));
+      await d.goto(url);
+      await d.locator(".ph-img.on").waitFor();
+      await d.locator(".cell-clock .c-hm").waitFor();
+      expect(await d.locator(".cell-clock").evaluate((el) => el.classList.contains("on-photo")), "the clock isn't marked as on the photo");
+      expect(!(await d.locator(".cell-photos").evaluate((el) => el.classList.contains("on-photo"))), "the photo is marked as on itself");
+      // The clock is the element on top where both are drawn, so a tap reaches it rather than the photo.
+      const box = await d.locator(".cell-clock").boundingBox();
+      const top = await d.evaluate(
+        ([x, y]) => document.elementFromPoint(x, y)?.closest(".cell")?.className,
+        [box.x + box.width / 2, box.y + box.height / 2],
+      );
+      expect(top?.includes("cell-clock"), `the clock is under the photo (${top})`);
+      const colour = await d.locator(".cell-clock .c-hm").evaluate((el) => getComputedStyle(el).color);
+      expect(colour === "rgb(255, 255, 255)", `the clock over a photo should be white, was ${colour}`);
+      if (process.env.E2E_SHOTS) {
+        await d.waitForTimeout(1800); // the photo's fade-in
+        await d.screenshot({ path: `${process.env.E2E_SHOTS}/widgets-over-photos.png` });
+      }
+      expect(errors.length === 0, errors.join("\n"));
+      await context.close();
     },
   },
   {
@@ -256,6 +375,73 @@ export const flows = [
       const more = await today.locator(".mo-more").textContent();
       expect(more === `+${12 - rows.length} more`, `wrong count: ${more}`);
       await context.close();
+    },
+  },
+  {
+    name: "a kid ticks a chore off on the wall and earns its stars",
+    async run({ browser, page, base, expect }) {
+      // Settings › Chores on a phone: add a kid, then a chore for them.
+      const phone = await browser.newContext({ viewport: { width: 390, height: 844 }, storageState: await page.context().storageState() });
+      const p = await phone.newPage();
+      await p.goto(`${base}/admin/`);
+      await p.getByRole("navigation", { name: "Sections" }).last().getByRole("button", { name: "Settings" }).click();
+      await p.getByLabel("Add a kid").fill("Ana");
+      await p.getByLabel("Add a kid").press("Enter");
+      await p.getByLabel("Add a chore").fill("Make the bed");
+      await p.getByLabel("Add a chore").press("Enter");
+      await p.getByRole("group", { name: "Who" }).getByRole("button", { name: "Ana", pressed: true }).waitFor();
+      const overflow = await p.evaluate(() => document.documentElement.scrollWidth > innerWidth);
+      expect(!overflow, "Settings › Chores scrolls sideways on a phone");
+      await phone.close();
+
+      const { config, version } = await (await page.request.get(`${base}/api/admin/config/`)).json();
+      config.chores = {
+        people: [
+          { id: "ana", name: "Ana", emoji: "🦊", color: "#e8590c", goal: 10 },
+          { id: "ben", name: "Ben", emoji: "🐻", color: "#1c7ed6", goal: 0 },
+        ],
+        items: [
+          {
+            id: "bed",
+            name: "Make the bed",
+            emoji: "🛏️",
+            stars: 2,
+            days: [0, 1, 2, 3, 4, 5, 6],
+            personIds: ["ana", "ben"],
+            rotate: "none",
+          },
+          { id: "cat", name: "Feed the cat", emoji: "🐈", stars: 1, days: [0, 1, 2, 3, 4, 5, 6], personIds: ["ana", "ben"], rotate: "day" },
+        ],
+      };
+      config.views.push({
+        id: "e2e-chores",
+        name: "Chores",
+        cols: 12,
+        rows: 8,
+        gap: 16,
+        padding: 24,
+        themeId: null,
+        widgets: [{ id: "c-chart", type: "chores", x: 0, y: 0, w: 8, h: 6, personIds: [], showStars: true, allowCheck: true }],
+      });
+      const put = await page.request.put(`${base}/api/admin/config/`, {
+        headers: { origin: base },
+        data: { baseVersion: version, config },
+      });
+      expect(put.ok(), `save: ${put.status()}`);
+      const d = await openDisplay(browser, await addDevice(page, base, "e2e-chores"));
+      const ana = d.page.locator(".ch-col").filter({ hasText: "Ana" });
+      await ana.getByText("Make the bed").waitFor();
+      const saved = d.page.waitForResponse((r) => r.url().includes("/api/display/chores/") && r.request().method() === "POST");
+      await ana.getByRole("button", { name: /Make the bed/ }).click();
+      expect((await saved).ok(), "the tick wasn't saved");
+      await ana.locator(".ch-stars").getByText("⭐ 2 / 10").waitFor();
+      if (process.env.E2E_SHOTS) await d.page.screenshot({ path: `${process.env.E2E_SHOTS}/chore-chart.png` });
+      // Another screen sees it.
+      const other = await openDisplay(browser, await addDevice(page, base, "e2e-chores"));
+      await other.page.locator(".ch-col").filter({ hasText: "Ana" }).locator(".ch-done").getByText("Make the bed").waitFor();
+      expect(d.errors.length === 0 && other.errors.length === 0, [...d.errors, ...other.errors].join("\n"));
+      await d.context.close();
+      await other.context.close();
     },
   },
 ];

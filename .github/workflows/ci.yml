@@ -8,8 +8,10 @@ on:
     branches: [main]
   pull_request:
 
+# A newer push to a pull request cancels its stale run, but every commit on main gets its own full run: merges land
+# minutes apart, and a cancelled run left those merge commits on main without a "CI passed".
 concurrency:
-  group: ci-${{ github.ref }}
+  group: ci-${{ github.event_name == 'pull_request' && github.ref || github.sha }}
   cancel-in-progress: true
 
 permissions:

@@ -23,6 +23,8 @@ export const env = {
   spotifyClientSecret: () => process.env.SPOTIFY_CLIENT_SECRET ?? "",
   sonosClientId: () => process.env.SONOS_CLIENT_ID ?? "",
   sonosClientSecret: () => process.env.SONOS_CLIENT_SECRET ?? "",
+  /** Commute times with live traffic (docs/commute.md). */
+  tomtomKey: () => process.env.TOMTOM_API_KEY ?? "",
   // TransLink's open API (docs/translink.md): one key for the realtime departures feed.
   translinkKey: () => process.env.TRANSLINK_API_KEY ?? "",
   cronSecret: () => process.env.CRON_SECRET ?? "",

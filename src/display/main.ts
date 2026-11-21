@@ -1,7 +1,9 @@
+import { stackOrder } from "@/lib/config/grid";
 import type { Palette, Period, Theme, View } from "@/lib/config/schema";
 import { currentPeriod, msUntilNextPeriod } from "@/lib/config/time";
 import type { DisplayPayload, HaData } from "@/lib/display/types";
 
+import { startAlarms } from "./alarm";
 import { alertStrip } from "./alerts";
 import { get, offline, onOfflineChange, post, PREVIEW, subscribe, TOKEN } from "./api";
 import { h } from "./dom";
@@ -89,9 +91,11 @@ function render(force = false) {
     stage.replaceChildren();
     stage.style.cssText = `grid-template-columns:repeat(${view.cols},minmax(0,1fr));grid-template-rows:repeat(${view.rows},minmax(0,1fr));gap:${view.gap}px;padding:${view.padding}px`;
     const ctx = { payload: p, timeZone: p.location.timeZone, hour12: p.hour12 };
-    for (const w of view.widgets) {
+    // Photos are a backdrop (Melvin, 2026-11-21): they're drawn first and underneath, and a widget on top of one gets
+    // `on-photo`, which keeps it readable against whatever picture is showing.
+    for (const { widget: w, onPhoto } of stackOrder(view.widgets)) {
       const cell = h("section", {
-        class: `cell cell-${w.type}`,
+        class: `cell cell-${w.type}${onPhoto ? " on-photo" : ""}`,
         style: `grid-column:${w.x + 1}/span ${w.w};grid-row:${w.y + 1}/span ${w.h}`,
         "aria-label": w.title ?? w.type,
       });
@@ -239,6 +243,8 @@ async function start() {
   app.className = "app";
   app.replaceChildren(stage, dim, offlineDot);
   onOfflineChange(() => offlineDot.classList.toggle("show", offline));
+  // Timers and pomodoros set before a reload still ring, whichever view is showing.
+  startAlarms();
   if (TOKEN && !PREVIEW && "serviceWorker" in navigator) {
     void navigator.serviceWorker.register(`/display/sw.js?v=${document.body.dataset.v ?? ""}`, { scope: "/d/" }).catch(() => undefined);
   }

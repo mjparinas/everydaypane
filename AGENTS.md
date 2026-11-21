@@ -6,6 +6,71 @@ and any other screen with a browser, and is set up from an admin panel that work
 decisions behind it, with who made them and when. Follow them; if a task seems to need one changed, raise it with
 Melvin first, and update this file in the same change when a decision changes.
 
+## Before proposing or building a feature (rule, Melvin, 2026-11-19)
+
+Melvin, 2026-11-19: "i feel like you keep repeating things that already exist." Before suggesting or starting a feature,
+read **What already exists** below (and `widgetSchema` in `src/lib/config/schema.ts`, which is the source of truth
+for widgets). Don't suggest anything listed there as new; if an idea extends something that exists, say which part
+and what it adds. Every pull request that adds a widget, an integration or a display behaviour updates this list in the
+same change, and moves it out of **In progress** when it merges.
+
+## What already exists (checked against the code, 2026-11-19)
+
+**Widgets** (`widgetSchema`, drawn by `src/display/widgets/`):
+
+| Widget (`type`) | What it shows | Data source |
+| --- | --- | --- |
+| Clock (`clock`) | Digital or analogue, any time zone, label, seconds (Vancouver and Toronto clocks) | Device clock |
+| Date (`date`) | Today's date in a time zone | Device clock |
+| Weather (`weather`) | Current conditions, hourly, up to 7 days, with icons | Open-Meteo forecast |
+| Air quality (`airQuality`) | AQHI or US AQI | Open-Meteo air quality |
+| WiFi QR (`wifiQr`) | Join code, optionally the password | Settings document |
+| Countdowns (`countdown`) | Days until holidays, birthdays and events, yearly ones roll over | Settings document |
+| Schedule (`agenda`) | Today, or the next 1 to 14 days | Google Calendar + iCal links |
+| Month calendar (`calendarMonth`) | Month grid or 1 to 6 weeks from this one, Sunday or Monday start, weekends on or off, title toggle | Google Calendar + iCal links |
+| Garbage day (`garbage`) | Next pickups, 1 to 8 weeks | Township of Langley (Recycle Coach) |
+| Photos (`photos`) | Slideshow, cover or contain, captions | Amazon shared albums, Amazon people, URL lists, photo library (uploads and Google Photos picks) |
+| Home Assistant tile (`haEntity`) | Toggle, light, sensor, climate, cover, lock (lock only), button | Home Assistant |
+| Camera (`camera`) | UniFi Protect snapshot on a timer | Home Assistant |
+| Music (`media`) | Now playing, play/pause, skip, volume, sources | Home Assistant, Spotify or Sonos |
+| Note (`note`) | Fixed text from the admin | Settings document |
+| Message board (`messages`) | Family notes posted from phones | `messages` table |
+| Meals (`meals`) | Breakfast, lunch, dinner for a day or a week | `meals` table |
+| Alerts (`alerts`) | Current emergency alerts, optional "all clear" | See alerts below |
+| Chore chart (`chores`) | Each kid's chores today, **tap to tick off** (tap again to take back), stars this week and a weekly goal | Settings document + `chores_done` table |
+| To-dos (`tasks`) | Open Google Tasks; **tap to tick off, synced back to Google** (`allowCheck`, 4 s undo) | Google Tasks |
+| Timers (`timer`) | Kitchen timers started from preset buttons on the wall, up to six at once, pause, +1 min; flash, full-screen alert and beeps when done | Device (localStorage) |
+| Pomodoro (`pomodoro`) | Focus and break rounds, long break after the last round, optional auto-start, chime between phases | Device (localStorage) |
+| BC Ferries (`ferries`) | Next sailings on up to four routes, how full each is, cancellations and delays | Community BC Ferries API (bcferriesapi.ca) |
+
+**Display behaviour:** several views on a drag-and-drop grid (chosen rows and columns), **widgets layered on top of a photos widget**
+(photos as the backdrop), a time-of-day schedule
+(morning, afternoon, evening, night) choosing the view, theme, day or night mode and dimming; themes with colour
+palettes, fonts, corner radius, opacity and optional glass; burn-in protection (pixel shift); offline mode (service
+worker serves the last good data and shows "Offline"); doorbell pop-up full screen; the red, dismissible alert strip;
+no pinch zoom; settings reach displays by polling every 30 seconds.
+
+**Alerts** (`src/server/alerts.ts`): Alert Ready (NAAD), **Environment Canada weather warnings** (through NAAD),
+DriveBC road events and weather conditions, Earthquakes Canada. Each switchable in `config.alerts.sources`.
+
+**Admin and family:** magic-link sign-in (Resend), admin panel tabs (views and grid editor, themes, displays with
+copyable addresses, meals, settings for every integration, Settings › Chores for the kids and their chores), **settings backup and restore** (Settings › Backup, a JSON
+file), `/family/` for the message board and meals, Sentry.
+
+**Integrations connected from Settings:** Google Calendar, Google Tasks, Google Photos (Picker), iCal calendar links,
+Amazon Photos, the photo library (Vercel Blob), Home Assistant (Cloudflare Tunnel + Access), Spotify, Sonos, garbage
+zone lookup.
+
+## In progress (2026-11-19)
+
+Being built in other threads now; check the merged code before starting any of these again, and move each to **What
+already exists** when it merges:
+
+- **TransLink** departures for nearby stops.
+- **BC Hydro outages**, and more weather alerts (Environment Canada warnings already come through NAAD, see above).
+- **Tappable to-dos** (the `tasks` widget already ticks off Google Tasks from the wall; this work extends it).
+- **Commute time.**
+
 ## Commands
 
 ```bash
@@ -36,6 +101,9 @@ node scripts/e2e.mjs   # Playwright browser tests against the build (CHROMIUM_PA
   Ready/NAAD, Environment Canada weather warnings, DriveBC road events for torrential rain or snow, Earthquakes Canada,
   tsunami and flooding). They show as a **red strip across the top of the screen that can be dismissed**, not a
   full-screen takeover (`config.alerts.banner` sets the lowest severity that gets the strip).
+- **BC Hydro power outages** (Melvin, 2026-11-19: "do bc hydro outages and weather alerts"): outages from BC Hydro's
+  outage map join the same alert strip and alerts widget (see Architecture). Weather alerts already existed
+  (Environment Canada through NAAD, since 2026-11-17), so that half of the ask needed nothing new.
 - **Admin changes reach displays by polling** (Melvin, 2026-11-17: "we dont need real time push for now, polling is
   ok"). Every display asks for the settings version every 30 seconds (a tiny request answered with 304 when nothing
   changed) and reloads its settings when it moves. No WebSocket or push service.
@@ -45,6 +113,22 @@ node scripts/e2e.mjs   # Playwright browser tests against the build (CHROMIUM_PA
   the PNG icons, `favicon.ico` and the web app manifest (`src/app/manifest.ts`) are made from them.
 - **Month calendar title** (Melvin, 2026-11-19: "add a toggle to show/hide month title"): the month widget's
   "November 2026" line can be switched off in its settings (`showTitle`, on by default); the grid takes the space.
+- **Month calendar weeks and weekends** (Melvin, 2026-11-21: "allow users to customize how many weeks to display,
+  minimum 1, max is 6", and "allow calendar to hide or show weekends"): the month widget shows the whole month (the
+  default, as before) or 1 to 6 weeks starting with this one (`weeks`), and can drop the Saturday and Sunday columns
+  (`showWeekends`, on by default). Rolling weeks don't dim the next month's days; its first day reads "Dec 1" and the
+  title names both months. The calendar feed covers at least the next six weeks for this. Weeks already started on
+  Sunday or Monday (`weekStartsOn`).
+- **Commute time** (Melvin, 2026-11-19): drive times with live traffic from home to up to six places (work, school),
+  set up in Settings › Commute; a place can have a "be there by" time, and the widget then says when to leave (see
+  Architecture).
+- **Chore chart** (Melvin, 2026-11-21): recurring chores for the kids, on chosen weekdays, done by everyone picked or
+  rotated between them (each time it's due, or a week each), ticked off with a tap on the wall, with stars per chore
+  counted per kid for the week and an optional weekly goal. Separate from Google Tasks (see Architecture).
+- **Kitchen timers and pomodoro** (Melvin, 2026-11-21: "1 with visual and sound alerts", then "i want a regular
+  timer, and a separate pomodoro"): two widgets, `timer` and `pomodoro` (see Architecture).
+- **BC Ferries** (Melvin, 2026-11-21): the next sailings for routes chosen in the widget's settings, with how full
+  each one is (see Architecture).
 - **TransLink departures** (Melvin, 2026-11-19: "add translink"): a TransLink widget with the next buses from up to six
   picked stops, live from TransLink's GTFS-realtime feed (see Architecture).
 - **Canadian English** in everything a person reads (colour, centre, favourite), as in Liftsmith.
@@ -94,7 +178,14 @@ panel can be complex if you need it to be."
   device signs that screen out.
 - **Admin panel** (`src/app/admin/_ui/`): one page with tabs (a bottom tab bar on phones). Edits collect in a working
   copy (a Zustand store per page) and go out together with Save. The grid editor drags with pointer events (mouse and
-  touch) and also moves and resizes with the keyboard; widgets never overlap or leave the grid (`src/lib/config/grid.ts`).
+  touch), resizes from any of a widget's four corners with the opposite corner held still (Melvin, 2026-11-21: "allow
+  any corner of a widget to adjust the size"), and also moves and resizes with the keyboard; widgets never leave the
+  grid and never overlap, except that other widgets may sit on top of a photos widget (`src/lib/config/grid.ts`).
+- **Widgets over photos** (Melvin, 2026-11-21: "allow other widgets to be placed on top of the photos widget"): photos
+  widgets are a backdrop layer. Any other widget may cover one; two photos widgets, or two widgets on top, still never
+  overlap. A new widget goes in empty cells first and lands on the photos only when nothing else is free. The display
+  draws photos first with a lower `z-index`, and marks a widget on top with `on-photo` (`stackOrder`): its panel is never
+  thinner than 55 %, and the clock and date (which have no panel) turn white with a soft shadow.
 - **Family message board:** anyone on `ADMIN_EMAILS` or `FAMILY_EMAILS` posts notes from `/family/`; the author name is
   typed, never the email, because the wall is readable by anyone in the kitchen. Notes can expire; admins pin. Displays
   poll the board every 30 seconds with an ETag.
@@ -106,7 +197,7 @@ panel can be complex if you need it to be."
   week, and polls `/api/display/meals/` every minute. Plans older than 60 days are cleared as new ones are written.
 - **Google Calendar:** an admin connects one Google account from Settings (OAuth, `calendar.readonly`, redirect
   `<site>/api/google/callback/`); the refresh token is a stored secret, the chosen calendars and their colours live in
-  `config.integrations.google.calendars`. The server fetches the month grid around today plus the next two weeks into
+  `config.integrations.google.calendars`. The server fetches the month grid around today plus the next six weeks into
   one five-minute feed (`/api/display/calendar/`) that the schedule and month widgets share. Events are placed by the
   dashboard's time zone (tzdata has B.C. on UTC−7 all year from 2026, so don't hard-code −08:00 in tests).
 - **Google Tasks** (Melvin, 2026-11-17: he asked for Google Keep, which has no API for personal accounts, and chose
@@ -133,7 +224,10 @@ panel can be complex if you need it to be."
   Setup: `docs/translink.md`.
 - **Emergency alerts:** `src/server/alerts.ts` reads NAAD's Atom feed (Alert Ready, and Environment Canada's warnings,
   whose own GeoMet API refuses automated readers), DriveBC Open511 (major events and weather conditions) and Earthquakes
-  Canada's FDSN text service (the last 24 hours; its distance filter is ignored, so distance is checked here). Each
+  Canada's FDSN text service (the last 24 hours; its distance filter is ignored, so distance is checked here) and BC
+  Hydro's outage map data (`outages-map-data.json`, no sign-in; times in epoch ms, polygons as flat longitude, latitude
+  lists). An outage whose area covers the home is "severe" (on the strip by default), one within `alerts.powerKm`
+  (default 5 km) is "moderate" from 1,000 customers out and "minor" below; restored outages drop out. Each
   source is cached on its own and one failing never hides the others. The red strip sits in the layout's flow, so it
   pushes the widgets down rather than covering them; a tap dismisses it on that screen (localStorage) until a new
   alert arrives.
@@ -156,6 +250,47 @@ panel can be complex if you need it to be."
   picks a page at a time (`=w2048-h2048`, with our token; Google's links last an hour, so photos are copied, not
   linked). Videos are skipped and a Google photo is never copied twice into one album. Blobs are never public; displays
   get them only through `/api/display/photo/`. Removing a library album deletes its photos. Setup: `docs/google-photos.md`.
+- **Chore chart:** the kids and chores are in the settings document (`config.chores`, edited in Settings › Chores and
+  saved with Save); ticks are rows in `chores_done` (one per day, chore and person, with the stars the chore was worth
+  then, so changing a chore later doesn't rewrite the week; kept 60 days), `src/server/chores.ts`. Who has a chore on a
+  day is worked out, never stored (`assignees` in `src/lib/chores.ts`): turns count from a fixed Monday (2024-01-01),
+  so a Monday, Wednesday, Friday chore alternates every time it's due, and changing who is on it starts the turns over.
+  Weeks start on Monday. Displays poll `/api/display/chores/` every minute with an ETag; a tap ticks at once (no undo
+  delay: a second tap takes it back) and the server accepts only a chore due today for that person, shown by a chores
+  widget with `allowCheck`.
+- **Commute time:** TomTom's Routing API (`traffic=true`, car, fastest) through `src/server/commute.ts`, with the key in
+  `TOMTOM_API_KEY` (Vercel). TomTom was Claude's pick (2026-11-19): free 2,500 requests a day with no credit card, where
+  Google's Routes API needs billing for traffic. Home and each place are geocoded once in the admin panel with TomTom's
+  Search API; the settings document keeps a label and coordinates (`integrations.commute`), and displays get only names
+  and times from `/api/display/commute/`. Each drive is cached five minutes, shared by every display, and six places at
+  most keeps that inside the free tier. One route failing never hides the others; readings older than 20 minutes aren't
+  shown as live. TomTom takes its key only in the query string, so its URLs are never logged. Setup: `docs/commute.md`.
+- **BC Ferries:** BC Ferries has no public API, so `src/server/ferries.ts` reads the community BC Ferries API
+  (`https://www.bcferriesapi.ca/v2/capacity/`, MIT, no key; it reads BC Ferries' current conditions pages every
+  minute). Its one answer covers every route with "how full" (the codes in `src/lib/ferries.ts`, departure terminal then
+  arrival, such as `TSASWB`), so it is cached two minutes for every widget and display, and the last good copy is
+  served when it fails (it answers a bare string, "BC Ferries Data Currently Down", when it has nothing). Displays get
+  only the routes on a ferries widget, from `/api/display/ferries/`: sailings that haven't left, in 24-hour Pacific
+  time, with percent full (`fill`, and `carFill`), cancellations and delays. The widget drops a sailing five minutes
+  after its time on the wall's own clock and labels conditions older than 15 minutes with their time. Its field names
+  come from the project's published JSON schema (`schemas/bc-ferries-api-v2-capacity-schema.json`); this sandbox can't
+  reach it, so tests use that shape.
+- **Settings backup and restore** (Melvin, 2026-11-21): Settings › Backup downloads the whole settings document as
+  `everydaypane-settings-<date>.json` and restores one (`src/server/backup.ts`, `/api/admin/backup/`). The file is the
+  document itself, walked generically, so new widget types and settings are in it with no change there. It never holds
+  the `secrets` table (tokens, cookies, calendar link addresses), display devices, meals, messages or library photos;
+  the file says so in `notIncluded`. WiFi passwords (the one secret in the document) are blanked unless the admin
+  switches them on, and a restore without them keeps the dashboard's current ones. A restore is checked first
+  (`dryRun`, the panel shows what the file holds), upgraded like a stored document, and saved as an ordinary versioned
+  save, so displays reload and a stale restore gets 409.
+- **Timers and pomodoro:** run entirely on the display, no server. Each widget keeps its state in localStorage
+  (`everydaypane.timer.<id>`, `everydaypane.pomodoro.<id>`), and alarms belong to the screen, not the widget
+  (`src/display/alarm.ts`, started by `main.ts`), so a timer still rings after a settings save, a reload, or when the
+  time-of-day schedule has switched to a view without it. When one is done the widget flashes; the full-screen alert
+  (red flashing, "Tap to stop") and the sound can each be switched off, and both stop by themselves after
+  `ringSeconds`. Sound is Web Audio beeps (no sound file); browsers allow it only after a tap, and starting a timer is
+  that tap, so a timer started before a page reload rings silently until someone touches the screen. The pomodoro's
+  full-screen alert is off by default and it chimes rather than beeps. The arithmetic is in `src/lib/timers.ts`.
 - **Garbage pickup:** the Township of Langley's collection calendar (tol.ca) is Recycle Coach, project 521,
   district `LANGL`, with zones such as Monday A or Thursday B. The zone is looked up from the address in the admin
   panel (or picked by hand) and the schedule is fetched and cached by the server (12 hours). The API is Recycle Coach's
@@ -219,7 +354,8 @@ panel can be complex if you need it to be."
 - `.github/workflows/ci.yml` runs on every pull request and every push to `main`: types, lint, formatting and
   dependency audit; Vitest with coverage; the production build; and the Playwright browser tests against that build
   (`scripts/e2e.mjs`, which signs in through a real magic link and fails on any console error). **"CI passed"** is the
-  one check to require.
+  one check to require. A new push to a pull request cancels its stale run, but runs on `main` are never cancelled:
+  each merge commit gets its own full run, because merges land minutes apart and a cancelled run left them unchecked.
 - A bug fix comes with a test that fails without it. Flaky tests are fixed at the cause, never retried.
 - Test data is plain and readable; nothing random.
 - **Agents fix and merge their own pull requests** (Melvin, 2026-11-17: "auto fix and merge prs please"). An agent

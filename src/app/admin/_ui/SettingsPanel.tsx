@@ -1,6 +1,9 @@
 "use client";
 
+import { BackupPanel } from "./BackupPanel";
 import { CalendarLinksPanel } from "./CalendarLinksPanel";
+import { ChoresPanel } from "./ChoresPanel";
+import { CommutePanel } from "./CommutePanel";
 import { NumberInput, Section, Select, Text, Toggle } from "./fields";
 import { GarbagePanel } from "./GarbagePanel";
 import { GooglePanel } from "./GooglePanel";
@@ -68,6 +71,8 @@ export function SettingsPanel() {
       <TasksPanel />
       <CalendarLinksPanel />
       <GarbagePanel />
+      <CommutePanel />
+      <ChoresPanel />
       <PhotosPanel />
       <HomeAssistantPanel />
       <MusicPanel />
@@ -137,6 +142,11 @@ export function SettingsPanel() {
               checked={alerts.sources.earthquakes}
               onChange={(v) => edit((c) => void (c.alerts.sources.earthquakes = v))}
             />
+            <Toggle
+              label="BC Hydro power outages"
+              checked={alerts.sources.power}
+              onChange={(v) => edit((c) => void (c.alerts.sources.power = v))}
+            />
             <div className="grid grid-cols-2 gap-3">
               <NumberInput
                 label="Within (km)"
@@ -153,14 +163,23 @@ export function SettingsPanel() {
                 step={0.1}
                 onChange={(v) => edit((c) => void (c.alerts.minMagnitude = v))}
               />
+              <NumberInput
+                label="Power outages within (km)"
+                value={alerts.powerKm}
+                min={0}
+                max={50}
+                onChange={(v) => edit((c) => void (c.alerts.powerKm = v))}
+              />
             </div>
             <p className="text-xs text-soft">
               Alert Ready and weather warnings count when they cover your location; road events and earthquakes count within the distance
-              above.
+              above. A power outage covering your home reaches the red strip at Severe; ones nearby count within their own distance.
             </p>
           </>
         )}
       </Section>
+
+      <BackupPanel />
     </div>
   );
 }
