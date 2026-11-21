@@ -63,7 +63,7 @@ export async function touchConfig(now = Date.now()): Promise<void> {
 }
 
 /** Fills in sections added after a document was saved, from the defaults. */
-function upgrade(stored: unknown): unknown {
+export function upgrade(stored: unknown): unknown {
   if (typeof stored !== "object" || stored === null) return stored;
   const d = defaultConfig() as unknown as Record<string, unknown>;
   const s = stored as Record<string, unknown>;

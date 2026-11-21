@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { cellAt, clampRect, findSpot, fits, overlaps, refit, stackOrder } from "./grid";
+import { cellAt, clampRect, findSpot, fits, overlaps, refit, resizeFrom, stackOrder } from "./grid";
 
 const grid = { cols: 12, rows: 8 };
 
@@ -14,6 +14,38 @@ describe("grid", () => {
     expect(clampRect({ x: 11, y: 7, w: 3, h: 2 }, grid)).toEqual({ x: 9, y: 6, w: 3, h: 2 });
     expect(clampRect({ x: -2, y: 0, w: 20, h: 1 }, grid)).toEqual({ x: 0, y: 0, w: 12, h: 1 });
     expect(clampRect({ x: 0, y: 0, w: 1, h: 1 }, grid, { w: 2, h: 2 })).toEqual({ x: 0, y: 0, w: 2, h: 2 });
+  });
+
+  describe("resizing from a corner", () => {
+    const w = { x: 4, y: 2, w: 3, h: 2 }; // columns 4–6, rows 2–3
+
+    it("keeps the opposite corner fixed", () => {
+      expect(resizeFrom(w, "se", { x: 8, y: 5 }, grid)).toEqual({ x: 4, y: 2, w: 5, h: 4 });
+      expect(resizeFrom(w, "nw", { x: 2, y: 0 }, grid)).toEqual({ x: 2, y: 0, w: 5, h: 4 });
+      expect(resizeFrom(w, "ne", { x: 9, y: 1 }, grid)).toEqual({ x: 4, y: 1, w: 6, h: 3 });
+      expect(resizeFrom(w, "sw", { x: 3, y: 6 }, grid)).toEqual({ x: 3, y: 2, w: 4, h: 5 });
+    });
+
+    it("shrinks from any corner", () => {
+      expect(resizeFrom(w, "nw", { x: 6, y: 3 }, grid)).toEqual({ x: 6, y: 3, w: 1, h: 1 });
+      expect(resizeFrom(w, "ne", { x: 4, y: 3 }, grid)).toEqual({ x: 4, y: 3, w: 1, h: 1 });
+    });
+
+    it("never goes below the minimum size or past the opposite corner", () => {
+      expect(resizeFrom(w, "nw", { x: 11, y: 7 }, grid, { w: 2, h: 2 })).toEqual({ x: 5, y: 2, w: 2, h: 2 });
+      expect(resizeFrom(w, "se", { x: 0, y: 0 }, grid, { w: 2, h: 1 })).toEqual({ x: 4, y: 2, w: 2, h: 1 });
+    });
+
+    it("stays on the grid", () => {
+      expect(resizeFrom(w, "nw", { x: -3, y: -1 }, grid)).toEqual({ x: 0, y: 0, w: 7, h: 4 });
+      expect(resizeFrom(w, "se", { x: 20, y: 20 }, grid)).toEqual({ x: 4, y: 2, w: 8, h: 6 });
+    });
+
+    it("still refuses a size that covers another widget, but may cover photos", () => {
+      const r = resizeFrom(w, "nw", { x: 0, y: 0 }, grid);
+      expect(fits({ ...r, type: "clock" }, grid, [{ x: 0, y: 0, w: 2, h: 1, type: "weather" }])).toBe(false);
+      expect(fits({ ...r, type: "clock" }, grid, [{ x: 0, y: 0, w: 4, h: 4, type: "photos" }])).toBe(true);
+    });
   });
 
   it("refuses a spot that is taken or off the grid", () => {

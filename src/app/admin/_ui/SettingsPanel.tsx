@@ -1,5 +1,6 @@
 "use client";
 
+import { BackupPanel } from "./BackupPanel";
 import { CalendarLinksPanel } from "./CalendarLinksPanel";
 import { ChoresPanel } from "./ChoresPanel";
 import { CommutePanel } from "./CommutePanel";
@@ -177,6 +178,8 @@ export function SettingsPanel() {
           </>
         )}
       </Section>
+
+      <BackupPanel />
     </div>
   );
 }

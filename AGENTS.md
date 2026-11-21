@@ -27,7 +27,7 @@ same change, and moves it out of **In progress** when it merges.
 | WiFi QR (`wifiQr`) | Join code, optionally the password | Settings document |
 | Countdowns (`countdown`) | Days until holidays, birthdays and events, yearly ones roll over | Settings document |
 | Schedule (`agenda`) | Today, or the next 1 to 14 days | Google Calendar + iCal links |
-| Month calendar (`calendarMonth`) | Month grid, week start, title toggle | Google Calendar + iCal links |
+| Month calendar (`calendarMonth`) | Month grid or 1 to 6 weeks from this one, Sunday or Monday start, weekends on or off, title toggle | Google Calendar + iCal links |
 | Garbage day (`garbage`) | Next pickups, 1 to 8 weeks | Township of Langley (Recycle Coach) |
 | Photos (`photos`) | Slideshow, cover or contain, captions | Amazon shared albums, Amazon people, URL lists, photo library (uploads and Google Photos picks) |
 | Home Assistant tile (`haEntity`) | Toggle, light, sensor, climate, cover, lock (lock only), button | Home Assistant |
@@ -51,7 +51,8 @@ no pinch zoom; settings reach displays by polling every 30 seconds.
 DriveBC road events and weather conditions, Earthquakes Canada. Each switchable in `config.alerts.sources`.
 
 **Admin and family:** magic-link sign-in (Resend), admin panel tabs (views and grid editor, themes, displays with
-copyable addresses, meals, settings for every integration, Settings › Chores for the kids and their chores), `/family/` for the message board and meals, Sentry.
+copyable addresses, meals, settings for every integration, Settings › Chores for the kids and their chores), **settings backup and restore** (Settings › Backup, a JSON
+file), `/family/` for the message board and meals, Sentry.
 
 **Integrations connected from Settings:** Google Calendar, Google Tasks, Google Photos (Picker), iCal calendar links,
 Amazon Photos, the photo library (Vercel Blob), Home Assistant (Cloudflare Tunnel + Access), Spotify, Sonos, garbage
@@ -109,6 +110,12 @@ node scripts/e2e.mjs   # Playwright browser tests against the build (CHROMIUM_PA
   the PNG icons, `favicon.ico` and the web app manifest (`src/app/manifest.ts`) are made from them.
 - **Month calendar title** (Melvin, 2026-11-19: "add a toggle to show/hide month title"): the month widget's
   "November 2026" line can be switched off in its settings (`showTitle`, on by default); the grid takes the space.
+- **Month calendar weeks and weekends** (Melvin, 2026-11-21: "allow users to customize how many weeks to display,
+  minimum 1, max is 6", and "allow calendar to hide or show weekends"): the month widget shows the whole month (the
+  default, as before) or 1 to 6 weeks starting with this one (`weeks`), and can drop the Saturday and Sunday columns
+  (`showWeekends`, on by default). Rolling weeks don't dim the next month's days; its first day reads "Dec 1" and the
+  title names both months. The calendar feed covers at least the next six weeks for this. Weeks already started on
+  Sunday or Monday (`weekStartsOn`).
 - **Commute time** (Melvin, 2026-11-19): drive times with live traffic from home to up to six places (work, school),
   set up in Settings › Commute; a place can have a "be there by" time, and the widget then says when to leave (see
   Architecture).
@@ -162,8 +169,9 @@ panel can be complex if you need it to be."
   device signs that screen out.
 - **Admin panel** (`src/app/admin/_ui/`): one page with tabs (a bottom tab bar on phones). Edits collect in a working
   copy (a Zustand store per page) and go out together with Save. The grid editor drags with pointer events (mouse and
-  touch) and also moves and resizes with the keyboard; widgets never leave the grid and never overlap, except that
-  other widgets may sit on top of a photos widget (`src/lib/config/grid.ts`).
+  touch), resizes from any of a widget's four corners with the opposite corner held still (Melvin, 2026-11-21: "allow
+  any corner of a widget to adjust the size"), and also moves and resizes with the keyboard; widgets never leave the
+  grid and never overlap, except that other widgets may sit on top of a photos widget (`src/lib/config/grid.ts`).
 - **Widgets over photos** (Melvin, 2026-11-21: "allow other widgets to be placed on top of the photos widget"): photos
   widgets are a backdrop layer. Any other widget may cover one; two photos widgets, or two widgets on top, still never
   overlap. A new widget goes in empty cells first and lands on the photos only when nothing else is free. The display
@@ -180,7 +188,7 @@ panel can be complex if you need it to be."
   week, and polls `/api/display/meals/` every minute. Plans older than 60 days are cleared as new ones are written.
 - **Google Calendar:** an admin connects one Google account from Settings (OAuth, `calendar.readonly`, redirect
   `<site>/api/google/callback/`); the refresh token is a stored secret, the chosen calendars and their colours live in
-  `config.integrations.google.calendars`. The server fetches the month grid around today plus the next two weeks into
+  `config.integrations.google.calendars`. The server fetches the month grid around today plus the next six weeks into
   one five-minute feed (`/api/display/calendar/`) that the schedule and month widgets share. Events are placed by the
   dashboard's time zone (tzdata has B.C. on UTC−7 all year from 2026, so don't hard-code −08:00 in tests).
 - **Google Tasks** (Melvin, 2026-11-17: he asked for Google Keep, which has no API for personal accounts, and chose
@@ -239,6 +247,14 @@ panel can be complex if you need it to be."
   and times from `/api/display/commute/`. Each drive is cached five minutes, shared by every display, and six places at
   most keeps that inside the free tier. One route failing never hides the others; readings older than 20 minutes aren't
   shown as live. TomTom takes its key only in the query string, so its URLs are never logged. Setup: `docs/commute.md`.
+- **Settings backup and restore** (Melvin, 2026-11-21): Settings › Backup downloads the whole settings document as
+  `everydaypane-settings-<date>.json` and restores one (`src/server/backup.ts`, `/api/admin/backup/`). The file is the
+  document itself, walked generically, so new widget types and settings are in it with no change there. It never holds
+  the `secrets` table (tokens, cookies, calendar link addresses), display devices, meals, messages or library photos;
+  the file says so in `notIncluded`. WiFi passwords (the one secret in the document) are blanked unless the admin
+  switches them on, and a restore without them keeps the dashboard's current ones. A restore is checked first
+  (`dryRun`, the panel shows what the file holds), upgraded like a stored document, and saved as an ordinary versioned
+  save, so displays reload and a stale restore gets 409.
 - **Garbage pickup:** the Township of Langley's collection calendar (tol.ca) is Recycle Coach, project 521,
   district `LANGL`, with zones such as Monday A or Thursday B. The zone is looked up from the address in the admin
   panel (or picked by hand) and the schedule is fetched and cached by the server (12 hours). The API is Recycle Coach's
