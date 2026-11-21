@@ -145,11 +145,18 @@ export const WIDGETS: { [T in WidgetType]: WidgetInfo<T> } = {
   },
   camera: {
     label: "Camera",
-    description: "A UniFi Protect camera via Home Assistant",
+    description: "Live video from go2rtc, or snapshots via Home Assistant",
     icon: "📹",
     size: { w: 4, h: 3 },
     minSize: { w: 2, h: 2 },
-    defaults: () => ({ entityId: "", refreshSeconds: 10 }),
+    defaults: () => ({
+      source: "homeAssistant" as const,
+      entityId: "",
+      refreshSeconds: 10,
+      stream: "",
+      format: "mp4" as const,
+      fit: "cover" as const,
+    }),
   },
   media: {
     label: "Music",

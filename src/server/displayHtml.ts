@@ -1,5 +1,7 @@
 import "server-only";
 
+import { csp } from "@/lib/securityHeaders";
+
 const ASSET_VERSION = (process.env.NEXT_PUBLIC_COMMIT_SHA || String(Date.now())).slice(0, 12);
 
 const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/"/g, "&quot;");
@@ -8,11 +10,13 @@ const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replac
  * The display shell. Its settings arrive by fetch (and from the service worker's copy when offline), so this HTML is
  * the same for every load and can be cached whole for offline mode.
  */
-export function displayHtml(opts: { token: string | null; title: string; previewView?: string }): Response {
+export function displayHtml(opts: { token: string | null; title: string; previewView?: string; mediaOrigin?: string }): Response {
   const v = ASSET_VERSION;
   const data = [`data-v="${esc(v)}"`];
   if (opts.token) data.push(`data-token="${esc(opts.token)}"`);
   if (opts.previewView) data.push(`data-preview="${esc(opts.previewView)}"`);
+  // The page reloads itself when the camera server changes, since this page's policy names it.
+  data.push(`data-media="${esc(opts.mediaOrigin ?? "")}"`);
   const html = `<!doctype html>
 <html lang="en-CA">
 <head>
@@ -34,6 +38,13 @@ export function displayHtml(opts: { token: string | null; title: string; preview
 </body>
 </html>`;
   return new Response(html, {
-    headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store", "X-Robots-Tag": "noindex" },
+    headers: {
+      "Content-Type": "text/html; charset=utf-8",
+      "Cache-Control": "no-store",
+      "X-Robots-Tag": "noindex",
+      // Replaces the site-wide policy (next.config.ts) on this page only: live camera video comes straight from the
+      // go2rtc server on the home network.
+      "Content-Security-Policy": csp(opts.mediaOrigin),
+    },
   });
 }

@@ -31,7 +31,7 @@ same change, and moves it out of **In progress** when it merges.
 | Garbage day (`garbage`) | Next pickups, 1 to 8 weeks | Township of Langley (Recycle Coach) |
 | Photos (`photos`) | Slideshow, cover or contain, captions | Amazon shared albums, Amazon people, URL lists, photo library (uploads and Google Photos picks) |
 | Home Assistant tile (`haEntity`) | Toggle, light, sensor, climate, cover, lock (lock only), button | Home Assistant |
-| Camera (`camera`) | UniFi Protect snapshot on a timer | Home Assistant |
+| Camera (`camera`) | **Live video** (`source: go2rtc`, MP4 or MJPEG), or a UniFi Protect snapshot on a timer | go2rtc at home, or Home Assistant |
 | Music (`media`) | Now playing, play/pause, skip, volume, sources | Home Assistant, Spotify or Sonos |
 | Note (`note`) | Fixed text from the admin | Settings document |
 | Message board (`messages`) | Family notes posted from phones | `messages` table |
@@ -44,7 +44,8 @@ same change, and moves it out of **In progress** when it merges.
 (morning, afternoon, evening, night) choosing the view, theme, day or night mode and dimming; themes with colour
 palettes, fonts, corner radius, opacity and optional glass; burn-in protection (pixel shift); offline mode (service
 worker serves the last good data and shows "Offline"); doorbell pop-up full screen; the red, dismissible alert strip;
-no pinch zoom; settings reach displays by polling every 30 seconds.
+no pinch zoom; settings reach displays by polling every 30 seconds; live camera video that pauses while hidden, off
+screen or deeply dimmed.
 
 **Alerts** (`src/server/alerts.ts`): Alert Ready (NAAD), **Environment Canada weather warnings** (through NAAD),
 DriveBC road events and weather conditions, Earthquakes Canada. Each switchable in `config.alerts.sources`.
@@ -55,7 +56,7 @@ file), `/family/` for the message board and meals, Sentry.
 
 **Integrations connected from Settings:** Google Calendar, Google Tasks, Google Photos (Picker), iCal calendar links,
 Amazon Photos, the photo library (Vercel Blob), Home Assistant (Cloudflare Tunnel + Access), Spotify, Sonos, garbage
-zone lookup.
+zone lookup, go2rtc for live cameras (Settings › Live cameras).
 
 ## In progress (2026-11-19)
 
@@ -118,6 +119,9 @@ node scripts/e2e.mjs   # Playwright browser tests against the build (CHROMIUM_PA
 - **Commute time** (Melvin, 2026-11-19): drive times with live traffic from home to up to six places (work, school),
   set up in Settings › Commute; a place can have a "be there by" time, and the widget then says when to leave (see
   Architecture).
+- **Live cameras** (Melvin, 2026-11-21: "can I add RTSP or other video feeds", with his UniFi Protect camera's RTSPS
+  links): Camera widgets and the doorbell pop-up can play live video from a go2rtc server at home (see Architecture),
+  alongside the Home Assistant snapshots they already had. Medium resolution for widgets by default (the docs name it).
 - **Canadian English** in everything a person reads (colour, centre, favourite), as in Liftsmith.
 
 ## Display: super lightweight (rule, Melvin, 2026-11-17)
@@ -235,6 +239,18 @@ panel can be complex if you need it to be."
   and times from `/api/display/commute/`. Each drive is cached five minutes, shared by every display, and six places at
   most keeps that inside the free tier. One route failing never hides the others; readings older than 20 minutes aren't
   shown as live. TomTom takes its key only in the query string, so its URLs are never logged. Setup: `docs/commute.md`.
+- **Live cameras:** browsers can't play RTSP and Vercel can't reach the home network (nor should it carry video), so
+  **go2rtc** runs at home (Home Assistant add-on or Docker) and the screen, which is on the same network, plays from it
+  directly: `<go2rtc>/api/stream.mp4?src=<name>` in a plain muted `<video>` (the camera's own H.264, hardware decoded),
+  or `stream.mjpeg` in an `<img>` for H.265 cameras. No player library (`src/display/live.ts`). The settings document
+  keeps only go2rtc's address (`integrations.cameras.go2rtcUrl`, https only, since the dashboard is https) and stream
+  names (`[A-Za-z0-9_.-]`); the cameras' RTSP links, which carry tokens, live only in go2rtc's own `go2rtc.yaml`.
+  Video plays only while visible: not while the page is hidden, the widget is off screen (IntersectionObserver) or the
+  schedule dims to 0.8 or more; a failure or a frozen picture reconnects with backoff (5 s doubling to a minute), and a
+  video more than 4 s behind skips ahead. The doorbell pop-up plays `doorbell.stream` live when set (the ring still
+  comes from Home Assistant). Display pages send their own Content-Security-Policy naming the go2rtc origin in
+  `img-src` and `media-src` (`displayHtml`; next.config.ts leaves those paths out, because its header would replace
+  the page's own), and a display reloads once when that address changes. Setup: `docs/cameras.md`.
 - **Settings backup and restore** (Melvin, 2026-11-21): Settings › Backup downloads the whole settings document as
   `everydaypane-settings-<date>.json` and restores one (`src/server/backup.ts`, `/api/admin/backup/`). The file is the
   document itself, walked generically, so new widget types and settings are in it with no change there. It never holds
@@ -292,7 +308,7 @@ panel can be complex if you need it to be."
 - Requests that change something must come from our own origin (`sameOrigin`).
 - Security headers on every response (`src/lib/securityHeaders.ts`): HSTS, nosniff, `frame-ancestors 'none'`, a CSP
   that allows only our own origin (and Sentry's ingest), and a Permissions-Policy that turns off camera, microphone
-  and location.
+  and location. The one addition: display pages also allow pictures and video from the configured go2rtc server.
 - Error reports are scrubbed of emails, display tokens and cookies before they leave (`src/lib/sentryScrub.ts`).
 
 ## Monitoring (Melvin, 2026-11-17)

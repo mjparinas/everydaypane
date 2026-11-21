@@ -22,6 +22,8 @@ export function displayPayload(
   const themes: Record<string, Theme> = {};
   for (const t of config.themes) if (themeIds.has(t.id)) themes[t.id] = t;
   const doorbell = config.integrations.homeAssistant.doorbell;
+  const go2rtc = go2rtcBase(config);
+  const bellStream = go2rtc ? doorbell.stream : "";
   return {
     version,
     device: device ? { id: device.id, name: device.name } : null,
@@ -37,10 +39,23 @@ export function displayPayload(
     burnIn: config.burnIn,
     alerts: { enabled: config.alerts.enabled, banner: config.alerts.banner },
     doorbell: {
-      enabled: Boolean(doorbell.entityId && doorbell.cameraEntityId),
+      enabled: Boolean(doorbell.entityId && (doorbell.cameraEntityId || bellStream)),
       seconds: doorbell.seconds,
       entityId: doorbell.entityId,
       cameraEntityId: doorbell.cameraEntityId,
+      stream: bellStream,
     },
+    go2rtcUrl: go2rtc,
   };
+}
+
+/** The go2rtc server's address without a trailing slash, or "" when live cameras aren't set up. */
+export function go2rtcBase(config: DashboardConfig): string {
+  return config.integrations.cameras.go2rtcUrl.replace(/\/+$/, "");
+}
+
+/** The origin display pages may play camera video from (their Content-Security-Policy), or "". */
+export function mediaOrigin(config: DashboardConfig): string {
+  const base = go2rtcBase(config);
+  return base ? new URL(base).origin : "";
 }

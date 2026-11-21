@@ -313,6 +313,76 @@ export const flows = [
     },
   },
   {
+    name: "a live camera plays straight from go2rtc at home, which only the display page's policy allows",
+    async run({ browser, page, base, expect }) {
+      const go2rtc = "https://cams.example.test:8443";
+      const { config, version } = await (await page.request.get(`${base}/api/admin/config/`)).json();
+      config.integrations.cameras = { go2rtcUrl: go2rtc };
+      const cam = (id, x, format) => ({
+        id,
+        type: "camera",
+        title: format === "mp4" ? "Front door" : "Driveway",
+        x,
+        y: 0,
+        w: 6,
+        h: 8,
+        source: "go2rtc",
+        entityId: "",
+        refreshSeconds: 10,
+        stream: format === "mp4" ? "front_door" : "driveway",
+        format,
+        fit: "cover",
+      });
+      config.views.push({
+        id: "e2e-cams",
+        name: "Cameras",
+        cols: 12,
+        rows: 8,
+        gap: 16,
+        padding: 24,
+        themeId: null,
+        widgets: [cam("c-video", 0, "mp4"), cam("c-mjpeg", 6, "mjpeg")],
+      });
+      const saved = await page.request.put(`${base}/api/admin/config/`, {
+        headers: { origin: base },
+        data: { baseVersion: version, config },
+      });
+      expect(saved.ok(), `save: ${saved.status()} ${await saved.text()}`);
+      const url = await addDevice(page, base, "e2e-cams");
+
+      const html = await fetch(url);
+      const policy = html.headers.get("content-security-policy") ?? "";
+      expect(policy.includes(`media-src 'self' ${go2rtc}`), `display policy doesn't allow go2rtc video: ${policy}`);
+      const admin = (await fetch(`${base}/api/health/`)).headers.get("content-security-policy") ?? "";
+      expect(!admin.includes(go2rtc), "other pages shouldn't allow the camera server");
+
+      const context = await browser.newContext({ viewport: VIEWPORT });
+      // The sandbox has no camera (and Playwright's Chromium no H.264), so a drawn picture stands in for go2rtc's MJPEG.
+      const picture = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 720"><rect width="960" height="720" fill="#3b4a3f"/><rect y="430" width="960" height="290" fill="#6b6f72"/><path d="M80 430V170h300v260z" fill="#c9b79c"/><rect x="190" y="260" width="80" height="170" fill="#5a3b2a"/><circle cx="760" cy="150" r="70" fill="#e8e3c8" opacity=".5"/><text x="24" y="44" font-family="monospace" font-size="26" fill="#fff">DRIVEWAY  2026-11-21 21:16:04</text></svg>`;
+      const asked = [];
+      await context.route(`${go2rtc}/**`, (r) => {
+        asked.push(r.request().url());
+        return r.request().url().includes("stream.mjpeg")
+          ? r.fulfill({ contentType: "image/svg+xml", body: picture })
+          : r.fulfill({ status: 404, body: "" });
+      });
+      const d = await context.newPage();
+      const blocked = [];
+      d.on("console", (m) => /Content Security Policy/i.test(m.text()) && blocked.push(m.text()));
+      await d.goto(url);
+      await d.locator(".cell-camera img.cam-img[src]").waitFor();
+      await d.waitForFunction(() => document.querySelector(".cell-camera img.cam-img")?.naturalWidth > 0);
+      expect(blocked.length === 0, blocked.join("\n"));
+      expect(asked.includes(`${go2rtc}/api/stream.mjpeg?src=driveway`), `asked for ${asked.join(", ")}`);
+      expect(asked.includes(`${go2rtc}/api/stream.mp4?src=front_door`), `asked for ${asked.join(", ")}`);
+      expect((await d.locator(".cell-camera video").getAttribute("aria-label")) === "Front door", "the video has no name");
+      // The stream that failed (404 here) says so on the picture and is retried.
+      await d.getByText("Camera offline · trying again").waitFor();
+      if (process.env.E2E_SHOTS) await d.screenshot({ path: `${process.env.E2E_SHOTS}/live-cameras.png` });
+      await context.close();
+    },
+  },
+  {
     name: "an emergency alert shows as a red strip that a tap dismisses",
     async run({ browser, page, base, expect }) {
       const url = await addDevice(page, base, "home");

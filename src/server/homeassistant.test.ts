@@ -94,7 +94,20 @@ describe("Home Assistant routes", () => {
     view.widgets = [
       { id: "w1", type: "haEntity", x: 0, y: 0, w: 2, h: 1, entityId: "light.kitchen", control: "auto" },
       { id: "w2", type: "haEntity", x: 2, y: 0, w: 2, h: 1, entityId: "lock.front", control: "auto" },
-      { id: "w3", type: "camera", x: 4, y: 0, w: 2, h: 2, entityId: "camera.driveway", refreshSeconds: 10 },
+      {
+        id: "w3",
+        type: "camera",
+        x: 4,
+        y: 0,
+        w: 2,
+        h: 2,
+        source: "homeAssistant",
+        entityId: "camera.driveway",
+        refreshSeconds: 10,
+        stream: "",
+        format: "mp4",
+        fit: "cover",
+      },
       {
         id: "w4",
         type: "media",
@@ -112,7 +125,7 @@ describe("Home Assistant routes", () => {
     ];
     config.integrations.homeAssistant = {
       url: HA,
-      doorbell: { entityId: "event.doorbell_ring", cameraEntityId: "camera.front_door", seconds: 30 },
+      doorbell: { entityId: "event.doorbell_ring", cameraEntityId: "camera.front_door", seconds: 30, stream: "" },
     };
     expect((await saveConfig(config, stored.version)).ok).toBe(true);
     await setSecret("homeAssistant.token", "ha-token");

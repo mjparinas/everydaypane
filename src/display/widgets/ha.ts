@@ -3,6 +3,7 @@ import type { HaData, HaEntity } from "@/lib/display/types";
 
 import { imageUrl, refresh, send, subscribe } from "../api";
 import { fill, h, setText } from "../dom";
+import { liveUrl, playLive } from "../live";
 import type { Mount } from "./types";
 
 // Home Assistant tiles and UniFi Protect cameras. Every tap goes to our server, which only passes on a fixed set of
@@ -233,14 +234,34 @@ export function cameraLoop(img: HTMLImageElement, entityId: string, everyMs: num
   };
 }
 
-export const camera: Mount<"camera"> = (el, w) => {
+export const camera: Mount<"camera"> = (el, w, ctx) => {
+  const label = w.title ? h("div", { class: "cam-label" }, w.title) : null;
+  const status = h("div", { class: "cam-status" });
+  const box = (media: HTMLElement) => el.append(h("div", { class: `w-camera fit-${w.fit}` }, media, label, status));
+
+  if (w.source === "go2rtc") {
+    const base = ctx.payload.go2rtcUrl;
+    if (!base || !w.stream) {
+      el.append(
+        h("div", { class: "w-empty" }, base ? "Pick a stream for this camera." : "Add your go2rtc address under Settings › Live cameras."),
+      );
+      return () => undefined;
+    }
+    const media =
+      w.format === "mjpeg"
+        ? h("img", { class: "cam-img", alt: w.title || "Camera" })
+        : h("video", { class: "cam-img", "aria-label": w.title || "Camera" });
+    box(media);
+    return playLive(media, liveUrl(base, w.stream, w.format), (s) =>
+      setText(status, s === "offline" ? "Camera offline · trying again" : ""),
+    );
+  }
+
   if (!w.entityId) {
     el.append(h("div", { class: "w-empty" }, "Pick a camera for this widget."));
     return () => undefined;
   }
   const img = h("img", { class: "cam-img", alt: w.title || "Camera" });
-  const status = h("div", { class: "cam-status" });
-  const label = w.title ? h("div", { class: "cam-label" }, w.title) : null;
-  el.append(h("div", { class: "w-camera" }, img, label, status));
+  box(img);
   return cameraLoop(img, w.entityId, w.refreshSeconds * 1000, (failed) => setText(status, failed ? "Camera offline" : ""));
 };

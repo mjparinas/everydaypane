@@ -452,23 +452,73 @@ function TypeSettings({
     }
     case "camera": {
       const e = edit<"camera">();
+      const go2rtc = config.integrations.cameras.go2rtcUrl;
       return (
         <>
-          <Text
-            label="Camera entity"
-            value={w.entityId}
-            maxLength={255}
-            placeholder="camera.front_door"
-            list="ha-cameras"
-            onChange={(v) => e((x) => void (x.entityId = v.trim()))}
+          <Select
+            label="Picture from"
+            value={w.source}
+            options={[
+              { value: "go2rtc", label: "Live video (go2rtc at home)" },
+              { value: "homeAssistant", label: "Snapshots (Home Assistant)" },
+            ]}
+            hint={
+              w.source === "go2rtc"
+                ? go2rtc
+                  ? "Plays straight from go2rtc on your home network, so it works only on screens at home."
+                  : "Add your go2rtc address under Settings › Live cameras first."
+                : "A fresh picture every few seconds, through Home Assistant."
+            }
+            onChange={(v) => e((x) => void (x.source = v))}
           />
-          <HaEntityList id="ha-cameras" only="camera." />
-          <NumberInput
-            label="Refresh every (seconds)"
-            value={w.refreshSeconds}
-            min={2}
-            max={600}
-            onChange={(v) => e((x) => void (x.refreshSeconds = v))}
+          {w.source === "go2rtc" ? (
+            <>
+              <Text
+                label="Stream name"
+                value={w.stream}
+                maxLength={64}
+                placeholder="front_door"
+                hint="As named under streams: in go2rtc.yaml. Use the camera's medium quality stream for a widget."
+                onChange={(v) => e((x) => void (x.stream = v.trim()))}
+              />
+              <Select
+                label="Format"
+                value={w.format}
+                options={[
+                  { value: "mp4", label: "Video (lightest, the camera's own H.264)" },
+                  { value: "mjpeg", label: "MJPEG (for H.265 cameras; go2rtc converts it)" },
+                ]}
+                onChange={(v) => e((x) => void (x.format = v))}
+              />
+            </>
+          ) : (
+            <>
+              <Text
+                label="Camera entity"
+                value={w.entityId}
+                maxLength={255}
+                placeholder="camera.front_door"
+                list="ha-cameras"
+                onChange={(v) => e((x) => void (x.entityId = v.trim()))}
+              />
+              <HaEntityList id="ha-cameras" only="camera." />
+              <NumberInput
+                label="Refresh every (seconds)"
+                value={w.refreshSeconds}
+                min={2}
+                max={600}
+                onChange={(v) => e((x) => void (x.refreshSeconds = v))}
+              />
+            </>
+          )}
+          <Select
+            label="Picture"
+            value={w.fit}
+            options={[
+              { value: "cover", label: "Fill the widget (trims the edges)" },
+              { value: "contain", label: "Whole picture (bars at the sides)" },
+            ]}
+            onChange={(v) => e((x) => void (x.fit = v))}
           />
         </>
       );

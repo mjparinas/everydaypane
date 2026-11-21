@@ -6,6 +6,7 @@ import type { DisplayPayload, HaData } from "@/lib/display/types";
 import { alertStrip } from "./alerts";
 import { get, offline, onOfflineChange, post, PREVIEW, subscribe, TOKEN } from "./api";
 import { h } from "./dom";
+import { liveUrl, playLive, setDimLevel } from "./live";
 import { mountWidget } from "./widgets";
 import { cameraLoop, HA_EVERY } from "./widgets/ha";
 import type { Cleanup } from "./widgets/types";
@@ -84,6 +85,7 @@ function render(force = false) {
   const mode = palette === theme.night ? "night" : "day";
   applyTheme(theme, palette, mode);
   dim.style.opacity = String(dimLevel);
+  setDimLevel(dimLevel);
   if (force || shown.viewId !== view.id || shown.version !== p.version || shown.themeId !== theme.id) {
     for (const c of cleanups) c();
     cleanups = [];
@@ -120,6 +122,7 @@ async function loadState(): Promise<boolean> {
   if (!r.data) return false;
   payload = r.data;
   etag = r.etag ?? undefined;
+  if (cameraServerMoved(payload)) return true;
   render();
   burnIn();
   alerts();
@@ -130,6 +133,28 @@ async function loadState(): Promise<boolean> {
 async function poll() {
   await loadState();
   window.setTimeout(() => void poll(), 30_000);
+}
+
+// The page's security policy names the go2rtc server video may come from (src/server/displayHtml.ts), so when the
+// admin changes it the page has to load again to play from the new one. At most once a minute, and only online, so a
+// saved copy that disagrees can't loop.
+function cameraServerMoved(p: DisplayPayload): boolean {
+  let origin = "";
+  try {
+    origin = p.go2rtcUrl ? new URL(p.go2rtcUrl).origin : "";
+  } catch {
+    return false;
+  }
+  if (origin === (document.body.dataset.media ?? "") || offline) return false;
+  try {
+    const last = Number(sessionStorage.getItem("ep-media-reload") ?? 0);
+    if (Date.now() - last < 60_000) return false;
+    sessionStorage.setItem("ep-media-reload", String(Date.now()));
+  } catch {
+    return false;
+  }
+  location.reload();
+  return true;
 }
 
 // ---- Emergency strip: polled every minute while alerts are on. ----
@@ -155,7 +180,7 @@ let closeRing: (() => void) | null = null;
 
 function doorbell() {
   const d = payload?.doorbell;
-  const key = d?.enabled ? `${d.entityId}|${d.cameraEntityId}|${d.seconds}` : "";
+  const key = d?.enabled ? `${d.entityId}|${d.cameraEntityId}|${d.stream}|${d.seconds}` : "";
   if (bell?.key === key) return;
   bell?.stop();
   bell = null;
@@ -170,23 +195,30 @@ function doorbell() {
       const isEvent = d.entityId.startsWith("event.");
       const ring = isEvent ? e.state : e.state === "on" ? `on@${e.changed}` : "off";
       // The first look only learns the current state, so loading the page never rings.
-      if (lastRing !== null && ring !== lastRing && (isEvent || e.state === "on")) ringDoor(d.cameraEntityId, d.seconds);
+      if (lastRing !== null && ring !== lastRing && (isEvent || e.state === "on")) ringDoor(d.cameraEntityId, d.stream, d.seconds);
       lastRing = ring;
     }),
   };
 }
 
-function ringDoor(cameraEntityId: string, seconds: number) {
+function ringDoor(cameraEntityId: string, stream: string, seconds: number) {
   closeRing?.();
-  const img = h("img", { class: "bell-img", alt: "Front door camera" });
+  // Live video when a go2rtc stream is set for the doorbell, otherwise a fresh Home Assistant snapshot each second.
+  const live = Boolean(stream && payload?.go2rtcUrl);
+  const media = live
+    ? h("video", { class: "bell-img", "aria-label": "Front door camera" })
+    : h("img", { class: "bell-img", alt: "Front door camera" });
   const el = h(
     "div",
     { class: "bell", role: "dialog", "aria-label": "Someone is at the door" },
-    img,
+    media,
     h("div", { class: "bell-title" }, "Someone's at the door"),
   );
   app.append(el);
-  const stopCam = cameraLoop(img, cameraEntityId, 1000, () => undefined);
+  const stopCam =
+    media instanceof HTMLVideoElement
+      ? playLive(media, liveUrl(payload?.go2rtcUrl ?? "", stream, "mp4"), () => undefined)
+      : cameraLoop(media, cameraEntityId, 1000, () => undefined);
   const timer = window.setTimeout(() => closeRing?.(), seconds * 1000);
   closeRing = () => {
     stopCam();

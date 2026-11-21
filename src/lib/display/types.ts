@@ -18,7 +18,10 @@ export interface DisplayPayload {
   schedule: DashboardConfig["schedule"];
   burnIn: DashboardConfig["burnIn"];
   alerts: Pick<DashboardConfig["alerts"], "enabled" | "banner">;
-  doorbell: { enabled: boolean; seconds: number; entityId: string; cameraEntityId: string };
+  /** `stream` is a go2rtc stream to play live in the pop-up ("" for Home Assistant snapshots of cameraEntityId). */
+  doorbell: { enabled: boolean; seconds: number; entityId: string; cameraEntityId: string; stream: string };
+  /** The go2rtc server live camera widgets play from, without a trailing slash ("" when not set up). */
+  go2rtcUrl: string;
 }
 
 export interface WeatherDay {

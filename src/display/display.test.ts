@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { Widget } from "@/lib/config/schema";
 import { newWidget } from "@/lib/config/widgets";
@@ -7,12 +7,13 @@ import type { DisplayPayload, TasksData } from "@/lib/display/types";
 
 import { shortTime } from "./format";
 import { kindOf, label, weatherIcon } from "./icons";
+import { DEEP_DIM, liveUrl, playLive, retryDelay, setDimLevel } from "./live";
 import { aqhiBand, usAqiBand } from "./widgets/air";
 import { calendarMonth } from "./widgets/calendar";
 import { clock } from "./widgets/clock";
 import { commute, distance, duration, timing, trafficLevel } from "./widgets/commute";
 import { countdown } from "./widgets/countdown";
-import { controlFor, stateText } from "./widgets/ha";
+import { camera, controlFor, stateText } from "./widgets/ha";
 import { meals } from "./widgets/meals";
 import { F, media, nowPlaying, positionNow } from "./widgets/media";
 import { dueLabel, shownLists, tasks, UNDO_MS } from "./widgets/tasks";
@@ -489,5 +490,104 @@ describe("commute", () => {
     expect(el.textContent).toBe("Add a TomTom key to show commute times.");
     stop();
     vi.unstubAllGlobals();
+  });
+});
+
+describe("live cameras (go2rtc)", () => {
+  const go2rtc = "https://cams.example.com:8443";
+  const live = (p: Partial<Extract<Widget, { type: "camera" }>> = {}) =>
+    ({ ...newWidget("camera", "cam", { x: 0, y: 0 }), source: "go2rtc", stream: "front_door", ...p }) as Extract<
+      Widget,
+      { type: "camera" }
+    >;
+  const liveCtx = { ...ctx, payload: { go2rtcUrl: go2rtc } as DisplayPayload };
+  const hide = (hidden: boolean) => {
+    Object.defineProperty(document, "hidden", { configurable: true, get: () => hidden });
+    document.dispatchEvent(new Event("visibilitychange"));
+  };
+
+  beforeEach(() => {
+    // jsdom has no media playback.
+    vi.spyOn(HTMLMediaElement.prototype, "play").mockResolvedValue(undefined);
+    vi.spyOn(HTMLMediaElement.prototype, "load").mockImplementation(() => undefined);
+  });
+  afterEach(() => {
+    hide(false);
+    setDimLevel(0);
+    vi.restoreAllMocks();
+  });
+
+  it("asks go2rtc for the stream by name", () => {
+    expect(liveUrl(`${go2rtc}/`, "front door", "mp4")).toBe(`${go2rtc}/api/stream.mp4?src=front%20door`);
+    expect(liveUrl(go2rtc, "package", "mjpeg")).toBe(`${go2rtc}/api/stream.mjpeg?src=package`);
+  });
+
+  it("plays muted video, and MJPEG in an image", () => {
+    const el = document.createElement("div");
+    const stop = camera(el, live(), liveCtx);
+    const video = el.querySelector("video");
+    expect(video?.getAttribute("src")).toBe(`${go2rtc}/api/stream.mp4?src=front_door`);
+    expect(video?.muted).toBe(true);
+    stop();
+    expect(video?.hasAttribute("src")).toBe(false);
+
+    const el2 = document.createElement("div");
+    camera(el2, live({ format: "mjpeg" }), liveCtx)();
+    expect(el2.querySelector("img.cam-img")).not.toBeNull();
+  });
+
+  it("says what's missing before it can play", () => {
+    const el = document.createElement("div");
+    camera(el, live(), ctx);
+    expect(el.textContent).toContain("Settings › Live cameras");
+    const el2 = document.createElement("div");
+    camera(el2, live({ stream: "" }), liveCtx);
+    expect(el2.textContent).toContain("Pick a stream");
+  });
+
+  it("stops while the page is hidden or the night dim is deep, and starts again after", () => {
+    const video = document.createElement("video");
+    const stop = playLive(video, `${go2rtc}/api/stream.mp4?src=a`, () => undefined);
+    expect(video.hasAttribute("src")).toBe(true);
+    hide(true);
+    expect(video.hasAttribute("src")).toBe(false);
+    hide(false);
+    expect(video.hasAttribute("src")).toBe(true);
+    setDimLevel(DEEP_DIM);
+    expect(video.hasAttribute("src")).toBe(false);
+    setDimLevel(0.3);
+    expect(video.hasAttribute("src")).toBe(true);
+    stop();
+  });
+
+  it("tries again after an error, waiting longer each time", () => {
+    vi.useFakeTimers();
+    const seen: string[] = [];
+    const video = document.createElement("video");
+    const stop = playLive(video, `${go2rtc}/api/stream.mp4?src=a`, (s) => seen.push(s));
+    video.dispatchEvent(new Event("error"));
+    expect(seen.at(-1)).toBe("offline");
+    expect(video.hasAttribute("src")).toBe(false);
+    vi.advanceTimersByTime(retryDelay(1));
+    expect(video.hasAttribute("src")).toBe(true);
+    video.dispatchEvent(new Event("playing"));
+    expect(seen.at(-1)).toBe("live");
+    expect([1, 2, 3, 4, 9].map(retryDelay)).toEqual([5000, 10_000, 20_000, 40_000, 60_000]);
+    stop();
+  });
+
+  it("reconnects a frozen picture and skips ahead when it falls behind", () => {
+    vi.useFakeTimers();
+    const video = document.createElement("video");
+    let t = 0;
+    Object.defineProperty(video, "currentTime", { configurable: true, get: () => t, set: (v: number) => (t = v) });
+    Object.defineProperty(video, "buffered", { configurable: true, get: () => ({ length: 1, end: () => t + 6 }) });
+    const states: string[] = [];
+    const stop = playLive(video, `${go2rtc}/api/stream.mp4?src=a`, (s) => states.push(s));
+    vi.advanceTimersByTime(10_000); // first look: 0 s, 6 s buffered, so it jumps near the end
+    expect(t).toBeCloseTo(5.5);
+    vi.advanceTimersByTime(10_000); // still 5.5: frozen
+    expect(states.at(-1)).toBe("offline");
+    stop();
   });
 });

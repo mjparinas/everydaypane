@@ -48,6 +48,8 @@ second policy (action **Allow**, include your email) for the browser, or keep th
 3. Add **Home Assistant** and **Camera** widgets to a view and pick entities from the suggestions.
 4. For the doorbell pop-up, pick the doorbell's ring entity from UniFi Protect (usually `event.<name>_doorbell`) and the
    camera to show.
+5. For live video instead of snapshots (in widgets and the doorbell pop-up), set up go2rtc at home: see
+   [cameras.md](cameras.md).
 
 The tokens are stored encrypted on the server and are never shown again or sent to a screen. To change one, remove it
 and paste the new one.

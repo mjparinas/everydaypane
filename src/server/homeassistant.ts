@@ -77,7 +77,8 @@ export function usedEntities(config: DashboardConfig): {
   for (const v of config.views)
     for (const w of v.widgets) {
       if (w.type === "haEntity" && w.entityId) controls.add(w.entityId);
-      if (w.type === "camera" && w.entityId) cameras.add(w.entityId);
+      // Only snapshot cameras: a live (go2rtc) widget never asks our server for pictures.
+      if (w.type === "camera" && w.source === "homeAssistant" && w.entityId) cameras.add(w.entityId);
       if (w.type === "media" && w.provider === "homeAssistant" && w.entityId.startsWith("media_player.")) {
         players.add(w.entityId);
         controls.add(w.entityId);

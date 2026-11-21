@@ -2,6 +2,7 @@
 
 import { BackupPanel } from "./BackupPanel";
 import { CalendarLinksPanel } from "./CalendarLinksPanel";
+import { CamerasPanel } from "./CamerasPanel";
 import { CommutePanel } from "./CommutePanel";
 import { NumberInput, Section, Select, Text, Toggle } from "./fields";
 import { GarbagePanel } from "./GarbagePanel";
@@ -73,6 +74,7 @@ export function SettingsPanel() {
       <CommutePanel />
       <PhotosPanel />
       <HomeAssistantPanel />
+      <CamerasPanel />
       <MusicPanel />
 
       <Section title="Screen care">

@@ -5,7 +5,7 @@ panel that works on your phone.
 
 - Clocks, date, weather for the week, air quality, countdowns, WiFi QR code
 - Google Calendar (today and the month), garbage pickup, photos, a family message board
-- Home Assistant controls and UniFi Protect cameras
+- Home Assistant controls and UniFi Protect cameras (live video through go2rtc at home, or snapshots)
 - Emergency alerts for BC
 - Drag-and-drop layouts, several views, time-of-day views, day and night themes, burn-in protection, offline mode
 

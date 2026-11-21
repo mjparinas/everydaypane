@@ -1,7 +1,7 @@
 import { withSentryConfig } from "@sentry/nextjs/config";
 import type { NextConfig } from "next";
 
-import { SECURITY_HEADERS } from "./src/lib/securityHeaders";
+import { CSP, CSP_SOURCES, SECURITY_HEADERS } from "./src/lib/securityHeaders";
 
 const nextConfig: NextConfig = {
   trailingSlash: true,
@@ -10,6 +10,7 @@ const nextConfig: NextConfig = {
   // The display page is plain HTML plus one small script (public/display/), not a React page: see AGENTS.md "Display".
   headers: async () => [
     { source: "/:path*", headers: SECURITY_HEADERS },
+    ...CSP_SOURCES.map((source) => ({ source, headers: [{ key: "Content-Security-Policy", value: CSP }] })),
     // Display assets are versioned by ?v=<commit>, so they can be cached for a year.
     { source: "/display/:file*", headers: [{ key: "Cache-Control", value: "public, max-age=31536000, immutable" }] },
     {

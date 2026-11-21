@@ -10,6 +10,17 @@ import { PERIODS } from "./periods";
 // The display page imports only the types from this file (`import type`), so zod stays out of its bundle.
 
 const id = z.string().min(1).max(64);
+// A go2rtc stream name, as in its go2rtc.yaml (`streams:`). Only safe characters, since it goes into a URL.
+const streamName = z.string().regex(/^[A-Za-z0-9_.-]{0,64}$/, "Letters, numbers, dots, dashes and underscores");
+// A go2rtc server on the home network. It must be https: the dashboard is an https page, and browsers refuse (or
+// fail to upgrade) plain http video from one. No user name, password, query or fragment, since it is shown to screens.
+export const go2rtcUrl = z.union([
+  z.literal(""),
+  z.url().refine((u) => {
+    const url = new URL(u);
+    return url.protocol === "https:" && !url.username && !url.password && !url.search && !url.hash;
+  }, "An https address like https://cams.example.com:8443, with no password or ?query"),
+]);
 const hex = z.string().regex(/^#[0-9a-fA-F]{6}$/, "A colour like #1a2b3c");
 const hhmm = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, "A time like 07:30");
 const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "A date like 2026-12-25");
@@ -155,8 +166,20 @@ export const widgetSchema = z.discriminatedUnion("type", [
     showDue: z.boolean(),
     allowCheck: z.boolean(),
   }),
-  // A UniFi Protect camera, through Home Assistant's UniFi Protect integration (camera.* entity).
-  z.object({ ...base, type: z.literal("camera"), entityId: z.string().max(255), refreshSeconds: z.number().int().min(2).max(600) }),
+  // A UniFi Protect camera. `homeAssistant` (the default, so older widgets still load) shows snapshots of a camera.*
+  // entity on a timer. `go2rtc` (Melvin, 2026-11-21: "can I add RTSP or other video feeds") plays live video from a
+  // go2rtc server on the home network (integrations.cameras), which turns the camera's RTSP(S) into something a
+  // browser plays; the screen fetches it straight from there, never through our server.
+  z.object({
+    ...base,
+    type: z.literal("camera"),
+    source: z.enum(["homeAssistant", "go2rtc"]).default("homeAssistant"),
+    entityId: z.string().max(255),
+    refreshSeconds: z.number().int().min(2).max(600),
+    stream: streamName.default(""),
+    format: z.enum(["mp4", "mjpeg"]).default("mp4"),
+    fit: z.enum(["cover", "contain"]).default("cover"),
+  }),
   // Music (Melvin, 2026-11-17: Sonos and Spotify controls): a media_player entity through Home Assistant's Sonos or
   // Spotify integration. Shows what's playing, with play/pause, skip, volume and the player's sources (Sonos
   // favourites, or the Spotify Connect speakers to play on).
@@ -309,6 +332,8 @@ export const configSchema = z
       commute: z
         .object({ home: placeSchema.nullable(), destinations: z.array(commuteDestinationSchema).max(6) })
         .default({ home: null, destinations: [] }),
+      // Live cameras (Melvin, 2026-11-21): the go2rtc server on the home network that camera widgets play from.
+      cameras: z.object({ go2rtcUrl }).default({ go2rtcUrl: "" }),
       homeAssistant: z.object({
         url: z.union([z.url(), z.literal("")]),
         // Doorbell pop-up: when this binary_sensor or event entity turns on, every display shows the camera full screen.
@@ -316,6 +341,8 @@ export const configSchema = z
           entityId: z.string().max(255),
           cameraEntityId: z.string().max(255),
           seconds: z.number().int().min(5).max(300),
+          // A go2rtc stream for the pop-up: live video instead of snapshots, when integrations.cameras is set up.
+          stream: streamName.default(""),
         }),
       }),
     }),

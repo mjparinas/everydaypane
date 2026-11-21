@@ -161,6 +161,14 @@ export function HomeAssistantPanel() {
           onChange={(v) => edit((c) => void (c.integrations.homeAssistant.doorbell.cameraEntityId = v.trim()))}
         />
         <HaEntityList id="ha-cams" only="camera." />
+        <Text
+          label="Live video stream (optional)"
+          value={ha.doorbell.stream}
+          maxLength={64}
+          placeholder="front_door"
+          hint="A go2rtc stream (Settings › Live cameras) to play live in the pop-up instead of snapshots."
+          onChange={(v) => edit((c) => void (c.integrations.homeAssistant.doorbell.stream = v.trim()))}
+        />
         <NumberInput
           label="Show for (seconds)"
           value={ha.doorbell.seconds}

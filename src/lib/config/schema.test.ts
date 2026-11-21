@@ -46,6 +46,45 @@ describe("config schema", () => {
     expect(parsed).not.toHaveProperty("weeks");
   });
 
+  it("loads cameras saved before live video existed as Home Assistant snapshots", () => {
+    const c = defaultConfig() as unknown as {
+      integrations: Record<string, unknown> & { homeAssistant: { doorbell: Record<string, unknown> } };
+      views: { widgets: Record<string, unknown>[] }[];
+    };
+    delete c.integrations.cameras;
+    delete c.integrations.homeAssistant.doorbell.stream;
+    c.views[0]!.widgets = [{ id: "cam", type: "camera", x: 0, y: 0, w: 4, h: 3, entityId: "camera.driveway", refreshSeconds: 10 }];
+    const r = configSchema.safeParse(c);
+    expect(r.success ? [] : r.error.issues).toEqual([]);
+    if (!r.success) return;
+    expect(r.data.integrations.cameras).toEqual({ go2rtcUrl: "" });
+    expect(r.data.integrations.homeAssistant.doorbell.stream).toBe("");
+    expect(r.data.views[0]!.widgets[0]).toMatchObject({ source: "homeAssistant", stream: "", format: "mp4", fit: "cover" });
+  });
+
+  it.each([
+    ["https://cams.example.com:8443", true],
+    ["https://cams.example.com:8443/go2rtc/", true],
+    ["", true],
+    // The dashboard is https; screens refuse (or can't upgrade) plain http video from it.
+    ["http://192.168.0.10:1984", false],
+    ["https://admin:secret@cams.example.com", false],
+    ["https://cams.example.com/?token=1", false],
+    ["rtsps://192.168.0.203:7441/abc", false],
+  ])("takes %s as the go2rtc address: %s", (url, ok) => {
+    const c = defaultConfig();
+    c.integrations.cameras.go2rtcUrl = url;
+    expect(configSchema.safeParse(c).success).toBe(ok);
+  });
+
+  it("only takes go2rtc stream names that are safe in a link", () => {
+    const c = defaultConfig();
+    c.integrations.homeAssistant.doorbell.stream = "front_door-hd.2";
+    expect(configSchema.safeParse(c).success).toBe(true);
+    c.integrations.homeAssistant.doorbell.stream = "front door&src=x";
+    expect(configSchema.safeParse(c).success).toBe(false);
+  });
+
   it("rejects a widget that runs off its grid", () => {
     const c = defaultConfig();
     c.views[0]!.widgets[0]!.x = 11;

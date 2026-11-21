@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { defaultConfig } from "@/lib/config/defaults";
 
-import { displayPayload } from "./display";
+import { displayPayload, mediaOrigin } from "./display";
 
 const device = (viewId: string | null) => ({ id: "d1", name: "Kitchen", viewId, createdAt: 0, lastSeenAt: null });
 
@@ -35,5 +35,23 @@ describe("display payload", () => {
 
   it("previews any view for an admin", () => {
     expect(displayPayload(defaultConfig(), 1, null, "calendar").views.map((v) => v.id)).toEqual(["calendar"]);
+  });
+
+  it("sends the go2rtc address for live cameras, without a trailing slash", () => {
+    const c = defaultConfig();
+    expect(displayPayload(c, 1, device(null)).go2rtcUrl).toBe("");
+    expect(mediaOrigin(c)).toBe("");
+    c.integrations.cameras.go2rtcUrl = "https://cams.example.com:8443/go2rtc/";
+    expect(displayPayload(c, 1, device(null)).go2rtcUrl).toBe("https://cams.example.com:8443/go2rtc");
+    expect(mediaOrigin(c)).toBe("https://cams.example.com:8443");
+  });
+
+  it("rings the doorbell with live video when only a go2rtc stream is set", () => {
+    const c = defaultConfig();
+    c.integrations.homeAssistant.doorbell = { entityId: "event.front_door_ring", cameraEntityId: "", seconds: 30, stream: "front_door" };
+    // No go2rtc server yet: nothing to show, so no pop-up.
+    expect(displayPayload(c, 1, device(null)).doorbell).toMatchObject({ enabled: false, stream: "" });
+    c.integrations.cameras.go2rtcUrl = "https://cams.example.com:8443";
+    expect(displayPayload(c, 1, device(null)).doorbell).toMatchObject({ enabled: true, stream: "front_door" });
   });
 });
