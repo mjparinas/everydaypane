@@ -70,6 +70,19 @@ export function monthGrid(today: string, weekStartsOn: 0 | 1): string[][] {
   return weeks;
 }
 
+/** `count` whole weeks starting with the one that holds today. */
+export function weeksFrom(today: string, weekStartsOn: 0 | 1, count: number): string[][] {
+  const dow = new Date(`${today}T00:00:00Z`).getUTCDay();
+  const start = addDays(today, -((dow - weekStartsOn + 7) % 7));
+  return Array.from({ length: count }, (_, wk) => Array.from({ length: 7 }, (_, i) => addDays(start, wk * 7 + i)));
+}
+
+/** True for Saturday and Sunday. */
+export const isWeekend = (date: string): boolean => {
+  const dow = new Date(`${date}T00:00:00Z`).getUTCDay();
+  return dow === 0 || dow === 6;
+};
+
 /** "Today", "Tomorrow" or "Wed, Nov 19". */
 export function dayLabel(date: string, today: string): string {
   if (date === today) return "Today";

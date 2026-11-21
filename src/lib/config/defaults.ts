@@ -22,7 +22,7 @@ const home: View = {
   cols: 12,
   rows: 8,
   gap: 16,
-  padding: 24,
+  padding: 14,
   themeId: null,
   widgets: [
     w(newWidget("clock", "home-clock-van", { x: 0, y: 0 }), { x: 0, y: 0, w: 4, h: 2 }),
@@ -49,7 +49,7 @@ const morning: View = {
   cols: 12,
   rows: 8,
   gap: 16,
-  padding: 24,
+  padding: 14,
   themeId: null,
   widgets: [
     w(newWidget("clock", "m-clock", { x: 0, y: 0 }), { x: 0, y: 0, w: 4, h: 2 }),
@@ -67,7 +67,7 @@ const calendar: View = {
   cols: 12,
   rows: 8,
   gap: 16,
-  padding: 24,
+  padding: 14,
   themeId: null,
   widgets: [
     w(newWidget("calendarMonth", "c-month", { x: 0, y: 0 }), { x: 0, y: 0, w: 9, h: 8 }),
@@ -82,7 +82,7 @@ const night: View = {
   cols: 12,
   rows: 8,
   gap: 16,
-  padding: 32,
+  padding: 20,
   themeId: null,
   widgets: [
     w(newWidget("clock", "n-clock", { x: 0, y: 0 }), { x: 0, y: 0, w: 12, h: 5 }, { label: "" } as Partial<Widget>),
@@ -110,6 +110,7 @@ export function defaultConfig(): DashboardConfig {
       minMagnitude: 4,
       powerKm: 5,
     },
+    chores: { people: [], items: [] },
     burnIn: { shift: true, maxPixels: 6, minutes: 3 },
     screenSaver: { ...SCREEN_SAVER_OFF, photoSourceIds: [], motionEntityIds: [] },
     schedule: {

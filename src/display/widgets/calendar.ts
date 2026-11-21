@@ -1,4 +1,4 @@
-import { addDays, byDay, dayLabel, eventTime, localDate, monthGrid } from "@/lib/calendar";
+import { addDays, byDay, dayLabel, eventTime, isWeekend, localDate, monthGrid, weeksFrom } from "@/lib/calendar";
 import type { CalendarData, CalendarEvent } from "@/lib/display/types";
 
 import { subscribe } from "../api";
@@ -92,30 +92,32 @@ export const calendarMonth: Mount<"calendarMonth"> = (el, w, ctx) => {
     if (sig === drawn) return;
     drawn = sig;
 
-    const weeks = monthGrid(today, w.weekStartsOn);
+    // Whole month (the default) or a rolling run of weeks starting with this one; weekends dropped if switched off.
+    const rolling = w.weeks !== undefined;
+    const weeks = (rolling ? weeksFrom(today, w.weekStartsOn, w.weeks ?? 1) : monthGrid(today, w.weekStartsOn)).map((wk) =>
+      w.showWeekends ? wk : wk.filter((d) => !isWeekend(d)),
+    );
     const days = byDay(data.events, ctx.timeZone);
     const month = today.slice(0, 7);
     const weekdayNames = (weeks[0] ?? []).map((d) => fmt("UTC", { weekday: "short" }).format(Date.parse(`${d}T12:00:00Z`)));
+    const cols = w.showWeekends ? "mo-grid" : "mo-grid mo-5";
 
     fill(
       root,
-      w.showTitle
-        ? h(
-            "div",
-            { class: "mo-title" },
-            w.title || fmt("UTC", { month: "long", year: "numeric" }).format(Date.parse(`${today}T12:00:00Z`)),
-          )
-        : null,
-      h("div", { class: "mo-grid mo-names", "aria-hidden": "true" }, ...weekdayNames.map((n) => h("div", { class: "mo-name" }, n))),
+      w.showTitle ? h("div", { class: "mo-title" }, w.title || monthTitle(today, rolling ? weeks.flat() : [today])) : null,
+      h("div", { class: `${cols} mo-names`, "aria-hidden": "true" }, ...weekdayNames.map((n) => h("div", { class: "mo-name" }, n))),
       h(
         "div",
-        { class: "mo-grid mo-days", style: `grid-template-rows:repeat(${weeks.length},minmax(0,1fr))` },
+        { class: `${cols} mo-days`, style: `grid-template-rows:repeat(${weeks.length},minmax(0,1fr))` },
         ...weeks.flat().map((d) => {
           const list = days.get(d) ?? [];
           return h(
             "div",
-            { class: `mo-day${d.slice(0, 7) !== month ? " mo-out" : ""}${d === today ? " mo-today" : ""}${d < today ? " mo-past" : ""}` },
-            h("div", { class: "mo-num" }, String(Number(d.slice(8)))),
+            {
+              class: `mo-day${!rolling && d.slice(0, 7) !== month ? " mo-out" : ""}${d === today ? " mo-today" : ""}${d < today ? " mo-past" : ""}`,
+            },
+            // In rolling weeks the first of a month says which month it starts ("Dec 1").
+            h("div", { class: "mo-num" }, rolling && d.endsWith("-01") ? shortDate(d) : String(Number(d.slice(8)))),
             ...list.map((e) =>
               h(
                 "div",
@@ -141,6 +143,18 @@ export const calendarMonth: Mount<"calendarMonth"> = (el, w, ctx) => {
     stopTick();
   };
 };
+
+const noon = (d: string) => Date.parse(`${d}T12:00:00Z`);
+const shortDate = (d: string) => fmt("UTC", { month: "short", day: "numeric" }).format(noon(d));
+
+/** "November 2026", or "November – December 2026" when the shown days run into the next month. */
+function monthTitle(today: string, shown: string[]): string {
+  const first = shown[0] ?? today;
+  const last = shown[shown.length - 1] ?? today;
+  const long = (d: string, year: boolean) => fmt("UTC", year ? { month: "long", year: "numeric" } : { month: "long" }).format(noon(d));
+  if (first.slice(0, 7) === last.slice(0, 7)) return long(first, true);
+  return `${long(first, first.slice(0, 4) !== last.slice(0, 4))} – ${long(last, true)}`;
+}
 
 /**
  * Drops the events that don't fit in a day's box and says how many are hidden. Measured once per redraw (a few times

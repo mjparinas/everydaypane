@@ -235,7 +235,7 @@ const localDate = (now: number, timeZone: string) =>
 
 /**
  * The days one feed covers: the whole month grid around today (a week either side of the month) and at least the
- * next two weeks, so the month view and the schedule share one fetch.
+ * next six weeks (the most a month widget can show from this week), so the month view and the schedule share one fetch.
  */
 export function feedRange(now: number, timeZone: string): { from: string; to: string; today: string } {
   const today = localDate(now, timeZone);
@@ -243,8 +243,8 @@ export function feedRange(now: number, timeZone: string): { from: string; to: st
   const nextMonth = addDays(first, 32).slice(0, 8) + "01";
   const from = addDays(first, -7);
   const monthEnd = addDays(nextMonth, 7);
-  const twoWeeks = addDays(today, 15);
-  return { from, to: monthEnd > twoWeeks ? monthEnd : twoWeeks, today };
+  const sixWeeks = addDays(today, 43);
+  return { from, to: monthEnd > sixWeeks ? monthEnd : sixWeeks, today };
 }
 
 async function eventsFor(calendar: { id: string; name: string; color: string }, from: string, to: string): Promise<CalendarEvent[]> {

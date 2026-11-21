@@ -139,6 +139,41 @@ export interface CommuteData {
   routes: CommuteRoute[];
 }
 
+/** One BC Ferries sailing (src/server/ferries.ts). Times are HH:MM in Pacific time. */
+export interface FerrySailing {
+  time: string;
+  /** HH:MM, or "" when BC Ferries gives none (or says "Variable"). */
+  arrive: string;
+  /** Sailings that have left are left out. */
+  state: "scheduled" | "delayed" | "cancelled";
+  /** Percent full, overall and for cars; absent when BC Ferries hasn't said. */
+  fill?: number;
+  carFill?: number;
+  vessel: string;
+  delayMinutes?: number;
+  /** BC Ferries' own note on the sailing ("Delayed due to heavy traffic"). */
+  note: string;
+}
+
+export interface FerryRouteData {
+  code: string;
+  name: string;
+  /** "1h 35m" as BC Ferries writes it. */
+  duration: string;
+  /** "no-service" when nothing sails today; "" otherwise. */
+  status: "" | "no-service";
+  sailings: FerrySailing[];
+}
+
+export interface FerriesData {
+  updatedAt: number;
+  /** Epoch ms when BC Ferries' conditions were read (from the community API). */
+  at: number;
+  /** true when BC Ferries' data couldn't be read at all. */
+  down: boolean;
+  routes: FerryRouteData[];
+}
+
 export type AlertSeverity = "extreme" | "severe" | "moderate" | "minor";
 export type AlertSource = "alertReady" | "weather" | "roads" | "earthquakes" | "power";
 
@@ -233,4 +268,62 @@ export interface MusicData {
 export interface MealsData {
   today: string;
   meals: Record<string, Partial<Record<"breakfast" | "lunch" | "dinner", string>>>;
+}
+
+/** Times (epoch ms) of the radar pictures Environment Canada has for one kind of precipitation (src/server/radar.ts). */
+export interface RadarTimes {
+  /** Observed, oldest first, up to three hours back. */
+  past: number[];
+  /** Environment Canada's extrapolation of the radar, after the last observed picture. */
+  forecast: number[];
+  /** Why the times couldn't be read; the widget says so. */
+  error?: string;
+}
+
+export interface RadarMap {
+  x: number;
+  y: number;
+  homeX: number;
+  homeY: number;
+}
+
+export interface RadarData {
+  updatedAt: number;
+  /**
+   * The map around home for each zoom a widget uses: its top-left tile, and home's pixel on it. Displays get these,
+   * never the dashboard's coordinates.
+   */
+  maps: Record<string, RadarMap>;
+  layers: Partial<Record<"rain" | "snow", RadarTimes>>;
+}
+
+/** Today's chore chart (src/server/chores.ts): who does what today, what's done, and each person's stars this week. */
+export interface ChoresData {
+  today: string;
+  people: { id: string; name: string; emoji: string; color: string; goal: number; stars: number }[];
+  /** Only the chores due today. */
+  chores: { id: string; name: string; emoji: string; stars: number }[];
+  due: { choreId: string; personId: string; done: boolean }[];
+}
+
+/** One bus (or train) leaving a stop, from TransLink's live feed (src/server/translink.ts). */
+export interface TransitDeparture {
+  /** The number riders know, like "502" or "R1". */
+  route: string;
+  /** Where it's going, without the route number ("Langley Centre"). */
+  headsign: string;
+  /** Epoch seconds of the predicted departure. */
+  time: number;
+  /** Seconds late (negative: early), when TransLink says. */
+  delay: number | null;
+  /** A vehicle is on the trip, so the time is a live prediction rather than the timetable. */
+  live: boolean;
+}
+
+export interface TransitData {
+  updatedAt: number;
+  /** False until TRANSLINK_API_KEY is set in Vercel. */
+  configured: boolean;
+  /** Stop id → its next departures, soonest first. */
+  stops: Record<string, TransitDeparture[]>;
 }

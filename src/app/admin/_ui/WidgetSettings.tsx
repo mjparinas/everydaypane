@@ -1,7 +1,10 @@
 "use client";
 
-import type { CountdownEvent, DashboardConfig, Widget } from "@/lib/config/schema";
+import { useState } from "react";
+
+import type { CountdownEvent, DashboardConfig, TimerPreset, Widget } from "@/lib/config/schema";
 import { WIDGETS } from "@/lib/config/widgets";
+import { FERRY_ROUTES, ferryRouteName } from "@/lib/ferries";
 import { MEAL_LABELS, MEAL_SLOTS } from "@/lib/meals";
 
 import { NumberInput, Select, Text, TextArea, Toggle } from "./fields";
@@ -31,6 +34,13 @@ export const TIME_ZONES = [
   { value: "Australia/Sydney", label: "Sydney" },
   { value: "UTC", label: "UTC" },
 ] as const;
+
+// The month calendar shows the whole month, or 1 to 6 weeks starting with this one (Melvin, 2026-11-21).
+type WeeksChoice = "month" | "1" | "2" | "3" | "4" | "5" | "6";
+const WEEKS_OPTIONS: { value: WeeksChoice; label: string }[] = [
+  { value: "month", label: "The whole month" },
+  ...(["1", "2", "3", "4", "5", "6"] as const).map((n) => ({ value: n, label: n === "1" ? "This week" : `${n} weeks from this one` })),
+];
 
 function zoneOptions(current: string) {
   return TIME_ZONES.some((z) => z.value === current) ? TIME_ZONES : [{ value: current, label: current }, ...TIME_ZONES];
@@ -225,6 +235,18 @@ function TypeSettings({
             ]}
             onChange={(v) => e((x) => void (x.weekStartsOn = v === "1" ? 1 : 0))}
           />
+          <Select
+            label="Show"
+            value={w.weeks === undefined ? "month" : (String(w.weeks) as WeeksChoice)}
+            options={WEEKS_OPTIONS}
+            onChange={(v) =>
+              e((x) => {
+                if (v === "month") delete x.weeks;
+                else x.weeks = Number(v);
+              })
+            }
+          />
+          <Toggle label="Show weekends" checked={w.showWeekends} onChange={(v) => e((x) => void (x.showWeekends = v))} />
           <Toggle label="Show the month title" checked={w.showTitle} onChange={(v) => e((x) => void (x.showTitle = v))} />
         </>
       );
@@ -257,6 +279,78 @@ function TypeSettings({
               ))}
             </>
           )}
+        </>
+      );
+    }
+    case "radar": {
+      const e = edit<"radar">();
+      const minutes = (list: number[], none?: string) =>
+        list.map((m) => ({
+          value: String(m),
+          label: m === 0 && none ? none : m < 60 ? `${m} minutes` : `${m / 60} hour${m > 60 ? "s" : ""}`,
+        }));
+      return (
+        <>
+          <Select
+            label="Show"
+            value={w.precip}
+            options={[
+              { value: "rain", label: "Rain" },
+              { value: "snow", label: "Snow" },
+            ]}
+            onChange={(v) => e((x) => void (x.precip = v))}
+          />
+          <Select
+            label="Map area"
+            value={String(w.zoom)}
+            options={[
+              { value: "6", label: "Southern B.C." },
+              { value: "7", label: "South coast" },
+              { value: "8", label: "Lower Mainland" },
+              { value: "9", label: "Fraser Valley" },
+              { value: "10", label: "Close to home" },
+            ]}
+            onChange={(v) => e((x) => void (x.zoom = Number(v)))}
+            hint="The map is centred on the dashboard's location (Settings)."
+          />
+          <Select
+            label="Radar from the past"
+            value={String(w.pastMinutes)}
+            options={minutes([30, 60, 90, 120, 180])}
+            onChange={(v) => e((x) => void (x.pastMinutes = Number(v)))}
+          />
+          <Select
+            label="Forecast ahead"
+            value={String(w.forecastMinutes)}
+            options={minutes([0, 30, 60, 120, 180], "No forecast")}
+            onChange={(v) => e((x) => void (x.forecastMinutes = Number(v)))}
+            hint="Environment Canada's extrapolation of where the rain is moving."
+          />
+          <Toggle label="Animate" checked={w.animate} onChange={(v) => e((x) => void (x.animate = v))} />
+        </>
+      );
+    }
+    case "ferries": {
+      const e = edit<"ferries">();
+      return (
+        <>
+          <NumberInput label="Sailings per route" value={w.count} min={1} max={8} onChange={(v) => e((x) => void (x.count = v))} />
+          <Toggle label="Show the ship's name" checked={w.showVessel} onChange={(v) => e((x) => void (x.showVessel = v))} />
+          <p className="text-xs text-soft">Pick up to four routes. These are the ones BC Ferries says how full they are for.</p>
+          {FERRY_ROUTES.map((code) => (
+            <Toggle
+              key={code}
+              label={ferryRouteName(code)}
+              checked={w.routes.includes(code)}
+              onChange={(on) =>
+                e((x) => {
+                  const next = on ? [...x.routes, code] : x.routes.filter((c) => c !== code);
+                  // At least one route, at most four (the schema refuses anything else).
+                  if (next.length >= 1 && next.length <= 4) x.routes = next;
+                })
+              }
+            />
+          ))}
         </>
       );
     }
@@ -425,6 +519,36 @@ function TypeSettings({
         </>
       );
     }
+    case "chores": {
+      const e = edit<"chores">();
+      const people = config.chores.people;
+      return (
+        <>
+          <Toggle label="Show stars" checked={w.showStars} onChange={(v) => e((x) => void (x.showStars = v))} />
+          <Toggle
+            label="Tap to tick off"
+            hint="Anyone at the screen can mark a chore done. Tapping it again takes it back."
+            checked={w.allowCheck}
+            onChange={(v) => e((x) => void (x.allowCheck = v))}
+          />
+          {people.length === 0 ? (
+            <p className="text-xs text-soft">Add the kids and their chores under Settings › Chores.</p>
+          ) : (
+            <>
+              <p className="text-xs text-soft">Pick whose chores to show. With nobody picked, it shows everyone.</p>
+              {people.map((p) => (
+                <Toggle
+                  key={p.id}
+                  label={`${p.emoji} ${p.name}`.trim()}
+                  checked={w.personIds.includes(p.id)}
+                  onChange={(on) => e((x) => void (x.personIds = on ? [...x.personIds, p.id] : x.personIds.filter((id) => id !== p.id)))}
+                />
+              ))}
+            </>
+          )}
+        </>
+      );
+    }
     case "alerts": {
       const e = edit<"alerts">();
       return (
@@ -450,6 +574,28 @@ function TypeSettings({
             min={2}
             max={600}
             onChange={(v) => e((x) => void (x.refreshSeconds = v))}
+          />
+        </>
+      );
+    }
+    case "transit": {
+      const e = edit<"transit">();
+      return (
+        <>
+          <TransitStops
+            stops={w.stops}
+            onAdd={(s) => e((x) => void (x.stops = [...x.stops, s]))}
+            onRemove={(id) => e((x) => void (x.stops = x.stops.filter((s) => s.id !== id)))}
+          />
+          <RoutesField routes={w.routes} onChange={(routes) => e((x) => void (x.routes = routes))} />
+          <NumberInput label="Departures per stop" value={w.count} min={1} max={12} onChange={(v) => e((x) => void (x.count = v))} />
+          <NumberInput
+            label="Walk to the stop (minutes)"
+            value={w.walkMinutes}
+            min={0}
+            max={60}
+            hint="Buses leaving sooner than this are left out, since nobody could catch them."
+            onChange={(v) => e((x) => void (x.walkMinutes = v))}
           />
         </>
       );
@@ -500,7 +646,134 @@ function TypeSettings({
         </>
       );
     }
+    case "timer": {
+      const e = edit<"timer">();
+      return (
+        <>
+          <TimerPresets presets={w.presets} onChange={e} />
+          <AlertSettings w={w} onChange={e} />
+        </>
+      );
+    }
+    case "pomodoro": {
+      const e = edit<"pomodoro">();
+      return (
+        <>
+          <div className="grid grid-cols-3 gap-2">
+            <NumberInput label="Focus (min)" value={w.workMinutes} min={1} max={120} onChange={(v) => e((x) => void (x.workMinutes = v))} />
+            <NumberInput
+              label="Break (min)"
+              value={w.shortBreakMinutes}
+              min={1}
+              max={60}
+              onChange={(v) => e((x) => void (x.shortBreakMinutes = v))}
+            />
+            <NumberInput
+              label="Long break (min)"
+              value={w.longBreakMinutes}
+              min={1}
+              max={90}
+              onChange={(v) => e((x) => void (x.longBreakMinutes = v))}
+            />
+          </div>
+          <NumberInput
+            label="Focus rounds before the long break"
+            value={w.rounds}
+            min={1}
+            max={12}
+            onChange={(v) => e((x) => void (x.rounds = v))}
+          />
+          <Toggle
+            label="Start the next phase by itself"
+            checked={w.autoStart}
+            hint="Off: it waits for a tap on Start after each focus round and break."
+            onChange={(v) => e((x) => void (x.autoStart = v))}
+          />
+          <AlertSettings w={w} onChange={e} />
+        </>
+      );
+    }
   }
+}
+
+type Alerting = Extract<Widget, { type: "timer" | "pomodoro" }>;
+
+/** How a timer or the pomodoro says it's done. The widget itself always flashes. */
+function AlertSettings<T extends Alerting>({ w, onChange }: { w: T; onChange: (change: (x: T) => void) => void }) {
+  return (
+    <>
+      <Toggle label="Sound" checked={w.sound} onChange={(v) => onChange((x) => void (x.sound = v))} />
+      <Toggle
+        label="Full-screen alert"
+        checked={w.fullScreen}
+        hint="Flashes the whole screen with what's done, until someone taps."
+        onChange={(v) => onChange((x) => void (x.fullScreen = v))}
+      />
+      <NumberInput
+        label="Stop alerting after (seconds)"
+        value={w.ringSeconds}
+        min={5}
+        max={600}
+        onChange={(v) => onChange((x) => void (x.ringSeconds = v))}
+      />
+    </>
+  );
+}
+
+function TimerPresets({ presets, onChange }: { presets: TimerPreset[]; onChange: Edit<"timer"> }) {
+  const setLength = (i: number, minutes: number, seconds: number) =>
+    onChange((x) => void (x.presets[i]!.seconds = Math.min(86_400, Math.max(5, minutes * 60 + seconds))));
+  return (
+    <div className="grid gap-3">
+      <p className="text-xs text-soft">The buttons on the wall. A tap starts a timer; up to six run at once.</p>
+      {presets.map((p, i) => (
+        <div key={p.id} className="grid gap-2 rounded-xl border border-line p-3">
+          <div className="grid grid-cols-[4rem_1fr] gap-2">
+            <Text label="Emoji" value={p.emoji} maxLength={8} onChange={(v) => onChange((x) => void (x.presets[i]!.emoji = v))} />
+            <Text
+              label="Name"
+              value={p.label}
+              maxLength={30}
+              placeholder="Just the time"
+              onChange={(v) => onChange((x) => void (x.presets[i]!.label = v))}
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <NumberInput
+              label="Minutes"
+              value={Math.floor(p.seconds / 60)}
+              min={0}
+              max={1440}
+              onChange={(v) => setLength(i, v, p.seconds % 60)}
+            />
+            <NumberInput
+              label="Seconds"
+              value={p.seconds % 60}
+              min={0}
+              max={59}
+              onChange={(v) => setLength(i, Math.floor(p.seconds / 60), v)}
+            />
+          </div>
+          <button
+            type="button"
+            className="btn-ghost justify-self-start text-bad"
+            onClick={() => onChange((x) => void x.presets.splice(i, 1))}
+          >
+            Remove
+          </button>
+        </div>
+      ))}
+      {presets.length < 12 && (
+        <button
+          type="button"
+          className="btn-ghost justify-self-start"
+          onClick={() => onChange((x) => void x.presets.push({ id: newId("tm"), label: "", emoji: "", seconds: 300 }))}
+        >
+          Add a timer button
+        </button>
+      )}
+    </div>
+  );
 }
 
 function SonosSpeaker({ value, onChange }: { value: string; onChange: (v: string) => void }) {
@@ -585,5 +858,119 @@ function CountdownEvents({ events, count, onChange }: { events: CountdownEvent[]
         Add a date
       </button>
     </>
+  );
+}
+
+interface StopMatch {
+  id: string;
+  code: string;
+  name: string;
+  km: number;
+}
+type TransitStop = { id: string; code: string; name: string };
+
+/** Finds TransLink stops by the number on the stop's sign or by name; with nothing typed, the ones nearest home. */
+function TransitStops({
+  stops,
+  onAdd,
+  onRemove,
+}: {
+  stops: TransitStop[];
+  onAdd: (s: TransitStop) => void;
+  onRemove: (id: string) => void;
+}) {
+  const [q, setQ] = useState("");
+  const [matches, setMatches] = useState<StopMatch[] | null>(null);
+  const [note, setNote] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  async function search(e?: React.FormEvent) {
+    e?.preventDefault();
+    setBusy(true);
+    setNote("");
+    const r = await fetch(`/api/admin/transit/?${new URLSearchParams({ q: q.trim() })}`).catch(() => null);
+    const body = (await r?.json().catch(() => ({}))) as { stops?: StopMatch[]; keySet?: boolean; error?: string } | undefined;
+    setBusy(false);
+    setMatches(body?.stops ?? []);
+    if (!r?.ok) setNote(body?.error ?? "Couldn't search TransLink's stops.");
+    else if (body?.keySet === false) setNote("Departures show once TRANSLINK_API_KEY is set in Vercel (docs/translink.md).");
+  }
+
+  return (
+    <div className="grid gap-2">
+      <p className="text-sm font-medium">Stops</p>
+      {stops.length === 0 && <p className="text-xs text-soft">No stops yet. Find one below.</p>}
+      {stops.map((s) => (
+        <div key={s.id} className="flex items-center justify-between gap-2 text-sm">
+          <span className="min-w-0 truncate">
+            {s.name} {s.code && <span className="text-soft">#{s.code}</span>}
+          </span>
+          <button type="button" className="btn-ghost" onClick={() => onRemove(s.id)}>
+            Remove
+          </button>
+        </div>
+      ))}
+      {stops.length < 6 && (
+        <form className="flex items-end gap-2" onSubmit={(e) => void search(e)}>
+          <div className="min-w-0 flex-1">
+            <Text label="Find a stop" value={q} maxLength={60} placeholder="Stop number or name; empty for the nearest" onChange={setQ} />
+          </div>
+          <button className="btn-primary" disabled={busy}>
+            {busy ? "Finding…" : "Find"}
+          </button>
+        </form>
+      )}
+      {note && <p className="text-xs text-soft">{note}</p>}
+      {matches && stops.length < 6 && (
+        <div className="grid gap-1">
+          {matches.length === 0 && !note && <p className="text-xs text-soft">No stops matched.</p>}
+          {matches
+            .filter((m) => !stops.some((s) => s.id === m.id))
+            .map((m) => (
+              <button
+                key={m.id}
+                type="button"
+                className="btn-ghost justify-start text-left"
+                onClick={() => onAdd({ id: m.id, code: m.code, name: m.name })}
+              >
+                {m.name} {m.code && <span className="text-soft">#{m.code}</span>} <span className="text-soft">· {m.km} km</span>
+              </button>
+            ))}
+        </div>
+      )}
+      <p className="text-xs text-soft">
+        Route and arrival data used in this product or service is provided by permission of TransLink. TransLink assumes no responsibility
+        for the accuracy or currency of the Data used in this product or service.
+      </p>
+    </div>
+  );
+}
+
+/** Route numbers to show, typed as "502, 503"; kept as typed until it parses, so a trailing comma isn't eaten. */
+function RoutesField({ routes, onChange }: { routes: string[]; onChange: (routes: string[]) => void }) {
+  const [text, setText] = useState(routes.join(", "));
+  return (
+    <Text
+      label="Only these routes"
+      value={text}
+      maxLength={200}
+      placeholder="All routes"
+      hint="Route numbers separated by commas, like 502, 503. Empty shows every route."
+      onChange={(v) => {
+        setText(v);
+        onChange(
+          [
+            ...new Set(
+              v
+                .split(/[\s,]+/)
+                .map((r) => r.trim().toUpperCase())
+                .filter(Boolean),
+            ),
+          ]
+            .slice(0, 30)
+            .map((r) => r.slice(0, 12)),
+        );
+      }}
+    />
   );
 }

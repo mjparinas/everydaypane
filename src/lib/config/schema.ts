@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+import { FERRY_ROUTES } from "../ferries";
 import { MEAL_SLOTS } from "../meals";
 import { SCREEN_SAVER_OFF } from "../screenSaver";
 import { PERIODS } from "./periods";
@@ -69,6 +70,23 @@ export const countdownEventSchema = z.object({
 });
 export type CountdownEvent = z.infer<typeof countdownEventSchema>;
 
+// A kitchen timer's button: a name ("Eggs") and a length. Up to a day.
+export const timerPresetSchema = z.object({
+  id,
+  label: z.string().trim().max(30),
+  emoji: z.string().max(8),
+  seconds: z.number().int().min(5).max(86_400),
+});
+export type TimerPreset = z.infer<typeof timerPresetSchema>;
+
+// How a timer or pomodoro tells you it's done (Melvin, 2026-11-21: "visual and sound alerts"). The widget always
+// flashes; the screen-wide notice and the beeps can each be switched off, and both stop by themselves after a while.
+const alertFields = {
+  sound: z.boolean(),
+  fullScreen: z.boolean(),
+  ringSeconds: z.number().int().min(5).max(600),
+};
+
 export const haControlSchema = z.enum(["auto", "toggle", "light", "sensor", "climate", "cover", "lock", "button"]);
 export type HaControl = z.infer<typeof haControlSchema>;
 
@@ -114,6 +132,11 @@ export const widgetSchema = z.discriminatedUnion("type", [
     // The "November 2026" line above the grid (Melvin, 2026-11-19: a toggle to hide it). Shown unless switched off, so
     // month widgets saved before the toggle existed look the same.
     showTitle: z.boolean().default(true),
+    // How many weeks to show, starting with this one (Melvin, 2026-11-21: "minimum 1, max is 6"). Left out, the widget
+    // shows the whole month as it always has, so month widgets saved before this setting look the same.
+    weeks: z.number().int().min(1).max(6).optional(),
+    // Saturday and Sunday columns (Melvin, 2026-11-21: "allow calendar to hide or show weekends"). Shown by default.
+    showWeekends: z.boolean().default(true),
   }),
   z.object({ ...base, type: z.literal("garbage"), weeks: z.number().int().min(1).max(8) }),
   z.object({
@@ -151,6 +174,21 @@ export const widgetSchema = z.discriminatedUnion("type", [
     showDue: z.boolean(),
     allowCheck: z.boolean(),
   }),
+  // TransLink departures (Melvin, 2026-11-19): the next buses from a few stops, live from TransLink's GTFS-realtime
+  // feed (src/server/translink.ts). Stops are picked in the widget's settings and kept with their stop number and
+  // name, so the wall can label them without asking TransLink. `routes` (route numbers like "502") narrows the list,
+  // none meaning every route; departures sooner than `walkMinutes` are left out, since nobody can catch them.
+  z.object({
+    ...base,
+    type: z.literal("transit"),
+    stops: z
+      .array(z.object({ id: z.string().min(1).max(40), code: z.string().max(20), name: z.string().max(120) }))
+      .max(6)
+      .refine((s) => new Set(s.map((x) => x.id)).size === s.length, "Each stop once"),
+    routes: z.array(z.string().trim().min(1).max(12)).max(30),
+    count: z.number().int().min(1).max(12),
+    walkMinutes: z.number().int().min(0).max(60),
+  }),
   // A UniFi Protect camera, through Home Assistant's UniFi Protect integration (camera.* entity).
   z.object({ ...base, type: z.literal("camera"), entityId: z.string().max(255), refreshSeconds: z.number().int().min(2).max(600) }),
   // Music (Melvin, 2026-11-17: Sonos and Spotify controls): a media_player entity through Home Assistant's Sonos or
@@ -169,6 +207,15 @@ export const widgetSchema = z.discriminatedUnion("type", [
     showVolume: z.boolean(),
     showSources: z.boolean(),
   }),
+  // The kids' chore chart (Melvin, 2026-11-21): today's chores for the people under Settings › Chores (none picked means
+  // everyone), ticked off with a tap when `allowCheck` is on, with each person's stars this week.
+  z.object({
+    ...base,
+    type: z.literal("chores"),
+    personIds: z.array(id).max(8),
+    showStars: z.boolean(),
+    allowCheck: z.boolean(),
+  }),
   // Commute time (Melvin, 2026-11-19): live-traffic drive times from home to the places under Settings › Commute
   // (none picked means all of them).
   z.object({
@@ -177,6 +224,39 @@ export const widgetSchema = z.discriminatedUnion("type", [
     destinationIds: z.array(id).max(6),
     showDistance: z.boolean(),
     showArrival: z.boolean(),
+  }),
+  // Rain radar (Melvin, 2026-11-21): Environment Canada's radar around home, animated over the past hour or so and on
+  // into its short-term forecast (src/server/radar.ts). Zoom 6 is most of southern B.C., 8 the Lower Mainland, 10 the
+  // Township.
+  z.object({
+    ...base,
+    type: z.literal("radar"),
+    precip: z.enum(["rain", "snow"]),
+    zoom: z.number().int().min(6).max(10),
+    pastMinutes: z.number().int().min(30).max(180),
+    forecastMinutes: z.number().int().min(0).max(180),
+    animate: z.boolean(),
+  }),
+  // Kitchen timers (Melvin, 2026-11-21): tap a button on the wall to start one; several can run at once.
+  z.object({ ...base, type: z.literal("timer"), presets: z.array(timerPresetSchema).max(12), ...alertFields }),
+  // A pomodoro (Melvin, 2026-11-21: "a separate pomodoro"): focus rounds and breaks, a long break after the last round.
+  z.object({
+    ...base,
+    type: z.literal("pomodoro"),
+    workMinutes: z.number().int().min(1).max(120),
+    shortBreakMinutes: z.number().int().min(1).max(60),
+    longBreakMinutes: z.number().int().min(1).max(90),
+    rounds: z.number().int().min(1).max(12),
+    autoStart: z.boolean(),
+    ...alertFields,
+  }),
+  // BC Ferries (Melvin, 2026-11-21): the next sailings and how full they are, for up to four routes (src/server/ferries.ts).
+  z.object({
+    ...base,
+    type: z.literal("ferries"),
+    routes: z.array(z.enum(FERRY_ROUTES)).min(1).max(4),
+    count: z.number().int().min(1).max(8),
+    showVessel: z.boolean(),
   }),
 ]);
 export type Widget = z.infer<typeof widgetSchema>;
@@ -248,6 +328,35 @@ export const screenSaverSchema = z.object({
 });
 export type ScreenSaver = z.infer<typeof screenSaverSchema>;
 
+// The chore chart (Melvin, 2026-11-21): the people who do chores, and recurring chores that are shared by everyone on
+// them or rotate between them by day or by week (src/lib/chores.ts). Who ticked what off lives in the chores_done table.
+export const chorePersonSchema = z.object({
+  id,
+  name: z.string().trim().min(1).max(30),
+  emoji: z.string().max(8),
+  color: hex,
+  // Stars to aim for each week (0 for no goal); the widget draws a bar towards it.
+  goal: z.number().int().min(0).max(500),
+});
+export type ChorePerson = z.infer<typeof chorePersonSchema>;
+
+export const choreSchema = z.object({
+  id,
+  name: z.string().trim().min(1).max(40),
+  emoji: z.string().max(8),
+  stars: z.number().int().min(1).max(5),
+  // Weekdays it's due, 0 = Sunday.
+  days: z
+    .array(z.number().int().min(0).max(6))
+    .min(1, "Pick at least one day")
+    .max(7)
+    .refine((d) => new Set(d).size === d.length, "Each day once"),
+  personIds: z.array(id).min(1, "Pick who does it").max(8),
+  // "none": everyone picked does it; "day": one of them each time it's due, in turn; "week": one of them all week.
+  rotate: z.enum(["none", "day", "week"]),
+});
+export type Chore = z.infer<typeof choreSchema>;
+
 export const configSchema = z
   .object({
     name: z.string().min(1).max(60),
@@ -282,6 +391,8 @@ export const configSchema = z
       // Power outages count when their area covers the home or is within this many km of it.
       powerKm: z.number().int().min(0).max(50).default(5),
     }),
+    // Defaults to none, so a document saved before the chore chart existed still loads.
+    chores: z.object({ people: z.array(chorePersonSchema).max(8), items: z.array(choreSchema).max(40) }).default({ people: [], items: [] }),
     // Burn-in protection: the whole layout drifts a few pixels every few minutes so static edges never sit on the same
     // pixels for hours, and night periods can dim the screen (periodSchema.dim).
     burnIn: z.object({ shift: z.boolean(), maxPixels: z.number().int().min(1).max(24), minutes: z.number().int().min(1).max(60) }),

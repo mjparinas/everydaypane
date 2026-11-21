@@ -111,16 +111,53 @@ export const flows = [
       await page.reload();
       await page.getByTestId("grid-editor").waitFor();
       const widget = page.locator('[data-widget="home-countdown"]');
-      // The keyboard resizes a widget the same way dragging its corner does, and is steadier in a test.
+      // The keyboard moves the bottom-right corner, as dragging that corner does.
       await widget.focus();
       await page.keyboard.press("Shift+ArrowLeft");
       const after = await widget.getAttribute("aria-label");
       expect(after.includes("2 by 3"), `the widget didn't shrink: ${after}`);
+      // Any corner resizes (Melvin, 2026-11-21). Dragging the top-left one a cell left grows the widget onto the
+      // photos, which other widgets may cover, while its bottom-right corner stays put.
+      const grid = await page.getByTestId("grid-editor").boundingBox();
+      const handle = await widget.locator('[data-corner="nw"]').boundingBox();
+      const cell = grid.width / 12;
+      await page.mouse.move(handle.x + handle.width / 2, handle.y + handle.height / 2);
+      await page.mouse.down();
+      await page.mouse.move(handle.x + handle.width / 2 - cell, handle.y + handle.height / 2, { steps: 5 });
+      await page.mouse.up();
+      const grown = await widget.getAttribute("aria-label");
+      expect(grown.includes("3 by 3 at column 9, row 6"), `the top-left corner didn't resize: ${grown}`);
       await page.getByRole("button", { name: "Save", exact: true }).click();
       await page.getByText("Saved. Displays update within 30 seconds.").waitFor();
       const { config } = await (await page.request.get(`${base}/api/admin/config/`)).json();
       const saved = config.views.find((v) => v.id === "home").widgets.find((w) => w.id === "home-countdown");
-      expect(saved.w === 2 && saved.h === 3, `saved as ${saved.w} by ${saved.h}`);
+      expect(saved.x === 8 && saved.w === 3 && saved.h === 3, `saved as ${saved.w} by ${saved.h} at ${saved.x}`);
+    },
+  },
+  {
+    name: "settings download as a backup file and restore from it",
+    async run({ page, base, expect }) {
+      await page.goto(`${base}/admin/#settings`);
+      await page.reload();
+      const [download] = await Promise.all([page.waitForEvent("download"), page.getByRole("link", { name: "Download backup" }).click()]);
+      expect(/^everydaypane-settings-\d{4}-\d{2}-\d{2}\.json$/.test(download.suggestedFilename()), download.suggestedFilename());
+      const file = await download.path();
+      // Change the settings behind the page's back, then put the backup's back.
+      const before = await (await page.request.get(`${base}/api/admin/config/`)).json();
+      const renamed = { ...before.config, name: "Renamed after the backup" };
+      const put = await page.request.put(`${base}/api/admin/config/`, {
+        headers: { origin: base },
+        data: { baseVersion: before.version, config: renamed },
+      });
+      expect(put.ok(), `status ${put.status()}`);
+      await page.reload();
+      await page.locator('input[type="file"][accept*="json"]').setInputFiles(file);
+      await page.getByTestId("restore-confirm").waitFor();
+      await page.getByRole("button", { name: "Restore these settings" }).click();
+      await page.getByText(/^Restored .*Displays pick it up within 30 seconds\.$/).waitFor();
+      const after = await (await page.request.get(`${base}/api/admin/config/`)).json();
+      expect(after.config.name === before.config.name, `name is ${after.config.name}`);
+      expect(after.version === before.version + 2, `version ${after.version}`);
     },
   },
   {
@@ -371,6 +408,73 @@ export const flows = [
       await d.locator(".saver.show").waitFor({ state: "detached" });
       expect(await d.locator(".cell-clock").first().isVisible(), "the dashboard didn't come back");
       await context.close();
+    },
+  },
+  {
+    name: "a kid ticks a chore off on the wall and earns its stars",
+    async run({ browser, page, base, expect }) {
+      // Settings › Chores on a phone: add a kid, then a chore for them.
+      const phone = await browser.newContext({ viewport: { width: 390, height: 844 }, storageState: await page.context().storageState() });
+      const p = await phone.newPage();
+      await p.goto(`${base}/admin/`);
+      await p.getByRole("navigation", { name: "Sections" }).last().getByRole("button", { name: "Settings" }).click();
+      await p.getByLabel("Add a kid").fill("Ana");
+      await p.getByLabel("Add a kid").press("Enter");
+      await p.getByLabel("Add a chore").fill("Make the bed");
+      await p.getByLabel("Add a chore").press("Enter");
+      await p.getByRole("group", { name: "Who" }).getByRole("button", { name: "Ana", pressed: true }).waitFor();
+      const overflow = await p.evaluate(() => document.documentElement.scrollWidth > innerWidth);
+      expect(!overflow, "Settings › Chores scrolls sideways on a phone");
+      await phone.close();
+
+      const { config, version } = await (await page.request.get(`${base}/api/admin/config/`)).json();
+      config.chores = {
+        people: [
+          { id: "ana", name: "Ana", emoji: "🦊", color: "#e8590c", goal: 10 },
+          { id: "ben", name: "Ben", emoji: "🐻", color: "#1c7ed6", goal: 0 },
+        ],
+        items: [
+          {
+            id: "bed",
+            name: "Make the bed",
+            emoji: "🛏️",
+            stars: 2,
+            days: [0, 1, 2, 3, 4, 5, 6],
+            personIds: ["ana", "ben"],
+            rotate: "none",
+          },
+          { id: "cat", name: "Feed the cat", emoji: "🐈", stars: 1, days: [0, 1, 2, 3, 4, 5, 6], personIds: ["ana", "ben"], rotate: "day" },
+        ],
+      };
+      config.views.push({
+        id: "e2e-chores",
+        name: "Chores",
+        cols: 12,
+        rows: 8,
+        gap: 16,
+        padding: 24,
+        themeId: null,
+        widgets: [{ id: "c-chart", type: "chores", x: 0, y: 0, w: 8, h: 6, personIds: [], showStars: true, allowCheck: true }],
+      });
+      const put = await page.request.put(`${base}/api/admin/config/`, {
+        headers: { origin: base },
+        data: { baseVersion: version, config },
+      });
+      expect(put.ok(), `save: ${put.status()}`);
+      const d = await openDisplay(browser, await addDevice(page, base, "e2e-chores"));
+      const ana = d.page.locator(".ch-col").filter({ hasText: "Ana" });
+      await ana.getByText("Make the bed").waitFor();
+      const saved = d.page.waitForResponse((r) => r.url().includes("/api/display/chores/") && r.request().method() === "POST");
+      await ana.getByRole("button", { name: /Make the bed/ }).click();
+      expect((await saved).ok(), "the tick wasn't saved");
+      await ana.locator(".ch-stars").getByText("⭐ 2 / 10").waitFor();
+      if (process.env.E2E_SHOTS) await d.page.screenshot({ path: `${process.env.E2E_SHOTS}/chore-chart.png` });
+      // Another screen sees it.
+      const other = await openDisplay(browser, await addDevice(page, base, "e2e-chores"));
+      await other.page.locator(".ch-col").filter({ hasText: "Ana" }).locator(".ch-done").getByText("Make the bed").waitFor();
+      expect(d.errors.length === 0 && other.errors.length === 0, [...d.errors, ...other.errors].join("\n"));
+      await d.context.close();
+      await other.context.close();
     },
   },
 ];
