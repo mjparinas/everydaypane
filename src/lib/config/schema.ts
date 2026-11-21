@@ -209,6 +209,18 @@ export const widgetSchema = z.discriminatedUnion("type", [
     showDistance: z.boolean(),
     showArrival: z.boolean(),
   }),
+  // Rain radar (Melvin, 2026-11-21): Environment Canada's radar around home, animated over the past hour or so and on
+  // into its short-term forecast (src/server/radar.ts). Zoom 6 is most of southern B.C., 8 the Lower Mainland, 10 the
+  // Township.
+  z.object({
+    ...base,
+    type: z.literal("radar"),
+    precip: z.enum(["rain", "snow"]),
+    zoom: z.number().int().min(6).max(10),
+    pastMinutes: z.number().int().min(30).max(180),
+    forecastMinutes: z.number().int().min(0).max(180),
+    animate: z.boolean(),
+  }),
   // Kitchen timers (Melvin, 2026-11-21): tap a button on the wall to start one; several can run at once.
   z.object({ ...base, type: z.literal("timer"), presets: z.array(timerPresetSchema).max(12), ...alertFields }),
   // A pomodoro (Melvin, 2026-11-21: "a separate pomodoro"): focus rounds and breaks, a long break after the last round.
