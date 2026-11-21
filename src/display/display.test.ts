@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+import type { Widget } from "@/lib/config/schema";
 import { newWidget } from "@/lib/config/widgets";
 import type { DisplayPayload, TasksData } from "@/lib/display/types";
 
@@ -362,25 +363,52 @@ describe("tasks", () => {
 });
 
 describe("month calendar", () => {
-  const month = async (showTitle: boolean) => {
+  type Month = Extract<Widget, { type: "calendarMonth" }>;
+  const month = async (settings: Partial<Month>) => {
     vi.useFakeTimers({ now: new Date("2026-11-17T20:00:00Z") });
     vi.stubGlobal("fetch", () => Promise.resolve(Response.json({ connected: true, updatedAt: 1, events: [] })));
     const el = document.createElement("div");
-    const stop = calendarMonth(el, { ...newWidget("calendarMonth", `mo-${String(showTitle)}`, { x: 0, y: 0 }), showTitle }, ctx);
+    const stop = calendarMonth(el, { ...(newWidget("calendarMonth", "mo", { x: 0, y: 0 }) as Month), ...settings }, ctx);
     await vi.advanceTimersByTimeAsync(0);
     const title = el.querySelector(".mo-title")?.textContent ?? null;
-    const days = el.querySelectorAll(".mo-day").length;
+    const days = [...el.querySelectorAll(".mo-num")].map((n) => n.textContent);
+    const names = [...el.querySelectorAll(".mo-name")].map((n) => n.textContent);
+    const rows = el.querySelector<HTMLElement>(".mo-days")?.style.gridTemplateRows;
     stop();
     vi.unstubAllGlobals();
-    return { title, days };
+    return { title, days, names, rows };
   };
 
-  it("shows the month title by default", async () => {
-    expect(await month(true)).toEqual({ title: "November 2026", days: 35 });
+  it("shows the whole month with its title by default", async () => {
+    const m = await month({});
+    expect(m.title).toBe("November 2026");
+    expect(m.days).toHaveLength(35);
+    expect(m.names).toEqual(["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]);
   });
 
   it("leaves the title out when it is switched off, keeping the grid", async () => {
-    expect(await month(false)).toEqual({ title: null, days: 35 });
+    const m = await month({ showTitle: false });
+    expect(m.title).toBeNull();
+    expect(m.days).toHaveLength(35);
+  });
+
+  it("shows one week, starting on the chosen day", async () => {
+    expect((await month({ weeks: 1 })).days).toEqual(["15", "16", "17", "18", "19", "20", "21"]);
+    expect((await month({ weeks: 1, weekStartsOn: 1 })).days).toEqual(["16", "17", "18", "19", "20", "21", "22"]);
+  });
+
+  it("runs six weeks into the next month and names both months", async () => {
+    const m = await month({ weeks: 6 });
+    expect(m.days).toHaveLength(42);
+    expect(m.rows).toMatch(/^repeat\(6,/);
+    expect(m.days.slice(16, 18)).toEqual(["Dec 1", "2"]);
+    expect(m.title).toBe("November – December 2026");
+  });
+
+  it("hides Saturday and Sunday when weekends are off", async () => {
+    const m = await month({ weeks: 2, showWeekends: false, weekStartsOn: 1 });
+    expect(m.names).toEqual(["Mon", "Tue", "Wed", "Thu", "Fri"]);
+    expect(m.days).toEqual(["16", "17", "18", "19", "20", "23", "24", "25", "26", "27"]);
   });
 });
 

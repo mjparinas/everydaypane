@@ -38,9 +38,12 @@ describe("config schema", () => {
     const c = defaultConfig();
     const month = c.views.flatMap((v) => v.widgets).find((w) => w.type === "calendarMonth") as unknown as Record<string, unknown>;
     delete month.showTitle;
+    delete month.showWeekends;
     const r = configSchema.safeParse(c);
     const parsed = r.success ? r.data.views.flatMap((v) => v.widgets).find((w) => w.type === "calendarMonth") : undefined;
-    expect(parsed).toMatchObject({ showTitle: true });
+    // A month widget saved before these settings existed still shows the whole month, weekends and title included.
+    expect(parsed).toMatchObject({ showTitle: true, showWeekends: true });
+    expect(parsed).not.toHaveProperty("weeks");
   });
 
   it("rejects a widget that runs off its grid", () => {
