@@ -62,7 +62,7 @@ export function ViewsPanel() {
     const id = newId("view");
     edit(
       (c) =>
-        void c.views.push({ id, name: `View ${c.views.length + 1}`, cols: 12, rows: 8, gap: 16, padding: 24, themeId: null, widgets: [] }),
+        void c.views.push({ id, name: `View ${c.views.length + 1}`, cols: 12, rows: 8, gap: 16, padding: 14, themeId: null, widgets: [] }),
     );
     setViewId(id);
     setSelected(null);
