@@ -1,6 +1,8 @@
 "use client";
 
+import { BackupPanel } from "./BackupPanel";
 import { CalendarLinksPanel } from "./CalendarLinksPanel";
+import { ChoresPanel } from "./ChoresPanel";
 import { CommutePanel } from "./CommutePanel";
 import { NumberInput, Section, Select, Text, Toggle } from "./fields";
 import { GarbagePanel } from "./GarbagePanel";
@@ -71,6 +73,7 @@ export function SettingsPanel() {
       <CalendarLinksPanel />
       <GarbagePanel />
       <CommutePanel />
+      <ChoresPanel />
       <SportsPanel />
       <PhotosPanel />
       <HomeAssistantPanel />
@@ -177,6 +180,8 @@ export function SettingsPanel() {
           </>
         )}
       </Section>
+
+      <BackupPanel />
     </div>
   );
 }

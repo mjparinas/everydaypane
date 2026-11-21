@@ -1,16 +1,19 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+import type { Widget } from "@/lib/config/schema";
 import { newWidget } from "@/lib/config/widgets";
-import type { DisplayPayload, TasksData } from "@/lib/display/types";
+import type { ChoresData, DisplayPayload, TasksData } from "@/lib/display/types";
 
 import { shortTime } from "./format";
 import { kindOf, label, weatherIcon } from "./icons";
 import { aqhiBand, usAqiBand } from "./widgets/air";
 import { calendarMonth } from "./widgets/calendar";
+import { chores, columns } from "./widgets/chores";
 import { clock } from "./widgets/clock";
 import { commute, distance, duration, timing, trafficLevel } from "./widgets/commute";
 import { countdown } from "./widgets/countdown";
+import { ferries, fullness, hasLeft } from "./widgets/ferries";
 import { controlFor, stateText } from "./widgets/ha";
 import { meals } from "./widgets/meals";
 import { F, media, nowPlaying, positionNow } from "./widgets/media";
@@ -363,25 +366,52 @@ describe("tasks", () => {
 });
 
 describe("month calendar", () => {
-  const month = async (showTitle: boolean) => {
+  type Month = Extract<Widget, { type: "calendarMonth" }>;
+  const month = async (settings: Partial<Month>) => {
     vi.useFakeTimers({ now: new Date("2026-11-17T20:00:00Z") });
     vi.stubGlobal("fetch", () => Promise.resolve(Response.json({ connected: true, updatedAt: 1, events: [] })));
     const el = document.createElement("div");
-    const stop = calendarMonth(el, { ...newWidget("calendarMonth", `mo-${String(showTitle)}`, { x: 0, y: 0 }), showTitle }, ctx);
+    const stop = calendarMonth(el, { ...(newWidget("calendarMonth", "mo", { x: 0, y: 0 }) as Month), ...settings }, ctx);
     await vi.advanceTimersByTimeAsync(0);
     const title = el.querySelector(".mo-title")?.textContent ?? null;
-    const days = el.querySelectorAll(".mo-day").length;
+    const days = [...el.querySelectorAll(".mo-num")].map((n) => n.textContent);
+    const names = [...el.querySelectorAll(".mo-name")].map((n) => n.textContent);
+    const rows = el.querySelector<HTMLElement>(".mo-days")?.style.gridTemplateRows;
     stop();
     vi.unstubAllGlobals();
-    return { title, days };
+    return { title, days, names, rows };
   };
 
-  it("shows the month title by default", async () => {
-    expect(await month(true)).toEqual({ title: "November 2026", days: 35 });
+  it("shows the whole month with its title by default", async () => {
+    const m = await month({});
+    expect(m.title).toBe("November 2026");
+    expect(m.days).toHaveLength(35);
+    expect(m.names).toEqual(["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]);
   });
 
   it("leaves the title out when it is switched off, keeping the grid", async () => {
-    expect(await month(false)).toEqual({ title: null, days: 35 });
+    const m = await month({ showTitle: false });
+    expect(m.title).toBeNull();
+    expect(m.days).toHaveLength(35);
+  });
+
+  it("shows one week, starting on the chosen day", async () => {
+    expect((await month({ weeks: 1 })).days).toEqual(["15", "16", "17", "18", "19", "20", "21"]);
+    expect((await month({ weeks: 1, weekStartsOn: 1 })).days).toEqual(["16", "17", "18", "19", "20", "21", "22"]);
+  });
+
+  it("runs six weeks into the next month and names both months", async () => {
+    const m = await month({ weeks: 6 });
+    expect(m.days).toHaveLength(42);
+    expect(m.rows).toMatch(/^repeat\(6,/);
+    expect(m.days.slice(16, 18)).toEqual(["Dec 1", "2"]);
+    expect(m.title).toBe("November – December 2026");
+  });
+
+  it("hides Saturday and Sunday when weekends are off", async () => {
+    const m = await month({ weeks: 2, showWeekends: false, weekStartsOn: 1 });
+    expect(m.names).toEqual(["Mon", "Tue", "Wed", "Thu", "Fri"]);
+    expect(m.days).toEqual(["16", "17", "18", "19", "20", "23", "24", "25", "26", "27"]);
   });
 });
 
@@ -460,6 +490,148 @@ describe("commute", () => {
     const stop = commute(el, { ...newWidget("commute", "cm2", { x: 0, y: 0 }) }, ctx);
     await vi.advanceTimersByTimeAsync(0);
     expect(el.textContent).toBe("Add a TomTom key to show commute times.");
+    stop();
+    vi.unstubAllGlobals();
+  });
+});
+
+describe("ferries", () => {
+  it("drops a sailing five minutes after it was due, and never takes tonight's last one for this morning's", () => {
+    expect(hasLeft({ time: "09:00" }, "09:05")).toBe(false);
+    expect(hasLeft({ time: "09:00" }, "09:06")).toBe(true);
+    expect(hasLeft({ time: "09:00", delayMinutes: 25 }, "09:20")).toBe(false);
+    expect(hasLeft({ time: "00:30" }, "23:10")).toBe(false); // after midnight: tomorrow's
+    expect(hasLeft({ time: "23:00" }, "00:10")).toBe(true);
+  });
+
+  it("turns the bar amber from 70 % and red from 90 %", () => {
+    expect(fullness(41)).toEqual({ text: "41% full", level: 1 });
+    expect(fullness(70)).toEqual({ text: "70% full", level: 2 });
+    expect(fullness(92)).toEqual({ text: "92% full", level: 3 });
+    expect(fullness(100)).toEqual({ text: "Full", level: 3 });
+  });
+
+  it("draws the next sailings of each picked route, in the widget's order", async () => {
+    vi.useFakeTimers({ now: new Date("2026-11-21T16:10:00Z") }); // 9:10 AM in Vancouver
+    const now = Date.now();
+    const base = { arrive: "", vessel: "Coastal Celebration", note: "" };
+    const routes = [
+      { code: "HSBNAN", name: "Horseshoe Bay → Departure Bay", duration: "1h 40m", status: "no-service", sailings: [] },
+      {
+        code: "TSASWB",
+        name: "Tsawwassen → Swartz Bay",
+        duration: "1h 35m",
+        status: "",
+        sailings: [
+          { ...base, time: "09:00", state: "scheduled", fill: 92 }, // left ten minutes ago
+          { ...base, time: "11:00", state: "scheduled", fill: 41 },
+          { ...base, time: "13:00", state: "cancelled" },
+          { ...base, time: "15:00", state: "delayed", delayMinutes: 25, fill: 100 },
+          { ...base, time: "17:00", state: "scheduled", fill: 10 },
+        ],
+      },
+    ];
+    vi.stubGlobal("fetch", () => Promise.resolve(Response.json({ updatedAt: now, at: now - 60_000, down: false, routes })));
+    const el = document.createElement("div");
+    const w = { ...newWidget("ferries", "fe", { x: 0, y: 0 }), routes: ["TSASWB" as const, "HSBNAN" as const], count: 3 };
+    const stop = ferries(el, w, ctx);
+    await vi.advanceTimersByTimeAsync(0);
+    const names = [...el.querySelectorAll(".fe-name")].map((n) => n.textContent);
+    expect(names).toEqual(["Tsawwassen → Swartz Bay1h 35m", "Horseshoe Bay → Departure Bay1h 40m"]);
+    const rows = [...el.querySelectorAll(".fe-row")];
+    expect(rows.map((r) => r.className)).toEqual(["fe-row fe-scheduled", "fe-row fe-cancelled", "fe-row fe-delayed"]);
+    expect(rows.map((r) => r.textContent)).toEqual(["11 AM41% full", "1 PMCancelled", "3 PMFullDelayed 25 min"]);
+    expect(el.querySelector(".fe-none")?.textContent).toBe("No service today");
+    expect(el.querySelector(".fe-asof")).toBeNull();
+    stop();
+    vi.unstubAllGlobals();
+  });
+
+  it("says when BC Ferries can't be read", async () => {
+    vi.useFakeTimers({ now: new Date("2026-11-21T16:10:00Z") });
+    vi.stubGlobal("fetch", () => Promise.resolve(Response.json({ updatedAt: 1, at: 0, down: true, routes: [] })));
+    const el = document.createElement("div");
+    const stop = ferries(el, newWidget("ferries", "fe2", { x: 0, y: 0 }), ctx);
+    await vi.advanceTimersByTimeAsync(0);
+    expect(el.textContent).toBe("BC Ferries sailings are unavailable right now.");
+    stop();
+    vi.unstubAllGlobals();
+  });
+});
+
+describe("chore chart", () => {
+  const data: ChoresData = {
+    today: "2026-11-18",
+    people: [
+      { id: "ana", name: "Ana", emoji: "🦊", color: "#e8590c", goal: 10, stars: 4 },
+      { id: "ben", name: "Ben", emoji: "", color: "#1c7ed6", goal: 0, stars: 0 },
+    ],
+    chores: [
+      { id: "bed", name: "Make the bed", emoji: "🛏️", stars: 1 },
+      { id: "dishes", name: "Dishes", emoji: "", stars: 3 },
+    ],
+    due: [
+      { choreId: "bed", personId: "ana", done: true },
+      { choreId: "bed", personId: "ben", done: false },
+      { choreId: "dishes", personId: "ana", done: false },
+    ],
+  };
+
+  it("makes a column per person, and counts a tick not yet saved towards the stars", () => {
+    expect(columns(data, []).map((c) => [c.person.name, c.items.map((i) => i.chore.id)])).toEqual([
+      ["Ana", ["bed", "dishes"]],
+      ["Ben", ["bed"]],
+    ]);
+    expect(columns(data, ["ben"]).map((c) => c.person.id)).toEqual(["ben"]);
+    const ticked = columns(data, [], new Map([["dishes|ana", true]]));
+    expect(ticked[0]?.person.stars).toBe(7);
+    expect(columns(data, [], new Map([["bed|ana", false]]))[0]?.person.stars).toBe(3);
+  });
+
+  it("ticks a chore off at once, says so when everyone's done, and a second tap takes it back", async () => {
+    vi.useFakeTimers({ now: new Date("2026-11-18T19:00:00Z") });
+    const posts: unknown[] = [];
+    vi.stubGlobal(
+      "fetch",
+      vi.fn((_url: string, init?: RequestInit) => {
+        if (init?.method === "POST") {
+          posts.push(JSON.parse(String(init.body)));
+          return Promise.resolve(Response.json({ ok: true }));
+        }
+        return Promise.resolve(Response.json(data));
+      }),
+    );
+    const el = document.createElement("div");
+    const stop = chores(el, newWidget("chores", "ch", { x: 0, y: 0 }), ctx);
+    await vi.advanceTimersByTimeAsync(0);
+    expect([...el.querySelectorAll(".ch-name")].map((n) => n.textContent)).toEqual(["Ana", "Ben"]);
+    expect(el.querySelector(".ch-stars")?.textContent).toBe("⭐ 4 / 10");
+
+    const button = (key: string) => el.querySelector<HTMLButtonElement>(`[data-key="${key}"] button`) as HTMLButtonElement;
+    button("dishes|ana").click();
+    expect(el.querySelector(".ch-stars")?.textContent).toBe("⭐ 7 / 10");
+    expect(el.querySelector(".ch-finished .ch-all")?.textContent).toBe("All done! 🎉");
+    expect(el.querySelector(".ch-pop")?.textContent).toBe("+3 ⭐");
+    button("dishes|ana").click();
+    expect(el.querySelector(".ch-stars")?.textContent).toBe("⭐ 4 / 10");
+    expect(el.querySelector(".ch-finished")).toBeNull();
+    await vi.advanceTimersByTimeAsync(0);
+    expect(posts).toEqual([
+      { chore: "dishes", person: "ana", done: true },
+      { chore: "dishes", person: "ana", done: false },
+    ]);
+    stop();
+    vi.unstubAllGlobals();
+  });
+
+  it("asks for setup when there's nobody on the chart", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(() => Promise.resolve(Response.json({ ...data, people: [], due: [] }))),
+    );
+    const el = document.createElement("div");
+    const stop = chores(el, newWidget("chores", "ch", { x: 0, y: 0 }), ctx);
+    await vi.waitFor(() => expect(el.textContent).toContain("Settings › Chores"));
     stop();
     vi.unstubAllGlobals();
   });

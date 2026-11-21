@@ -3,6 +3,7 @@ import type { Palette, Period, Theme, View } from "@/lib/config/schema";
 import { currentPeriod, msUntilNextPeriod } from "@/lib/config/time";
 import type { DisplayPayload, HaData } from "@/lib/display/types";
 
+import { startAlarms } from "./alarm";
 import { alertStrip } from "./alerts";
 import { get, offline, onOfflineChange, post, PREVIEW, subscribe, TOKEN } from "./api";
 import { h } from "./dom";
@@ -242,6 +243,8 @@ async function start() {
   app.className = "app";
   app.replaceChildren(stage, dim, offlineDot);
   onOfflineChange(() => offlineDot.classList.toggle("show", offline));
+  // Timers and pomodoros set before a reload still ring, whichever view is showing.
+  startAlarms();
   if (TOKEN && !PREVIEW && "serviceWorker" in navigator) {
     void navigator.serviceWorker.register(`/display/sw.js?v=${document.body.dataset.v ?? ""}`, { scope: "/d/" }).catch(() => undefined);
   }

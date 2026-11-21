@@ -27,7 +27,7 @@ same change, and moves it out of **In progress** when it merges.
 | WiFi QR (`wifiQr`) | Join code, optionally the password | Settings document |
 | Countdowns (`countdown`) | Days until holidays, birthdays and events, yearly ones roll over | Settings document |
 | Schedule (`agenda`) | Today, or the next 1 to 14 days | Google Calendar + iCal links |
-| Month calendar (`calendarMonth`) | Month grid, week start, title toggle | Google Calendar + iCal links |
+| Month calendar (`calendarMonth`) | Month grid or 1 to 6 weeks from this one, Sunday or Monday start, weekends on or off, title toggle | Google Calendar + iCal links |
 | Garbage day (`garbage`) | Next pickups, 1 to 8 weeks | Township of Langley (Recycle Coach) |
 | Photos (`photos`) | Slideshow, cover or contain, captions | Amazon shared albums, Amazon people, URL lists, photo library (uploads and Google Photos picks) |
 | Home Assistant tile (`haEntity`) | Toggle, light, sensor, climate, cover, lock (lock only), button | Home Assistant |
@@ -37,8 +37,12 @@ same change, and moves it out of **In progress** when it merges.
 | Message board (`messages`) | Family notes posted from phones | `messages` table |
 | Meals (`meals`) | Breakfast, lunch, dinner for a day or a week | `meals` table |
 | Alerts (`alerts`) | Current emergency alerts, optional "all clear" | See alerts below |
+| Chore chart (`chores`) | Each kid's chores today, **tap to tick off** (tap again to take back), stars this week and a weekly goal | Settings document + `chores_done` table |
 | Sports scores (`sports`) | Live score, last result and next game for followed teams (NHL, NBA, WNBA, NFL, MLB, MLS, Premier League, Champions League) | ESPN public site API |
 | To-dos (`tasks`) | Open Google Tasks; **tap to tick off, synced back to Google** (`allowCheck`, 4 s undo) | Google Tasks |
+| Timers (`timer`) | Kitchen timers started from preset buttons on the wall, up to six at once, pause, +1 min; flash, full-screen alert and beeps when done | Device (localStorage) |
+| Pomodoro (`pomodoro`) | Focus and break rounds, long break after the last round, optional auto-start, chime between phases | Device (localStorage) |
+| BC Ferries (`ferries`) | Next sailings on up to four routes, how full each is, cancellations and delays | Community BC Ferries API (bcferriesapi.ca) |
 
 **Display behaviour:** several views on a drag-and-drop grid (chosen rows and columns), **widgets layered on top of a photos widget**
 (photos as the backdrop), a time-of-day schedule
@@ -51,7 +55,8 @@ no pinch zoom; settings reach displays by polling every 30 seconds.
 DriveBC road events and weather conditions, Earthquakes Canada. Each switchable in `config.alerts.sources`.
 
 **Admin and family:** magic-link sign-in (Resend), admin panel tabs (views and grid editor, themes, displays with
-copyable addresses, meals, settings for every integration), `/family/` for the message board and meals, Sentry.
+copyable addresses, meals, settings for every integration, Settings › Chores for the kids and their chores), **settings backup and restore** (Settings › Backup, a JSON
+file), `/family/` for the message board and meals, Sentry.
 
 **Integrations connected from Settings:** Google Calendar, Google Tasks, Google Photos (Picker), iCal calendar links,
 Amazon Photos, the photo library (Vercel Blob), Home Assistant (Cloudflare Tunnel + Access), Spotify, Sonos, garbage
@@ -109,9 +114,22 @@ node scripts/e2e.mjs   # Playwright browser tests against the build (CHROMIUM_PA
   the PNG icons, `favicon.ico` and the web app manifest (`src/app/manifest.ts`) are made from them.
 - **Month calendar title** (Melvin, 2026-11-19: "add a toggle to show/hide month title"): the month widget's
   "November 2026" line can be switched off in its settings (`showTitle`, on by default); the grid takes the space.
+- **Month calendar weeks and weekends** (Melvin, 2026-11-21: "allow users to customize how many weeks to display,
+  minimum 1, max is 6", and "allow calendar to hide or show weekends"): the month widget shows the whole month (the
+  default, as before) or 1 to 6 weeks starting with this one (`weeks`), and can drop the Saturday and Sunday columns
+  (`showWeekends`, on by default). Rolling weeks don't dim the next month's days; its first day reads "Dec 1" and the
+  title names both months. The calendar feed covers at least the next six weeks for this. Weeks already started on
+  Sunday or Monday (`weekStartsOn`).
 - **Commute time** (Melvin, 2026-11-19): drive times with live traffic from home to up to six places (work, school),
   set up in Settings › Commute; a place can have a "be there by" time, and the widget then says when to leave (see
   Architecture).
+- **Chore chart** (Melvin, 2026-11-21): recurring chores for the kids, on chosen weekdays, done by everyone picked or
+  rotated between them (each time it's due, or a week each), ticked off with a tap on the wall, with stars per chore
+  counted per kid for the week and an optional weekly goal. Separate from Google Tasks (see Architecture).
+- **Kitchen timers and pomodoro** (Melvin, 2026-11-21: "1 with visual and sound alerts", then "i want a regular
+  timer, and a separate pomodoro"): two widgets, `timer` and `pomodoro` (see Architecture).
+- **BC Ferries** (Melvin, 2026-11-21): the next sailings for routes chosen in the widget's settings, with how full
+  each one is (see Architecture).
 - **Sports scores** (Melvin, 2026-11-21: "allow to customize the sports and the teams"): any teams from several leagues
   (up to 12), picked in Settings › Sports, with a live score while a game is on, the last result and the next game
   (see Architecture).
@@ -162,8 +180,9 @@ panel can be complex if you need it to be."
   device signs that screen out.
 - **Admin panel** (`src/app/admin/_ui/`): one page with tabs (a bottom tab bar on phones). Edits collect in a working
   copy (a Zustand store per page) and go out together with Save. The grid editor drags with pointer events (mouse and
-  touch) and also moves and resizes with the keyboard; widgets never leave the grid and never overlap, except that
-  other widgets may sit on top of a photos widget (`src/lib/config/grid.ts`).
+  touch), resizes from any of a widget's four corners with the opposite corner held still (Melvin, 2026-11-21: "allow
+  any corner of a widget to adjust the size"), and also moves and resizes with the keyboard; widgets never leave the
+  grid and never overlap, except that other widgets may sit on top of a photos widget (`src/lib/config/grid.ts`).
 - **Widgets over photos** (Melvin, 2026-11-21: "allow other widgets to be placed on top of the photos widget"): photos
   widgets are a backdrop layer. Any other widget may cover one; two photos widgets, or two widgets on top, still never
   overlap. A new widget goes in empty cells first and lands on the photos only when nothing else is free. The display
@@ -180,7 +199,7 @@ panel can be complex if you need it to be."
   week, and polls `/api/display/meals/` every minute. Plans older than 60 days are cleared as new ones are written.
 - **Google Calendar:** an admin connects one Google account from Settings (OAuth, `calendar.readonly`, redirect
   `<site>/api/google/callback/`); the refresh token is a stored secret, the chosen calendars and their colours live in
-  `config.integrations.google.calendars`. The server fetches the month grid around today plus the next two weeks into
+  `config.integrations.google.calendars`. The server fetches the month grid around today plus the next six weeks into
   one five-minute feed (`/api/display/calendar/`) that the schedule and month widgets share. Events are placed by the
   dashboard's time zone (tzdata has B.C. on UTC−7 all year from 2026, so don't hard-code −08:00 in tests).
 - **Google Tasks** (Melvin, 2026-11-17: he asked for Google Keep, which has no API for personal accounts, and chose
@@ -224,6 +243,14 @@ panel can be complex if you need it to be."
   picks a page at a time (`=w2048-h2048`, with our token; Google's links last an hour, so photos are copied, not
   linked). Videos are skipped and a Google photo is never copied twice into one album. Blobs are never public; displays
   get them only through `/api/display/photo/`. Removing a library album deletes its photos. Setup: `docs/google-photos.md`.
+- **Chore chart:** the kids and chores are in the settings document (`config.chores`, edited in Settings › Chores and
+  saved with Save); ticks are rows in `chores_done` (one per day, chore and person, with the stars the chore was worth
+  then, so changing a chore later doesn't rewrite the week; kept 60 days), `src/server/chores.ts`. Who has a chore on a
+  day is worked out, never stored (`assignees` in `src/lib/chores.ts`): turns count from a fixed Monday (2024-01-01),
+  so a Monday, Wednesday, Friday chore alternates every time it's due, and changing who is on it starts the turns over.
+  Weeks start on Monday. Displays poll `/api/display/chores/` every minute with an ETag; a tap ticks at once (no undo
+  delay: a second tap takes it back) and the server accepts only a chore due today for that person, shown by a chores
+  widget with `allowCheck`.
 - **Commute time:** TomTom's Routing API (`traffic=true`, car, fastest) through `src/server/commute.ts`, with the key in
   `TOMTOM_API_KEY` (Vercel). TomTom was Claude's pick (2026-11-19): free 2,500 requests a day with no credit card, where
   Google's Routes API needs billing for traffic. Home and each place are geocoded once in the admin panel with TomTom's
@@ -231,6 +258,32 @@ panel can be complex if you need it to be."
   and times from `/api/display/commute/`. Each drive is cached five minutes, shared by every display, and six places at
   most keeps that inside the free tier. One route failing never hides the others; readings older than 20 minutes aren't
   shown as live. TomTom takes its key only in the query string, so its URLs are never logged. Setup: `docs/commute.md`.
+- **BC Ferries:** BC Ferries has no public API, so `src/server/ferries.ts` reads the community BC Ferries API
+  (`https://www.bcferriesapi.ca/v2/capacity/`, MIT, no key; it reads BC Ferries' current conditions pages every
+  minute). Its one answer covers every route with "how full" (the codes in `src/lib/ferries.ts`, departure terminal then
+  arrival, such as `TSASWB`), so it is cached two minutes for every widget and display, and the last good copy is
+  served when it fails (it answers a bare string, "BC Ferries Data Currently Down", when it has nothing). Displays get
+  only the routes on a ferries widget, from `/api/display/ferries/`: sailings that haven't left, in 24-hour Pacific
+  time, with percent full (`fill`, and `carFill`), cancellations and delays. The widget drops a sailing five minutes
+  after its time on the wall's own clock and labels conditions older than 15 minutes with their time. Its field names
+  come from the project's published JSON schema (`schemas/bc-ferries-api-v2-capacity-schema.json`); this sandbox can't
+  reach it, so tests use that shape.
+- **Settings backup and restore** (Melvin, 2026-11-21): Settings › Backup downloads the whole settings document as
+  `everydaypane-settings-<date>.json` and restores one (`src/server/backup.ts`, `/api/admin/backup/`). The file is the
+  document itself, walked generically, so new widget types and settings are in it with no change there. It never holds
+  the `secrets` table (tokens, cookies, calendar link addresses), display devices, meals, messages or library photos;
+  the file says so in `notIncluded`. WiFi passwords (the one secret in the document) are blanked unless the admin
+  switches them on, and a restore without them keeps the dashboard's current ones. A restore is checked first
+  (`dryRun`, the panel shows what the file holds), upgraded like a stored document, and saved as an ordinary versioned
+  save, so displays reload and a stale restore gets 409.
+- **Timers and pomodoro:** run entirely on the display, no server. Each widget keeps its state in localStorage
+  (`everydaypane.timer.<id>`, `everydaypane.pomodoro.<id>`), and alarms belong to the screen, not the widget
+  (`src/display/alarm.ts`, started by `main.ts`), so a timer still rings after a settings save, a reload, or when the
+  time-of-day schedule has switched to a view without it. When one is done the widget flashes; the full-screen alert
+  (red flashing, "Tap to stop") and the sound can each be switched off, and both stop by themselves after
+  `ringSeconds`. Sound is Web Audio beeps (no sound file); browsers allow it only after a tap, and starting a timer is
+  that tap, so a timer started before a page reload rings silently until someone touches the screen. The pomodoro's
+  full-screen alert is off by default and it chimes rather than beeps. The arithmetic is in `src/lib/timers.ts`.
 - **Sports scores:** ESPN's public site API (`site.api.espn.com/apis/site/v2/sports/<sport>/<league>/…`, no key or
   sign-up) through `src/server/sports.ts`; Claude's pick (2026-11-21) because it covers every league in
   `src/lib/sports.ts` in one shape for free, where the NHL's own API is hockey only and TheSportsDB's free key has no
@@ -306,7 +359,8 @@ panel can be complex if you need it to be."
 - `.github/workflows/ci.yml` runs on every pull request and every push to `main`: types, lint, formatting and
   dependency audit; Vitest with coverage; the production build; and the Playwright browser tests against that build
   (`scripts/e2e.mjs`, which signs in through a real magic link and fails on any console error). **"CI passed"** is the
-  one check to require.
+  one check to require. A new push to a pull request cancels its stale run, but runs on `main` are never cancelled:
+  each merge commit gets its own full run, because merges land minutes apart and a cancelled run left them unchecked.
 - A bug fix comes with a test that fails without it. Flaky tests are fixed at the cause, never retried.
 - Test data is plain and readable; nothing random.
 - **Agents fix and merge their own pull requests** (Melvin, 2026-11-17: "auto fix and merge prs please"). An agent

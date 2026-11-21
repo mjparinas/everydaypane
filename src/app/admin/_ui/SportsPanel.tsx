@@ -23,12 +23,16 @@ export function SportsPanel() {
   const edit = useAdmin((s) => s.edit);
   const [league, setLeague] = useState<LeagueId>("nhl");
   const [teamId, setTeamId] = useState("");
+  // ESPN's team list is asked for only once the admin starts adding a team, so opening Settings never waits on (or
+  // shows an error from) ESPN.
+  const [adding, setAdding] = useState(false);
   // The answer for the league it was asked for, so switching leagues shows "Loading" until its own list arrives.
   const [loaded, setLoaded] = useState<{ league: LeagueId; teams?: TeamChoice[]; error?: string } | null>(null);
   const choices = loaded?.league === league ? (loaded.teams ?? null) : null;
   const error = loaded?.league === league ? (loaded.error ?? "") : "";
 
   useEffect(() => {
+    if (!adding) return;
     let live = true;
     fetch(`/api/admin/sports/?${new URLSearchParams({ league })}`)
       .then(async (r) => {
@@ -40,7 +44,7 @@ export function SportsPanel() {
     return () => {
       live = false;
     };
-  }, [league]);
+  }, [league, adding]);
 
   const followed = new Set(teams.map((t) => `${t.league}:${t.teamId}`));
   const open = (choices ?? []).filter((c) => !followed.has(`${league}:${c.teamId}`));
@@ -71,7 +75,11 @@ export function SportsPanel() {
         </ul>
       )}
 
-      {teams.length < MAX_TEAMS ? (
+      {teams.length < MAX_TEAMS && !adding ? (
+        <button type="button" className="btn-ghost justify-self-start" onClick={() => setAdding(true)}>
+          Follow a team
+        </button>
+      ) : teams.length < MAX_TEAMS ? (
         <div className="grid gap-2 rounded-xl border border-dashed border-line p-3">
           <Select
             label="League"

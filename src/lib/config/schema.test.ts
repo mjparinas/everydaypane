@@ -18,6 +18,25 @@ describe("config schema", () => {
     expect(r.success && r.data.integrations.tasks).toEqual({ lists: [] });
   });
 
+  it("loads a dashboard saved before the chore chart existed", () => {
+    const c = defaultConfig() as unknown as Record<string, unknown>;
+    delete c.chores;
+    const r = configSchema.safeParse(c);
+    expect(r.success && r.data.chores).toEqual({ people: [], items: [] });
+  });
+
+  it("refuses a chore with no days or nobody to do it", () => {
+    const c = defaultConfig();
+    c.chores.people = [{ id: "ana", name: "Ana", emoji: "", color: "#e8590c", goal: 0 }];
+    c.chores.items = [{ id: "bed", name: "Make the bed", emoji: "", stars: 1, days: [1], personIds: ["ana"], rotate: "none" }];
+    expect(configSchema.safeParse(c).success).toBe(true);
+    c.chores.items[0]!.days = [];
+    expect(configSchema.safeParse(c).success).toBe(false);
+    c.chores.items[0]!.days = [1];
+    c.chores.items[0]!.personIds = [];
+    expect(configSchema.safeParse(c).success).toBe(false);
+  });
+
   it("loads a dashboard saved before commute times existed", () => {
     const c = defaultConfig() as unknown as { integrations: Record<string, unknown> };
     delete c.integrations.commute;
@@ -53,9 +72,12 @@ describe("config schema", () => {
     const c = defaultConfig();
     const month = c.views.flatMap((v) => v.widgets).find((w) => w.type === "calendarMonth") as unknown as Record<string, unknown>;
     delete month.showTitle;
+    delete month.showWeekends;
     const r = configSchema.safeParse(c);
     const parsed = r.success ? r.data.views.flatMap((v) => v.widgets).find((w) => w.type === "calendarMonth") : undefined;
-    expect(parsed).toMatchObject({ showTitle: true });
+    // A month widget saved before these settings existed still shows the whole month, weekends and title included.
+    expect(parsed).toMatchObject({ showTitle: true, showWeekends: true });
+    expect(parsed).not.toHaveProperty("weeks");
   });
 
   it("rejects a widget that runs off its grid", () => {
