@@ -42,5 +42,6 @@ export function displayPayload(
       entityId: doorbell.entityId,
       cameraEntityId: doorbell.cameraEntityId,
     },
+    screenSaver: config.screenSaver,
   };
 }

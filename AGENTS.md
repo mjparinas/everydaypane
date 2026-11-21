@@ -49,7 +49,9 @@ same change, and moves it out of **In progress** when it merges.
 (photos as the backdrop), a time-of-day schedule
 (morning, afternoon, evening, night) choosing the view, theme, day or night mode and dimming; themes with colour
 palettes, fonts, corner radius, opacity and optional glass; burn-in protection (pixel shift); offline mode (service
-worker serves the last good data and shows "Offline"); doorbell pop-up full screen; the red, dismissible alert strip;
+worker serves the last good data and shows "Offline"); a **screen saver** (photos only or dark after idle minutes, dark
+in a night window, woken by a tap, Home Assistant motion sensors, the doorbell, a new alert or a timer going off); doorbell pop-up full
+screen; the red, dismissible alert strip;
 no pinch zoom; settings reach displays by polling every 30 seconds.
 
 **Alerts** (`src/server/alerts.ts`): Alert Ready (NAAD), **Environment Canada weather warnings** (through NAAD),
@@ -138,6 +140,9 @@ node scripts/e2e.mjs   # Playwright browser tests against the build (CHROMIUM_PA
 - **Sports scores** (Melvin, 2026-11-21: "allow to customize the sports and the teams"): any teams from several leagues
   (up to 12), picked in Settings › Sports, with a live score while a game is on, the last result and the next game
   (see Architecture).
+- **Screen saver** (Melvin, 2026-11-21): after some minutes with no touch the display shows only photos (full screen,
+  optional clock) or goes dark, and during a night window it goes dark; Home Assistant motion sensors keep it awake and
+  wake it (see Architecture). Off until switched on in Settings › Screen saver.
 - **Canadian English** in everything a person reads (colour, centre, favourite), as in Liftsmith.
 
 ## Display: super lightweight (rule, Melvin, 2026-11-17)
@@ -193,6 +198,18 @@ panel can be complex if you need it to be."
   overlap. A new widget goes in empty cells first and lands on the photos only when nothing else is free. The display
   draws photos first with a lower `z-index`, and marks a widget on top with `on-photo` (`stackOrder`): its panel is never
   thinner than 55 %, and the clock and date (which have no panel) turn white with a soft shadow.
+- **Screen saver** (`src/lib/screenSaver.ts` for the rules, `src/display/saver.ts` on the display,
+  `config.screenSaver`): the display checks every 15 seconds. Idle counts from the last touch, key, motion, doorbell
+  ring, new alert or timer alarm, or from the page load; the night window counts only from real activity, so the 3:30 AM reload
+  never lights the screen. One `minutes` setting is both the idle wait and how long a touch at night keeps it awake.
+  The saver is a black overlay above the dashboard and its dimming (the `.dim` layer still dims the photos) and below
+  the doorbell pop-up and the alert strip, so an emergency stays visible. The dashboard underneath stays mounted but
+  `visibility: hidden`, so it is current the moment it wakes and the browser doesn't paint it. A tap on the saver only
+  wakes the screen and never presses the widget underneath. Photo mode reuses the photos widget full screen; the clock
+  on it wanders a few pixels each minute against burn-in. Motion sensors (`binary_sensor.*`, up to five) are added to
+  the entities read from Home Assistant (`usedEntities().all`), never to those that can be controlled; while one is
+  `on`, the screen counts as in use. "Dark" is a black screen: a browser can't switch the UC-Display21's backlight off.
+  An admin's preview never shows the saver.
 - **Family message board:** anyone on `ADMIN_EMAILS` or `FAMILY_EMAILS` posts notes from `/family/`; the author name is
   typed, never the email, because the wall is readable by anyone in the kitchen. Notes can expire; admins pin. Displays
   poll the board every 30 seconds with an ETag.

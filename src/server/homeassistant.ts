@@ -64,7 +64,10 @@ export async function testConnection(config: DashboardConfig): Promise<string> {
 
 // ---- Which entities ----
 
-/** Every entity a widget or the doorbell uses: the only ones read and the only ones that can be controlled. */
+/**
+ * Every entity a widget, the doorbell or the screen saver's motion sensors use: the only ones read. Only widget
+ * entities can be controlled; the doorbell and motion sensors are read and nothing else.
+ */
 export function usedEntities(config: DashboardConfig): {
   controls: Set<string>;
   cameras: Set<string>;
@@ -87,6 +90,7 @@ export function usedEntities(config: DashboardConfig): {
   if (d.cameraEntityId) cameras.add(d.cameraEntityId);
   const all = new Set([...controls, ...cameras]);
   if (d.entityId) all.add(d.entityId);
+  for (const m of config.screenSaver.motionEntityIds) if (m) all.add(m);
   return { controls, cameras, players, all };
 }
 

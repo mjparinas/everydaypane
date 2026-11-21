@@ -2,6 +2,7 @@ import { z } from "zod";
 
 import { FERRY_ROUTES } from "../ferries";
 import { MEAL_SLOTS } from "../meals";
+import { SCREEN_SAVER_OFF } from "../screenSaver";
 import { LEAGUE_IDS, MAX_TEAMS } from "../sports";
 import { PERIODS } from "./periods";
 
@@ -321,6 +322,21 @@ export const commuteDestinationSchema = placeSchema.extend({
 });
 export type CommuteDestination = z.infer<typeof commuteDestinationSchema>;
 
+export const screenSaverSchema = z.object({
+  idle: z.boolean(),
+  minutes: z.number().int().min(1).max(240),
+  shows: z.enum(["photos", "dark"]),
+  // The albums the photo saver shows (none picked means all of them).
+  photoSourceIds: z.array(id).max(20),
+  showClock: z.boolean(),
+  night: z.boolean(),
+  nightStart: hhmm,
+  nightEnd: hhmm,
+  // binary_sensor.* motion or occupancy sensors: while one is on, the screen counts as in use.
+  motionEntityIds: z.array(z.string().max(255)).max(5),
+});
+export type ScreenSaver = z.infer<typeof screenSaverSchema>;
+
 // The chore chart (Melvin, 2026-11-21): the people who do chores, and recurring chores that are shared by everyone on
 // them or rotate between them by day or by week (src/lib/chores.ts). Who ticked what off lives in the chores_done table.
 export const chorePersonSchema = z.object({
@@ -400,6 +416,11 @@ export const configSchema = z
     // Burn-in protection: the whole layout drifts a few pixels every few minutes so static edges never sit on the same
     // pixels for hours, and night periods can dim the screen (periodSchema.dim).
     burnIn: z.object({ shift: z.boolean(), maxPixels: z.number().int().min(1).max(24), minutes: z.number().int().min(1).max(60) }),
+    // Screen saver (Melvin, 2026-11-21): after `minutes` with no touch (or motion, from Home Assistant motion
+    // sensors), the display shows only photos or goes dark; during the night window it goes dark, and a touch or
+    // motion wakes it for `minutes`. Separate from the schedule's dimming, which still applies while it is awake.
+    // Off by default, so a document saved before it existed still loads and behaves the same.
+    screenSaver: screenSaverSchema.default(() => ({ ...SCREEN_SAVER_OFF, photoSourceIds: [], motionEntityIds: [] })),
     // Each period starts at its time and runs until the next one starts.
     schedule: z.object({
       enabled: z.boolean(),

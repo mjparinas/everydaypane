@@ -3,10 +3,11 @@ import type { Palette, Period, Theme, View } from "@/lib/config/schema";
 import { currentPeriod, msUntilNextPeriod } from "@/lib/config/time";
 import type { DisplayPayload, HaData } from "@/lib/display/types";
 
-import { startAlarms } from "./alarm";
+import { onAlarm, startAlarms } from "./alarm";
 import { alertStrip } from "./alerts";
 import { get, offline, onOfflineChange, post, PREVIEW, subscribe, TOKEN } from "./api";
 import { h } from "./dom";
+import { screenSaver, type Saver } from "./saver";
 import { mountWidget } from "./widgets";
 import { cameraLoop, HA_EVERY } from "./widgets/ha";
 import type { Cleanup } from "./widgets/types";
@@ -125,6 +126,7 @@ async function loadState(): Promise<boolean> {
   burnIn();
   alerts();
   doorbell();
+  saver?.update();
   return true;
 }
 
@@ -136,10 +138,15 @@ async function poll() {
 // ---- Emergency strip: polled every minute while alerts are on. ----
 
 let strip: { el: HTMLElement; stop: () => void } | null = null;
+// Made in start(), before the first settings load.
+let saver: Saver | null = null;
 function alerts() {
   const on = payload?.alerts.enabled === true && payload.alerts.banner !== "never";
   if (on && !strip) {
-    strip = alertStrip(() => payload);
+    strip = alertStrip(
+      () => payload,
+      () => saver?.wake(),
+    );
     app.prepend(strip.el);
   } else if (!on && strip) {
     strip.stop();
@@ -179,6 +186,7 @@ function doorbell() {
 
 function ringDoor(cameraEntityId: string, seconds: number) {
   closeRing?.();
+  saver?.wake();
   const img = h("img", { class: "bell-img", alt: "Front door camera" });
   const el = h(
     "div",
@@ -242,9 +250,12 @@ function nightlyReload() {
 async function start() {
   app.className = "app";
   app.replaceChildren(stage, dim, offlineDot);
+  saver = screenSaver(app, () => payload);
   onOfflineChange(() => offlineDot.classList.toggle("show", offline));
   // Timers and pomodoros set before a reload still ring, whichever view is showing.
   startAlarms();
+  // A kitchen or pomodoro timer going off wakes the screen saver, so its full-screen alarm is seen.
+  onAlarm((_key, ringing) => ringing && saver?.wake());
   if (TOKEN && !PREVIEW && "serviceWorker" in navigator) {
     void navigator.serviceWorker.register(`/display/sw.js?v=${document.body.dataset.v ?? ""}`, { scope: "/d/" }).catch(() => undefined);
   }
