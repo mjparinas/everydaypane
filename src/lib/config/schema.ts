@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+import { FERRY_ROUTES } from "../ferries";
 import { MEAL_SLOTS } from "../meals";
 import { PERIODS } from "./periods";
 
@@ -211,6 +212,14 @@ export const widgetSchema = z.discriminatedUnion("type", [
     rounds: z.number().int().min(1).max(12),
     autoStart: z.boolean(),
     ...alertFields,
+  }),
+  // BC Ferries (Melvin, 2026-11-21): the next sailings and how full they are, for up to four routes (src/server/ferries.ts).
+  z.object({
+    ...base,
+    type: z.literal("ferries"),
+    routes: z.array(z.enum(FERRY_ROUTES)).min(1).max(4),
+    count: z.number().int().min(1).max(8),
+    showVessel: z.boolean(),
   }),
 ]);
 export type Widget = z.infer<typeof widgetSchema>;
