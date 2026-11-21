@@ -14,7 +14,9 @@ import { media } from "./media";
 import { messages } from "./messages";
 import { note } from "./note";
 import { photos } from "./photos";
+import { pomodoro } from "./pomodoro";
 import { tasks } from "./tasks";
+import { timer } from "./timer";
 import type { Cleanup, WidgetContext } from "./types";
 import { weather } from "./weather";
 import { wifiQr } from "./wifi";
@@ -60,5 +62,9 @@ export function mountWidget(el: HTMLElement, w: Widget, ctx: WidgetContext): Cle
       return media(el, w, ctx);
     case "commute":
       return commute(el, w, ctx);
+    case "timer":
+      return timer(el, w, ctx);
+    case "pomodoro":
+      return pomodoro(el, w, ctx);
   }
 }

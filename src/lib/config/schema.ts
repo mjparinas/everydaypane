@@ -68,6 +68,23 @@ export const countdownEventSchema = z.object({
 });
 export type CountdownEvent = z.infer<typeof countdownEventSchema>;
 
+// A kitchen timer's button: a name ("Eggs") and a length. Up to a day.
+export const timerPresetSchema = z.object({
+  id,
+  label: z.string().trim().max(30),
+  emoji: z.string().max(8),
+  seconds: z.number().int().min(5).max(86_400),
+});
+export type TimerPreset = z.infer<typeof timerPresetSchema>;
+
+// How a timer or pomodoro tells you it's done (Melvin, 2026-11-21: "visual and sound alerts"). The widget always
+// flashes; the screen-wide notice and the beeps can each be switched off, and both stop by themselves after a while.
+const alertFields = {
+  sound: z.boolean(),
+  fullScreen: z.boolean(),
+  ringSeconds: z.number().int().min(5).max(600),
+};
+
 export const haControlSchema = z.enum(["auto", "toggle", "light", "sensor", "climate", "cover", "lock", "button"]);
 export type HaControl = z.infer<typeof haControlSchema>;
 
@@ -181,6 +198,19 @@ export const widgetSchema = z.discriminatedUnion("type", [
     destinationIds: z.array(id).max(6),
     showDistance: z.boolean(),
     showArrival: z.boolean(),
+  }),
+  // Kitchen timers (Melvin, 2026-11-21): tap a button on the wall to start one; several can run at once.
+  z.object({ ...base, type: z.literal("timer"), presets: z.array(timerPresetSchema).max(12), ...alertFields }),
+  // A pomodoro (Melvin, 2026-11-21: "a separate pomodoro"): focus rounds and breaks, a long break after the last round.
+  z.object({
+    ...base,
+    type: z.literal("pomodoro"),
+    workMinutes: z.number().int().min(1).max(120),
+    shortBreakMinutes: z.number().int().min(1).max(60),
+    longBreakMinutes: z.number().int().min(1).max(90),
+    rounds: z.number().int().min(1).max(12),
+    autoStart: z.boolean(),
+    ...alertFields,
   }),
 ]);
 export type Widget = z.infer<typeof widgetSchema>;
