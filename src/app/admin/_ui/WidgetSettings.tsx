@@ -2,6 +2,7 @@
 
 import type { CountdownEvent, DashboardConfig, Widget } from "@/lib/config/schema";
 import { WIDGETS } from "@/lib/config/widgets";
+import { FERRY_ROUTES, ferryRouteName } from "@/lib/ferries";
 import { MEAL_LABELS, MEAL_SLOTS } from "@/lib/meals";
 
 import { NumberInput, Select, Text, TextArea, Toggle } from "./fields";
@@ -257,6 +258,30 @@ function TypeSettings({
               ))}
             </>
           )}
+        </>
+      );
+    }
+    case "ferries": {
+      const e = edit<"ferries">();
+      return (
+        <>
+          <NumberInput label="Sailings per route" value={w.count} min={1} max={8} onChange={(v) => e((x) => void (x.count = v))} />
+          <Toggle label="Show the ship's name" checked={w.showVessel} onChange={(v) => e((x) => void (x.showVessel = v))} />
+          <p className="text-xs text-soft">Pick up to four routes. These are the ones BC Ferries says how full they are for.</p>
+          {FERRY_ROUTES.map((code) => (
+            <Toggle
+              key={code}
+              label={ferryRouteName(code)}
+              checked={w.routes.includes(code)}
+              onChange={(on) =>
+                e((x) => {
+                  const next = on ? [...x.routes, code] : x.routes.filter((c) => c !== code);
+                  // At least one route, at most four (the schema refuses anything else).
+                  if (next.length >= 1 && next.length <= 4) x.routes = next;
+                })
+              }
+            />
+          ))}
         </>
       );
     }
