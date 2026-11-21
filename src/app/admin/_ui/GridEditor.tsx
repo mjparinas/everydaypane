@@ -2,14 +2,15 @@
 
 import { useRef, useState } from "react";
 
-import { cellAt, clampRect, fits, type Rect } from "@/lib/config/grid";
+import { cellAt, clampRect, fits, isBackdrop, type Rect } from "@/lib/config/grid";
 import type { View, Widget } from "@/lib/config/schema";
 import { WIDGETS } from "@/lib/config/widgets";
 
 // The drag-and-drop layout editor (Melvin, 2026-11-17: a grid with a chosen number of rows and columns). Drag a widget
 // to move it, drag its corner to resize it, tap it to edit its settings. Works with a mouse, a finger (pointer events)
 // and the keyboard (arrows move, Shift + arrows resize). A move or resize that would overlap another widget or leave
-// the grid is shown in red and not applied.
+// the grid is shown in red and not applied. Photos widgets are the exception (Melvin, 2026-11-21): they're drawn
+// underneath, and other widgets can be dropped on top of them.
 
 type Drag = { id: string; mode: "move" | "resize"; offset: { x: number; y: number }; pointer: number; moved: boolean; rect: Rect };
 
@@ -70,7 +71,7 @@ export function GridEditor({
   function end(e: React.PointerEvent, w: Widget) {
     if (!drag || drag.pointer !== e.pointerId) return;
     if (!drag.moved) onSelect(w.id);
-    else if (fits(drag.rect, grid, others(w.id))) onChange(w.id, drag.rect);
+    else if (fits({ ...drag.rect, type: w.type }, grid, others(w.id))) onChange(w.id, drag.rect);
     setDrag(null);
   }
 
@@ -88,7 +89,7 @@ export function GridEditor({
     const next = e.shiftKey ? { x: w.x, y: w.y, w: w.w + dx, h: w.h + dy } : { x: w.x + dx, y: w.y + dy, w: w.w, h: w.h };
     const min = minOf(w);
     if (next.w < min.w || next.h < min.h) return;
-    if (fits(next, grid, others(w.id))) onChange(w.id, next);
+    if (fits({ ...next, type: w.type }, grid, others(w.id))) onChange(w.id, next);
   }
 
   const cells = [];
@@ -115,7 +116,8 @@ export function GridEditor({
       {view.widgets.map((w) => {
         const dragging = drag?.id === w.id && drag.moved;
         const r = dragging ? drag.rect : w;
-        const ok = !dragging || fits(drag.rect, grid, others(w.id));
+        const ok = !dragging || fits({ ...drag.rect, type: w.type }, grid, others(w.id));
+        const backdrop = isBackdrop(w);
         const info = WIDGETS[w.type];
         const selected = selectedId === w.id;
         return (
@@ -126,9 +128,11 @@ export function GridEditor({
             aria-label={`${w.title || info.label}, ${w.w} by ${w.h} at column ${w.x + 1}, row ${w.y + 1}`}
             aria-pressed={selected}
             data-widget={w.id}
-            className={`relative flex min-w-0 cursor-grab touch-none flex-col items-center justify-center overflow-hidden rounded-lg border-2 bg-panel p-1 text-center shadow-sm transition-[box-shadow] outline-none focus-visible:ring-2 focus-visible:ring-brand/50 active:cursor-grabbing ${
-              selected ? "border-brand" : "border-line"
-            } ${dragging ? (ok ? "z-10 opacity-90 shadow-lg" : "z-10 border-bad opacity-80") : ""}`}
+            className={`relative flex min-w-0 cursor-grab touch-none flex-col overflow-hidden rounded-lg border-2 p-1 shadow-sm transition-[box-shadow] outline-none focus-visible:ring-2 focus-visible:ring-brand/50 active:cursor-grabbing ${
+              backdrop ? "items-start justify-start bg-line/60 text-left" : "items-center justify-center bg-panel text-center"
+            } ${dragging ? "z-10" : backdrop ? "z-0" : "z-[1]"} ${dragging && !ok ? "border-bad opacity-80" : selected ? "border-brand" : "border-line"} ${
+              dragging && ok ? "opacity-90 shadow-lg" : ""
+            }`}
             style={{ gridColumn: `${r.x + 1} / span ${r.w}`, gridRow: `${r.y + 1} / span ${r.h}` }}
             onPointerDown={(e) => start(e, w, "move")}
             onPointerMove={(e) => move(e, w)}

@@ -46,7 +46,7 @@ export function ViewsPanel() {
 
   function add(type: WidgetType) {
     const info = WIDGETS[type];
-    const spot = findSpot(info.size, view!, view!.widgets, info.minSize);
+    const spot = findSpot({ ...info.size, type }, view!, view!.widgets, info.minSize);
     setPicking(false);
     if (!spot) {
       setNotice(`There's no room for a ${info.label.toLowerCase()} widget. Make the grid bigger or move things around.`);
@@ -135,7 +135,7 @@ export function ViewsPanel() {
         )}
         <p className="text-xs text-soft">
           Drag a widget to move it and its corner to resize it. Tap one to change its settings. With a keyboard: arrows move, Shift + arrows
-          resize.
+          resize. Widgets can go on top of a photos widget, so the photos fill the space behind them.
         </p>
       </div>
 

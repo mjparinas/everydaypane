@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { cellAt, clampRect, findSpot, fits, overlaps, refit } from "./grid";
+import { cellAt, clampRect, findSpot, fits, overlaps, refit, stackOrder } from "./grid";
 
 const grid = { cols: 12, rows: 8 };
 
@@ -52,5 +52,48 @@ describe("grid", () => {
     ]);
     expect(dropped).toEqual([]);
     expect(refit(widgets, { cols: 4, rows: 2 }).dropped.map((w) => w.id)).toEqual(["weather", "photos"]);
+  });
+
+  describe("widgets on top of photos", () => {
+    const photos = { x: 0, y: 0, w: 12, h: 8, type: "photos" };
+
+    it("lets a widget sit on a photos widget, but not on another widget or two photos on each other", () => {
+      const clock = { x: 0, y: 0, w: 3, h: 2, type: "clock" };
+      expect(fits(clock, grid, [photos])).toBe(true);
+      expect(fits(photos, grid, [clock])).toBe(true);
+      expect(fits({ x: 2, y: 1, w: 3, h: 2, type: "weather" }, grid, [photos, clock])).toBe(false);
+      expect(fits({ x: 6, y: 4, w: 2, h: 2, type: "photos" }, grid, [photos])).toBe(false);
+    });
+
+    it("puts a new widget in empty cells first, and on the photos only when nothing else is free", () => {
+      const half = { x: 0, y: 0, w: 12, h: 6, type: "photos" };
+      expect(findSpot({ w: 3, h: 2, type: "clock" }, grid, [half])).toEqual({ x: 0, y: 6, w: 3, h: 2 });
+      expect(findSpot({ w: 3, h: 2, type: "clock" }, grid, [photos])).toEqual({ x: 0, y: 0, w: 3, h: 2 });
+      expect(findSpot({ w: 3, h: 2, type: "photos" }, grid, [photos])).toBeNull();
+    });
+
+    it("keeps widgets on the photos when the grid shrinks", () => {
+      const widgets = [
+        { id: "photos", ...photos },
+        { id: "clock", x: 0, y: 0, w: 4, h: 2, type: "clock" },
+      ];
+      expect(refit(widgets, { cols: 8, rows: 4 }).kept.map((w) => [w.id, w.x, w.y, w.w, w.h])).toEqual([
+        ["photos", 0, 0, 8, 4],
+        ["clock", 0, 0, 4, 2],
+      ]);
+    });
+
+    it("draws photos first and marks the widgets on top of them", () => {
+      const order = stackOrder([
+        { id: "clock", x: 0, y: 0, w: 3, h: 2, type: "clock" },
+        { id: "photos", x: 0, y: 0, w: 8, h: 8, type: "photos" },
+        { id: "agenda", x: 8, y: 0, w: 4, h: 8, type: "agenda" },
+      ]);
+      expect(order.map((o) => [o.widget.id, o.onPhoto])).toEqual([
+        ["photos", false],
+        ["clock", true],
+        ["agenda", false],
+      ]);
+    });
   });
 });
