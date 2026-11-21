@@ -3,12 +3,13 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import type { Widget } from "@/lib/config/schema";
 import { newWidget } from "@/lib/config/widgets";
-import type { DisplayPayload, TasksData } from "@/lib/display/types";
+import type { ChoresData, DisplayPayload, TasksData } from "@/lib/display/types";
 
 import { shortTime } from "./format";
 import { kindOf, label, weatherIcon } from "./icons";
 import { aqhiBand, usAqiBand } from "./widgets/air";
 import { calendarMonth } from "./widgets/calendar";
+import { chores, columns } from "./widgets/chores";
 import { clock } from "./widgets/clock";
 import { commute, distance, duration, timing, trafficLevel } from "./widgets/commute";
 import { countdown } from "./widgets/countdown";
@@ -630,6 +631,84 @@ describe("ferries", () => {
     const stop = ferries(el, newWidget("ferries", "fe2", { x: 0, y: 0 }), ctx);
     await vi.advanceTimersByTimeAsync(0);
     expect(el.textContent).toBe("BC Ferries sailings are unavailable right now.");
+    stop();
+    vi.unstubAllGlobals();
+  });
+});
+
+describe("chore chart", () => {
+  const data: ChoresData = {
+    today: "2026-11-18",
+    people: [
+      { id: "ana", name: "Ana", emoji: "🦊", color: "#e8590c", goal: 10, stars: 4 },
+      { id: "ben", name: "Ben", emoji: "", color: "#1c7ed6", goal: 0, stars: 0 },
+    ],
+    chores: [
+      { id: "bed", name: "Make the bed", emoji: "🛏️", stars: 1 },
+      { id: "dishes", name: "Dishes", emoji: "", stars: 3 },
+    ],
+    due: [
+      { choreId: "bed", personId: "ana", done: true },
+      { choreId: "bed", personId: "ben", done: false },
+      { choreId: "dishes", personId: "ana", done: false },
+    ],
+  };
+
+  it("makes a column per person, and counts a tick not yet saved towards the stars", () => {
+    expect(columns(data, []).map((c) => [c.person.name, c.items.map((i) => i.chore.id)])).toEqual([
+      ["Ana", ["bed", "dishes"]],
+      ["Ben", ["bed"]],
+    ]);
+    expect(columns(data, ["ben"]).map((c) => c.person.id)).toEqual(["ben"]);
+    const ticked = columns(data, [], new Map([["dishes|ana", true]]));
+    expect(ticked[0]?.person.stars).toBe(7);
+    expect(columns(data, [], new Map([["bed|ana", false]]))[0]?.person.stars).toBe(3);
+  });
+
+  it("ticks a chore off at once, says so when everyone's done, and a second tap takes it back", async () => {
+    vi.useFakeTimers({ now: new Date("2026-11-18T19:00:00Z") });
+    const posts: unknown[] = [];
+    vi.stubGlobal(
+      "fetch",
+      vi.fn((_url: string, init?: RequestInit) => {
+        if (init?.method === "POST") {
+          posts.push(JSON.parse(String(init.body)));
+          return Promise.resolve(Response.json({ ok: true }));
+        }
+        return Promise.resolve(Response.json(data));
+      }),
+    );
+    const el = document.createElement("div");
+    const stop = chores(el, newWidget("chores", "ch", { x: 0, y: 0 }), ctx);
+    await vi.advanceTimersByTimeAsync(0);
+    expect([...el.querySelectorAll(".ch-name")].map((n) => n.textContent)).toEqual(["Ana", "Ben"]);
+    expect(el.querySelector(".ch-stars")?.textContent).toBe("⭐ 4 / 10");
+
+    const button = (key: string) => el.querySelector<HTMLButtonElement>(`[data-key="${key}"] button`) as HTMLButtonElement;
+    button("dishes|ana").click();
+    expect(el.querySelector(".ch-stars")?.textContent).toBe("⭐ 7 / 10");
+    expect(el.querySelector(".ch-finished .ch-all")?.textContent).toBe("All done! 🎉");
+    expect(el.querySelector(".ch-pop")?.textContent).toBe("+3 ⭐");
+    button("dishes|ana").click();
+    expect(el.querySelector(".ch-stars")?.textContent).toBe("⭐ 4 / 10");
+    expect(el.querySelector(".ch-finished")).toBeNull();
+    await vi.advanceTimersByTimeAsync(0);
+    expect(posts).toEqual([
+      { chore: "dishes", person: "ana", done: true },
+      { chore: "dishes", person: "ana", done: false },
+    ]);
+    stop();
+    vi.unstubAllGlobals();
+  });
+
+  it("asks for setup when there's nobody on the chart", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(() => Promise.resolve(Response.json({ ...data, people: [], due: [] }))),
+    );
+    const el = document.createElement("div");
+    const stop = chores(el, newWidget("chores", "ch", { x: 0, y: 0 }), ctx);
+    await vi.waitFor(() => expect(el.textContent).toContain("Settings › Chores"));
     stop();
     vi.unstubAllGlobals();
   });

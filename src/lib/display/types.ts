@@ -295,3 +295,12 @@ export interface RadarData {
   maps: Record<string, RadarMap>;
   layers: Partial<Record<"rain" | "snow", RadarTimes>>;
 }
+
+/** Today's chore chart (src/server/chores.ts): who does what today, what's done, and each person's stars this week. */
+export interface ChoresData {
+  today: string;
+  people: { id: string; name: string; emoji: string; color: string; goal: number; stars: number }[];
+  /** Only the chores due today. */
+  chores: { id: string; name: string; emoji: string; stars: number }[];
+  due: { choreId: string; personId: string; done: boolean }[];
+}

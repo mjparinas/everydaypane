@@ -22,6 +22,8 @@ const MIGRATIONS = [
   `CREATE INDEX IF NOT EXISTS photos_by_source ON photos (source_id, added_at)`,
   // The meal plan: one row per day and meal (src/server/meals.ts).
   `CREATE TABLE IF NOT EXISTS meals (date TEXT NOT NULL, slot TEXT NOT NULL, text TEXT NOT NULL, updated_at INTEGER NOT NULL, updated_by TEXT NOT NULL, PRIMARY KEY (date, slot))`,
+  // The chore chart's ticks: one row per day, chore and person (src/server/chores.ts).
+  `CREATE TABLE IF NOT EXISTS chores_done (date TEXT NOT NULL, chore_id TEXT NOT NULL, person_id TEXT NOT NULL, stars INTEGER NOT NULL, done_at INTEGER NOT NULL, PRIMARY KEY (date, chore_id, person_id))`,
 ];
 
 // Columns added after a table was first created. SQLite has no ADD COLUMN IF NOT EXISTS, so each one runs on its own
