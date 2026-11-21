@@ -158,8 +158,9 @@ panel can be complex if you need it to be."
   device signs that screen out.
 - **Admin panel** (`src/app/admin/_ui/`): one page with tabs (a bottom tab bar on phones). Edits collect in a working
   copy (a Zustand store per page) and go out together with Save. The grid editor drags with pointer events (mouse and
-  touch) and also moves and resizes with the keyboard; widgets never leave the grid and never overlap, except that
-  other widgets may sit on top of a photos widget (`src/lib/config/grid.ts`).
+  touch), resizes from any of a widget's four corners with the opposite corner held still (Melvin, 2026-11-21: "allow
+  any corner of a widget to adjust the size"), and also moves and resizes with the keyboard; widgets never leave the
+  grid and never overlap, except that other widgets may sit on top of a photos widget (`src/lib/config/grid.ts`).
 - **Widgets over photos** (Melvin, 2026-11-21: "allow other widgets to be placed on top of the photos widget"): photos
   widgets are a backdrop layer. Any other widget may cover one; two photos widgets, or two widgets on top, still never
   overlap. A new widget goes in empty cells first and lands on the photos only when nothing else is free. The display
