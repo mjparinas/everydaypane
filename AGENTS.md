@@ -39,7 +39,8 @@ same change, and moves it out of **In progress** when it merges.
 | Alerts (`alerts`) | Current emergency alerts, optional "all clear" | See alerts below |
 | To-dos (`tasks`) | Open Google Tasks; **tap to tick off, synced back to Google** (`allowCheck`, 4 s undo) | Google Tasks |
 
-**Display behaviour:** several views on a drag-and-drop grid (chosen rows and columns), a time-of-day schedule
+**Display behaviour:** several views on a drag-and-drop grid (chosen rows and columns), **widgets layered on top of a photos widget**
+(photos as the backdrop), a time-of-day schedule
 (morning, afternoon, evening, night) choosing the view, theme, day or night mode and dimming; themes with colour
 palettes, fonts, corner radius, opacity and optional glass; burn-in protection (pixel shift); offline mode (service
 worker serves the last good data and shows "Offline"); doorbell pop-up full screen; the red, dismissible alert strip;
@@ -157,7 +158,13 @@ panel can be complex if you need it to be."
   device signs that screen out.
 - **Admin panel** (`src/app/admin/_ui/`): one page with tabs (a bottom tab bar on phones). Edits collect in a working
   copy (a Zustand store per page) and go out together with Save. The grid editor drags with pointer events (mouse and
-  touch) and also moves and resizes with the keyboard; widgets never overlap or leave the grid (`src/lib/config/grid.ts`).
+  touch) and also moves and resizes with the keyboard; widgets never leave the grid and never overlap, except that
+  other widgets may sit on top of a photos widget (`src/lib/config/grid.ts`).
+- **Widgets over photos** (Melvin, 2026-11-21: "allow other widgets to be placed on top of the photos widget"): photos
+  widgets are a backdrop layer. Any other widget may cover one; two photos widgets, or two widgets on top, still never
+  overlap. A new widget goes in empty cells first and lands on the photos only when nothing else is free. The display
+  draws photos first with a lower `z-index`, and marks a widget on top with `on-photo` (`stackOrder`): its panel is never
+  thinner than 55 %, and the clock and date (which have no panel) turn white with a soft shadow.
 - **Family message board:** anyone on `ADMIN_EMAILS` or `FAMILY_EMAILS` posts notes from `/family/`; the author name is
   typed, never the email, because the wall is readable by anyone in the kitchen. Notes can expire; admins pin. Displays
   poll the board every 30 seconds with an ETag.

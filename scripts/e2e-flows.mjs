@@ -167,8 +167,9 @@ export const flows = [
       const phone = await browser.newContext({ viewport: { width: 390, height: 844 }, storageState: await page.context().storageState() });
       const p = await phone.newPage();
       await p.goto(`${base}/family/`);
-      const today = p.getByRole("region", { name: /^Today/ });
-      const dinner = today.getByRole("combobox", { name: /Dinner/ });
+      // Tomorrow, not today: from 8 PM the widget starts at tomorrow, so a meal planned for today drops off in the evening.
+      const tomorrow = p.getByRole("region", { name: /^Tomorrow/ });
+      const dinner = tomorrow.getByRole("combobox", { name: /Dinner/ });
       await dinner.fill("Tacos");
       const saved = p.waitForResponse((r) => r.url().includes("/api/meals/") && r.request().method() === "PUT");
       await dinner.press("Enter");
@@ -191,6 +192,87 @@ export const flows = [
       await d.page.locator(".w-meals").getByText("Tacos").waitFor();
       expect(d.errors.length === 0, d.errors.join("\n"));
       await d.context.close();
+    },
+  },
+  {
+    name: "widgets on top of a photos widget are drawn above the photo and stay readable",
+    async run({ browser, page, base, expect }) {
+      const { config, version } = await (await page.request.get(`${base}/api/admin/config/`)).json();
+      const home = config.views.find((v) => v.id === "home");
+      const countdown = home.widgets.find((w) => w.type === "countdown");
+      config.views.push({
+        id: "e2e-frame",
+        name: "Photo frame",
+        cols: 12,
+        rows: 8,
+        gap: 16,
+        padding: 24,
+        themeId: null,
+        widgets: [
+          {
+            id: "f-photos",
+            type: "photos",
+            x: 0,
+            y: 0,
+            w: 12,
+            h: 8,
+            sourceIds: [],
+            intervalSeconds: 600,
+            fit: "cover",
+            showCaption: false,
+          },
+          {
+            id: "f-clock",
+            type: "clock",
+            x: 0,
+            y: 5,
+            w: 4,
+            h: 2,
+            timeZone: "America/Vancouver",
+            label: "",
+            showSeconds: false,
+            style: "digital",
+          },
+          { id: "f-date", type: "date", x: 0, y: 7, w: 4, h: 1, timeZone: "America/Vancouver", showYear: false },
+          { ...countdown, id: "f-countdown", x: 9, y: 0, w: 3, h: 3 },
+        ],
+      });
+      const saved = await page.request.put(`${base}/api/admin/config/`, {
+        headers: { origin: base },
+        data: { baseVersion: version, config },
+      });
+      expect(saved.ok(), `save: ${saved.status()}`);
+      const url = await addDevice(page, base, "e2e-frame");
+      const context = await browser.newContext({ viewport: VIEWPORT });
+      // A drawn landscape stands in for an album, so the test needs no photo service.
+      const picture = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1080"><defs><linearGradient id="s" x2="0" y2="1"><stop offset="0" stop-color="#f6b26b"/><stop offset=".55" stop-color="#f9e0b0"/></linearGradient></defs><rect width="1920" height="1080" fill="url(#s)"/><circle cx="1350" cy="520" r="120" fill="#fff3d6"/><path d="M0 700 420 380 760 640 1100 300 1500 620 1920 420V1080H0Z" fill="#5a6e8c"/><path d="M0 820 520 600 980 800 1400 640 1920 780V1080H0Z" fill="#2f4058"/><rect y="900" width="1920" height="180" fill="#1d2a3d"/></svg>`;
+      await context.route("**/api/display/photos/**", (r) =>
+        r.fulfill({ json: { updatedAt: 1, sources: { lib: { photos: [["p1", 1920, 1080, "2026-08-01"]], error: null } } } }),
+      );
+      await context.route("**/api/display/photo/**", (r) => r.fulfill({ contentType: "image/svg+xml", body: picture }));
+      const d = await context.newPage();
+      const errors = [];
+      d.on("pageerror", (e) => errors.push(e.message));
+      await d.goto(url);
+      await d.locator(".ph-img.on").waitFor();
+      await d.locator(".cell-clock .c-hm").waitFor();
+      expect(await d.locator(".cell-clock").evaluate((el) => el.classList.contains("on-photo")), "the clock isn't marked as on the photo");
+      expect(!(await d.locator(".cell-photos").evaluate((el) => el.classList.contains("on-photo"))), "the photo is marked as on itself");
+      // The clock is the element on top where both are drawn, so a tap reaches it rather than the photo.
+      const box = await d.locator(".cell-clock").boundingBox();
+      const top = await d.evaluate(
+        ([x, y]) => document.elementFromPoint(x, y)?.closest(".cell")?.className,
+        [box.x + box.width / 2, box.y + box.height / 2],
+      );
+      expect(top?.includes("cell-clock"), `the clock is under the photo (${top})`);
+      const colour = await d.locator(".cell-clock .c-hm").evaluate((el) => getComputedStyle(el).color);
+      expect(colour === "rgb(255, 255, 255)", `the clock over a photo should be white, was ${colour}`);
+      if (process.env.E2E_SHOTS) {
+        await d.waitForTimeout(1800); // the photo's fade-in
+        await d.screenshot({ path: `${process.env.E2E_SHOTS}/widgets-over-photos.png` });
+      }
+      expect(errors.length === 0, errors.join("\n"));
+      await context.close();
     },
   },
   {

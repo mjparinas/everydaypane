@@ -141,6 +141,7 @@ body {
     0 10px 30px -18px rgb(0 0 0 / 0.5);
   padding: clamp(10px, 6cqmin, 28px);
   animation: rise 0.5s ease-out both;
+  z-index: 1;
 }
 .glass .cell {
   backdrop-filter: blur(18px) saturate(1.2);
@@ -149,6 +150,26 @@ body {
 .cell-date {
   background: transparent;
   box-shadow: none;
+}
+/* Widgets on top of a photos widget (Melvin, 2026-11-21). Photos sit underneath; the panel behind a widget is never
+   thinner than 55 % so text stays readable on a busy picture. The clock and the date have no panel, so over a photo
+   they turn white with a soft shadow, like a photo frame's. */
+.cell-photos {
+  z-index: 0;
+}
+.cell.on-photo {
+  background: color-mix(in srgb, var(--surface) calc(max(var(--surface-alpha), 0.55) * 100%), transparent);
+}
+.cell-clock.on-photo,
+.cell-date.on-photo {
+  --text: #fff;
+  --muted: rgb(255 255 255 / 0.82);
+  --surface: #0b0f18; /* the analogue clock's face */
+  color: var(--text);
+  background: transparent;
+  text-shadow:
+    0 1px 3px rgb(0 0 0 / 0.55),
+    0 2px 18px rgb(0 0 0 / 0.45);
 }
 @keyframes rise {
   from {
