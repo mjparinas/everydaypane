@@ -134,8 +134,9 @@ export function ViewsPanel() {
           </div>
         )}
         <p className="text-xs text-soft">
-          Drag a widget to move it and its corner to resize it. Tap one to change its settings. With a keyboard: arrows move, Shift + arrows
-          resize. Widgets can go on top of a photos widget, so the photos fill the space behind them.
+          Drag a widget to move it and any of its corners to resize it. Tap one to change its settings and show all four corners. With a
+          keyboard: arrows move, Shift + arrows move the bottom-right corner and Shift + Alt + arrows the top-left. Widgets can go on top of
+          a photos widget, so the photos fill the space behind them.
         </p>
       </div>
 
