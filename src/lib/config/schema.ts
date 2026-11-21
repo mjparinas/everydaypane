@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 import { MEAL_SLOTS } from "../meals";
+import { LEAGUE_IDS, MAX_TEAMS } from "../sports";
 import { PERIODS } from "./periods";
 
 // The whole dashboard setup, as the admin panel edits it and every display reads it. One JSON document, validated
@@ -177,6 +178,14 @@ export const widgetSchema = z.discriminatedUnion("type", [
     showDistance: z.boolean(),
     showArrival: z.boolean(),
   }),
+  // Sports scores (Melvin, 2026-11-21): live scores, the last result and the next game of the teams followed under
+  // Settings › Sports (none picked means all of them).
+  z.object({
+    ...base,
+    type: z.literal("sports"),
+    teamIds: z.array(id).max(MAX_TEAMS),
+    showLast: z.boolean(),
+  }),
 ]);
 export type Widget = z.infer<typeof widgetSchema>;
 export type WidgetType = Widget["type"];
@@ -231,6 +240,17 @@ export const commuteDestinationSchema = placeSchema.extend({
   arriveBy: z.union([hhmm, z.literal("")]),
 });
 export type CommuteDestination = z.infer<typeof commuteDestinationSchema>;
+
+// A team the sports widget follows, picked in the admin panel from ESPN's team list for its league.
+export const sportsTeamSchema = z.object({
+  id,
+  league: z.enum(LEAGUE_IDS),
+  teamId: z.string().regex(/^[0-9]{1,8}$/, "An ESPN team id"),
+  name: z.string().trim().min(1).max(60),
+  abbr: z.string().trim().min(1).max(8),
+  color: hex,
+});
+export type SportsTeam = z.infer<typeof sportsTeamSchema>;
 
 export const configSchema = z
   .object({
@@ -304,6 +324,9 @@ export const configSchema = z
       commute: z
         .object({ home: placeSchema.nullable(), destinations: z.array(commuteDestinationSchema).max(6) })
         .default({ home: null, destinations: [] }),
+      // Sports scores (Melvin, 2026-11-21): the teams to follow, from any of the leagues in src/lib/sports.ts. Defaults
+      // so older documents still load.
+      sports: z.object({ teams: z.array(sportsTeamSchema).max(MAX_TEAMS) }).default({ teams: [] }),
       homeAssistant: z.object({
         url: z.union([z.url(), z.literal("")]),
         // Doorbell pop-up: when this binary_sensor or event entity turns on, every display shows the camera full screen.

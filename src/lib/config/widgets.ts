@@ -174,6 +174,14 @@ export const WIDGETS: { [T in WidgetType]: WidgetInfo<T> } = {
     minSize: { w: 2, h: 1 },
     defaults: () => ({ destinationIds: [], showDistance: false, showArrival: true }),
   },
+  sports: {
+    label: "Sports scores",
+    description: "Live scores and next games for your teams",
+    icon: "🏒",
+    size: { w: 3, h: 3 },
+    minSize: { w: 2, h: 1 },
+    defaults: () => ({ teamIds: [], showLast: true }),
+  },
 };
 
 export const WIDGET_TYPES = Object.keys(WIDGETS) as WidgetType[];

@@ -14,6 +14,7 @@ import { countdown } from "./widgets/countdown";
 import { controlFor, stateText } from "./widgets/ha";
 import { meals } from "./widgets/meals";
 import { F, media, nowPlaying, positionNow } from "./widgets/media";
+import { describe as describeTeam, opponent, result, score, sports, when } from "./widgets/sports";
 import { dueLabel, shownLists, tasks, UNDO_MS } from "./widgets/tasks";
 
 const ctx = { payload: {} as DisplayPayload, timeZone: "America/Vancouver", hour12: true };
@@ -459,6 +460,93 @@ describe("commute", () => {
     const stop = commute(el, { ...newWidget("commute", "cm2", { x: 0, y: 0 }) }, ctx);
     await vi.advanceTimersByTimeAsync(0);
     expect(el.textContent).toBe("Add a TomTom key to show commute times.");
+    stop();
+    vi.unstubAllGlobals();
+  });
+});
+
+describe("sports", () => {
+  const VAN = { abbr: "VAN", name: "Canucks" };
+  const TOR = { abbr: "TOR", name: "Maple Leafs" };
+  const now = new Date("2026-11-21T22:00:00Z"); // Saturday, 3 PM in Vancouver (UTC−7 all year from 2026)
+  const final = {
+    id: "401",
+    start: Date.parse("2026-11-21T03:00:00Z"),
+    state: "post" as const,
+    detail: "Final/OT",
+    us: "home" as const,
+    home: { ...VAN, score: "3" },
+    away: { ...TOR, score: "2" },
+  };
+  const tonight = {
+    id: "402",
+    start: Date.parse("2026-11-22T02:00:00Z"),
+    state: "pre" as const,
+    detail: "",
+    us: "away" as const,
+    home: TOR,
+    away: VAN,
+  };
+  const team = { id: "canucks", league: "nhl", name: "Vancouver Canucks", abbr: "VAN", color: "#00205b" };
+
+  it("says when the next game is the way people do", () => {
+    const tz = "America/Vancouver";
+    expect(when(Date.parse("2026-11-22T02:00:00Z"), now, tz, true)).toBe("Today 7 PM");
+    expect(when(Date.parse("2026-11-22T21:30:00Z"), now, tz, true)).toBe("Tomorrow 2:30 PM");
+    expect(when(Date.parse("2026-11-25T02:00:00Z"), now, tz, false)).toBe("Tue 19:00");
+    expect(when(Date.parse("2026-12-02T03:00:00Z"), now, tz, true)).toBe("Tue Dec 1");
+  });
+
+  it("puts the followed team's score first, with the result", () => {
+    expect(score(final)).toBe("3–2");
+    expect(score({ ...final, us: "away" })).toBe("2–3");
+    expect(result(final, "nhl")).toBe("W");
+    expect(result({ ...final, us: "away" }, "nhl")).toBe("L");
+    expect(result({ ...final, away: { ...TOR, score: "3" } }, "epl")).toBe("D");
+    expect(opponent(final)).toBe("vs TOR");
+    expect(opponent(tonight)).toBe("@ TOR");
+  });
+
+  it("shows last night's result until morning, then the next game", () => {
+    const t = { ...team, last: final, next: tonight };
+    expect(describeTeam(t, now, "America/Vancouver", true, true)).toMatchObject({
+      kind: "next",
+      right: "Today 7 PM",
+      sub: ["@ TOR", "Last W 3–2 vs TOR"],
+    });
+    const morning = new Date("2026-11-21T08:00:00Z");
+    expect(describeTeam(t, morning, "America/Vancouver", true, true)).toMatchObject({
+      kind: "final",
+      right: "W 3–2",
+      sub: ["Final/OT", "vs TOR", "Next Today 7 PM"],
+    });
+  });
+
+  it("draws a live score with its period, and flashes it when it changes", async () => {
+    vi.useFakeTimers({ now });
+    let live = { ...tonight, state: "in" as const, detail: "2nd - 12:34", home: { ...TOR, score: "1" }, away: { ...VAN, score: "1" } };
+    vi.stubGlobal("fetch", () => Promise.resolve(Response.json({ updatedAt: 1, teams: [{ ...team, next: live, last: final }] })));
+    const el = document.createElement("div");
+    const stop = sports(el, newWidget("sports", "sp", { x: 0, y: 0 }), ctx);
+    await vi.advanceTimersByTimeAsync(0);
+    const row = () => el.querySelector(".sp-row")!;
+    expect(row().className).toBe("sp-row sp-live");
+    expect(row().textContent).toBe("LIVEVancouver Canucks1–12nd - 12:34 · @ TOR");
+    expect(row().getAttribute("style")).toBe("--team:#00205b");
+    live = { ...live, away: { ...VAN, score: "2" } };
+    await vi.advanceTimersByTimeAsync(30_000);
+    expect(row().className).toBe("sp-row sp-live sp-new");
+    stop();
+    vi.unstubAllGlobals();
+  });
+
+  it("says where to pick teams when none are followed", async () => {
+    vi.useFakeTimers({ now });
+    vi.stubGlobal("fetch", () => Promise.resolve(Response.json({ updatedAt: 1, teams: [] })));
+    const el = document.createElement("div");
+    const stop = sports(el, newWidget("sports", "sp2", { x: 0, y: 0 }), ctx);
+    await vi.advanceTimersByTimeAsync(0);
+    expect(el.textContent).toBe("Follow teams under Settings › Sports.");
     stop();
     vi.unstubAllGlobals();
   });

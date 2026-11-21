@@ -126,6 +126,7 @@ export function defaultConfig(): DashboardConfig {
       garbage: { projectId: "521", districtId: "LANGL", zoneId: "", zoneLabel: "" },
       photos: { sources: [] },
       commute: { home: null, destinations: [] },
+      sports: { teams: [] },
       homeAssistant: { url: "", doorbell: { entityId: "", cameraEntityId: "", seconds: 30 } },
     },
   };

@@ -8,6 +8,7 @@ import { GooglePanel } from "./GooglePanel";
 import { HomeAssistantPanel } from "./HomeAssistantPanel";
 import { MusicPanel } from "./MusicPanel";
 import { PhotosPanel } from "./PhotosPanel";
+import { SportsPanel } from "./SportsPanel";
 import { useAdmin } from "./store";
 import { TasksPanel } from "./TasksPanel";
 import { TIME_ZONES } from "./WidgetSettings";
@@ -70,6 +71,7 @@ export function SettingsPanel() {
       <CalendarLinksPanel />
       <GarbagePanel />
       <CommutePanel />
+      <SportsPanel />
       <PhotosPanel />
       <HomeAssistantPanel />
       <MusicPanel />
