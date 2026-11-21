@@ -9,7 +9,6 @@ import type { RadarData } from "@/lib/display/types";
 import { req, useTestServer } from "@/test/server";
 
 import { clearMemoryCache } from "./cache";
-import { loadConfig, saveConfig } from "./config";
 import { addDevice } from "./devices";
 import { dimensionFrom, durationMs, frameUrl, parseTimes, radarFeed, radarMap, radarTimes } from "./radar";
 
@@ -23,6 +22,7 @@ const capabilities = (dimension: string) => `<?xml version="1.0" encoding="UTF-8
   </Layer></Layer></Capability>
 </WMS_Capabilities>`;
 const PNG = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+const JPEG = new Uint8Array([0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10]);
 const NOW = Date.parse("2026-11-21T05:03:00Z");
 const at = (hhmm: string) => Date.parse(`2026-11-21T${hhmm}:00Z`);
 
@@ -178,19 +178,27 @@ describe("radar feed", () => {
     vi.useRealTimers();
   });
 
-  it("serves map tiles around home only", async () => {
-    const { seen } = geomet();
-    const stored = await loadConfig();
-    await saveConfig(stored.config, stored.version);
+  it("serves Esri's map tiles around home only, row before column", async () => {
+    const { seen } = geomet({ picture: JPEG });
     const { token } = await addDevice("Kitchen", null);
     const tile = (q: string) => tileGET(req(`/api/display/radar/tile/?t=${token}&${q}`));
-    const ok = await tile("s=dark_nolabels&z=8&x=40&y=87");
+    const ok = await tile("s=dark&z=8&x=40&y=87");
     expect(ok.status).toBe(200);
+    expect(ok.headers.get("content-type")).toBe("image/jpeg");
     expect(ok.headers.get("cache-control")).toBe("private, max-age=604800");
-    expect(seen.at(-1)).toMatch(/^https:\/\/[abcd]\.basemaps\.cartocdn\.com\/dark_nolabels\/8\/40\/87\.png$/);
-    expect((await tile("s=light_only_labels&z=8&x=42&y=89")).status).toBe(200); // the map's far corner
-    expect((await tile("s=light_nolabels&z=8&x=43&y=87")).status).toBe(404); // off the map
+    expect(seen.at(-1)).toBe("https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/8/87/40");
+    expect((await tile("s=light-labels&z=8&x=42&y=89")).status).toBe(200); // the map's far corner
+    expect(seen.at(-1)).toContain("/World_Light_Gray_Reference/MapServer/tile/8/89/42");
+    expect((await tile("s=light&z=8&x=43&y=87")).status).toBe(404); // off the map
     expect((await tile("s=satellite&z=8&x=40&y=87")).status).toBe(404);
-    expect((await tile("s=light_nolabels&z=5&x=5&y=10")).status).toBe(404);
+    expect((await tile("s=constructor&z=8&x=40&y=87")).status).toBe(404);
+    expect((await tile("s=light&z=5&x=5&y=10")).status).toBe(404);
+  });
+
+  it("never passes on a page in place of a map tile", async () => {
+    geomet({ picture: "<html>Sign in for an API key</html>" });
+    vi.spyOn(console, "error").mockImplementation(() => undefined);
+    const { token } = await addDevice("Kitchen", null);
+    expect((await tileGET(req(`/api/display/radar/tile/?t=${token}&s=light&z=8&x=40&y=87`))).status).toBe(404);
   });
 });
