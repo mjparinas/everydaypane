@@ -39,6 +39,8 @@ same change, and moves it out of **In progress** when it merges.
 | Alerts (`alerts`) | Current emergency alerts, optional "all clear" | See alerts below |
 | Chore chart (`chores`) | Each kid's chores today, **tap to tick off** (tap again to take back), stars this week and a weekly goal | Settings document + `chores_done` table |
 | To-dos (`tasks`) | Open Google Tasks; **tap to tick off, synced back to Google** (`allowCheck`, 4 s undo) | Google Tasks |
+| Timers (`timer`) | Kitchen timers started from preset buttons on the wall, up to six at once, pause, +1 min; flash, full-screen alert and beeps when done | Device (localStorage) |
+| Pomodoro (`pomodoro`) | Focus and break rounds, long break after the last round, optional auto-start, chime between phases | Device (localStorage) |
 | BC Ferries (`ferries`) | Next sailings on up to four routes, how full each is, cancellations and delays | Community BC Ferries API (bcferriesapi.ca) |
 
 **Display behaviour:** several views on a drag-and-drop grid (chosen rows and columns), **widgets layered on top of a photos widget**
@@ -123,6 +125,8 @@ node scripts/e2e.mjs   # Playwright browser tests against the build (CHROMIUM_PA
 - **Chore chart** (Melvin, 2026-11-21): recurring chores for the kids, on chosen weekdays, done by everyone picked or
   rotated between them (each time it's due, or a week each), ticked off with a tap on the wall, with stars per chore
   counted per kid for the week and an optional weekly goal. Separate from Google Tasks (see Architecture).
+- **Kitchen timers and pomodoro** (Melvin, 2026-11-21: "1 with visual and sound alerts", then "i want a regular
+  timer, and a separate pomodoro"): two widgets, `timer` and `pomodoro` (see Architecture).
 - **BC Ferries** (Melvin, 2026-11-21): the next sailings for routes chosen in the widget's settings, with how full
   each one is (see Architecture).
 - **Canadian English** in everything a person reads (colour, centre, favourite), as in Liftsmith.
@@ -268,6 +272,14 @@ panel can be complex if you need it to be."
   switches them on, and a restore without them keeps the dashboard's current ones. A restore is checked first
   (`dryRun`, the panel shows what the file holds), upgraded like a stored document, and saved as an ordinary versioned
   save, so displays reload and a stale restore gets 409.
+- **Timers and pomodoro:** run entirely on the display, no server. Each widget keeps its state in localStorage
+  (`everydaypane.timer.<id>`, `everydaypane.pomodoro.<id>`), and alarms belong to the screen, not the widget
+  (`src/display/alarm.ts`, started by `main.ts`), so a timer still rings after a settings save, a reload, or when the
+  time-of-day schedule has switched to a view without it. When one is done the widget flashes; the full-screen alert
+  (red flashing, "Tap to stop") and the sound can each be switched off, and both stop by themselves after
+  `ringSeconds`. Sound is Web Audio beeps (no sound file); browsers allow it only after a tap, and starting a timer is
+  that tap, so a timer started before a page reload rings silently until someone touches the screen. The pomodoro's
+  full-screen alert is off by default and it chimes rather than beeps. The arithmetic is in `src/lib/timers.ts`.
 - **Garbage pickup:** the Township of Langley's collection calendar (tol.ca) is Recycle Coach, project 521,
   district `LANGL`, with zones such as Monday A or Thursday B. The zone is looked up from the address in the admin
   panel (or picked by hand) and the schedule is fetched and cached by the server (12 hours). The API is Recycle Coach's
@@ -331,7 +343,8 @@ panel can be complex if you need it to be."
 - `.github/workflows/ci.yml` runs on every pull request and every push to `main`: types, lint, formatting and
   dependency audit; Vitest with coverage; the production build; and the Playwright browser tests against that build
   (`scripts/e2e.mjs`, which signs in through a real magic link and fails on any console error). **"CI passed"** is the
-  one check to require.
+  one check to require. A new push to a pull request cancels its stale run, but runs on `main` are never cancelled:
+  each merge commit gets its own full run, because merges land minutes apart and a cancelled run left them unchecked.
 - A bug fix comes with a test that fails without it. Flaky tests are fixed at the cause, never retried.
 - Test data is plain and readable; nothing random.
 - **Agents fix and merge their own pull requests** (Melvin, 2026-11-17: "auto fix and merge prs please"). An agent
