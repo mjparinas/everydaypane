@@ -174,6 +174,14 @@ export const WIDGETS: { [T in WidgetType]: WidgetInfo<T> } = {
     minSize: { w: 2, h: 1 },
     defaults: () => ({ destinationIds: [], showDistance: false, showArrival: true }),
   },
+  ferries: {
+    label: "BC Ferries",
+    description: "Next sailings and how full they are",
+    icon: "⛴️",
+    size: { w: 4, h: 3 },
+    minSize: { w: 2, h: 2 },
+    defaults: () => ({ routes: ["TSASWB" as const], count: 3, showVessel: false }),
+  },
 };
 
 export const WIDGET_TYPES = Object.keys(WIDGETS) as WidgetType[];

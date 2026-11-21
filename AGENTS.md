@@ -38,6 +38,7 @@ same change, and moves it out of **In progress** when it merges.
 | Meals (`meals`) | Breakfast, lunch, dinner for a day or a week | `meals` table |
 | Alerts (`alerts`) | Current emergency alerts, optional "all clear" | See alerts below |
 | To-dos (`tasks`) | Open Google Tasks; **tap to tick off, synced back to Google** (`allowCheck`, 4 s undo) | Google Tasks |
+| BC Ferries (`ferries`) | Next sailings on up to four routes, how full each is, cancellations and delays | Community BC Ferries API (bcferriesapi.ca) |
 
 **Display behaviour:** several views on a drag-and-drop grid (chosen rows and columns), **widgets layered on top of a photos widget**
 (photos as the backdrop), a time-of-day schedule
@@ -118,6 +119,8 @@ node scripts/e2e.mjs   # Playwright browser tests against the build (CHROMIUM_PA
 - **Commute time** (Melvin, 2026-11-19): drive times with live traffic from home to up to six places (work, school),
   set up in Settings › Commute; a place can have a "be there by" time, and the widget then says when to leave (see
   Architecture).
+- **BC Ferries** (Melvin, 2026-11-21): the next sailings for routes chosen in the widget's settings, with how full
+  each one is (see Architecture).
 - **Canadian English** in everything a person reads (colour, centre, favourite), as in Liftsmith.
 
 ## Display: super lightweight (rule, Melvin, 2026-11-17)
@@ -235,6 +238,16 @@ panel can be complex if you need it to be."
   and times from `/api/display/commute/`. Each drive is cached five minutes, shared by every display, and six places at
   most keeps that inside the free tier. One route failing never hides the others; readings older than 20 minutes aren't
   shown as live. TomTom takes its key only in the query string, so its URLs are never logged. Setup: `docs/commute.md`.
+- **BC Ferries:** BC Ferries has no public API, so `src/server/ferries.ts` reads the community BC Ferries API
+  (`https://www.bcferriesapi.ca/v2/capacity/`, MIT, no key; it reads BC Ferries' current conditions pages every
+  minute). Its one answer covers every route with "how full" (the codes in `src/lib/ferries.ts`, departure terminal then
+  arrival, such as `TSASWB`), so it is cached two minutes for every widget and display, and the last good copy is
+  served when it fails (it answers a bare string, "BC Ferries Data Currently Down", when it has nothing). Displays get
+  only the routes on a ferries widget, from `/api/display/ferries/`: sailings that haven't left, in 24-hour Pacific
+  time, with percent full (`fill`, and `carFill`), cancellations and delays. The widget drops a sailing five minutes
+  after its time on the wall's own clock and labels conditions older than 15 minutes with their time. Its field names
+  come from the project's published JSON schema (`schemas/bc-ferries-api-v2-capacity-schema.json`); this sandbox can't
+  reach it, so tests use that shape.
 - **Settings backup and restore** (Melvin, 2026-11-21): Settings › Backup downloads the whole settings document as
   `everydaypane-settings-<date>.json` and restores one (`src/server/backup.ts`, `/api/admin/backup/`). The file is the
   document itself, walked generically, so new widget types and settings are in it with no change there. It never holds
