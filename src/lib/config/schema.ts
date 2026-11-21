@@ -174,6 +174,21 @@ export const widgetSchema = z.discriminatedUnion("type", [
     showDue: z.boolean(),
     allowCheck: z.boolean(),
   }),
+  // TransLink departures (Melvin, 2026-11-19): the next buses from a few stops, live from TransLink's GTFS-realtime
+  // feed (src/server/translink.ts). Stops are picked in the widget's settings and kept with their stop number and
+  // name, so the wall can label them without asking TransLink. `routes` (route numbers like "502") narrows the list,
+  // none meaning every route; departures sooner than `walkMinutes` are left out, since nobody can catch them.
+  z.object({
+    ...base,
+    type: z.literal("transit"),
+    stops: z
+      .array(z.object({ id: z.string().min(1).max(40), code: z.string().max(20), name: z.string().max(120) }))
+      .max(6)
+      .refine((s) => new Set(s.map((x) => x.id)).size === s.length, "Each stop once"),
+    routes: z.array(z.string().trim().min(1).max(12)).max(30),
+    count: z.number().int().min(1).max(12),
+    walkMinutes: z.number().int().min(0).max(60),
+  }),
   // A UniFi Protect camera, through Home Assistant's UniFi Protect integration (camera.* entity).
   z.object({ ...base, type: z.literal("camera"), entityId: z.string().max(255), refreshSeconds: z.number().int().min(2).max(600) }),
   // Music (Melvin, 2026-11-17: Sonos and Spotify controls): a media_player entity through Home Assistant's Sonos or
@@ -209,6 +224,18 @@ export const widgetSchema = z.discriminatedUnion("type", [
     destinationIds: z.array(id).max(6),
     showDistance: z.boolean(),
     showArrival: z.boolean(),
+  }),
+  // Rain radar (Melvin, 2026-11-21): Environment Canada's radar around home, animated over the past hour or so and on
+  // into its short-term forecast (src/server/radar.ts). Zoom 6 is most of southern B.C., 8 the Lower Mainland, 10 the
+  // Township.
+  z.object({
+    ...base,
+    type: z.literal("radar"),
+    precip: z.enum(["rain", "snow"]),
+    zoom: z.number().int().min(6).max(10),
+    pastMinutes: z.number().int().min(30).max(180),
+    forecastMinutes: z.number().int().min(0).max(180),
+    animate: z.boolean(),
   }),
   // Kitchen timers (Melvin, 2026-11-21): tap a button on the wall to start one; several can run at once.
   z.object({ ...base, type: z.literal("timer"), presets: z.array(timerPresetSchema).max(12), ...alertFields }),

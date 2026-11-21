@@ -3,7 +3,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import type { Widget } from "@/lib/config/schema";
 import { newWidget } from "@/lib/config/widgets";
-import type { ChoresData, DisplayPayload, TasksData } from "@/lib/display/types";
+import type { ChoresData, DisplayPayload, TasksData, TransitData, TransitDeparture } from "@/lib/display/types";
 
 import { shortTime } from "./format";
 import { kindOf, label, weatherIcon } from "./icons";
@@ -17,8 +17,10 @@ import { ferries, fullness, hasLeft } from "./widgets/ferries";
 import { controlFor, stateText } from "./widgets/ha";
 import { meals } from "./widgets/meals";
 import { F, media, nowPlaying, positionNow } from "./widgets/media";
+import { pickFrames, radar, thin } from "./widgets/radar";
 import { describe as describeTeam, opponent, result, score, sports, when } from "./widgets/sports";
 import { dueLabel, shownLists, tasks, UNDO_MS } from "./widgets/tasks";
+import { delayLabel, minutesLabel, shownDepartures, transit } from "./widgets/transit";
 
 const ctx = { payload: {} as DisplayPayload, timeZone: "America/Vancouver", hour12: true };
 
@@ -495,6 +497,83 @@ describe("commute", () => {
   });
 });
 
+describe("radar", () => {
+  const at = (hhmm: string) => Date.parse(`2026-11-21T${hhmm}:00Z`);
+  const every = (from: string, to: string, minutes: number) => {
+    const out: number[] = [];
+    for (let t = at(from); t <= at(to); t += minutes * 60_000) out.push(t);
+    return out;
+  };
+  const times = { past: every("02:06", "05:00", 6), forecast: every("05:10", "08:00", 10) };
+
+  it("thins a long list evenly and keeps the latest", () => {
+    expect(thin([1, 2, 3, 4, 5, 6, 7], 3)).toEqual([1, 4, 7]);
+    expect(thin([1, 2], 5)).toEqual([1, 2]);
+  });
+
+  it("plays the past hour into the next hour's forecast, at most sixteen pictures", () => {
+    const frames = pickFrames(times, 60, 60, true);
+    expect(frames.filter((f) => !f.forecast).map((f) => f.time)).toEqual(every("04:00", "05:00", 6).slice(1));
+    expect(frames.filter((f) => f.forecast).map((f) => f.time)).toEqual(every("05:10", "06:00", 10));
+    expect(pickFrames(times, 180, 180, true)).toHaveLength(16);
+    expect(pickFrames(times, 180, 0, true).every((f) => !f.forecast)).toBe(true);
+  });
+
+  it("shows only the latest picture when it doesn't animate", () => {
+    expect(pickFrames(times, 60, 60, false)).toEqual([{ time: at("05:00"), forecast: false }]);
+    expect(pickFrames({ past: [], forecast: [] }, 60, 60, true)).toEqual([]);
+  });
+
+  it("lays the radar over the map around home and loops into the forecast", async () => {
+    vi.useFakeTimers({ now: new Date("2026-11-21T05:03:00Z") });
+    const loaded = vi.spyOn(HTMLImageElement.prototype, "naturalWidth", "get").mockReturnValue(640);
+    const complete = vi.spyOn(HTMLImageElement.prototype, "complete", "get").mockReturnValue(true);
+    const data = { updatedAt: 1, maps: { "8": { x: 38, y: 85, homeX: 710, homeY: 718 } }, layers: { rain: times } };
+    vi.stubGlobal("fetch", () => Promise.resolve(Response.json(data)));
+    const el = document.createElement("div");
+    document.body.append(el);
+    const stop = radar(el, { ...newWidget("radar", "rd", { x: 0, y: 0 }), forecastMinutes: 30 }, ctx);
+    await vi.advanceTimersByTimeAsync(0);
+    const tiles = [...el.querySelectorAll<HTMLImageElement>(".rd-tile")].map((i) => new URL(i.src, "http://x").search);
+    expect(tiles).toHaveLength(50);
+    expect(tiles[0]).toBe("?s=light_nolabels&z=8&x=38&y=85");
+    expect(tiles[49]).toBe("?s=light_only_labels&z=8&x=42&y=89");
+    expect(el.querySelector<HTMLElement>(".rd-home")?.style.left).toBe("710px");
+    expect(el.querySelectorAll(".rd-frame")).toHaveLength(13); // ten observed, three forecast
+    expect(el.querySelector(".rd-when")?.textContent).toBe("10 PMLatest"); // 05:00 UTC is 10 PM in Vancouver
+    await vi.advanceTimersByTimeAsync(2000);
+    expect(el.querySelector(".rd-when")?.textContent).toBe("10:10 PMForecast");
+    await vi.advanceTimersByTimeAsync(1000);
+    expect(el.querySelector(".rd-when")?.textContent).toBe("10:30 PMForecast");
+    expect(el.querySelectorAll(".rd-frame.on")).toHaveLength(1);
+    document.documentElement.dataset.mode = "night";
+    await vi.advanceTimersByTimeAsync(2000);
+    expect(el.querySelector<HTMLImageElement>(".rd-tile")?.src).toContain("s=dark_nolabels");
+    expect(el.querySelector(".rd-when")?.textContent).toBe("9:06 PM"); // back to the start of the loop
+    delete document.documentElement.dataset.mode;
+    stop();
+    loaded.mockRestore();
+    complete.mockRestore();
+    vi.unstubAllGlobals();
+  });
+
+  it("says when the radar is unavailable", async () => {
+    vi.useFakeTimers({ now: new Date("2026-11-21T05:03:00Z") });
+    const data = {
+      updatedAt: 1,
+      maps: { "8": { x: 38, y: 85, homeX: 710, homeY: 718 } },
+      layers: { rain: { past: [], forecast: [], error: "x" } },
+    };
+    vi.stubGlobal("fetch", () => Promise.resolve(Response.json(data)));
+    const el = document.createElement("div");
+    const stop = radar(el, newWidget("radar", "rd2", { x: 0, y: 0 }), ctx);
+    await vi.advanceTimersByTimeAsync(0);
+    expect(el.textContent).toBe("The radar is unavailable right now.");
+    stop();
+    vi.unstubAllGlobals();
+  });
+});
+
 describe("ferries", () => {
   it("drops a sailing five minutes after it was due, and never takes tonight's last one for this morning's", () => {
     expect(hasLeft({ time: "09:00" }, "09:05")).toBe(false);
@@ -632,6 +711,63 @@ describe("chore chart", () => {
     const el = document.createElement("div");
     const stop = chores(el, newWidget("chores", "ch", { x: 0, y: 0 }), ctx);
     await vi.waitFor(() => expect(el.textContent).toContain("Settings › Chores"));
+    stop();
+    vi.unstubAllGlobals();
+  });
+});
+
+describe("TransLink departures", () => {
+  const NOW = 1_795_000_000;
+  const dep = (route: string, inMin: number, delay: number | null = 0, live = true): TransitDeparture => ({
+    route,
+    headsign: route === "502" ? "Langley Centre" : "Aldergrove",
+    time: NOW + inMin * 60,
+    delay,
+    live,
+  });
+
+  it("labels minutes to go and how late a bus is", () => {
+    expect(minutesLabel(NOW + 30, NOW, "3:07")).toBe("Now");
+    expect(minutesLabel(NOW + 4 * 60 + 59, NOW, "3:10")).toBe("4 min");
+    expect(minutesLabel(NOW + 75 * 60, NOW, "4:21")).toBe("4:21");
+    expect(delayLabel(dep("502", 5, 180))).toEqual({ text: "3 min late", cls: "tl-late" });
+    expect(delayLabel(dep("502", 5, -120))).toEqual({ text: "2 min early", cls: "tl-early" });
+    expect(delayLabel(dep("502", 5, 20))).toEqual({ text: "On time", cls: "tl-ontime" });
+    expect(delayLabel(dep("502", 5, null, false))).toEqual({ text: "Scheduled", cls: "" });
+  });
+
+  it("keeps the widget's routes, drops buses too soon to walk to, and cuts to the count", () => {
+    const list = [dep("502", 2), dep("503", 6), dep("502", 9), dep("502", 20), dep("502", 30)];
+    expect(shownDepartures(list, { routes: [], count: 3, walkMinutes: 0 }, NOW).map((d) => d.time - NOW)).toEqual([120, 360, 540]);
+    expect(shownDepartures(list, { routes: ["502"], count: 2, walkMinutes: 5 }, NOW).map((d) => d.time - NOW)).toEqual([540, 1200]);
+  });
+
+  it("draws each stop's next buses from the shared feed", async () => {
+    vi.useFakeTimers({ now: NOW * 1000, toFake: ["Date"] });
+    const data: TransitData = { updatedAt: 0, configured: true, stops: { "100": [dep("502", 4, 180), dep("503", 12, null, false)] } };
+    const gets: string[] = [];
+    vi.stubGlobal("fetch", (url: string) => {
+      gets.push(url);
+      return Promise.resolve(Response.json(data));
+    });
+    const el = document.createElement("div");
+    const w = { ...newWidget("transit", "t", { x: 0, y: 0 }), stops: [{ id: "100", code: "55210", name: "Fraser Hwy @ 200 St" }] };
+    const stop = transit(el, w, ctx);
+    await vi.waitFor(() => expect(el.querySelectorAll(".tl-row")).toHaveLength(2));
+    expect(gets[0]).toBe("/api/display/transit/");
+    expect(el.querySelector(".tl-name")?.textContent).toBe("Fraser Hwy @ 200 St #55210");
+    const rows = [...el.querySelectorAll(".tl-row")].map((r) => r.textContent);
+    expect(rows).toEqual(["502Langley Centre4:10 a.m. · 3 min late4 min", "503Aldergrove4:18 a.m. · Scheduled12 min"]);
+    expect(el.textContent).toContain("TransLink");
+    stop();
+    vi.unstubAllGlobals();
+  });
+
+  it("says what to set up first", async () => {
+    vi.stubGlobal("fetch", () => Promise.resolve(Response.json({ updatedAt: 0, configured: false, stops: {} })));
+    const el = document.createElement("div");
+    const stop = transit(el, newWidget("transit", "t2", { x: 0, y: 0 }), ctx);
+    await vi.waitFor(() => expect(el.textContent).toContain("TransLink API key"));
     stop();
     vi.unstubAllGlobals();
   });

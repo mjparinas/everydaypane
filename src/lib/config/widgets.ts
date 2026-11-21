@@ -143,6 +143,14 @@ export const WIDGETS: { [T in WidgetType]: WidgetInfo<T> } = {
     minSize: { w: 2, h: 2 },
     defaults: () => ({ listIds: [], count: 8, showDue: true, allowCheck: true }),
   },
+  transit: {
+    label: "TransLink",
+    description: "Next buses from your stops, live",
+    icon: "🚌",
+    size: { w: 4, h: 3 },
+    minSize: { w: 2, h: 2 },
+    defaults: () => ({ stops: [], routes: [], count: 4, walkMinutes: 0 }),
+  },
   camera: {
     label: "Camera",
     description: "A UniFi Protect camera via Home Assistant",
@@ -181,6 +189,14 @@ export const WIDGETS: { [T in WidgetType]: WidgetInfo<T> } = {
     size: { w: 3, h: 2 },
     minSize: { w: 2, h: 1 },
     defaults: () => ({ destinationIds: [], showDistance: false, showArrival: true }),
+  },
+  radar: {
+    label: "Rain radar",
+    description: "Environment Canada's radar, the past hour and what's coming",
+    icon: "🌧️",
+    size: { w: 4, h: 4 },
+    minSize: { w: 2, h: 2 },
+    defaults: () => ({ precip: "rain" as const, zoom: 8, pastMinutes: 60, forecastMinutes: 60, animate: true }),
   },
   timer: {
     label: "Timers",

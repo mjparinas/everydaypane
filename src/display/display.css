@@ -1152,6 +1152,89 @@ body {
   text-overflow: ellipsis;
 }
 
+/* TransLink departures */
+.w-transit {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45em;
+  height: 100%;
+  overflow: hidden;
+  font-size: clamp(13px, min(4.5cqw, 9cqh), 26px);
+}
+.tl-stop {
+  display: grid;
+  gap: 0.25em;
+  min-height: 0;
+}
+.tl-name {
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 0.8em;
+  font-weight: 600;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.tl-list {
+  display: grid;
+  gap: 0.3em;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.tl-row {
+  display: flex;
+  align-items: center;
+  gap: 0.55em;
+  min-width: 0;
+}
+.tl-route {
+  flex: none;
+  min-width: 2.6em;
+  padding: 0.1em 0.4em;
+  border-radius: 0.35em;
+  background: #0b5fa5;
+  color: #fff;
+  font-weight: 700;
+  text-align: center;
+}
+.tl-where {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+  line-height: 1.15;
+}
+.tl-sign,
+.tl-delay {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.tl-delay {
+  color: var(--muted);
+  font-size: 0.7em;
+}
+.tl-late {
+  color: var(--danger);
+}
+.tl-ontime {
+  color: #2e9b57;
+}
+.tl-mins {
+  flex: none;
+  font-size: 1.15em;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.tl-none {
+  color: var(--muted);
+  font-size: 0.8em;
+}
+.tl-src {
+  margin-top: auto;
+  color: var(--muted);
+  font-size: 0.6em;
+}
+
 /* Sports: one row per team with its colour down the left; the score or the next game's time on the right. */
 .w-sports {
   display: flex;
@@ -1702,6 +1785,118 @@ body {
 .tk-msg {
   color: var(--danger);
   font-size: 0.75em;
+}
+
+/* Rain radar: the map fills the cell edge to edge, with the time and the loop's steps along the bottom. */
+.cell-radar {
+  padding: 0;
+}
+.w-radar {
+  position: relative;
+  height: 100%;
+  overflow: hidden;
+  font-size: clamp(12px, min(4cqw, 7cqh), 20px);
+}
+.rd-map {
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform-origin: 0 0;
+}
+.rd-layer {
+  position: absolute;
+  inset: 0;
+}
+.rd-tile {
+  position: absolute;
+  width: 256px;
+  height: 256px;
+}
+.rd-frames {
+  opacity: 0.8;
+}
+.rd-frame {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+}
+.rd-frame.on {
+  opacity: 1;
+}
+.rd-home {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  margin: -7px 0 0 -7px;
+  border: 3px solid #fff;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 0 1px rgb(0 0 0 / 35%);
+}
+.rd-bar {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.8em;
+  padding: 0.5em 0.8em;
+  background: linear-gradient(transparent, color-mix(in srgb, var(--surface) 85%, transparent) 40%);
+}
+.rd-when {
+  display: flex;
+  min-width: 9.5em; /* so the steps don't shift as the time and tag change */
+  align-items: baseline;
+  gap: 0.5em;
+  white-space: nowrap;
+}
+.rd-time {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.rd-tag {
+  color: var(--muted);
+  font-size: 0.8em;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+.rd-tag.rd-ahead {
+  color: var(--accent);
+}
+.rd-steps {
+  display: flex;
+  flex: 1;
+  gap: 3px;
+}
+.rd-step {
+  flex: 1;
+  height: 4px;
+  border-radius: 2px;
+  background: color-mix(in srgb, var(--muted) 40%, transparent);
+}
+.rd-step.rd-ahead {
+  background: color-mix(in srgb, var(--accent) 35%, transparent);
+}
+.rd-step.on {
+  background: var(--text);
+}
+.rd-step.rd-ahead.on {
+  background: var(--accent);
+}
+.rd-credit {
+  position: absolute;
+  top: 0.3em;
+  right: 0.5em;
+  color: #555;
+  font-size: 9px;
+  text-shadow: 0 0 2px #fff;
+}
+[data-mode="night"] .rd-credit {
+  color: #bbb;
+  text-shadow: 0 0 2px #000;
 }
 
 /* Kitchen timers and the pomodoro (Melvin, 2026-11-21). Big buttons for a wet hand from across the kitchen. A timer

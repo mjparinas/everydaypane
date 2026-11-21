@@ -311,6 +311,33 @@ export interface MealsData {
   meals: Record<string, Partial<Record<"breakfast" | "lunch" | "dinner", string>>>;
 }
 
+/** Times (epoch ms) of the radar pictures Environment Canada has for one kind of precipitation (src/server/radar.ts). */
+export interface RadarTimes {
+  /** Observed, oldest first, up to three hours back. */
+  past: number[];
+  /** Environment Canada's extrapolation of the radar, after the last observed picture. */
+  forecast: number[];
+  /** Why the times couldn't be read; the widget says so. */
+  error?: string;
+}
+
+export interface RadarMap {
+  x: number;
+  y: number;
+  homeX: number;
+  homeY: number;
+}
+
+export interface RadarData {
+  updatedAt: number;
+  /**
+   * The map around home for each zoom a widget uses: its top-left tile, and home's pixel on it. Displays get these,
+   * never the dashboard's coordinates.
+   */
+  maps: Record<string, RadarMap>;
+  layers: Partial<Record<"rain" | "snow", RadarTimes>>;
+}
+
 /** Today's chore chart (src/server/chores.ts): who does what today, what's done, and each person's stars this week. */
 export interface ChoresData {
   today: string;
@@ -318,4 +345,26 @@ export interface ChoresData {
   /** Only the chores due today. */
   chores: { id: string; name: string; emoji: string; stars: number }[];
   due: { choreId: string; personId: string; done: boolean }[];
+}
+
+/** One bus (or train) leaving a stop, from TransLink's live feed (src/server/translink.ts). */
+export interface TransitDeparture {
+  /** The number riders know, like "502" or "R1". */
+  route: string;
+  /** Where it's going, without the route number ("Langley Centre"). */
+  headsign: string;
+  /** Epoch seconds of the predicted departure. */
+  time: number;
+  /** Seconds late (negative: early), when TransLink says. */
+  delay: number | null;
+  /** A vehicle is on the trip, so the time is a live prediction rather than the timetable. */
+  live: boolean;
+}
+
+export interface TransitData {
+  updatedAt: number;
+  /** False until TRANSLINK_API_KEY is set in Vercel. */
+  configured: boolean;
+  /** Stop id → its next departures, soonest first. */
+  stops: Record<string, TransitDeparture[]>;
 }

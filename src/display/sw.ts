@@ -95,6 +95,9 @@ sw.addEventListener("fetch", (e) => {
   // Album art is one address per track and the browser's own cache keeps it (Cache-Control), so the offline copy
   // doesn't collect one picture per song.
   if (url.pathname.startsWith("/api/display/art/")) return;
+  // Radar pictures are one address per six minutes and the browser's cache keeps them a day; offline, the loop
+  // simply stops at what it has.
+  if (url.pathname.startsWith("/api/display/radar/frame/")) return;
   if (req.mode === "navigate" && url.pathname.startsWith("/d/")) {
     e.respondWith(networkFirst(req, new Request(url.pathname), 6000));
   } else if (url.pathname.startsWith("/api/display/")) {
