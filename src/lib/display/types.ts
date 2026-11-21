@@ -138,6 +138,41 @@ export interface CommuteData {
   routes: CommuteRoute[];
 }
 
+/** One BC Ferries sailing (src/server/ferries.ts). Times are HH:MM in Pacific time. */
+export interface FerrySailing {
+  time: string;
+  /** HH:MM, or "" when BC Ferries gives none (or says "Variable"). */
+  arrive: string;
+  /** Sailings that have left are left out. */
+  state: "scheduled" | "delayed" | "cancelled";
+  /** Percent full, overall and for cars; absent when BC Ferries hasn't said. */
+  fill?: number;
+  carFill?: number;
+  vessel: string;
+  delayMinutes?: number;
+  /** BC Ferries' own note on the sailing ("Delayed due to heavy traffic"). */
+  note: string;
+}
+
+export interface FerryRouteData {
+  code: string;
+  name: string;
+  /** "1h 35m" as BC Ferries writes it. */
+  duration: string;
+  /** "no-service" when nothing sails today; "" otherwise. */
+  status: "" | "no-service";
+  sailings: FerrySailing[];
+}
+
+export interface FerriesData {
+  updatedAt: number;
+  /** Epoch ms when BC Ferries' conditions were read (from the community API). */
+  at: number;
+  /** true when BC Ferries' data couldn't be read at all. */
+  down: boolean;
+  routes: FerryRouteData[];
+}
+
 export type AlertSeverity = "extreme" | "severe" | "moderate" | "minor";
 export type AlertSource = "alertReady" | "weather" | "roads" | "earthquakes" | "power";
 
