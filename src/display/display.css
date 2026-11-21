@@ -1279,6 +1279,73 @@ body {
   font-size: 0.6em;
 }
 
+/* Sports: one row per team with its colour down the left; the score or the next game's time on the right. */
+.w-sports {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4em;
+  height: 100%;
+  overflow: hidden;
+  font-size: clamp(13px, min(5cqw, 10cqh), 26px);
+}
+.sp-list {
+  display: grid;
+  gap: 0.5em;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.sp-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  column-gap: 0.6em;
+  align-items: baseline;
+  padding-left: 0.6em;
+  border-left: 0.25em solid var(--team, var(--accent));
+}
+.sp-name {
+  overflow: hidden;
+  font-weight: 600;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.sp-score {
+  font-size: 1.3em;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.sp-next .sp-score {
+  font-size: 1em;
+  font-weight: 600;
+}
+.sp-sub {
+  grid-column: 1 / -1;
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 0.8em;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.sp-badge {
+  margin-right: 0.5em;
+  padding: 0.05em 0.4em;
+  border-radius: 0.3em;
+  background: #e03131;
+  color: #fff;
+  font-size: 0.7em;
+  font-weight: 700;
+  vertical-align: 0.15em;
+}
+.sp-new .sp-score {
+  animation: sp-flash 1s ease-in-out 3;
+}
+@keyframes sp-flash {
+  50% {
+    opacity: 0.25;
+  }
+}
+
 /* Emergency strip: across the top, pushing the layout down rather than covering it or the whole screen. */
 .alert-strip {
   position: relative;

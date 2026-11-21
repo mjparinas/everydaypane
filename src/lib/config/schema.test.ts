@@ -53,6 +53,21 @@ describe("config schema", () => {
     expect(configSchema.safeParse(c).success).toBe(true);
   });
 
+  it("loads a dashboard saved before sports scores existed, and follows twelve teams at most", () => {
+    const c = defaultConfig() as unknown as { integrations: Record<string, unknown> };
+    delete c.integrations.sports;
+    const r = configSchema.safeParse(c);
+    expect(r.success && r.data.integrations.sports).toEqual({ teams: [] });
+    const d = defaultConfig();
+    const team = { league: "nhl" as const, teamId: "22", name: "Vancouver Canucks", abbr: "VAN", color: "#00205b" };
+    d.integrations.sports.teams = Array.from({ length: 13 }, (_, i) => ({ ...team, id: `t${i}` }));
+    expect(configSchema.safeParse(d).success).toBe(false);
+    d.integrations.sports.teams.pop();
+    expect(configSchema.safeParse(d).success).toBe(true);
+    d.integrations.sports.teams[0]!.league = "cricket" as "nhl";
+    expect(configSchema.safeParse(d).success).toBe(false);
+  });
+
   it("shows the month title on month calendars saved before the toggle existed", () => {
     const c = defaultConfig();
     const month = c.views.flatMap((v) => v.widgets).find((w) => w.type === "calendarMonth") as unknown as Record<string, unknown>;

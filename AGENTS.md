@@ -38,6 +38,7 @@ same change, and moves it out of **In progress** when it merges.
 | Meals (`meals`) | Breakfast, lunch, dinner for a day or a week | `meals` table |
 | Alerts (`alerts`) | Current emergency alerts, optional "all clear" | See alerts below |
 | Chore chart (`chores`) | Each kid's chores today, **tap to tick off** (tap again to take back), stars this week and a weekly goal | Settings document + `chores_done` table |
+| Sports scores (`sports`) | Live score, last result and next game for followed teams (NHL, NBA, WNBA, NFL, MLB, MLS, Premier League, Champions League) | ESPN public site API |
 | To-dos (`tasks`) | Open Google Tasks; **tap to tick off, synced back to Google** (`allowCheck`, 4 s undo) | Google Tasks |
 | Rain radar (`radar`) | Animated radar over a map around home: the past 30 min to 3 h, then up to 3 h of forecast; rain or snow, five map areas, still or looping | Environment Canada (MSC GeoMet), CARTO map |
 | Timers (`timer`) | Kitchen timers started from preset buttons on the wall, up to six at once, pause, +1 min; flash, full-screen alert and beeps when done | Device (localStorage) |
@@ -62,7 +63,7 @@ file), `/family/` for the message board and meals, Sentry.
 
 **Integrations connected from Settings:** Google Calendar, Google Tasks, Google Photos (Picker), iCal calendar links,
 Amazon Photos, the photo library (Vercel Blob), Home Assistant (Cloudflare Tunnel + Access), Spotify, Sonos, garbage
-zone lookup.
+zone lookup, sports teams to follow.
 
 ## In progress (2026-11-19)
 
@@ -136,6 +137,9 @@ node scripts/e2e.mjs   # Playwright browser tests against the build (CHROMIUM_PA
   each one is (see Architecture).
 - **TransLink departures** (Melvin, 2026-11-19: "add translink"): a TransLink widget with the next buses from up to six
   picked stops, live from TransLink's GTFS-realtime feed (see Architecture).
+- **Sports scores** (Melvin, 2026-11-21: "allow to customize the sports and the teams"): any teams from several leagues
+  (up to 12), picked in Settings › Sports, with a live score while a game is on, the last result and the next game
+  (see Architecture).
 - **Screen saver** (Melvin, 2026-11-21): after some minutes with no touch the display shows only photos (full screen,
   optional clock) or goes dark, and during a night window it goes dark; Home Assistant motion sensors keep it awake and
   wake it (see Architecture). Off until switched on in Settings › Screen saver.
@@ -325,6 +329,18 @@ panel can be complex if you need it to be."
   `ringSeconds`. Sound is Web Audio beeps (no sound file); browsers allow it only after a tap, and starting a timer is
   that tap, so a timer started before a page reload rings silently until someone touches the screen. The pomodoro's
   full-screen alert is off by default and it chimes rather than beeps. The arithmetic is in `src/lib/timers.ts`.
+- **Sports scores:** ESPN's public site API (`site.api.espn.com/apis/site/v2/sports/<sport>/<league>/…`, no key or
+  sign-up) through `src/server/sports.ts`; Claude's pick (2026-11-21) because it covers every league in
+  `src/lib/sports.ts` in one shape for free, where the NHL's own API is hockey only and TheSportsDB's free key has no
+  live scores. ESPN's API is unofficial, so every answer is parsed leniently and one odd event or team never hides the
+  rest. Settings › Sports lists a league's teams (cached a day) and keeps each followed team's ESPN id, name,
+  abbreviation and colour in `integrations.sports.teams`. Each team's schedule is read every 30 minutes (a soccer team's
+  also with `?fixture=true`, since its plain schedule lists results only); only while a game might be on (ten minutes
+  before the start until final, six hours at most) is the league's scoreboard for that Eastern-time day read, every
+  30 seconds, for the live score. Displays poll `/api/display/sports/` every 30 seconds. The widget shows a live score,
+  a result from the last ten hours (last night's game at breakfast), or the next game; a changed live score flashes.
+  No team logos, to keep the display light: each row has the team's colour instead. This sandbox can't reach ESPN, so
+  tests use recorded shapes.
 - **Garbage pickup:** the Township of Langley's collection calendar (tol.ca) is Recycle Coach, project 521,
   district `LANGL`, with zones such as Monday A or Thursday B. The zone is looked up from the address in the admin
   panel (or picked by hand) and the schedule is fetched and cached by the server (12 hours). The API is Recycle Coach's

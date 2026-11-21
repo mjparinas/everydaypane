@@ -174,6 +174,48 @@ export interface FerriesData {
   routes: FerryRouteData[];
 }
 
+/** One side of a game, as the sports widget shows it. */
+export interface SportsSide {
+  abbr: string;
+  name: string;
+  /** Absent before the game starts. */
+  score?: string;
+}
+
+/** A game of a followed team (src/server/sports.ts). */
+export interface SportsGame {
+  id: string;
+  /** Epoch ms of the start. */
+  start: number;
+  state: "pre" | "in" | "post";
+  /** ESPN's own short status: "2nd - 12:34", "Final/OT", "Halftime". */
+  detail: string;
+  /** Which side the followed team is. */
+  us: "home" | "away";
+  home: SportsSide;
+  away: SportsSide;
+}
+
+export interface SportsTeamData {
+  /** The team's id in the settings document. */
+  id: string;
+  league: string;
+  name: string;
+  abbr: string;
+  color: string;
+  /** The game being played now, or the next one. */
+  next?: SportsGame;
+  /** The latest finished game. */
+  last?: SportsGame;
+  /** True when ESPN couldn't be read for this team and nothing was cached. */
+  error?: boolean;
+}
+
+export interface SportsData {
+  updatedAt: number;
+  teams: SportsTeamData[];
+}
+
 export type AlertSeverity = "extreme" | "severe" | "moderate" | "minor";
 export type AlertSource = "alertReady" | "weather" | "roads" | "earthquakes" | "power";
 

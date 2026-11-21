@@ -18,6 +18,7 @@ import { note } from "./note";
 import { photos } from "./photos";
 import { pomodoro } from "./pomodoro";
 import { radar } from "./radar";
+import { sports } from "./sports";
 import { tasks } from "./tasks";
 import { timer } from "./timer";
 import { transit } from "./transit";
@@ -78,5 +79,7 @@ export function mountWidget(el: HTMLElement, w: Widget, ctx: WidgetContext): Cle
       return ferries(el, w, ctx);
     case "transit":
       return transit(el, w, ctx);
+    case "sports":
+      return sports(el, w, ctx);
   }
 }

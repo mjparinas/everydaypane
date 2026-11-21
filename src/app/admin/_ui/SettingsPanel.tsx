@@ -11,6 +11,7 @@ import { HomeAssistantPanel } from "./HomeAssistantPanel";
 import { MusicPanel } from "./MusicPanel";
 import { PhotosPanel } from "./PhotosPanel";
 import { ScreenSaverPanel } from "./ScreenSaverPanel";
+import { SportsPanel } from "./SportsPanel";
 import { useAdmin } from "./store";
 import { TasksPanel } from "./TasksPanel";
 import { TIME_ZONES } from "./WidgetSettings";
@@ -74,6 +75,7 @@ export function SettingsPanel() {
       <GarbagePanel />
       <CommutePanel />
       <ChoresPanel />
+      <SportsPanel />
       <PhotosPanel />
       <HomeAssistantPanel />
       <MusicPanel />

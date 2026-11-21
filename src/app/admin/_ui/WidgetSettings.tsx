@@ -354,6 +354,35 @@ function TypeSettings({
         </>
       );
     }
+    case "sports": {
+      const e = edit<"sports">();
+      const teams = config.integrations.sports.teams;
+      return (
+        <>
+          <Toggle
+            label="Show the last result"
+            checked={w.showLast}
+            hint="Next to the next game, when no game is on."
+            onChange={(v) => e((x) => void (x.showLast = v))}
+          />
+          {teams.length === 0 ? (
+            <p className="text-xs text-soft">Pick the teams to follow under Settings › Sports.</p>
+          ) : (
+            <>
+              <p className="text-xs text-soft">Pick the teams to show. With none picked, it shows them all.</p>
+              {teams.map((t) => (
+                <Toggle
+                  key={t.id}
+                  label={t.name}
+                  checked={w.teamIds.includes(t.id)}
+                  onChange={(on) => e((x) => void (x.teamIds = on ? [...x.teamIds, t.id] : x.teamIds.filter((id) => id !== t.id)))}
+                />
+              ))}
+            </>
+          )}
+        </>
+      );
+    }
     case "photos": {
       const e = edit<"photos">();
       const sources = config.integrations.photos.sources;
