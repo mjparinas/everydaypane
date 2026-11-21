@@ -13,6 +13,7 @@ import { chores, columns } from "./widgets/chores";
 import { clock } from "./widgets/clock";
 import { commute, distance, duration, timing, trafficLevel } from "./widgets/commute";
 import { countdown } from "./widgets/countdown";
+import { earth, RELOAD_MS } from "./widgets/earth";
 import { ferries, fullness, hasLeft } from "./widgets/ferries";
 import { controlFor, stateText } from "./widgets/ha";
 import { meals } from "./widgets/meals";
@@ -857,5 +858,51 @@ describe("sports", () => {
     expect(el.textContent).toBe("Follow teams under Settings › Sports.");
     stop();
     vi.unstubAllGlobals();
+  });
+});
+
+describe("earth", () => {
+  afterEach(() => {
+    document.documentElement.classList.remove("saving");
+    vi.useRealTimers();
+  });
+
+  it("frames earth while the screen is in use, drops it under the screen saver and makes it again on waking", async () => {
+    vi.useFakeTimers();
+    const el = document.createElement("div");
+    document.body.append(el);
+    const stop = earth(el, newWidget("earth", "ea", { x: 0, y: 0 }), ctx);
+    vi.advanceTimersByTime(20); // the first animation frame
+    const frame = () => el.querySelector("iframe");
+    expect(frame()?.getAttribute("src")).toMatch(
+      /^https:\/\/earth\.nullschool\.net\/#current\/wind\/surface\/level\/orthographic=-122\.66,49\.1,\d+\/loc=/,
+    );
+    expect(frame()?.getAttribute("sandbox")).toBe("allow-scripts allow-same-origin");
+
+    document.documentElement.classList.add("saving");
+    await Promise.resolve(); // MutationObserver callbacks run as microtasks
+    expect(frame()).toBeNull();
+
+    document.documentElement.classList.remove("saving");
+    await Promise.resolve();
+    expect(frame()).not.toBeNull();
+
+    stop();
+    expect(frame()).toBeNull();
+    el.remove();
+  });
+
+  it("loads earth again after an hour, for new weather", () => {
+    vi.useFakeTimers();
+    const el = document.createElement("div");
+    const stop = earth(el, newWidget("earth", "ea2", { x: 0, y: 0 }), ctx);
+    vi.advanceTimersByTime(20);
+    const first = el.querySelector("iframe");
+    vi.advanceTimersByTime(30 * 60_000);
+    expect(el.querySelector("iframe")).toBe(first);
+    vi.advanceTimersByTime(RELOAD_MS);
+    expect(el.querySelector("iframe")).not.toBe(first);
+    expect(el.querySelectorAll("iframe")).toHaveLength(1);
+    stop();
   });
 });

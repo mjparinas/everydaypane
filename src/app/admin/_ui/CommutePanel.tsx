@@ -8,7 +8,7 @@ import { newId, useAdmin } from "./store";
 // Commute time (Melvin, 2026-11-19): home and up to six places (work, school), each found from its address with
 // TomTom. Only the coordinates and a label are kept; drive times are read by the server (src/server/commute.ts).
 
-interface Place {
+export interface Place {
   label: string;
   latitude: number;
   longitude: number;
@@ -16,7 +16,24 @@ interface Place {
 
 const MAX = 6;
 
-function PlaceFinder({ label, button, onPick }: { label: string; button: string; onPick: (p: Place) => void }) {
+const addressUrl = (address: string) => `/api/admin/commute/?${new URLSearchParams({ address })}`;
+
+/** Finds a place by what the admin types, through `url` (TomTom addresses by default), and hands back the one picked. */
+export function PlaceFinder({
+  label,
+  button,
+  onPick,
+  url = addressUrl,
+  placeholder = "Street address or place",
+  nothing = "Nothing matched. Try the street address with the city, like \u201c4700 Kingsway, Burnaby\u201d.",
+}: {
+  label: string;
+  button: string;
+  onPick: (p: Place) => void;
+  url?: (term: string) => string;
+  placeholder?: string;
+  nothing?: string;
+}) {
   const [address, setAddress] = useState("");
   const [matches, setMatches] = useState<Place[] | null>(null);
   const [busy, setBusy] = useState(false);
@@ -27,7 +44,7 @@ function PlaceFinder({ label, button, onPick }: { label: string; button: string;
     setBusy(true);
     setError("");
     setMatches(null);
-    const r = await fetch(`/api/admin/commute/?${new URLSearchParams({ address })}`).catch(() => null);
+    const r = await fetch(url(address)).catch(() => null);
     const body = (await r?.json().catch(() => ({}))) as { matches?: Place[]; error?: string } | undefined;
     setBusy(false);
     if (!r?.ok || !body?.matches) return setError(body?.error ?? "Couldn't look up that address.");
@@ -38,7 +55,7 @@ function PlaceFinder({ label, button, onPick }: { label: string; button: string;
     <div className="grid gap-2">
       <form className="flex items-end gap-2" onSubmit={(e) => void find(e)}>
         <div className="min-w-0 flex-1">
-          <Text label={label} value={address} maxLength={120} placeholder="Street address or place" onChange={setAddress} />
+          <Text label={label} value={address} maxLength={120} placeholder={placeholder} onChange={setAddress} />
         </div>
         <button className="btn-primary" disabled={busy || address.trim().length < 3}>
           {busy ? "Finding…" : button}
@@ -62,9 +79,7 @@ function PlaceFinder({ label, button, onPick }: { label: string; button: string;
             </button>
           ))
         ) : (
-          <p className="text-sm text-soft">
-            Nothing matched. Try the street address with the city, like &ldquo;4700 Kingsway, Burnaby&rdquo;.
-          </p>
+          <p className="text-sm text-soft">{nothing}</p>
         ))}
     </div>
   );
