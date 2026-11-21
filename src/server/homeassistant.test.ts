@@ -4,6 +4,7 @@ import { GET as adminGET, PUT as adminPUT } from "@/app/api/admin/ha/route";
 import { GET as artGET } from "@/app/api/display/art/route";
 import { GET as cameraGET } from "@/app/api/display/camera/route";
 import { GET as haGET, POST as haPOST } from "@/app/api/display/ha/route";
+import { defaultConfig } from "@/lib/config/defaults";
 import type { DashboardConfig } from "@/lib/config/schema";
 import type { HaData } from "@/lib/display/types";
 import { cookieFor, req, useTestServer } from "@/test/server";
@@ -16,6 +17,14 @@ import { getSecret, setSecret } from "./secrets";
 const HA = "https://ha.example.com";
 
 describe("Home Assistant actions", () => {
+  it("reads the screen saver's motion sensors but never controls them", () => {
+    const config = structuredClone(defaultConfig());
+    config.screenSaver.motionEntityIds = ["binary_sensor.hall_motion"];
+    const used = usedEntities(config);
+    expect(used.all.has("binary_sensor.hall_motion")).toBe(true);
+    expect(used.controls.has("binary_sensor.hall_motion")).toBe(false);
+  });
+
   it("allows a fixed set of services per domain", () => {
     expect(serviceFor("light.kitchen", "toggle")).toEqual({ path: "/api/services/light/toggle", body: { entity_id: "light.kitchen" } });
     expect(serviceFor("light.kitchen", "brightness", 140)?.body).toEqual({ entity_id: "light.kitchen", brightness_pct: 100 });

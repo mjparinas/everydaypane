@@ -340,4 +340,31 @@ export const flows = [
       await context.close();
     },
   },
+  {
+    name: "the screen saver goes dark when nobody uses the screen, and a tap brings the dashboard back",
+    async run({ browser, page, base, expect }) {
+      const url = await addDevice(page, base, "home");
+      const context = await browser.newContext({ viewport: VIEWPORT });
+      // Switched on for this screen only, by changing the settings it receives, so other flows keep theirs.
+      await context.route("**/api/display/state/**", async (r) => {
+        const res = await r.fetch();
+        if (res.status() !== 200) return r.fulfill({ response: res });
+        const json = await res.json();
+        json.screenSaver = { ...json.screenSaver, idle: true, shows: "dark", minutes: 1 };
+        await r.fulfill({ response: res, json });
+      });
+      await context.clock.install();
+      const d = await context.newPage();
+      await d.goto(url);
+      await d.locator(".cell-clock .c-hm").first().waitFor();
+      expect((await d.locator(".saver.show").count()) === 0, "the saver showed straight away");
+      await d.clock.fastForward("01:20");
+      await d.locator(".saver.show.saver-dark").waitFor();
+      expect(await d.locator(".stage").evaluate((el) => getComputedStyle(el).visibility === "hidden"), "the dashboard still paints");
+      await d.locator(".saver.show").click();
+      await d.locator(".saver.show").waitFor({ state: "detached" });
+      expect(await d.locator(".cell-clock").first().isVisible(), "the dashboard didn't come back");
+      await context.close();
+    },
+  },
 ];

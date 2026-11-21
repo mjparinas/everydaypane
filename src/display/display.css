@@ -180,11 +180,55 @@ body {
 
 .dim {
   position: absolute;
+  /* Above the screen saver, so a dimmed night still dims the photos; below the doorbell and the alert strip. */
+  z-index: 16;
   inset: 0;
   background: #000;
   opacity: 0;
   pointer-events: none;
   transition: opacity 4s;
+}
+/* Screen saver (Melvin, 2026-11-21): photos only, or dark. Over the dashboard, under the doorbell and the alert strip.
+   The dashboard underneath is hidden so the browser stops painting it. */
+.saver {
+  position: fixed;
+  inset: 0;
+  z-index: 15;
+  display: none;
+  background: #000;
+}
+.saver.show {
+  display: block;
+  animation: saver-in 1.5s ease-out;
+}
+.saving .stage {
+  visibility: hidden;
+}
+.saver .w-photos {
+  border-radius: 0;
+}
+.sv-clock {
+  position: absolute;
+  left: 48px;
+  bottom: 40px;
+  color: #fff;
+  text-shadow: 0 2px 12px rgb(0 0 0 / 0.6);
+}
+.sv-time {
+  font-size: 112px;
+  font-weight: 700;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+.sv-date {
+  margin-top: 8px;
+  font-size: 34px;
+  font-weight: 500;
+}
+@keyframes saver-in {
+  from {
+    opacity: 0;
+  }
 }
 .offline {
   position: absolute;

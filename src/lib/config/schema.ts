@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 import { MEAL_SLOTS } from "../meals";
+import { SCREEN_SAVER_OFF } from "../screenSaver";
 import { PERIODS } from "./periods";
 
 // The whole dashboard setup, as the admin panel edits it and every display reads it. One JSON document, validated
@@ -232,6 +233,21 @@ export const commuteDestinationSchema = placeSchema.extend({
 });
 export type CommuteDestination = z.infer<typeof commuteDestinationSchema>;
 
+export const screenSaverSchema = z.object({
+  idle: z.boolean(),
+  minutes: z.number().int().min(1).max(240),
+  shows: z.enum(["photos", "dark"]),
+  // The albums the photo saver shows (none picked means all of them).
+  photoSourceIds: z.array(id).max(20),
+  showClock: z.boolean(),
+  night: z.boolean(),
+  nightStart: hhmm,
+  nightEnd: hhmm,
+  // binary_sensor.* motion or occupancy sensors: while one is on, the screen counts as in use.
+  motionEntityIds: z.array(z.string().max(255)).max(5),
+});
+export type ScreenSaver = z.infer<typeof screenSaverSchema>;
+
 export const configSchema = z
   .object({
     name: z.string().min(1).max(60),
@@ -269,6 +285,11 @@ export const configSchema = z
     // Burn-in protection: the whole layout drifts a few pixels every few minutes so static edges never sit on the same
     // pixels for hours, and night periods can dim the screen (periodSchema.dim).
     burnIn: z.object({ shift: z.boolean(), maxPixels: z.number().int().min(1).max(24), minutes: z.number().int().min(1).max(60) }),
+    // Screen saver (Melvin, 2026-11-21): after `minutes` with no touch (or motion, from Home Assistant motion
+    // sensors), the display shows only photos or goes dark; during the night window it goes dark, and a touch or
+    // motion wakes it for `minutes`. Separate from the schedule's dimming, which still applies while it is awake.
+    // Off by default, so a document saved before it existed still loads and behaves the same.
+    screenSaver: screenSaverSchema.default(() => ({ ...SCREEN_SAVER_OFF, photoSourceIds: [], motionEntityIds: [] })),
     // Each period starts at its time and runs until the next one starts.
     schedule: z.object({
       enabled: z.boolean(),

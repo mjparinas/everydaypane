@@ -19,6 +19,7 @@ export interface DisplayPayload {
   burnIn: DashboardConfig["burnIn"];
   alerts: Pick<DashboardConfig["alerts"], "enabled" | "banner">;
   doorbell: { enabled: boolean; seconds: number; entityId: string; cameraEntityId: string };
+  screenSaver: DashboardConfig["screenSaver"];
 }
 
 export interface WeatherDay {

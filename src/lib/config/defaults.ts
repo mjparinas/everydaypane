@@ -1,3 +1,4 @@
+import { SCREEN_SAVER_OFF } from "../screenSaver";
 import type { DashboardConfig, View, Widget } from "./schema";
 import { BUILT_IN_THEMES } from "./themes";
 import { newWidget } from "./widgets";
@@ -110,6 +111,7 @@ export function defaultConfig(): DashboardConfig {
       powerKm: 5,
     },
     burnIn: { shift: true, maxPixels: 6, minutes: 3 },
+    screenSaver: { ...SCREEN_SAVER_OFF, photoSourceIds: [], motionEntityIds: [] },
     schedule: {
       enabled: true,
       morning: { start: "06:00", viewId: "morning", mode: "day", dim: 0 },
