@@ -2345,3 +2345,22 @@ body {
     transform: rotate(var(--a)) translateY(-5em) scale(1.4);
   }
 }
+
+/* Earth wind map: earth.nullschool.net's frame fills the cell edge to edge; it is always dark, day or night. */
+.cell-earth {
+  padding: 0;
+  background: #000;
+}
+.w-earth {
+  position: relative;
+  height: 100%;
+  overflow: hidden;
+}
+.ea-frame {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  pointer-events: none;
+}

@@ -8,6 +8,7 @@ import { clock } from "./clock";
 import { commute } from "./commute";
 import { countdown } from "./countdown";
 import { date } from "./date";
+import { earth } from "./earth";
 import { ferries } from "./ferries";
 import { garbage } from "./garbage";
 import { camera, haEntity } from "./ha";
@@ -81,5 +82,7 @@ export function mountWidget(el: HTMLElement, w: Widget, ctx: WidgetContext): Cle
       return transit(el, w, ctx);
     case "sports":
       return sports(el, w, ctx);
+    case "earth":
+      return earth(el, w, ctx);
   }
 }
