@@ -135,6 +135,32 @@ export const flows = [
     },
   },
   {
+    name: "settings download as a backup file and restore from it",
+    async run({ page, base, expect }) {
+      await page.goto(`${base}/admin/#settings`);
+      await page.reload();
+      const [download] = await Promise.all([page.waitForEvent("download"), page.getByRole("link", { name: "Download backup" }).click()]);
+      expect(/^everydaypane-settings-\d{4}-\d{2}-\d{2}\.json$/.test(download.suggestedFilename()), download.suggestedFilename());
+      const file = await download.path();
+      // Change the settings behind the page's back, then put the backup's back.
+      const before = await (await page.request.get(`${base}/api/admin/config/`)).json();
+      const renamed = { ...before.config, name: "Renamed after the backup" };
+      const put = await page.request.put(`${base}/api/admin/config/`, {
+        headers: { origin: base },
+        data: { baseVersion: before.version, config: renamed },
+      });
+      expect(put.ok(), `status ${put.status()}`);
+      await page.reload();
+      await page.locator('input[type="file"][accept*="json"]').setInputFiles(file);
+      await page.getByTestId("restore-confirm").waitFor();
+      await page.getByRole("button", { name: "Restore these settings" }).click();
+      await page.getByText(/^Restored .*Displays pick it up within 30 seconds\.$/).waitFor();
+      const after = await (await page.request.get(`${base}/api/admin/config/`)).json();
+      expect(after.config.name === before.config.name, `name is ${after.config.name}`);
+      expect(after.version === before.version + 2, `version ${after.version}`);
+    },
+  },
+  {
     name: "the admin panel works on a phone",
     async run({ browser, page, base, expect }) {
       const phone = await browser.newContext({ viewport: { width: 390, height: 844 }, storageState: await page.context().storageState() });

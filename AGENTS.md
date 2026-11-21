@@ -50,7 +50,8 @@ no pinch zoom; settings reach displays by polling every 30 seconds.
 DriveBC road events and weather conditions, Earthquakes Canada. Each switchable in `config.alerts.sources`.
 
 **Admin and family:** magic-link sign-in (Resend), admin panel tabs (views and grid editor, themes, displays with
-copyable addresses, meals, settings for every integration), `/family/` for the message board and meals, Sentry.
+copyable addresses, meals, settings for every integration), **settings backup and restore** (Settings › Backup, a JSON
+file), `/family/` for the message board and meals, Sentry.
 
 **Integrations connected from Settings:** Google Calendar, Google Tasks, Google Photos (Picker), iCal calendar links,
 Amazon Photos, the photo library (Vercel Blob), Home Assistant (Cloudflare Tunnel + Access), Spotify, Sonos, garbage
@@ -234,6 +235,14 @@ panel can be complex if you need it to be."
   and times from `/api/display/commute/`. Each drive is cached five minutes, shared by every display, and six places at
   most keeps that inside the free tier. One route failing never hides the others; readings older than 20 minutes aren't
   shown as live. TomTom takes its key only in the query string, so its URLs are never logged. Setup: `docs/commute.md`.
+- **Settings backup and restore** (Melvin, 2026-11-21): Settings › Backup downloads the whole settings document as
+  `everydaypane-settings-<date>.json` and restores one (`src/server/backup.ts`, `/api/admin/backup/`). The file is the
+  document itself, walked generically, so new widget types and settings are in it with no change there. It never holds
+  the `secrets` table (tokens, cookies, calendar link addresses), display devices, meals, messages or library photos;
+  the file says so in `notIncluded`. WiFi passwords (the one secret in the document) are blanked unless the admin
+  switches them on, and a restore without them keeps the dashboard's current ones. A restore is checked first
+  (`dryRun`, the panel shows what the file holds), upgraded like a stored document, and saved as an ordinary versioned
+  save, so displays reload and a stale restore gets 409.
 - **Garbage pickup:** the Township of Langley's collection calendar (tol.ca) is Recycle Coach, project 521,
   district `LANGL`, with zones such as Monday A or Thursday B. The zone is looked up from the address in the admin
   panel (or picked by hand) and the schedule is fetched and cached by the server (12 hours). The API is Recycle Coach's
