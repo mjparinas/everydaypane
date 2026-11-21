@@ -469,6 +469,36 @@ function TypeSettings({
         </>
       );
     }
+    case "chores": {
+      const e = edit<"chores">();
+      const people = config.chores.people;
+      return (
+        <>
+          <Toggle label="Show stars" checked={w.showStars} onChange={(v) => e((x) => void (x.showStars = v))} />
+          <Toggle
+            label="Tap to tick off"
+            hint="Anyone at the screen can mark a chore done. Tapping it again takes it back."
+            checked={w.allowCheck}
+            onChange={(v) => e((x) => void (x.allowCheck = v))}
+          />
+          {people.length === 0 ? (
+            <p className="text-xs text-soft">Add the kids and their chores under Settings › Chores.</p>
+          ) : (
+            <>
+              <p className="text-xs text-soft">Pick whose chores to show. With nobody picked, it shows everyone.</p>
+              {people.map((p) => (
+                <Toggle
+                  key={p.id}
+                  label={`${p.emoji} ${p.name}`.trim()}
+                  checked={w.personIds.includes(p.id)}
+                  onChange={(on) => e((x) => void (x.personIds = on ? [...x.personIds, p.id] : x.personIds.filter((id) => id !== p.id)))}
+                />
+              ))}
+            </>
+          )}
+        </>
+      );
+    }
     case "alerts": {
       const e = edit<"alerts">();
       return (

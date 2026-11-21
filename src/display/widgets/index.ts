@@ -3,6 +3,7 @@ import type { Widget } from "@/lib/config/schema";
 import { airQuality } from "./air";
 import { alerts } from "./alerts";
 import { agenda, calendarMonth } from "./calendar";
+import { chores } from "./chores";
 import { clock } from "./clock";
 import { commute } from "./commute";
 import { countdown } from "./countdown";
@@ -63,6 +64,8 @@ export function mountWidget(el: HTMLElement, w: Widget, ctx: WidgetContext): Cle
       return media(el, w, ctx);
     case "commute":
       return commute(el, w, ctx);
+    case "chores":
+      return chores(el, w, ctx);
     case "timer":
       return timer(el, w, ctx);
     case "pomodoro":

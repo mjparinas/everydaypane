@@ -191,6 +191,15 @@ export const widgetSchema = z.discriminatedUnion("type", [
     showVolume: z.boolean(),
     showSources: z.boolean(),
   }),
+  // The kids' chore chart (Melvin, 2026-11-21): today's chores for the people under Settings › Chores (none picked means
+  // everyone), ticked off with a tap when `allowCheck` is on, with each person's stars this week.
+  z.object({
+    ...base,
+    type: z.literal("chores"),
+    personIds: z.array(id).max(8),
+    showStars: z.boolean(),
+    allowCheck: z.boolean(),
+  }),
   // Commute time (Melvin, 2026-11-19): live-traffic drive times from home to the places under Settings › Commute
   // (none picked means all of them).
   z.object({
@@ -276,6 +285,35 @@ export const commuteDestinationSchema = placeSchema.extend({
 });
 export type CommuteDestination = z.infer<typeof commuteDestinationSchema>;
 
+// The chore chart (Melvin, 2026-11-21): the people who do chores, and recurring chores that are shared by everyone on
+// them or rotate between them by day or by week (src/lib/chores.ts). Who ticked what off lives in the chores_done table.
+export const chorePersonSchema = z.object({
+  id,
+  name: z.string().trim().min(1).max(30),
+  emoji: z.string().max(8),
+  color: hex,
+  // Stars to aim for each week (0 for no goal); the widget draws a bar towards it.
+  goal: z.number().int().min(0).max(500),
+});
+export type ChorePerson = z.infer<typeof chorePersonSchema>;
+
+export const choreSchema = z.object({
+  id,
+  name: z.string().trim().min(1).max(40),
+  emoji: z.string().max(8),
+  stars: z.number().int().min(1).max(5),
+  // Weekdays it's due, 0 = Sunday.
+  days: z
+    .array(z.number().int().min(0).max(6))
+    .min(1, "Pick at least one day")
+    .max(7)
+    .refine((d) => new Set(d).size === d.length, "Each day once"),
+  personIds: z.array(id).min(1, "Pick who does it").max(8),
+  // "none": everyone picked does it; "day": one of them each time it's due, in turn; "week": one of them all week.
+  rotate: z.enum(["none", "day", "week"]),
+});
+export type Chore = z.infer<typeof choreSchema>;
+
 export const configSchema = z
   .object({
     name: z.string().min(1).max(60),
@@ -310,6 +348,8 @@ export const configSchema = z
       // Power outages count when their area covers the home or is within this many km of it.
       powerKm: z.number().int().min(0).max(50).default(5),
     }),
+    // Defaults to none, so a document saved before the chore chart existed still loads.
+    chores: z.object({ people: z.array(chorePersonSchema).max(8), items: z.array(choreSchema).max(40) }).default({ people: [], items: [] }),
     // Burn-in protection: the whole layout drifts a few pixels every few minutes so static edges never sit on the same
     // pixels for hours, and night periods can dim the screen (periodSchema.dim).
     burnIn: z.object({ shift: z.boolean(), maxPixels: z.number().int().min(1).max(24), minutes: z.number().int().min(1).max(60) }),

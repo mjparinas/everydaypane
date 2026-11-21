@@ -166,6 +166,14 @@ export const WIDGETS: { [T in WidgetType]: WidgetInfo<T> } = {
       showSources: false,
     }),
   },
+  chores: {
+    label: "Chore chart",
+    description: "The kids' chores for today, ticked off with a tap, and their stars",
+    icon: "⭐",
+    size: { w: 6, h: 4 },
+    minSize: { w: 2, h: 2 },
+    defaults: () => ({ personIds: [], showStars: true, allowCheck: true }),
+  },
   commute: {
     label: "Commute",
     description: "Drive time with live traffic to work or school",
