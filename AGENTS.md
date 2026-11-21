@@ -306,7 +306,8 @@ panel can be complex if you need it to be."
 - `.github/workflows/ci.yml` runs on every pull request and every push to `main`: types, lint, formatting and
   dependency audit; Vitest with coverage; the production build; and the Playwright browser tests against that build
   (`scripts/e2e.mjs`, which signs in through a real magic link and fails on any console error). **"CI passed"** is the
-  one check to require.
+  one check to require. A new push to a pull request cancels its stale run, but runs on `main` are never cancelled:
+  each merge commit gets its own full run, because merges land minutes apart and a cancelled run left them unchecked.
 - A bug fix comes with a test that fails without it. Flaky tests are fixed at the cause, never retried.
 - Test data is plain and readable; nothing random.
 - **Agents fix and merge their own pull requests** (Melvin, 2026-11-17: "auto fix and merge prs please"). An agent
