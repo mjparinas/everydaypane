@@ -1,14 +1,15 @@
-// Intl formatters are slow to build, so each one is made once and reused.
-const cache = new Map<string, Intl.DateTimeFormat>();
+import { zonedFormatter, type ZonedFormatter } from "@/lib/timeZone";
 
-export function fmt(timeZone: string, opts: Intl.DateTimeFormatOptions): Intl.DateTimeFormat {
+// Intl formatters are slow to build, so zonedFormatter caches the underlying native formatters.
+const cache = new Map<string, ZonedFormatter>();
+export function fmt(timeZone: string, opts: Intl.DateTimeFormatOptions): ZonedFormatter {
   const key = timeZone + JSON.stringify(opts);
-  let f = cache.get(key);
-  if (!f) {
-    f = new Intl.DateTimeFormat("en-CA", { timeZone, ...opts });
-    cache.set(key, f);
+  let formatter = cache.get(key);
+  if (!formatter) {
+    formatter = zonedFormatter(timeZone, opts);
+    cache.set(key, formatter);
   }
-  return f;
+  return formatter;
 }
 
 export interface ClockParts {

@@ -55,7 +55,8 @@ palettes, fonts, corner radius, opacity and optional glass; burn-in protection (
 worker serves the last good data and shows "Offline"); a **screen saver** (photos only or dark after idle minutes, dark
 in a night window, woken by a tap, Home Assistant motion sensors, the doorbell, a new alert or a timer going off); doorbell pop-up full
 screen; the red, dismissible alert strip;
-no pinch zoom; settings reach displays by polling every 30 seconds.
+no pinch zoom; settings reach displays by polling every 30 seconds; Vancouver clocks, dates, calendars and scheduled
+views stay on UTC−7 after B.C.'s March 2026 change even when the display browser has old time-zone data.
 
 **Alerts** (`src/server/alerts.ts`): Alert Ready (NAAD), **Environment Canada weather warnings** (through NAAD),
 DriveBC road events and weather conditions, Earthquakes Canada, BC Hydro power outages. Each switchable in `config.alerts.sources`.
@@ -114,6 +115,9 @@ node scripts/e2e.mjs   # Playwright browser tests against the build (CHROMIUM_PA
   the PNG icons, `favicon.ico` and the web app manifest (`src/app/manifest.ts`) are made from them.
 - **Month calendar title** (Melvin, 2026-11-19: "add a toggle to show/hide month title"): the month widget's
   "November 2026" line can be switched off in its settings (`showTitle`, on by default); the grid takes the space.
+- **B.C. permanent daylight time** (Melvin, 2026-11-22): some display browsers have old time-zone data and move
+  `America/Vancouver` back one hour in November. Everydaypane uses Vancouver's historical rules before the March 8,
+  2026 transition and fixed UTC−7 after it for clocks, dates, calendars and time-of-day display schedules.
 - **Month calendar weeks and weekends** (Melvin, 2026-11-21: "allow users to customize how many weeks to display,
   minimum 1, max is 6", and "allow calendar to hide or show weekends"): the month widget shows the whole month (the
   default, as before) or 1 to 6 weeks starting with this one (`weeks`), and can drop the Saturday and Sunday columns

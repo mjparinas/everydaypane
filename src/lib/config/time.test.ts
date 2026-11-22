@@ -4,16 +4,8 @@ import { defaultConfig } from "./defaults";
 import { currentPeriod, dateInZone, daysBetween, minutesInZone, msUntilNextPeriod } from "./time";
 
 const VAN = "America/Vancouver";
-// Wall-clock time in Vancouver on 2026-11-17, whatever its UTC offset is that day (BC keeps daylight time all year
-// from 2026 in current time zone data; older data says standard time), so the tests hold with either.
 function at(hhmm: string): Date {
-  const guess = new Date(`2026-11-17T${hhmm}:00Z`);
-  const shown = minutesInZone(guess, VAN);
-  const wanted = Number(hhmm.slice(0, 2)) * 60 + Number(hhmm.slice(3));
-  let diff = wanted - shown;
-  if (diff > 720) diff -= 1440;
-  if (diff < -720) diff += 1440;
-  return new Date(guess.getTime() + diff * 60_000);
+  return new Date(Date.parse(`2026-11-17T${hhmm}:00Z`) + 7 * 60 * 60_000);
 }
 
 describe("time of day", () => {
@@ -22,6 +14,10 @@ describe("time of day", () => {
   it("reads the wall clock in the dashboard's zone", () => {
     expect(minutesInZone(at("07:30"), VAN)).toBe(450);
     expect(minutesInZone(new Date("2026-11-17T12:30:00Z"), "America/Toronto")).toBe(450);
+  });
+
+  it("keeps Vancouver on UTC-7 after the 2026 change even with stale browser time-zone data", () => {
+    expect(minutesInZone(new Date("2026-11-17T15:30:00Z"), VAN)).toBe(510);
   });
 
   it.each([

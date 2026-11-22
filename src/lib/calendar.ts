@@ -1,15 +1,16 @@
 import type { CalendarEvent } from "@/lib/display/types";
+import { zonedFormatter, type ZonedFormatter } from "@/lib/timeZone";
 
 // Date arithmetic for the schedule and month widgets. Plain functions on YYYY-MM-DD strings, shared by the display
 // and the tests; no libraries, so the display bundle stays small. Events are placed by the dashboard's time zone.
 
 const DAY = 86_400_000;
-const dtf = new Map<string, Intl.DateTimeFormat>();
-function fmt(timeZone: string, opts: Intl.DateTimeFormatOptions): Intl.DateTimeFormat {
+const dtf = new Map<string, ZonedFormatter>();
+function fmt(timeZone: string, opts: Intl.DateTimeFormatOptions): ZonedFormatter {
   const key = timeZone + JSON.stringify(opts);
   let f = dtf.get(key);
   if (!f) {
-    f = new Intl.DateTimeFormat("en-CA", { timeZone, ...opts });
+    f = zonedFormatter(timeZone, opts);
     dtf.set(key, f);
   }
   return f;
