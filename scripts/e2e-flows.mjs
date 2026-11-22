@@ -396,7 +396,8 @@ export const flows = [
       });
       const d = await context.newPage();
       await d.goto(url);
-      await d.locator(".cell-clock .c-hm").first().waitFor();
+      // The dark saver immediately hides the dashboard, so wait for the clock to mount rather than become visible.
+      await d.locator(".cell-clock .c-hm").first().waitFor({ state: "attached" });
       // Idle timing is covered by the screenSaver unit tests. With a zero-minute threshold here, this browser test
       // checks that the loaded settings activate the dark overlay and that tapping it wakes the dashboard.
       await d.locator(".saver.show.saver-dark").waitFor();
