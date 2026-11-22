@@ -68,7 +68,8 @@ Optional email to everyone on `ADMIN_EMAILS` and `FAMILY_EMAILS` when a new stri
 
 **Admin and family:** magic-link sign-in (Resend), admin panel tabs (views and grid editor, themes, displays with
 copyable addresses, meals, shopping, settings for every integration, Settings › Chores for the kids and their chores), **settings backup and restore** (Settings › Backup, a JSON
-file), `/family/` for the message board, **family calendar events**, meals and the shopping list, Sentry. View previews can force day or night mode with `?mode=`.
+file), `/family/` for the message board, **family calendar events**, meals and the shopping list, Sentry. View previews
+can force day or night with `?mode=`, and a quiet Day/Night control on the preview swaps without reloading.
 
 **Integrations connected from Settings:** Google Calendar, Google Tasks, Google Photos (Picker), iCal calendar links,
 Amazon Photos, the photo library (Vercel Blob), Home Assistant (Cloudflare Tunnel + Access), Spotify, Sonos, garbage

@@ -5,7 +5,7 @@ import type { DisplayPayload, HaData } from "@/lib/display/types";
 
 import { onAlarm, startAlarms } from "./alarm";
 import { alertStrip } from "./alerts";
-import { get, offline, onOfflineChange, post, PREVIEW, PREVIEW_MODE, subscribe, TOKEN } from "./api";
+import { get, offline, onOfflineChange, post, PREVIEW, previewMode, setPreviewMode, subscribe, TOKEN } from "./api";
 import { h } from "./dom";
 import { screenSaver, type Saver } from "./saver";
 import { mountWidget } from "./widgets";
@@ -55,10 +55,12 @@ function pick(
   if (!view) throw new Error("No views to show");
   const theme = p.themes[view.themeId ?? p.themeId] ?? p.themes[p.themeId] ?? Object.values(p.themes)[0];
   if (!theme) throw new Error("No theme");
-  // A fixed view still follows day and night from the schedule.
+  // A fixed view still follows day and night from the schedule; an admin preview can force either.
   const modePeriod = period ?? currentPeriod(p.schedule, now, p.location.timeZone);
-  const mode = PREVIEW_MODE || p.schedule[modePeriod].mode;
-  return { view, period, theme, palette: mode === "night" ? theme.night : theme.day, dimLevel: p.schedule[modePeriod].dim };
+  const mode = previewMode || p.schedule[modePeriod].mode;
+  // Preview night uses the night period's dim so the palette and dimming match what evening/night look like.
+  const dimLevel = previewMode === "night" ? p.schedule.night.dim : previewMode === "day" ? 0 : p.schedule[modePeriod].dim;
+  return { view, period, theme, palette: mode === "night" ? theme.night : theme.day, dimLevel };
 }
 
 function applyTheme(theme: Theme, palette: Palette, mode: string) {
@@ -247,9 +249,31 @@ function nightlyReload() {
   }, next.getTime() - now.getTime());
 }
 
+/** Admin preview only (Melvin, 2026-11-22): a quiet control to flip day ↔ night without leaving the page. */
+function previewModeToggle(): HTMLButtonElement | null {
+  if (!PREVIEW) return null;
+  const btn = h(
+    "button",
+    { type: "button", class: "preview-mode", "aria-label": previewMode === "night" ? "Show day mode" : "Show night mode" },
+    previewMode === "night" ? "Night" : "Day",
+  ) as HTMLButtonElement;
+  btn.addEventListener("click", () => {
+    const next = (previewMode || "day") === "night" ? "day" : "night";
+    setPreviewMode(next);
+    btn.textContent = next === "night" ? "Night" : "Day";
+    btn.setAttribute("aria-label", next === "night" ? "Show day mode" : "Show night mode");
+    render();
+  });
+  return btn;
+}
+
 async function start() {
   app.className = "app";
-  app.replaceChildren(stage, dim, offlineDot);
+  // Preview with no ?mode= still gets a starting mode from the schedule once settings load; default the button to day
+  // until then so the control has a label.
+  if (PREVIEW && !previewMode) setPreviewMode("day");
+  const modeBtn = previewModeToggle();
+  app.replaceChildren(stage, dim, offlineDot, ...(modeBtn ? [modeBtn] : []));
   saver = screenSaver(app, () => payload);
   onOfflineChange(() => offlineDot.classList.toggle("show", offline));
   // Timers and pomodoros set before a reload still ring, whichever view is showing.
