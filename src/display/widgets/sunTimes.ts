@@ -16,12 +16,13 @@ export function daylightLength(sunrise: string, sunset: string): string {
   return `${Math.floor(total / 60)} hr ${total % 60} min`;
 }
 
-export const sunTimes: Mount<"sunTimes"> = (el, _w, ctx) => {
+export const sunTimes: Mount<"sunTimes"> = (el, w, ctx) => {
   const root = h("div", { class: "w-sun-times" }, h("div", { class: "w-empty" }, "Loading sun times…"));
   el.append(root);
   return subscribe<WeatherData>("weather", 15 * 60_000, (data) => {
     const { sunrise, sunset } = data.today;
     const daylight = daylightLength(sunrise, sunset);
+    const emoji = w.showEmoji;
     fill(
       root,
       h(
@@ -29,20 +30,20 @@ export const sunTimes: Mount<"sunTimes"> = (el, _w, ctx) => {
         { class: "st-times" },
         h(
           "div",
-          { class: "st-time" },
-          h("span", { class: "st-icon", "aria-hidden": "true" }, "🌅"),
+          { class: `st-time${emoji ? "" : " no-emoji"}` },
+          emoji ? h("span", { class: "st-icon", "aria-hidden": "true" }, "🌅") : null,
           h("span", { class: "st-label" }, "Sunrise"),
           h("span", { class: "st-value" }, sunrise ? shortTime(sunrise, ctx.hour12) : "Unavailable"),
         ),
         h(
           "div",
-          { class: "st-time" },
-          h("span", { class: "st-icon", "aria-hidden": "true" }, "🌇"),
+          { class: `st-time${emoji ? "" : " no-emoji"}` },
+          emoji ? h("span", { class: "st-icon", "aria-hidden": "true" }, "🌇") : null,
           h("span", { class: "st-label" }, "Sunset"),
           h("span", { class: "st-value" }, sunset ? shortTime(sunset, ctx.hour12) : "Unavailable"),
         ),
       ),
-      daylight ? h("div", { class: "st-daylight" }, `☀️ ${daylight} of daylight`) : null,
+      daylight ? h("div", { class: "st-daylight" }, emoji ? `☀️ ${daylight} of daylight` : `${daylight} of daylight`) : null,
     );
   });
 };

@@ -80,6 +80,17 @@ describe("config schema", () => {
     expect(parsed).not.toHaveProperty("weeks");
   });
 
+  it("keeps a panel and emoji on sunrise & sunset widgets saved before those toggles", () => {
+    const c = defaultConfig();
+    const sun = newWidget("sunTimes", "sun", { x: 0, y: 0 }) as unknown as Record<string, unknown>;
+    delete sun.transparent;
+    delete sun.showEmoji;
+    c.views[0]!.widgets = [sun as ReturnType<typeof newWidget<"sunTimes">>];
+    const r = configSchema.safeParse(c);
+    const parsed = r.success ? r.data.views[0]!.widgets[0] : undefined;
+    expect(parsed).toMatchObject({ type: "sunTimes", transparent: false, showEmoji: true });
+  });
+
   it("rejects a widget that runs off its grid", () => {
     const c = defaultConfig();
     c.views[0]!.widgets[0]!.x = 11;

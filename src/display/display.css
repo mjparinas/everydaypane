@@ -147,13 +147,14 @@ body {
   backdrop-filter: blur(18px) saturate(1.2);
 }
 .cell-clock,
-.cell-date {
+.cell-date,
+.cell-sunTimes.transparent {
   background: transparent;
   box-shadow: none;
 }
 /* Widgets on top of a photos widget (Melvin, 2026-11-21). Photos sit underneath; the panel behind a widget is never
    thinner than 55 % so text stays readable on a busy picture. The clock and the date have no panel, so over a photo
-   they turn white with a soft shadow, like a photo frame's. */
+   they turn white with a soft shadow, like a photo frame's. A transparent sunrise & sunset widget does the same. */
 .cell-photos {
   z-index: 0;
 }
@@ -161,7 +162,8 @@ body {
   background: color-mix(in srgb, var(--surface) calc(max(var(--surface-alpha), 0.55) * 100%), transparent);
 }
 .cell-clock.on-photo,
-.cell-date.on-photo {
+.cell-date.on-photo,
+.cell-sunTimes.transparent.on-photo {
   --text: #fff;
   --muted: rgb(255 255 255 / 0.82);
   --surface: #0b0f18; /* the analogue clock's face */
@@ -417,6 +419,9 @@ body {
   grid-template-columns: auto minmax(0, 1fr);
   align-items: center;
   column-gap: 1.5cqw;
+}
+.st-time.no-emoji {
+  grid-template-columns: minmax(0, 1fr);
 }
 .st-icon {
   grid-row: 1 / 3;
