@@ -1,9 +1,10 @@
+import { zonedFormatter } from "../timeZone";
 import { PERIODS, type Period } from "./periods";
 import type { DashboardConfig } from "./schema";
 
 // Minutes since midnight in a time zone, for "which part of the day is it" questions.
 export function minutesInZone(now: Date, timeZone: string): number {
-  const parts = new Intl.DateTimeFormat("en-CA", { timeZone, hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).formatToParts(now);
+  const parts = zonedFormatter(timeZone, { hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).formatToParts(now);
   const hour = Number(parts.find((p) => p.type === "hour")?.value ?? 0);
   const minute = Number(parts.find((p) => p.type === "minute")?.value ?? 0);
   return hour * 60 + minute;
@@ -34,7 +35,7 @@ export function msUntilNextPeriod(schedule: DashboardConfig["schedule"], now: Da
 
 /** A calendar date (YYYY-MM-DD) in a time zone. */
 export function dateInZone(now: Date, timeZone: string): string {
-  return new Intl.DateTimeFormat("en-CA", { timeZone, year: "numeric", month: "2-digit", day: "2-digit" }).format(now);
+  return zonedFormatter(timeZone, { year: "numeric", month: "2-digit", day: "2-digit" }).format(now);
 }
 
 /** Whole days from `from` to `to`, both YYYY-MM-DD, ignoring daylight saving. */

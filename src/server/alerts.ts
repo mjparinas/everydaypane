@@ -3,6 +3,7 @@ import "server-only";
 import { distanceKm, insidePolygon, rank } from "@/lib/alerts";
 import type { DashboardConfig } from "@/lib/config/schema";
 import type { AlertData, AlertSeverity, EmergencyAlert } from "@/lib/display/types";
+import { zonedFormatter } from "@/lib/timeZone";
 
 import { cached } from "./cache";
 
@@ -239,7 +240,7 @@ export function parseHydro(
   now: number,
 ): EmergencyAlert[] {
   if (!Array.isArray(raw)) return [];
-  const time = new Intl.DateTimeFormat("en-CA", { timeZone, hour: "numeric", minute: "2-digit", weekday: "short" });
+  const time = zonedFormatter(timeZone, { hour: "numeric", minute: "2-digit", weekday: "short" });
   const out: EmergencyAlert[] = [];
   for (const o of raw as HydroOutage[]) {
     if (o.id === undefined || (typeof o.dateOn === "number" && o.dateOn <= now)) continue;

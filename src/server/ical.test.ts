@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { GET as adminGET, DELETE, POST } from "@/app/api/admin/calendar-links/route";
 import { GET as displayGET } from "@/app/api/display/calendar/route";
 import type { CalendarData } from "@/lib/display/types";
+import { zonedFormatter } from "@/lib/timeZone";
 import { cookieFor, req, useTestServer } from "@/test/server";
 
 import { clearMemoryCache } from "./cache";
@@ -93,7 +94,7 @@ describe("calendar links: reading iCal", () => {
       "DTEND:20261118T100000",
     );
     const assembly = parseIcal(floating, link, "2026-10-25", "2026-12-07", zone).find((e) => e.title === "Assembly");
-    const wall = new Intl.DateTimeFormat("en-CA", { timeZone: zone, dateStyle: "short", timeStyle: "short", hourCycle: "h23" });
+    const wall = zonedFormatter(zone, { dateStyle: "short", timeStyle: "short", hourCycle: "h23" });
     expect(wall.format(Date.parse(assembly?.start ?? ""))).toBe("2026-11-18, 09:00");
   });
 
