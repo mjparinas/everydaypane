@@ -9,7 +9,8 @@ import { cached } from "./cache";
 // Rain radar (Melvin, 2026-11-21). Environment Canada's North American radar composite through MSC GeoMet's WMS: no
 // key, no sign-in, updated every six minutes with the last three hours kept, plus GeoMet's own extrapolation of the
 // radar for the short-term forecast. RainViewer's free API, the usual alternative, closed at the start of 2026.
-// The map underneath is CARTO's basemap (OpenStreetMap data), with the place names drawn on top of the rain.
+// The map underneath is Esri's grey canvas basemap (keyless; CARTO's started asking for an API key and drew a
+// watermark instead, seen on the wall 2026-11-21), with the place names drawn on top of the rain.
 //
 // Displays never talk to either service: they get the list of picture times here, and every picture through our own
 // routes, which build the upstream address themselves from a time this server listed and the dashboard's location.
@@ -178,26 +179,37 @@ export async function radarFrame(
   });
 }
 
-export const MAP_STYLES = ["light_nolabels", "light_only_labels", "dark_nolabels", "dark_only_labels"] as const;
-export type MapStyle = (typeof MAP_STYLES)[number];
-export const isMapStyle = (v: string): v is MapStyle => (MAP_STYLES as readonly string[]).includes(v);
+// Esri's light and dark grey canvas, each as land without names and a transparent layer of names to lay over the rain.
+const ESRI = "https://server.arcgisonline.com/ArcGIS/rest/services/Canvas";
+const MAP_LAYERS = {
+  light: "World_Light_Gray_Base",
+  "light-labels": "World_Light_Gray_Reference",
+  dark: "World_Dark_Gray_Base",
+  "dark-labels": "World_Dark_Gray_Reference",
+} as const;
+export type MapStyle = keyof typeof MAP_LAYERS;
+export const isMapStyle = (v: string): v is MapStyle => Object.hasOwn(MAP_LAYERS, v);
+
+/** The picture type of a map tile: Esri sends JPEG for the land and PNG for the names. */
+const tileType = (b: Uint8Array) => (isPng(b) ? "image/png" : b[0] === 0xff && b[1] === 0xd8 && b[2] === 0xff ? "image/jpeg" : null);
 
 /** One map tile of the area around home (only those: the route can't be used as a general tile proxy). */
 export async function mapTile(config: DashboardConfig, style: MapStyle, zoom: number, x: number, y: number): Promise<Response | null> {
   if (!validZoom(zoom) || !Number.isInteger(x) || !Number.isInteger(y)) return null;
   const o = blockOrigin(config.location.latitude, config.location.longitude, zoom);
   if (x < o.x || x >= o.x + BLOCK || y < o.y || y >= o.y + BLOCK) return null;
-  const host = "abcd"[(x + y) % 4] ?? "a";
-  const r = await fetch(`https://${host}.basemaps.cartocdn.com/${style}/${zoom}/${x}/${y}.png`, {
+  // Esri's tile addresses put the row before the column.
+  const r = await fetch(`${ESRI}/${MAP_LAYERS[style]}/MapServer/tile/${zoom}/${y}/${x}`, {
     signal: AbortSignal.timeout(10_000),
     headers: { "User-Agent": "Everydaypane/1.0" },
   });
   const bytes = new Uint8Array(await r.arrayBuffer());
-  if (!r.ok || !isPng(bytes)) {
-    console.error(`[radar] map tile ${style}/${zoom}/${x}/${y} answered ${r.status}`);
+  const type = tileType(bytes);
+  if (!r.ok || !type) {
+    console.error(`[radar] map tile ${style}/${zoom}/${x}/${y} answered ${r.status} (${r.headers.get("content-type") ?? "no type"})`);
     return null;
   }
   return new Response(bytes, {
-    headers: { "Content-Type": "image/png", "Cache-Control": "private, max-age=604800", "X-Content-Type-Options": "nosniff" },
+    headers: { "Content-Type": type, "Cache-Control": "private, max-age=604800", "X-Content-Type-Options": "nosniff" },
   });
 }

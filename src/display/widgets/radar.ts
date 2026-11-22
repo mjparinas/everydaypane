@@ -62,7 +62,7 @@ export const radar: Mount<"radar"> = (el, w, ctx) => {
   const tag = h("span", { class: "rd-tag" });
   const steps = h("div", { class: "rd-steps" });
   const bar = h("div", { class: "rd-bar" }, h("div", { class: "rd-when" }, time, tag), steps);
-  const credit = h("div", { class: "rd-credit" }, "Radar © Environment Canada · Map © OpenStreetMap, CARTO");
+  const credit = h("div", { class: "rd-credit" }, "Radar © Environment Canada · Map © Esri, HERE, Garmin, OpenStreetMap");
 
   let data: RadarData | null = null;
   let homeAt = { x: size / 2, y: size / 2 };
@@ -95,8 +95,8 @@ export const radar: Mount<"radar"> = (el, w, ctx) => {
         }
       return out;
     };
-    fill(base, ...tiles(`${mode}_nolabels`));
-    fill(labels, ...tiles(`${mode}_only_labels`));
+    fill(base, ...tiles(mode));
+    fill(labels, ...tiles(`${mode}-labels`));
     homeAt = { x: m.homeX, y: m.homeY };
     home.style.cssText = `left:${homeAt.x}px;top:${homeAt.y}px`;
   };

@@ -388,20 +388,18 @@ export const flows = [
           const res = await r.fetch();
           if (res.status() !== 200) return await r.fulfill({ response: res });
           const json = await res.json();
-          json.screenSaver = { ...json.screenSaver, idle: true, shows: "dark", minutes: 1 };
+          json.screenSaver = { ...json.screenSaver, idle: true, shows: "dark", minutes: 0.1 };
           await r.fulfill({ response: res, json });
         } catch {
           // The page closed while this request was in flight.
         }
       });
-      await context.clock.install();
       const d = await context.newPage();
       await d.goto(url);
-      await d.locator(".cell-clock .c-hm").first().waitFor();
-      expect((await d.locator(".saver.show").count()) === 0, "the saver showed straight away");
-      // runFor fires every timer on the way (fastForward fires each due timer at most once, at its old due time, so
-      // the 15-second check could run only before the idle minute is up).
-      await d.clock.runFor("01:20");
+      // The dark saver immediately hides the dashboard, so wait for the clock to mount rather than become visible.
+      await d.locator(".cell-clock .c-hm").first().waitFor({ state: "attached" });
+      // The short idle threshold exercises the loaded settings without a simulated clock; the unit tests cover the
+      // exact timing rule. A positive threshold also keeps the saver off after the tap wakes the dashboard.
       await d.locator(".saver.show.saver-dark").waitFor();
       expect(await d.locator(".stage").evaluate((el) => getComputedStyle(el).visibility === "hidden"), "the dashboard still paints");
       await d.locator(".saver.show").click();

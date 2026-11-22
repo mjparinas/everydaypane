@@ -537,8 +537,8 @@ describe("radar", () => {
     await vi.advanceTimersByTimeAsync(0);
     const tiles = [...el.querySelectorAll<HTMLImageElement>(".rd-tile")].map((i) => new URL(i.src, "http://x").search);
     expect(tiles).toHaveLength(50);
-    expect(tiles[0]).toBe("?s=light_nolabels&z=8&x=38&y=85");
-    expect(tiles[49]).toBe("?s=light_only_labels&z=8&x=42&y=89");
+    expect(tiles[0]).toBe("?s=light&z=8&x=38&y=85");
+    expect(tiles[49]).toBe("?s=light-labels&z=8&x=42&y=89");
     expect(el.querySelector<HTMLElement>(".rd-home")?.style.left).toBe("710px");
     expect(el.querySelectorAll(".rd-frame")).toHaveLength(13); // ten observed, three forecast
     expect(el.querySelector(".rd-when")?.textContent).toBe("10 PMLatest"); // 05:00 UTC is 10 PM in Vancouver
@@ -549,7 +549,7 @@ describe("radar", () => {
     expect(el.querySelectorAll(".rd-frame.on")).toHaveLength(1);
     document.documentElement.dataset.mode = "night";
     await vi.advanceTimersByTimeAsync(2000);
-    expect(el.querySelector<HTMLImageElement>(".rd-tile")?.src).toContain("s=dark_nolabels");
+    expect(el.querySelector<HTMLImageElement>(".rd-tile")?.src).toContain("s=dark&");
     expect(el.querySelector(".rd-when")?.textContent).toBe("9:06 PM"); // back to the start of the loop
     delete document.documentElement.dataset.mode;
     stop();
