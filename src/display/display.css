@@ -389,7 +389,7 @@ body {
   min-height: 0;
 }
 .wx-now-icon {
-  height: min(100%, 38cqh);
+  height: min(100%, 46cqh, 42cqw);
   aspect-ratio: 1;
   flex: none;
 }
@@ -455,7 +455,7 @@ body {
 }
 .wx-day .icon,
 .wx-hour .icon {
-  width: min(11cqh, 6cqw);
+  width: min(14cqh, 7cqw);
   aspect-ratio: 1;
 }
 /* A short, wide weather cell (the night view's strip) puts now and the days side by side. */
@@ -470,7 +470,7 @@ body {
     height: 100%;
   }
   .wx-now-icon {
-    height: min(60cqh, 14cqw);
+    height: min(64cqh, 15cqw);
   }
   .wx-temp {
     font-size: min(42cqh, 9cqw);
@@ -492,7 +492,7 @@ body {
   }
   .wx-day .icon,
   .wx-hour .icon {
-    width: min(26cqh, 5cqw);
+    width: min(28cqh, 5.5cqw);
   }
 }
 .wx-dn,
