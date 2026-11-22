@@ -68,6 +68,13 @@ describe("config schema", () => {
     expect(configSchema.safeParse(d).success).toBe(false);
   });
 
+  it("fills tile padding on views saved before the control existed", () => {
+    const c = defaultConfig() as unknown as { views: Record<string, unknown>[] };
+    for (const v of c.views) delete v.tilePadding;
+    const r = configSchema.safeParse(c);
+    expect(r.success && r.data.views.every((v) => v.tilePadding === 16)).toBe(true);
+  });
+
   it("shows the month title on month calendars saved before the toggle existed", () => {
     const c = defaultConfig();
     const month = c.views.flatMap((v) => v.widgets).find((w) => w.type === "calendarMonth") as unknown as Record<string, unknown>;

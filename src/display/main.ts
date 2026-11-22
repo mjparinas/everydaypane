@@ -92,7 +92,7 @@ function render(force = false) {
     for (const c of cleanups) c();
     cleanups = [];
     stage.replaceChildren();
-    stage.style.cssText = `grid-template-columns:repeat(${view.cols},minmax(0,1fr));grid-template-rows:repeat(${view.rows},minmax(0,1fr));gap:${view.gap}px;padding:${view.padding}px`;
+    stage.style.cssText = `grid-template-columns:repeat(${view.cols},minmax(0,1fr));grid-template-rows:repeat(${view.rows},minmax(0,1fr));gap:${view.gap}px;padding:${view.padding}px;--cell-pad:${view.tilePadding}px`;
     const ctx = { payload: p, timeZone: p.location.timeZone, hour12: p.hour12 };
     // Photos are a backdrop (Melvin, 2026-11-21): they're drawn first and underneath, and a widget on top of one gets
     // `on-photo`, which keeps it readable against whatever picture is showing.
