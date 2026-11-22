@@ -186,7 +186,7 @@ panel can be complex if you need it to be."
 - **Displays** are devices with their own secret address `/d/<token>/`. Requests are matched by the token's hash; the
   token is also kept encrypted (`token_sealed`, like the other secrets) so an admin can show and copy the address again
   from the Displays tab any time (Melvin, 2026-11-17, who didn't want it shown only once). "New link" replaces the
-  address and the old one stops working. New addresses use a case-sensitive, 10-character alphanumeric token; the
+  address and the old one stops working. New addresses use a case-sensitive, 8-character alphanumeric token; the
   database's unique token hash constraint is retried on a collision (Melvin, 2026-11-21). Existing longer addresses
   remain valid. A device shows one view, or follows the time-of-day schedule. Deleting a device signs that screen out.
 - **Admin panel** (`src/app/admin/_ui/`): one page with tabs (a bottom tab bar on phones). Edits collect in a working
