@@ -3,7 +3,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import type { Widget } from "@/lib/config/schema";
 import { newWidget } from "@/lib/config/widgets";
-import type { ChoresData, DisplayPayload, TasksData, TransitData, TransitDeparture } from "@/lib/display/types";
+import type { ChoresData, DisplayPayload, TasksData, TransitData, TransitDeparture, WeatherData } from "@/lib/display/types";
 
 import { shortTime } from "./format";
 import { kindOf, label, weatherIcon } from "./icons";
@@ -20,6 +20,7 @@ import { meals } from "./widgets/meals";
 import { F, media, nowPlaying, positionNow } from "./widgets/media";
 import { pickFrames, radar, thin } from "./widgets/radar";
 import { describe as describeTeam, opponent, result, score, sports, when } from "./widgets/sports";
+import { daylightLength, sunTimes } from "./widgets/sunTimes";
 import { dueLabel, shownLists, tasks, UNDO_MS } from "./widgets/tasks";
 import { delayLabel, minutesLabel, shownDepartures, transit } from "./widgets/transit";
 
@@ -70,6 +71,21 @@ describe("formatting", () => {
 });
 
 describe("widgets", () => {
+  it("shows today's sunrise, sunset and daylight in the chosen clock format", async () => {
+    const data = {
+      today: { sunrise: "2026-11-21T07:33", sunset: "2026-11-21T16:24" },
+    } as WeatherData;
+    vi.stubGlobal("fetch", () => Promise.resolve(Response.json(data)));
+    const el = document.createElement("div");
+    const stop = sunTimes(el, newWidget("sunTimes", "sun", { x: 0, y: 0 }), ctx);
+    await vi.waitFor(() => expect(el.querySelectorAll(".st-value")).toHaveLength(2));
+    expect([...el.querySelectorAll(".st-value")].map((node) => node.textContent)).toEqual(["7:33 AM", "4:24 PM"]);
+    expect(el.querySelector(".st-daylight")?.textContent).toContain("8 hr 51 min");
+    expect(daylightLength("", "2026-11-21T16:24")).toBe("");
+    stop();
+    vi.unstubAllGlobals();
+  });
+
   it("shows the time in the clock's own zone", () => {
     vi.useFakeTimers({ now: new Date("2026-11-17T20:15:30Z") });
     const el = document.createElement("div");

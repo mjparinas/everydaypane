@@ -22,6 +22,7 @@ same change, and moves it out of **In progress** when it merges.
 | --- | --- | --- |
 | Clock (`clock`) | Digital or analogue, any time zone, label, seconds (Vancouver and Toronto clocks) | Device clock |
 | Date (`date`) | Today's date in a time zone | Device clock |
+| Sunrise & sunset (`sunTimes`) | Today's sunrise, sunset and length of daylight | Open-Meteo forecast |
 | Weather (`weather`) | Current conditions, hourly, up to 7 days, with icons | Open-Meteo forecast |
 | Air quality (`airQuality`) | AQHI or US AQI | Open-Meteo air quality |
 | WiFi QR (`wifiQr`) | Join code, optionally the password | Settings document |

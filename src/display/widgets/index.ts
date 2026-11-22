@@ -20,6 +20,7 @@ import { photos } from "./photos";
 import { pomodoro } from "./pomodoro";
 import { radar } from "./radar";
 import { sports } from "./sports";
+import { sunTimes } from "./sunTimes";
 import { tasks } from "./tasks";
 import { timer } from "./timer";
 import { transit } from "./transit";
@@ -34,6 +35,8 @@ export function mountWidget(el: HTMLElement, w: Widget, ctx: WidgetContext): Cle
       return clock(el, w, ctx);
     case "date":
       return date(el, w, ctx);
+    case "sunTimes":
+      return sunTimes(el, w, ctx);
     case "weather":
       return weather(el, w, ctx);
     case "airQuality":

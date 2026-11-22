@@ -145,6 +145,8 @@ function TypeSettings({
         </>
       );
     }
+    case "sunTimes":
+      return <p className="text-xs text-soft">Times are for {config.location.name || "the dashboard's location"} (Settings).</p>;
     case "weather": {
       const e = edit<"weather">();
       return (
