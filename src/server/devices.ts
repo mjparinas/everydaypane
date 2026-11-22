@@ -1,6 +1,6 @@
 import "server-only";
 
-import { decrypt, encrypt, randomToken, sha256 } from "./crypto";
+import { decrypt, encrypt, randomAlphanumeric, randomToken, sha256 } from "./crypto";
 import { query, run } from "./db";
 
 // A display (the UC-Display21 in the kitchen, a tablet in the hall). Each one opens its own secret address,
@@ -18,6 +18,11 @@ export interface Device {
 }
 
 type Row = { id: string; name: string; view_id: string | null; created_at: number; last_seen_at: number | null };
+const DISPLAY_TOKEN_LENGTH = 10;
+const TOKEN_ATTEMPTS = 10;
+
+const newDisplayToken = () => randomAlphanumeric(DISPLAY_TOKEN_LENGTH);
+
 const toDevice = (r: Row): Device => ({
   id: r.id,
   name: r.name,
@@ -31,17 +36,17 @@ export async function listDevices(): Promise<Device[]> {
 }
 
 export async function addDevice(name: string, viewId: string | null, now = Date.now()): Promise<{ device: Device; token: string }> {
-  const id = randomToken(9);
-  const token = randomToken(18);
-  await run("INSERT INTO devices (id, name, token_hash, token_sealed, view_id, created_at) VALUES (?, ?, ?, ?, ?, ?)", [
-    id,
-    name,
-    sha256(token),
-    encrypt(token),
-    viewId,
-    now,
-  ]);
-  return { device: { id, name, viewId, createdAt: now, lastSeenAt: null }, token };
+  for (let attempt = 0; attempt < TOKEN_ATTEMPTS; attempt += 1) {
+    const id = randomToken(9);
+    const token = newDisplayToken();
+    // The UNIQUE token_hash constraint makes this collision check atomic across all app instances.
+    const inserted = await run(
+      "INSERT OR IGNORE INTO devices (id, name, token_hash, token_sealed, view_id, created_at) VALUES (?, ?, ?, ?, ?, ?)",
+      [id, name, sha256(token), encrypt(token), viewId, now],
+    );
+    if (inserted === 1) return { device: { id, name, viewId, createdAt: now, lastSeenAt: null }, token };
+  }
+  throw new Error("Could not generate a unique display address");
 }
 
 export async function updateDevice(id: string, patch: { name?: string; viewId?: string | null }): Promise<boolean> {
@@ -70,9 +75,18 @@ export async function deviceToken(id: string): Promise<string | null> {
 
 /** Gives a display a new address. The old one stops working at once, so a leaked link can be shut off. */
 export async function newDeviceToken(id: string): Promise<string | null> {
-  const token = randomToken(18);
-  const changed = await run("UPDATE devices SET token_hash = ?, token_sealed = ? WHERE id = ?", [sha256(token), encrypt(token), id]);
-  return changed === 1 ? token : null;
+  const row = (await query<{ token_hash: string }>("SELECT token_hash FROM devices WHERE id = ?", [id]))[0];
+  if (!row) return null;
+
+  for (let attempt = 0; attempt < TOKEN_ATTEMPTS; attempt += 1) {
+    const token = newDisplayToken();
+    const hash = sha256(token);
+    if (hash === row.token_hash) continue;
+    // A collision with another display is ignored by SQLite, then retried with a fresh code.
+    const changed = await run("UPDATE OR IGNORE devices SET token_hash = ?, token_sealed = ? WHERE id = ?", [hash, encrypt(token), id]);
+    if (changed === 1) return token;
+  }
+  throw new Error("Could not generate a unique display address");
 }
 
 export async function removeDevice(id: string): Promise<boolean> {
@@ -81,7 +95,8 @@ export async function removeDevice(id: string): Promise<boolean> {
 
 /** The device a display token belongs to, noting when it was last seen (at most once a minute, to keep writes down). */
 export async function deviceForToken(token: string, now = Date.now()): Promise<Device | null> {
-  if (!/^[A-Za-z0-9_-]{16,64}$/.test(token)) return null;
+  // New links are exactly 10 alphanumerics; keep accepting the longer legacy base64url links already on displays.
+  if (!/^(?:[A-Za-z0-9]{10}|[A-Za-z0-9_-]{16,64})$/.test(token)) return null;
   const rows = await query<Row>("SELECT * FROM devices WHERE token_hash = ?", [sha256(token)]);
   const row = rows[0];
   if (!row) return null;

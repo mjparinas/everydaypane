@@ -1,6 +1,6 @@
 import "server-only";
 
-import { createCipheriv, createDecipheriv, createHash, createHmac, randomBytes, timingSafeEqual } from "node:crypto";
+import { createCipheriv, createDecipheriv, createHash, createHmac, randomBytes, randomInt, timingSafeEqual } from "node:crypto";
 
 import { env } from "./env";
 
@@ -15,6 +15,13 @@ function key(purpose: string): Buffer {
 
 export const sha256 = (value: string) => createHash("sha256").update(value).digest("hex");
 export const randomToken = (bytes = 32) => randomBytes(bytes).toString("base64url");
+
+const ALPHANUMERIC = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+
+/** A cryptographically random, case-sensitive code with no URL punctuation. */
+export function randomAlphanumeric(length: number): string {
+  return Array.from({ length }, () => ALPHANUMERIC.charAt(randomInt(ALPHANUMERIC.length))).join("");
+}
 
 export function encrypt(plain: string): string {
   const iv = randomBytes(12);
