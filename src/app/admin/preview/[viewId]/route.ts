@@ -5,5 +5,7 @@ import { adminFor } from "@/server/viewer";
 export async function GET(req: Request, ctx: { params: Promise<{ viewId: string }> }) {
   if (!(await adminFor(req))) return Response.redirect(new URL("/signin/?next=/admin/", req.url), 303);
   const { viewId } = await ctx.params;
-  return displayHtml({ token: null, title: "Preview", previewView: viewId });
+  const mode = new URL(req.url).searchParams.get("mode");
+  const previewMode = mode === "day" || mode === "night" ? mode : undefined;
+  return displayHtml({ token: null, title: "Preview", previewView: viewId, previewMode });
 }

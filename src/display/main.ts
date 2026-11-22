@@ -5,7 +5,7 @@ import type { DisplayPayload, HaData } from "@/lib/display/types";
 
 import { onAlarm, startAlarms } from "./alarm";
 import { alertStrip } from "./alerts";
-import { get, offline, onOfflineChange, post, PREVIEW, subscribe, TOKEN } from "./api";
+import { get, offline, onOfflineChange, post, PREVIEW, PREVIEW_MODE, subscribe, TOKEN } from "./api";
 import { h } from "./dom";
 import { screenSaver, type Saver } from "./saver";
 import { mountWidget } from "./widgets";
@@ -57,7 +57,7 @@ function pick(
   if (!theme) throw new Error("No theme");
   // A fixed view still follows day and night from the schedule.
   const modePeriod = period ?? currentPeriod(p.schedule, now, p.location.timeZone);
-  const mode = p.schedule[modePeriod].mode;
+  const mode = PREVIEW_MODE || p.schedule[modePeriod].mode;
   return { view, period, theme, palette: mode === "night" ? theme.night : theme.day, dimLevel: p.schedule[modePeriod].dim };
 }
 

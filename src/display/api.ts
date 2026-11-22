@@ -5,6 +5,7 @@
 const body = document.body;
 export const TOKEN = body.dataset.token ?? "";
 export const PREVIEW = body.dataset.preview ?? "";
+export const PREVIEW_MODE = body.dataset.previewMode === "day" || body.dataset.previewMode === "night" ? body.dataset.previewMode : "";
 
 type Listener = () => void;
 const offlineListeners = new Set<Listener>();

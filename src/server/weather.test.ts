@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { defaultConfig } from "@/lib/config/defaults";
 
-import { aqhi, forecastUrl, trimAir, trimForecast } from "./weather";
+import { aqhi, forecastUrl, maxPollen, pollenUrl, trimAir, trimForecast } from "./weather";
 
 const forecast = {
   current: { temperature_2m: 6.4, apparent_temperature: 3.2, weather_code: 61, is_day: 1, wind_speed_10m: 14.6, relative_humidity_2m: 88 },
@@ -29,7 +29,12 @@ describe("weather", () => {
     const c = defaultConfig();
     const metric = new URL(forecastUrl(c));
     expect(metric.searchParams.get("timezone")).toBe("America/Vancouver");
+    expect(metric.searchParams.get("current")).toContain("uv_index");
+    expect(metric.searchParams.get("daily")).toContain("uv_index_max");
     expect(metric.searchParams.get("temperature_unit")).toBeNull();
+    expect(new URL(pollenUrl(c)).searchParams.get("current")).toBe(
+      "alder_pollen,birch_pollen,grass_pollen,mugwort_pollen,olive_pollen,ragweed_pollen",
+    );
     c.units = "imperial";
     expect(new URL(forecastUrl(c)).searchParams.get("temperature_unit")).toBe("fahrenheit");
   });
@@ -41,6 +46,48 @@ describe("weather", () => {
     expect(d.hours[1]).toEqual({ time: "2026-11-17T15:00", temp: 6, code: 3, precip: 0, isDay: false });
     expect(d.today).toEqual({ sunrise: "2026-11-17T08:21", sunset: "2026-11-17T17:24" });
     expect(d.units.temp).toBe("°C");
+    expect(d.current.uv).toBeUndefined();
+    expect(d.today.uvMax).toBeUndefined();
+    expect(d.pollen).toBeUndefined();
+  });
+
+  it("keeps today's UV index when Open-Meteo sends one", () => {
+    const withUv = {
+      ...forecast,
+      current: { ...forecast.current, uv_index: 2.6 },
+      daily: { ...forecast.daily, uv_index_max: [4.4, null] },
+    };
+    const d = trimForecast(withUv, "metric", 1);
+    expect(d.current.uv).toBe(3);
+    expect(d.today.uvMax).toBe(4);
+  });
+
+  it("keeps the highest pollen count and ignores kinds that weren't reported", () => {
+    expect(
+      maxPollen({
+        current: {
+          alder_pollen: 1,
+          birch_pollen: null,
+          grass_pollen: 12.4,
+          mugwort_pollen: 0,
+          olive_pollen: 4,
+          ragweed_pollen: 3,
+        },
+      }),
+    ).toBe(12);
+    expect(
+      maxPollen({
+        current: {
+          alder_pollen: null,
+          birch_pollen: null,
+          grass_pollen: null,
+          mugwort_pollen: null,
+          olive_pollen: null,
+          ragweed_pollen: null,
+        },
+      }),
+    ).toBeUndefined();
+    expect(maxPollen({})).toBeUndefined();
   });
 
   it("refuses a malformed answer rather than drawing junk", () => {

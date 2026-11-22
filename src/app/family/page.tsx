@@ -2,8 +2,10 @@ import type { Metadata } from "next";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
+import { FamilyEvents } from "@/components/FamilyEvents";
 import { MealPlanner } from "@/components/MealPlanner";
 import { MessageBoard } from "@/components/MessageBoard";
+import { ShoppingList } from "@/components/ShoppingList";
 import { Mark } from "@/components/Wordmark";
 import { SESSION_COOKIE, sessionFor } from "@/server/auth";
 
@@ -11,7 +13,7 @@ import { SignOut } from "./SignOut";
 
 export const metadata: Metadata = { title: "Family" };
 
-// The family's page (FAMILY_EMAILS): the message board and the meal plan, made for a phone.
+// The family's page (FAMILY_EMAILS): the message board, the meal plan and the shopping list, made for a phone.
 export default async function FamilyPage() {
   const session = await sessionFor((await cookies()).get(SESSION_COOKIE)?.value);
   if (!session) redirect("/signin/?next=/family/");
@@ -32,11 +34,18 @@ export default async function FamilyPage() {
         </div>
       </header>
       <MessageBoard />
+      <FamilyEvents />
       <section className="grid gap-3" aria-labelledby="meals-heading">
         <h2 id="meals-heading" className="text-lg font-bold">
           Meal plan
         </h2>
         <MealPlanner />
+      </section>
+      <section className="grid gap-3" aria-labelledby="shopping-heading">
+        <h2 id="shopping-heading" className="text-lg font-bold">
+          Shopping list
+        </h2>
+        <ShoppingList />
       </section>
     </main>
   );

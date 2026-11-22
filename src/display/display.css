@@ -460,12 +460,16 @@ body {
   font-size: min(9cqh, 5cqw);
   font-weight: 600;
 }
-.wx-meta {
+.wx-meta,
+.wx-extra {
   color: var(--muted);
   font-size: min(6.5cqh, 3.4cqw);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+.wx-extra {
+  font-weight: 600;
 }
 .wx-hilo {
   margin-left: auto;
@@ -533,7 +537,8 @@ body {
     font-size: min(14cqh, 3.2cqw);
   }
   .wx-meta,
-  .wx-hilo {
+  .wx-hilo,
+  .wx-extra {
     display: none;
   }
   .wx-hours,
@@ -2417,4 +2422,163 @@ body {
   height: 100%;
   border: 0;
   pointer-events: none;
+}
+
+/* Shopping list: open items, then bought ones when the widget shows them. A tap ticks a row off. */
+.w-shopping {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35em;
+  height: 100%;
+  overflow: hidden;
+  font-size: clamp(14px, 4.6cqw, 26px);
+}
+.sh-items {
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  list-style: none;
+}
+.sh-item,
+.sh-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.55em;
+  width: 100%;
+  min-height: 1.8em;
+  padding: 0.12em 0;
+}
+.sh-btn {
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+.sh-btn:active {
+  transform: scale(0.98);
+}
+.sh-check {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 1.05em;
+  height: 1.05em;
+  border: 2px solid var(--muted);
+  border-radius: 50%;
+  font-size: 0.75em;
+  font-weight: 800;
+}
+.sh-done .sh-check {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: #fff;
+  animation: sh-tick 0.35s;
+}
+.sh-title {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.sh-done .sh-title {
+  text-decoration: line-through;
+  opacity: 0.55;
+}
+.sh-more,
+.sh-msg {
+  font-size: 0.75em;
+}
+.sh-more {
+  color: var(--muted);
+}
+.sh-msg {
+  color: var(--danger);
+}
+@keyframes sh-tick {
+  50% {
+    transform: scale(1.25);
+  }
+}
+
+/* School status and who's home */
+.w-school,
+.w-presence {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 3cqh;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+.sc-state {
+  font-size: min(28cqh, 12cqw);
+  font-weight: 800;
+  line-height: 1.05;
+}
+.sc-open {
+  color: var(--accent);
+}
+.sc-delayed {
+  color: var(--sun);
+}
+.sc-closed {
+  color: var(--danger);
+}
+.sc-unknown {
+  color: var(--muted);
+}
+.sc-detail {
+  color: var(--muted);
+  font-size: min(8cqh, 3.6cqw);
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.pr-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35em;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  min-height: 0;
+  overflow: hidden;
+}
+.pr-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
+  font-size: min(11cqh, 4.5cqw);
+  font-weight: 700;
+}
+.pr-dot {
+  width: 0.55em;
+  height: 0.55em;
+  border-radius: 50%;
+  background: var(--muted);
+  flex: none;
+}
+.pr-home .pr-dot {
+  background: #8ce99a;
+}
+.pr-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.pr-where {
+  color: var(--muted);
+  font-weight: 600;
+}
+.pr-home .pr-where {
+  color: var(--text);
 }

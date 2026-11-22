@@ -23,12 +23,12 @@ same change, and moves it out of **In progress** when it merges.
 | Clock (`clock`) | Digital or analogue, any time zone, label, seconds (Vancouver and Toronto clocks) | Device clock |
 | Date (`date`) | Today's date in a time zone | Device clock |
 | Sunrise & sunset (`sunTimes`) | Today's sunrise, sunset and length of daylight | Open-Meteo forecast |
-| Weather (`weather`) | Current conditions, hourly, up to 7 days, with icons | Open-Meteo forecast |
+| Weather (`weather`) | Current conditions, hourly, up to 7 days, with icons, UV index and pollen | Open-Meteo forecast and air quality |
 | Air quality (`airQuality`) | AQHI or US AQI | Open-Meteo air quality |
 | WiFi QR (`wifiQr`) | Join code, optionally the password | Settings document |
 | Countdowns (`countdown`) | Days until holidays, birthdays and events, yearly ones roll over | Settings document |
-| Schedule (`agenda`) | Today, or the next 1 to 14 days | Google Calendar + iCal links |
-| Month calendar (`calendarMonth`) | Month grid or 1 to 6 weeks from this one, Sunday or Monday start, weekends on or off, title toggle | Google Calendar + iCal links |
+| Schedule (`agenda`) | Today, or the next 1 to 14 days | Google Calendar + iCal links, family events |
+| Month calendar (`calendarMonth`) | Month grid or 1 to 6 weeks from this one, Sunday or Monday start, weekends on or off, title toggle | Google Calendar + iCal links, family events |
 | Garbage day (`garbage`) | Next pickups, 1 to 8 weeks | Township of Langley (Recycle Coach) |
 | Photos (`photos`) | Slideshow, cover or contain, captions | Amazon shared albums, Amazon people, URL lists, photo library (uploads and Google Photos picks) |
 | Home Assistant tile (`haEntity`) | Toggle, light, sensor, climate, cover, lock (lock only), button | Home Assistant |
@@ -37,6 +37,9 @@ same change, and moves it out of **In progress** when it merges.
 | Note (`note`) | Fixed text from the admin | Settings document |
 | Message board (`messages`) | Family notes posted from phones | `messages` table |
 | Meals (`meals`) | Breakfast, lunch, dinner for a day or a week | `meals` table |
+| Shopping list (`shopping`) | Groceries added from phones, **tap to tick off** (tap again to put back), optional bought items | `shopping` table |
+| Who's home (`presence`) | Who is home, from person and device tracker entities, read only | Home Assistant |
+| School status (`school`) | Open, closed, delayed or late start; optional school names | District status page (`config.school`) |
 | Alerts (`alerts`) | Current emergency alerts, optional "all clear" | See alerts below |
 | Chore chart (`chores`) | Each kid's chores today, **tap to tick off** (tap again to take back), stars this week and a weekly goal | Settings document + `chores_done` table |
 | Sports scores (`sports`) | Live score, last result and next game for followed teams (NHL, NBA, WNBA, NFL, MLB, MLS, Premier League, Champions League) | ESPN public site API |
@@ -61,10 +64,11 @@ views stay on UTC−7 after B.C.'s March 2026 change even when the display brows
 
 **Alerts** (`src/server/alerts.ts`): Alert Ready (NAAD), **Environment Canada weather warnings** (through NAAD),
 DriveBC road events and weather conditions, Earthquakes Canada, BC Hydro power outages. Each switchable in `config.alerts.sources`.
+Optional email to everyone on `ADMIN_EMAILS` and `FAMILY_EMAILS` when a new strip-worthy alert arrives (`config.alerts.notifyEmail`).
 
 **Admin and family:** magic-link sign-in (Resend), admin panel tabs (views and grid editor, themes, displays with
-copyable addresses, meals, settings for every integration, Settings › Chores for the kids and their chores), **settings backup and restore** (Settings › Backup, a JSON
-file), `/family/` for the message board and meals, Sentry.
+copyable addresses, meals, shopping, settings for every integration, Settings › Chores for the kids and their chores), **settings backup and restore** (Settings › Backup, a JSON
+file), `/family/` for the message board, **family calendar events**, meals and the shopping list, Sentry. View previews can force day or night mode with `?mode=`.
 
 **Integrations connected from Settings:** Google Calendar, Google Tasks, Google Photos (Picker), iCal calendar links,
 Amazon Photos, the photo library (Vercel Blob), Home Assistant (Cloudflare Tunnel + Access), Spotify, Sonos, garbage
@@ -100,6 +104,11 @@ node scripts/e2e.mjs   # Playwright browser tests against the build (CHROMIUM_PA
 - **Music** (Melvin, 2026-11-17): Spotify and Sonos controls on the wall, through Home Assistant.
 - **Meal planning** (Melvin, 2026-11-17): breakfast, lunch and dinner for each day, planned from a phone and shown on
   the wall (see Architecture).
+- **Shopping list** (Melvin, 2026-11-22): groceries the family adds from their phones, shown on the wall, ticked off
+  with a tap when the widget allows it (see Architecture).
+- **UV, pollen, school status and who's home** (Melvin, 2026-11-22): the weather widget can show the UV index and the
+  highest pollen count Open-Meteo reports; a school widget reads the district page (Langley SD35 by default) for closed,
+  delayed or late start; a who's-home widget reads Home Assistant person and device tracker entities and never controls them.
 - **Emergency alerts** (Melvin, 2026-11-17): urgent alerts for Langley, the Lower Mainland, BC and Canada (Alert
   Ready/NAAD, Environment Canada weather warnings, DriveBC road events for torrential rain or snow, Earthquakes Canada,
   tsunami and flooding). They show as a **red strip across the top of the screen that can be dismissed**, not a
@@ -219,12 +228,30 @@ panel can be complex if you need it to be."
 - **Family message board:** anyone on `ADMIN_EMAILS` or `FAMILY_EMAILS` posts notes from `/family/`; the author name is
   typed, never the email, because the wall is readable by anyone in the kitchen. Notes can expire; admins pin. Displays
   poll the board every 30 seconds with an ETag.
+- **Family calendar events** (Melvin, 2026-11-22): dentists, concerts and the like posted from `/family/` live in
+  `family_events` (`src/server/familyEvents.ts`) and merge into the same five-minute calendar feed as Google and iCal
+  links (colour `#5b8def`, calendar "Family"). `/api/family-events/` serves the phone UI; authors and admins can delete.
 - **Meal planning** (Melvin, 2026-11-17: "add meal planning", with breakfast, lunch and dinner for each day): one row
   per day and meal in the `meals` table (`src/server/meals.ts`), planned by anyone on `ADMIN_EMAILS` or `FAMILY_EMAILS`
   from the admin panel's Meals tab or `/family/`. A meal saves when its box loses focus (not with the settings Save
   button, since it isn't part of the settings document), and recent meals are offered as suggestions. The meals widget
   shows one day (the next meal highlighted; from 8 PM it shows tomorrow, `nextMeal` in `src/lib/meals.ts`) or up to a
   week, and polls `/api/display/meals/` every minute. Plans older than 60 days are cleared as new ones are written.
+- **Shopping list** (Melvin, 2026-11-22): one row per item in the `shopping` table (`src/server/shopping.ts`), added by
+  anyone on `ADMIN_EMAILS` or `FAMILY_EMAILS` from `/family/` or the admin panel's Shopping tab. Open items stay in
+  the order they were added; bought ones drop off after 7 days, and the open list stops around 100. "Add from this
+  week's meals" copies each distinct meal for the next seven days that isn't already open. Displays poll
+  `/api/display/shopping/` every minute with an ETag. A tap on the wall ticks an item off at once (a second tap puts
+  it back) only when a shopping widget has `allowCheck`, because anyone in the kitchen can reach the screen; a
+  signed-in phone can always tick. The widget shows a chosen number of items and can show or hide what's already bought.
+- **School status** (Melvin, 2026-11-22): `src/server/school.ts` reads `config.school.statusUrl` (https only, never a private
+  address), cached five minutes, and looks for closed, delayed or late start in the page's alert or notification banner,
+  then in the rest of the page. Anything else is open. A widget can name schools; a notice counts when it names one of
+  them or says all schools. Displays poll `/api/display/school/`. The district name and page are Settings › School status
+  (Langley School District, sd35.bc.ca, by default).
+- **Who's home** (Melvin, 2026-11-22): presence widgets list Home Assistant person and device tracker entities. Those ids
+  are added to `usedEntities().all` and never to `controls`, so the wall can show home or away and cannot change them.
+  The widget uses the same five-second Home Assistant feed as the other tiles.
 - **Google Calendar:** an admin connects one Google account from Settings (OAuth, `calendar.readonly`, redirect
   `<site>/api/google/callback/`); the refresh token is a stored secret, the chosen calendars and their colours live in
   `config.integrations.google.calendars`. The server fetches the month grid around today plus the next six weeks into
@@ -252,6 +279,10 @@ panel can be complex if you need it to be."
   (`/api/display/transit/`, polled every 30 seconds); the wall counts minutes down from absolute times between reads.
   TransLink's licence notice is shown in the widget's settings and as "Live times from TransLink" on the wall.
   Setup: `docs/translink.md`.
+- **Alert email:** when `config.alerts.notifyEmail` is on, each new strip-worthy alert (`meetsBanner` in `src/lib/alerts.ts`)
+  triggers one email per alert id to everyone on `ADMIN_EMAILS` and `FAMILY_EMAILS` (`src/server/alertNotify.ts`,
+  `sendEmail` through Resend); ids are stored in `alert_notified` so repeats are never sent. The display alerts route
+  calls this after each feed read.
 - **Emergency alerts:** `src/server/alerts.ts` reads NAAD's Atom feed (Alert Ready, and Environment Canada's warnings,
   whose own GeoMet API refuses automated readers), DriveBC Open511 (major events and weather conditions) and Earthquakes
   Canada's FDSN text service (the last 24 hours; its distance filter is ignored, so distance is checked here) and BC
@@ -377,9 +408,9 @@ panel can be complex if you need it to be."
   "Cloudflare Access refused" rather than following. The Home Assistant token and the Access pair are encrypted secrets
   (`homeAssistant.*`), set from Settings. Setup steps: `docs/home-assistant.md`.
   - Only entities on a widget (or the doorbell settings) are read, and only widget entities can be controlled, with a
-    fixed set of actions per domain (`serviceFor`). **Locks can be locked, never unlocked** (Claude's default, 2026-11-17,
-    to be confirmed by Melvin), because anyone in the kitchen can tap the screen. States are one five-second feed
-    shared by every tile and the doorbell.
+    fixed set of actions per domain (`serviceFor`). Who's-home entities are read and never controlled. **Locks can be
+    locked, never unlocked** (Melvin, 2026-11-22), because anyone in the kitchen can tap the screen. States are one
+    five-second feed shared by every tile, the doorbell and who's home.
   - UniFi Protect cameras and the doorbell come through Home Assistant's UniFi Protect integration, because Protect
     itself is only on the local network. Camera pictures go through `/api/display/camera/` (snapshots from
     `camera_proxy`, refreshed on a timer, never a video stream, which would be heavy for the UC-Display21).
@@ -461,8 +492,10 @@ panel can be complex if you need it to be."
 
 <!-- BEGIN:nextjs-agent-rules -->
 
-# This is NOT the Next.js you know
+## This is NOT the Next.js you know
 
-This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` before writing any code. Heed deprecation notices.
+This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
+
+This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
 
 <!-- END:nextjs-agent-rules -->

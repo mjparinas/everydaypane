@@ -66,7 +66,7 @@ export async function testConnection(config: DashboardConfig): Promise<string> {
 
 /**
  * Every entity a widget, the doorbell or the screen saver's motion sensors use: the only ones read. Only widget
- * entities can be controlled; the doorbell and motion sensors are read and nothing else.
+ * entities can be controlled; the doorbell, motion sensors and who's-home entities are read and nothing else.
  */
 export function usedEntities(config: DashboardConfig): {
   controls: Set<string>;
@@ -77,6 +77,7 @@ export function usedEntities(config: DashboardConfig): {
   const controls = new Set<string>();
   const cameras = new Set<string>();
   const players = new Set<string>();
+  const readOnly = new Set<string>();
   for (const v of config.views)
     for (const w of v.widgets) {
       if (w.type === "haEntity" && w.entityId) controls.add(w.entityId);
@@ -85,12 +86,14 @@ export function usedEntities(config: DashboardConfig): {
         players.add(w.entityId);
         controls.add(w.entityId);
       }
+      if (w.type === "presence") for (const person of w.entities) if (person.entityId) readOnly.add(person.entityId);
     }
   const d = config.integrations.homeAssistant.doorbell;
   if (d.cameraEntityId) cameras.add(d.cameraEntityId);
   const all = new Set([...controls, ...cameras]);
   if (d.entityId) all.add(d.entityId);
   for (const m of config.screenSaver.motionEntityIds) if (m) all.add(m);
+  for (const id of readOnly) all.add(id);
   return { controls, cameras, players, all };
 }
 

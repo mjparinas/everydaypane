@@ -24,6 +24,12 @@ const MIGRATIONS = [
   `CREATE TABLE IF NOT EXISTS meals (date TEXT NOT NULL, slot TEXT NOT NULL, text TEXT NOT NULL, updated_at INTEGER NOT NULL, updated_by TEXT NOT NULL, PRIMARY KEY (date, slot))`,
   // The chore chart's ticks: one row per day, chore and person (src/server/chores.ts).
   `CREATE TABLE IF NOT EXISTS chores_done (date TEXT NOT NULL, chore_id TEXT NOT NULL, person_id TEXT NOT NULL, stars INTEGER NOT NULL, done_at INTEGER NOT NULL, PRIMARY KEY (date, chore_id, person_id))`,
+  // The family shopping list (src/server/shopping.ts): items added from phones, ticked on the wall or phone.
+  `CREATE TABLE IF NOT EXISTS shopping (id TEXT PRIMARY KEY, text TEXT NOT NULL, done INTEGER NOT NULL DEFAULT 0, sort INTEGER NOT NULL, added_at INTEGER NOT NULL, done_at INTEGER, added_by TEXT NOT NULL)`,
+  // Family calendar notes posted from phones (src/server/familyEvents.ts); merged into the display calendar feed.
+  `CREATE TABLE IF NOT EXISTS family_events (id TEXT PRIMARY KEY, title TEXT NOT NULL, start TEXT NOT NULL, end TEXT NOT NULL, all_day INTEGER NOT NULL, created_at INTEGER NOT NULL, created_by TEXT NOT NULL)`,
+  // Ids of strip-worthy alerts already emailed (src/server/alertNotify.ts), so a new alert emails once.
+  `CREATE TABLE IF NOT EXISTS alert_notified (id TEXT PRIMARY KEY, sent_at INTEGER NOT NULL)`,
 ];
 
 // Columns added after a table was first created. SQLite has no ADD COLUMN IF NOT EXISTS, so each one runs on its own

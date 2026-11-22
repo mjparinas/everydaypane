@@ -110,6 +110,10 @@ export const widgetSchema = z.discriminatedUnion("type", [
     days: z.number().int().min(0).max(7),
     showCurrent: z.boolean(),
     showHourly: z.boolean(),
+    // UV index and pollen from Open-Meteo (Melvin, 2026-11-22). On by default for new widgets; older documents keep
+    // the fields via zod defaults so the forecast looks the same until someone switches them on.
+    showUv: z.boolean().default(true),
+    showPollen: z.boolean().default(true),
   }),
   z.object({ ...base, type: z.literal("airQuality"), scale: z.enum(["aqhi", "usAqi"]) }),
   z.object({
@@ -283,6 +287,31 @@ export const widgetSchema = z.discriminatedUnion("type", [
     showPlace: z.boolean(),
     animate: z.boolean(),
   }),
+  // Shopping list (Melvin, 2026-11-22): items in the shopping table, added from phones, ticked on the wall when
+  // allowCheck is on.
+  z.object({
+    ...base,
+    type: z.literal("shopping"),
+    count: z.number().int().min(1).max(40),
+    allowCheck: z.boolean(),
+    showDone: z.boolean(),
+  }),
+  // Who's home (Melvin, 2026-11-22): Home Assistant person / device_tracker / presence entities, read-only.
+  z.object({
+    ...base,
+    type: z.literal("presence"),
+    entities: z
+      .array(z.object({ entityId: z.string().max(255), label: z.string().max(40) }))
+      .max(12)
+      .refine((xs) => new Set(xs.map((x) => x.entityId)).size === xs.length, "Each person once"),
+  }),
+  // School / snow-day status (Melvin, 2026-11-22): scrapes the district site banner (Langley SD35 by default).
+  z.object({
+    ...base,
+    type: z.literal("school"),
+    // School name fragments to match in a closure notice (empty = any district-wide alert).
+    schools: z.array(z.string().trim().min(1).max(80)).max(12),
+  }),
 ]);
 export type Widget = z.infer<typeof widgetSchema>;
 export type WidgetType = Widget["type"];
@@ -426,7 +455,17 @@ export const configSchema = z
       minMagnitude: z.number().min(2).max(9),
       // Power outages count when their area covers the home or is within this many km of it.
       powerKm: z.number().int().min(0).max(50).default(5),
+      // Email ADMIN_EMAILS and FAMILY_EMAILS when a new strip-worthy alert arrives (Melvin, 2026-11-22). Off by default.
+      notifyEmail: z.boolean().default(false),
     }),
+    // School status (Melvin, 2026-11-22): which district site to read for snow-day / closure banners.
+    school: z
+      .object({
+        districtName: z.string().trim().max(80).default("Langley School District"),
+        // Public https page that shows a closure banner when schools are closed or delayed.
+        statusUrl: z.string().trim().max(300).default("https://www.sd35.bc.ca/"),
+      })
+      .default({ districtName: "Langley School District", statusUrl: "https://www.sd35.bc.ca/" }),
     // Defaults to none, so a document saved before the chore chart existed still loads.
     chores: z.object({ people: z.array(chorePersonSchema).max(8), items: z.array(choreSchema).max(40) }).default({ people: [], items: [] }),
     // Burn-in protection: the whole layout drifts a few pixels every few minutes so static edges never sit on the same

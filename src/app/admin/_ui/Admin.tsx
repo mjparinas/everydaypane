@@ -5,6 +5,7 @@ import { useEffect, useSyncExternalStore } from "react";
 
 import { MealPlanner } from "@/components/MealPlanner";
 import { MessageBoard } from "@/components/MessageBoard";
+import { ShoppingList } from "@/components/ShoppingList";
 import { Mark } from "@/components/Wordmark";
 import type { DashboardConfig } from "@/lib/config/schema";
 
@@ -25,6 +26,7 @@ const TABS = [
   { id: "displays", label: "Displays", icon: "🖥️" },
   { id: "messages", label: "Messages", icon: "💬" },
   { id: "meals", label: "Meals", icon: "🍽️" },
+  { id: "shopping", label: "Shopping", icon: "🛒" },
   { id: "settings", label: "Settings", icon: "⚙️" },
 ] as const;
 type Tab = (typeof TABS)[number]["id"];
@@ -165,6 +167,11 @@ function AdminPanel({ email }: { email: string }) {
           </div>
         )}
         {tab === "meals" && <MealPlanner />}
+        {tab === "shopping" && (
+          <div className="mx-auto max-w-xl">
+            <ShoppingList />
+          </div>
+        )}
         {tab === "settings" && (
           <div className="grid gap-4">
             <SettingsPanel />
@@ -177,13 +184,13 @@ function AdminPanel({ email }: { email: string }) {
 
       {/* A thumb-reachable tab bar on phones. */}
       <nav
-        className="fixed inset-x-0 bottom-0 z-20 grid grid-cols-7 border-t border-line bg-panel/95 pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden"
+        className="fixed inset-x-0 bottom-0 z-20 grid grid-cols-8 border-t border-line bg-panel/95 pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden"
         aria-label="Sections"
       >
         {TABS.map((t) => (
           <button
             key={t.id}
-            className={`grid min-h-14 place-items-center gap-0.5 text-[11px] font-medium ${tab === t.id ? "text-brand" : "text-soft"}`}
+            className={`grid min-h-14 min-w-0 place-items-center gap-0.5 px-0.5 text-[10px] font-medium leading-tight ${tab === t.id ? "text-brand" : "text-soft"}`}
             aria-current={tab === t.id ? "page" : undefined}
             onClick={() => go(t.id)}
           >

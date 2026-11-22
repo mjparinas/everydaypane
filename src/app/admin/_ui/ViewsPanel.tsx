@@ -116,8 +116,11 @@ export function ViewsPanel() {
           <button className="btn-primary" onClick={() => setPicking(!picking)} aria-expanded={picking}>
             + Add a widget
           </button>
-          <a className="btn-ghost" href={`/admin/preview/${encodeURIComponent(view.id)}/`} target="_blank" rel="noreferrer">
-            Preview saved view ↗
+          <a className="btn-ghost" href={`/admin/preview/${encodeURIComponent(view.id)}/?mode=day`} target="_blank" rel="noreferrer">
+            Preview day ↗
+          </a>
+          <a className="btn-ghost" href={`/admin/preview/${encodeURIComponent(view.id)}/?mode=night`} target="_blank" rel="noreferrer">
+            Preview night ↗
           </a>
         </div>
         {picking && (
