@@ -102,6 +102,8 @@ export const widgetSchema = z.discriminatedUnion("type", [
     style: z.enum(["digital", "analog"]),
   }),
   z.object({ ...base, type: z.literal("date"), timeZone, showYear: z.boolean() }),
+  // Today's sunrise and sunset at the dashboard's location. It shares the weather feed, which already includes both.
+  z.object({ ...base, type: z.literal("sunTimes") }),
   z.object({
     ...base,
     type: z.literal("weather"),

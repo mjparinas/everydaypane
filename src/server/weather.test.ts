@@ -39,6 +39,7 @@ describe("weather", () => {
     expect(d.current).toEqual({ temp: 6, feels: 3, code: 61, isDay: true, wind: 15, humidity: 88 });
     expect(d.days[1]).toEqual({ date: "2026-11-18", code: 2, max: 9, min: 3, precip: 10 });
     expect(d.hours[1]).toEqual({ time: "2026-11-17T15:00", temp: 6, code: 3, precip: 0, isDay: false });
+    expect(d.today).toEqual({ sunrise: "2026-11-17T08:21", sunset: "2026-11-17T17:24" });
     expect(d.units.temp).toBe("°C");
   });
 

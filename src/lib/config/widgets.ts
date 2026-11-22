@@ -31,6 +31,14 @@ export const WIDGETS: { [T in WidgetType]: WidgetInfo<T> } = {
     minSize: { w: 2, h: 1 },
     defaults: () => ({ timeZone: "America/Vancouver", showYear: false }),
   },
+  sunTimes: {
+    label: "Sunrise & sunset",
+    description: "Today's sunrise, sunset and daylight",
+    icon: "🌅",
+    size: { w: 3, h: 2 },
+    minSize: { w: 2, h: 1 },
+    defaults: () => ({}),
+  },
   weather: {
     label: "Weather",
     description: "Now and the week ahead",
