@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import type { DisplayPayload } from "@/lib/display/types";
 import { SCREEN_SAVER_OFF } from "@/lib/screenSaver";
+import { zonedFormatter } from "@/lib/timeZone";
 
 import { screenSaver } from "./saver";
 
@@ -92,8 +93,7 @@ describe("the display's screen saver", () => {
     vi.advanceTimersByTime(MIN + 15_000);
     expect(s.mode).toBe("photos");
     expect(app.querySelector(".saver .w-photos")).not.toBeNull();
-    // Formatted as the dashboard's zone sees it (tzdata keeps B.C. on UTC−7 from 2026, so don't hard-code the hour).
-    const want = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Vancouver", hour: "numeric", minute: "2-digit", hour12: true });
+    const want = zonedFormatter("America/Vancouver", { hour: "numeric", minute: "2-digit", hour12: true });
     expect(app.querySelector(".sv-time")?.textContent).toBe(want.format(Date.now()));
     vi.unstubAllGlobals();
   });

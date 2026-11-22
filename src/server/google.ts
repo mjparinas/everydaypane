@@ -4,6 +4,7 @@ import { z } from "zod";
 
 import type { DashboardConfig } from "@/lib/config/schema";
 import type { CalendarData, CalendarEvent } from "@/lib/display/types";
+import { zonedFormatter } from "@/lib/timeZone";
 
 import { cached, forget, type Cached } from "./cache";
 import { randomToken } from "./crypto";
@@ -231,7 +232,7 @@ export function trimEvent(raw: unknown, calendar: { name: string; color: string 
 
 const addDays = (date: string, n: number) => new Date(Date.parse(`${date}T00:00:00Z`) + n * 86_400_000).toISOString().slice(0, 10);
 const localDate = (now: number, timeZone: string) =>
-  new Intl.DateTimeFormat("en-CA", { timeZone, year: "numeric", month: "2-digit", day: "2-digit" }).format(now);
+  zonedFormatter(timeZone, { year: "numeric", month: "2-digit", day: "2-digit" }).format(now);
 
 /**
  * The days one feed covers: the whole month grid around today (a week either side of the month) and at least the

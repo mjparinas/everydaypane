@@ -4,6 +4,7 @@ import ICAL from "ical.js";
 
 import type { DashboardConfig } from "@/lib/config/schema";
 import type { CalendarEvent } from "@/lib/display/types";
+import { reliableTimeZone } from "@/lib/timeZone";
 
 import { cached } from "./cache";
 import { getSecret, setSecret } from "./secrets";
@@ -65,7 +66,7 @@ async function download(url: string): Promise<string> {
 /** The UTC offset of a time zone at an instant, in milliseconds. */
 function offsetMs(at: number, timeZone: string): number {
   const p = new Intl.DateTimeFormat("en-US", {
-    timeZone,
+    timeZone: reliableTimeZone(timeZone, at),
     hourCycle: "h23",
     year: "numeric",
     month: "2-digit",

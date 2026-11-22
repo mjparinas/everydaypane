@@ -4,6 +4,7 @@ import { z } from "zod";
 
 import type { DashboardConfig } from "@/lib/config/schema";
 import type { BinKind, GarbageData } from "@/lib/display/types";
+import { zonedFormatter } from "@/lib/timeZone";
 
 import { cached, type Cached } from "./cache";
 
@@ -133,7 +134,7 @@ export function trimSchedule(collectionsRaw: unknown, schedulesRaw: unknown, tod
 }
 
 const localDate = (now: number, timeZone: string) =>
-  new Intl.DateTimeFormat("en-CA", { timeZone, year: "numeric", month: "2-digit", day: "2-digit" }).format(now);
+  zonedFormatter(timeZone, { year: "numeric", month: "2-digit", day: "2-digit" }).format(now);
 
 export async function garbageFeed(config: DashboardConfig, now = Date.now()): Promise<Cached<GarbageData>> {
   const g = config.integrations.garbage;
