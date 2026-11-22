@@ -80,8 +80,23 @@ describe("widgets", () => {
     const stop = sunTimes(el, newWidget("sunTimes", "sun", { x: 0, y: 0 }), ctx);
     await vi.waitFor(() => expect(el.querySelectorAll(".st-value")).toHaveLength(2));
     expect([...el.querySelectorAll(".st-value")].map((node) => node.textContent)).toEqual(["7:33 AM", "4:24 PM"]);
-    expect(el.querySelector(".st-daylight")?.textContent).toContain("8 hr 51 min");
+    expect(el.querySelectorAll(".st-icon")).toHaveLength(2);
+    expect(el.querySelector(".st-daylight")?.textContent).toBe("☀️ 8 hr 51 min of daylight");
     expect(daylightLength("", "2026-11-21T16:24")).toBe("");
+    stop();
+    vi.unstubAllGlobals();
+  });
+
+  it("hides sunrise and sunset emoji when switched off", async () => {
+    const data = {
+      today: { sunrise: "2026-11-21T07:33", sunset: "2026-11-21T16:24" },
+    } as WeatherData;
+    vi.stubGlobal("fetch", () => Promise.resolve(Response.json(data)));
+    const el = document.createElement("div");
+    const stop = sunTimes(el, { ...newWidget("sunTimes", "sun", { x: 0, y: 0 }), showEmoji: false }, ctx);
+    await vi.waitFor(() => expect(el.querySelector(".st-daylight")).toBeTruthy());
+    expect(el.querySelector(".st-icon")).toBeNull();
+    expect(el.querySelector(".st-daylight")?.textContent).toBe("8 hr 51 min of daylight");
     stop();
     vi.unstubAllGlobals();
   });

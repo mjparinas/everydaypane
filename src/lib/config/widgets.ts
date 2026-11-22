@@ -37,7 +37,7 @@ export const WIDGETS: { [T in WidgetType]: WidgetInfo<T> } = {
     icon: "🌅",
     size: { w: 3, h: 2 },
     minSize: { w: 2, h: 1 },
-    defaults: () => ({}),
+    defaults: () => ({ transparent: false, showEmoji: true }),
   },
   weather: {
     label: "Weather",

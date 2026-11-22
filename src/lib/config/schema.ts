@@ -103,7 +103,14 @@ export const widgetSchema = z.discriminatedUnion("type", [
   }),
   z.object({ ...base, type: z.literal("date"), timeZone, showYear: z.boolean() }),
   // Today's sunrise and sunset at the dashboard's location. It shares the weather feed, which already includes both.
-  z.object({ ...base, type: z.literal("sunTimes") }),
+  // Transparent drops the panel so it can sit over photos like the clock and date; showEmoji covers the sun icons
+  // and the daylight line (Melvin, 2026-11-22).
+  z.object({
+    ...base,
+    type: z.literal("sunTimes"),
+    transparent: z.boolean().default(false),
+    showEmoji: z.boolean().default(true),
+  }),
   z.object({
     ...base,
     type: z.literal("weather"),

@@ -145,8 +145,26 @@ function TypeSettings({
         </>
       );
     }
-    case "sunTimes":
-      return <p className="text-xs text-soft">Times are for {config.location.name || "the dashboard's location"} (Settings).</p>;
+    case "sunTimes": {
+      const e = edit<"sunTimes">();
+      return (
+        <>
+          <Toggle
+            label="Transparent background"
+            checked={w.transparent}
+            hint="No panel, like the clock and date. Handy over a photos widget."
+            onChange={(v) => e((x) => void (x.transparent = v))}
+          />
+          <Toggle
+            label="Show emoji"
+            checked={w.showEmoji}
+            hint="The sunrise and sunset icons, and the sun on the daylight line."
+            onChange={(v) => e((x) => void (x.showEmoji = v))}
+          />
+          <p className="text-xs text-soft">Times are for {config.location.name || "the dashboard's location"} (Settings).</p>
+        </>
+      );
+    }
     case "weather": {
       const e = edit<"weather">();
       return (
