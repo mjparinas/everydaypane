@@ -388,7 +388,7 @@ export const flows = [
           const res = await r.fetch();
           if (res.status() !== 200) return await r.fulfill({ response: res });
           const json = await res.json();
-          json.screenSaver = { ...json.screenSaver, idle: true, shows: "dark", minutes: 0 };
+          json.screenSaver = { ...json.screenSaver, idle: true, shows: "dark", minutes: 0.1 };
           await r.fulfill({ response: res, json });
         } catch {
           // The page closed while this request was in flight.
@@ -398,8 +398,8 @@ export const flows = [
       await d.goto(url);
       // The dark saver immediately hides the dashboard, so wait for the clock to mount rather than become visible.
       await d.locator(".cell-clock .c-hm").first().waitFor({ state: "attached" });
-      // Idle timing is covered by the screenSaver unit tests. With a zero-minute threshold here, this browser test
-      // checks that the loaded settings activate the dark overlay and that tapping it wakes the dashboard.
+      // The short idle threshold exercises the loaded settings without a simulated clock; the unit tests cover the
+      // exact timing rule. A positive threshold also keeps the saver off after the tap wakes the dashboard.
       await d.locator(".saver.show.saver-dark").waitFor();
       expect(await d.locator(".stage").evaluate((el) => getComputedStyle(el).visibility === "hidden"), "the dashboard still paints");
       await d.locator(".saver.show").click();
