@@ -62,7 +62,17 @@ export function ViewsPanel() {
     const id = newId("view");
     edit(
       (c) =>
-        void c.views.push({ id, name: `View ${c.views.length + 1}`, cols: 12, rows: 8, gap: 16, padding: 14, themeId: null, widgets: [] }),
+        void c.views.push({
+          id,
+          name: `View ${c.views.length + 1}`,
+          cols: 12,
+          rows: 8,
+          gap: 16,
+          padding: 14,
+          tilePadding: 16,
+          themeId: null,
+          widgets: [],
+        }),
     );
     setViewId(id);
     setSelected(null);
@@ -182,6 +192,13 @@ export function ViewsPanel() {
             <NumberInput label="Rows" value={view.rows} min={1} max={24} onChange={(n) => resize(view.cols, n)} />
             <NumberInput label="Gap (px)" value={view.gap} min={0} max={48} onChange={(n) => editView((x) => void (x.gap = n))} />
             <NumberInput label="Edge (px)" value={view.padding} min={0} max={96} onChange={(n) => editView((x) => void (x.padding = n))} />
+            <NumberInput
+              label="Tile (px)"
+              value={view.tilePadding}
+              min={0}
+              max={48}
+              onChange={(n) => editView((x) => void (x.tilePadding = n))}
+            />
           </div>
           <Select
             label="Colour scheme"

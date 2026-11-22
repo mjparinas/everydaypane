@@ -23,6 +23,7 @@ const home: View = {
   rows: 8,
   gap: 16,
   padding: 14,
+  tilePadding: 16,
   themeId: null,
   widgets: [
     w(newWidget("clock", "home-clock-van", { x: 0, y: 0 }), { x: 0, y: 0, w: 4, h: 2 }),
@@ -50,6 +51,7 @@ const morning: View = {
   rows: 8,
   gap: 16,
   padding: 14,
+  tilePadding: 16,
   themeId: null,
   widgets: [
     w(newWidget("clock", "m-clock", { x: 0, y: 0 }), { x: 0, y: 0, w: 4, h: 2 }),
@@ -68,6 +70,7 @@ const calendar: View = {
   rows: 8,
   gap: 16,
   padding: 14,
+  tilePadding: 16,
   themeId: null,
   widgets: [
     w(newWidget("calendarMonth", "c-month", { x: 0, y: 0 }), { x: 0, y: 0, w: 9, h: 8 }),
@@ -83,6 +86,7 @@ const night: View = {
   rows: 8,
   gap: 16,
   padding: 20,
+  tilePadding: 16,
   themeId: null,
   widgets: [
     w(newWidget("clock", "n-clock", { x: 0, y: 0 }), { x: 0, y: 0, w: 12, h: 5 }, { label: "" } as Partial<Widget>),

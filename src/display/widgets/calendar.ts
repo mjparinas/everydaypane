@@ -60,7 +60,8 @@ export const agenda: Mount<"agenda"> = (el, w, ctx) => {
         h(
           "section",
           { class: "ag-day" },
-          w.range === "upcoming" || w.title ? h("h3", { class: "ag-head" }, dayLabel(g.d, today)) : null,
+          // Only the upcoming range needs a day label; for today the widget title (or the range itself) already says it.
+          w.range === "upcoming" ? h("h3", { class: "ag-head" }, dayLabel(g.d, today)) : null,
           h("ul", { class: "ag-list" }, ...g.list.map((e) => row(e, g.d, ctx, now))),
         ),
       ),

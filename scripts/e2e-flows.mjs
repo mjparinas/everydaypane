@@ -244,6 +244,7 @@ export const flows = [
         rows: 8,
         gap: 16,
         padding: 24,
+        tilePadding: 16,
         themeId: null,
         widgets: [
           {
@@ -451,6 +452,7 @@ export const flows = [
         rows: 8,
         gap: 16,
         padding: 24,
+        tilePadding: 16,
         themeId: null,
         widgets: [{ id: "c-chart", type: "chores", x: 0, y: 0, w: 8, h: 6, personIds: [], showStars: true, allowCheck: true }],
       });

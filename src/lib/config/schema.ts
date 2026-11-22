@@ -331,6 +331,9 @@ export const viewSchema = z.object({
   rows: z.number().int().min(1).max(24),
   gap: z.number().int().min(0).max(48),
   padding: z.number().int().min(0).max(96),
+  // Space inside each tile between the panel edge and the content (Melvin, 2026-11-22). Photos, cameras and
+  // radar keep padding 0 in CSS so the picture still fills the cell.
+  tilePadding: z.number().int().min(0).max(48).default(16),
   themeId: id.nullable(), // null: the dashboard's theme
   widgets: z.array(widgetSchema).max(60),
 });

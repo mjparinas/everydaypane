@@ -52,7 +52,7 @@ same change, and moves it out of **In progress** when it merges.
 | BC Ferries (`ferries`) | Next sailings on up to four routes, how full each is, cancellations and delays | Community BC Ferries API (bcferriesapi.ca) |
 | Earth wind map (`earth`) | earth.nullschool.net's animated wind globe centred on any place, four zooms, a colour layer (temperature, rain, humidity…), place marker, animation on or off | earth.nullschool.net (framed), Open-Meteo place search |
 
-**Display behaviour:** several views on a drag-and-drop grid (chosen rows and columns), **widgets layered on top of a photos widget**
+**Display behaviour:** several views on a drag-and-drop grid (chosen rows and columns, gap, edge padding and **tile padding**), **widgets layered on top of a photos widget**
 (photos as the backdrop), a time-of-day schedule
 (morning, afternoon, evening, night) choosing the view, theme, day or night mode and dimming; themes with colour
 palettes, fonts, corner radius, opacity and optional glass; burn-in protection (pixel shift); offline mode (service
@@ -126,6 +126,9 @@ node scripts/e2e.mjs   # Playwright browser tests against the build (CHROMIUM_PA
   the PNG icons, `favicon.ico` and the web app manifest (`src/app/manifest.ts`) are made from them.
 - **Month calendar title** (Melvin, 2026-11-19: "add a toggle to show/hide month title"): the month widget's
   "November 2026" line can be switched off in its settings (`showTitle`, on by default); the grid takes the space.
+- **Tile padding** (Melvin, 2026-11-22: "is it possible to adjust the inner padding of the tiles"): each view has a
+  **Tile** control next to Gap and Edge (`tilePadding`, 0–48 px, 16 by default) for the space inside each panel;
+  photos, cameras and radar still fill their cell.
 - **B.C. permanent daylight time** (Melvin, 2026-11-22): some display browsers have old time-zone data and move
   `America/Vancouver` back one hour in November. Everydaypane uses Vancouver's historical rules before the March 8,
   2026 transition and fixed UTC−7 after it for clocks, dates, calendars and time-of-day display schedules.
