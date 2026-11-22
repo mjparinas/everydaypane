@@ -3,10 +3,11 @@ import "server-only";
 import type { DashboardConfig } from "@/lib/config/schema";
 import type { CalendarData } from "@/lib/display/types";
 
+import { eventsInRange as familyEvents } from "./familyEvents";
 import { calendarFeed, feedRange, GoogleDisconnected, sortEvents } from "./google";
 import { icalEvents } from "./ical";
 
-// The one calendar feed displays read: Google's chosen calendars plus the calendar links. Each source fails on its own,
+// The one calendar feed displays read: Google's chosen calendars, calendar links, and family events from /family/. Each source fails on its own,
 // so a school calendar that is down never hides the family's Google events, or the other way round.
 
 export interface Feed {
@@ -19,6 +20,7 @@ export interface Feed {
 export async function combinedFeed(config: DashboardConfig, now = Date.now()): Promise<Feed> {
   const links = config.integrations.icals.filter((l) => l.enabled);
   const { from, to } = feedRange(now, config.location.timeZone);
+  const family = await familyEvents(from, to);
 
   let google: Awaited<ReturnType<typeof calendarFeed>> | null = null;
   let googleConnected = true;
@@ -26,10 +28,12 @@ export async function combinedFeed(config: DashboardConfig, now = Date.now()): P
     google = await calendarFeed(config, now);
   } catch (error) {
     if (error instanceof GoogleDisconnected) googleConnected = false;
-    else if (!links.length) throw error;
+    else if (!links.length && !family.length) throw error;
     else console.error("[calendar] Google failed", error);
   }
-  if (!googleConnected && !links.length) return { data: { updatedAt: now, from: "", to: "", events: [] }, connected: false, stale: false };
+
+  if (!googleConnected && !links.length && !family.length)
+    return { data: { updatedAt: now, from: "", to: "", events: [] }, connected: false, stale: false };
 
   const results = await Promise.allSettled(links.map((l) => icalEvents(l, from, to, config.location.timeZone, now)));
   const linked = results.flatMap((r, i) => {
@@ -37,7 +41,7 @@ export async function combinedFeed(config: DashboardConfig, now = Date.now()): P
     console.error(`[calendar] link ${links[i]?.id} failed`, r.reason);
     return [];
   });
-  if (!google && results.every((r) => r.status === "rejected")) {
+  if (!google && results.every((r) => r.status === "rejected") && !family.length) {
     throw new Error("Every calendar failed");
   }
   return {
@@ -45,7 +49,7 @@ export async function combinedFeed(config: DashboardConfig, now = Date.now()): P
       updatedAt: google?.value.updatedAt ?? now,
       from,
       to,
-      events: sortEvents([...(google?.value.events ?? []), ...linked]).slice(0, 800),
+      events: sortEvents([...(google?.value.events ?? []), ...linked, ...family]).slice(0, 800),
     },
     connected: true,
     stale: google?.stale ?? false,

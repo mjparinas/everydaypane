@@ -68,7 +68,7 @@ export function upgrade(stored: unknown): unknown {
   const d = defaultConfig() as unknown as Record<string, unknown>;
   const s = stored as Record<string, unknown>;
   const out: Record<string, unknown> = { ...d, ...s };
-  for (const k of ["integrations", "burnIn", "alerts", "schedule", "location"]) {
+  for (const k of ["integrations", "burnIn", "alerts", "schedule", "location", "school"]) {
     if (typeof s[k] === "object" && s[k] !== null) out[k] = { ...(d[k] as object), ...(s[k] as object) };
   }
   return out;

@@ -153,6 +153,13 @@ function TypeSettings({
         <>
           <Toggle label="Show current conditions" checked={w.showCurrent} onChange={(v) => e((x) => void (x.showCurrent = v))} />
           <Toggle label="Show the next hours" checked={w.showHourly} onChange={(v) => e((x) => void (x.showHourly = v))} />
+          <Toggle label="Show the UV index" checked={w.showUv} onChange={(v) => e((x) => void (x.showUv = v))} />
+          <Toggle
+            label="Show pollen"
+            checked={w.showPollen}
+            hint="The highest count Open-Meteo reports. Often missing in North America."
+            onChange={(v) => e((x) => void (x.showPollen = v))}
+          />
           <NumberInput label="Days ahead" value={w.days} min={0} max={7} onChange={(v) => e((x) => void (x.days = v))} />
           <p className="text-xs text-soft">Weather is for {config.location.name || "the dashboard's location"} (Settings).</p>
         </>
@@ -595,6 +602,24 @@ function TypeSettings({
         </>
       );
     }
+    case "shopping": {
+      const e = edit<"shopping">();
+      return (
+        <>
+          <NumberInput label="Items shown" value={w.count} min={1} max={40} onChange={(v) => e((x) => void (x.count = v))} />
+          <Toggle label="Show bought items" checked={w.showDone} onChange={(v) => e((x) => void (x.showDone = v))} />
+          <Toggle
+            label="Tap to tick off"
+            hint="Anyone at the screen can mark an item bought. Tapping it again puts it back."
+            checked={w.allowCheck}
+            onChange={(v) => e((x) => void (x.allowCheck = v))}
+          />
+          <p className="text-xs text-soft">
+            The family adds items from their phones at <span className="font-mono">/family/</span> (Shopping tab here).
+          </p>
+        </>
+      );
+    }
     case "tasks": {
       const e = edit<"tasks">();
       const lists = config.integrations.tasks.lists.filter((l) => l.enabled);
@@ -800,7 +825,95 @@ function TypeSettings({
         </>
       );
     }
+    case "presence": {
+      const e = edit<"presence">();
+      const blank = w.entities.some((person) => !person.entityId);
+      return (
+        <>
+          <p className="text-xs text-soft">
+            People or phones from Home Assistant. The wall shows who is home, and can&rsquo;t change anything.
+          </p>
+          {w.entities.map((person, i) => (
+            <div key={`${person.entityId}-${i}`} className="grid gap-2 rounded-xl border border-line p-3">
+              <Text
+                label="Entity"
+                value={person.entityId}
+                maxLength={255}
+                placeholder="person.melvin"
+                list="ha-presence"
+                onChange={(v) => e((x) => void (x.entities[i]!.entityId = v.trim()))}
+              />
+              <Text
+                label="Name"
+                value={person.label}
+                maxLength={40}
+                placeholder="From Home Assistant"
+                onChange={(v) => e((x) => void (x.entities[i]!.label = v))}
+              />
+              <button
+                type="button"
+                className="btn-ghost justify-self-start text-bad"
+                onClick={() => e((x) => void x.entities.splice(i, 1))}
+              >
+                Remove
+              </button>
+            </div>
+          ))}
+          <HaEntityList id="ha-presence" />
+          {w.entities.length < 12 && (
+            <button
+              type="button"
+              className="btn-ghost justify-self-start"
+              disabled={blank}
+              onClick={() => e((x) => void x.entities.push({ entityId: "", label: "" }))}
+            >
+              Add a person
+            </button>
+          )}
+        </>
+      );
+    }
+    case "school": {
+      const e = edit<"school">();
+      return (
+        <>
+          <SchoolNames schools={w.schools} onChange={(schools) => e((x) => void (x.schools = schools))} />
+          <p className="text-xs text-soft">The district page is set under Settings › School status.</p>
+        </>
+      );
+    }
+    default:
+      return null;
   }
+}
+
+/** School name fragments matched in the district notice. Kept as typed until it parses, so a trailing comma isn't eaten. */
+function SchoolNames({ schools, onChange }: { schools: string[]; onChange: (schools: string[]) => void }) {
+  const [text, setText] = useState(schools.join(", "));
+  return (
+    <Text
+      label="Only these schools"
+      value={text}
+      maxLength={1000}
+      placeholder="Any district notice"
+      hint="Names separated by commas, matched in the notice. Empty shows any closure or delay."
+      onChange={(v) => {
+        setText(v);
+        onChange(
+          [
+            ...new Set(
+              v
+                .split(",")
+                .map((name) => name.trim())
+                .filter(Boolean),
+            ),
+          ]
+            .slice(0, 12)
+            .map((name) => name.slice(0, 80)),
+        );
+      }}
+    />
+  );
 }
 
 type Alerting = Extract<Widget, { type: "timer" | "pomodoro" }>;

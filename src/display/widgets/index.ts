@@ -18,7 +18,10 @@ import { messages } from "./messages";
 import { note } from "./note";
 import { photos } from "./photos";
 import { pomodoro } from "./pomodoro";
+import { presence } from "./presence";
 import { radar } from "./radar";
+import { school } from "./school";
+import { shopping } from "./shopping";
 import { sports } from "./sports";
 import { sunTimes } from "./sunTimes";
 import { tasks } from "./tasks";
@@ -75,6 +78,8 @@ export function mountWidget(el: HTMLElement, w: Widget, ctx: WidgetContext): Cle
       return radar(el, w, ctx);
     case "chores":
       return chores(el, w, ctx);
+    case "shopping":
+      return shopping(el, w, ctx);
     case "timer":
       return timer(el, w, ctx);
     case "pomodoro":
@@ -87,5 +92,12 @@ export function mountWidget(el: HTMLElement, w: Widget, ctx: WidgetContext): Cle
       return sports(el, w, ctx);
     case "earth":
       return earth(el, w, ctx);
+    case "presence":
+      return presence(el, w, ctx);
+    case "school":
+      return school(el, w, ctx);
+    default:
+      // A widget type with no screen yet (still being built) leaves an empty cell instead of crashing the dashboard.
+      return () => undefined;
   }
 }

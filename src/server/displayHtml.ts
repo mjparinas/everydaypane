@@ -8,11 +8,12 @@ const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replac
  * The display shell. Its settings arrive by fetch (and from the service worker's copy when offline), so this HTML is
  * the same for every load and can be cached whole for offline mode.
  */
-export function displayHtml(opts: { token: string | null; title: string; previewView?: string }): Response {
+export function displayHtml(opts: { token: string | null; title: string; previewView?: string; previewMode?: "day" | "night" }): Response {
   const v = ASSET_VERSION;
   const data = [`data-v="${esc(v)}"`];
   if (opts.token) data.push(`data-token="${esc(opts.token)}"`);
   if (opts.previewView) data.push(`data-preview="${esc(opts.previewView)}"`);
+  if (opts.previewMode) data.push(`data-preview-mode="${esc(opts.previewMode)}"`);
   const html = `<!doctype html>
 <html lang="en-CA">
 <head>

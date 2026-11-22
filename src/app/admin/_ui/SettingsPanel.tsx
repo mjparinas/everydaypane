@@ -110,6 +110,26 @@ export function SettingsPanel() {
 
       <ScreenSaverPanel />
 
+      <Section title="School status">
+        <p className="text-xs text-soft">
+          The school widget reads this page for a closure, delay or late start. With nothing like that on the page, it says open.
+        </p>
+        <Text
+          label="District name"
+          value={config.school.districtName}
+          maxLength={80}
+          onChange={(v) => edit((c) => void (c.school.districtName = v))}
+        />
+        <Text
+          label="Status page"
+          type="url"
+          value={config.school.statusUrl}
+          maxLength={300}
+          hint="A public https page, such as the district site. Langley School District is the default."
+          onChange={(v) => edit((c) => void (c.school.statusUrl = v))}
+        />
+      </Section>
+
       <Section title="Emergency alerts">
         <Toggle label="Show alerts" checked={alerts.enabled} onChange={(v) => edit((c) => void (c.alerts.enabled = v))} />
         {alerts.enabled && (
@@ -151,6 +171,12 @@ export function SettingsPanel() {
               label="BC Hydro power outages"
               checked={alerts.sources.power}
               onChange={(v) => edit((c) => void (c.alerts.sources.power = v))}
+            />
+            <Toggle
+              label="Email admins and family for new red-strip alerts"
+              checked={alerts.notifyEmail}
+              onChange={(v) => edit((c) => void (c.alerts.notifyEmail = v))}
+              hint="Each alert is emailed once to everyone on ADMIN_EMAILS and FAMILY_EMAILS."
             />
             <div className="grid grid-cols-2 gap-3">
               <NumberInput

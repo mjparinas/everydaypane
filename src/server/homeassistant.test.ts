@@ -17,6 +17,31 @@ import { getSecret, setSecret } from "./secrets";
 const HA = "https://ha.example.com";
 
 describe("Home Assistant actions", () => {
+  it("reads who's-home entities but never controls them", () => {
+    const config = structuredClone(defaultConfig());
+    const view = config.views[0];
+    if (!view) throw new Error("no view");
+    view.widgets.push({
+      id: "who",
+      type: "presence",
+      x: 0,
+      y: 0,
+      w: 3,
+      h: 2,
+      entities: [
+        { entityId: "person.melvin", label: "Melvin" },
+        { entityId: "device_tracker.phone", label: "" },
+        { entityId: "", label: "Nobody" },
+      ],
+    });
+    const used = usedEntities(config);
+    expect(used.all.has("person.melvin")).toBe(true);
+    expect(used.all.has("device_tracker.phone")).toBe(true);
+    expect(used.all.has("")).toBe(false);
+    expect(used.controls.has("person.melvin")).toBe(false);
+    expect(used.controls.has("device_tracker.phone")).toBe(false);
+  });
+
   it("reads the screen saver's motion sensors but never controls them", () => {
     const config = structuredClone(defaultConfig());
     config.screenSaver.motionEntityIds = ["binary_sensor.hall_motion"];

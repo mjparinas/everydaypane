@@ -5,6 +5,20 @@
 const body = document.body;
 export const TOKEN = body.dataset.token ?? "";
 export const PREVIEW = body.dataset.preview ?? "";
+/** Forced day/night in an admin preview; empty on a real display. Mutable so the preview can swap without a reload. */
+export let previewMode: "" | "day" | "night" =
+  body.dataset.previewMode === "day" || body.dataset.previewMode === "night" ? body.dataset.previewMode : "";
+
+export function setPreviewMode(mode: "day" | "night") {
+  previewMode = mode;
+  body.dataset.previewMode = mode;
+  // Keep the address in sync so a refresh stays on the same mode.
+  if (PREVIEW && typeof history !== "undefined") {
+    const url = new URL(location.href);
+    url.searchParams.set("mode", mode);
+    history.replaceState(null, "", url);
+  }
+}
 
 type Listener = () => void;
 const offlineListeners = new Set<Listener>();

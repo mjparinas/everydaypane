@@ -6,6 +6,35 @@ import { shortTime, weekday } from "../format";
 import { label, weatherIcon } from "../icons";
 import type { Mount } from "./types";
 
+/** Environment Canada's UV bands. */
+function uvWord(n: number): string {
+  if (n <= 2) return "low";
+  if (n <= 5) return "moderate";
+  if (n <= 7) return "high";
+  if (n <= 10) return "very high";
+  return "extreme";
+}
+
+/** A rough word for grains/m³. The number is what matters; the word is only a glance. */
+function pollenWord(n: number): string {
+  if (n <= 0) return "none";
+  if (n < 20) return "low";
+  if (n < 50) return "moderate";
+  if (n < 100) return "high";
+  return "very high";
+}
+
+/** The UV and pollen line, or "" when the widget has them off or the forecast didn't include them. */
+export function weatherNotes(d: WeatherData, showUv: boolean, showPollen: boolean): string {
+  const bits: string[] = [];
+  if (showUv && d.current.uv !== undefined) {
+    bits.push(`UV ${d.current.uv} · ${uvWord(d.current.uv)}`);
+    if (d.today.uvMax !== undefined && d.today.uvMax > d.current.uv) bits.push(`peaks at ${d.today.uvMax}`);
+  } else if (showUv && d.today.uvMax !== undefined) bits.push(`UV peaks at ${d.today.uvMax}`);
+  if (showPollen && d.pollen !== undefined) bits.push(d.pollen <= 0 ? "No pollen" : `Pollen ${d.pollen} · ${pollenWord(d.pollen)}`);
+  return bits.join(" · ");
+}
+
 export const weather: Mount<"weather"> = (el, w, ctx) => {
   const root = h("div", { class: "w-weather" }, h("div", { class: "w-empty" }, "Loading the forecast…"));
   el.append(root);
@@ -36,6 +65,8 @@ export const weather: Mount<"weather"> = (el, w, ctx) => {
         ),
       );
     }
+    const notes = weatherNotes(d, w.showUv, w.showPollen);
+    if (notes) parts.push(h("div", { class: "wx-extra" }, notes));
     if (w.showHourly) {
       parts.push(
         h(

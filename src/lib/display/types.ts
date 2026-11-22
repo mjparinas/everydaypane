@@ -41,8 +41,19 @@ export interface WeatherHour {
 export interface WeatherData {
   updatedAt: number;
   units: { temp: "°C" | "°F"; wind: "km/h" | "mph" };
-  current: { temp: number; feels: number; code: number; isDay: boolean; wind: number; humidity: number };
-  today: { sunrise: string; sunset: string };
+  current: {
+    temp: number;
+    feels: number;
+    code: number;
+    isDay: boolean;
+    wind: number;
+    humidity: number;
+    /** UV index now, when Open-Meteo sent one. */
+    uv?: number;
+  };
+  today: { sunrise: string; sunset: string; /** Today's peak UV, when known. */ uvMax?: number };
+  /** Highest pollen grains/m³ among the kinds Open-Meteo reports (often absent in North America). */
+  pollen?: number;
   hours: WeatherHour[];
   days: WeatherDay[];
 }
@@ -346,6 +357,40 @@ export interface ChoresData {
   /** Only the chores due today. */
   chores: { id: string; name: string; emoji: string; stars: number }[];
   due: { choreId: string; personId: string; done: boolean }[];
+}
+
+/** The family shopping list (src/server/shopping.ts). */
+export interface ShoppingItem {
+  id: string;
+  text: string;
+  done: boolean;
+}
+
+export interface ShoppingData {
+  updatedAt: number;
+  items: ShoppingItem[];
+}
+
+/** School / snow-day status from the district site (src/server/school.ts). */
+export type SchoolState = "open" | "closed" | "delayed" | "unknown";
+
+export interface SchoolData {
+  updatedAt: number;
+  state: SchoolState;
+  /** Short line for the wall ("All schools closed", "Open", …). */
+  summary: string;
+  /** The notice text when the district posted one. */
+  detail: string;
+  districtName: string;
+}
+
+/** One person on the who's-home strip (drawn from the shared HA feed). */
+export interface PresencePerson {
+  entityId: string;
+  label: string;
+  home: boolean;
+  /** Raw HA state when not a clear home/away. */
+  state: string;
 }
 
 /** One bus (or train) leaving a stop, from TransLink's live feed (src/server/translink.ts). */

@@ -117,7 +117,7 @@ export function ViewsPanel() {
             + Add a widget
           </button>
           <a className="btn-ghost" href={`/admin/preview/${encodeURIComponent(view.id)}/`} target="_blank" rel="noreferrer">
-            Preview saved view ↗
+            Preview ↗
           </a>
         </div>
         {picking && (

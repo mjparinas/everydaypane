@@ -18,6 +18,7 @@ const forecastSchema = z.object({
     is_day: z.number(),
     wind_speed_10m: z.number(),
     relative_humidity_2m: z.number(),
+    uv_index: z.number().nullable().optional(),
   }),
   hourly: z.object({
     time: z.array(z.string()),
@@ -34,6 +35,7 @@ const forecastSchema = z.object({
     precipitation_probability_max: z.array(z.number().nullable()),
     sunrise: z.array(z.string()),
     sunset: z.array(z.string()),
+    uv_index_max: z.array(z.number().nullable()).optional(),
   }),
 });
 
@@ -43,9 +45,9 @@ export function forecastUrl(config: Pick<DashboardConfig, "location" | "units">)
     latitude: latitude.toFixed(4),
     longitude: longitude.toFixed(4),
     timezone: timeZone,
-    current: "temperature_2m,apparent_temperature,weather_code,is_day,wind_speed_10m,relative_humidity_2m",
+    current: "temperature_2m,apparent_temperature,weather_code,is_day,wind_speed_10m,relative_humidity_2m,uv_index",
     hourly: "temperature_2m,weather_code,precipitation_probability,is_day",
-    daily: "weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max,sunrise,sunset",
+    daily: "weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max,sunrise,sunset,uv_index_max",
     forecast_days: "8",
     forecast_hours: "24",
   });
@@ -59,6 +61,8 @@ export function forecastUrl(config: Pick<DashboardConfig, "location" | "units">)
 export function trimForecast(raw: unknown, units: DashboardConfig["units"], now: number): WeatherData {
   const f = forecastSchema.parse(raw);
   const round = (n: number) => Math.round(n);
+  const uv = f.current.uv_index;
+  const uvMax = f.daily.uv_index_max?.[0];
   return {
     updatedAt: now,
     units: units === "imperial" ? { temp: "°F", wind: "mph" } : { temp: "°C", wind: "km/h" },
@@ -69,8 +73,13 @@ export function trimForecast(raw: unknown, units: DashboardConfig["units"], now:
       isDay: f.current.is_day === 1,
       wind: round(f.current.wind_speed_10m),
       humidity: round(f.current.relative_humidity_2m),
+      ...(typeof uv === "number" && Number.isFinite(uv) ? { uv: round(uv) } : {}),
     },
-    today: { sunrise: f.daily.sunrise[0] ?? "", sunset: f.daily.sunset[0] ?? "" },
+    today: {
+      sunrise: f.daily.sunrise[0] ?? "",
+      sunset: f.daily.sunset[0] ?? "",
+      ...(typeof uvMax === "number" && Number.isFinite(uvMax) ? { uvMax: round(uvMax) } : {}),
+    },
     hours: f.hourly.time.slice(0, 24).map((time, i) => ({
       time,
       temp: round(f.hourly.temperature_2m[i] ?? 0),
@@ -88,9 +97,61 @@ export function trimForecast(raw: unknown, units: DashboardConfig["units"], now:
   };
 }
 
+// Pollen is on the air-quality API, not the forecast (CAMS, grains/m³, often missing outside Europe). The wall shows
+// the highest of these kinds (Melvin, 2026-11-22).
+const POLLEN = ["alder_pollen", "birch_pollen", "grass_pollen", "mugwort_pollen", "olive_pollen", "ragweed_pollen"] as const;
+
+const pollenLevel = z.number().nullable().optional();
+const pollenSchema = z.object({
+  current: z
+    .object({
+      alder_pollen: pollenLevel,
+      birch_pollen: pollenLevel,
+      grass_pollen: pollenLevel,
+      mugwort_pollen: pollenLevel,
+      olive_pollen: pollenLevel,
+      ragweed_pollen: pollenLevel,
+    })
+    .optional(),
+});
+
+export function pollenUrl(config: Pick<DashboardConfig, "location">): string {
+  const { latitude, longitude, timeZone } = config.location;
+  const p = new URLSearchParams({
+    latitude: latitude.toFixed(4),
+    longitude: longitude.toFixed(4),
+    timezone: timeZone,
+    current: POLLEN.join(","),
+    forecast_days: "1",
+  });
+  return `https://air-quality-api.open-meteo.com/v1/air-quality?${p}`;
+}
+
+/** Highest pollen grains/m³ among the kinds Open-Meteo sent, or nothing when every kind is missing. */
+export function maxPollen(raw: unknown): number | undefined {
+  const parsed = pollenSchema.safeParse(raw);
+  const current = parsed.success ? parsed.data.current : undefined;
+  if (!current) return undefined;
+  const values = POLLEN.flatMap((key) => {
+    const n = current[key];
+    return typeof n === "number" && Number.isFinite(n) ? [n] : [];
+  });
+  return values.length ? Math.round(Math.max(...values)) : undefined;
+}
+
 export function weather(config: DashboardConfig): Promise<Cached<WeatherData>> {
   const url = forecastUrl(config);
-  return cached(`weather:${url}`, 15 * 60_000, async () => trimForecast(await getJson(url), config.units, Date.now()));
+  const pollen = pollenUrl(config);
+  return cached(`weather:${url}`, 15 * 60_000, async () => {
+    const data = trimForecast(await getJson(url), config.units, Date.now());
+    try {
+      const level = maxPollen(await getJson(pollen));
+      if (level !== undefined) data.pollen = level;
+    } catch {
+      // Pollen is extra, and often absent in North America. A failure still leaves the forecast.
+    }
+    return data;
+  });
 }
 
 const airSchema = z.object({

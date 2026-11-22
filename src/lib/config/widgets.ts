@@ -45,7 +45,7 @@ export const WIDGETS: { [T in WidgetType]: WidgetInfo<T> } = {
     icon: "⛅",
     size: { w: 6, h: 3 },
     minSize: { w: 2, h: 2 },
-    defaults: () => ({ days: 7, showCurrent: true, showHourly: false }),
+    defaults: () => ({ days: 7, showCurrent: true, showHourly: false, showUv: true, showPollen: true }),
   },
   airQuality: {
     label: "Air quality",
@@ -275,6 +275,30 @@ export const WIDGETS: { [T in WidgetType]: WidgetInfo<T> } = {
       showPlace: true,
       animate: true,
     }),
+  },
+  shopping: {
+    label: "Shopping list",
+    description: "Groceries the family adds from their phones, ticked off with a tap",
+    icon: "🛒",
+    size: { w: 3, h: 4 },
+    minSize: { w: 2, h: 2 },
+    defaults: () => ({ count: 12, allowCheck: true, showDone: false }),
+  },
+  presence: {
+    label: "Who's home",
+    description: "Who is home, from Home Assistant",
+    icon: "👨‍👩‍👧",
+    size: { w: 3, h: 2 },
+    minSize: { w: 2, h: 1 },
+    defaults: () => ({ entities: [] }),
+  },
+  school: {
+    label: "School status",
+    description: "Open, closed or delayed (Langley SD35 snow days)",
+    icon: "🏫",
+    size: { w: 3, h: 2 },
+    minSize: { w: 2, h: 1 },
+    defaults: () => ({ schools: [] }),
   },
 };
 

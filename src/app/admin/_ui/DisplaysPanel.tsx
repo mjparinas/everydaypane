@@ -19,11 +19,14 @@ interface Device {
 
 function seen(at: number | null): string {
   if (at === null) return "Never opened";
-  const min = Math.round((Date.now() - at) / 60_000);
-  if (min < 2) return "Online";
-  if (min < 60) return `Seen ${min} min ago`;
-  if (min < 48 * 60) return `Seen ${Math.round(min / 60)} h ago`;
-  return `Seen ${new Date(at).toLocaleDateString("en-CA")}`;
+  const ms = Date.now() - at;
+  if (ms < 120_000) return "Online";
+  const min = Math.floor(ms / 60_000);
+  if (min < 60) return min <= 1 ? "Seen 1 min ago" : `Seen ${min} min ago`;
+  const hr = Math.floor(min / 60);
+  if (hr < 24) return hr === 1 ? "Seen 1 h ago" : `Seen ${hr} h ago`;
+  if (hr < 48) return "Seen yesterday";
+  return `Seen ${new Date(at).toLocaleDateString("en-CA", { month: "short", day: "numeric", year: "numeric" })}`;
 }
 
 async function call(url: string, method: string, body?: unknown): Promise<Response> {

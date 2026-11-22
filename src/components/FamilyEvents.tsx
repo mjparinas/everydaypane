@@ -1,0 +1,209 @@
+"use client";
+
+import { useEffect, useState } from "react";
+
+// Family calendar events (Melvin, 2026-11-22): post visits and concerts from a phone; they appear on the wall calendar in blue.
+
+interface EventRow {
+  id: string;
+  title: string;
+  start: string;
+  end: string;
+  allDay: boolean;
+  createdAt: number;
+  mine: boolean;
+  canDelete: boolean;
+}
+
+type Payload = { events: EventRow[] };
+
+async function loadEvents(): Promise<Payload | string> {
+  try {
+    const r = await fetch("/api/family-events/");
+    if (!r.ok) return r.status === 401 ? "You've been signed out. Sign in again." : "Couldn't load events.";
+    return (await r.json()) as Payload;
+  } catch {
+    return "No connection.";
+  }
+}
+
+function addDays(date: string, n: number): string {
+  // The first paint runs before today's date is filled in, and an empty value must not throw.
+  const parsed = Date.parse(`${date}T12:00:00Z`);
+  if (!date || Number.isNaN(parsed)) return "";
+  return new Date(parsed + n * 86_400_000).toISOString().slice(0, 10);
+}
+
+function fmtWhen(e: EventRow): string {
+  if (e.allDay) {
+    const endIncl = addDays(e.end, -1);
+    return endIncl === e.start
+      ? new Date(`${e.start}T12:00:00Z`).toLocaleDateString("en-CA", { weekday: "short", month: "short", day: "numeric" })
+      : `${new Date(`${e.start}T12:00:00Z`).toLocaleDateString("en-CA", { month: "short", day: "numeric" })} – ${new Date(`${endIncl}T12:00:00Z`).toLocaleDateString("en-CA", { month: "short", day: "numeric" })}`;
+  }
+  const start = new Date(e.start);
+  const end = new Date(e.end);
+  const day = start.toLocaleDateString("en-CA", { weekday: "short", month: "short", day: "numeric" });
+  const t0 = start.toLocaleTimeString("en-CA", { hour: "numeric", minute: "2-digit" });
+  const t1 = end.toLocaleTimeString("en-CA", { hour: "numeric", minute: "2-digit" });
+  return `${day}, ${t0} – ${t1}`;
+}
+
+function defaultFormTimes(now = new Date()) {
+  const pad = (n: number) => String(n).padStart(2, "0");
+  const today = now.toISOString().slice(0, 10);
+  const startLocal = `${today}T${pad(now.getHours())}:${pad(now.getMinutes())}`;
+  const later = new Date(now.getTime() + 3_600_000);
+  return {
+    startDate: today,
+    endDate: addDays(today, 1),
+    startLocal,
+    endLocal: `${later.toISOString().slice(0, 10)}T${pad(later.getHours())}:${pad(later.getMinutes())}`,
+  };
+}
+
+export function FamilyEvents() {
+  const initial = defaultFormTimes();
+  const [rows, setRows] = useState<EventRow[] | null>(null);
+  const [title, setTitle] = useState("");
+  const [allDay, setAllDay] = useState(true);
+  const [startDate, setStartDate] = useState(initial.startDate);
+  const [endDate, setEndDate] = useState(initial.endDate);
+  const [startLocal, setStartLocal] = useState(initial.startLocal);
+  const [endLocal, setEndLocal] = useState(initial.endLocal);
+  const [error, setError] = useState("");
+  const [sending, setSending] = useState(false);
+
+  const refresh = () =>
+    loadEvents().then((data) => {
+      if (typeof data === "string") return setError(data);
+      setRows(data.events);
+      setError("");
+    });
+
+  useEffect(() => {
+    void refresh();
+  }, []);
+
+  async function submit(e: React.FormEvent) {
+    e.preventDefault();
+    setSending(true);
+    setError("");
+    const start = allDay ? startDate : new Date(startLocal).toISOString();
+    const end = allDay ? endDate || addDays(startDate, 1) : new Date(endLocal).toISOString();
+    try {
+      const r = await fetch("/api/family-events/", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title: title.trim(), allDay, start, end }),
+      });
+      const body = (await r.json().catch(() => ({}))) as { error?: string };
+      if (!r.ok) {
+        setError(body.error ?? "Couldn't save.");
+        return;
+      }
+      setTitle("");
+      await refresh();
+    } catch {
+      setError("No connection.");
+    } finally {
+      setSending(false);
+    }
+  }
+
+  async function remove(id: string) {
+    const r = await fetch(`/api/family-events/${encodeURIComponent(id)}/`, { method: "DELETE" });
+    if (!r.ok) {
+      setError("Couldn't delete.");
+      return;
+    }
+    await refresh();
+  }
+
+  return (
+    <section className="grid gap-3" aria-labelledby="events-heading">
+      <h2 id="events-heading" className="text-lg font-bold">
+        Family calendar
+      </h2>
+      <p className="text-sm text-soft">Shows on the wall in the Family calendar (blue), with Google and school calendars.</p>
+      {error && (
+        <p className="rounded-xl bg-danger/10 p-3 text-sm text-danger" role="alert">
+          {error}
+        </p>
+      )}
+      <form className="card grid gap-3 p-4" onSubmit={(e) => void submit(e)}>
+        <label className="grid gap-1">
+          <span className="text-sm font-semibold">What</span>
+          <input className="input" value={title} onChange={(e) => setTitle(e.target.value)} maxLength={120} required />
+        </label>
+        <label className="flex items-center gap-2 text-sm">
+          <input type="checkbox" checked={allDay} onChange={(e) => setAllDay(e.target.checked)} />
+          All day
+        </label>
+        {allDay ? (
+          <div className="grid grid-cols-2 gap-3">
+            <label className="grid gap-1">
+              <span className="text-sm font-semibold">First day</span>
+              <input
+                className="input"
+                type="date"
+                value={startDate}
+                onChange={(e) => {
+                  setStartDate(e.target.value);
+                  if (endDate <= e.target.value) setEndDate(addDays(e.target.value, 1));
+                }}
+                required
+              />
+            </label>
+            <label className="grid gap-1">
+              <span className="text-sm font-semibold">Day after last</span>
+              <input
+                className="input"
+                type="date"
+                value={endDate}
+                min={addDays(startDate, 1)}
+                onChange={(e) => setEndDate(e.target.value)}
+                required
+              />
+            </label>
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 gap-3">
+            <label className="grid gap-1">
+              <span className="text-sm font-semibold">Starts</span>
+              <input className="input" type="datetime-local" value={startLocal} onChange={(e) => setStartLocal(e.target.value)} required />
+            </label>
+            <label className="grid gap-1">
+              <span className="text-sm font-semibold">Ends</span>
+              <input className="input" type="datetime-local" value={endLocal} onChange={(e) => setEndLocal(e.target.value)} required />
+            </label>
+          </div>
+        )}
+        <button className="btn-primary" type="submit" disabled={sending}>
+          {sending ? "Saving…" : "Add to calendar"}
+        </button>
+      </form>
+      <ul className="grid gap-2">
+        {rows === null ? (
+          <li className="text-sm text-soft">Loading…</li>
+        ) : rows.length === 0 ? (
+          <li className="text-sm text-soft">No upcoming events yet.</li>
+        ) : (
+          rows.map((ev) => (
+            <li key={ev.id} className="card flex items-start justify-between gap-3 p-3" style={{ borderLeft: "4px solid #5b8def" }}>
+              <div className="min-w-0">
+                <div className="font-semibold">{ev.title}</div>
+                <div className="text-sm text-soft">{fmtWhen(ev)}</div>
+              </div>
+              {ev.canDelete && (
+                <button type="button" className="btn-ghost shrink-0 text-sm" onClick={() => void remove(ev.id)}>
+                  Delete
+                </button>
+              )}
+            </li>
+          ))
+        )}
+      </ul>
+    </section>
+  );
+}
