@@ -1,8 +1,9 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import { GET, POST } from "@/app/api/admin/devices/[id]/route";
 import { cookieFor, req, useTestServer } from "@/test/server";
 
+import * as crypto from "./crypto";
 import { query } from "./db";
 import { addDevice, deviceForToken } from "./devices";
 
@@ -14,6 +15,7 @@ describe("display addresses", () => {
 
   it("shows an admin a display's address again, and keeps the token encrypted", async () => {
     const { device, token } = await addDevice("Kitchen", null);
+    expect(token).toMatch(/^[A-Za-z0-9]{10}$/);
     const admin = await cookieFor("admin@example.com");
     const r = await GET(req(`/api/admin/devices/${device.id}/`, { headers: { cookie: admin } }), ctx(device.id));
     expect(r.status).toBe(200);
@@ -34,9 +36,35 @@ describe("display addresses", () => {
     const admin = await cookieFor("admin@example.com");
     const r = await POST(req(`/api/admin/devices/${device.id}/`, { method: "POST", headers: { cookie: admin } }), ctx(device.id));
     const fresh = tokenOf(((await r.json()) as { url: string }).url);
+    expect(fresh).toMatch(/^[A-Za-z0-9]{10}$/);
     expect(fresh).not.toBe(token);
     expect(await deviceForToken(token)).toBeNull();
     expect((await deviceForToken(fresh))?.id).toBe(device.id);
+  });
+
+  it("retries the database constraint instead of duplicating a display code", async () => {
+    const first = await addDevice("Kitchen", null);
+    const random = vi.spyOn(crypto, "randomAlphanumeric");
+    random.mockReturnValueOnce(first.token).mockReturnValueOnce("Aa0Bb1Cc2D");
+
+    const second = await addDevice("Hall", null);
+    expect(second.token).toBe("Aa0Bb1Cc2D");
+    expect((await deviceForToken(first.token))?.id).toBe(first.device.id);
+    expect((await deviceForToken(second.token))?.id).toBe(second.device.id);
+    expect(await deviceForToken("aa0Bb1Cc2D")).toBeNull();
+    random.mockRestore();
+  });
+
+  it("keeps accepting existing longer base64url display codes", async () => {
+    const { device } = await addDevice("Legacy display", null);
+    const legacy = "abc_DEF-0123456789xyzABC";
+    await query("UPDATE devices SET token_hash = ?, token_sealed = ? WHERE id = ?", [
+      crypto.sha256(legacy),
+      crypto.encrypt(legacy),
+      device.id,
+    ]);
+
+    expect((await deviceForToken(legacy))?.id).toBe(device.id);
   });
 
   it("offers only a new link for a display added before addresses were kept", async () => {
