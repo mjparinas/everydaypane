@@ -14,7 +14,7 @@ for widgets). Don't suggest anything listed there as new; if an idea extends som
 and what it adds. Every pull request that adds a widget, an integration or a display behaviour updates this list in the
 same change, and moves it out of **In progress** when it merges.
 
-## What already exists (checked against the code, 2026-11-19)
+## What already exists (checked against the code, 2026-11-22)
 
 **Widgets** (`widgetSchema`, drawn by `src/display/widgets/`):
 
@@ -40,6 +40,8 @@ same change, and moves it out of **In progress** when it merges.
 | Chore chart (`chores`) | Each kid's chores today, **tap to tick off** (tap again to take back), stars this week and a weekly goal | Settings document + `chores_done` table |
 | Sports scores (`sports`) | Live score, last result and next game for followed teams (NHL, NBA, WNBA, NFL, MLB, MLS, Premier League, Champions League) | ESPN public site API |
 | To-dos (`tasks`) | Open Google Tasks; **tap to tick off, synced back to Google** (`allowCheck`, 4 s undo) | Google Tasks |
+| TransLink departures (`transit`) | Next buses from up to six picked stops, live times, route filter, walk-minutes cutoff | TransLink GTFS-realtime |
+| Commute time (`commute`) | Drive times with live traffic from home to up to six places, "leave by" time | TomTom Routing API |
 | Rain radar (`radar`) | Animated radar over a map around home: the past 30 min to 3 h, then up to 3 h of forecast; rain or snow, five map areas, still or looping | Environment Canada (MSC GeoMet), CARTO map |
 | Timers (`timer`) | Kitchen timers started from preset buttons on the wall, up to six at once, pause, +1 min; flash, full-screen alert and beeps when done | Device (localStorage) |
 | Pomodoro (`pomodoro`) | Focus and break rounds, long break after the last round, optional auto-start, chime between phases | Device (localStorage) |
@@ -56,7 +58,7 @@ screen; the red, dismissible alert strip;
 no pinch zoom; settings reach displays by polling every 30 seconds.
 
 **Alerts** (`src/server/alerts.ts`): Alert Ready (NAAD), **Environment Canada weather warnings** (through NAAD),
-DriveBC road events and weather conditions, Earthquakes Canada. Each switchable in `config.alerts.sources`.
+DriveBC road events and weather conditions, Earthquakes Canada, BC Hydro power outages. Each switchable in `config.alerts.sources`.
 
 **Admin and family:** magic-link sign-in (Resend), admin panel tabs (views and grid editor, themes, displays with
 copyable addresses, meals, settings for every integration, Settings › Chores for the kids and their chores), **settings backup and restore** (Settings › Backup, a JSON
@@ -64,17 +66,11 @@ file), `/family/` for the message board and meals, Sentry.
 
 **Integrations connected from Settings:** Google Calendar, Google Tasks, Google Photos (Picker), iCal calendar links,
 Amazon Photos, the photo library (Vercel Blob), Home Assistant (Cloudflare Tunnel + Access), Spotify, Sonos, garbage
-zone lookup, sports teams to follow.
+zone lookup, sports teams to follow, TransLink, commute places (TomTom geocoding).
 
-## In progress (2026-11-19)
+## In progress
 
-Being built in other threads now; check the merged code before starting any of these again, and move each to **What
-already exists** when it merges:
-
-- **TransLink** departures for nearby stops.
-- **BC Hydro outages**, and more weather alerts (Environment Canada warnings already come through NAAD, see above).
-- **Tappable to-dos** (the `tasks` widget already ticks off Google Tasks from the wall; this work extends it).
-- **Commute time.**
+Nothing in progress right now. Move new work here when it starts, and to **What already exists** when it merges.
 
 ## Commands
 
