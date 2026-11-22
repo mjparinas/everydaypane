@@ -15,7 +15,7 @@ describe("display addresses", () => {
 
   it("shows an admin a display's address again, and keeps the token encrypted", async () => {
     const { device, token } = await addDevice("Kitchen", null);
-    expect(token).toMatch(/^[A-Za-z0-9]{10}$/);
+    expect(token).toMatch(/^[A-Za-z0-9]{8}$/);
     const admin = await cookieFor("admin@example.com");
     const r = await GET(req(`/api/admin/devices/${device.id}/`, { headers: { cookie: admin } }), ctx(device.id));
     expect(r.status).toBe(200);
@@ -36,7 +36,7 @@ describe("display addresses", () => {
     const admin = await cookieFor("admin@example.com");
     const r = await POST(req(`/api/admin/devices/${device.id}/`, { method: "POST", headers: { cookie: admin } }), ctx(device.id));
     const fresh = tokenOf(((await r.json()) as { url: string }).url);
-    expect(fresh).toMatch(/^[A-Za-z0-9]{10}$/);
+    expect(fresh).toMatch(/^[A-Za-z0-9]{8}$/);
     expect(fresh).not.toBe(token);
     expect(await deviceForToken(token)).toBeNull();
     expect((await deviceForToken(fresh))?.id).toBe(device.id);
@@ -45,18 +45,26 @@ describe("display addresses", () => {
   it("retries the database constraint instead of duplicating a display code", async () => {
     const first = await addDevice("Kitchen", null);
     const random = vi.spyOn(crypto, "randomAlphanumeric");
-    random.mockReturnValueOnce(first.token).mockReturnValueOnce("Aa0Bb1Cc2D");
+    random.mockReturnValueOnce(first.token).mockReturnValueOnce("Aa0Bb1Cc");
 
     const second = await addDevice("Hall", null);
-    expect(second.token).toBe("Aa0Bb1Cc2D");
+    expect(second.token).toBe("Aa0Bb1Cc");
     expect((await deviceForToken(first.token))?.id).toBe(first.device.id);
     expect((await deviceForToken(second.token))?.id).toBe(second.device.id);
-    expect(await deviceForToken("aa0Bb1Cc2D")).toBeNull();
+    expect(await deviceForToken("aa0Bb1Cc")).toBeNull();
     random.mockRestore();
   });
 
-  it("keeps accepting existing longer base64url display codes", async () => {
+  it("keeps accepting existing 10-character and longer base64url display codes", async () => {
     const { device } = await addDevice("Legacy display", null);
+    const previous = "Ab1Cd2Ef3G";
+    await query("UPDATE devices SET token_hash = ?, token_sealed = ? WHERE id = ?", [
+      crypto.sha256(previous),
+      crypto.encrypt(previous),
+      device.id,
+    ]);
+    expect((await deviceForToken(previous))?.id).toBe(device.id);
+
     const legacy = "abc_DEF-0123456789xyzABC";
     await query("UPDATE devices SET token_hash = ?, token_sealed = ? WHERE id = ?", [
       crypto.sha256(legacy),

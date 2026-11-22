@@ -18,7 +18,7 @@ export interface Device {
 }
 
 type Row = { id: string; name: string; view_id: string | null; created_at: number; last_seen_at: number | null };
-const DISPLAY_TOKEN_LENGTH = 10;
+const DISPLAY_TOKEN_LENGTH = 8;
 const TOKEN_ATTEMPTS = 10;
 
 const newDisplayToken = () => randomAlphanumeric(DISPLAY_TOKEN_LENGTH);
@@ -95,8 +95,8 @@ export async function removeDevice(id: string): Promise<boolean> {
 
 /** The device a display token belongs to, noting when it was last seen (at most once a minute, to keep writes down). */
 export async function deviceForToken(token: string, now = Date.now()): Promise<Device | null> {
-  // New links are exactly 10 alphanumerics; keep accepting the longer legacy base64url links already on displays.
-  if (!/^(?:[A-Za-z0-9]{10}|[A-Za-z0-9_-]{16,64})$/.test(token)) return null;
+  // New links are exactly 8 alphanumerics; keep accepting the earlier 10-character and legacy base64url links.
+  if (!/^(?:[A-Za-z0-9]{8}|[A-Za-z0-9]{10}|[A-Za-z0-9_-]{16,64})$/.test(token)) return null;
   const rows = await query<Row>("SELECT * FROM devices WHERE token_hash = ?", [sha256(token)]);
   const row = rows[0];
   if (!row) return null;
