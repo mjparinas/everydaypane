@@ -14,7 +14,7 @@ for widgets). Don't suggest anything listed there as new; if an idea extends som
 and what it adds. Every pull request that adds a widget, an integration or a display behaviour updates this list in the
 same change, and moves it out of **In progress** when it merges.
 
-## What already exists (checked against the code, 2026-11-19)
+## What already exists (checked against the code, 2026-11-22)
 
 **Widgets** (`widgetSchema`, drawn by `src/display/widgets/`):
 
@@ -40,10 +40,13 @@ same change, and moves it out of **In progress** when it merges.
 | Chore chart (`chores`) | Each kid's chores today, **tap to tick off** (tap again to take back), stars this week and a weekly goal | Settings document + `chores_done` table |
 | Sports scores (`sports`) | Live score, last result and next game for followed teams (NHL, NBA, WNBA, NFL, MLB, MLS, Premier League, Champions League) | ESPN public site API |
 | To-dos (`tasks`) | Open Google Tasks; **tap to tick off, synced back to Google** (`allowCheck`, 4 s undo) | Google Tasks |
+| TransLink departures (`transit`) | Next buses from up to six picked stops, live times, route filter, walk-minutes cutoff | TransLink GTFS-realtime |
+| Commute time (`commute`) | Drive times with live traffic from home to up to six places, "leave by" time | TomTom Routing API |
 | Rain radar (`radar`) | Animated radar over a map around home: the past 30 min to 3 h, then up to 3 h of forecast; rain or snow, five map areas, still or looping | Environment Canada (MSC GeoMet), Esri grey canvas map |
 | Timers (`timer`) | Kitchen timers started from preset buttons on the wall, up to six at once, pause, +1 min; flash, full-screen alert and beeps when done | Device (localStorage) |
 | Pomodoro (`pomodoro`) | Focus and break rounds, long break after the last round, optional auto-start, chime between phases | Device (localStorage) |
 | BC Ferries (`ferries`) | Next sailings on up to four routes, how full each is, cancellations and delays | Community BC Ferries API (bcferriesapi.ca) |
+| Earth wind map (`earth`) | earth.nullschool.net's animated wind globe centred on any place, four zooms, a colour layer (temperature, rain, humidity…), place marker, animation on or off | earth.nullschool.net (framed), Open-Meteo place search |
 
 **Display behaviour:** several views on a drag-and-drop grid (chosen rows and columns), **widgets layered on top of a photos widget**
 (photos as the backdrop), a time-of-day schedule
@@ -55,7 +58,7 @@ screen; the red, dismissible alert strip;
 no pinch zoom; settings reach displays by polling every 30 seconds.
 
 **Alerts** (`src/server/alerts.ts`): Alert Ready (NAAD), **Environment Canada weather warnings** (through NAAD),
-DriveBC road events and weather conditions, Earthquakes Canada. Each switchable in `config.alerts.sources`.
+DriveBC road events and weather conditions, Earthquakes Canada, BC Hydro power outages. Each switchable in `config.alerts.sources`.
 
 **Admin and family:** magic-link sign-in (Resend), admin panel tabs (views and grid editor, themes, displays with
 copyable addresses, meals, settings for every integration, Settings › Chores for the kids and their chores), **settings backup and restore** (Settings › Backup, a JSON
@@ -63,17 +66,11 @@ file), `/family/` for the message board and meals, Sentry.
 
 **Integrations connected from Settings:** Google Calendar, Google Tasks, Google Photos (Picker), iCal calendar links,
 Amazon Photos, the photo library (Vercel Blob), Home Assistant (Cloudflare Tunnel + Access), Spotify, Sonos, garbage
-zone lookup, sports teams to follow.
+zone lookup, sports teams to follow, TransLink, commute places (TomTom geocoding).
 
-## In progress (2026-11-19)
+## In progress
 
-Being built in other threads now; check the merged code before starting any of these again, and move each to **What
-already exists** when it merges:
-
-- **TransLink** departures for nearby stops.
-- **BC Hydro outages**, and more weather alerts (Environment Canada warnings already come through NAAD, see above).
-- **Tappable to-dos** (the `tasks` widget already ticks off Google Tasks from the wall; this work extends it).
-- **Commute time.**
+Nothing in progress right now. Move new work here when it starts, and to **What already exists** when it merges.
 
 ## Commands
 
@@ -135,6 +132,9 @@ node scripts/e2e.mjs   # Playwright browser tests against the build (CHROMIUM_PA
   timer, and a separate pomodoro"): two widgets, `timer` and `pomodoro` (see Architecture).
 - **BC Ferries** (Melvin, 2026-11-21): the next sailings for routes chosen in the widget's settings, with how full
   each one is (see Architecture).
+- **Earth wind map** (Melvin, 2026-11-21: "can i add this and specific a location? https://earth.nullschool.net"):
+  earth.nullschool.net framed in a widget, centred on a place picked in its settings (Langley by default), with a
+  zoom, a colour layer and its own place marker (see Architecture).
 - **TransLink departures** (Melvin, 2026-11-19: "add translink"): a TransLink widget with the next buses from up to six
   picked stops, live from TransLink's GTFS-realtime feed (see Architecture).
 - **Sports scores** (Melvin, 2026-11-21: "allow to customize the sports and the teams"): any teams from several leagues
@@ -315,6 +315,21 @@ panel can be complex if you need it to be."
   after its time on the wall's own clock and labels conditions older than 15 minutes with their time. Its field names
   come from the project's published JSON schema (`schemas/bc-ferries-api-v2-capacity-schema.json`); this sandbox can't
   reach it, so tests use that shape.
+- **Earth wind map:** earth.nullschool.net (Cameron Beccario's site) in an `<iframe>`; checked 2026-11-21: it sends no
+  `X-Frame-Options` or `frame-ancestors`, and its script handles being framed itself (it blocks only a few named
+  sites, hides its app banner and uses its lighter 1° data in a frame). Everything it shows is set by the address's
+  hash (`#current/wind/surface/level/overlay=…/orthographic=lon,lat,scale/loc=…/anim=off`), built by `earthUrl` in
+  `src/lib/earth.ts`; its scale is the globe's radius in pixels, so the widget's zoom (globe, continent, region, local)
+  is a multiple of the cell's short side. The place is stored on the widget (`place` label, `latitude`, `longitude`),
+  found by name through `/api/admin/places/` (Open-Meteo's free geocoding, `src/server/places.ts`) or copied from the
+  dashboard's location, and sent to earth rounded to two decimals. Earth's wind lines are the heaviest thing a screen
+  can run (a load is about 600 KB; it animates on the GPU), so the frame exists only while it can be seen: it is
+  removed while the screen saver is up (`html.saving`) or the page is hidden, made again on waking, and made again
+  every hour for new weather (earth reads data only when it loads). The frame is sandboxed (`allow-scripts
+  allow-same-origin`: no pop-ups or navigating the dashboard), sends no referrer, and takes no touches
+  (`pointer-events: none`), so a tap neither spins the globe nor goes unheard by the screen saver. The CSP's
+  `frame-src` names earth.nullschool.net and nothing else. This sandbox can't reach earth, so tests check the address
+  and the frame's life, not earth itself.
 - **Settings backup and restore** (Melvin, 2026-11-21): Settings › Backup downloads the whole settings document as
   `everydaypane-settings-<date>.json` and restores one (`src/server/backup.ts`, `/api/admin/backup/`). The file is the
   document itself, walked generically, so new widget types and settings are in it with no change there. It never holds
@@ -391,7 +406,7 @@ panel can be complex if you need it to be."
 - Sign-in tries are rate-limited in the database (one atomic upsert), per address and per IP.
 - Requests that change something must come from our own origin (`sameOrigin`).
 - Security headers on every response (`src/lib/securityHeaders.ts`): HSTS, nosniff, `frame-ancestors 'none'`, a CSP
-  that allows only our own origin (and Sentry's ingest), and a Permissions-Policy that turns off camera, microphone
+  that allows only our own origin (and Sentry's ingest, and earth.nullschool.net as the one frame), and a Permissions-Policy that turns off camera, microphone
   and location.
 - Error reports are scrubbed of emails, display tokens and cookies before they leave (`src/lib/sentryScrub.ts`).
 

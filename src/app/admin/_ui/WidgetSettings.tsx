@@ -4,9 +4,11 @@ import { useState } from "react";
 
 import type { CountdownEvent, DashboardConfig, TimerPreset, Widget } from "@/lib/config/schema";
 import { WIDGETS } from "@/lib/config/widgets";
+import { EARTH_OVERLAY_LABELS, EARTH_OVERLAYS, EARTH_ZOOM_LABELS, EARTH_ZOOMS } from "@/lib/earth";
 import { FERRY_ROUTES, ferryRouteName } from "@/lib/ferries";
 import { MEAL_LABELS, MEAL_SLOTS } from "@/lib/meals";
 
+import { PlaceFinder } from "./CommutePanel";
 import { NumberInput, Select, Text, TextArea, Toggle } from "./fields";
 import { HaEntityList } from "./haEntities";
 import { useMusic } from "./music";
@@ -327,6 +329,80 @@ function TypeSettings({
             hint="Environment Canada's extrapolation of where the rain is moving."
           />
           <Toggle label="Animate" checked={w.animate} onChange={(v) => e((x) => void (x.animate = v))} />
+        </>
+      );
+    }
+    case "earth": {
+      const e = edit<"earth">();
+      const home = config.location;
+      const atHome = w.latitude === home.latitude && w.longitude === home.longitude;
+      return (
+        <>
+          <div className="grid gap-1">
+            <p className="text-sm font-medium">Centred on</p>
+            <p className="text-sm">
+              {w.place || "A place"} ({w.latitude.toFixed(2)}, {w.longitude.toFixed(2)})
+            </p>
+            {!atHome && (
+              <button
+                type="button"
+                className="btn-ghost justify-start"
+                onClick={() =>
+                  e((x) => {
+                    x.place = home.name.slice(0, 80);
+                    x.latitude = home.latitude;
+                    x.longitude = home.longitude;
+                  })
+                }
+              >
+                Use the dashboard&rsquo;s location{home.name ? ` (${home.name})` : ""}
+              </button>
+            )}
+          </div>
+          <PlaceFinder
+            label="Another place"
+            button="Find"
+            placeholder="Town or city, anywhere"
+            nothing="Nothing matched. Try a town or city name, like \u201cManila\u201d."
+            url={(q) => `/api/admin/places/?${new URLSearchParams({ q })}`}
+            onPick={(p) =>
+              e((x) => {
+                x.place = p.label.slice(0, 80);
+                x.latitude = p.latitude;
+                x.longitude = p.longitude;
+              })
+            }
+          />
+          <Select
+            label="How far out"
+            value={w.zoom}
+            options={EARTH_ZOOMS.map((z) => ({ value: z, label: EARTH_ZOOM_LABELS[z] }))}
+            onChange={(v) => e((x) => void (x.zoom = v))}
+            hint="Worked out from the widget's size, so a small widget shows the same area as a big one."
+          />
+          <Select
+            label="Colours show"
+            value={w.overlay}
+            options={EARTH_OVERLAYS.map((o) => ({ value: o, label: EARTH_OVERLAY_LABELS[o] }))}
+            onChange={(v) => e((x) => void (x.overlay = v))}
+          />
+          <Toggle
+            label="Mark the place"
+            checked={w.showPlace}
+            hint="A ring on the map, with a small card of its wind and the reading for the colours."
+            onChange={(v) => e((x) => void (x.showPlace = v))}
+          />
+          <Toggle
+            label="Animate the wind"
+            checked={w.animate}
+            hint="The moving lines are the heaviest thing on the screen. Off draws a still map."
+            onChange={(v) => e((x) => void (x.animate = v))}
+          />
+          <p className="text-xs text-soft">
+            The map is earth.nullschool.net by Cameron Beccario, shown as it is on that site. It is hidden while the screen saver is on,
+            loads again every hour for new weather, and doesn&rsquo;t respond to touch on the wall. The place is sent to
+            earth.nullschool.net rounded to about a kilometre.
+          </p>
         </>
       );
     }

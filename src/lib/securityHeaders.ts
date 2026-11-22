@@ -1,5 +1,6 @@
 // Security headers on every response. The display needs camera snapshots and photos from our own origin only
-// (they're proxied), so img-src stays 'self' plus data: and blob: for the QR code and offline copies.
+// (they're proxied), so img-src stays 'self' plus data: and blob: for the QR code and offline copies. The one page from
+// elsewhere is the earth wind map widget's frame (src/lib/earth.ts), so frame-src names that site and nothing else.
 export const CSP = [
   "default-src 'self'",
   "script-src 'self' 'unsafe-inline'",
@@ -7,6 +8,7 @@ export const CSP = [
   "img-src 'self' data: blob:",
   "font-src 'self'",
   "connect-src 'self' https://*.ingest.sentry.io https://*.ingest.us.sentry.io",
+  "frame-src https://earth.nullschool.net",
   "worker-src 'self'",
   "manifest-src 'self'",
   "frame-ancestors 'none'",

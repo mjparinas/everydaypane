@@ -251,6 +251,23 @@ export const WIDGETS: { [T in WidgetType]: WidgetInfo<T> } = {
     minSize: { w: 2, h: 1 },
     defaults: () => ({ teamIds: [], showLast: true }),
   },
+  earth: {
+    label: "Earth wind map",
+    description: "Animated wind and weather from earth.nullschool.net",
+    icon: "🌀",
+    size: { w: 6, h: 4 },
+    minSize: { w: 2, h: 2 },
+    // Langley until another place is picked; the widget's settings can copy the dashboard's own location.
+    defaults: () => ({
+      place: "Langley",
+      latitude: 49.1,
+      longitude: -122.66,
+      zoom: "region" as const,
+      overlay: "wind" as const,
+      showPlace: true,
+      animate: true,
+    }),
+  },
 };
 
 export const WIDGET_TYPES = Object.keys(WIDGETS) as WidgetType[];

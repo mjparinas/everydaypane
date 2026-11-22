@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+import { EARTH_OVERLAYS, EARTH_ZOOMS } from "../earth";
 import { FERRY_ROUTES } from "../ferries";
 import { MEAL_SLOTS } from "../meals";
 import { SCREEN_SAVER_OFF } from "../screenSaver";
@@ -266,6 +267,19 @@ export const widgetSchema = z.discriminatedUnion("type", [
     type: z.literal("sports"),
     teamIds: z.array(id).max(MAX_TEAMS),
     showLast: z.boolean(),
+  }),
+  // The earth wind map (Melvin, 2026-11-21): earth.nullschool.net's animated wind and weather, centred on a place
+  // (src/lib/earth.ts). `place` is only the name the admin panel shows.
+  z.object({
+    ...base,
+    type: z.literal("earth"),
+    place: z.string().max(80),
+    latitude: z.number().min(-90).max(90),
+    longitude: z.number().min(-180).max(180),
+    zoom: z.enum(EARTH_ZOOMS),
+    overlay: z.enum(EARTH_OVERLAYS),
+    showPlace: z.boolean(),
+    animate: z.boolean(),
   }),
 ]);
 export type Widget = z.infer<typeof widgetSchema>;
