@@ -98,10 +98,6 @@ export function NumberInput({
   const [draft, setDraft] = useState(String(value));
   const [focused, setFocused] = useState(false);
 
-  useEffect(() => {
-    if (!focused) setDraft(String(value));
-  }, [value, focused]);
-
   function commit(raw: string) {
     const n = Number(raw);
     if (raw.trim() === "" || !Number.isFinite(n)) {
@@ -130,6 +126,7 @@ export function NumberInput({
           className="field tabular-nums"
           type="text"
           inputMode="decimal"
+          // While focused, keep the draft so mid-typing isn't clamped; otherwise show the live value.
           value={focused ? draft : String(value)}
           onFocus={() => {
             setFocused(true);
@@ -143,8 +140,6 @@ export function NumberInput({
           onKeyDown={(e) => {
             if (e.key === "Enter") (e.target as HTMLInputElement).blur();
           }}
-          aria-valuemin={min}
-          aria-valuemax={max}
           data-step={step}
         />
       )}

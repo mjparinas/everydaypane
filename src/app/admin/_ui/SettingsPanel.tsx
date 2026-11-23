@@ -62,13 +62,13 @@ export function SettingsPanel() {
   const edit = useAdmin((s) => s.edit);
   const { location, burnIn, alerts } = config;
   const section = useSyncExternalStore(subscribeHash, settingsSectionFromHash, () => null);
-  const [openGroup, setOpenGroup] = useState<GroupId>(() => groupForSection(section));
+  // Which group is open comes from the hash (deep links from widgets), not from effect-synced state.
+  const openGroup = groupForSection(section);
   const [coordsOpen, setCoordsOpen] = useState(false);
 
   useEffect(() => {
     if (!section) return;
-    setOpenGroup(groupForSection(section));
-    // Wait a tick so collapsed groups mount before scrolling.
+    // Wait a tick so the group's sections mount before scrolling.
     const t = window.setTimeout(() => {
       document.getElementById(`settings-${section}`)?.scrollIntoView({ behavior: "smooth", block: "start" });
     }, 50);
@@ -91,10 +91,7 @@ export function SettingsPanel() {
             type="button"
             className={openGroup === g.id ? "btn-primary shrink-0" : "btn-ghost shrink-0"}
             aria-pressed={openGroup === g.id}
-            onClick={() => {
-              setOpenGroup(g.id);
-              goSettingsSection(g.sections[0]!);
-            }}
+            onClick={() => goSettingsSection(g.sections[0]!)}
           >
             {g.label}
           </button>
