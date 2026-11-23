@@ -359,8 +359,12 @@ export type View = z.infer<typeof viewSchema>;
 
 export { PERIODS, type Period } from "./periods";
 
+/** Fixed clock time, or today's sunrise / sunset at the dashboard location (from the weather feed). */
+export const periodStartSchema = z.union([hhmm, z.literal("sunrise"), z.literal("sunset")]);
+export type PeriodStart = z.infer<typeof periodStartSchema>;
+
 export const periodSchema = z.object({
-  start: hhmm,
+  start: periodStartSchema,
   viewId: id,
   mode: z.enum(["day", "night"]),
   // Night mode can also dim the whole screen (0 = off, 0.8 = very dim) for a display in a bedroom or hallway.
@@ -502,7 +506,8 @@ export const configSchema = z
     // motion wakes it for `minutes`. Separate from the schedule's dimming, which still applies while it is awake.
     // Off by default, so a document saved before it existed still loads and behaves the same.
     screenSaver: screenSaverSchema.default(() => ({ ...SCREEN_SAVER_OFF, photoSourceIds: [], motionEntityIds: [] })),
-    // Each period starts at its time and runs until the next one starts.
+    // Each period starts at a fixed time, sunrise or sunset, and runs until the next one starts. The overnight
+    // period's key is still `night` (Melvin, 2026-11-22: renamed in the admin only).
     schedule: z.object({
       enabled: z.boolean(),
       morning: periodSchema,

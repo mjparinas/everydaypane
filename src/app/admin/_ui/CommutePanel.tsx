@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 
 import { ConfirmButton, Section, Text } from "./fields";
 import { newId, useAdmin } from "./store";
+import { TimePicker } from "./TimePicker";
 
 // Commute time (Melvin, 2026-11-19): home and up to six places (work, school), each found from its address with
 // TomTom. Only the coordinates and a label are kept; drive times are read by the server (src/server/commute.ts).
@@ -87,6 +88,7 @@ export function PlaceFinder({
 
 export function CommutePanel() {
   const commute = useAdmin((s) => s.config.integrations.commute);
+  const hour12 = useAdmin((s) => s.config.hour12);
   const edit = useAdmin((s) => s.edit);
   const [ready, setReady] = useState<boolean | null>(null);
   const [name, setName] = useState("");
@@ -141,10 +143,12 @@ export function CommutePanel() {
                 <Text label="Icon" value={d.emoji} maxLength={8} placeholder="🏢" onChange={(v) => change(d.id, { emoji: v })} />
                 <Text label="Name" value={d.name} maxLength={40} onChange={(v) => change(d.id, { name: v })} />
               </div>
-              <Text
+              <TimePicker
                 label="Be there by"
-                type="time"
                 value={d.arriveBy}
+                hour12={hour12}
+                optional
+                emptyLabel="No set time"
                 hint="Optional. The widget then says when to leave."
                 onChange={(v) => change(d.id, { arriveBy: v })}
               />

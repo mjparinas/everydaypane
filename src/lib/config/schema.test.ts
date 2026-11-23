@@ -127,6 +127,15 @@ describe("config schema", () => {
     expect(configSchema.safeParse(c).success).toBe(false);
   });
 
+  it("allows a period to start at sunrise or sunset", () => {
+    const c = defaultConfig();
+    c.schedule.morning.start = "sunrise";
+    c.schedule.evening.start = "sunset";
+    expect(configSchema.safeParse(c).success).toBe(true);
+    c.schedule.afternoon.start = "noon";
+    expect(configSchema.safeParse(c).success).toBe(false);
+  });
+
   it("rejects an unknown time zone", () => {
     const c = defaultConfig();
     c.location.timeZone = "Mars/Olympus";
