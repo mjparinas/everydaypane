@@ -14,8 +14,13 @@ import { displayPayload } from "@/lib/display/payload";
 
 const DESIGN_W = 1920;
 const DESIGN_H = 1080;
+/** Reused by "Open full preview" so switching views navigates the same tab instead of leaving a stale one. */
+const FULL_PREVIEW = "everydaypane-preview";
 
 type Drag = { id: string; mode: "move" | Corner; offset: { x: number; y: number }; pointer: number; moved: boolean; rect: Rect };
+
+/** Last full-preview tab opened from the Views editor (module-level so remounts keep the handle). */
+let fullPreviewWin: Window | null = null;
 
 export function LiveLayoutEditor({
   view,
@@ -74,11 +79,25 @@ export function LiveLayoutEditor({
   }
 
   useEffect(() => {
-    if (!listening) return;
-    const win = frame.current?.contentWindow;
-    if (!win) return;
+    const hasFull = Boolean(fullPreviewWin && !fullPreviewWin.closed);
+    if (!listening && !hasFull) return;
     window.clearTimeout(draftTimer.current);
-    draftTimer.current = window.setTimeout(() => sendDraft(win), 120);
+    draftTimer.current = window.setTimeout(() => {
+      const frameWin = frame.current?.contentWindow;
+      if (listening && frameWin) sendDraft(frameWin);
+      const full = fullPreviewWin;
+      if (full && !full.closed) {
+        try {
+          // Only push when that tab is still on this view (pathname carries the view id).
+          if (full.location.pathname.includes(`/admin/preview/${encodeURIComponent(latest.current.viewId)}`)) {
+            sendDraft(full);
+          }
+        } catch {
+          // Tab on another origin or gone.
+          fullPreviewWin = null;
+        }
+      }
+    }, 120);
     return () => window.clearTimeout(draftTimer.current);
   }, [config, version, viewId, listening]);
 
@@ -86,10 +105,17 @@ export function LiveLayoutEditor({
     const iframe = frame.current;
     const onMessage = (event: MessageEvent) => {
       if (event.origin !== window.location.origin) return;
-      if (event.source !== iframe?.contentWindow) return;
       if (!parsePreviewReady(event.data)) return;
-      setListening(true);
-      if (event.source && "postMessage" in event.source) sendDraft(event.source as Window);
+      if (event.source === iframe?.contentWindow) {
+        setListening(true);
+        if (event.source && "postMessage" in event.source) sendDraft(event.source as Window);
+        return;
+      }
+      // Ready ping from the "Open full preview" tab (opener relationship).
+      if (event.source && "postMessage" in event.source) {
+        fullPreviewWin = event.source as Window;
+        sendDraft(event.source as Window);
+      }
     };
     window.addEventListener("message", onMessage);
     return () => {
@@ -104,6 +130,16 @@ export function LiveLayoutEditor({
       }
     };
   }, [viewId]);
+
+  function openFullPreview(e: React.MouseEvent<HTMLAnchorElement>) {
+    e.preventDefault();
+    // Named target: reuse one tab and navigate it to the active view (target=_blank left a stale first tab).
+    // No noreferrer/noopener — we need window.opener so the tab can take the working-copy draft.
+    const w = window.open(src, FULL_PREVIEW);
+    if (!w) return;
+    fullPreviewWin = w;
+    w.focus();
+  }
 
   function cellFromEvent(e: React.PointerEvent): { x: number; y: number } {
     const el = overlay.current;
@@ -178,7 +214,13 @@ export function LiveLayoutEditor({
     <div className="grid gap-2">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h2 className="text-sm font-semibold text-soft">Layout</h2>
-        <a className="btn-ghost min-h-9 px-3 text-sm" href={src} target="_blank" rel="noreferrer">
+        <a
+          className="btn-ghost min-h-9 px-3 text-sm"
+          href={src}
+          target={FULL_PREVIEW}
+          data-testid="open-full-preview"
+          onClick={openFullPreview}
+        >
           Open full preview ↗
         </a>
       </div>
@@ -189,6 +231,7 @@ export function LiveLayoutEditor({
         data-testid="live-preview"
       >
         <iframe
+          key={viewId}
           ref={frame}
           title="Preview of this view"
           src={src}

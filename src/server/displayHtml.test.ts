@@ -14,6 +14,15 @@ describe("display page", () => {
     expect(html).toContain('data-preview-mode="night"');
   });
 
+  it("puts a different data-preview on each view (full preview must not stick on the first)", async () => {
+    const home = await displayHtml({ token: null, title: "Preview", previewView: "home" }).text();
+    const night = await displayHtml({ token: null, title: "Preview", previewView: "night" }).text();
+    expect(home).toContain('data-preview="home"');
+    expect(night).toContain('data-preview="night"');
+    expect(home).not.toContain('data-preview="night"');
+    expect(night).not.toContain('data-preview="home"');
+  });
+
   it("lets the admin frame a preview, and keeps a wall display unframeable", () => {
     const wall = displayHtml({ token: "abc", title: "Kitchen" });
     expect(wall.headers.get("Content-Security-Policy")).toContain("frame-ancestors 'none'");
