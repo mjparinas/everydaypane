@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { GET as adminGET } from "@/app/api/admin/sports/route";
+import { GET as adminGET } from "@/app/api/household/sports/route";
 import { GET as displayGET } from "@/app/api/display/sports/route";
 import { defaultConfig } from "@/lib/config/defaults";
 import type { DashboardConfig } from "@/lib/config/schema";
@@ -222,10 +222,10 @@ describe("sports routes", () => {
     const fetch = vi.fn<(input: string | URL | Request) => Promise<Response>>(() => Promise.resolve(Response.json(teams)));
     vi.stubGlobal("fetch", fetch);
     const kid = await cookieFor("kid@example.com");
-    expect((await adminGET(req("/api/admin/sports/?league=nhl", { headers: { cookie: kid } }))).status).toBe(401);
+    expect((await adminGET(req("/api/household/sports/?league=nhl", { headers: { cookie: kid } }))).status).toBe(401);
     const admin = await cookieFor("admin@example.com");
-    expect((await adminGET(req("/api/admin/sports/?league=cricket", { headers: { cookie: admin } }))).status).toBe(400);
-    const r = await adminGET(req("/api/admin/sports/?league=nhl", { headers: { cookie: admin } }));
+    expect((await adminGET(req("/api/household/sports/?league=cricket", { headers: { cookie: admin } }))).status).toBe(400);
+    const r = await adminGET(req("/api/household/sports/?league=nhl", { headers: { cookie: admin } }));
     expect(((await r.json()) as { teams: unknown[] }).teams).toHaveLength(2);
     expect(String(fetch.mock.calls[0]?.[0])).toBe("https://site.api.espn.com/apis/site/v2/sports/hockey/nhl/teams?limit=200");
   });

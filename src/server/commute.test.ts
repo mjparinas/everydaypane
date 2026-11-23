@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { GET as adminGET } from "@/app/api/admin/commute/route";
+import { GET as adminGET } from "@/app/api/household/commute/route";
 import { GET as displayGET } from "@/app/api/display/commute/route";
 import { defaultConfig } from "@/lib/config/defaults";
 import type { DashboardConfig } from "@/lib/config/schema";
@@ -168,7 +168,7 @@ describe("commute routes", () => {
   it("looks up addresses for admins only, near the dashboard", async () => {
     const fetch = vi.fn<(input: string | URL | Request) => Promise<Response>>(() => Promise.resolve(Response.json(geocode)));
     vi.stubGlobal("fetch", fetch);
-    const url = "/api/admin/commute/?address=4700%20Kingsway%20Burnaby";
+    const url = "/api/household/commute/?address=4700%20Kingsway%20Burnaby";
     const kid = await cookieFor("kid@example.com");
     expect((await adminGET(req(url, { headers: { cookie: kid } }))).status).toBe(401);
     const admin = await cookieFor("admin@example.com");
@@ -177,13 +177,13 @@ describe("commute routes", () => {
     const asked = new URL(String(fetch.mock.calls[0]?.[0]));
     expect(asked.pathname).toBe("/search/2/geocode/4700%20Kingsway%20Burnaby.json");
     expect(asked.searchParams.get("lat")).toBe(String(defaultConfig().location.latitude));
-    expect(await (await adminGET(req("/api/admin/commute/", { headers: { cookie: admin } }))).json()).toEqual({ ready: true });
+    expect(await (await adminGET(req("/api/household/commute/", { headers: { cookie: admin } }))).json()).toEqual({ ready: true });
   });
 
   it("tells the admin to add the key before looking anything up", async () => {
     vi.stubEnv("TOMTOM_API_KEY", "");
     const admin = await cookieFor("admin@example.com");
-    expect(await (await adminGET(req("/api/admin/commute/", { headers: { cookie: admin } }))).json()).toEqual({ ready: false });
-    expect((await adminGET(req("/api/admin/commute/?address=Kingsway", { headers: { cookie: admin } }))).status).toBe(503);
+    expect(await (await adminGET(req("/api/household/commute/", { headers: { cookie: admin } }))).json()).toEqual({ ready: false });
+    expect((await adminGET(req("/api/household/commute/?address=Kingsway", { headers: { cookie: admin } }))).status).toBe(503);
   });
 });

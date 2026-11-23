@@ -17,7 +17,7 @@ export interface Place {
 
 const MAX = 6;
 
-const addressUrl = (address: string) => `/api/admin/commute/?${new URLSearchParams({ address })}`;
+const addressUrl = (address: string) => `/api/household/commute/?${new URLSearchParams({ address })}`;
 
 /** Finds a place by what the admin types, through `url` (TomTom addresses by default), and hands back the one picked. */
 export function PlaceFinder({
@@ -95,7 +95,7 @@ export function CommutePanel() {
 
   useEffect(() => {
     let live = true;
-    fetch("/api/admin/commute/")
+    fetch("/api/household/commute/")
       .then((r) => (r.ok ? (r.json() as Promise<{ ready: boolean }>) : null))
       .then((b) => live && b && setReady(b.ready))
       .catch(() => undefined);

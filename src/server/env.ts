@@ -7,9 +7,9 @@ export const env = {
   databaseToken: () => process.env.DATABASE_AUTH_TOKEN || process.env.TURSO_AUTH_TOKEN || undefined,
   /** Signs sessions and encrypts stored secrets. 32+ random characters. Changing it signs everyone out and loses stored tokens. */
   sessionSecret: () => process.env.SESSION_SECRET ?? "",
-  /** Who may sign in to the admin panel (comma separated). */
+  /** Platform staff (/admin/) and bootstrap admins for the grandfather household (comma separated). */
   adminEmails: () => list(process.env.ADMIN_EMAILS),
-  /** Who may post on the family message board but not change the dashboard. */
+  /** Who may post on the family message board but not change the household dashboard. */
   familyEmails: () => list(process.env.FAMILY_EMAILS),
   resendKey: () => process.env.RESEND_API_KEY ?? "",
   mailFrom: () => process.env.MAIL_FROM || "Everydaypane <onboarding@resend.dev>",

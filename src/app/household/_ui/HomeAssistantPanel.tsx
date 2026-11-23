@@ -26,7 +26,7 @@ export function HomeAssistantPanel() {
   async function save(body: Record<string, string | null>) {
     setBusy(true);
     setError("");
-    const r = await fetch("/api/admin/ha/", {
+    const r = await fetch("/api/household/ha/", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),

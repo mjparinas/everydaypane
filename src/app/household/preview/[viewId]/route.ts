@@ -8,7 +8,7 @@ export const dynamic = "force-dynamic";
 export async function GET(req: Request, ctx: { params: Promise<{ viewId: string }> }) {
   const { viewId } = await ctx.params;
   if (!(await adminFor(req))) {
-    const next = `/admin/preview/${encodeURIComponent(viewId)}/`;
+    const next = `/household/preview/${encodeURIComponent(viewId)}/`;
     return Response.redirect(new URL(`/signin/?next=${encodeURIComponent(next)}`, req.url), 303);
   }
   const mode = new URL(req.url).searchParams.get("mode");

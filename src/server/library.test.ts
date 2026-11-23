@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { GET as googleGET, POST as googlePOST } from "@/app/api/admin/google-photos/route";
-import { DELETE as libraryDELETE, GET as libraryGET, POST as libraryPOST } from "@/app/api/admin/library/route";
+import { GET as googleGET, POST as googlePOST } from "@/app/api/household/google-photos/route";
+import { DELETE as libraryDELETE, GET as libraryGET, POST as libraryPOST } from "@/app/api/household/library/route";
 import { GET as photoGET } from "@/app/api/display/photo/route";
 import { GET as photosGET } from "@/app/api/display/photos/route";
 import type { PhotoData } from "@/lib/display/types";
@@ -56,7 +56,7 @@ describe("photo library", () => {
     const admin = await cookieFor("admin@example.com");
     const upload = (bytes: Uint8Array<ArrayBuffer>, cookie = admin, w = "2048", h = "1536") =>
       libraryPOST(
-        req("/api/admin/library/?source=family", {
+        req("/api/household/library/?source=family", {
           method: "POST",
           headers: { cookie, "content-type": "image/jpeg", "x-photo-width": w, "x-photo-height": h },
           body: bytes,
@@ -68,7 +68,7 @@ describe("photo library", () => {
     expect((await upload(JPEG, await cookieFor("kid@example.com"))).status).toBe(401);
     expect([...store.keys()]).toHaveLength(1);
 
-    const list = (await (await libraryGET(req("/api/admin/library/?source=family", { headers: { cookie: admin } }))).json()) as {
+    const list = (await (await libraryGET(req("/api/household/library/?source=family", { headers: { cookie: admin } }))).json()) as {
       photos: { id: string; w: number }[];
     };
     expect(list.photos).toHaveLength(1);
@@ -84,7 +84,8 @@ describe("photo library", () => {
     expect(JSON.stringify(feed)).not.toContain("blob.vercel-storage");
 
     expect(
-      (await libraryDELETE(req(`/api/admin/library/?source=family&photo=${id}`, { method: "DELETE", headers: { cookie: admin } }))).status,
+      (await libraryDELETE(req(`/api/household/library/?source=family&photo=${id}`, { method: "DELETE", headers: { cookie: admin } })))
+        .status,
     ).toBe(200);
     expect(store.size).toBe(0);
     expect((await photoGET(req(`/api/display/photo/?s=family&i=${id}&t=${token}`))).status).toBe(404);
@@ -96,7 +97,7 @@ describe("photo library", () => {
     expect(
       (
         await libraryPOST(
-          req("/api/admin/library/?source=family", {
+          req("/api/household/library/?source=family", {
             method: "POST",
             headers: { cookie: admin, "content-type": "image/jpeg", "x-photo-width": "800", "x-photo-height": "600" },
             body: JPEG,
@@ -116,11 +117,11 @@ describe("photo library", () => {
   it("copies photos picked in Google Photos, skipping videos and ones already added", async () => {
     await withLibrary();
     const admin = await cookieFor("admin@example.com");
-    expect(await (await googleGET(req("/api/admin/google-photos/", { headers: { cookie: admin } }))).json()).toMatchObject({
+    expect(await (await googleGET(req("/api/household/google-photos/", { headers: { cookie: admin } }))).json()).toMatchObject({
       allowed: false,
     });
     const start = () =>
-      googlePOST(req("/api/admin/google-photos/", { method: "POST", headers: { cookie: admin }, body: JSON.stringify({ start: true }) }));
+      googlePOST(req("/api/household/google-photos/", { method: "POST", headers: { cookie: admin }, body: JSON.stringify({ start: true }) }));
     expect(((await (await start()).json()) as { connect?: boolean }).connect).toBe(true);
 
     await setSecret(LEGACY_ACCOUNT_ID, "google.refreshToken", "refresh");
@@ -173,7 +174,7 @@ describe("photo library", () => {
     const copy = async () =>
       (await (
         await googlePOST(
-          req("/api/admin/google-photos/", {
+          req("/api/household/google-photos/", {
             method: "POST",
             headers: { cookie: admin },
             body: JSON.stringify({ source: "family", session: "s1", page: null }),
@@ -184,7 +185,7 @@ describe("photo library", () => {
     expect(downloads).toEqual(["https://lh3.googleusercontent.com/p/g1=w2048-h2048"]);
     expect(await copy()).toEqual({ added: 0, skipped: 2, next: null });
 
-    const list = (await (await libraryGET(req("/api/admin/library/?source=family", { headers: { cookie: admin } }))).json()) as {
+    const list = (await (await libraryGET(req("/api/household/library/?source=family", { headers: { cookie: admin } }))).json()) as {
       photos: { w: number; h: number; taken: string; origin: string }[];
     };
     expect(list.photos).toEqual([expect.objectContaining({ w: 2048, h: 1536, taken: "2026-07-01", origin: "google" })]);
@@ -196,7 +197,7 @@ describe("photo library", () => {
     expect(
       (
         await libraryPOST(
-          req("/api/admin/library/?source=family", {
+          req("/api/household/library/?source=family", {
             method: "POST",
             headers: { cookie: admin, "content-type": "image/jpeg", "x-photo-width": "800", "x-photo-height": "600" },
             body: JPEG,

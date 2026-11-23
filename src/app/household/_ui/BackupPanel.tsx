@@ -43,7 +43,7 @@ export function BackupPanel() {
   const [done, setDone] = useState("");
 
   async function post(backup: unknown, dryRun: boolean) {
-    const r = await fetch("/api/admin/backup/", {
+    const r = await fetch("/api/household/backup/", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ baseVersion: version, backup, dryRun }),
@@ -128,7 +128,7 @@ export function BackupPanel() {
       />
       {dirty && <p className="text-xs text-bad">You have unsaved changes. The backup has the last saved settings, so save first.</p>}
       <div className="flex flex-wrap gap-2">
-        <a className="btn-primary" href={`/api/admin/backup/${wifi ? "?wifi=1" : ""}`} download>
+        <a className="btn-primary" href={`/api/household/backup/${wifi ? "?wifi=1" : ""}`} download>
           Download backup
         </a>
         <label className={`btn-ghost cursor-pointer ${busy ? "pointer-events-none opacity-50" : ""}`}>

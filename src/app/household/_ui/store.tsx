@@ -88,7 +88,7 @@ const createAdminStore = (initial: DashboardConfig, initialVersion: number) => {
       const snapshot = JSON.stringify(config);
       set({ status: { kind: "saving" } });
       try {
-        const r = await fetch("/api/admin/config/", {
+        const r = await fetch("/api/household/config/", {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ baseVersion: version, config }),
@@ -116,7 +116,7 @@ const createAdminStore = (initial: DashboardConfig, initialVersion: number) => {
       }
     },
     reload: async () => {
-      const r = await fetch("/api/admin/config/");
+      const r = await fetch("/api/household/config/");
       if (!r.ok) return;
       const body = (await r.json()) as { config: DashboardConfig; version: number };
       get().init(body.config, body.version);

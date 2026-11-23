@@ -28,7 +28,7 @@ const failed: SmartHomeStatus = {
 
 export function loadSmartHome(fresh = false): Promise<SmartHomeStatus> {
   if (!pending || fresh) {
-    pending = fetch("/api/admin/smart-home/")
+    pending = fetch("/api/household/smart-home/")
       .then((r) => (r.ok ? (r.json() as Promise<SmartHomeStatus>) : Promise.reject(new Error(String(r.status)))))
       .catch(() => failed);
     void pending.then((s) => listeners.forEach((l) => l(s)));
@@ -54,7 +54,7 @@ export function useSmartHome(): SmartHomeStatus | null {
 }
 
 export async function loadSmartProvider(provider: NativeSmartProvider): Promise<SmartProviderDetail> {
-  const r = await fetch(`/api/admin/smart-home/?provider=${provider}`);
+  const r = await fetch(`/api/household/smart-home/?provider=${provider}`);
   if (!r.ok) return { configured: false, connected: false, devices: [], error: "Couldn't load devices" };
   return r.json() as Promise<SmartProviderDetail>;
 }

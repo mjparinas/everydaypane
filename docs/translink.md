@@ -15,7 +15,7 @@ seconds at most, whatever the number of screens, and displays ask the server, ne
 2. Key `TRANSLINK_API_KEY`, value the key, environment **Production** (and Development if you run it locally).
 3. **Deployments** › the latest one › **⋯** › **Redeploy**, so the new variable is picked up.
 
-## In the admin panel
+## In the household panel
 
 1. Views › add a **TransLink** widget (🚌).
 2. In its settings, **Find a stop**: type the five-digit number on the bus stop sign (like 55210), part of its name

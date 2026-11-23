@@ -87,14 +87,14 @@ export function SmartHomePanel() {
 
   async function disconnect(provider: NativeSmartProvider) {
     setError("");
-    const r = await fetch(`/api/admin/smart-home/?provider=${provider}`, { method: "DELETE" }).catch(() => null);
+    const r = await fetch(`/api/household/smart-home/?provider=${provider}`, { method: "DELETE" }).catch(() => null);
     if (!r?.ok) setError("Couldn't disconnect that.");
     await loadSmartHome(true);
   }
 
   async function saveSecret(body: { tempestToken?: string | null; wuApiKey?: string | null }) {
     setError("");
-    const r = await fetch("/api/admin/smart-home/", {
+    const r = await fetch("/api/household/smart-home/", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),

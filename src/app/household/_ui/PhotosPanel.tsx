@@ -21,7 +21,7 @@ interface AmazonStatus {
 type SourceCheck = Record<string, { count: number; error: string | null; image: string | null }>;
 
 async function fetchAmazon(): Promise<AmazonStatus> {
-  const r = await fetch("/api/admin/amazon/");
+  const r = await fetch("/api/household/amazon/");
   if (!r.ok) throw new Error(String(r.status));
   return (await r.json()) as AmazonStatus;
 }
@@ -69,7 +69,7 @@ export function PhotosPanel() {
       () => live && setAmazon({ connected: false, people: [] }),
     );
     // How each saved source is doing, so a broken album says why here rather than "Loading photos…" on the wall.
-    fetch("/api/admin/photos/")
+    fetch("/api/household/photos/")
       .then((r) => (r.ok ? (r.json() as Promise<SourceCheck>) : null))
       .then((c) => live && setChecks(c))
       .catch(() => undefined);
@@ -135,7 +135,7 @@ export function PhotosPanel() {
 
   async function saveCookie(value: string | null) {
     setError("");
-    const r = await fetch("/api/admin/amazon/", {
+    const r = await fetch("/api/household/amazon/", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ cookie: value, tld }),

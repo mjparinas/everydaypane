@@ -42,7 +42,7 @@ async function call(url: string, method: string, body?: unknown): Promise<Respon
 }
 
 async function fetchDevices(): Promise<Device[]> {
-  const r = await fetch("/api/admin/devices/");
+  const r = await fetch("/api/household/devices/");
   if (!r.ok) throw new Error(String(r.status));
   return ((await r.json()) as { devices: Device[] }).devices;
 }
@@ -79,7 +79,7 @@ export function DisplaysPanel() {
   async function add(e: React.FormEvent) {
     e.preventDefault();
     setError("");
-    const r = await call("/api/admin/devices/", "POST", { name, viewId: viewId || null });
+    const r = await call("/api/household/devices/", "POST", { name, viewId: viewId || null });
     const body = (await r.json().catch(() => ({}))) as { url?: string; editUrl?: string; error?: string };
     if (!r.ok || !body.url || !body.editUrl) return setError(body.error ?? "Couldn't add the display.");
     setAdded({ name, url: body.url, editUrl: body.editUrl });
@@ -88,13 +88,13 @@ export function DisplaysPanel() {
 
   async function patch(id: string, p: { name?: string; viewId?: string | null }) {
     setDevices((d) => d?.map((x) => (x.id === id ? { ...x, ...p } : x)) ?? null);
-    const r = await call(`/api/admin/devices/${id}/`, "PATCH", p);
+    const r = await call(`/api/household/devices/${id}/`, "PATCH", p);
     if (!r.ok) setError("Couldn't save that change.");
   }
 
   async function newLink(id: string) {
     setError("");
-    const r = await call(`/api/admin/devices/${id}/`, "POST");
+    const r = await call(`/api/household/devices/${id}/`, "POST");
     const body = (await r.json().catch(() => ({}))) as { url?: string; editUrl?: string };
     if (!body.url || !body.editUrl) return setError("Couldn't get a new address.");
     const { url, editUrl } = body;
@@ -166,7 +166,7 @@ export function DisplaysPanel() {
                       {/* eslint-disable-next-line @next/next/no-img-element -- admin SVG from our own route */}
                       <img
                         key={d.editUrl}
-                        src={`/api/admin/devices/${encodeURIComponent(d.id)}/edit-qr/?v=${encodeURIComponent(d.editUrl)}`}
+                        src={`/api/household/devices/${encodeURIComponent(d.id)}/edit-qr/?v=${encodeURIComponent(d.editUrl)}`}
                         alt={`QR code for editing from ${d.name}`}
                         className="h-28 w-28 rounded-lg bg-white p-1"
                         width={112}
@@ -185,7 +185,7 @@ export function DisplaysPanel() {
                     label="Delete display"
                     confirm="Tap again: this signs the screen out"
                     onConfirm={() => {
-                      void call(`/api/admin/devices/${d.id}/`, "DELETE").then(() => load());
+                      void call(`/api/household/devices/${d.id}/`, "DELETE").then(() => load());
                     }}
                   />
                 </div>

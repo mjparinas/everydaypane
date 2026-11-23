@@ -19,7 +19,7 @@ const listeners = new Set<(s: HaStatus) => void>();
 
 export function loadHa(fresh = false): Promise<HaStatus> {
   if (!pending || fresh) {
-    pending = fetch("/api/admin/ha/")
+    pending = fetch("/api/household/ha/")
       .then((r) => (r.ok ? (r.json() as Promise<HaStatus>) : Promise.reject(new Error(String(r.status)))))
       .catch((): HaStatus => ({ tokenSet: false, accessSet: false, connected: false, error: "Couldn't ask the server", entities: [] }));
     void pending.then((s) => listeners.forEach((l) => l(s)));

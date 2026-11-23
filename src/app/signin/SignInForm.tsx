@@ -1,10 +1,23 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+
+const NEXT_KEY = "ep_signin_next";
+
+/** Same-origin relative path only (open redirect guard). */
+function safeNext(raw: string | null): string | null {
+  if (!raw || !raw.startsWith("/") || raw.startsWith("//") || raw.includes("://")) return null;
+  return raw;
+}
 
 export function SignInForm() {
   const [email, setEmail] = useState("");
   const [state, setState] = useState<{ kind: "idle" | "sending" | "sent" | "error"; message?: string }>({ kind: "idle" });
+
+  useEffect(() => {
+    const next = safeNext(new URLSearchParams(window.location.search).get("next"));
+    if (next) sessionStorage.setItem(NEXT_KEY, next);
+  }, []);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -45,3 +58,5 @@ export function SignInForm() {
     </form>
   );
 }
+
+export { NEXT_KEY, safeNext };

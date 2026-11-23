@@ -290,7 +290,7 @@ export function ChoresPanel() {
           void (async () => {
             const pin = pinDraft.trim();
             if (pin && !/^\d{4}$/.test(pin)) return setPinMsg("PIN must be four digits.");
-            const r = await fetch("/api/admin/chores/pin/", {
+            const r = await fetch("/api/household/chores/pin/", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({ pin: pin || null }),

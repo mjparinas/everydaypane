@@ -15,7 +15,7 @@ Household only. Nest thermostats and some lights show on **Smart device** tiles 
 - `NEST_PROJECT_ID` (required)
 - `NEST_CLIENT_ID` and `NEST_CLIENT_SECRET` (optional if `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` are set)
 
-## In the admin panel
+## In the household panel
 
 1. **Settings › Smart home › Nest** — Connect Google.
 2. Add a **Smart device** widget, provider **Nest**, entity id from the connected device list (e.g. `nest.abc123`).

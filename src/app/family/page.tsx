@@ -26,8 +26,8 @@ export default async function FamilyPage() {
         </div>
         <div className="flex shrink-0 gap-2 whitespace-nowrap">
           {session.role === "admin" && (
-            <a className="btn-ghost" href="/admin/">
-              Admin
+            <a className="btn-ghost" href="/household/">
+              Household
             </a>
           )}
           <SignOut />

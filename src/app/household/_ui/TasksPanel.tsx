@@ -17,7 +17,7 @@ interface Status {
 }
 
 async function fetchStatus(): Promise<Status> {
-  const r = await fetch("/api/admin/google-tasks/");
+  const r = await fetch("/api/household/google-tasks/");
   if (!r.ok) throw new Error(String(r.status));
   return (await r.json()) as Status;
 }
@@ -107,7 +107,7 @@ function TodoistPanel() {
 
   useEffect(() => {
     let live = true;
-    fetch("/api/admin/todoist/")
+    fetch("/api/household/todoist/")
       .then((r) => (r.ok ? (r.json() as Promise<typeof status>) : null))
       .then((s) => live && s && setStatus(s))
       .catch(() => undefined);
@@ -158,7 +158,7 @@ function MicrosoftTodoPanel() {
 
   useEffect(() => {
     let live = true;
-    fetch("/api/admin/microsoft-todo/")
+    fetch("/api/household/microsoft-todo/")
       .then((r) => (r.ok ? (r.json() as Promise<typeof status>) : null))
       .then((s) => live && s && setStatus(s))
       .catch(() => undefined);

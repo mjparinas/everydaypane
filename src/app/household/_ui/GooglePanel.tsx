@@ -17,7 +17,7 @@ interface Status {
 }
 
 async function fetchStatus(): Promise<Status> {
-  const r = await fetch("/api/admin/google/");
+  const r = await fetch("/api/household/google/");
   if (!r.ok) throw new Error(String(r.status));
   return (await r.json()) as Status;
 }
@@ -51,7 +51,7 @@ export function GooglePanel() {
   }, []);
 
   async function disconnect() {
-    const r = await fetch("/api/admin/google/", { method: "DELETE" });
+    const r = await fetch("/api/household/google/", { method: "DELETE" });
     if (!r.ok) return setError("Couldn't disconnect Google Calendar.");
     setStatus(await fetchStatus().catch(() => null));
   }

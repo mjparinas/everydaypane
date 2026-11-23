@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { GET as adminGET, DELETE, POST } from "@/app/api/admin/calendar-links/route";
+import { GET as adminGET, DELETE, POST } from "@/app/api/household/calendar-links/route";
 import { GET as displayGET } from "@/app/api/display/calendar/route";
 import type { CalendarData } from "@/lib/display/types";
 import { zonedFormatter } from "@/lib/timeZone";
@@ -159,7 +159,7 @@ describe("calendar links: admin and displays", () => {
 
   async function addLink(admin: string) {
     const r = await POST(
-      req("/api/admin/calendar-links/", {
+      req("/api/household/calendar-links/", {
         method: "POST",
         headers: { cookie: admin },
         body: JSON.stringify({ id: "school1", url: "webcal://school.example.com/cal.ics" }),
@@ -178,7 +178,7 @@ describe("calendar links: admin and displays", () => {
     expect(r.status).toBe(200);
     expect(await r.json()).toMatchObject({ ok: true, name: "Riverside Elementary" });
     expect(await getIcalUrl(LEGACY_ACCOUNT_ID, "school1")).toBe("https://school.example.com/cal.ics");
-    const listed = await adminGET(req("/api/admin/calendar-links/", { headers: { cookie: admin } }));
+    const listed = await adminGET(req("/api/household/calendar-links/", { headers: { cookie: admin } }));
     const text = await listed.text();
     expect(JSON.parse(text)).toEqual({ links: { school1: true } });
     expect(text).not.toContain("school.example.com");
@@ -189,7 +189,7 @@ describe("calendar links: admin and displays", () => {
     const admin = await cookieFor("admin@example.com");
     answer = () => new Response("<html>Sign in</html>", { headers: { "content-type": "text/html" } });
     const bad = await POST(
-      req("/api/admin/calendar-links/", {
+      req("/api/household/calendar-links/", {
         method: "POST",
         headers: { cookie: admin },
         body: JSON.stringify({ id: "school1", url: "https://school.example.com/x" }),
@@ -201,7 +201,7 @@ describe("calendar links: admin and displays", () => {
 
     const kid = await cookieFor("kid@example.com");
     const refused = await POST(
-      req("/api/admin/calendar-links/", {
+      req("/api/household/calendar-links/", {
         method: "POST",
         headers: { cookie: kid },
         body: JSON.stringify({ id: "school1", url: "https://school.example.com/x" }),
@@ -220,7 +220,7 @@ describe("calendar links: admin and displays", () => {
     expect(data.events.map((e) => e.title)).toContain("Pro-D day");
     expect(data.events.every((e) => e.calendar === "School")).toBe(true);
 
-    await DELETE(req("/api/admin/calendar-links/?id=school1", { method: "DELETE", headers: { cookie: admin } }));
+    await DELETE(req("/api/household/calendar-links/?id=school1", { method: "DELETE", headers: { cookie: admin } }));
     expect(await getIcalUrl(LEGACY_ACCOUNT_ID, "school1")).toBeNull();
   });
 

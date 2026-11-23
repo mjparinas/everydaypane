@@ -26,7 +26,7 @@ const listeners = new Set<(s: MusicStatus) => void>();
 
 export function loadMusic(fresh = false): Promise<MusicStatus> {
   if (!pending || fresh) {
-    pending = fetch("/api/admin/music/")
+    pending = fetch("/api/household/music/")
       .then((r) => (r.ok ? (r.json() as Promise<MusicStatus>) : Promise.reject(new Error(String(r.status)))))
       .catch(() => failed);
     void pending.then((s) => listeners.forEach((l) => l(s)));
