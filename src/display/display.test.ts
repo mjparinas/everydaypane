@@ -101,6 +101,19 @@ describe("widgets", () => {
     vi.unstubAllGlobals();
   });
 
+  it("hides hours of daylight when switched off", async () => {
+    const data = {
+      today: { sunrise: "2026-11-21T07:33", sunset: "2026-11-21T16:24" },
+    } as WeatherData;
+    vi.stubGlobal("fetch", () => Promise.resolve(Response.json(data)));
+    const el = document.createElement("div");
+    const stop = sunTimes(el, { ...newWidget("sunTimes", "sun", { x: 0, y: 0 }), showDaylight: false }, ctx);
+    await vi.waitFor(() => expect(el.querySelectorAll(".st-value")).toHaveLength(2));
+    expect(el.querySelector(".st-daylight")).toBeNull();
+    stop();
+    vi.unstubAllGlobals();
+  });
+
   it("shows the time in the clock's own zone", () => {
     vi.useFakeTimers({ now: new Date("2026-11-17T20:15:30Z") });
     const el = document.createElement("div");
