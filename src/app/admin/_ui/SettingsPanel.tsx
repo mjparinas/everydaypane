@@ -26,7 +26,7 @@ const GROUPS = [
   { id: "calendars", label: "Calendars", sections: ["google", "tasks", "icals"] },
   { id: "family", label: "Family", sections: ["garbage", "commute", "chores", "sports", "school"] },
   { id: "photos-music", label: "Photos & music", sections: ["photos", "music"] },
-  { id: "ha", label: "Home tech", sections: ["ha"] },
+  { id: "ha", label: "Home Assistant", sections: ["ha"] },
   { id: "screen", label: "Screen", sections: ["screen-care", "screen-saver"] },
   { id: "alerts", label: "Alerts & backup", sections: ["alerts", "backup"] },
 ] as const;
