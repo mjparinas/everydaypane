@@ -71,10 +71,14 @@ export async function addShoppingItem(
   if (Number(open[0]?.n ?? 0) >= OPEN_MAX) return { ok: false, error: "full" };
   const max = await query<{ n: number | bigint }>("SELECT COALESCE(MAX(sort), 0) AS n FROM shopping WHERE account_id = ?", [accountId]);
   const id = randomToken(9);
-  await run(
-    "INSERT INTO shopping (id, account_id, text, done, sort, added_at, done_at, added_by) VALUES (?, ?, ?, 0, ?, ?, NULL, ?)",
-    [id, accountId, text, Number(max[0]?.n ?? 0) + 1, now, input.by],
-  );
+  await run("INSERT INTO shopping (id, account_id, text, done, sort, added_at, done_at, added_by) VALUES (?, ?, ?, 0, ?, ?, NULL, ?)", [
+    id,
+    accountId,
+    text,
+    Number(max[0]?.n ?? 0) + 1,
+    now,
+    input.by,
+  ]);
   return { ok: true, item: { id, text, done: false } };
 }
 

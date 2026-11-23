@@ -1,5 +1,4 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { LEGACY_ACCOUNT_ID } from "@/server/accounts";
 
 import { GET as frameGET } from "@/app/api/display/radar/frame/route";
 import { GET as feedGET } from "@/app/api/display/radar/route";
@@ -7,6 +6,7 @@ import { GET as tileGET } from "@/app/api/display/radar/tile/route";
 import { defaultConfig } from "@/lib/config/defaults";
 import { newWidget } from "@/lib/config/widgets";
 import type { RadarData } from "@/lib/display/types";
+import { LEGACY_ACCOUNT_ID } from "@/server/accounts";
 import { req, useTestServer } from "@/test/server";
 
 import { clearMemoryCache } from "./cache";

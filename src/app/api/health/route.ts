@@ -1,5 +1,5 @@
-import { configVersion } from "@/server/config";
 import { LEGACY_ACCOUNT_ID } from "@/server/accounts";
+import { configVersion } from "@/server/config";
 import { json } from "@/server/http";
 
 export async function GET() {

@@ -1,11 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { LEGACY_ACCOUNT_ID } from "@/server/accounts";
 
 import { DELETE as adminDELETE, GET as adminGET } from "@/app/api/admin/google/route";
 import { GET as displayGET } from "@/app/api/display/calendar/route";
 import { GET as callbackGET } from "@/app/api/google/callback/route";
 import { GET as connectGET } from "@/app/api/google/connect/route";
 import type { CalendarData } from "@/lib/display/types";
+import { LEGACY_ACCOUNT_ID } from "@/server/accounts";
 import { cookieFor, req, useTestServer } from "@/test/server";
 
 import { clearMemoryCache } from "./cache";

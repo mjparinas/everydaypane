@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { LEGACY_ACCOUNT_ID } from "@/server/accounts";
 
 import { GET, POST } from "@/app/api/display/chores/route";
 import { defaultConfig } from "@/lib/config/defaults";
 import type { DashboardConfig } from "@/lib/config/schema";
 import type { ChoresData } from "@/lib/display/types";
+import { LEGACY_ACCOUNT_ID } from "@/server/accounts";
 import { req, useTestServer } from "@/test/server";
 
 import { choreBoard, setChoreDone } from "./chores";

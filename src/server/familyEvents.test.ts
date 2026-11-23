@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { LEGACY_ACCOUNT_ID } from "@/server/accounts";
 
 import { DELETE, PATCH } from "@/app/api/family-events/[id]/route";
 import { GET, POST } from "@/app/api/family-events/route";
 import { defaultConfig } from "@/lib/config/defaults";
+import { LEGACY_ACCOUNT_ID } from "@/server/accounts";
 import { cookieFor, req, useTestServer } from "@/test/server";
 
 import { combinedFeed } from "./calendars";

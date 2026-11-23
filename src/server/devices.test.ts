@@ -1,8 +1,8 @@
 import { describe, expect, it, vi } from "vitest";
-import { LEGACY_ACCOUNT_ID } from "@/server/accounts";
 
 import { GET, POST } from "@/app/api/admin/devices/[id]/route";
 import { GET as listDevices } from "@/app/api/admin/devices/route";
+import { LEGACY_ACCOUNT_ID } from "@/server/accounts";
 import { cookieFor, req, useTestServer } from "@/test/server";
 
 import * as crypto from "./crypto";

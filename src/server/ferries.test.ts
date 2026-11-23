@@ -1,11 +1,11 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { LEGACY_ACCOUNT_ID } from "@/server/accounts";
 
 import { GET } from "@/app/api/display/ferries/route";
 import { defaultConfig } from "@/lib/config/defaults";
 import type { DashboardConfig } from "@/lib/config/schema";
 import { newWidget } from "@/lib/config/widgets";
 import type { FerriesData } from "@/lib/display/types";
+import { LEGACY_ACCOUNT_ID } from "@/server/accounts";
 import { req, useTestServer } from "@/test/server";
 
 import { clearMemoryCache } from "./cache";

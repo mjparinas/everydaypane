@@ -151,12 +151,7 @@ export async function spotifyFeed(
 
 export type MusicAction = "playPause" | "next" | "previous" | "volume" | "mute" | "unmute" | "source";
 
-export async function spotifyAct(
-  accountId: string,
-  action: MusicAction,
-  value?: number,
-  option?: string,
-): Promise<"ok" | "forbidden"> {
+export async function spotifyAct(accountId: string, action: MusicAction, value?: number, option?: string): Promise<"ok" | "forbidden"> {
   if (action === "playPause") {
     const p = await playback(accountId);
     await spotify(accountId, p?.is_playing ? "/me/player/pause" : "/me/player/play", { method: "PUT" });

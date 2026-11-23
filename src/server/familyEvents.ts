@@ -68,10 +68,11 @@ export const toCalendar = (e: FamilyEvent): CalendarEvent => ({
 export async function eventsInRange(accountId: string, from: string, to: string): Promise<CalendarEvent[]> {
   const boundStart = `${from}T00:00:00Z`;
   const boundEnd = `${to}T00:00:00Z`;
-  const rows = await query<Row>(
-    "SELECT * FROM family_events WHERE account_id = ? AND end > ? AND start < ? ORDER BY start",
-    [accountId, boundStart, boundEnd],
-  );
+  const rows = await query<Row>("SELECT * FROM family_events WHERE account_id = ? AND end > ? AND start < ? ORDER BY start", [
+    accountId,
+    boundStart,
+    boundEnd,
+  ]);
   return rows.map(toEvent).map(toCalendar);
 }
 
@@ -105,8 +106,7 @@ export async function createFamilyEvent(
     [id, accountId, input.title, input.start, input.end, input.allDay ? 1 : 0, now, input.createdBy],
   );
   await pruneOld(accountId, now);
-  const count =
-    (await query<{ n: number }>("SELECT COUNT(*) AS n FROM family_events WHERE account_id = ?", [accountId]))[0]?.n ?? 0;
+  const count = (await query<{ n: number }>("SELECT COUNT(*) AS n FROM family_events WHERE account_id = ?", [accountId]))[0]?.n ?? 0;
   if (count > MAX_FAMILY_EVENTS) {
     const drop = await query<Row>("SELECT id FROM family_events WHERE account_id = ? ORDER BY end ASC LIMIT ?", [
       accountId,

@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { LEGACY_ACCOUNT_ID } from "@/server/accounts";
 
 import { GET, POST } from "@/app/api/admin/backup/route";
 import { defaultConfig } from "@/lib/config/defaults";
 import type { DashboardConfig } from "@/lib/config/schema";
+import { LEGACY_ACCOUNT_ID } from "@/server/accounts";
 import { cookieFor, req, useTestServer } from "@/test/server";
 
 import { makeBackup, readBackup } from "./backup";

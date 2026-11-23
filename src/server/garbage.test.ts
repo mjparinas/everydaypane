@@ -1,10 +1,10 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { LEGACY_ACCOUNT_ID } from "@/server/accounts";
 
 import { GET as adminGET } from "@/app/api/admin/garbage/route";
 import { GET as displayGET } from "@/app/api/display/garbage/route";
 import { defaultConfig } from "@/lib/config/defaults";
 import type { GarbageData } from "@/lib/display/types";
+import { LEGACY_ACCOUNT_ID } from "@/server/accounts";
 import { cookieFor, req, useTestServer } from "@/test/server";
 
 import { clearMemoryCache } from "./cache";

@@ -1,5 +1,4 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { LEGACY_ACCOUNT_ID } from "@/server/accounts";
 
 import { DELETE as adminDELETE, GET as adminGET } from "@/app/api/admin/music/route";
 import { GET as artGET } from "@/app/api/display/art/route";
@@ -9,6 +8,7 @@ import { GET as connectGET } from "@/app/api/music/spotify/connect/route";
 import { configSchema, type DashboardConfig } from "@/lib/config/schema";
 import { F } from "@/lib/display/mediaFeatures";
 import type { MusicData } from "@/lib/display/types";
+import { LEGACY_ACCOUNT_ID } from "@/server/accounts";
 import { cookieFor, req, useTestServer } from "@/test/server";
 
 import { loadConfig, saveConfig } from "./config";

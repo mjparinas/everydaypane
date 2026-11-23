@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { LEGACY_ACCOUNT_ID } from "@/server/accounts";
 
 import { GET as displayGET } from "@/app/api/display/messages/route";
 import { DELETE, PATCH } from "@/app/api/messages/[id]/route";
 import { GET, POST } from "@/app/api/messages/route";
+import { LEGACY_ACCOUNT_ID } from "@/server/accounts";
 import { cookieFor, req, useTestServer } from "@/test/server";
 
 import { query } from "./db";
@@ -48,18 +48,24 @@ describe("message board", () => {
     expect((await PATCH(req("/", { method: "PATCH", body: '{"pinned":true}', headers: { cookie: admin } }), ctx(message.id))).status).toBe(
       200,
     );
-    expect((await listMessages(LEGACY_ACCOUNT_ID, ))[0]?.pinned).toBe(true);
+    expect((await listMessages(LEGACY_ACCOUNT_ID))[0]?.pinned).toBe(true);
     expect((await DELETE(req("/", { method: "DELETE", headers: { cookie: admin } }), ctx(message.id))).status).toBe(200);
-    expect(await listMessages(LEGACY_ACCOUNT_ID, )).toEqual([]);
+    expect(await listMessages(LEGACY_ACCOUNT_ID)).toEqual([]);
   });
 
   it("lets any signed-in person delete a legacy note with no posted_by", async () => {
     const kid = await cookieFor("kid@example.com");
-    await postMessage(LEGACY_ACCOUNT_ID, { author: "Mom", text: "Old note", colour: "yellow", expiresInHours: null, postedBy: "admin@example.com" });
+    await postMessage(LEGACY_ACCOUNT_ID, {
+      author: "Mom",
+      text: "Old note",
+      colour: "yellow",
+      expiresInHours: null,
+      postedBy: "admin@example.com",
+    });
     const [row] = await query<{ id: string }>("SELECT id FROM messages WHERE text = 'Old note'");
     await query("UPDATE messages SET posted_by = NULL WHERE id = ?", [row!.id]);
     expect((await DELETE(req("/", { method: "DELETE", headers: { cookie: kid } }), ctx(row!.id))).status).toBe(200);
-    expect(await listMessages(LEGACY_ACCOUNT_ID, )).toEqual([]);
+    expect(await listMessages(LEGACY_ACCOUNT_ID)).toEqual([]);
   });
 
   it("puts pinned notes first, then the newest, and drops expired ones", async () => {
@@ -75,7 +81,13 @@ describe("message board", () => {
   });
 
   it("gives displays the board with an ETag, and 304 when nothing changed", async () => {
-    await postMessage(LEGACY_ACCOUNT_ID, { author: "Dad", text: "Pizza night", colour: "pink", expiresInHours: null, postedBy: "admin@example.com" });
+    await postMessage(LEGACY_ACCOUNT_ID, {
+      author: "Dad",
+      text: "Pizza night",
+      colour: "pink",
+      expiresInHours: null,
+      postedBy: "admin@example.com",
+    });
     const { token } = await addDevice(LEGACY_ACCOUNT_ID, "Kitchen", null);
     const first = await displayGET(req("/api/display/messages/", { headers: { "x-display-token": token } }));
     const body = (await first.json()) as { messages: { text: string }[] };

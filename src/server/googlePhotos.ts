@@ -112,12 +112,7 @@ export interface ImportResult {
 }
 
 /** Copies one page (up to 20) of the picked photos into a library album. Videos are skipped. */
-export async function importPage(
-  accountId: string,
-  sourceId: string,
-  session: string,
-  pageToken: string | null,
-): Promise<ImportResult> {
+export async function importPage(accountId: string, sourceId: string, session: string, pageToken: string | null): Promise<ImportResult> {
   const q = new URLSearchParams({ sessionId: sessionId(session), pageSize: "20" });
   if (pageToken) q.set("pageToken", pageToken);
   const page = pageSchema.parse(await (await call(accountId, `/mediaItems?${q}`)).json());

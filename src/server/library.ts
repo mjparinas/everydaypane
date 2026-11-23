@@ -74,18 +74,8 @@ export async function addPhoto(
   };
   await run(
     "INSERT INTO photos (id, account_id, source_id, pathname, w, h, taken, origin, origin_id, added_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-    [
-      id,
-      accountId,
-      sourceId,
-    pathname,
-    photo.w,
-    photo.h,
-    photo.taken,
-    photo.origin,
-    meta.originId ?? null,
-    now,
-  ]);
+    [id, accountId, sourceId, pathname, photo.w, photo.h, photo.taken, photo.origin, meta.originId ?? null, now],
+  );
   return { ok: true, photo };
 }
 

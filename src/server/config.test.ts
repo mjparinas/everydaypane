@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { LEGACY_ACCOUNT_ID } from "@/server/accounts";
 
 import { defaultConfig } from "@/lib/config/defaults";
 import { configSchema } from "@/lib/config/schema";
+import { LEGACY_ACCOUNT_ID } from "@/server/accounts";
 import { useTestServer } from "@/test/server";
 
 import { configVersion, loadConfig, saveConfig, touchConfig, upgrade } from "./config";

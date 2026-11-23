@@ -23,7 +23,8 @@ export async function loadConfig(accountId: string): Promise<StoredConfig> {
     [accountId],
   );
   const row = rows[0];
-  if (!row || row.json === "{}") return { config: defaultConfig(), version: Number(row?.version ?? 0), updatedAt: Number(row?.updated_at ?? 0) };
+  if (!row || row.json === "{}")
+    return { config: defaultConfig(), version: Number(row?.version ?? 0), updatedAt: Number(row?.updated_at ?? 0) };
   const parsed = configSchema.safeParse(upgrade(JSON.parse(row.json) as unknown));
   return { config: parsed.success ? parsed.data : defaultConfig(), version: Number(row.version), updatedAt: Number(row.updated_at) };
 }
@@ -59,10 +60,11 @@ export async function saveConfig(accountId: string, input: unknown, baseVersion:
     if (inserted === 1) version = 1;
     else {
       // Row exists with version 0 from account create — upgrade in place when still at 0.
-      const updated = await run(
-        "UPDATE account_config SET json = ?, version = 1, updated_at = ? WHERE account_id = ? AND version = 0",
-        [json, now, accountId],
-      );
+      const updated = await run("UPDATE account_config SET json = ?, version = 1, updated_at = ? WHERE account_id = ? AND version = 0", [
+        json,
+        now,
+        accountId,
+      ]);
       if (updated === 1) version = 1;
     }
   } else {

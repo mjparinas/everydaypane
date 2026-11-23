@@ -1,9 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
-import { LEGACY_ACCOUNT_ID } from "@/server/accounts";
 
 import { GET as displayGET } from "@/app/api/display/meals/route";
 import { GET, PUT } from "@/app/api/meals/route";
 import { nextMeal } from "@/lib/meals";
+import { LEGACY_ACCOUNT_ID } from "@/server/accounts";
 import { cookieFor, req, useTestServer } from "@/test/server";
 
 import { query } from "./db";

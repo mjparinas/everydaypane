@@ -119,16 +119,14 @@ export async function disconnect(accountId: string): Promise<void> {
 /** Whether the connected Google account allowed Google Photos picking. */
 export async function photosGranted(accountId: string): Promise<boolean> {
   return Boolean(
-    (await getSecret(accountId, "google.refreshToken")) &&
-      (await getSecret(accountId, "google.scopes"))?.split(" ").includes(PHOTOS_SCOPE),
+    (await getSecret(accountId, "google.refreshToken")) && (await getSecret(accountId, "google.scopes"))?.split(" ").includes(PHOTOS_SCOPE),
   );
 }
 
 /** Whether the connected Google account allowed Google Tasks. */
 export async function tasksGranted(accountId: string): Promise<boolean> {
   return Boolean(
-    (await getSecret(accountId, "google.refreshToken")) &&
-      (await getSecret(accountId, "google.scopes"))?.split(" ").includes(TASKS_SCOPE),
+    (await getSecret(accountId, "google.refreshToken")) && (await getSecret(accountId, "google.scopes"))?.split(" ").includes(TASKS_SCOPE),
   );
 }
 

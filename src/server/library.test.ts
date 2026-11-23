@@ -1,11 +1,11 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { LEGACY_ACCOUNT_ID } from "@/server/accounts";
 
 import { GET as googleGET, POST as googlePOST } from "@/app/api/admin/google-photos/route";
 import { DELETE as libraryDELETE, GET as libraryGET, POST as libraryPOST } from "@/app/api/admin/library/route";
 import { GET as photoGET } from "@/app/api/display/photo/route";
 import { GET as photosGET } from "@/app/api/display/photos/route";
 import type { PhotoData } from "@/lib/display/types";
+import { LEGACY_ACCOUNT_ID } from "@/server/accounts";
 import { cookieFor, req, useTestServer } from "@/test/server";
 
 import { loadConfig, saveConfig } from "./config";

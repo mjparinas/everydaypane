@@ -1,5 +1,4 @@
 import { deflateRawSync } from "node:zlib";
-import { LEGACY_ACCOUNT_ID } from "@/server/accounts";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { GET as adminGET } from "@/app/api/admin/transit/route";
@@ -7,6 +6,7 @@ import { GET as displayGET } from "@/app/api/display/transit/route";
 import { defaultConfig } from "@/lib/config/defaults";
 import { newWidget } from "@/lib/config/widgets";
 import type { TransitData } from "@/lib/display/types";
+import { LEGACY_ACCOUNT_ID } from "@/server/accounts";
 import { cookieFor, req, useTestServer } from "@/test/server";
 
 import { clearMemoryCache } from "./cache";

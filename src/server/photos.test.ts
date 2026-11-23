@@ -1,11 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { LEGACY_ACCOUNT_ID } from "@/server/accounts";
 
 import { GET as amazonGET, PUT as amazonPUT } from "@/app/api/admin/amazon/route";
 import { GET as checkGET } from "@/app/api/admin/photos/route";
 import { GET as photoGET } from "@/app/api/display/photo/route";
 import { GET as photosGET } from "@/app/api/display/photos/route";
 import type { PhotoData } from "@/lib/display/types";
+import { LEGACY_ACCOUNT_ID } from "@/server/accounts";
 import { cookieFor, req, useTestServer } from "@/test/server";
 
 import { clearMemoryCache } from "./cache";

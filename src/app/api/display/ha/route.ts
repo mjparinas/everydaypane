@@ -34,7 +34,14 @@ export async function POST(req: Request) {
   const parsed = body.safeParse(await readJson(req, 2000).catch(() => null));
   if (!parsed.success) return json({ error: "Bad request" }, 400);
   try {
-    const result = await act(accountId, (await loadConfig(accountId)).config, parsed.data.entity, parsed.data.action, parsed.data.value, parsed.data.option);
+    const result = await act(
+      accountId,
+      (await loadConfig(accountId)).config,
+      parsed.data.entity,
+      parsed.data.action,
+      parsed.data.value,
+      parsed.data.option,
+    );
     return result === "ok" ? json({ ok: true }) : json({ error: "Not allowed" }, 403);
   } catch (error) {
     return json({ error: error instanceof Error ? error.message : "Home Assistant didn't answer" }, 502);

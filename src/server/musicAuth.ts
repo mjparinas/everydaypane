@@ -107,13 +107,7 @@ const accessKey = (accountId: string, s: MusicService) => `${accountId}:${s}`;
 const access = new Map<string, { token: string; expiresAt: number; refresh: string }>();
 
 /** Trades the one-time code from the sign-in page for a refresh token and stores it. */
-export async function connectMusic(
-  accountId: string,
-  s: MusicService,
-  code: string,
-  redirect: string,
-  now = Date.now(),
-): Promise<void> {
+export async function connectMusic(accountId: string, s: MusicService, code: string, redirect: string, now = Date.now()): Promise<void> {
   const t = await tokenRequest(s, { grant_type: "authorization_code", code, redirect_uri: redirect });
   if (!t.refresh_token) throw new Error(`${SERVICES[s].label} didn't send a refresh token`);
   await setSecret(accountId, tokenKey(s), t.refresh_token, now);

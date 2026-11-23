@@ -1,5 +1,4 @@
 import { describe, expect, it, vi } from "vitest";
-import { LEGACY_ACCOUNT_ID } from "@/server/accounts";
 
 import { GET as displayGET, POST as displayPOST } from "@/app/api/display/shopping/route";
 import { DELETE as itemDELETE, PATCH } from "@/app/api/shopping/[id]/route";
@@ -8,6 +7,7 @@ import { POST as addPOST, DELETE as clearDELETE, GET as listGET } from "@/app/ap
 import { defaultConfig } from "@/lib/config/defaults";
 import type { DashboardConfig } from "@/lib/config/schema";
 import type { ShoppingData } from "@/lib/display/types";
+import { LEGACY_ACCOUNT_ID } from "@/server/accounts";
 import { cookieFor, req, useTestServer } from "@/test/server";
 
 import { loadConfig, saveConfig } from "./config";

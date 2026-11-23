@@ -93,10 +93,7 @@ const favMemo = new Map<string, { at: number; items: { id: string; name: string 
 async function favourites(accountId: string, household: string, now: number): Promise<{ id: string; name: string }[]> {
   const hit = favMemo.get(household);
   if (hit && now - hit.at < 10 * 60_000) return hit.items;
-  const body = await get<{ items?: { id?: string; name?: string }[] }>(
-    accountId,
-    `/households/${encodeURIComponent(household)}/favorites`,
-  );
+  const body = await get<{ items?: { id?: string; name?: string }[] }>(accountId, `/households/${encodeURIComponent(household)}/favorites`);
   const items = (body.items ?? [])
     .filter((i): i is { id: string; name: string } => Boolean(i.id && i.name))
     .slice(0, 40)
@@ -219,8 +216,7 @@ export async function sonosAct(
   const found = findGroup(await households(accountId), playerId);
   if (!found) return "forbidden";
   const g = `/groups/${encodeURIComponent(found.group.id)}`;
-  const post = (path: string, body: unknown = {}) =>
-    sonos(accountId, `${g}${path}`, { method: "POST", body: JSON.stringify(body) });
+  const post = (path: string, body: unknown = {}) => sonos(accountId, `${g}${path}`, { method: "POST", body: JSON.stringify(body) });
   if (action === "playPause") await post("/playback/togglePlayPause");
   else if (action === "next") await post("/playback/skipToNextTrack");
   else if (action === "previous") await post("/playback/skipToPreviousTrack");

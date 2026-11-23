@@ -1,8 +1,8 @@
 import { describe, expect, it, vi } from "vitest";
-import { LEGACY_ACCOUNT_ID } from "@/server/accounts";
 
 import { defaultConfig } from "@/lib/config/defaults";
 import type { EmergencyAlert } from "@/lib/display/types";
+import { LEGACY_ACCOUNT_ID } from "@/server/accounts";
 import { useTestServer } from "@/test/server";
 
 import { alreadyNotified, markNotified, notifyNewStripAlerts } from "./alertNotify";

@@ -1,10 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { LEGACY_ACCOUNT_ID } from "@/server/accounts";
 
 import { GET as adminGET, DELETE, POST } from "@/app/api/admin/calendar-links/route";
 import { GET as displayGET } from "@/app/api/display/calendar/route";
 import type { CalendarData } from "@/lib/display/types";
 import { zonedFormatter } from "@/lib/timeZone";
+import { LEGACY_ACCOUNT_ID } from "@/server/accounts";
 import { cookieFor, req, useTestServer } from "@/test/server";
 
 import { clearMemoryCache } from "./cache";

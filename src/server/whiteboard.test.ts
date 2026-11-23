@@ -1,9 +1,8 @@
 import { describe, expect, it } from "vitest";
 
 import { GET, POST } from "@/app/api/display/whiteboard/route";
-import { req, useTestServer } from "@/test/server";
-
 import { LEGACY_ACCOUNT_ID } from "@/server/accounts";
+import { req, useTestServer } from "@/test/server";
 
 import { addDevice } from "./devices";
 import { appendStroke, clearWhiteboard, getWhiteboard, sanitizeStroke } from "./whiteboard";

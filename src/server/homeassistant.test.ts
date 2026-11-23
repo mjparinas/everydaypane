@@ -1,5 +1,4 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { LEGACY_ACCOUNT_ID } from "@/server/accounts";
 
 import { GET as adminGET, PUT as adminPUT } from "@/app/api/admin/ha/route";
 import { GET as artGET } from "@/app/api/display/art/route";
@@ -8,6 +7,7 @@ import { GET as haGET, POST as haPOST } from "@/app/api/display/ha/route";
 import { defaultConfig } from "@/lib/config/defaults";
 import type { DashboardConfig } from "@/lib/config/schema";
 import type { HaData } from "@/lib/display/types";
+import { LEGACY_ACCOUNT_ID } from "@/server/accounts";
 import { cookieFor, req, useTestServer } from "@/test/server";
 
 import { loadConfig, saveConfig } from "./config";
