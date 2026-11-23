@@ -13,7 +13,13 @@ export async function GET(req: Request) {
   return new Response(null, {
     status: 303,
     headers: {
-      Location: consentUrl(state, redirectUri(origin), url.searchParams.get("photos") === "1", url.searchParams.get("tasks") === "1"),
+      Location: consentUrl(
+        state,
+        redirectUri(origin),
+        url.searchParams.get("photos") === "1",
+        url.searchParams.get("tasks") === "1",
+        url.searchParams.get("gmail") === "1",
+      ),
       "Set-Cookie": stateCookie(state),
       "Cache-Control": "no-store",
     },

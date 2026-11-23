@@ -6,6 +6,7 @@ import { BackupPanel } from "./BackupPanel";
 import { CalendarLinksPanel } from "./CalendarLinksPanel";
 import { ChoresPanel } from "./ChoresPanel";
 import { CommutePanel, PlaceFinder } from "./CommutePanel";
+import { ContentPanel } from "./ContentPanel";
 import { NumberInput, Range, Section, Select, Stepper, Text, Toggle } from "./fields";
 import { GarbagePanel } from "./GarbagePanel";
 import { GooglePanel } from "./GooglePanel";
@@ -29,6 +30,7 @@ const GROUPS = [
   { id: "tasks", label: "Tasks", sections: ["tasks"] },
   { id: "family", label: "Family", sections: ["garbage", "commute", "chores", "sports", "school"] },
   { id: "photos-music", label: "Photos & music", sections: ["photos", "music"] },
+  { id: "content", label: "Content & finance", sections: ["content", "ynab", "fitbit", "gmail-unread", "slack", "trello"] },
   { id: "ha", label: "Home & devices", sections: ["ha", "smart-home", "weather-stations", "menus"] },
   { id: "screen", label: "Screen", sections: ["screen-care", "screen-saver"] },
   { id: "alerts", label: "Alerts & backup", sections: ["alerts", "backup"] },
@@ -240,6 +242,12 @@ export function SettingsPanel() {
           <div id="settings-music" className="lg:col-span-2">
             <MusicPanel />
           </div>
+        </div>
+      )}
+
+      {showGroup("content") && (
+        <div id="settings-content">
+          <ContentPanel />
         </div>
       )}
 

@@ -144,6 +144,9 @@ export function defaultConfig(): DashboardConfig {
         weatherUnderground: { stationId: "" },
         menus: { slug: "", schoolName: "" },
       },
+      ynab: { budgetId: "", budgetName: "" },
+      trello: { boardId: "", boardName: "" },
+      slack: { channels: [] },
     },
   };
 }

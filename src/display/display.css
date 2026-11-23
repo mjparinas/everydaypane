@@ -2535,6 +2535,64 @@ body {
   pointer-events: none;
 }
 
+.cell-embed,
+.cell-tradingView,
+.cell-youtube,
+.cell-vimeo,
+.cell-maps,
+.cell-instagram,
+.cell-earth {
+  padding: 0;
+}
+.w-embed {
+  position: relative;
+  height: 100%;
+  overflow: hidden;
+}
+.embed-frame {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  pointer-events: none;
+}
+.p5-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.35rem;
+}
+.p5-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  font-size: 0.95rem;
+}
+.p5-wrap {
+  line-height: 1.35;
+}
+.p5-muted {
+  opacity: 0.65;
+}
+.p5-big {
+  font-size: 2.5rem;
+  font-weight: 700;
+  line-height: 1;
+}
+.p5-quote {
+  margin: 0;
+  font-size: 1rem;
+  line-height: 1.4;
+}
+.p5-mono {
+  font-family: ui-monospace, monospace;
+  font-size: 0.75rem;
+  line-height: 1.35;
+  opacity: 0.9;
+}
+
 /* Shopping list: open items, then bought ones when the widget shows them. A tap ticks a row off. */
 .w-shopping {
   display: flex;
