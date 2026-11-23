@@ -1,0 +1,10 @@
+{
+  "updatedAt": 1763937720000,
+  "temp": 8.4,
+  "humidity": 81,
+  "wind": 9,
+  "gust": 18,
+  "rain": 1.2,
+  "pressure": 1014.2,
+  "units": { "temp": "°C", "wind": "km/h", "rain": "mm" }
+}

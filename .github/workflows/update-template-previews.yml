@@ -38,25 +38,27 @@ jobs:
       - name: Install Chromium
         run: npx playwright install --with-deps chromium
 
-      - name: Render template previews
+      - name: Render template and widget previews
         run: npm run templates:previews
 
       - name: Create pull request
         uses: peter-evans/create-pull-request@v7
         with:
           commit-message: |
-            Update starter template screenshot previews.
+            Update starter template and feature widget screenshot previews.
 
             Regenerated with the real display widgets and scripts/template-samples/ feeds.
-          title: Update template screenshot previews
+          title: Update template and widget screenshot previews
           body: |
             ## Summary
             - Regenerates `public/templates/*.png` with the real display bundle
+            - Regenerates `public/features/widgets/<type>.png` for the features page
             - Uses shared sample feeds in `scripts/template-samples/`
             - Sample photos live under `public/templates/samples/`
 
             ## Test plan
             - [ ] Open Views › Templates in the admin and skim each preview
+            - [ ] Open `/features/` and confirm every widget card has a sample image
             - [ ] Confirm calendars, photos, notes and themed fonts look filled in
             - [ ] Spot-check photo-frame / christmas / halloween for real images
           branch: chore/update-template-previews
@@ -64,3 +66,4 @@ jobs:
           add-paths: |
             public/templates/**
             public/templates/manifest.json
+            public/features/widgets/**

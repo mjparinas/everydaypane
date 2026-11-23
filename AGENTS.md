@@ -93,11 +93,13 @@ the `/d/…` URL; Vancouver clocks, dates, calendars and scheduled views stay on
 even when the display browser has old time-zone data.
 
 **Marketing site** (public pages, Melvin, 2026-11-23): homepage at `/` (no longer redirects to admin), plus `/pricing/`,
-`/features/`, `/compare/` (and per-competitor pages), `/blog/` with RSS, `/privacy/`, `/terms/`, `/contact/`, `robots.ts` and
-`sitemap.ts`. Built like Tuned/Liftsmith (`src/components/site/`, Manrope display, template preview screenshots from
-`public/templates/` — no personal photos in OG). Free vs **Household** pricing copy in `src/lib/marketingPlans.ts`;
-checkout uses the existing Stripe Household flow
+`/features/` (every widget with a real-widget sample PNG from `public/features/widgets/`, regenerated with
+`npm run templates:previews` alongside starter templates), `/compare/` (and per-competitor pages), `/blog/` with RSS,
+`/privacy/`, `/terms/`, `/contact/`, `robots.ts` and `sitemap.ts`. Built like Tuned/Liftsmith (`src/components/site/`,
+Manrope display, template preview screenshots from `public/templates/` — no personal photos in OG). Free vs
+**Household** pricing copy in `src/lib/marketingPlans.ts`; checkout uses the existing Stripe Household flow
 (`POST /api/admin/billing/?action=checkout`). Footer shows version + short commit with no GitHub link (`src/lib/build.ts`).
+The features catalogue lives in `src/lib/marketingFeatures.ts` (grouped like the admin widget picker).
 
 **Alerts** (`src/server/alerts.ts`): Alert Ready (NAAD), **Environment Canada weather warnings** (through NAAD),
 DriveBC road events and weather conditions, Earthquakes Canada, BC Hydro power outages. Each switchable in `config.alerts.sources`.

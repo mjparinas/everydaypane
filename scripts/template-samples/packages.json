@@ -1,0 +1,32 @@
+{
+  "updatedAt": 1763937720000,
+  "trackingConfigured": true,
+  "packages": [
+    {
+      "id": "pkg-lego",
+      "carrier": "ups",
+      "trackingNumber": "1Z999AA10123456784",
+      "label": "Lego set",
+      "status": "outForDelivery",
+      "summary": "On the truck for delivery",
+      "eta": "2026-11-23"
+    },
+    {
+      "id": "pkg-books",
+      "carrier": "canadaPost",
+      "trackingNumber": "1234567890123456",
+      "label": "Library holds",
+      "status": "inTransit",
+      "summary": "In transit to Langley",
+      "eta": "2026-11-25"
+    },
+    {
+      "id": "pkg-shoes",
+      "carrier": "fedex",
+      "trackingNumber": "794612345678",
+      "label": "Running shoes",
+      "status": "delivered",
+      "summary": "Left at front door"
+    }
+  ]
+}
