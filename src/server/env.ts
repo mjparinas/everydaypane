@@ -9,8 +9,31 @@ export const env = {
   sessionSecret: () => process.env.SESSION_SECRET ?? "",
   /** Platform staff (/admin/) and bootstrap admins for the grandfather household (comma separated). */
   adminEmails: () => list(process.env.ADMIN_EMAILS),
+  /** Read-only platform ops (comma separated). Not also on ADMIN_EMAILS. */
+  supportEmails: () => {
+    const admins = list(process.env.ADMIN_EMAILS);
+    return new Set([...list(process.env.SUPPORT_EMAILS)].filter((e) => !admins.has(e)));
+  },
   /** Who may post on the family message board but not change the household dashboard. */
   familyEmails: () => list(process.env.FAMILY_EMAILS),
+  /** Staff 2FA: unset = required; `optional` lets addresses without enrolment in. */
+  admin2fa: () => (process.env.ADMIN_2FA?.trim().toLowerCase() === "optional" ? "optional" : "required") as "required" | "optional",
+  /** Seals authenticator secrets; prefer a dedicated key, else SESSION_SECRET. */
+  twoFactorKey: () => process.env.TWO_FACTOR_KEY || process.env.SESSION_SECRET || "",
+  /** Salt for cookieless visitor hashes on the marketing site. */
+  analyticsSecret: () => process.env.ANALYTICS_SECRET ?? "",
+  googleServiceAccountKey: () => process.env.GOOGLE_SERVICE_ACCOUNT_KEY ?? "",
+  searchConsoleSite: () => process.env.SEARCH_CONSOLE_SITE || "sc-domain:everydaypane.com",
+  bingWebmasterKey: () => process.env.BING_WEBMASTER_API_KEY ?? "",
+  bingSiteUrl: () => process.env.BING_SITE_URL || "https://www.everydaypane.com/",
+  githubToken: () => process.env.GITHUB_TOKEN ?? "",
+  vercelToken: () => process.env.VERCEL_TOKEN ?? "",
+  resendInboxKey: () => process.env.RESEND_INBOX_API_KEY ?? "",
+  inboxDomains: () =>
+    (process.env.INBOX_DOMAINS || "everydaypane.com")
+      .split(",")
+      .map((d) => d.trim().toLowerCase())
+      .filter(Boolean),
   resendKey: () => process.env.RESEND_API_KEY ?? "",
   mailFrom: () => process.env.MAIL_FROM || "Everydaypane <onboarding@resend.dev>",
   siteUrl: () =>

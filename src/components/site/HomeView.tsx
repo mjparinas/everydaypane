@@ -10,6 +10,7 @@ import { SIGNUP_PATH, SITE_URL } from "@/lib/site";
 
 import { HouseholdCheckoutButton } from "./CheckoutButtons";
 import { PaneMock } from "./PaneMock";
+import { SiteBeacon } from "./SiteBeacon";
 import { Check, CtaBanner, Eyebrow, JsonLd, organizationJsonLd, SiteFooter, SiteHeader } from "./SiteChrome";
 
 export const homeMetadata = pageMeta({
@@ -124,6 +125,7 @@ export function HomeView() {
 
   return (
     <div className="site min-h-dvh">
+      <SiteBeacon />
       <JsonLd data={jsonLd} />
       <SiteHeader />
       <main>

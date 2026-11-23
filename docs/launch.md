@@ -2,7 +2,7 @@
 
 Living go-to-market checklist for Melvin and agents. Update this file when a launch criterion lands or a decision changes. Product rules still live in `AGENTS.md`.
 
-**Measurement (privacy-first):** Google Search Console (organic), Stripe Dashboard (paid), platform `/admin/` household list (signups). No on-site analytics cookies until Melvin opts in and Privacy is updated.
+**Measurement (privacy-first):** Google Search Console (organic), Stripe Dashboard (paid), platform `/admin/` (households, Revenue, cookieless Traffic from `SiteBeacon`). No third-party analytics cookies; first-party page views are hashed daily and disclosed on `/privacy/`.
 
 ---
 

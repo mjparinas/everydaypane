@@ -6,6 +6,7 @@ import { BRAND } from "@/lib/brand";
 import { APP_PATH, CONTACT_EMAIL, FAMILY_PATH, SIGNUP_PATH, SITE_URL } from "@/lib/site";
 
 import { BuildStamp } from "./BuildStamp";
+import { SiteBeacon } from "./SiteBeacon";
 
 const NAV = [
   { href: "/features/", label: "Features" },
@@ -128,6 +129,7 @@ function FooterCol({ title, links }: { title: string; links: { href: string; lab
 export function SitePage({ children, wide }: { children: ReactNode; wide?: boolean }) {
   return (
     <div className="site min-h-dvh">
+      <SiteBeacon />
       <SiteHeader />
       <main className={`mx-auto px-4 py-10 ${wide ? "max-w-6xl" : "max-w-3xl"}`}>{children}</main>
       <SiteFooter />
@@ -144,6 +146,7 @@ export function CtaBanner({ title, body, cta }: { title: string; body: string; c
       <Link
         href={SIGNUP_PATH}
         data-cta={cta}
+        data-track="start_free"
         className="relative mt-6 inline-flex min-h-12 items-center rounded-2xl bg-white px-6 font-semibold text-brand shadow-md"
       >
         Start free

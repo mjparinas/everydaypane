@@ -74,6 +74,29 @@ const MIGRATIONS = [
   )`,
   // One Free signup household per email (Melvin, 2026-11-23): stops parallel /api/auth/signup/ creating two accounts.
   `CREATE TABLE IF NOT EXISTS signup_emails (email TEXT PRIMARY KEY, account_id TEXT NOT NULL, created_at INTEGER NOT NULL)`,
+  // Platform admin (Melvin, 2026-11-23): dedicated staff sessions, 2FA, audit — Tuned/Liftsmith pattern.
+  `CREATE TABLE IF NOT EXISTS admin_links (token_hash TEXT PRIMARY KEY, email TEXT NOT NULL, expires_at INTEGER NOT NULL, used_at INTEGER)`,
+  `CREATE TABLE IF NOT EXISTS admin_sessions (token_hash TEXT PRIMARY KEY, email TEXT NOT NULL, created_at INTEGER NOT NULL, expires_at INTEGER NOT NULL)`,
+  `CREATE TABLE IF NOT EXISTS admin_two_factor (email TEXT PRIMARY KEY, secret TEXT, pending TEXT, enabled_at INTEGER, last_step INTEGER)`,
+  `CREATE TABLE IF NOT EXISTS admin_backup_codes (email TEXT NOT NULL, code_hash TEXT NOT NULL, used_at INTEGER, PRIMARY KEY (email, code_hash))`,
+  `CREATE TABLE IF NOT EXISTS admin_session_steps (token_hash TEXT PRIMARY KEY, at INTEGER NOT NULL)`,
+  `CREATE TABLE IF NOT EXISTS admin_audit (id INTEGER PRIMARY KEY AUTOINCREMENT, at INTEGER NOT NULL, admin TEXT NOT NULL, action TEXT NOT NULL, target TEXT, detail TEXT)`,
+  `CREATE TABLE IF NOT EXISTS admin_settings (key TEXT PRIMARY KEY, value TEXT NOT NULL, updated_at INTEGER NOT NULL)`,
+  `CREATE TABLE IF NOT EXISTS admin_tasks (id TEXT PRIMARY KEY, text TEXT NOT NULL, due_at INTEGER, done_at INTEGER, created_at INTEGER NOT NULL, created_by TEXT NOT NULL)`,
+  `CREATE TABLE IF NOT EXISTS admin_todo_hidden (key TEXT PRIMARY KEY, until_at INTEGER, dismissed INTEGER NOT NULL DEFAULT 0)`,
+  `CREATE TABLE IF NOT EXISTS account_notes (id TEXT PRIMARY KEY, account_id TEXT NOT NULL, admin TEXT NOT NULL, text TEXT NOT NULL, created_at INTEGER NOT NULL)`,
+  `CREATE INDEX IF NOT EXISTS account_notes_by_account ON account_notes (account_id, created_at)`,
+  `CREATE TABLE IF NOT EXISTS problem_reports (id TEXT PRIMARY KEY, account_id TEXT, email TEXT, text TEXT NOT NULL, status TEXT NOT NULL, note TEXT, created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL)`,
+  `CREATE INDEX IF NOT EXISTS problem_reports_by_status ON problem_reports (status, created_at)`,
+  `CREATE TABLE IF NOT EXISTS feature_flags (name TEXT PRIMARY KEY, value TEXT NOT NULL, share INTEGER NOT NULL DEFAULT 100, updated_at INTEGER NOT NULL)`,
+  `CREATE TABLE IF NOT EXISTS promo_codes (code TEXT PRIMARY KEY, kind TEXT NOT NULL, max_uses INTEGER NOT NULL, used INTEGER NOT NULL DEFAULT 0, expires_at INTEGER, note TEXT, enabled INTEGER NOT NULL DEFAULT 1, created_at INTEGER NOT NULL)`,
+  `CREATE TABLE IF NOT EXISTS promo_redemptions (id TEXT PRIMARY KEY, code TEXT NOT NULL, account_id TEXT NOT NULL, redeemed_at INTEGER NOT NULL)`,
+  `CREATE INDEX IF NOT EXISTS promo_redemptions_by_code ON promo_redemptions (code)`,
+  `CREATE TABLE IF NOT EXISTS page_views (id INTEGER PRIMARY KEY AUTOINCREMENT, day TEXT NOT NULL, visitor TEXT NOT NULL, path TEXT NOT NULL, referrer TEXT, utm_source TEXT, utm_campaign TEXT, country TEXT, browser TEXT, os TEXT, device TEXT, track TEXT, at INTEGER NOT NULL)`,
+  `CREATE INDEX IF NOT EXISTS page_views_by_day ON page_views (day, at)`,
+  `CREATE TABLE IF NOT EXISTS admin_events (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, props TEXT, at INTEGER NOT NULL, account_id TEXT, device_id TEXT)`,
+  `CREATE INDEX IF NOT EXISTS admin_events_by_name ON admin_events (name, at)`,
+  `CREATE TABLE IF NOT EXISTS staff_sign_in_failures (id INTEGER PRIMARY KEY AUTOINCREMENT, email TEXT NOT NULL, kind TEXT NOT NULL, at INTEGER NOT NULL)`,
 ];
 
 // Columns added after a table was first created. SQLite has no ADD COLUMN IF NOT EXISTS, so each one runs on its own
@@ -89,6 +112,7 @@ const COLUMNS = [
   `ALTER TABLE family_events ADD COLUMN account_id TEXT`,
   `ALTER TABLE sessions ADD COLUMN account_id TEXT`,
   `ALTER TABLE sign_in_links ADD COLUMN account_id TEXT`,
+  `ALTER TABLE devices ADD COLUMN is_test INTEGER NOT NULL DEFAULT 0`,
 ];
 
 async function migrate(c: Client): Promise<void> {
@@ -126,6 +150,15 @@ export async function query<T = Row>(sql: string, args: InArgs = []): Promise<T[
 export async function run(sql: string, args: InArgs = []): Promise<number> {
   const r = await (await db()).execute({ sql, args });
   return r.rowsAffected;
+}
+
+/** Several statements as one write (admin 2FA enrolment and similar). */
+export async function batch(stmts: { sql: string; args?: InArgs }[]): Promise<void> {
+  const c = await db();
+  await c.batch(
+    stmts.map((s) => ({ sql: s.sql, args: s.args ?? [] })),
+    "write",
+  );
 }
 
 /**

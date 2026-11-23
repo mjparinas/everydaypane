@@ -1,24 +1,17 @@
 import type { Metadata } from "next";
-import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
-import { SESSION_COOKIE, sessionFor } from "@/server/auth";
-import { isStaffEmail, staffEnabled } from "@/server/staff";
+import { staffEnabled } from "@/server/adminAuth";
 
-import { PlatformAdmin } from "./_ui/PlatformAdmin";
+import { AdminApp } from "./_ui/AdminApp";
 
-export const metadata: Metadata = { title: "Admin" };
+export const metadata: Metadata = { title: "Admin", robots: { index: false, follow: false } };
 
 /**
- * Platform ops (/admin/), reserved like Tuned and Liftsmith. Household settings are /household/.
- * Old /admin bookmarks for a household admin who is not staff land on /household/.
+ * Platform ops (/admin/). Dedicated staff magic-link + 2FA (Tuned/Liftsmith).
+ * Household settings stay at /household/. When ADMIN_EMAILS is empty the panel is hidden.
  */
-export default async function PlatformAdminPage() {
+export default function PlatformAdminPage() {
   if (!staffEnabled()) redirect("/household/");
-  const session = await sessionFor((await cookies()).get(SESSION_COOKIE)?.value);
-  if (!session) redirect("/signin/?next=/admin/");
-  if (!isStaffEmail(session.email)) {
-    redirect(session.role === "admin" ? "/household/" : "/family/");
-  }
-  return <PlatformAdmin email={session.email} />;
+  return <AdminApp />;
 }

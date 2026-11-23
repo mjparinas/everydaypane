@@ -79,7 +79,12 @@ export function planFromSubscriptionStatus(status: Stripe.Subscription.Status): 
 
 export async function applySubscription(accountId: string, subscription: Stripe.Subscription): Promise<void> {
   await setStripeIds(accountId, { subscriptionId: subscription.id });
-  await setAccountPlan(accountId, planFromSubscriptionStatus(subscription.status));
+  const plan = planFromSubscriptionStatus(subscription.status);
+  await setAccountPlan(accountId, plan);
+  if (plan === "paid") {
+    const { recordEvent } = await import("./adminAnalytics");
+    await recordEvent("household_upgraded", { source: "stripe" }, accountId);
+  }
 }
 
 /**

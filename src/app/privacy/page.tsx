@@ -76,10 +76,11 @@ export default function PrivacyPage() {
       <ul className="mt-3 list-disc space-y-1 pl-6 text-soft">
         <li>Integration tokens (Google, Amazon cookies, Home Assistant, music and smart-home OAuth) are encrypted at rest.</li>
         <li>Error reports are scrubbed of email addresses and display links before they leave the server.</li>
-        <li>There are no ads and no tracking cookies on the product or marketing site.</li>
+        <li>There are no ads and no third-party tracking cookies on the product or marketing site.</li>
         <li>
-          We do not run third-party product analytics. Organic traffic may be reviewed in Google Search Console; paid conversions in Stripe;
-          household counts in the platform admin.
+          The marketing site records cookieless first-party page views (a daily hash of address and browser, never a cookie) so staff can
+          see Traffic in the platform admin. It honours Global Privacy Control and skips /admin, /household and /family. Organic search may
+          also be reviewed in Google Search Console; paid conversions in Stripe.
         </li>
       </ul>
 
