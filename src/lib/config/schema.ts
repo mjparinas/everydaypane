@@ -153,6 +153,11 @@ export const widgetSchema = z.discriminatedUnion("type", [
     weeks: z.number().int().min(1).max(6).optional(),
     // Saturday and Sunday columns (Melvin, 2026-11-21: "allow calendar to hide or show weekends"). Shown by default.
     showWeekends: z.boolean().default(true),
+    // Wrap (and shrink if needed) so event titles are not ellipsis-truncated. On by default (Melvin, 2026-11-22).
+    fitTitles: z.boolean().default(true),
+    // When the grid has more week rows than this, size rows as if only this many fit and scroll the rest
+    // (Melvin, 2026-11-22: touch scroll, default 3 weeks).
+    scrollWeeks: z.number().int().min(1).max(6).default(3),
   }),
   z.object({ ...base, type: z.literal("garbage"), weeks: z.number().int().min(1).max(8) }),
   z.object({

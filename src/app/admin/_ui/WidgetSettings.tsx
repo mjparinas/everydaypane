@@ -305,6 +305,21 @@ function TypeSettings({
           />
           <Toggle label="Show weekends" checked={w.showWeekends} onChange={(v) => e((x) => void (x.showWeekends = v))} />
           <Toggle label="Show the month title" checked={w.showTitle} onChange={(v) => e((x) => void (x.showTitle = v))} />
+          <Toggle
+            label="Fit event titles"
+            checked={w.fitTitles}
+            onChange={(v) => e((x) => void (x.fitTitles = v))}
+            hint="Wrap titles (and shrink if needed) so they are not cut off with an ellipsis. Busy days still show “+N more”."
+          />
+          <Stepper
+            label="Scroll after"
+            value={w.scrollWeeks}
+            min={1}
+            max={6}
+            format={(n) => `${n} week${n === 1 ? "" : "s"}`}
+            onChange={(v) => e((x) => void (x.scrollWeeks = v))}
+            hint="When the calendar shows more weeks than this, each week keeps that height and you can scroll the rest."
+          />
         </>
       );
     }

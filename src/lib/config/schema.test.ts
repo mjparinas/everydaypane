@@ -80,10 +80,13 @@ describe("config schema", () => {
     const month = c.views.flatMap((v) => v.widgets).find((w) => w.type === "calendarMonth") as unknown as Record<string, unknown>;
     delete month.showTitle;
     delete month.showWeekends;
+    delete month.fitTitles;
+    delete month.scrollWeeks;
     const r = configSchema.safeParse(c);
     const parsed = r.success ? r.data.views.flatMap((v) => v.widgets).find((w) => w.type === "calendarMonth") : undefined;
-    // A month widget saved before these settings existed still shows the whole month, weekends and title included.
-    expect(parsed).toMatchObject({ showTitle: true, showWeekends: true });
+    // A month widget saved before these settings existed still shows the whole month, weekends and title included;
+    // fit titles and scroll-after-3 are the new defaults (Melvin, 2026-11-22).
+    expect(parsed).toMatchObject({ showTitle: true, showWeekends: true, fitTitles: true, scrollWeeks: 3 });
     expect(parsed).not.toHaveProperty("weeks");
   });
 

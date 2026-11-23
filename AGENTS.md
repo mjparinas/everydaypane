@@ -28,7 +28,7 @@ same change, and moves it out of **In progress** when it merges.
 | WiFi QR (`wifiQr`) | Join code, optionally the password | Settings document |
 | Countdowns (`countdown`) | Days until holidays, birthdays and events, yearly ones roll over | Settings document |
 | Schedule (`agenda`) | Today, or the next 1 to 14 days | Google Calendar + iCal links, family events |
-| Month calendar (`calendarMonth`) | Month grid or 1 to 6 weeks from this one, Sunday or Monday start, weekends on or off, title toggle | Google Calendar + iCal links, family events |
+| Month calendar (`calendarMonth`) | Month grid or 1 to 6 weeks from this one, Sunday or Monday start, weekends on or off, title toggle, fit titles (wrap/shrink, on by default), scroll after N weeks (default 3) | Google Calendar + iCal links, family events |
 | Garbage day (`garbage`) | Next pickups, 1 to 8 weeks | Township of Langley (Recycle Coach) |
 | Photos (`photos`) | Slideshow, cover or contain, captions | Amazon shared albums, Amazon people, URL lists, photo library (uploads and Google Photos picks) |
 | Home Assistant tile (`haEntity`) | Toggle, light, sensor, climate, cover, lock (lock only), button | Home Assistant |
@@ -141,6 +141,10 @@ node scripts/e2e.mjs   # Playwright browser tests against the build (CHROMIUM_PA
   (`showWeekends`, on by default). Rolling weeks don't dim the next month's days; its first day reads "Dec 1" and the
   title names both months. The calendar feed covers at least the next six weeks for this. Weeks already started on
   Sunday or Monday (`weekStartsOn`).
+- **Month calendar fit titles and scroll** (Melvin, 2026-11-22): event titles wrap (and shrink if needed) so they are
+  not cut off with an ellipsis (`fitTitles`, on by default); busy days still use “+N more”. When the grid has more
+  week rows than `scrollWeeks` (1 to 6, default 3), each week is sized as if only that many fit the tile and the rest
+  scrolls by touch.
 - **Commute time** (Melvin, 2026-11-19): drive times with live traffic from home to up to six places (work, school),
   set up in Settings › Commute; a place can have a "be there by" time, and the widget then says when to leave (see
   Architecture).
