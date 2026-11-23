@@ -999,6 +999,13 @@ function TypeSettings({
         </>
       );
     }
+    case "whiteboard":
+      return (
+        <p className="text-xs text-soft">
+          Finger draw on the wall with a few colours and an eraser. Every display shows the same doodle. A wider tile shows more colours.
+          Hold Clear to wipe the board.
+        </p>
+      );
     default:
       return null;
   }

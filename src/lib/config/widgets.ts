@@ -303,6 +303,14 @@ export const WIDGETS: { [T in WidgetType]: WidgetInfo<T> } = {
     minSize: { w: 2, h: 1 },
     defaults: () => ({ schools: [] }),
   },
+  whiteboard: {
+    label: "Whiteboard",
+    description: "Finger draw with a few colours; the same doodle on every display",
+    icon: "✏️",
+    size: { w: 4, h: 3 },
+    minSize: { w: 2, h: 2 },
+    defaults: () => ({}),
+  },
 };
 
 export const WIDGET_TYPES = Object.keys(WIDGETS) as WidgetType[];
@@ -312,7 +320,7 @@ export const WIDGET_GROUPS: { id: string; label: string; types: WidgetType[] }[]
   { id: "time", label: "Time", types: ["clock", "date", "sunTimes", "timer", "pomodoro"] },
   { id: "weather", label: "Weather & map", types: ["weather", "airQuality", "radar", "earth"] },
   { id: "calendar", label: "Calendar", types: ["agenda", "calendarMonth", "countdown", "tasks"] },
-  { id: "family", label: "Family", types: ["meals", "shopping", "messages", "chores", "school", "presence"] },
+  { id: "family", label: "Family", types: ["meals", "shopping", "messages", "chores", "whiteboard", "school", "presence"] },
   { id: "home", label: "Home", types: ["haEntity", "camera", "media", "wifiQr", "garbage", "commute", "transit", "ferries"] },
   { id: "media", label: "Outside", types: ["photos", "sports", "alerts", "note"] },
 ];

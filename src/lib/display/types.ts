@@ -371,6 +371,9 @@ export interface ShoppingData {
   items: ShoppingItem[];
 }
 
+/** Shared kitchen whiteboard (src/server/whiteboard.ts). Same doodle on every display. */
+export type { WhiteboardData, WhiteboardStroke, WhiteboardTool } from "@/lib/whiteboard";
+
 /** School / snow-day status from the district site (src/server/school.ts). */
 export type SchoolState = "open" | "closed" | "delayed" | "unknown";
 
