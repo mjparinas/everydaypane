@@ -389,6 +389,9 @@ body {
   height: 100%;
   line-height: 1.05;
 }
+.w-date .w-label {
+  margin-bottom: 0.2em;
+}
 .d-day {
   font-weight: 700;
   font-size: min(40cqh, 16cqw);

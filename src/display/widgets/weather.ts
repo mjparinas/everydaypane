@@ -40,6 +40,7 @@ export const weather: Mount<"weather"> = (el, w, ctx) => {
   el.append(root);
   return subscribe<WeatherData>("weather", 15 * 60_000, (d) => {
     const parts: HTMLElement[] = [];
+    if (w.title) parts.push(h("div", { class: "w-label" }, w.title));
     if (w.showCurrent) {
       parts.push(
         h(

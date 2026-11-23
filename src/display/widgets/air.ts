@@ -34,7 +34,7 @@ export const airQuality: Mount<"airQuality"> = (el, w) => {
     );
     fill(
       root,
-      h("div", { class: "w-label" }, w.scale === "aqhi" ? "Air quality (AQHI)" : "Air quality (US AQI)"),
+      h("div", { class: "w-label" }, w.title || (w.scale === "aqhi" ? "Air quality (AQHI)" : "Air quality (US AQI)")),
       h(
         "div",
         { class: `air-row air-${band.level}` },
