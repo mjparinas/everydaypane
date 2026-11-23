@@ -183,6 +183,7 @@ export function ViewsPanel() {
 
       {editingView && !widget && (
         <ViewSettingsDrawer
+          key={active.id}
           view={active}
           config={config}
           usedBySchedule={usedBySchedule}
