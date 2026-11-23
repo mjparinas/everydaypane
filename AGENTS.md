@@ -102,7 +102,7 @@ OG). Free vs **Household** pricing copy in `src/lib/marketingPlans.ts`; checkout
 DriveBC road events and weather conditions, Earthquakes Canada, BC Hydro power outages. Each switchable in `config.alerts.sources`.
 Optional email to everyone on `ADMIN_EMAILS` and `FAMILY_EMAILS` when a new strip-worthy alert arrives (`config.alerts.notifyEmail`).
 
-**Admin and family:** magic-link sign-in (Resend), admin panel tabs (views and grid editor, themes, displays with
+**Admin and family:** magic-link sign-in (Resend, branded HTML from `src/lib/email.ts`), admin panel tabs (views and grid editor, themes, displays with
 copyable addresses **and a phone-edit QR/link**, meals, shopping, settings for every integration, Settings › Chores for the kids and their chores), **settings backup and restore** (Settings › Backup, a JSON
 file), `/family/` for the message board, **family calendar events**, meals and the shopping list, **`/d/<token>/edit/`**
 (same meals, shopping and messages with no login — scan the edit QR or open the Displays link), Sentry. Settings is
@@ -144,6 +144,10 @@ npm run templates:previews  # regenerate public/templates/*.png from real widget
   EverydayPane or Everyday Pane). The wordmark keeps everyday**pane** with "pane" in the brand blue; URLs and handles
   stay `everydaypane`. "Everyday Pane" is fine once when saying the name aloud; don't invent a third written form.
   Short form later, once the full name is known: Pane.
+- **Branded outbound email** (Melvin, 2026-11-23): every message we send through Resend (magic-link sign-in and alert
+  notifications) uses the shared chrome in `src/lib/email.ts` — brand blue `#3b5bdb`, the mark, everyday**pane**
+  wordmark, soft `#f6f7fb` page and white card — so mail looks like the site and feels trustworthy. New email kinds
+  reuse that layout; don't invent a third template style.
 - **Paid multi-tenant product** (Melvin, 2026-11-22): Everydaypane is a **Free + one paid (“Household”)** app other
   families can use. Free is DAKboard-like (1 view, 2 calendars, 2 displays, core widgets only). Household unlocks
   everything. Melvin’s existing install is grandfathered on Household (`acct_legacy`). Stripe Checkout + Customer Portal
@@ -398,9 +402,9 @@ panel can be complex if you need it to be."
   TransLink's licence notice is shown in the widget's settings and as "Live times from TransLink" on the wall.
   Setup: `docs/translink.md`.
 - **Alert email:** when `config.alerts.notifyEmail` is on, each new strip-worthy alert (`meetsBanner` in `src/lib/alerts.ts`)
-  triggers one email per alert id to everyone on `ADMIN_EMAILS` and `FAMILY_EMAILS` (`src/server/alertNotify.ts`,
-  `sendEmail` through Resend); ids are stored in `alert_notified` so repeats are never sent. The display alerts route
-  calls this after each feed read.
+  triggers one email per alert id to household members (`src/server/alertNotify.ts`, `sendEmail` through Resend, HTML from
+  `alertEmail` in `src/lib/email.ts`); ids are stored in `account_alert_notified` so repeats are never sent. The display
+  alerts route calls this after each feed read.
 - **Emergency alerts:** `src/server/alerts.ts` reads NAAD's Atom feed (Alert Ready, and Environment Canada's warnings,
   whose own GeoMet API refuses automated readers), DriveBC Open511 (major events and weather conditions) and Earthquakes
   Canada's FDSN text service (the last 24 hours; its distance filter is ignored, so distance is checked here) and BC
