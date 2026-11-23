@@ -25,9 +25,27 @@ function withChores(allowCheck = true): DashboardConfig {
       { id: "ben", name: "Ben", emoji: "", color: "#1c7ed6", goal: 0 },
     ],
     items: [
-      { id: "bed", name: "Make the bed", emoji: "🛏️", stars: 1, days: [0, 1, 2, 3, 4, 5, 6], personIds: ["ana", "ben"], rotate: "none" },
-      { id: "dishes", name: "Dishes", emoji: "", stars: 3, days: [0, 1, 2, 3, 4, 5, 6], personIds: ["ana", "ben"], rotate: "day" },
-      { id: "lawn", name: "Mow the lawn", emoji: "", stars: 5, days: [6], personIds: ["ben"], rotate: "none" },
+      {
+        id: "bed",
+        name: "Make the bed",
+        emoji: "🛏️",
+        stars: 1,
+        days: [0, 1, 2, 3, 4, 5, 6],
+        personIds: ["ana", "ben"],
+        rotate: "none",
+        period: "morning",
+      },
+      {
+        id: "dishes",
+        name: "Dishes",
+        emoji: "",
+        stars: 3,
+        days: [0, 1, 2, 3, 4, 5, 6],
+        personIds: ["ana", "ben"],
+        rotate: "day",
+        period: "evening",
+      },
+      { id: "lawn", name: "Mow the lawn", emoji: "", stars: 5, days: [6], personIds: ["ben"], rotate: "none", period: "anytime" },
     ],
     rewards: [{ id: "tv", name: "Extra TV", starsCost: 4 }],
     pinSet: false,
@@ -43,6 +61,7 @@ function withChores(allowCheck = true): DashboardConfig {
     personIds: [],
     showStars: true,
     allowCheck,
+    layout: "columns",
   });
   return c;
 }

@@ -28,7 +28,9 @@ describe("config schema", () => {
   it("refuses a chore with no days or nobody to do it", () => {
     const c = defaultConfig();
     c.chores.people = [{ id: "ana", name: "Ana", emoji: "", color: "#e8590c", goal: 0 }];
-    c.chores.items = [{ id: "bed", name: "Make the bed", emoji: "", stars: 1, days: [1], personIds: ["ana"], rotate: "none" }];
+    c.chores.items = [
+      { id: "bed", name: "Make the bed", emoji: "", stars: 1, days: [1], personIds: ["ana"], rotate: "none", period: "anytime" },
+    ];
     expect(configSchema.safeParse(c).success).toBe(true);
     c.chores.items[0]!.days = [];
     expect(configSchema.safeParse(c).success).toBe(false);

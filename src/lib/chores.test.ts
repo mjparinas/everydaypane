@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { assignees, daysLabel, dueOn, weekStart } from "./chores";
+import { activePeriod, assignees, daysLabel, dueOn, periodRank, weekStart } from "./chores";
 import type { Chore, ChorePerson } from "./config/schema";
 
 const EVERY_DAY = [0, 1, 2, 3, 4, 5, 6];
@@ -12,6 +12,7 @@ const chore = (over: Partial<Chore>): Chore => ({
   days: EVERY_DAY,
   personIds: ["ana", "ben"],
   rotate: "none",
+  period: "anytime",
   ...over,
 });
 const person = (id: string): ChorePerson => ({ id, name: id, emoji: "", color: "#1c7ed6", goal: 0 });
@@ -88,5 +89,22 @@ describe("daysLabel", () => {
     expect(daysLabel([5, 1, 2, 3, 4])).toBe("Weekdays");
     expect(daysLabel([6, 0])).toBe("Weekends");
     expect(daysLabel([0, 3, 1])).toBe("Mon, Wed, Sun");
+  });
+});
+
+describe("chore periods", () => {
+  it("orders morning before afternoon before evening before anytime", () => {
+    expect(periodRank("morning")).toBeLessThan(periodRank("afternoon"));
+    expect(periodRank("afternoon")).toBeLessThan(periodRank("evening"));
+    expect(periodRank("evening")).toBeLessThan(periodRank("anytime"));
+  });
+
+  it("picks the active band from the hour of day", () => {
+    expect(activePeriod(7)).toBe("morning");
+    expect(activePeriod(11)).toBe("morning");
+    expect(activePeriod(12)).toBe("afternoon");
+    expect(activePeriod(16)).toBe("afternoon");
+    expect(activePeriod(17)).toBe("evening");
+    expect(activePeriod(22)).toBe("evening");
   });
 });

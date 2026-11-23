@@ -265,7 +265,7 @@ export const WIDGETS: { [T in WidgetType]: WidgetInfo<T> } = {
     icon: "⭐",
     size: { w: 6, h: 4 },
     minSize: { w: 2, h: 2 },
-    defaults: () => ({ personIds: [], showStars: true, allowCheck: true }),
+    defaults: () => ({ personIds: [], showStars: true, allowCheck: true, layout: "columns" as const }),
   },
   commute: {
     label: "Commute",

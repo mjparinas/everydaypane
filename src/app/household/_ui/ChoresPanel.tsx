@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 
-import { daysLabel, WEEKDAYS } from "@/lib/chores";
+import { CHORE_PERIODS, daysLabel, PERIOD_LABELS, WEEKDAYS, type ChorePeriod } from "@/lib/chores";
 import type { Chore } from "@/lib/config/schema";
 
 import { Colour, ConfirmButton, Range, Section, Select, Stepper, Text, Toggle } from "./fields";
@@ -17,6 +17,11 @@ const MAX_CHORES = 40;
 const MAX_REWARDS = 12;
 const COLOURS = ["#e8590c", "#1c7ed6", "#2f9e44", "#ae3ec9", "#f08c00", "#0ca678", "#d6336c", "#4263eb"];
 const WEEK = [1, 2, 3, 4, 5, 6, 0];
+
+const PERIODS: { value: ChorePeriod; label: string }[] = CHORE_PERIODS.map((value) => ({
+  value,
+  label: PERIOD_LABELS[value],
+}));
 
 const ROTATIONS: { value: Chore["rotate"]; label: string }[] = [
   { value: "none", label: "Everyone picked does it" },
@@ -185,6 +190,7 @@ export function ChoresPanel() {
               })
             }
           />
+          <Select label="Time of day" value={i.period} options={PERIODS} onChange={(v) => changeChore(i.id, (x) => void (x.period = v))} />
           {i.personIds.length > 1 && (
             <Select label="How" value={i.rotate} options={ROTATIONS} onChange={(v) => changeChore(i.id, (x) => void (x.rotate = v))} />
           )}
@@ -211,6 +217,7 @@ export function ChoresPanel() {
                 days: [0, 1, 2, 3, 4, 5, 6],
                 personIds: c.chores.people.map((p) => p.id),
                 rotate: c.chores.people.length > 1 ? "day" : "none",
+                period: "anytime",
               });
             });
             setChore("");

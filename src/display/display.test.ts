@@ -9,7 +9,7 @@ import { shortTime } from "./format";
 import { kindOf, label, weatherIcon } from "./icons";
 import { airQuality, aqhiBand, usAqiBand } from "./widgets/air";
 import { calendarMonth, fitDayTitles } from "./widgets/calendar";
-import { chores, columns } from "./widgets/chores";
+import { bandsFor, chores, columns } from "./widgets/chores";
 import { clock } from "./widgets/clock";
 import { commute, distance, duration, timing, trafficLevel } from "./widgets/commute";
 import { countdown } from "./widgets/countdown";
@@ -835,8 +835,8 @@ describe("chore chart", () => {
       { id: "ben", name: "Ben", emoji: "", color: "#1c7ed6", goal: 0, stars: 0, available: 0 },
     ],
     chores: [
-      { id: "bed", name: "Make the bed", emoji: "🛏️", stars: 1 },
-      { id: "dishes", name: "Dishes", emoji: "", stars: 3 },
+      { id: "bed", name: "Make the bed", emoji: "🛏️", stars: 1, period: "morning" },
+      { id: "dishes", name: "Dishes", emoji: "", stars: 3, period: "evening" },
     ],
     due: [
       { choreId: "bed", personId: "ana", done: true },
@@ -854,6 +854,30 @@ describe("chore chart", () => {
     const ticked = columns(data, [], new Map([["dishes|ana", true]]));
     expect(ticked[0]?.person.stars).toBe(7);
     expect(columns(data, [], new Map([["bed|ana", false]]))[0]?.person.stars).toBe(3);
+  });
+
+  it("groups a kid's chores into morning/afternoon/evening bands", () => {
+    const ana = columns(data, ["ana"])[0]!.items;
+    expect(bandsFor(ana).map((b) => [b.period, b.items.map((i) => i.chore.id)])).toEqual([
+      ["morning", ["bed"]],
+      ["evening", ["dishes"]],
+    ]);
+  });
+
+  it("draws time-of-day bands and completion dots when layout is byPeriod", async () => {
+    vi.useFakeTimers({ now: new Date("2026-11-18T19:00:00Z") });
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(() => Promise.resolve(Response.json(data))),
+    );
+    const el = document.createElement("div");
+    const widget = { ...newWidget("chores", "ch", { x: 0, y: 0 }), layout: "byPeriod" as const };
+    const stop = chores(el, widget, ctx);
+    await vi.advanceTimersByTimeAsync(0);
+    expect([...el.querySelectorAll(".ch-band-label")].map((n) => n.textContent)).toEqual(expect.arrayContaining(["Morning", "Evening"]));
+    expect(el.querySelectorAll(".ch-dot").length).toBeGreaterThan(0);
+    stop();
+    vi.unstubAllGlobals();
   });
 
   it("ticks a chore off at once, says so when everyone's done, and a second tap takes it back", async () => {

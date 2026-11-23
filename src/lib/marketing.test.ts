@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { postBySlug, POSTS } from "../content/posts";
 import { shortCommit } from "./build";
 import { COMPETITORS } from "./compare";
-import { MARKETING_PLANS, MARKETING_PLAN_TABLE } from "./marketingPlans";
+import { MARKETING_PLAN_TABLE, MARKETING_PLANS } from "./marketingPlans";
 import { FREE_LIMITS, PAID_LIMITS } from "./plans";
 
 describe("marketing content", () => {

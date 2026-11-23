@@ -1,3 +1,4 @@
+import { activePeriod, PERIOD_LABELS, periodRank, type ChorePeriod } from "@/lib/chores";
 import type { ChoresData } from "@/lib/display/types";
 
 import { refresh, sendExplained, subscribe } from "../api";
@@ -8,12 +9,15 @@ import type { Mount } from "./types";
 // The chore chart (Melvin, 2026-11-21): a column for each kid with today's chores and the stars they've earned this
 // week. A tap ticks a chore off at once, with a little star burst, and a second tap takes it back (a stray finger, or
 // "I didn't really make my bed"). Other screens catch up within a minute.
+// Periods and progress dots (Melvin, 2026-11-23: homescreens-style morning/afternoon/evening bands).
 
 export const CHORES_EVERY = 60_000;
 
 type Person = ChoresData["people"][number];
+type ChoreRow = ChoresData["chores"][number];
+type Item = { key: string; chore: ChoreRow; done: boolean };
 
-/** The people a widget shows (none picked means everyone), each with today's chores in the chart's order. */
+/** The people a widget shows (none picked means everyone), each with today's chores in period then chart order. */
 export function columns(data: ChoresData, personIds: string[], ticks: ReadonlyMap<string, boolean> = new Map()) {
   const chores = new Map(data.chores.map((c) => [c.id, c]));
   return data.people
@@ -35,12 +39,31 @@ export function columns(data: ChoresData, personIds: string[], ticks: ReadonlyMa
             available += delta;
           }
           return [{ key, chore, done }];
-        });
+        })
+        .sort((a, b) => periodRank(a.chore.period) - periodRank(b.chore.period) || a.chore.name.localeCompare(b.chore.name));
       return { person: { ...p, stars: Math.max(0, stars), available: Math.max(0, available) } as Person, items };
     });
 }
 
-export const chores: Mount<"chores"> = (el, w) => {
+/** Group a person's items into period bands (empty bands omitted). */
+export function bandsFor(items: Item[]): { period: ChorePeriod; items: Item[] }[] {
+  const by = new Map<ChorePeriod, Item[]>();
+  for (const item of items) {
+    const list = by.get(item.chore.period) ?? [];
+    list.push(item);
+    by.set(item.chore.period, list);
+  }
+  return (["morning", "afternoon", "evening", "anytime"] as const)
+    .filter((p) => (by.get(p)?.length ?? 0) > 0)
+    .map((period) => ({ period, items: by.get(period)! }));
+}
+
+function hourInZone(now: Date, timeZone: string): number {
+  const parts = new Intl.DateTimeFormat("en-CA", { timeZone, hour: "numeric", hourCycle: "h23" }).formatToParts(now);
+  return Number(parts.find((p) => p.type === "hour")?.value ?? "12");
+}
+
+export const chores: Mount<"chores"> = (el, w, ctx) => {
   const root = h("div", { class: "w-chores" }, h("div", { class: "w-empty" }, "Loading chores…"));
   el.append(root);
   let data: ChoresData | null = null;
@@ -148,19 +171,73 @@ export const chores: Mount<"chores"> = (el, w) => {
     });
   };
 
+  const itemRow = (p: Person, { key, chore, done }: Item) => {
+    const parts = [
+      h("span", { class: "ch-check", "aria-hidden": "true" }, done ? "✓" : ""),
+      h("span", { class: "ch-title" }, chore.emoji ? `${chore.emoji} ${chore.name}` : chore.name),
+      w.showStars ? h("span", { class: "ch-worth" }, "★".repeat(chore.stars)) : null,
+    ];
+    const cls = `ch-item${done ? " ch-done" : ""}`;
+    if (!w.allowCheck) return h("li", { class: cls, "data-key": key }, ...parts);
+    const b = h("button", { type: "button", class: "ch-btn", "aria-pressed": done ? "true" : "false" }, ...parts);
+    b.addEventListener("click", (ev) => {
+      ev.stopPropagation();
+      tap(chore.id, p.id, !done, chore.stars);
+    });
+    return h("li", { class: cls, "data-key": key }, b);
+  };
+
+  const dots = (items: Item[]) => {
+    if (!items.length) return null;
+    return h(
+      "div",
+      { class: "ch-dots", "aria-label": `${items.filter((i) => i.done).length} of ${items.length} done` },
+      ...items.map((i) => h("i", { class: i.done ? "ch-dot ch-dot-on" : "ch-dot", "aria-hidden": "true" })),
+    );
+  };
+
+  const progressRing = (items: Item[]) => {
+    const n = items.length;
+    const done = items.filter((i) => i.done).length;
+    const pct = n ? Math.round((done / n) * 100) : 0;
+    return h("div", { class: "ch-ring", style: `--pct:${pct}` }, h("span", { class: "ch-ring-label" }, n ? `${done}/${n}` : "0"));
+  };
+
   function draw() {
     if (!data) return;
     const cols = columns(data, w.personIds, ticks);
     if (!cols.length)
       return fill(root, h("div", { class: "w-empty" }, "Add the kids and their chores under Settings › Chores in the admin panel."));
+    const active = activePeriod(hourInZone(new Date(), ctx.timeZone));
+    const showBands = w.layout === "byPeriod";
+    const showProgress = w.layout === "progress";
+
     fill(
       root,
       w.title ? h("div", { class: "w-label" }, w.title) : null,
       h(
         "div",
-        { class: "ch-cols", style: `--n:${cols.length}` },
+        { class: `ch-cols${showProgress ? " ch-cols-progress" : ""}`, style: `--n:${cols.length}` },
         ...cols.map(({ person: p, items }) => {
           const finished = items.length > 0 && items.every((i) => i.done);
+          const body =
+            showBands && items.length
+              ? h(
+                  "div",
+                  { class: "ch-bands" },
+                  ...bandsFor(items).map(({ period, items: band }) =>
+                    h(
+                      "section",
+                      { class: `ch-band${period === active ? " ch-band-now" : ""}` },
+                      h("div", { class: "ch-band-label" }, PERIOD_LABELS[period]),
+                      h("ul", { class: "ch-list" }, ...band.map((item) => itemRow(p, item))),
+                    ),
+                  ),
+                )
+              : items.length
+                ? h("ul", { class: "ch-list" }, ...items.map((item) => itemRow(p, item)))
+                : h("div", { class: "ch-free" }, "No chores today");
+
           return h(
             "section",
             { class: `ch-col${finished ? " ch-finished" : ""}`, style: `--kid:${p.color}` },
@@ -177,30 +254,11 @@ export const chores: Mount<"chores"> = (el, w) => {
                   )
                 : null,
             ),
+            showProgress ? progressRing(items) : dots(items),
             w.showStars && p.goal
               ? h("div", { class: "ch-bar" }, h("i", { style: `transform:scaleX(${Math.min(1, p.stars / p.goal)})` }))
               : null,
-            items.length
-              ? h(
-                  "ul",
-                  { class: "ch-list" },
-                  ...items.map(({ key, chore, done }) => {
-                    const parts = [
-                      h("span", { class: "ch-check", "aria-hidden": "true" }, done ? "✓" : ""),
-                      h("span", { class: "ch-title" }, chore.emoji ? `${chore.emoji} ${chore.name}` : chore.name),
-                      w.showStars ? h("span", { class: "ch-worth" }, "★".repeat(chore.stars)) : null,
-                    ];
-                    const cls = `ch-item${done ? " ch-done" : ""}`;
-                    if (!w.allowCheck) return h("li", { class: cls, "data-key": key }, ...parts);
-                    const b = h("button", { type: "button", class: "ch-btn", "aria-pressed": done ? "true" : "false" }, ...parts);
-                    b.addEventListener("click", (ev) => {
-                      ev.stopPropagation();
-                      tap(chore.id, p.id, !done, chore.stars);
-                    });
-                    return h("li", { class: cls, "data-key": key }, b);
-                  }),
-                )
-              : h("div", { class: "ch-free" }, "No chores today"),
+            body,
             finished ? h("div", { class: "ch-all" }, "All done! 🎉") : null,
             w.allowCheck && data?.rewards.length
               ? h(

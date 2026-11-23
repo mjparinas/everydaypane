@@ -331,12 +331,14 @@ export const widgetSchema = z.discriminatedUnion("type", [
   }),
   // The kids' chore chart (Melvin, 2026-11-21): today's chores for the people under Settings › Chores (none picked means
   // everyone), ticked off with a tap when `allowCheck` is on, with each person's stars this week.
+  // layout (Melvin, 2026-11-23): columns = per-kid list; byPeriod = morning/afternoon/evening bands; progress = rings.
   z.object({
     ...base,
     type: z.literal("chores"),
     personIds: z.array(id).max(8),
     showStars: z.boolean(),
     allowCheck: z.boolean(),
+    layout: z.enum(["columns", "byPeriod", "progress"]).default("columns"),
   }),
   // Commute time (Melvin, 2026-11-19): live-traffic drive times from home to the places under Settings › Commute
   // (none picked means all of them).
@@ -669,6 +671,9 @@ export const chorePersonSchema = z.object({
 });
 export type ChorePerson = z.infer<typeof chorePersonSchema>;
 
+/** When in the day a chore belongs (Melvin, 2026-11-23: homescreens-style morning/afternoon/evening bands). */
+export type ChorePeriod = "morning" | "afternoon" | "evening" | "anytime";
+
 export const choreSchema = z.object({
   id,
   name: z.string().trim().min(1).max(40),
@@ -683,6 +688,8 @@ export const choreSchema = z.object({
   personIds: z.array(id).min(1, "Pick who does it").max(8),
   // "none": everyone picked does it; "day": one of them each time it's due, in turn; "week": one of them all week.
   rotate: z.enum(["none", "day", "week"]),
+  // Defaults to anytime so documents saved before periods existed still load.
+  period: z.enum(["morning", "afternoon", "evening", "anytime"]).default("anytime"),
 });
 export type Chore = z.infer<typeof choreSchema>;
 

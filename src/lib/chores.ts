@@ -3,6 +3,11 @@ import type { Chore, ChorePerson } from "./config/schema";
 // The chore chart (Melvin, 2026-11-21): recurring chores, shared or taken in turns, ticked off on the wall, with stars
 // counted per person for the week. Shared by the server, the admin panel and the display, so it holds no zod and no
 // React. Dates are local YYYY-MM-DD strings in the dashboard's time zone; weeks start on Monday.
+// Periods (Melvin, 2026-11-23): morning / afternoon / evening / anytime for wall bands, inspired by homescreens.dev.
+// Keep the period constants here (not as a value import from schema.ts) so the display bundle never pulls in zod.
+
+export const CHORE_PERIODS = ["morning", "afternoon", "evening", "anytime"] as const;
+export type ChorePeriod = (typeof CHORE_PERIODS)[number];
 
 const DAY = 86_400_000;
 // A Monday long ago that every rotation counts from, so turns don't depend on when a chore was added.
@@ -55,4 +60,26 @@ export function daysLabel(days: number[]): string {
     .filter((d) => set.has(d))
     .map((d) => WEEKDAYS[d])
     .join(", ");
+}
+
+export const PERIOD_LABELS: Record<ChorePeriod, string> = {
+  morning: "Morning",
+  afternoon: "Afternoon",
+  evening: "Evening",
+  anytime: "Anytime",
+};
+
+/** Sort order for wall bands (morning first, anytime last). */
+export function periodRank(period: ChorePeriod): number {
+  return CHORE_PERIODS.indexOf(period);
+}
+
+/**
+ * Which band is "now" on the wall clock. Morning before noon, afternoon until 5 PM, evening after that.
+ * `anytime` is never the active band — those chores sit under every list without a highlight.
+ */
+export function activePeriod(hour: number): Exclude<ChorePeriod, "anytime"> {
+  if (hour < 12) return "morning";
+  if (hour < 17) return "afternoon";
+  return "evening";
 }
