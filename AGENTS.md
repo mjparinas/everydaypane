@@ -317,7 +317,8 @@ panel can be complex if you need it to be."
   for only by "Connect Google Photos"): the admin picks in Google's own window, then the panel has the server copy the
   picks a page at a time (`=w2048-h2048`, with our token; Google's links last an hour, so photos are copied, not
   linked). Videos are skipped and a Google photo is never copied twice into one album. Blobs are never public; displays
-  get them only through `/api/display/photo/`. Removing a library album deletes its photos. Setup: `docs/google-photos.md`.
+  get them only through `/api/display/photo/`. Removing a library album deletes its photos when the settings are saved
+  (Undo before Save keeps them). Setup: `docs/google-photos.md`.
 - **Chore chart:** the kids and chores are in the settings document (`config.chores`, edited in Settings › Chores and
   saved with Save); ticks are rows in `chores_done` (one per day, chore and person, with the stars the chore was worth
   then, so changing a chore later doesn't rewrite the week; kept 60 days), `src/server/chores.ts`. Who has a chore on a

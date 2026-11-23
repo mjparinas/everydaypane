@@ -66,6 +66,8 @@ describe("Google Tasks on displays", () => {
         if (url.includes("/lists/groceries/tasks?"))
           return Promise.resolve(Response.json({ items: [{ id: "t1", title: "Milk", position: "1" }] }));
         if (url.includes("/lists/groceries/tasks/t1") && init?.method === "PATCH") return Promise.resolve(Response.json({ id: "t1" }));
+        if (url.includes("/lists/groceries/tasks/t1")) return Promise.resolve(Response.json({ id: "t1", status: "needsAction" }));
+        if (url.includes("/lists/groceries/tasks/secret")) return Promise.resolve(new Response("missing", { status: 404 }));
         return Promise.resolve(new Response("unexpected", { status: 500 }));
       }),
     );
@@ -101,9 +103,12 @@ describe("Google Tasks on displays", () => {
   it("ticks a task off only in a list a widget that allows it shows", async () => {
     const token = await connected();
     expect((await tick(token, "groceries")).status).toBe(200);
+    const got = calls.find((c) => c.url.endsWith("/tasks/t1") && (c.init?.method ?? "GET") === "GET");
+    expect(got?.url).toBe("https://tasks.googleapis.com/tasks/v1/lists/groceries/tasks/t1");
     const patch = calls.find((c) => c.init?.method === "PATCH");
     expect(patch?.url).toBe("https://tasks.googleapis.com/tasks/v1/lists/groceries/tasks/t1");
     expect(JSON.parse(String(patch?.init?.body))).toEqual({ status: "completed" });
+    expect((await tick(token, "groceries", "secret")).status).toBe(403);
 
     expect((await tick(token, "chores")).status).toBe(403);
     expect(

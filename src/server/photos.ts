@@ -5,6 +5,7 @@ import type { PhotoData, PhotoItem } from "@/lib/display/types";
 
 import { cached } from "./cache";
 import { libraryImage, listLibrary } from "./library";
+import { fetchPublicHttps, publicHttpsUrl } from "./publicUrl";
 import { getSecret } from "./secrets";
 
 // Photos (Melvin, 2026-11-17: Amazon Photos, choosable by person). Three kinds of source, all listed and cached by the
@@ -238,7 +239,10 @@ export async function amazonPeople(): Promise<AmazonPerson[]> {
 // ---- Listing and serving ----
 
 function listUrls(urls: string[]): Listed[] {
-  return urls.slice(0, MAX_PHOTOS).map((url, i) => ({ id: `u${i}`, url, w: 0, h: 0, taken: null }));
+  return urls
+    .filter((url) => publicHttpsUrl(url))
+    .slice(0, MAX_PHOTOS)
+    .map((url, i) => ({ id: `u${i}`, url, w: 0, h: 0, taken: null }));
 }
 
 async function list(source: PhotoSource): Promise<Listed[]> {
@@ -320,9 +324,15 @@ export async function photoImage(config: DashboardConfig, sourceId: string, phot
   if (source.kind === "library") return libraryImage(photo.url);
   const w = Math.min(3840, Math.max(160, Math.round(width)));
   const sized = (p: Listed) => (source.kind === "urls" ? p.url : `${p.url}${p.url.includes("?") ? "&" : "?"}viewBox=${w},${w}`);
-  const get = (p: Listed) =>
-    fetch(sized(p), { signal: AbortSignal.timeout(20_000), headers: { "User-Agent": "Mozilla/5.0 (Everydaypane photo frame)" } });
-  let r = await get(photo);
+  const init = { signal: AbortSignal.timeout(20_000), headers: { "User-Agent": "Mozilla/5.0 (Everydaypane photo frame)" } };
+  const get = (p: Listed) => (source.kind === "urls" ? fetchPublicHttps(p.url, init) : fetch(sized(p), init));
+  let r: Response;
+  try {
+    r = await get(photo);
+  } catch (error) {
+    if (source.kind === "urls") return null;
+    throw error;
+  }
   if ([403, 404, 410].includes(r.status) && source.kind !== "urls") {
     // Amazon's temporary links expire: list again and retry once. The old list stays if Amazon refuses, and a recent
     // refusal isn't asked again.

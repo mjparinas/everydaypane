@@ -214,6 +214,8 @@ export const haEntity: Mount<"haEntity"> = (el, w) => {
     stop();
     window.clearTimeout(sendTimer);
     window.clearTimeout(messageTimer);
+    // A temperature still waiting out the 900 ms pause would be lost when the tile unmounts.
+    if (pendingTarget !== null) void send("ha", { entity: w.entityId, action: "temperature", value: pendingTarget });
   };
 };
 

@@ -1,6 +1,6 @@
 import { stackOrder } from "@/lib/config/grid";
 import type { Palette, Period, Theme, View } from "@/lib/config/schema";
-import { currentPeriod, msUntilNextPeriod } from "@/lib/config/time";
+import { currentPeriod, msUntilLocalTime, msUntilNextPeriod } from "@/lib/config/time";
 import type { DisplayPayload, HaData } from "@/lib/display/types";
 
 import { onAlarm, startAlarms } from "./alarm";
@@ -244,14 +244,16 @@ document.addEventListener("visibilitychange", () => {
 });
 
 function nightlyReload() {
-  const now = new Date();
-  const next = new Date(now);
-  next.setHours(3, 30, 0, 0);
-  if (next <= now) next.setDate(next.getDate() + 1);
-  window.setTimeout(() => {
-    if (!offline) location.reload();
-    else nightlyReload();
-  }, next.getTime() - now.getTime());
+  // 3:30 in the home's zone. The display browser is often UTC, so setHours would reload in the middle of the evening.
+  const timeZone = payload?.location.timeZone;
+  if (!timeZone) return;
+  window.setTimeout(
+    () => {
+      if (!offline) location.reload();
+      else nightlyReload();
+    },
+    msUntilLocalTime(new Date(), timeZone, 3, 30),
+  );
 }
 
 /** Admin preview only (Melvin, 2026-11-22): a quiet control to flip day ↔ night without leaving the page. */

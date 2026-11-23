@@ -11,10 +11,16 @@ interface FetchEventLike extends Event {
 interface ExtendableEventLike extends Event {
   waitUntil(p: Promise<unknown>): void;
 }
+interface WindowClientLike {
+  url: string;
+}
 interface ServiceWorkerScope {
   location: Location;
   skipWaiting(): Promise<void>;
-  clients: { claim(): Promise<void> };
+  clients: {
+    claim(): Promise<void>;
+    matchAll(options?: { type?: "window" }): Promise<WindowClientLike[]>;
+  };
   addEventListener(type: "install" | "activate", l: (e: ExtendableEventLike) => void): void;
   addEventListener(type: "fetch", l: (e: FetchEventLike) => void): void;
 }
@@ -39,7 +45,23 @@ sw.addEventListener("activate", (e) => {
     caches
       .keys()
       .then((keys) => Promise.all(keys.filter((k) => k.startsWith("ep-shell-") && k !== SHELL).map((k) => caches.delete(k))))
-      .then(() => sw.clients.claim()),
+      .then(() => sw.clients.claim())
+      .then(() => sw.clients.matchAll({ type: "window" }))
+      .then(async (clients) => {
+        const cache = await caches.open(DATA);
+        // The page itself, so a reload while offline still opens the dashboard and not just its last JSON.
+        await Promise.all(
+          clients.map(async (client) => {
+            const path = new URL(client.url).pathname;
+            if (!path.startsWith("/d/")) return;
+            try {
+              await cache.add(new Request(path));
+            } catch {
+              // The next visit fills this in.
+            }
+          }),
+        );
+      }),
   );
 });
 

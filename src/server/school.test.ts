@@ -8,6 +8,10 @@ import { useTestServer } from "@/test/server";
 import { clearMemoryCache } from "./cache";
 import { parseSchoolPage, publicPageUrl, schoolStatus } from "./school";
 
+vi.mock("node:dns/promises", () => ({
+  lookup: () => Promise.resolve([{ address: "1.1.1.1", family: 4 }]),
+}));
+
 const closedBanner = `
   <section class="wp_ntf-notification">
     <div class="alert-primary"><a>All schools are closed today because of snow.</a></div>

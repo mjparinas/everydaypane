@@ -82,7 +82,11 @@ export function MealPlanner() {
         const recent = text.trim() && !p.recent.includes(text.trim()) ? [text.trim(), ...p.recent] : p.recent;
         return { ...p, meals: { ...p.meals, [date]: day }, recent };
       });
-      setDrafts((d) => Object.fromEntries(Object.entries(d).filter(([x]) => x !== k)));
+      // Only clear the draft when it still matches what we saved — keystrokes typed during the request stay.
+      setDrafts((d) => {
+        if (d[k] !== undefined && d[k] !== text) return d;
+        return Object.fromEntries(Object.entries(d).filter(([x]) => x !== k));
+      });
       setStatus((s) => ({ ...s, [k]: "saved" }));
     } catch {
       setError("No connection. That meal wasn't saved.");

@@ -8,6 +8,7 @@ import type { PhotoData } from "@/lib/display/types";
 import { cookieFor, req, useTestServer } from "@/test/server";
 
 import { loadConfig, saveConfig } from "./config";
+import { query } from "./db";
 import { addDevice } from "./devices";
 import { consentUrl, PHOTOS_SCOPE } from "./google";
 import { fitted } from "./googlePhotos";
@@ -88,6 +89,29 @@ describe("photo library", () => {
     expect((await photoGET(req(`/api/display/photo/?s=family&i=${id}&t=${token}`))).status).toBe(404);
   });
 
+  it("deletes a library album's photos only when the source is removed by a successful Save", async () => {
+    await withLibrary();
+    const admin = await cookieFor("admin@example.com");
+    expect(
+      (
+        await libraryPOST(
+          req("/api/admin/library/?source=family", {
+            method: "POST",
+            headers: { cookie: admin, "content-type": "image/jpeg", "x-photo-width": "800", "x-photo-height": "600" },
+            body: JPEG,
+          }),
+        )
+      ).status,
+    ).toBe(200);
+    expect(store.size).toBe(1);
+
+    const stored = await loadConfig();
+    const without = structuredClone(stored.config);
+    without.integrations.photos.sources = [];
+    expect((await saveConfig(without, stored.version)).ok).toBe(true);
+    expect(store.size).toBe(0);
+  });
+
   it("copies photos picked in Google Photos, skipping videos and ones already added", async () => {
     await withLibrary();
     const admin = await cookieFor("admin@example.com");
@@ -163,6 +187,30 @@ describe("photo library", () => {
       photos: { w: number; h: number; taken: string; origin: string }[];
     };
     expect(list.photos).toEqual([expect.objectContaining({ w: 2048, h: 1536, taken: "2026-07-01", origin: "google" })]);
+  });
+
+  it("deletes a library album's photos when that album is saved away", async () => {
+    await withLibrary();
+    const admin = await cookieFor("admin@example.com");
+    expect(
+      (
+        await libraryPOST(
+          req("/api/admin/library/?source=family", {
+            method: "POST",
+            headers: { cookie: admin, "content-type": "image/jpeg", "x-photo-width": "800", "x-photo-height": "600" },
+            body: JPEG,
+          }),
+        )
+      ).status,
+    ).toBe(200);
+    expect(store.size).toBe(1);
+    const stored = await loadConfig();
+    const config = structuredClone(stored.config);
+    config.integrations.photos.sources = [];
+    expect((await saveConfig(config, stored.version)).ok).toBe(true);
+    expect(store.size).toBe(0);
+    const left = await query<{ n: number }>("SELECT COUNT(*) AS n FROM photos");
+    expect(Number(left[0]?.n)).toBe(0);
   });
 
   it("asks Google for Photos only when connecting Google Photos", () => {

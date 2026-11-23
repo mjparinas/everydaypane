@@ -44,7 +44,7 @@ export async function DELETE(req: Request) {
   const url = new URL(req.url);
   const source = url.searchParams.get("source") ?? "";
   if (!/^[A-Za-z0-9_-]{1,64}$/.test(source)) return notFound();
-  // A source being removed may already be gone from the saved settings, so this doesn't require it to exist.
+  // Single-photo deletes from the album UI; wiping a whole library source happens on config Save when the source is gone.
   const removed = await removePhotos(source, url.searchParams.get("photo") ?? undefined);
   return json({ removed });
 }

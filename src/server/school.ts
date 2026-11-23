@@ -4,6 +4,7 @@ import type { DashboardConfig } from "@/lib/config/schema";
 import type { SchoolData, SchoolState } from "@/lib/display/types";
 
 import { cached } from "./cache";
+import { fetchPublicHttps, publicHttpsUrl } from "./publicUrl";
 
 // School status (Melvin, 2026-11-22): the district's own page, read for a closure, delay or late start. Langley
 // (sd35.bc.ca) posts that in its notification banner. With nothing of the sort, schools are open. One copy is cached
@@ -19,25 +20,7 @@ export interface ParsedSchool {
 }
 
 /** A public https page, or null. Never this machine or a private network (the address is an admin setting). */
-export function publicPageUrl(raw: string): string | null {
-  try {
-    const u = new URL(raw.trim());
-    const host = u.hostname.toLowerCase();
-    if (u.protocol !== "https:" || u.username || u.password) return null;
-    if (
-      host === "localhost" ||
-      host.endsWith(".local") ||
-      host.endsWith(".localhost") ||
-      host.endsWith(".internal") ||
-      /^[\d.]+$/.test(host) ||
-      host.includes(":")
-    )
-      return null;
-    return u.toString();
-  } catch {
-    return null;
-  }
-}
+export const publicPageUrl = publicHttpsUrl;
 
 const SCHOOL_CLOSED =
   /\b(?:(?:all |the )?schools?|classes|the district)\b[^.]{0,80}\bclosed\b|\bschools? (?:are |is |will be |remain )?closed\b|\bclosed today\b/i;
@@ -162,9 +145,8 @@ export function parseSchoolPage(html: string): ParsedSchool {
 }
 
 async function getHtml(url: string): Promise<string> {
-  const r = await fetch(url, {
+  const r = await fetchPublicHttps(url, {
     headers: { "User-Agent": "Everydaypane/1.0", accept: "text/html, */*" },
-    redirect: "follow",
     signal: AbortSignal.timeout(8_000),
   });
   if (!r.ok) throw new Error(`${new URL(url).host} answered ${r.status}`);

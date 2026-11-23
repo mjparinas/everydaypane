@@ -18,6 +18,10 @@ import { getSecret, setSecret } from "./secrets";
 import { resetSonosForTests, sonosPlayer } from "./sonos";
 import { pickImage, resetSpotifyForTests, spotifyPlayer } from "./spotify";
 
+vi.mock("node:dns/promises", () => ({
+  lookup: () => Promise.resolve([{ address: "1.1.1.1", family: 4 }]),
+}));
+
 const NOW = Date.parse("2026-11-18T19:00:00Z");
 
 const playing = {
