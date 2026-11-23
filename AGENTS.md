@@ -125,9 +125,10 @@ with `?mode=`, and a quiet Day/Night control on the preview swaps without reload
 greyed controls that open an in-app upgrade dialog (`#upgrade`, Stripe Checkout), and Settings › Plan; core Free tools
 (views editor, colours, displays within limit, photos, calendars) stay fully usable.
 
-**Platform admin** (`/admin/`): Everydaypane ops for addresses on `ADMIN_EMAILS` (households list), separate from the
-household panel — same split as Tuned (`/account` vs `/admin`) and Liftsmith, with Everydaypane’s customer path named
-`/household/`.
+**Platform admin** (`/admin/`): Everydaypane ops for `ADMIN_EMAILS` (full) and optional `SUPPORT_EMAILS` (read-only),
+separate from the household panel — same split as Tuned and Liftsmith. Dedicated staff magic-link (`ep_admin`) plus TOTP
+2FA; Overview through Log (Households, Displays, Revenue, Traffic, Codes, Flags, …). Cookieless marketing beacon. Customer
+path is `/household/`.
 
 **Integrations connected from Settings:** Google Calendar, Microsoft 365 calendars and **To Do** (OAuth, `?todo=1` / `?files=1`), Google Tasks, **Todoist**, Google Photos (Picker), iCal calendar links (with iCloud publish steps in Settings and `docs/icloud-calendar.md`),
 Amazon Photos, **photo sources** (Bing, Reddit, weather albums, Immich API keys, Dropbox/Box/SmugMug OAuth, OneDrive via Microsoft, Flickr API key, iCloud published URLs), the photo library (Vercel Blob), Home Assistant (Cloudflare Tunnel + Access), Spotify, Sonos, garbage
@@ -171,9 +172,10 @@ npm run templates:previews  # regenerate public/templates/*.png from real widget
  Checkout). Lots of quiet CTAs (banner, plan chip, Save errors, Displays limit, widget picker, settings groups); Free
  core remains highly usable. Plan state from `/api/household/billing/` via `PlanProvider` (`src/app/household/_ui/plan.tsx`).
 - **Household vs platform admin** (Melvin, 2026-11-23: rename `/admin` → `/household`, reserve `/admin` like Tuned and
-  Liftsmith): household settings live at **`/household/`** (API `/api/household/`); **`/admin/`** is Everydaypane platform
-  ops for `ADMIN_EMAILS` only (households overview). A household admin who is not staff and opens `/admin/` is sent to
-  `/household/`. Member role `admin` in the database still means “household admin”.
+  Liftsmith; expanded 2026-11-23 to full Tuned-style ops): household settings live at **`/household/`** (API
+  `/api/household/`); **`/admin/`** is Everydaypane platform ops with dedicated staff sign-in (`ep_admin` + TOTP),
+  `ADMIN_EMAILS` / `SUPPORT_EMAILS`, and tabs for work, numbers, people and running the product. Member role `admin` in
+  the database still means “household admin”.
 
 - **Marketing homepage** (Melvin, 2026-11-23): public marketing site at `/` with pricing, features, compare, blog, privacy and terms; paid plan marketed as Household (same Stripe `STRIPE_PRICE_ID` as household billing).
 - **Launch & organic growth** (Melvin, 2026-11-23): self-serve Free signup from “Start free”, honest Free limits (2 displays / 1 view / 2 calendars), Household upgrade in Settings, privacy-first measurement (Search Console + Stripe, no product analytics until opted in). Living checklist and promo playbook: [`docs/launch.md`](docs/launch.md).
@@ -356,8 +358,8 @@ panel can be complex if you need it to be."
   view opens `ViewSettingsDrawer` (shared `SlideDrawer` chrome). Free plan soft-locks (`PlanProvider` in `plan.tsx`) badge
   and gate Schedule / Meals / Shopping / Messages tabs, paid widgets in Add widget, Household starter templates, and
   paid Settings groups; `#upgrade` opens the why-upgrade dialog with Stripe Checkout.
-- **Platform admin** (`src/app/admin/`, `/api/admin/`): staff-only ops gated by `ADMIN_EMAILS` (`src/server/staff.ts`);
-  lists households. Not the household settings UI.
+- **Platform admin** (`src/app/admin/`, `/api/admin/`): staff-only ops (`src/server/adminAuth.ts`, TOTP in
+  `twoFactor.ts`); Tuned-style tabs via `/api/admin/[action]/`. Not the household settings UI.
 - **Widgets over photos** (Melvin, 2026-11-21: "allow other widgets to be placed on top of the photos widget"): photos
   widgets are a backdrop layer. Any other widget may cover one; two photos widgets, or two widgets on top, still never
   overlap. A new widget goes in empty cells first and lands on the photos only when nothing else is free. The display

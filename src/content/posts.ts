@@ -862,7 +862,7 @@ const STORIES: Post[] = [
     "No ads, no analytics cookies, scrubbed error reports and encrypted secrets.",
     [
       {
-        p: "Anyone can create a Free household with a magic-link email. Secrets (Google, Amazon, Home Assistant, iCal URLs) are AES-GCM encrypted. Sentry is optional and scrubbed of emails and display tokens. We do not run third-party product analytics — organic traffic stays in Search Console; paid conversions in Stripe.",
+        p: "Anyone can create a Free household with a magic-link email. Secrets (Google, Amazon, Home Assistant, iCal URLs) are AES-GCM encrypted. Sentry is optional and scrubbed of emails and display tokens. We do not run third-party product analytics — the marketing site uses a cookieless first-party counter; organic traffic also stays in Search Console; paid conversions in Stripe.",
       },
       { p: "Read the full [privacy policy](/privacy/)." },
     ],

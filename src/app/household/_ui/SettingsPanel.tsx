@@ -17,6 +17,7 @@ import { MicrosoftPanel } from "./MicrosoftPanel";
 import { MusicPanel } from "./MusicPanel";
 import { PhotosPanel } from "./PhotosPanel";
 import { HouseholdBadge, HouseholdSoftLock, PlanSettingsCard, usePlan } from "./plan";
+import { ReportProblem } from "./ReportProblem";
 import { ScreenSaverPanel } from "./ScreenSaverPanel";
 import { SmartHomePanel } from "./SmartHomePanel";
 import { SportsPanel } from "./SportsPanel";
@@ -457,6 +458,9 @@ export function SettingsPanel() {
             <HouseholdSoftLock reason="backup" label="Backup needs Household">
               <BackupPanel />
             </HouseholdSoftLock>
+          </div>
+          <div id="settings-report">
+            <ReportProblem />
           </div>
         </div>
       )}
