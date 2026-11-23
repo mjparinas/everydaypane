@@ -1,6 +1,6 @@
 # Everydaypane
 
-Your home, at a glance: a fast, good-looking wall dashboard for the UniFi UC-Display21 (or any screen), with an admin
+Your home, at a glance: a fast, good-looking wall dashboard for any screen with a browser, with an admin
 panel that works on your phone.
 
 - Clocks, date, weather for the week, air quality, countdowns, WiFi QR code

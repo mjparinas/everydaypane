@@ -3,7 +3,7 @@ import type { DashboardConfig, View, Widget } from "./schema";
 import { BUILT_IN_THEMES } from "./themes";
 import { newWidget } from "./widgets";
 
-// The dashboard a fresh install starts with: tuned for a 1920 × 1080 landscape screen (the UC-Display21).
+// The dashboard a fresh install starts with: tuned for a 1920 × 1080 landscape wall panel.
 
 const VAN = "America/Vancouver";
 

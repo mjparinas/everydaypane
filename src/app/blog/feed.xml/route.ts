@@ -5,16 +5,18 @@ import { SITE_URL } from "@/lib/site";
 export const dynamic = "force-static";
 
 export function GET() {
-  const items = POSTS.map(
-    (p) => `
+  const items = POSTS.map((p) => {
+    const img = `${SITE_URL}${p.image}`;
+    return `
     <item>
       <title><![CDATA[${p.title}]]></title>
       <link>${SITE_URL}/blog/${p.slug}/</link>
       <guid isPermaLink="true">${SITE_URL}/blog/${p.slug}/</guid>
       <pubDate>${new Date(p.date).toUTCString()}</pubDate>
       <description><![CDATA[${p.description}]]></description>
-    </item>`,
-  ).join("");
+      <enclosure url="${img}" type="image/png" />
+    </item>`;
+  }).join("");
 
   const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <rss version="2.0">

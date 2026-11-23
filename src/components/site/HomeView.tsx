@@ -153,7 +153,7 @@ export function HomeView() {
                 </a>
               </div>
               <ul className="mt-5 flex flex-wrap gap-x-5 gap-y-2 text-sm text-soft">
-                {["Free plan, no ads", "Phone admin that works", "Made for the UC-Display21"].map((c) => (
+                {["Free plan, no ads", "Phone admin that works", "Runs on any screen"].map((c) => (
                   <li key={c} className="flex gap-1.5">
                     <Check />
                     {c}

@@ -4,7 +4,7 @@ import { ensureAccountsSeeded } from "./accounts";
 import { decrypt, encrypt, randomAlphanumeric, randomToken, sha256 } from "./crypto";
 import { query, run } from "./db";
 
-// A display (the UC-Display21 in the kitchen, a tablet in the hall). Each one opens its own secret address,
+// A display (kitchen wall panel, a tablet in the hall). Each one opens its own secret address,
 // /d/<token>/, so it can be signed out alone by deleting it or giving it a new link. Displays are found by the token's
 // hash; the token itself is also kept encrypted (like the other stored secrets) so the Displays tab can always show
 // and copy the address (Melvin, 2026-11-17: the address shouldn't be shown only once; 2026-11-22: always visible with

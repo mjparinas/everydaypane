@@ -1,7 +1,7 @@
 # Everydaypane: guide for agents
 
 Everydaypane is a wall dashboard for the home (in the spirit of MagicMirror, DAKboard and homescreens.dev), built for
-Melvin's family in Langley, BC. It runs on a **Ubiquiti UniFi UC-Display21** (a low-power 21.5" 1920 × 1080 touchscreen)
+Melvin's family in Langley, BC. It runs on a **landscape kitchen wall panel** (about 1920 × 1080 touch)
 and any other screen with a browser, and is set up from an admin panel that works on phones. This file holds the
 decisions behind it, with who made them and when. Follow them; if a task seems to need one changed, raise it with
 Melvin first, and update this file in the same change when a decision changes.
@@ -108,7 +108,7 @@ file), `/family/` for the message board, **family calendar events**, meals and t
 (same meals, shopping and messages with no login — scan the edit QR or open the Displays link), Sentry. Settings is
 grouped with a sticky jump nav and `#settings/…` deep links; bounded numbers use sliders or −/+ steppers that show
 min–max (not browser number arrows). Views default to a **12×8** grid with gap 16 / edge 14 / tile 16 for the
-1920×1080 UC-Display21, with one-tap grid presets and a grouped widget picker. The Views tab embeds one **live
+1920×1080 wall panels, with one-tap grid presets and a grouped widget picker. The Views tab embeds one **live
 editable layout** (the real display under a transparent drag overlay, working copy over `postMessage` before Save);
 tapping a widget opens its settings in a **right slide-out**, and **Edit view** (on the view tabs row) opens the same
 kind of drawer for name, grid, gap, edge, tile and theme so the preview stays visible. Draft edits patch widgets in
@@ -328,7 +328,7 @@ panel can be complex if you need it to be."
   wakes the screen and never presses the widget underneath. Photo mode reuses the photos widget full screen; the clock
   on it wanders a few pixels each minute against burn-in. Motion sensors (`binary_sensor.*`, up to five) are added to
   the entities read from Home Assistant (`usedEntities().all`), never to those that can be controlled; while one is
-  `on`, the screen counts as in use. "Dark" is a black screen: a browser can't switch the UC-Display21's backlight off.
+  `on`, the screen counts as in use. "Dark" is a black screen: a browser can't switch a panel's backlight off.
   An admin's preview never shows the saver.
 - **Family message board:** anyone on `ADMIN_EMAILS` or `FAMILY_EMAILS` posts notes from `/family/`; the author name is
   typed, never the email, because the wall is readable by anyone in the kitchen. Notes can expire; admins pin. Displays
@@ -532,7 +532,7 @@ panel can be complex if you need it to be."
     five-second feed shared by every tile, the doorbell and who's home.
   - UniFi Protect cameras and the doorbell come through Home Assistant's UniFi Protect integration, because Protect
     itself is only on the local network. Camera pictures go through `/api/display/camera/` (snapshots from
-    `camera_proxy`, refreshed on a timer, never a video stream, which would be heavy for the UC-Display21).
+    `camera_proxy`, refreshed on a timer, never a video stream, which would be heavy for a low-power wall panel).
   - **Doorbell pop-up:** when the ring entity (an `event.` entity's new timestamp, or a `binary_sensor.` turning on)
     changes, every display shows that camera full screen for the set seconds, refreshed each second; a tap closes it.
   - **Music** (Melvin, 2026-11-17: Spotify and Sonos controls): the Music widget drives a `media_player` from Home
