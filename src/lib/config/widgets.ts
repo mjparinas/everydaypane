@@ -136,12 +136,36 @@ export const WIDGETS: { [T in WidgetType]: WidgetInfo<T> } = {
     defaults: () => ({ sourceIds: [], intervalSeconds: 30, fit: "cover", showCaption: false }),
   },
   haEntity: {
-    label: "Home Assistant",
-    description: "Lights, switches, sensors and more",
+    label: "Smart device",
+    description: "Home Assistant, Nest, ecobee or SmartThings",
     icon: "🏠",
     size: { w: 2, h: 2 },
     minSize: { w: 1, h: 1 },
-    defaults: () => ({ entityId: "", control: "auto" }),
+    defaults: () => ({ provider: "homeAssistant" as const, entityId: "", control: "auto" }),
+  },
+  tempest: {
+    label: "Tempest",
+    description: "Your WeatherFlow station",
+    icon: "🌡️",
+    size: { w: 3, h: 2 },
+    minSize: { w: 2, h: 1 },
+    defaults: () => ({ showWind: true, showRain: true, showHumidity: true }),
+  },
+  weatherUnderground: {
+    label: "Weather Underground",
+    description: "A personal weather station (PWS)",
+    icon: "🌦️",
+    size: { w: 3, h: 2 },
+    minSize: { w: 2, h: 1 },
+    defaults: () => ({ showWind: true, showRain: true, showHumidity: true }),
+  },
+  menus: {
+    label: "School menu",
+    description: "Breakfast and lunch from Nutrislice",
+    icon: "🍎",
+    size: { w: 4, h: 4 },
+    minSize: { w: 2, h: 2 },
+    defaults: () => ({ school: "", days: 1, slots: ["lunch"] as const }),
   },
   note: {
     label: "Note",
@@ -365,13 +389,17 @@ export const WIDGET_TYPES = Object.keys(WIDGETS) as WidgetType[];
 /** Groups for the admin widget picker (Views › Add a widget). */
 export const WIDGET_GROUPS: { id: string; label: string; types: WidgetType[] }[] = [
   { id: "time", label: "Time", types: ["clock", "date", "sunTimes", "timer", "pomodoro"] },
-  { id: "weather", label: "Weather & map", types: ["weather", "airQuality", "radar", "earth"] },
+  {
+    id: "weather",
+    label: "Weather & map",
+    types: ["weather", "tempest", "weatherUnderground", "airQuality", "radar", "earth"],
+  },
   {
     id: "calendar",
     label: "Calendar",
     types: ["agenda", "calendarMonth", "calendarWeek", "calendarUpNext", "countdown", "tasks", "packages", "tides"],
   },
-  { id: "family", label: "Family", types: ["meals", "shopping", "messages", "chores", "whiteboard", "school", "presence"] },
+  { id: "family", label: "Family", types: ["meals", "menus", "shopping", "messages", "chores", "whiteboard", "school", "presence"] },
   { id: "home", label: "Home", types: ["haEntity", "camera", "media", "wifiQr", "editQr", "garbage", "commute", "transit", "ferries"] },
   { id: "media", label: "Outside", types: ["photos", "sports", "alerts", "note"] },
 ];

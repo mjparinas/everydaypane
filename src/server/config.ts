@@ -125,6 +125,14 @@ export function upgrade(stored: unknown): unknown {
       if (!Array.isArray(ms.todoLists)) ms.todoLists = dm.todoLists;
     } else ig.microsoft = di.microsoft;
     if (typeof ig.todoist !== "object" || ig.todoist === null) ig.todoist = di.todoist;
+    if (typeof ig.smartHome !== "object" || ig.smartHome === null) ig.smartHome = di.smartHome;
+    else {
+      const sh = ig.smartHome as Record<string, unknown>;
+      const dh = di.smartHome as Record<string, unknown>;
+      if (typeof sh.tempest !== "object" || sh.tempest === null) sh.tempest = dh.tempest;
+      if (typeof sh.weatherUnderground !== "object" || sh.weatherUnderground === null) sh.weatherUnderground = dh.weatherUnderground;
+      if (typeof sh.menus !== "object" || sh.menus === null) sh.menus = dh.menus;
+    }
   }
   if (Array.isArray(out.views)) {
     out.views = out.views.map((view) => {
@@ -149,6 +157,7 @@ export function upgrade(stored: unknown): unknown {
           }
           if (w.type === "messages" && !("allowAdd" in w)) w.allowAdd = false;
           if (w.type === "tasks" && !("provider" in w)) w.provider = "google";
+          if (w.type === "haEntity" && !("provider" in w)) w.provider = "homeAssistant";
           return w;
         }),
       };

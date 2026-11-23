@@ -139,6 +139,11 @@ export function defaultConfig(): DashboardConfig {
       commute: { home: null, destinations: [] },
       sports: { teams: [] },
       homeAssistant: { url: "", doorbell: { entityId: "", cameraEntityId: "", seconds: 30 } },
+      smartHome: {
+        tempest: {},
+        weatherUnderground: { stationId: "" },
+        menus: { slug: "", schoolName: "" },
+      },
     },
   };
 }

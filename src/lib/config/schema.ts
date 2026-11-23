@@ -195,7 +195,43 @@ export const widgetSchema = z.discriminatedUnion("type", [
     fit: z.enum(["cover", "contain"]),
     showCaption: z.boolean(),
   }),
-  z.object({ ...base, type: z.literal("haEntity"), entityId: z.string().max(255), control: haControlSchema }),
+  // Home Assistant or native Nest / ecobee / SmartThings (Phase 4, Household). `provider` defaults so older tiles stay on HA.
+  z.object({
+    ...base,
+    type: z.literal("haEntity"),
+    provider: z.enum(["homeAssistant", "nest", "ecobee", "smartthings"]).default("homeAssistant"),
+    entityId: z.string().max(255),
+    control: haControlSchema,
+  }),
+  // WeatherFlow Tempest station (Phase 4, Household). Station id and token under Settings › Weather stations.
+  z.object({
+    ...base,
+    type: z.literal("tempest"),
+    showWind: z.boolean().default(true),
+    showRain: z.boolean().default(true),
+    showHumidity: z.boolean().default(true),
+  }),
+  // Weather Underground PWS (Phase 4, Household).
+  z.object({
+    ...base,
+    type: z.literal("weatherUnderground"),
+    showWind: z.boolean().default(true),
+    showRain: z.boolean().default(true),
+    showHumidity: z.boolean().default(true),
+  }),
+  // Nutrislice school menus (Phase 4, Household). District slug under Settings; never copied into the meals table.
+  z.object({
+    ...base,
+    type: z.literal("menus"),
+    school: z.string().trim().max(80).default(""),
+    days: z.number().int().min(1).max(7).default(1),
+    slots: z
+      .array(z.enum(MEAL_SLOTS))
+      .min(1)
+      .max(2)
+      .default(["lunch"])
+      .refine((s) => new Set(s).size === s.length, "Each meal once"),
+  }),
   z.object({ ...base, type: z.literal("note"), text: z.string().max(2000), size: z.enum(["s", "m", "l", "xl"]) }),
   // The family message board: notes anyone in the family posts from their phone (stored in the messages table).
   z.object({
@@ -675,6 +711,17 @@ export const configSchema = z
           seconds: z.number().int().min(5).max(300),
         }),
       }),
+      // Native smart home and local weather (Phase 4, Household). OAuth tokens live in secrets; see docs/*.md.
+      smartHome: z
+        .object({
+          tempest: z.object({ stationId: z.number().int().positive().optional() }),
+          weatherUnderground: z.object({ stationId: z.string().max(24).default("") }),
+          menus: z.object({
+            slug: z.string().trim().max(80).default(""),
+            schoolName: z.string().trim().max(80).default(""),
+          }),
+        })
+        .default({ tempest: {}, weatherUnderground: { stationId: "" }, menus: { slug: "", schoolName: "" } }),
     }),
   })
   .superRefine((config, ctx) => {

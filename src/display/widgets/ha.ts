@@ -1,5 +1,6 @@
 import type { HaControl } from "@/lib/config/schema";
 import type { HaData, HaEntity } from "@/lib/display/types";
+import { nativeProviderFromEntity } from "@/lib/smartHome";
 
 import { imageUrl, refresh, send, subscribe } from "../api";
 import { fill, h, setText } from "../dom";
@@ -16,6 +17,10 @@ type Kind = Exclude<HaControl, "auto">;
 /** The control an entity gets when the widget says "auto". */
 export function controlFor(entityId: string, control: HaControl): Kind {
   if (control !== "auto") return control;
+  if (nativeProviderFromEntity(entityId)) {
+    if (entityId.startsWith("smartthings.") && entityId.includes("lock")) return "lock";
+    return "climate";
+  }
   const domain = entityId.split(".")[0] ?? "";
   if (domain === "light") return "light";
   if (["switch", "fan", "input_boolean", "media_player", "humidifier", "siren"].includes(domain)) return "toggle";
@@ -61,7 +66,8 @@ export const haEntity: Mount<"haEntity"> = (el, w) => {
 
   const act = async (action: string, value?: number) => {
     const ok = await send("ha", { entity: w.entityId, action, value });
-    say(ok ? "" : "Couldn't reach Home Assistant");
+    const provider = w.provider ?? "homeAssistant";
+    say(ok ? "" : provider === "homeAssistant" ? "Couldn't reach Home Assistant" : "Couldn't reach the device");
     window.setTimeout(() => refresh("ha"), 400);
   };
   const say = (text: string) => {

@@ -15,6 +15,7 @@ import { garbage } from "./garbage";
 import { camera, haEntity } from "./ha";
 import { meals } from "./meals";
 import { media } from "./media";
+import { menus } from "./menus";
 import { messages } from "./messages";
 import { note } from "./note";
 import { packages } from "./packages";
@@ -27,11 +28,13 @@ import { shopping } from "./shopping";
 import { sports } from "./sports";
 import { sunTimes } from "./sunTimes";
 import { tasks } from "./tasks";
+import { tempest } from "./tempest";
 import { tides } from "./tides";
 import { timer } from "./timer";
 import { transit } from "./transit";
 import type { Cleanup, WidgetContext } from "./types";
 import { weather } from "./weather";
+import { weatherUnderground } from "./weatherUnderground";
 import { whiteboard } from "./whiteboard";
 import { wifiQr } from "./wifi";
 
@@ -46,6 +49,10 @@ export function mountWidget(el: HTMLElement, w: Widget, ctx: WidgetContext): Cle
       return sunTimes(el, w, ctx);
     case "weather":
       return weather(el, w, ctx);
+    case "tempest":
+      return tempest(el, w, ctx);
+    case "weatherUnderground":
+      return weatherUnderground(el, w, ctx);
     case "airQuality":
       return airQuality(el, w, ctx);
     case "wifiQr":
@@ -60,6 +67,8 @@ export function mountWidget(el: HTMLElement, w: Widget, ctx: WidgetContext): Cle
       return messages(el, w, ctx);
     case "meals":
       return meals(el, w, ctx);
+    case "menus":
+      return menus(el, w, ctx);
     case "agenda":
       return agenda(el, w, ctx);
     case "calendarMonth":

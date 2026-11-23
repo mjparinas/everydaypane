@@ -4,9 +4,11 @@ import { createHash } from "node:crypto";
 
 import type { DashboardConfig } from "@/lib/config/schema";
 import type { HaData, HaEntity, HaMedia } from "@/lib/display/types";
+import { nativeProviderFromEntity } from "@/lib/smartHome";
 
 import { publicHaUrl } from "./haUrl";
 import { getSecret } from "./secrets";
+import { nativeAct, nativeEntityFeed, usedNativeDevices } from "./smartDevices";
 
 // Home Assistant (Melvin, 2026-11-17): controls, sensors, UniFi Protect cameras and the doorbell, all through Home
 // Assistant's REST API, called by our server (displays never talk to Home Assistant). Home Assistant is reached
@@ -79,9 +81,10 @@ export function usedEntities(config: DashboardConfig): {
   const cameras = new Set<string>();
   const players = new Set<string>();
   const readOnly = new Set<string>();
+  const native = usedNativeDevices(config).controls;
   for (const v of config.views)
     for (const w of v.widgets) {
-      if (w.type === "haEntity" && w.entityId) controls.add(w.entityId);
+      if (w.type === "haEntity" && w.entityId && (w.provider ?? "homeAssistant") === "homeAssistant") controls.add(w.entityId);
       if (w.type === "camera" && w.entityId) cameras.add(w.entityId);
       if (w.type === "media" && w.provider === "homeAssistant" && w.entityId.startsWith("media_player.")) {
         players.add(w.entityId);
@@ -95,6 +98,10 @@ export function usedEntities(config: DashboardConfig): {
   if (d.entityId) all.add(d.entityId);
   for (const m of config.screenSaver.motionEntityIds) if (m) all.add(m);
   for (const id of readOnly) all.add(id);
+  for (const id of native) {
+    controls.add(id);
+    all.add(id);
+  }
   return { controls, cameras, players, all };
 }
 
@@ -161,8 +168,18 @@ export async function haFeed(accountId: string, config: DashboardConfig, now = D
   const { all } = usedEntities(config);
   const key = `${accountId}:` + [...all].sort().join(",") + config.integrations.homeAssistant.url;
   if (memo && memo.key === key && now - memo.at < 2500) return memo.data;
-  if (!all.size) return { updatedAt: now, configured: true, entities: {} };
+  const native = await nativeEntityFeed(accountId, config, now);
+  const haIds = [...all].filter((id) => !nativeProviderFromEntity(id));
   let data: HaData;
+  if (!haIds.length) {
+    data = {
+      updatedAt: now,
+      configured: usedNativeDevices(config).controls.size > 0,
+      entities: native,
+    };
+    memo = { key, at: now, data };
+    return data;
+  }
   try {
     const states = (await (await ha(accountId, config, "/api/states")).json()) as RawState[];
     const entities: Record<string, HaEntity> = {};
@@ -171,10 +188,15 @@ export async function haFeed(accountId: string, config: DashboardConfig, now = D
       const t = trimState(s);
       if (t) entities[t.id] = t;
     }
-    data = { updatedAt: now, configured: true, entities };
+    data = { updatedAt: now, configured: true, entities: { ...entities, ...native } };
   } catch (error) {
-    if (error instanceof HaNotConfigured) data = { updatedAt: now, configured: false, entities: {} };
-    else throw error;
+    if (error instanceof HaNotConfigured) {
+      data = {
+        updatedAt: now,
+        configured: usedNativeDevices(config).controls.size > 0,
+        entities: native,
+      };
+    } else throw error;
   }
   memo = { key, at: now, data };
   return data;
@@ -270,6 +292,10 @@ export async function act(
   option?: string,
 ): Promise<"ok" | "forbidden"> {
   if (!usedEntities(config).controls.has(entityId)) return "forbidden";
+  if (nativeProviderFromEntity(entityId)) {
+    memo = null;
+    return nativeAct(accountId, config, entityId, action, value);
+  }
   const service = serviceFor(entityId, action, value, option);
   if (!service) return "forbidden";
   await ha(accountId, config, service.path, { method: "POST", body: JSON.stringify(service.body) });

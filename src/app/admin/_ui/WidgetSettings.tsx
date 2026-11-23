@@ -665,17 +665,36 @@ function TypeSettings({
     }
     case "haEntity": {
       const e = edit<"haEntity">();
+      const provider = w.provider ?? "homeAssistant";
       return (
         <>
+          <Select
+            label="Provider"
+            value={provider}
+            options={[
+              { value: "homeAssistant", label: "Home Assistant" },
+              { value: "nest", label: "Nest" },
+              { value: "ecobee", label: "ecobee" },
+              { value: "smartthings", label: "SmartThings" },
+            ]}
+            onChange={(v) => e((x) => void (x.provider = v))}
+          />
           <Text
             label="Entity"
             value={w.entityId}
             maxLength={255}
-            placeholder="light.kitchen"
-            list="ha-controls"
+            placeholder={provider === "homeAssistant" ? "light.kitchen" : `${provider}.device_id`}
+            list={provider === "homeAssistant" ? "ha-controls" : undefined}
             onChange={(v) => e((x) => void (x.entityId = v.trim()))}
           />
-          <HaEntityList id="ha-controls" />
+          {provider === "homeAssistant" ? (
+            <HaEntityList id="ha-controls" />
+          ) : (
+            <p className="text-sm text-soft">
+              Connect {provider} under <SettingsLink href="#settings/smart-home">Settings › Smart home</SettingsLink>, then paste a device
+              id from the list (e.g. {provider}.living_room).
+            </p>
+          )}
           <Select
             label="Control"
             value={w.control}
@@ -759,6 +778,61 @@ function TypeSettings({
           ))}
           <p className="text-xs text-soft">
             Plan meals in the Meals tab here, or at <span className="font-mono">/family/</span> from a phone.
+          </p>
+        </>
+      );
+    }
+    case "menus": {
+      const e = edit<"menus">();
+      const defaultSchool = config.integrations.smartHome.menus.schoolName;
+      return (
+        <>
+          <Text
+            label="School slug"
+            value={w.school || defaultSchool}
+            maxLength={80}
+            hint="From the district's Nutrislice URL. District slug lives under Settings › Menus."
+            onChange={(v) => e((x) => void (x.school = v.trim()))}
+          />
+          <Stepper label="Days" value={w.days} min={1} max={7} onChange={(v) => e((x) => void (x.days = v))} />
+          {(["breakfast", "lunch"] as const).map((slot) => (
+            <Toggle
+              key={slot}
+              label={`Show ${MEAL_LABELS[slot].toLowerCase()}`}
+              checked={w.slots.includes(slot)}
+              onChange={(on) =>
+                e((x) => {
+                  const next = (["breakfast", "lunch"] as const).filter((s) => (s === slot ? on : x.slots.includes(s)));
+                  if (next.length) x.slots = [...next];
+                })
+              }
+            />
+          ))}
+        </>
+      );
+    }
+    case "tempest": {
+      const e = edit<"tempest">();
+      return (
+        <>
+          <Toggle label="Wind" checked={w.showWind} onChange={(v) => e((x) => void (x.showWind = v))} />
+          <Toggle label="Humidity" checked={w.showHumidity} onChange={(v) => e((x) => void (x.showHumidity = v))} />
+          <Toggle label="Rain today" checked={w.showRain} onChange={(v) => e((x) => void (x.showRain = v))} />
+          <p className="text-sm text-soft">
+            Set station id and token under <SettingsLink href="#settings/weather-stations">Settings › Weather stations</SettingsLink>.
+          </p>
+        </>
+      );
+    }
+    case "weatherUnderground": {
+      const e = edit<"weatherUnderground">();
+      return (
+        <>
+          <Toggle label="Wind" checked={w.showWind} onChange={(v) => e((x) => void (x.showWind = v))} />
+          <Toggle label="Humidity" checked={w.showHumidity} onChange={(v) => e((x) => void (x.showHumidity = v))} />
+          <Toggle label="Rain" checked={w.showRain} onChange={(v) => e((x) => void (x.showRain = v))} />
+          <p className="text-sm text-soft">
+            Set station id under <SettingsLink href="#settings/weather-stations">Settings › Weather stations</SettingsLink>.
           </p>
         </>
       );
