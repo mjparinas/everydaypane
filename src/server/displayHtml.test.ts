@@ -16,7 +16,6 @@ describe("display page", () => {
     expect(html).toContain('href="/icons/apple-touch-icon-152.png" sizes="152x152"');
   });
 
-
   it("carries preview view and forced day or night mode", async () => {
     const html = await displayHtml({ token: null, title: "Preview", previewView: "home", previewMode: "night" }).text();
     expect(html).toContain('data-preview="home"');
