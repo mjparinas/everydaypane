@@ -8,8 +8,8 @@ import { ConfirmButton, Section, Select, Text } from "./fields";
 import { useAdmin } from "./store";
 
 // Displays: each screen (the UC-Display21 in the kitchen, an old tablet in the hall) gets its own secret address.
-// The address is always shown on the row with Copy on the far right (Melvin, 2026-11-22); deleting a display signs
-// that screen out.
+// The address is always shown on the row with Copy on the far right (Melvin, 2026-11-22); "New link" replaces it if
+// it leaks, and deleting a display signs that screen out.
 
 interface Device {
   id: string;
@@ -92,6 +92,15 @@ export function DisplaysPanel() {
     if (!r.ok) setError("Couldn't save that change.");
   }
 
+  async function newLink(id: string) {
+    setError("");
+    const r = await call(`/api/admin/devices/${id}/`, "POST");
+    const body = (await r.json().catch(() => ({}))) as { url?: string; editUrl?: string };
+    if (!body.url || !body.editUrl) return setError("Couldn't get a new address.");
+    const { url, editUrl } = body;
+    setDevices((d) => d?.map((x) => (x.id === id ? { ...x, url, editUrl } : x)) ?? null);
+  }
+
   return (
     <div className="grid gap-4 lg:grid-cols-2">
       <Section title="Add a display">
@@ -144,7 +153,7 @@ export function DisplaysPanel() {
                 {d.url ? (
                   <Address url={d.url} label="Display" />
                 ) : (
-                  <p className="text-sm text-soft">Address unavailable — delete this display and add it again.</p>
+                  <p className="text-sm text-soft">Address unavailable — give it a new link, or delete and add it again.</p>
                 )}
                 {d.editUrl && (
                   <div className="grid gap-2 rounded-lg border border-line bg-bg p-3">
@@ -152,7 +161,8 @@ export function DisplaysPanel() {
                     <div className="flex items-start gap-3">
                       {/* eslint-disable-next-line @next/next/no-img-element -- admin SVG from our own route */}
                       <img
-                        src={`/api/admin/devices/${encodeURIComponent(d.id)}/edit-qr/`}
+                        key={d.editUrl}
+                        src={`/api/admin/devices/${encodeURIComponent(d.id)}/edit-qr/?v=${encodeURIComponent(d.editUrl)}`}
                         alt={`QR code for editing from ${d.name}`}
                         className="h-28 w-28 rounded-lg bg-white p-1"
                         width={112}
@@ -165,13 +175,16 @@ export function DisplaysPanel() {
                     </div>
                   </div>
                 )}
-                <ConfirmButton
-                  label="Delete display"
-                  confirm="Tap again: this signs the screen out"
-                  onConfirm={() => {
-                    void call(`/api/admin/devices/${d.id}/`, "DELETE").then(() => load());
-                  }}
-                />
+                <div className="flex flex-wrap gap-2">
+                  <ConfirmButton label="New link" confirm="Tap again: the old address stops working" onConfirm={() => void newLink(d.id)} />
+                  <ConfirmButton
+                    label="Delete display"
+                    confirm="Tap again: this signs the screen out"
+                    onConfirm={() => {
+                      void call(`/api/admin/devices/${d.id}/`, "DELETE").then(() => load());
+                    }}
+                  />
+                </div>
               </li>
             ))}
           </ul>
