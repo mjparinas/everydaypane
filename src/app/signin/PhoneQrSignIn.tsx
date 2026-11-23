@@ -71,10 +71,10 @@ export function PhoneQrSignIn() {
     expiresAt.current = body.expiresAt ?? Date.now() + 600_000;
   }, []);
 
-  useEffect(() => {
-    if (!open) return;
+  function openPhoneSignIn() {
+    setOpen(true);
     void start();
-  }, [open, start]);
+  }
 
   useEffect(() => {
     if (!open || status !== "waiting" || !code || !pollSecret.current) return;
@@ -113,7 +113,7 @@ export function PhoneQrSignIn() {
   if (!open) {
     return (
       <div className="mt-6 border-t border-line pt-5">
-        <button type="button" className="btn-ghost w-full" onClick={() => setOpen(true)}>
+        <button type="button" className="btn-ghost w-full" onClick={openPhoneSignIn}>
           Sign in with your phone
         </button>
         <p className="mt-2 text-center text-xs text-soft">For wall panels and TVs without an email app. Scan a QR on your phone.</p>
@@ -126,6 +126,7 @@ export function PhoneQrSignIn() {
       <h2 className="text-sm font-semibold">Sign in with your phone</h2>
       <p className="mt-1 text-sm text-soft">Scan the code, sign in on your phone, then tap Approve. This screen finishes by itself.</p>
       {qrSvg ? (
+        // eslint-disable-next-line @next/next/no-img-element -- inline SVG data URL from our own start route
         <img
           className="mx-auto mt-4 h-44 w-44 rounded-lg bg-white p-2"
           src={`data:image/svg+xml;utf8,${encodeURIComponent(qrSvg)}`}
