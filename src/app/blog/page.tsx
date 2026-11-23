@@ -7,11 +7,17 @@ import { BRAND } from "@/lib/brand";
 import { pageMeta } from "@/lib/pageMeta";
 import { SITE_URL } from "@/lib/site";
 
-export const metadata: Metadata = pageMeta({
-  title: "Blog & updates",
-  description: "Everydaypane release notes, setup guides and comparisons — so families can discover the wall dashboard.",
-  path: "/blog/",
-});
+export const metadata: Metadata = {
+  ...pageMeta({
+    title: "Blog & updates",
+    description: "Everydaypane release notes, setup guides and comparisons — so families can discover the wall dashboard.",
+    path: "/blog/",
+  }),
+  alternates: {
+    canonical: `${SITE_URL}/blog/`,
+    types: { "application/rss+xml": [{ url: `${SITE_URL}/blog/feed.xml/`, title: `${BRAND.name} blog` }] },
+  },
+};
 
 export default function BlogIndex() {
   const [first, ...rest] = POSTS;
@@ -76,7 +82,7 @@ export default function BlogIndex() {
         ))}
       </ul>
       <div className="mt-14">
-        <CtaBanner cta="blog-index" title="Put a pane on your wall" body="Start free — Family unlocks every widget when you're ready." />
+        <CtaBanner cta="blog-index" title="Put a pane on your wall" body="Start free — Household unlocks every widget when you're ready." />
       </div>
     </SitePage>
   );

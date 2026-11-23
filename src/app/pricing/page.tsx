@@ -5,12 +5,12 @@ import { HouseholdCheckoutButton } from "@/components/site/CheckoutButtons";
 import { Check, CtaBanner, Eyebrow, JsonLd, organizationJsonLd, SitePage } from "@/components/site/SiteChrome";
 import { MARKETING_PLAN_TABLE, MARKETING_PLANS, usd } from "@/lib/marketingPlans";
 import { pageMeta } from "@/lib/pageMeta";
-import { APP_PATH, SITE_URL } from "@/lib/site";
+import { SIGNUP_PATH, SITE_URL } from "@/lib/site";
 
 export const metadata: Metadata = pageMeta({
   title: "Pricing",
   description:
-    "Everydaypane Free vs Household. Start free on one display; Household at $59/year unlocks every widget — best value, no ads.",
+    "Everydaypane Free vs Household. Start free with 2 displays; Household at $59/year unlocks every widget — best value, no ads.",
   path: "/pricing/",
 });
 
@@ -55,7 +55,7 @@ export default function PricingPage() {
             {p.priceMonthly > 0 ? (
               <p className="text-sm text-soft">or {usd(p.priceMonthly)} / month</p>
             ) : (
-              <p className="text-sm text-soft">One display · essentials</p>
+              <p className="text-sm text-soft">2 displays · 1 view · essentials</p>
             )}
             <ul className="mt-5 flex-1 space-y-2 text-sm">
               {p.features.map((f) => (
@@ -69,7 +69,7 @@ export default function PricingPage() {
               <HouseholdCheckoutButton className="mt-6" label={p.cta} />
             ) : (
               <Link
-                href={APP_PATH}
+                href={SIGNUP_PATH}
                 className="mt-6 inline-flex min-h-12 items-center justify-center rounded-2xl border border-line px-5 font-semibold"
               >
                 {p.cta}

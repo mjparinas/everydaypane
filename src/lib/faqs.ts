@@ -10,7 +10,7 @@ export const HOME_FAQS: Faq[] = [
   },
   {
     q: "Is it free?",
-    a: "Yes. Free covers one display with clocks, weather, notes and two Google calendars. Family unlocks every widget, unlimited displays, photos, Home Assistant, transit, chores, meals and more for $7 a month or $59 a year — the best value for most households.",
+    a: "Yes. Free covers two displays, one view, clocks, weather, notes and two Google calendars. Household unlocks every widget, more displays and views, photos, Home Assistant, transit, chores, meals and more for $7 a month or $59 a year — the best value for most households.",
   },
   {
     q: "Do I need to buy special hardware?",

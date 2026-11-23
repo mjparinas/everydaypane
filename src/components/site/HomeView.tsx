@@ -6,7 +6,7 @@ import { BRAND } from "@/lib/brand";
 import { faqJsonLd, HOME_FAQS } from "@/lib/faqs";
 import { MARKETING_PLAN_TABLE, MARKETING_PLANS, usd } from "@/lib/marketingPlans";
 import { pageMeta } from "@/lib/pageMeta";
-import { APP_PATH, SITE_URL } from "@/lib/site";
+import { SIGNUP_PATH, SITE_URL } from "@/lib/site";
 
 import { HouseholdCheckoutButton } from "./CheckoutButtons";
 import { PaneMock } from "./PaneMock";
@@ -138,7 +138,7 @@ export function HomeView() {
               <p className="mt-5 max-w-xl text-lg text-soft sm:text-xl">{BRAND.lede}</p>
               <div className="mt-7 flex flex-wrap gap-3">
                 <Link
-                  href={APP_PATH}
+                  href={SIGNUP_PATH}
                   data-cta="hero"
                   className="inline-flex min-h-14 items-center justify-center rounded-2xl bg-brand px-7 text-lg font-semibold text-brand-ink shadow-[0_12px_40px_-12px_rgb(59_91_219/0.7)]"
                 >
@@ -309,7 +309,7 @@ export function HomeView() {
                     or {usd(p.priceMonthly)} / month · save {usd(p.priceMonthly * 12 - p.priceYearly)} yearly
                   </p>
                 ) : (
-                  <p className="text-sm text-soft">Forever free for one display</p>
+                  <p className="text-sm text-soft">Forever free · 2 displays · 1 view</p>
                 )}
                 <ul className="mt-5 flex-1 space-y-2.5 text-sm">
                   {p.features.map((f) => (
@@ -323,7 +323,7 @@ export function HomeView() {
                   <HouseholdCheckoutButton className="mt-6" label={p.cta} />
                 ) : (
                   <Link
-                    href={APP_PATH}
+                    href={SIGNUP_PATH}
                     data-cta={`pricing-${p.id}`}
                     className="mt-6 inline-flex min-h-12 items-center justify-center rounded-2xl border border-line bg-bg px-5 font-semibold"
                   >

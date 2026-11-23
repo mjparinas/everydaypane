@@ -20,10 +20,10 @@ export const MARKETING_PLANS: MarketingPlan[] = [
     name: "Free",
     priceMonthly: 0,
     priceYearly: 0,
-    blurb: "One kitchen screen with the essentials. No card, no ads.",
+    blurb: "Two wall displays with the essentials. No card, no ads.",
     cta: "Start free",
     features: [
-      "2 wall displays",
+      "2 wall displays and 1 view",
       "Clock, date, weather, sunrise & sunset, air quality",
       "Photos, notes, WiFi QR and countdowns",
       "Google Calendar (up to 2 calendars)",

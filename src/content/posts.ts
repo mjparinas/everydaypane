@@ -179,29 +179,31 @@ const RELEASES: Post[] = [
 const GUIDES: Post[] = [
   guide(
     "setup-wall-display",
-    "2026-11-18",
+    "2026-11-23",
     "Set up Everydaypane on a wall display",
-    "How to hang Everydaypane on a kitchen touchscreen or tablet: display link, kiosk tips and the default 12×8 grid.",
+    "Hang Everydaypane on a kitchen touchscreen, tablet, Chromecast or Fire tablet: Free signup, display link, kiosk tips and the default 12×8 grid.",
     "Setup",
     [
       {
-        p: "Everydaypane runs in any modern browser. It is tuned for a landscape kitchen panel around **1920×1080**, and it also works on tablets, smart displays and TVs you already own.",
+        p: "Everydaypane runs in any modern browser. It is tuned for a landscape kitchen panel around **1920×1080**, and it also works on tablets, smart displays and TVs you already own. Start with a [Free household](/signin/?intent=signup) — two displays, no card.",
       },
       { h2: "1. Create a display address" },
       {
-        p: "In the admin, open **Displays** and add a device. Copy the secret `/d/…` link. New addresses are eight characters; older longer ones still work. You can show and copy the address again any time — it is stored encrypted.",
+        p: "In the household panel, open **Displays** and add a device. Copy the secret `/d/…` link. New addresses are eight characters; older longer ones still work. You can show and copy the address again any time — it is stored encrypted.",
       },
       { h2: "2. Open the link on the screen" },
       {
         ul: [
           "Use the display's browser, or set the address as the start page in kiosk settings.",
+          "**Chromecast / Google TV:** cast a Chrome tab with the display URL open, or use the TV browser and set the address as the start page.",
+          "**Fire tablet / Android:** fullscreen browser or a simple kiosk launcher pointed at `/d/…`.",
           "Pinch zoom is locked on purpose so a fixed wall layout stays put.",
           "The page sets a short-lived cookie for images; the long token stays in a header for fetches.",
         ],
       },
       { h2: "3. Match the default grid" },
       {
-        p: "Views default to a **12×8** grid with gap 16, edge 14 and tile padding 16 — a good fit for landscape wall panels. One-tap presets and a grouped widget picker speed the first layout.",
+        p: "Views default to a **12×8** grid with gap 16, edge 14 and tile padding 16 — a good fit for landscape wall panels. One-tap presets and a grouped widget picker speed the first layout. Free includes one view; [Household](/pricing/) unlocks more.",
       },
       { h2: "4. Schedule morning to night" },
       {
@@ -499,7 +501,7 @@ const COMPARES: Post[] = [
       },
       { h2: "Price" },
       {
-        p: "DAKboard's Plus plan is about $8/month billed yearly. Everydaypane Household is $59/year with unlimited displays and every widget — and a capable Free tier for one screen.",
+        p: "DAKboard's Plus plan is about $8/month billed yearly. Everydaypane Household is $59/year with up to 20 displays and every widget — and a capable Free tier (two displays, one view).",
       },
       { h2: "Admin" },
       {
@@ -534,7 +536,7 @@ const COMPARES: Post[] = [
     "Skylight is a polished appliance. Everydaypane is bring-your-own-screen software with smart home and BC transit Skylight does not offer.",
     [
       {
-        p: "Skylight Calendar 2 (~$300) is the easiest sealed product in the category. Plus at ~$79/year unlocks meals, photo screensaver and Magic Import — features Everydaypane includes on Family without buying a proprietary panel.",
+        p: "Skylight Calendar 2 (~$300) is the easiest sealed product in the category. Plus at ~$79/year unlocks meals, photo screensaver and Magic Import — features Everydaypane includes on Household without buying a proprietary panel.",
       },
       {
         p: "If nobody in the house wants to configure a dashboard, Skylight is a fair pick. If you already have a display, run Home Assistant, or care about TransLink and ferries, Everydaypane fits better.",
@@ -603,7 +605,7 @@ const COMPARES: Post[] = [
       },
       { h2: "Three-year cost thinking" },
       {
-        p: "A $300–$800 panel plus $70–$90/year adds up. Everydaypane Family at $59/year on a display you own is usually the lowest cost for the widest kitchen feature set — especially if Home Assistant is already humming.",
+        p: "A $300–$800 panel plus $70–$90/year adds up. Everydaypane Household at $59/year on a display you own is usually the lowest cost for the widest kitchen feature set — especially if Home Assistant is already humming.",
       },
       { p: "Browse every matrix on the [compare index](/compare/)." },
     ],
@@ -612,6 +614,40 @@ const COMPARES: Post[] = [
 ];
 
 const MORE_GUIDES: Post[] = [
+  guide(
+    "kitchen-wall-dashboard-free",
+    "2026-11-23",
+    "A free kitchen wall dashboard (without buying a panel)",
+    "What Free includes on Everydaypane: two displays, calendars, weather and photos — and when Household is worth it.",
+    "Guides",
+    [
+      {
+        p: "Looking for a **family wall dashboard** or **kitchen display** without a $300–$800 appliance? Everydaypane is software: open a browser on a tablet, TV or wall panel you already own.",
+      },
+      { h2: "What Free includes" },
+      {
+        ul: [
+          "Two wall displays and one view",
+          "Clock, date, weather, sunrise & sunset, air quality",
+          "Photos, notes, WiFi QR and countdowns",
+          "Up to two Google calendars, plus schedule and month widgets",
+          "Day and night themes, offline mode and burn-in protection",
+          "No ads, no tracking cookies",
+        ],
+      },
+      {
+        p: "[Start free](/signin/?intent=signup) with an email — we send a magic link and create your household. Then open **Displays**, add a screen and copy the `/d/…` address onto the wall.",
+      },
+      { h2: "When to upgrade to Household" },
+      {
+        p: "Household ($7/mo or $59/yr) unlocks chores, meals, shopping, TransLink, commute, BC Ferries, Home Assistant, timers, more views and displays, and the rest of the widget catalogue. Compare Free vs Household on [pricing](/pricing/), or see [Everydaypane vs DAKboard](/compare/dakboard/).",
+      },
+      {
+        tip: "Langley and Lower Mainland families get garbage day, school status, Alert Ready and Environment Canada radar on Household — see the [features](/features/) list.",
+      },
+    ],
+    "/templates/kitchen-glance.png",
+  ),
   guide(
     "ical-calendar-links",
     "2026-11-17",
@@ -804,7 +840,7 @@ const STORIES: Post[] = [
     "No ads, no analytics cookies, scrubbed error reports and encrypted secrets.",
     [
       {
-        p: "Sign-in is magic link for listed emails only. Secrets (Google, Amazon, Home Assistant, iCal URLs) are AES-GCM encrypted. Sentry is optional and scrubbed of emails and display tokens.",
+        p: "Anyone can create a Free household with a magic-link email. Secrets (Google, Amazon, Home Assistant, iCal URLs) are AES-GCM encrypted. Sentry is optional and scrubbed of emails and display tokens. We do not run third-party product analytics — organic traffic stays in Search Console; paid conversions in Stripe.",
       },
       { p: "Read the full [privacy policy](/privacy/)." },
     ],

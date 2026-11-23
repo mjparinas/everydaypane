@@ -163,7 +163,23 @@ export function DisplaysPanel() {
         {devices === null ? (
           <p className="text-sm text-soft">Loading…</p>
         ) : devices.length === 0 ? (
-          <p className="text-sm text-soft">No displays yet. Add one to get its address.</p>
+          <div className="grid gap-2 text-sm text-soft">
+            <p className="font-medium text-ink">First screen</p>
+            <ol className="list-decimal space-y-1 pl-5">
+              <li>Name it (Kitchen works) and tap Add display.</li>
+              <li>
+                Copy the secret <code className="text-xs">/d/…</code> address onto your tablet or wall panel.
+              </li>
+              <li>
+                Optional: open{" "}
+                <a href="#views" className="font-semibold text-brand hover:underline">
+                  Views
+                </a>{" "}
+                and start from a Free template.
+              </li>
+            </ol>
+            <p className="text-xs">Free includes two displays. Upgrade from Settings › Plan when you need more.</p>
+          </div>
         ) : (
           <ul className="grid gap-3">
             {devices.map((d) => (

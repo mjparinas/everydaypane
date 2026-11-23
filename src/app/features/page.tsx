@@ -19,7 +19,7 @@ export default function FeaturesPage() {
       <Eyebrow>Features</Eyebrow>
       <h1 className="mt-3 font-display text-4xl font-extrabold tracking-tight sm:text-5xl">Everything on the pane</h1>
       <p className="mt-4 max-w-2xl text-lg text-soft">
-        Free includes the essentials on one display.{" "}
+        Free includes the essentials on two displays (one view).{" "}
         <Link href="/pricing/" className="font-semibold text-brand hover:underline">
           Household
         </Link>{" "}

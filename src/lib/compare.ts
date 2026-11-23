@@ -29,7 +29,7 @@ export const TOPIC_LABEL: Record<Topic, string> = {
 export const OURS: Record<Topic, string> = {
   hardware: "Any browser: tablet, TV, wall panel or laptop. No appliance to buy.",
   price: "Software: Free plan $0. Household $7/mo or $59/yr. Use a screen you already own.",
-  subscription: "Free forever for one display with essentials. Family unlocks every widget — best value.",
+  subscription: "Free forever for two displays with essentials. Household unlocks every widget — best value.",
   calendars: "Google Calendar, Google Tasks and any iCal link, merged into schedule and month views.",
   photos: "Amazon shared albums and people, Google Photos picks, uploads to a private library, screen saver.",
   chores: "Recurring chore chart with stars and weekly goals; shopping list and message board from phones.",
