@@ -414,7 +414,7 @@ export interface ChoresData {
     available: number;
   }[];
   /** Only the chores due today. */
-  chores: { id: string; name: string; emoji: string; stars: number }[];
+  chores: { id: string; name: string; emoji: string; stars: number; period: "morning" | "afternoon" | "evening" | "anytime" }[];
   due: { choreId: string; personId: string; done: boolean }[];
 }
 

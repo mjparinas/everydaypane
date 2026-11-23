@@ -952,6 +952,16 @@ function TypeSettings({
       const people = config.chores.people;
       return (
         <>
+          <Select
+            label="Layout"
+            value={w.layout}
+            options={[
+              { value: "columns", label: "Columns (list)" },
+              { value: "byPeriod", label: "By time of day" },
+              { value: "progress", label: "Progress rings" },
+            ]}
+            onChange={(v) => e((x) => void (x.layout = v))}
+          />
           <Toggle label="Show stars" checked={w.showStars} onChange={(v) => e((x) => void (x.showStars = v))} />
           <Toggle
             label="Tap to tick off"

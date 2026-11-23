@@ -57,7 +57,9 @@ export async function choreBoard(accountId: string, config: DashboardConfig, now
       const available = Math.max(0, earned - (spent.get(p.id) ?? 0));
       return { id: p.id, name: p.name, emoji: p.emoji, color: p.color, goal: p.goal, stars: earned, available };
     }),
-    chores: items.filter((c) => dueIds.has(c.id)).map((c) => ({ id: c.id, name: c.name, emoji: c.emoji, stars: c.stars })),
+    chores: items
+      .filter((c) => dueIds.has(c.id))
+      .map((c) => ({ id: c.id, name: c.name, emoji: c.emoji, stars: c.stars, period: c.period })),
     due: due.map((d) => ({ ...d, done: done.has(`${d.choreId}|${d.personId}`) })),
   };
 }

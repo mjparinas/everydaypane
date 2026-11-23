@@ -35,7 +35,7 @@ const FEATURE_BLURBS: Partial<Record<WidgetType, string>> = {
   calendarUpNext: "The next event large, with a short following list.",
   countdown: "Holidays, birthdays and events; yearly ones roll over.",
   tasks: "Google Tasks, Microsoft To Do or Todoist with tap-to-tick.",
-  chores: "Kids, stars, weekly goals, fair rotation.",
+  chores: "Kids, morning/afternoon/evening bands, stars, weekly goals, fair rotation.",
   meals: "Breakfast, lunch, dinner for a day or a week.",
   menus: "Nutrislice breakfast and lunch for a day or week.",
   shopping: "Groceries from phones; tap to tick on the wall.",

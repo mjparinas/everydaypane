@@ -2418,6 +2418,76 @@ body {
   gap: 0.4em;
   min-width: 0;
 }
+.ch-dots {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25em;
+}
+.ch-dot {
+  width: 0.55em;
+  height: 0.55em;
+  border: 1.5px solid var(--kid);
+  border-radius: 50%;
+  background: transparent;
+}
+.ch-dot-on {
+  background: var(--kid);
+}
+.ch-ring {
+  --pct: 0;
+  display: grid;
+  place-items: center;
+  width: 3.2em;
+  height: 3.2em;
+  margin: 0.1em auto;
+  border-radius: 50%;
+  background: conic-gradient(var(--kid) calc(var(--pct) * 1%), color-mix(in srgb, var(--text) 12%, transparent) 0);
+}
+.ch-ring-label {
+  display: grid;
+  place-items: center;
+  width: 2.4em;
+  height: 2.4em;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--bg, #111) 85%, var(--surface));
+  font-size: 0.85em;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+.ch-bands {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 0.45em;
+  min-height: 0;
+  overflow: hidden;
+}
+.ch-band {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25em;
+  min-height: 0;
+  padding: 0.25em 0.3em;
+  border-radius: calc(var(--radius) / 3);
+}
+.ch-band-now {
+  background: color-mix(in srgb, var(--kid) 14%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--kid) 35%, transparent);
+}
+.ch-band-label {
+  font-size: 0.75em;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  opacity: 0.7;
+}
+.ch-band-now .ch-band-label {
+  opacity: 1;
+  color: var(--kid);
+}
+.ch-cols-progress .ch-list {
+  max-height: 40%;
+}
 .ch-avatar {
   display: grid;
   flex: none;

@@ -48,7 +48,7 @@ same change, and moves it out of **In progress** when it merges.
 | School status (`school`) | Open, closed, delayed or late start; optional school names | District status page (`config.school`) |
 | Whiteboard (`whiteboard`) | Finger draw with a few colours and an eraser; wider tiles show more colours; hold Clear to wipe; same doodle on every display | `whiteboard` table |
 | Alerts (`alerts`) | Current emergency alerts, optional "all clear" | See alerts below |
-| Chore chart (`chores`) | Today's chores, **tap to tick off**, stars this week, optional **star rewards** and **child PIN** (uncheck/redeem) | Settings document + `chores_done` + `chore_redemptions` |
+| Chore chart (`chores`) | Today's chores by **morning/afternoon/evening** (or anytime), **tap to tick off**, completion dots / progress rings, stars this week, optional **star rewards** and **child PIN** (uncheck/redeem) | Settings document + `chores_done` + `chore_redemptions` |
 | Sports scores (`sports`) | Live score, last result and next game for followed teams (NHL, NBA, WNBA, NFL, MLB, MLS, Premier League, Champions League) | ESPN public site API |
 | To-dos (`tasks`) | Open tasks from **Google Tasks, Microsoft To Do or Todoist** (`provider`); **tap to tick off** (`allowCheck`, 4 s undo) | Unified `/api/display/tasks/` feed |
 | Packages (`packages`) | UPS, FedEx, Canada Post, USPS tracking numbers on the widget; live status when `PACKAGE_TRACK_API_KEY` is set | Optional 17track-style API (`src/server/packages.ts`) |
@@ -265,9 +265,11 @@ npm run templates:previews  # regenerate public/templates/*.png from real widget
   Architecture).
 - **Rain radar** (Melvin, 2026-11-21): an animated radar map for the Lower Mainland, the past hour and a short-term
   forecast, from a free source with no key (see Architecture).
-- **Chore chart** (Melvin, 2026-11-21): recurring chores for the kids, on chosen weekdays, done by everyone picked or
-  rotated between them (each time it's due, or a week each), ticked off with a tap on the wall, with stars per chore
-  counted per kid for the week and an optional weekly goal. Separate from Google Tasks (see Architecture).
+- **Chore chart** (Melvin, 2026-11-21; periods 2026-11-23 from homescreens.dev): recurring chores for the kids, on chosen
+  weekdays and a **time of day** (morning, afternoon, evening, anytime), done by everyone picked or rotated between them
+  (each time it's due, or a week each), ticked off with a tap on the wall, with per-kid completion dots (or progress rings),
+  stars per chore counted per kid for the week and an optional weekly goal. Widget layout: columns, by period, or progress.
+  Separate from Google Tasks (see Architecture).
 - **Kitchen timers and pomodoro** (Melvin, 2026-11-21: "1 with visual and sound alerts", then "i want a regular
   timer, and a separate pomodoro"): two widgets, `timer` and `pomodoro` (see Architecture).
 - **BC Ferries** (Melvin, 2026-11-21): the next sailings for routes chosen in the widget's settings, with how full
