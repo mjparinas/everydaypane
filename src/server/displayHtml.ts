@@ -1,6 +1,6 @@
 import "server-only";
 
-import { CSP } from "@/lib/securityHeaders";
+import { CSP, CSP_PREVIEW } from "@/lib/securityHeaders";
 
 const ASSET_VERSION = (process.env.NEXT_PUBLIC_COMMIT_SHA || String(Date.now())).slice(0, 12);
 
@@ -9,6 +9,9 @@ const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replac
 /**
  * The display shell. Its settings arrive by fetch (and from the service worker's copy when offline), so this HTML is
  * the same for every load and can be cached whole for offline mode.
+ *
+ * Admin preview pages allow same-origin framing so the Views tab can embed a live draft (Melvin, 2026-11-22).
+ * Wall /d/… pages stay unframeable.
  */
 export function displayHtml(opts: {
   token: string | null;
@@ -23,6 +26,7 @@ export function displayHtml(opts: {
   if (opts.token) data.push(`data-token="${esc(opts.token)}"`);
   if (opts.previewView) data.push(`data-preview="${esc(opts.previewView)}"`);
   if (opts.previewMode) data.push(`data-preview-mode="${esc(opts.previewMode)}"`);
+  const preview = Boolean(opts.previewView);
   const html = `<!doctype html>
 <html lang="en-CA">
 <head>
@@ -48,7 +52,9 @@ export function displayHtml(opts: {
       "Content-Type": "text/html; charset=utf-8",
       "Cache-Control": "no-store",
       "X-Robots-Tag": "noindex",
-      "Content-Security-Policy": CSP,
+      "Content-Security-Policy": preview ? CSP_PREVIEW : CSP,
+      // Override next.config's DENY so the admin can embed this preview same-origin.
+      ...(preview ? { "X-Frame-Options": "SAMEORIGIN" } : {}),
       ...opts.headers,
     },
   });

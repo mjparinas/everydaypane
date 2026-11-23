@@ -1,7 +1,7 @@
 import { withSentryConfig } from "@sentry/nextjs/config";
 import type { NextConfig } from "next";
 
-import { CSP, SECURITY_HEADERS } from "./src/lib/securityHeaders";
+import { CSP, SECURITY_HEADERS, SECURITY_HEADERS_PREVIEW } from "./src/lib/securityHeaders";
 
 const nextConfig: NextConfig = {
   trailingSlash: true,
@@ -9,8 +9,10 @@ const nextConfig: NextConfig = {
   reactStrictMode: true,
   // The display page is plain HTML plus one small script (public/display/), not a React page: see AGENTS.md "Display".
   // Document CSP with a per-request nonce is set in proxy.ts; APIs and /d/ get a baseline CSP here / in displayHtml.
+  // /admin/preview/ may be framed by the Views tab (SAMEORIGIN); wall /d/… stays DENY.
   headers: async () => [
     { source: "/:path*", headers: SECURITY_HEADERS },
+    { source: "/admin/preview/:path*", headers: SECURITY_HEADERS_PREVIEW },
     { source: "/api/:path*", headers: [{ key: "Content-Security-Policy", value: CSP }] },
     { source: "/d/:path*", headers: [{ key: "Content-Security-Policy", value: CSP }] },
     // Display assets are versioned by ?v=<commit>, so they can be cached for a year.

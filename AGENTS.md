@@ -71,7 +71,9 @@ copyable addresses, meals, shopping, settings for every integration, Settings �
 file), `/family/` for the message board, **family calendar events**, meals and the shopping list, Sentry. Settings is
 grouped with a sticky jump nav and `#settings/…` deep links; bounded numbers use sliders or −/+ steppers that show
 min–max (not browser number arrows). Views default to a **12×8** grid with gap 16 / edge 14 / tile 16 for the
-1920×1080 UC-Display21, with one-tap grid presets and a grouped widget picker. View previews can force day or night
+1920×1080 UC-Display21, with one-tap grid presets and a grouped widget picker. The Views tab puts the selected
+widget's settings at the top, embeds a **live preview** of the real display (working copy over `postMessage`, before
+Save), keeps the schematic grid for drag/resize, and puts "This view" underneath. View previews can force day or night
 with `?mode=`, and a quiet Day/Night control on the preview swaps without reloading.
 
 **Integrations connected from Settings:** Google Calendar, Google Tasks, Google Photos (Picker), iCal calendar links,
@@ -122,7 +124,11 @@ node scripts/e2e.mjs   # Playwright browser tests against the build (CHROMIUM_PA
   (Environment Canada through NAAD, since 2026-11-17), so that half of the ask needed nothing new.
 - **Admin changes reach displays by polling** (Melvin, 2026-11-17: "we dont need real time push for now, polling is
   ok"). Every display asks for the settings version every 30 seconds (a tiny request answered with 304 when nothing
-  changed) and reloads its settings when it moves. No WebSocket or push service.
+  changed) and reloads its settings when it moves. No WebSocket or push service. The Views tab's live preview is the
+  exception: it shows the unsaved working copy over `postMessage` and never pushes that draft to wall screens.
+- **Live views editor** (Melvin, 2026-11-22: selected widget settings at the top, the view loaded in the UI, changes
+  live): the Views tab stacks widget settings, an embedded preview of the real display shell, the schematic layout
+  grid, then "This view". Drag/resize stays on the grid; the iframe only mirrors the draft.
 - **Logo** (Melvin asked for one, 2026-11-17): a rounded blue square holding three panes (a tall white one with clock
   hands, an amber "sun" pane, a pale one), and the wordmark "everyday**pane**" in Manrope 800 with "pane" in the brand
   blue. Sources are SVGs in `public/brand/` (mark, simplified 16–32 px favicon, maskable, light and dark wordmarks);
@@ -218,10 +224,13 @@ panel can be complex if you need it to be."
   database's unique token hash constraint is retried on a collision (Melvin, 2026-11-21). Existing longer addresses
   remain valid. A device shows one view, or follows the time-of-day schedule. Deleting a device signs that screen out.
 - **Admin panel** (`src/app/admin/_ui/`): one page with tabs (a bottom tab bar on phones). Edits collect in a working
-  copy (a Zustand store per page) and go out together with Save. The grid editor drags with pointer events (mouse and
-  touch), resizes from any of a widget's four corners with the opposite corner held still (Melvin, 2026-11-21: "allow
-  any corner of a widget to adjust the size"), and also moves and resizes with the keyboard; widgets never leave the
-  grid and never overlap, except that other widgets may sit on top of a photos widget (`src/lib/config/grid.ts`).
+  copy (a Zustand store per page) and go out together with Save. The Views tab embeds `/admin/preview/<viewId>/` and
+  pushes the working copy into it over `postMessage` (`src/lib/display/draftMessage.ts`, `LivePreview.tsx`) so layout
+  and widget options update live; wall screens still only reload the saved document. The grid editor drags with pointer
+  events (mouse and touch), resizes from any of a widget's four corners with the opposite corner held still (Melvin,
+  2026-11-21: "allow any corner of a widget to adjust the size"), and also moves and resizes with the keyboard; widgets
+  never leave the grid and never overlap, except that other widgets may sit on top of a photos widget
+  (`src/lib/config/grid.ts`).
 - **Widgets over photos** (Melvin, 2026-11-21: "allow other widgets to be placed on top of the photos widget"): photos
   widgets are a backdrop layer. Any other widget may cover one; two photos widgets, or two widgets on top, still never
   overlap. A new widget goes in empty cells first and lands on the photos only when nothing else is free. The display
@@ -380,8 +389,8 @@ panel can be complex if you need it to be."
   every hour for new weather (earth reads data only when it loads). The frame is sandboxed (`allow-scripts
   allow-same-origin`: no pop-ups or navigating the dashboard), sends no referrer, and takes no touches
   (`pointer-events: none`), so a tap neither spins the globe nor goes unheard by the screen saver. The CSP's
-  `frame-src` names earth.nullschool.net and nothing else. This sandbox can't reach earth, so tests check the address
-  and the frame's life, not earth itself.
+  `frame-src` allows `'self'` (admin live preview) and earth.nullschool.net. This sandbox can't reach earth, so tests
+  check the address and the frame's life, not earth itself.
 - **Settings backup and restore** (Melvin, 2026-11-21): Settings › Backup downloads the whole settings document as
   `everydaypane-settings-<date>.json` and restores one (`src/server/backup.ts`, `/api/admin/backup/`). The file is the
   document itself, walked generically, so new widget types and settings are in it with no change there. It never holds
@@ -457,9 +466,10 @@ panel can be complex if you need it to be."
   can't. A link is used up in one statement, so two racing requests can't both sign in.
 - Sign-in tries are rate-limited in the database (one atomic upsert), per address and per IP.
 - Requests that change something must come from our own origin (`sameOrigin`).
-- Security headers on every response (`src/lib/securityHeaders.ts`): HSTS, nosniff, `frame-ancestors 'none'`, a CSP
-  that allows only our own origin (and Sentry's ingest, and earth.nullschool.net as the one frame; `script-src` never
-  allows `'unsafe-inline'` — Next.js pages get a per-request nonce from `proxy.ts`, the display loads only
+- Security headers on every response (`src/lib/securityHeaders.ts`): HSTS, nosniff, `frame-ancestors 'none'` (wall
+  `/d/…` stays unframeable; `/admin/preview/` allows `frame-ancestors 'self'` so the Views tab can embed it), a CSP
+  that allows only our own origin (and Sentry's ingest, `'self'` plus earth.nullschool.net in `frame-src`; `script-src`
+  never allows `'unsafe-inline'` — Next.js pages get a per-request nonce from `proxy.ts`, the display loads only
   `/display/display.js`), and a Permissions-Policy that turns off camera, microphone and location.
 - **Family sessions** (`FAMILY_EMAILS`) use `/family/` and the meals, shopping and messages APIs only. They are not
   accepted as display viewers (`viewerFor`), so they cannot call `/api/display/*` (Home Assistant, cameras, tasks, …).

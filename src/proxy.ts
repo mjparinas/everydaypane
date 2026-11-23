@@ -33,7 +33,7 @@ export function proxy(req: NextRequest) {
   return withCsp(req, (requestHeaders) => NextResponse.next({ request: { headers: requestHeaders } }));
 }
 
-// HTML documents (not /d/, which sets its own CSP in displayHtml; not APIs or static assets).
+// HTML documents (not /d/ or /admin/preview/, which set their own CSP in displayHtml; not APIs or static assets).
 export const config = {
-  matcher: ["/((?!api/|_next/static|_next/image|d/|display/|brand/|fonts/|favicon.ico|icon.svg|apple-icon.png|.*\\..*).*)"],
+  matcher: ["/((?!api/|_next/static|_next/image|d/|admin/preview/|display/|brand/|fonts/|favicon.ico|icon.svg|apple-icon.png|.*\\..*).*)"],
 };
