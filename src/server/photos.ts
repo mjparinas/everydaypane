@@ -5,6 +5,16 @@ import type { PhotoData, PhotoItem } from "@/lib/display/types";
 
 import { cached } from "./cache";
 import { libraryImage, listLibrary } from "./library";
+import { listBingPotd } from "./photos/bing";
+import { boxImage, listBox } from "./photos/box";
+import { dropboxImage, listDropbox } from "./photos/dropbox";
+import { listFlickr } from "./photos/flickr";
+import { immichImage, listImmich } from "./photos/immich";
+import { listOnedrive } from "./photos/onedrive";
+import { listReddit } from "./photos/reddit";
+import { listSmugmug } from "./photos/smugmug";
+import type { Listed } from "./photos/types";
+import { listWeatherAlbums } from "./photos/weatherAlbums";
 import { fetchPublicHttps, publicHttpsUrl } from "./publicUrl";
 import { getSecret } from "./secrets";
 
@@ -32,14 +42,7 @@ export const timing = { pause: (ms: number) => new Promise<void>((r) => setTimeo
 const MAX_PHOTOS = 1500;
 const PAGE = 200;
 
-export interface Listed {
-  id: string;
-  /** Where the full image is; for Amazon a temporary link that takes ?viewBox=W,H. */
-  url: string;
-  w: number;
-  h: number;
-  taken: string | null;
-}
+export type { Listed } from "./photos/types";
 
 // ---- Amazon shared albums ----
 
@@ -245,16 +248,35 @@ function listUrls(urls: string[]): Listed[] {
     .map((url, i) => ({ id: `u${i}`, url, w: 0, h: 0, taken: null }));
 }
 
-async function list(accountId: string, source: PhotoSource): Promise<Listed[]> {
+async function list(accountId: string, config: DashboardConfig, source: PhotoSource): Promise<Listed[]> {
   switch (source.kind) {
     case "amazonShare":
       return listShare(source.url);
     case "amazonPeople":
       return listPeople(accountId, source.personIds);
     case "urls":
+    case "icloudPublished":
       return listUrls(source.urls);
     case "library":
       return (await listLibrary(accountId, source.id)).map((p) => ({ id: p.id, url: p.pathname, w: p.w, h: p.h, taken: p.taken }));
+    case "bingPotd":
+      return listBingPotd();
+    case "reddit":
+      return listReddit(source.subreddit, source.sort);
+    case "weatherAlbums":
+      return listWeatherAlbums(accountId, config, source);
+    case "immich":
+      return listImmich(accountId, source.id, source.baseUrl);
+    case "dropbox":
+      return listDropbox(accountId, source.path);
+    case "onedrive":
+      return listOnedrive(accountId, source.folderId);
+    case "box":
+      return listBox(accountId, source.folderId);
+    case "flickr":
+      return listFlickr(accountId, source.userId, source.photosetId);
+    case "smugmug":
+      return listSmugmug(accountId, source.albumKey);
   }
 }
 
@@ -263,11 +285,18 @@ const sourceKey = (s: PhotoSource) => `photos:${s.id}:${hash(JSON.stringify(s))}
 
 const failures = new Map<string, { at: number; error: unknown }>();
 
-async function listed(accountId: string, source: PhotoSource, now = Date.now()): Promise<Listed[]> {
+async function listed(accountId: string, config: DashboardConfig, source: PhotoSource, now = Date.now()): Promise<Listed[]> {
   // Our own library is a quick database read, and must show a new upload at once: never cached.
-  if (source.kind === "library") return list(accountId, source);
+  if (source.kind === "library" || source.kind === "weatherAlbums") return list(accountId, config, source);
   const key = sourceKey(source);
-  const ttl = source.kind === "urls" ? LIST_TTL : AMAZON_TTL;
+  const ttl =
+    source.kind === "urls" || source.kind === "icloudPublished"
+      ? LIST_TTL
+      : source.kind === "bingPotd"
+        ? 24 * 60 * 60_000
+        : source.kind === "reddit"
+          ? 30 * 60_000
+          : AMAZON_TTL;
   const failed = failures.get(key);
   if (failed && now - failed.at < RETRY_AFTER_FAILURE) {
     // Amazon refused a little while ago: serve the last good list if there is one, and don't ask again yet.
@@ -281,7 +310,7 @@ async function listed(accountId: string, source: PhotoSource, now = Date.now()):
     ).value;
   }
   try {
-    const result = await cached(key, ttl, () => list(accountId, source), now);
+    const result = await cached(key, ttl, () => list(accountId, config, source), now);
     if (result.stale) failures.set(key, { at: now, error: new Error("Amazon refused; showing the last list") });
     else failures.delete(key);
     return result.value;
@@ -300,7 +329,7 @@ function hash(s: string): string {
 /** What displays get: each source's photos as ids and sizes. A source that fails is reported, not fatal. */
 export async function photosFeed(accountId: string, config: DashboardConfig, now = Date.now()): Promise<PhotoData> {
   const sources = config.integrations.photos.sources;
-  const results = await Promise.allSettled(sources.map((s) => listed(accountId, s, now)));
+  const results = await Promise.allSettled(sources.map((s) => listed(accountId, config, s, now)));
   const out: PhotoData = { updatedAt: now, sources: {} };
   results.forEach((r, i) => {
     const s = sources[i];
@@ -324,28 +353,58 @@ export async function photoImage(
 ): Promise<Response | null> {
   const source = config.integrations.photos.sources.find((s) => s.id === sourceId);
   if (!source) return null;
-  const find = async () => (await listed(accountId, source)).find((p) => p.id === photoId) ?? null;
+  const find = async () => (await listed(accountId, config, source)).find((p) => p.id === photoId) ?? null;
   let photo = await find();
   if (!photo) return null;
   if (source.kind === "library") return libraryImage(photo.url);
+  if (source.kind === "immich") {
+    const ir = await immichImage(accountId, source.id, source.baseUrl, photoId, width);
+    if (!ir.ok) return null;
+    const bytes = new Uint8Array(await ir.arrayBuffer());
+    const type = imageType(bytes, ir.headers.get("content-type") ?? "");
+    return type ? new Response(bytes, { headers: { "Content-Type": type, "Cache-Control": "private, max-age=86400" } }) : null;
+  }
+  if (source.kind === "dropbox" && photo.url.startsWith("dropbox:")) {
+    const path = decodeURIComponent(photo.url.slice("dropbox:".length));
+    const dr = await dropboxImage(accountId, path);
+    if (!dr.ok) return null;
+    const bytes = new Uint8Array(await dr.arrayBuffer());
+    const type = imageType(bytes, dr.headers.get("content-type") ?? "") ?? "image/jpeg";
+    return new Response(bytes, { headers: { "Content-Type": type, "Cache-Control": "private, max-age=86400" } });
+  }
+  if (source.kind === "box" && photo.url.startsWith("box:")) {
+    const br = await boxImage(accountId, photo.url.slice("box:".length));
+    if (!br.ok) return null;
+    const bytes = new Uint8Array(await br.arrayBuffer());
+    const type = imageType(bytes, br.headers.get("content-type") ?? "");
+    return type ? new Response(bytes, { headers: { "Content-Type": type, "Cache-Control": "private, max-age=86400" } }) : null;
+  }
   const w = Math.min(3840, Math.max(160, Math.round(width)));
-  const sized = (p: Listed) => (source.kind === "urls" ? p.url : `${p.url}${p.url.includes("?") ? "&" : "?"}viewBox=${w},${w}`);
+  const direct =
+    source.kind === "urls" ||
+    source.kind === "icloudPublished" ||
+    source.kind === "bingPotd" ||
+    source.kind === "reddit" ||
+    source.kind === "flickr" ||
+    source.kind === "smugmug" ||
+    source.kind === "onedrive";
+  const sized = (p: Listed) => (direct ? p.url : `${p.url}${p.url.includes("?") ? "&" : "?"}viewBox=${w},${w}`);
   const init = { signal: AbortSignal.timeout(20_000), headers: { "User-Agent": "Mozilla/5.0 (Everydaypane photo frame)" } };
-  const get = (p: Listed) => (source.kind === "urls" ? fetchPublicHttps(p.url, init) : fetch(sized(p), init));
+  const get = (p: Listed) => (direct ? fetchPublicHttps(p.url, init) : fetch(sized(p), init));
   let r: Response;
   try {
     r = await get(photo);
   } catch (error) {
-    if (source.kind === "urls") return null;
+    if (direct) return null;
     throw error;
   }
-  if ([403, 404, 410].includes(r.status) && source.kind !== "urls") {
+  if ([403, 404, 410].includes(r.status) && !direct) {
     // Amazon's temporary links expire: list again and retry once. The old list stays if Amazon refuses, and a recent
     // refusal isn't asked again.
     const key = sourceKey(source);
     const failed = failures.get(key);
     if (failed && Date.now() - failed.at < RETRY_AFTER_FAILURE) return null;
-    const fresh = await cached(key, 0, () => list(accountId, source));
+    const fresh = await cached(key, 0, () => list(accountId, config, source));
     if (fresh.stale) failures.set(key, { at: Date.now(), error: new Error("Amazon refused; showing the last list") });
     photo = fresh.value.find((p) => p.id === photoId) ?? null;
     if (!photo) return null;
@@ -392,7 +451,7 @@ export async function checkSources(
   const out: Record<string, { count: number; error: string | null; image: string | null }> = {};
   for (const s of config.integrations.photos.sources) {
     try {
-      const list = await listed(accountId, s);
+      const list = await listed(accountId, config, s);
       const first = list[0];
       const img = first ? await photoImage(accountId, config, s.id, first.id, 480).catch(() => null) : null;
       out[s.id] = { count: list.length, error: null, image: first ? (img ? null : "Its photos didn't load: see the server log") : null };

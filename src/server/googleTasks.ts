@@ -3,7 +3,7 @@ import "server-only";
 import { z } from "zod";
 
 import type { DashboardConfig } from "@/lib/config/schema";
-import type { TaskItem, TasksData } from "@/lib/display/types";
+import type { TaskItem } from "@/lib/display/types";
 
 import { cached, forget, type Cached } from "./cache";
 import { accessToken, tasksGranted } from "./google";
@@ -110,18 +110,19 @@ async function tasksOf(accountId: string, listId: string): Promise<TaskItem[]> {
   return trimTasks(raw).slice(0, 100);
 }
 
-/** Every open task of the lists switched on in Settings, for all tasks widgets to share. */
-export async function tasksFeed(accountId: string, config: DashboardConfig, now = Date.now()): Promise<Cached<TasksData>> {
-  // Checked first, so a revoked connection shows as such instead of the last cached tasks living on forever.
+export type GoogleTasksFeed = { connected: boolean; lists: { id: string; name: string; tasks: TaskItem[] }[] };
+
+/** Every open Google Task of the lists switched on in Settings. */
+export async function googleTasksFeed(accountId: string, config: DashboardConfig, now = Date.now()): Promise<Cached<GoogleTasksFeed>> {
   if (!(await tasksGranted(accountId))) throw new TasksNotAllowed();
   await accessToken(accountId, now);
   const lists = config.integrations.tasks.lists.filter((l) => l.enabled);
   return cached(
-    `tasks:${accountId}:${lists.map((l) => l.id).join(",")}`,
+    `google-tasks:${accountId}:${lists.map((l) => l.id).join(",")}`,
     TTL,
     async () => {
       const tasks = await Promise.all(lists.map((l) => tasksOf(accountId, l.id)));
-      return { updatedAt: now, connected: true, lists: lists.map((l, i) => ({ id: l.id, name: l.name, tasks: tasks[i] ?? [] })) };
+      return { connected: true, lists: lists.map((l, i) => ({ id: l.id, name: l.name, tasks: tasks[i] ?? [] })) };
     },
     now,
   );
@@ -132,7 +133,9 @@ export function mayComplete(config: DashboardConfig, listId: string): boolean {
   const enabled = config.integrations.tasks.lists.some((l) => l.enabled && l.id === listId);
   if (!enabled) return false;
   return config.views.some((v) =>
-    v.widgets.some((w) => w.type === "tasks" && w.allowCheck && (w.listIds.length === 0 || w.listIds.includes(listId))),
+    v.widgets.some(
+      (w) => w.type === "tasks" && w.provider === "google" && w.allowCheck && (w.listIds.length === 0 || w.listIds.includes(listId)),
+    ),
   );
 }
 
@@ -149,7 +152,7 @@ export async function completeTask(
     await call(accountId, path);
   } catch (error) {
     if (error instanceof Error && error.message.endsWith("answered 404")) {
-      await forget("tasks:");
+      await forget("google-tasks:");
       return "forbidden";
     }
     throw error;
@@ -158,6 +161,7 @@ export async function completeTask(
     method: "PATCH",
     body: JSON.stringify({ status: "completed" }),
   });
-  await forget("tasks:");
+  await forget("google-tasks:");
+  await forget("tasks-unified:");
   return "ok";
 }

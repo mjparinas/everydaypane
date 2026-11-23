@@ -99,3 +99,114 @@ export function TasksPanel() {
     </Section>
   );
 }
+
+function TodoistPanel() {
+  const lists = useAdmin((s) => s.config.integrations.todoist.lists);
+  const edit = useAdmin((s) => s.edit);
+  const [status, setStatus] = useState<{ configured: boolean; connected: boolean; lists: { id: string; name: string }[] } | null>(null);
+
+  useEffect(() => {
+    let live = true;
+    fetch("/api/admin/todoist/")
+      .then((r) => (r.ok ? (r.json() as Promise<typeof status>) : null))
+      .then((s) => live && s && setStatus(s))
+      .catch(() => undefined);
+    return () => {
+      live = false;
+    };
+  }, []);
+
+  const setList = (id: string, enabled: boolean, name: string) => {
+    edit((c) => {
+      const saved = c.integrations.todoist.lists;
+      const row = saved.find((x) => x.id === id);
+      if (row) row.enabled = enabled;
+      else if (saved.length < 50) saved.push({ id, name, enabled });
+    });
+  };
+
+  return (
+    <Section title="Todoist">
+      {!status ? (
+        <p className="text-sm text-soft">Checking…</p>
+      ) : !status.configured ? (
+        <p className="text-sm text-soft">Set TODOIST_CLIENT_ID and TODOIST_CLIENT_SECRET on the server.</p>
+      ) : !status.connected ? (
+        <a className="btn-primary justify-self-start" href="/api/todoist/connect/">
+          Connect Todoist
+        </a>
+      ) : (
+        <div className="grid gap-2">
+          {status.lists.map((l) => (
+            <Toggle
+              key={l.id}
+              label={l.name}
+              checked={lists.find((x) => x.id === l.id)?.enabled ?? false}
+              onChange={(v) => setList(l.id, v, l.name)}
+            />
+          ))}
+        </div>
+      )}
+    </Section>
+  );
+}
+
+function MicrosoftTodoPanel() {
+  const lists = useAdmin((s) => s.config.integrations.microsoft.todoLists);
+  const edit = useAdmin((s) => s.edit);
+  const [status, setStatus] = useState<{ configured: boolean; allowed: boolean; lists: { id: string; name: string }[] } | null>(null);
+
+  useEffect(() => {
+    let live = true;
+    fetch("/api/admin/microsoft-todo/")
+      .then((r) => (r.ok ? (r.json() as Promise<typeof status>) : null))
+      .then((s) => live && s && setStatus(s))
+      .catch(() => undefined);
+    return () => {
+      live = false;
+    };
+  }, []);
+
+  return (
+    <Section title="Microsoft To Do">
+      {!status ? (
+        <p className="text-sm text-soft">Checking…</p>
+      ) : !status.allowed ? (
+        <>
+          <p className="text-sm text-soft">Uses the same Microsoft app as calendars, with Tasks permission.</p>
+          <a className="btn-primary justify-self-start" href="/api/microsoft/connect/?todo=1">
+            Allow Microsoft To Do
+          </a>
+        </>
+      ) : (
+        <div className="grid gap-2">
+          {status.lists.map((l) => (
+            <Toggle
+              key={l.id}
+              label={l.name}
+              checked={lists.find((x) => x.id === l.id)?.enabled ?? false}
+              onChange={(v) =>
+                edit((c) => {
+                  const saved = c.integrations.microsoft.todoLists;
+                  const row = saved.find((x) => x.id === l.id);
+                  if (row) row.enabled = v;
+                  else if (saved.length < 50) saved.push({ id: l.id, name: l.name, enabled: v });
+                })
+              }
+            />
+          ))}
+        </div>
+      )}
+    </Section>
+  );
+}
+
+export function AllTasksPanels() {
+  return (
+    <>
+      <TasksPanel />
+      <MicrosoftTodoPanel />
+      <TodoistPanel />
+    </>
+  );
+}

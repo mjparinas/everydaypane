@@ -31,6 +31,18 @@ export const env = {
   tomtomKey: () => process.env.TOMTOM_API_KEY ?? "",
   // TransLink's open API (docs/translink.md): one key for the realtime departures feed.
   translinkKey: () => process.env.TRANSLINK_API_KEY ?? "",
+  /** Optional package tracking (docs/packages.md): 17track, AfterShip-style aggregator. */
+  packageTrackKey: () => process.env.PACKAGE_TRACK_API_KEY ?? "",
+  todoistClientId: () => process.env.TODOIST_CLIENT_ID ?? "",
+  todoistClientSecret: () => process.env.TODOIST_CLIENT_SECRET ?? "",
+  dropboxClientId: () => process.env.DROPBOX_CLIENT_ID ?? "",
+  dropboxClientSecret: () => process.env.DROPBOX_CLIENT_SECRET ?? "",
+  boxClientId: () => process.env.BOX_CLIENT_ID ?? "",
+  boxClientSecret: () => process.env.BOX_CLIENT_SECRET ?? "",
+  flickrApiKey: () => process.env.FLICKR_API_KEY ?? "",
+  flickrSecret: () => process.env.FLICKR_API_SECRET ?? "",
+  smugmugApiKey: () => process.env.SMUGMUG_API_KEY ?? "",
+  smugmugSecret: () => process.env.SMUGMUG_API_SECRET ?? "",
   cronSecret: () => process.env.CRON_SECRET ?? "",
   stripeSecretKey: () => process.env.STRIPE_SECRET_KEY ?? "",
   stripePriceId: () => process.env.STRIPE_PRICE_ID ?? "",

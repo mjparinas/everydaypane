@@ -789,9 +789,24 @@ function TypeSettings({
     }
     case "tasks": {
       const e = edit<"tasks">();
-      const lists = config.integrations.tasks.lists.filter((l) => l.enabled);
+      const lists =
+        w.provider === "microsoft"
+          ? config.integrations.microsoft.todoLists.filter((l) => l.enabled)
+          : w.provider === "todoist"
+            ? config.integrations.todoist.lists.filter((l) => l.enabled)
+            : config.integrations.tasks.lists.filter((l) => l.enabled);
       return (
         <>
+          <Select
+            label="Provider"
+            value={w.provider}
+            options={[
+              { value: "google", label: "Google Tasks" },
+              { value: "microsoft", label: "Microsoft To Do" },
+              { value: "todoist", label: "Todoist" },
+            ]}
+            onChange={(v) => e((x) => void ((x.provider = v), (x.listIds = [])))}
+          />
           <Stepper label="Tasks shown" value={w.count} min={1} max={30} onChange={(v) => e((x) => void (x.count = v))} />
           <Toggle label="Show due dates" checked={w.showDue} onChange={(v) => e((x) => void (x.showDue = v))} />
           <Toggle
@@ -1071,6 +1086,87 @@ function TypeSettings({
           <SchoolNames schools={w.schools} onChange={(schools) => e((x) => void (x.schools = schools))} />
           <p className="text-xs text-soft">
             The district page is set under <SettingsLink href="#settings/school">Settings › School status</SettingsLink>.
+          </p>
+        </>
+      );
+    }
+    case "packages": {
+      const e = edit<"packages">();
+      return (
+        <>
+          <Stepper label="Packages shown" value={w.count} min={1} max={12} onChange={(v) => e((x) => void (x.count = v))} />
+          <Toggle label="Show delivered" checked={w.showDelivered} onChange={(v) => e((x) => void (x.showDelivered = v))} />
+          {w.packages.map((p, i) => (
+            <div key={p.id} className="grid gap-2 rounded-xl border border-line p-3">
+              <Select
+                label="Carrier"
+                value={p.carrier}
+                options={[
+                  { value: "ups", label: "UPS" },
+                  { value: "fedex", label: "FedEx" },
+                  { value: "canadaPost", label: "Canada Post" },
+                  { value: "usps", label: "USPS" },
+                  { value: "other", label: "Other" },
+                ]}
+                onChange={(v) => e((x) => void (x.packages[i]!.carrier = v))}
+              />
+              <Text
+                label="Tracking number"
+                value={p.trackingNumber}
+                maxLength={64}
+                onChange={(v) => e((x) => void (x.packages[i]!.trackingNumber = v))}
+              />
+              <Text
+                label="Label"
+                value={p.label ?? ""}
+                maxLength={40}
+                placeholder="Optional"
+                onChange={(v) => e((x) => void (x.packages[i]!.label = v || undefined))}
+              />
+              <button
+                type="button"
+                className="btn-ghost justify-self-start text-bad"
+                onClick={() => e((x) => void x.packages.splice(i, 1))}
+              >
+                Remove
+              </button>
+            </div>
+          ))}
+          {w.packages.length < 12 && (
+            <button
+              type="button"
+              className="btn-ghost justify-self-start"
+              onClick={() => e((x) => void x.packages.push({ id: newId("pkg"), carrier: "ups", trackingNumber: "", label: "" }))}
+            >
+              Add a package
+            </button>
+          )}
+          <p className="text-xs text-soft">
+            Set <span className="font-mono">PACKAGE_TRACK_API_KEY</span> on the server for live status (optional).
+          </p>
+        </>
+      );
+    }
+    case "tides": {
+      const e = edit<"tides">();
+      return (
+        <>
+          <Text label="Station name" value={w.stationName} maxLength={80} onChange={(v) => e((x) => void (x.stationName = v))} />
+          <Text
+            label="Station id"
+            value={w.stationId}
+            maxLength={40}
+            hint="NOAA: digits only. Canada: iwls:8320 for Point Atkinson."
+            onChange={(v) => e((x) => void (x.stationId = v))}
+          />
+          <Stepper label="Highs and lows shown" value={w.count} min={1} max={8} onChange={(v) => e((x) => void (x.count = v))} />
+          <Toggle label="Show height" checked={w.showHeight} onChange={(v) => e((x) => void (x.showHeight = v))} />
+          <p className="text-xs text-soft">
+            See{" "}
+            <a className="text-brand underline-offset-2 hover:underline" href="/docs/tides.md">
+              docs/tides.md
+            </a>{" "}
+            for stations.
           </p>
         </>
       );

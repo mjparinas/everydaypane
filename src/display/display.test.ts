@@ -423,18 +423,22 @@ describe("music widget with Spotify or Sonos signed in directly", () => {
 describe("tasks", () => {
   const data: TasksData = {
     updatedAt: 1,
-    connected: true,
-    lists: [
-      {
-        id: "groceries",
-        name: "Groceries",
-        tasks: [
-          { id: "t1", title: "Milk", due: "2026-11-16" },
-          { id: "t2", title: "Bread" },
-        ],
-      },
-      { id: "chores", name: "Chores", tasks: [{ id: "t3", title: "Feed the cat", due: "2026-11-18" }] },
-    ],
+    google: {
+      connected: true,
+      lists: [
+        {
+          id: "groceries",
+          name: "Groceries",
+          tasks: [
+            { id: "t1", title: "Milk", due: "2026-11-16" },
+            { id: "t2", title: "Bread" },
+          ],
+        },
+        { id: "chores", name: "Chores", tasks: [{ id: "t3", title: "Feed the cat", due: "2026-11-18" }] },
+      ],
+    },
+    microsoft: { connected: false, lists: [] },
+    todoist: { connected: false, lists: [] },
   };
 
   it("labels due dates", () => {
@@ -445,8 +449,8 @@ describe("tasks", () => {
   });
 
   it("shows the picked lists, up to the count in all", () => {
-    expect(shownLists(data, [], 2).map((l) => l.tasks.length)).toEqual([2, 0]);
-    expect(shownLists(data, ["chores"], 5).map((l) => l.name)).toEqual(["Chores"]);
+    expect(shownLists(data, "google", [], 2).map((l) => l.tasks.length)).toEqual([2, 0]);
+    expect(shownLists(data, "google", ["chores"], 5).map((l) => l.name)).toEqual(["Chores"]);
   });
 
   it("ticks a task off after the undo time, and a second tap undoes it", async () => {
@@ -478,7 +482,7 @@ describe("tasks", () => {
 
     button("Bread").click();
     await vi.advanceTimersByTimeAsync(UNDO_MS + 100);
-    expect(posts).toEqual([{ list: "groceries", task: "t2" }]);
+    expect(posts).toEqual([{ provider: "google", list: "groceries", task: "t2" }]);
     expect([...el.querySelectorAll(".tk-title")].map((t) => t.textContent)).toEqual(["Milk", "Feed the cat"]);
     stop();
     vi.unstubAllGlobals();

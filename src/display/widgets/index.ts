@@ -17,6 +17,7 @@ import { meals } from "./meals";
 import { media } from "./media";
 import { messages } from "./messages";
 import { note } from "./note";
+import { packages } from "./packages";
 import { photos } from "./photos";
 import { pomodoro } from "./pomodoro";
 import { presence } from "./presence";
@@ -26,6 +27,7 @@ import { shopping } from "./shopping";
 import { sports } from "./sports";
 import { sunTimes } from "./sunTimes";
 import { tasks } from "./tasks";
+import { tides } from "./tides";
 import { timer } from "./timer";
 import { transit } from "./transit";
 import type { Cleanup, WidgetContext } from "./types";
@@ -94,6 +96,10 @@ export function mountWidget(el: HTMLElement, w: Widget, ctx: WidgetContext): Cle
       return pomodoro(el, w, ctx);
     case "ferries":
       return ferries(el, w, ctx);
+    case "packages":
+      return packages(el, w, ctx);
+    case "tides":
+      return tides(el, w, ctx);
     case "transit":
       return transit(el, w, ctx);
     case "sports":

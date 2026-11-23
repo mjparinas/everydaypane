@@ -31,6 +31,16 @@ const KINDS = [
   { value: "amazonShare", label: "Amazon shared album (a link)" },
   { value: "amazonPeople", label: "Amazon photos of people" },
   { value: "urls", label: "A list of photo addresses" },
+  { value: "bingPotd", label: "Bing picture of the day" },
+  { value: "reddit", label: "Reddit subreddit" },
+  { value: "weatherAlbums", label: "Weather-based albums" },
+  { value: "immich", label: "Immich" },
+  { value: "dropbox", label: "Dropbox folder" },
+  { value: "onedrive", label: "OneDrive folder" },
+  { value: "box", label: "Box folder" },
+  { value: "flickr", label: "Flickr" },
+  { value: "smugmug", label: "SmugMug album" },
+  { value: "icloudPublished", label: "iCloud published album links" },
 ] as const;
 
 const SHARE_LINK = /^https:\/\/(www\.)?amazon\.[a-z.]+\/(photos|clouddrive)\/share\/[A-Za-z0-9_-]{10,}/;
@@ -42,6 +52,10 @@ export function PhotosPanel() {
   const [name, setName] = useState("");
   const [link, setLink] = useState("");
   const [urls, setUrls] = useState("");
+  const [subreddit, setSubreddit] = useState("pics");
+  const [immichUrl, setImmichUrl] = useState("");
+  const [dropboxPath, setDropboxPath] = useState("");
+  const [albumKey, setAlbumKey] = useState("");
   const [amazon, setAmazon] = useState<AmazonStatus | null>(null);
   const [cookie, setCookie] = useState("");
   const [tld, setTld] = useState<"ca" | "com">("ca");
@@ -81,6 +95,35 @@ export function PhotosPanel() {
       source = { id, kind, name: name || "Photos", urls: list.slice(0, 500) };
     } else if (kind === "library") {
       source = { id, kind, name: name || "Family photos" };
+    } else if (kind === "bingPotd") {
+      source = { id, kind, name: name || "Bing today" };
+    } else if (kind === "reddit") {
+      const sub = subreddit.replace(/[^A-Za-z0-9_]/g, "");
+      if (!sub) return setError("Enter a subreddit name.");
+      source = { id, kind, name: name || `r/${sub}`, subreddit: sub, sort: "hot" };
+    } else if (kind === "weatherAlbums") {
+      source = { id, kind, name: name || "Weather photos", buckets: [], fallbackUrls: [] };
+    } else if (kind === "immich") {
+      if (!/^https:\/\/\S+/.test(immichUrl.trim())) return setError("Enter your Immich server address (https).");
+      source = { id, kind, name: name || "Immich", baseUrl: immichUrl.trim() };
+    } else if (kind === "dropbox") {
+      source = { id, kind, name: name || "Dropbox", path: dropboxPath.trim() };
+    } else if (kind === "onedrive") {
+      source = { id, kind, name: name || "OneDrive", folderId: "root" };
+    } else if (kind === "box") {
+      source = { id, kind, name: name || "Box", folderId: "0" };
+    } else if (kind === "flickr") {
+      source = { id, kind, name: name || "Flickr", userId: "", photosetId: "" };
+    } else if (kind === "smugmug") {
+      if (!albumKey.trim()) return setError("Enter the SmugMug album key.");
+      source = { id, kind, name: name || "SmugMug", albumKey: albumKey.trim() };
+    } else if (kind === "icloudPublished") {
+      const list = urls
+        .split(/\s+/)
+        .map((u) => u.trim())
+        .filter((u) => /^https:\/\/\S+$/.test(u));
+      if (!list.length) return setError("Paste at least one published iCloud album link.");
+      source = { id, kind, name: name || "iCloud", urls: list.slice(0, 500) };
     } else {
       source = { id, kind, name: name || "Family", personIds: [] };
     }
@@ -192,6 +235,58 @@ export function PhotosPanel() {
           />
         )}
         {kind === "urls" && <TextArea label="Photo addresses, one per line" value={urls} maxLength={60_000} onChange={setUrls} />}
+        {kind === "reddit" && <Text label="Subreddit" value={subreddit} maxLength={60} placeholder="earthporn" onChange={setSubreddit} />}
+        {kind === "immich" && (
+          <Text
+            label="Immich server"
+            value={immichUrl}
+            maxLength={300}
+            placeholder="https://photos.example.com"
+            hint="After adding the source, paste its API key here and Save."
+            onChange={setImmichUrl}
+          />
+        )}
+        {kind === "dropbox" && (
+          <>
+            <Text label="Folder path" value={dropboxPath} maxLength={500} placeholder="/Photos" onChange={setDropboxPath} />
+            <a className="text-sm text-brand underline-offset-2 hover:underline" href="/api/photos/dropbox/connect/">
+              Connect Dropbox
+            </a>
+          </>
+        )}
+        {kind === "onedrive" && (
+          <a className="text-sm text-brand underline-offset-2 hover:underline" href="/api/microsoft/connect/?files=1">
+            Connect Microsoft 365 for OneDrive photos
+          </a>
+        )}
+        {kind === "box" && (
+          <a className="text-sm text-brand underline-offset-2 hover:underline" href="/api/photos/box/connect/">
+            Connect Box
+          </a>
+        )}
+        {kind === "smugmug" && (
+          <>
+            <Text label="Album key" value={albumKey} maxLength={80} onChange={setAlbumKey} />
+            <a className="text-sm text-brand underline-offset-2 hover:underline" href="/api/photos/smugmug/connect/">
+              Connect SmugMug
+            </a>
+          </>
+        )}
+        {kind === "icloudPublished" && (
+          <>
+            <TextArea label="Published album links, one per line" value={urls} maxLength={60_000} onChange={setUrls} />
+            <p className="text-xs text-soft">
+              See{" "}
+              <a className="text-brand underline-offset-2 hover:underline" href="/docs/icloud-photos.md">
+                docs/icloud-photos.md
+              </a>{" "}
+              — no Apple sign-in on the server.
+            </p>
+          </>
+        )}
+        {kind === "weatherAlbums" && (
+          <p className="text-xs text-soft">After adding, edit buckets in the saved source (library albums or URLs per weather code).</p>
+        )}
         {error && <p className="text-sm text-bad">{error}</p>}
         <button type="button" className="btn-primary justify-self-start" onClick={addSource}>
           Add photos

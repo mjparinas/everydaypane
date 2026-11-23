@@ -218,15 +218,42 @@ export const widgetSchema = z.discriminatedUnion("type", [
   }),
   // Emergency and severe weather alerts for the area (the full-screen takeover is configured in config.alerts).
   z.object({ ...base, type: z.literal("alerts"), showAllClear: z.boolean() }),
-  // Google Tasks (Melvin, 2026-11-17): the open tasks of some lists (none picked means every list switched on under
-  // Settings), which anyone at the wall can tick off when `allowCheck` is on.
+  // Tasks (Melvin, 2026-11-17: Google Tasks; Phase 3: Microsoft To Do and Todoist). Each widget picks one provider and
+  // some of its lists (none picked means every list switched on under Settings).
   z.object({
     ...base,
     type: z.literal("tasks"),
+    provider: z.enum(["google", "microsoft", "todoist"]).default("google"),
     listIds: z.array(z.string().max(255)).max(20),
     count: z.number().int().min(1).max(30),
     showDue: z.boolean(),
     allowCheck: z.boolean(),
+  }),
+  // Package tracking (Phase 3, Household): UPS, FedEx, Canada Post, USPS and more; status from an optional tracker API.
+  z.object({
+    ...base,
+    type: z.literal("packages"),
+    packages: z
+      .array(
+        z.object({
+          id,
+          carrier: z.enum(["ups", "fedex", "canadaPost", "usps", "other"]),
+          trackingNumber: z.string().trim().min(4).max(64),
+          label: z.string().max(40).optional(),
+        }),
+      )
+      .max(12),
+    count: z.number().int().min(1).max(12),
+    showDelivered: z.boolean(),
+  }),
+  // Tides (Phase 3, Household): next highs and lows at a tide station (NOAA US, Canadian IWLS for B.C.).
+  z.object({
+    ...base,
+    type: z.literal("tides"),
+    stationId: z.string().max(40),
+    stationName: z.string().max(80),
+    count: z.number().int().min(1).max(8),
+    showHeight: z.boolean(),
   }),
   // TransLink departures (Melvin, 2026-11-19): the next buses from a few stops, live from TransLink's GTFS-realtime
   // feed (src/server/translink.ts). Stops are picked in the widget's settings and kept with their stop number and
@@ -399,12 +426,48 @@ export const periodSchema = z.object({
   dim: z.number().min(0).max(0.9),
 });
 
+const weatherAlbumBucketSchema = z.object({
+  codes: z.array(z.number().int().min(0).max(99)).max(30),
+  libraryAlbumId: id.optional(),
+  urls: z.array(z.url()).max(50).optional(),
+});
+
 export const photoSourceSchema = z.discriminatedUnion("kind", [
   z.object({ id, kind: z.literal("amazonShare"), name: z.string().max(60), url: z.url() }),
   z.object({ id, kind: z.literal("amazonPeople"), name: z.string().max(60), personIds: z.array(z.string().max(128)).max(20) }),
   z.object({ id, kind: z.literal("urls"), name: z.string().max(60), urls: z.array(z.url()).max(500) }),
   // Photos kept by Everydaypane itself: uploaded from the admin panel or picked in Google Photos (src/server/library.ts).
   z.object({ id, kind: z.literal("library"), name: z.string().max(60) }),
+  // Phase 3 photo sources (src/server/photos/).
+  z.object({ id, kind: z.literal("bingPotd"), name: z.string().max(60) }),
+  z.object({
+    id,
+    kind: z.literal("reddit"),
+    name: z.string().max(60),
+    subreddit: z.string().trim().min(1).max(60),
+    sort: z.enum(["hot", "new", "top"]).default("hot"),
+  }),
+  z.object({
+    id,
+    kind: z.literal("weatherAlbums"),
+    name: z.string().max(60),
+    buckets: z.array(weatherAlbumBucketSchema).max(12),
+    fallbackUrls: z.array(z.url()).max(50).default([]),
+  }),
+  z.object({ id, kind: z.literal("immich"), name: z.string().max(60), baseUrl: z.url() }),
+  z.object({ id, kind: z.literal("dropbox"), name: z.string().max(60), path: z.string().max(500).default("") }),
+  z.object({ id, kind: z.literal("onedrive"), name: z.string().max(60), folderId: z.string().max(200).default("root") }),
+  z.object({ id, kind: z.literal("box"), name: z.string().max(60), folderId: z.string().max(100).default("0") }),
+  z.object({
+    id,
+    kind: z.literal("flickr"),
+    name: z.string().max(60),
+    userId: z.string().max(50).default(""),
+    photosetId: z.string().max(50).default(""),
+  }),
+  z.object({ id, kind: z.literal("smugmug"), name: z.string().max(60), albumKey: z.string().max(80) }),
+  // iCloud: published shared album addresses only (no Apple OAuth), like iCal calendar links.
+  z.object({ id, kind: z.literal("icloudPublished"), name: z.string().max(60), urls: z.array(z.url()).max(500) }),
 ]);
 export type PhotoSource = z.infer<typeof photoSourceSchema>;
 
@@ -567,12 +630,20 @@ export const configSchema = z
       microsoft: z
         .object({
           calendars: z.array(z.object({ id: z.string().max(255), name: z.string().max(120), color: hex, enabled: z.boolean() })).max(50),
+          // Microsoft To Do lists (Phase 3, src/server/microsoftToDo.ts).
+          todoLists: z
+            .array(z.object({ id: z.string().max(255), name: z.string().max(120), enabled: z.boolean() }))
+            .max(50)
+            .default([]),
         })
-        .default({ calendars: [] }),
+        .default({ calendars: [], todoLists: [] }),
       // The Google Tasks lists of the connected account that widgets may show (src/server/googleTasks.ts). Defaults to
       // none, so a document saved before Tasks existed still loads.
       tasks: z
         .object({ lists: z.array(z.object({ id: z.string().max(255), name: z.string().max(120), enabled: z.boolean() })).max(50) })
+        .default({ lists: [] }),
+      todoist: z
+        .object({ lists: z.array(z.object({ id: z.string().max(64), name: z.string().max(120), enabled: z.boolean() })).max(50) })
         .default({ lists: [] }),
       // Calendar links (iCal), shown with Google's events. Their addresses are stored secrets (src/server/ical.ts).
       icals: z
