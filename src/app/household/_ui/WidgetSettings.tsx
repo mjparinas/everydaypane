@@ -820,7 +820,8 @@ function TypeSettings({
             />
           ))}
           <p className="text-xs text-soft">
-            Plan meals in the Meals tab here, or at <span className="font-mono">/family/</span> from a phone.
+            Plan meals in the Meals tab here, or at <span className="font-mono">/family/</span> from a phone. Set a
+            Repeat on a meal (every Monday, every 2 days, …) so future days fill in on their own.
           </p>
         </>
       );

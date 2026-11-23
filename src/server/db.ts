@@ -40,6 +40,20 @@ const MIGRATIONS = [
   `CREATE TABLE IF NOT EXISTS account_secrets (account_id TEXT NOT NULL, key TEXT NOT NULL, value TEXT NOT NULL, updated_at INTEGER NOT NULL, PRIMARY KEY (account_id, key))`,
   // Meal / chore ticks keyed by household (replaces the global composite PKs for new writes).
   `CREATE TABLE IF NOT EXISTS account_meals (account_id TEXT NOT NULL, date TEXT NOT NULL, slot TEXT NOT NULL, text TEXT NOT NULL, updated_at INTEGER NOT NULL, updated_by TEXT NOT NULL, PRIMARY KEY (account_id, date, slot))`,
+  // Recurring meal rules (Melvin, 2026-11-23): expand into the plan at read time; one-offs override or skip a day.
+  `CREATE TABLE IF NOT EXISTS account_meal_rules (
+    id TEXT PRIMARY KEY,
+    account_id TEXT NOT NULL,
+    slot TEXT NOT NULL,
+    text TEXT NOT NULL,
+    kind TEXT NOT NULL,
+    days TEXT,
+    every_n INTEGER,
+    start_date TEXT NOT NULL,
+    updated_at INTEGER NOT NULL,
+    updated_by TEXT NOT NULL
+  )`,
+  `CREATE INDEX IF NOT EXISTS account_meal_rules_by_account ON account_meal_rules (account_id)`,
   `CREATE TABLE IF NOT EXISTS account_chores_done (account_id TEXT NOT NULL, date TEXT NOT NULL, chore_id TEXT NOT NULL, person_id TEXT NOT NULL, stars INTEGER NOT NULL, done_at INTEGER NOT NULL, PRIMARY KEY (account_id, date, chore_id, person_id))`,
   // Star rewards redeemed on the wall (src/server/chores.ts); stars_cost is kept in case the reward changes later.
   `CREATE TABLE IF NOT EXISTS chore_redemptions (id TEXT PRIMARY KEY, account_id TEXT NOT NULL, person_id TEXT NOT NULL, reward_id TEXT NOT NULL, stars_cost INTEGER NOT NULL, redeemed_at INTEGER NOT NULL)`,
