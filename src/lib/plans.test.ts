@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { FREE_LIMITS, isFreeWidgetType, limitsFor, planLabel } from "./plans";
+import { FREE_LIMITS, isFreeWidgetType, isHouseholdSettingsGroup, isHouseholdTab, limitsFor, planLabel, UPGRADE_REASONS } from "./plans";
 
 describe("plans", () => {
   it("gives Free DAKboard-like caps", () => {
@@ -19,5 +19,17 @@ describe("plans", () => {
 
   it("labels the paid plan Household", () => {
     expect(planLabel("paid")).toBe("Household");
+  });
+
+  it("marks Household-only household tabs and settings groups", () => {
+    expect(isHouseholdTab("meals")).toBe(true);
+    expect(isHouseholdTab("views")).toBe(false);
+    expect(isHouseholdSettingsGroup("tasks")).toBe(true);
+    expect(isHouseholdSettingsGroup("home")).toBe(false);
+  });
+
+  it("has upgrade copy for soft Free CTAs", () => {
+    expect(UPGRADE_REASONS.widget).toMatch(/Household/);
+    expect(UPGRADE_REASONS.view).toMatch(/view/i);
   });
 });

@@ -3,8 +3,10 @@
 import { useEffect, useMemo, useState } from "react";
 
 import type { DashboardConfig } from "@/lib/config/schema";
+import { FREE_LIMITS } from "@/lib/plans";
 
 import { ConfirmButton, Section, Select, Text } from "./fields";
+import { HouseholdBadge, UpgradeLink, usePlan } from "./plan";
 import { useAdmin } from "./store";
 
 // Displays: each screen (kitchen wall panel, an old tablet in the hall) gets its own secret address.
@@ -50,6 +52,7 @@ async function fetchDevices(): Promise<Device[]> {
 export function DisplaysPanel() {
   // Only views that have been saved can be assigned: a display reloads the saved document, not this draft.
   const saved = useAdmin((s) => s.saved);
+  const { isPaid, openUpgrade } = usePlan();
   const views = useMemo(() => (JSON.parse(saved) as DashboardConfig).views, [saved]);
   const [devices, setDevices] = useState<Device[] | null>(null);
   const [error, setError] = useState("");
@@ -79,9 +82,17 @@ export function DisplaysPanel() {
   async function add(e: React.FormEvent) {
     e.preventDefault();
     setError("");
+    if (!isPaid && devices && devices.length >= FREE_LIMITS.displays) {
+      openUpgrade("display");
+      setError(`Free includes ${FREE_LIMITS.displays} displays. Upgrade to Household for more.`);
+      return;
+    }
     const r = await call("/api/household/devices/", "POST", { name, viewId: viewId || null });
     const body = (await r.json().catch(() => ({}))) as { url?: string; editUrl?: string; error?: string };
-    if (!r.ok || !body.url || !body.editUrl) return setError(body.error ?? "Couldn't add the display.");
+    if (!r.ok || !body.url || !body.editUrl) {
+      if (/Household|Free includes/i.test(body.error ?? "")) openUpgrade("display");
+      return setError(body.error ?? "Couldn't add the display.");
+    }
     setAdded({ name, url: body.url, editUrl: body.editUrl });
     void load();
   }
@@ -104,6 +115,18 @@ export function DisplaysPanel() {
   return (
     <div className="grid gap-4 lg:grid-cols-2">
       <Section title="Add a display">
+        {!isPaid && (
+          <p className="text-sm text-soft">
+            Free includes {FREE_LIMITS.displays} displays
+            {devices ? ` · ${devices.length} in use` : ""}. Need more? <UpgradeLink reason="display">See Household</UpgradeLink>
+            {devices && devices.length >= FREE_LIMITS.displays ? (
+              <>
+                {" "}
+                <HouseholdBadge className="align-middle" />
+              </>
+            ) : null}
+          </p>
+        )}
         <form onSubmit={add} className="grid gap-3">
           <Text label="Name" value={name} maxLength={40} onChange={setName} placeholder="Kitchen" />
           <Select label="Shows" value={viewId} options={viewOptions} onChange={setViewId} />
@@ -125,9 +148,14 @@ export function DisplaysPanel() {
           </div>
         )}
         {error && (
-          <p className="text-sm text-bad" role="alert">
-            {error}
-          </p>
+          <div className="grid gap-2" role="alert">
+            <p className="text-sm text-bad">{error}</p>
+            {!isPaid && /Household|Free includes/i.test(error) ? (
+              <button type="button" className="btn-primary justify-self-start" onClick={() => openUpgrade("display")}>
+                See Household
+              </button>
+            ) : null}
+          </div>
         )}
       </Section>
 
