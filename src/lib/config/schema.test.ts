@@ -93,13 +93,26 @@ describe("config schema", () => {
   it("keeps a panel, emoji and daylight on sunrise & sunset widgets saved before those toggles", () => {
     const c = defaultConfig();
     const sun = newWidget("sunTimes", "sun", { x: 0, y: 0 }) as unknown as Record<string, unknown>;
-    delete sun.transparent;
+    delete sun.showBackground;
     delete sun.showEmoji;
     delete sun.showDaylight;
     c.views[0]!.widgets = [sun as ReturnType<typeof newWidget<"sunTimes">>];
     const r = configSchema.safeParse(c);
     const parsed = r.success ? r.data.views[0]!.widgets[0] : undefined;
-    expect(parsed).toMatchObject({ type: "sunTimes", transparent: false, showEmoji: true, showDaylight: true });
+    expect(parsed).toMatchObject({ type: "sunTimes", showBackground: true, showEmoji: true, showDaylight: true });
+  });
+
+  it("defaults clocks and dates to no panel, and other widgets to a panel", () => {
+    const clock = newWidget("clock", "c", { x: 0, y: 0 });
+    const weather = newWidget("weather", "w", { x: 0, y: 0 });
+    expect(clock.showBackground).toBe(false);
+    expect(weather.showBackground).toBe(true);
+    const c = defaultConfig();
+    c.views[0]!.widgets = [clock, weather];
+    const r = configSchema.safeParse(c);
+    expect(r.success).toBe(true);
+    if (!r.success) return;
+    expect(r.data.views[0]!.widgets.map((w) => w.showBackground)).toEqual([false, true]);
   });
 
   it("rejects a widget that runs off its grid", () => {

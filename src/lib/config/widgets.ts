@@ -3,7 +3,10 @@ import type { Widget, WidgetType } from "./schema";
 // What the admin panel's widget picker offers, and what a new widget of each type starts with.
 // Kept free of zod and React so both the display and the admin can import it.
 
-type Defaults<T extends WidgetType> = Omit<Extract<Widget, { type: T }>, "id" | "x" | "y" | "w" | "h" | "type" | "title">;
+type Defaults<T extends WidgetType> = Omit<
+  Extract<Widget, { type: T }>,
+  "id" | "x" | "y" | "w" | "h" | "type" | "title" | "showBackground" | "backgroundOpacity"
+>;
 
 interface WidgetInfo<T extends WidgetType> {
   label: string;
@@ -37,7 +40,7 @@ export const WIDGETS: { [T in WidgetType]: WidgetInfo<T> } = {
     icon: "🌅",
     size: { w: 3, h: 2 },
     minSize: { w: 2, h: 1 },
-    defaults: () => ({ transparent: false, showEmoji: true, showDaylight: true }),
+    defaults: () => ({ showEmoji: true, showDaylight: true }),
   },
   weather: {
     label: "Weather",
@@ -316,5 +319,7 @@ export const WIDGET_GROUPS: { id: string; label: string; types: WidgetType[] }[]
 
 export function newWidget<T extends WidgetType>(type: T, id: string, at: { x: number; y: number }): Extract<Widget, { type: T }> {
   const info = WIDGETS[type];
-  return { id, type, ...at, ...info.size, ...info.defaults() } as Extract<Widget, { type: T }>;
+  // Clock and date defaults set showBackground false; everything else starts with a panel.
+  const showBackground = type === "clock" || type === "date" ? false : true;
+  return { id, type, showBackground, ...at, ...info.size, ...info.defaults() } as Extract<Widget, { type: T }>;
 }
