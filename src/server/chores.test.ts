@@ -139,6 +139,14 @@ describe("setChoreDone", () => {
     expect(await setChoreDone(LEGACY_ACCOUNT_ID, config, { chore: "bed", person: "ana", done: true }, WED)).toBe("forbidden");
     expect(await setChoreDone(LEGACY_ACCOUNT_ID, config, { chore: "bed", person: "ben", done: true }, WED)).toBe("ok");
   });
+
+  it("lets the kids phone page tick even when the wall widget forbids checks", async () => {
+    const config = withChores(false);
+    expect(await setChoreDone(LEGACY_ACCOUNT_ID, config, { chore: "bed", person: "ana", done: true, fromPhone: true }, WED)).toBe("ok");
+    expect((await choreBoard(LEGACY_ACCOUNT_ID, config, WED)).due.find((d) => d.personId === "ana" && d.choreId === "bed")?.done).toBe(
+      true,
+    );
+  });
 });
 
 describe("/api/display/chores/", () => {

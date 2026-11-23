@@ -35,6 +35,11 @@ export default async function FamilyPage() {
       </header>
       <MessageBoard />
       <FamilyEvents />
+      <p className="text-sm">
+        <a className="font-semibold text-brand underline-offset-2 hover:underline" href="/family/chores/">
+          Kids chores →
+        </a>
+      </p>
       <section className="grid gap-3" aria-labelledby="meals-heading">
         <h2 id="meals-heading" className="text-lg font-bold">
           Meal plan

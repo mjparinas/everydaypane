@@ -48,7 +48,7 @@ same change, and moves it out of **In progress** when it merges.
 | School status (`school`) | Open, closed, delayed or late start; optional school names | District status page (`config.school`) |
 | Whiteboard (`whiteboard`) | Finger draw with a few colours and an eraser; wider tiles show more colours; hold Clear to wipe; same doodle on every display | `whiteboard` table |
 | Alerts (`alerts`) | Current emergency alerts, optional "all clear" | See alerts below |
-| Chore chart (`chores`) | Today's chores by **morning/afternoon/evening** (or anytime), **tap to tick off**, completion dots / progress rings, stars this week, optional **star rewards** and **child PIN** (uncheck/redeem) | Settings document + `chores_done` + `chore_redemptions` |
+| Chore chart (`chores`) | Today's chores by **morning/afternoon/evening** (or anytime), **tap to tick off**, completion dots / progress rings, stars this week, optional **star rewards** and **child PIN**; kids phone at `/d/<token>/chores/` and `/family/chores/` | Settings document + `chores_done` + `chore_redemptions` |
 | Sports scores (`sports`) | Live score, last result and next game for followed teams (NHL, NBA, WNBA, NFL, MLB, MLS, Premier League, Champions League) | ESPN public site API |
 | To-dos (`tasks`) | Open tasks from **Google Tasks, Microsoft To Do or Todoist** (`provider`); **tap to tick off** (`allowCheck`, 4 s undo) | Unified `/api/display/tasks/` feed |
 | Packages (`packages`) | UPS, FedEx, Canada Post, USPS tracking numbers on the widget; live status when `PACKAGE_TRACK_API_KEY` is set | Optional 17track-style API (`src/server/packages.ts`) |
@@ -405,6 +405,10 @@ panel can be complex if you need it to be."
   the Displays tab (copyable `editUrl` plus `/api/household/devices/<id>/edit-qr/`) both encode that URL. Knowing the
   display link is the capability — keep the QR on the wall, not shared online. Family calendar events stay on `/family/`
   only.
+- **Kids chores phone** (Melvin, 2026-11-23): `/d/<token>/chores/` and `/family/chores/` (`KidsChores`, `/api/family/chores/`)
+  let a kid pick their name, tick today's chores by period, and redeem star rewards. Same display-token or family session
+  auth as the edit page; ticks skip the wall's `allowCheck` gate. Parents still edit people and chores in Settings › Chores;
+  uncheck and redeem still need the child PIN when set.
 - **School status** (Melvin, 2026-11-22): `src/server/school.ts` reads `config.school.statusUrl` (https only, never a private
   address), cached five minutes, and looks for closed, delayed or late start in the page's alert or notification banner,
   then in the rest of the page. Anything else is open. A widget can name schools; a notice counts when it names one of
