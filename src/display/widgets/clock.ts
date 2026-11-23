@@ -11,7 +11,10 @@ function digitCard(ch: string) {
 
 function setFlip(root: HTMLElement, text: string) {
   const cards = [...root.querySelectorAll<HTMLElement>(".c-flip-d")];
-  const chars = text.replace(/[^0-9]/g, "").padStart(cards.length, "0").slice(-cards.length);
+  const chars = text
+    .replace(/[^0-9]/g, "")
+    .padStart(cards.length, "0")
+    .slice(-cards.length);
   cards.forEach((card, i) => {
     const next = chars[i] ?? "0";
     if (card.dataset.d === next) return;
@@ -66,9 +69,7 @@ export const clock: Mount<"clock"> = (el, w, ctx) => {
       h("span", { class: "c-flip-colon" }, ":"),
       digitCard("0"),
       digitCard("0"),
-      ...(w.showSeconds
-        ? [h("span", { class: "c-flip-colon" }, ":"), digitCard("0"), digitCard("0")]
-        : []),
+      ...(w.showSeconds ? [h("span", { class: "c-flip-colon" }, ":"), digitCard("0"), digitCard("0")] : []),
     );
     const ampm = ctx.hour12 ? h("span", { class: "c-ampm" }) : null;
     el.append(h("div", { class: "w-clock" }, digits, ampm, label));
@@ -80,8 +81,7 @@ export const clock: Mount<"clock"> = (el, w, ctx) => {
     });
   }
 
-  const styleClass =
-    w.style === "nixie" ? "c-nixie" : w.style === "neon" ? "c-neon" : w.style === "minimal" ? "c-minimal" : "";
+  const styleClass = w.style === "nixie" ? "c-nixie" : w.style === "neon" ? "c-neon" : w.style === "minimal" ? "c-minimal" : "";
   const hm = h("span", { class: "c-hm" });
   const s = w.showSeconds ? h("span", { class: "c-s" }) : null;
   const ampm = ctx.hour12 && w.style !== "minimal" ? h("span", { class: "c-ampm" }) : null;

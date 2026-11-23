@@ -5,12 +5,11 @@ import type { Widget } from "@/lib/config/schema";
 import { newWidget, WIDGETS } from "@/lib/config/widgets";
 import type { AirData, ChoresData, DisplayPayload, TasksData, TransitData, TransitDeparture, WeatherData } from "@/lib/display/types";
 
-import { shortTime } from "./format";
+import { fuzzyTime, shortTime } from "./format";
 import { kindOf, label, weatherIcon } from "./icons";
 import { airQuality, aqhiBand, usAqiBand } from "./widgets/air";
 import { calendarMonth, fitDayTitles } from "./widgets/calendar";
 import { bandsFor, chores, columns } from "./widgets/chores";
-import { fuzzyTime } from "./format";
 import { clock } from "./widgets/clock";
 import { commute, distance, duration, timing, trafficLevel } from "./widgets/commute";
 import { countdown } from "./widgets/countdown";
