@@ -97,6 +97,7 @@ export function WidgetSettings({
         />
       )}
       <PanelBackground widget={widget} config={config} onChange={onChange} />
+      {info.supportsFontScale !== false && <FontScale widget={widget} onChange={onChange} />}
       <VisiblePeriods widget={widget} onChange={onChange} />
       <TypeSettings widget={widget} config={config} onChange={onChange} />
     </div>
@@ -167,6 +168,27 @@ function PanelBackground({
         />
       ) : null}
     </>
+  );
+}
+
+/** Text size for widgets that show copy (Melvin, 2026-11-23). Media-fill tiles omit this control. */
+function FontScale({ widget, onChange }: { widget: Widget; onChange: (change: (w: Widget) => void) => void }) {
+  return (
+    <Range
+      label="Font size"
+      value={widget.fontScale ?? 1}
+      min={0.7}
+      max={1.5}
+      step={0.05}
+      format={(v) => `${Math.round(v * 100)}%`}
+      hint="Scales the text in this tile only."
+      onChange={(v) =>
+        onChange((w) => {
+          if (v === 1) delete w.fontScale;
+          else w.fontScale = v;
+        })
+      }
+    />
   );
 }
 
