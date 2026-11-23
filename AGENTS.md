@@ -71,10 +71,11 @@ copyable addresses, meals, shopping, settings for every integration, Settings �
 file), `/family/` for the message board, **family calendar events**, meals and the shopping list, Sentry. Settings is
 grouped with a sticky jump nav and `#settings/…` deep links; bounded numbers use sliders or −/+ steppers that show
 min–max (not browser number arrows). Views default to a **12×8** grid with gap 16 / edge 14 / tile 16 for the
-1920×1080 UC-Display21, with one-tap grid presets and a grouped widget picker. The Views tab puts the selected
-widget's settings at the top, embeds a **live preview** of the real display (working copy over `postMessage`, before
-Save), keeps the schematic grid for drag/resize, and puts "This view" underneath. View previews can force day or night
-with `?mode=`, and a quiet Day/Night control on the preview swaps without reloading.
+1920×1080 UC-Display21, with one-tap grid presets and a grouped widget picker. The Views tab embeds one **live
+editable layout** (the real display under a transparent drag overlay, working copy over `postMessage` before Save);
+tapping a widget opens its settings in a **right slide-out** so the preview stays visible; "This view" sits underneath.
+Draft edits patch widgets in place instead of remounting the whole stage. View previews can force day or night with
+`?mode=`, and a quiet Day/Night control on the preview swaps without reloading.
 
 **Integrations connected from Settings:** Google Calendar, Google Tasks, Google Photos (Picker), iCal calendar links,
 Amazon Photos, the photo library (Vercel Blob), Home Assistant (Cloudflare Tunnel + Access), Spotify, Sonos, garbage
@@ -126,9 +127,10 @@ node scripts/e2e.mjs   # Playwright browser tests against the build (CHROMIUM_PA
   ok"). Every display asks for the settings version every 30 seconds (a tiny request answered with 304 when nothing
   changed) and reloads its settings when it moves. No WebSocket or push service. The Views tab's live preview is the
   exception: it shows the unsaved working copy over `postMessage` and never pushes that draft to wall screens.
-- **Live views editor** (Melvin, 2026-11-22: selected widget settings at the top, the view loaded in the UI, changes
-  live): the Views tab stacks widget settings, an embedded preview of the real display shell, the schematic layout
-  grid, then "This view". Drag/resize stays on the grid; the iframe only mirrors the draft.
+- **Live views editor** (Melvin, 2026-11-22: the view loaded in the UI, changes live; then one surface with a right
+  settings drawer, not two stacks): the Views tab shows one live editable layout (real widgets under a drag overlay),
+  opens widget settings in a right slide-out, then "This view". Draft `postMessage` updates patch cells in place
+  (`src/lib/display/viewDiff.ts`) so a setting tweak does not remount every widget.
 - **Logo** (Melvin asked for one, 2026-11-17): a rounded blue square holding three panes (a tall white one with clock
   hands, an amber "sun" pane, a pale one), and the wordmark "everyday**pane**" in Manrope 800 with "pane" in the brand
   blue. Sources are SVGs in `public/brand/` (mark, simplified 16–32 px favicon, maskable, light and dark wordmarks);
@@ -228,13 +230,13 @@ panel can be complex if you need it to be."
   database's unique token hash constraint is retried on a collision (Melvin, 2026-11-21). Existing longer addresses
   remain valid. A device shows one view, or follows the time-of-day schedule. Deleting a device signs that screen out.
 - **Admin panel** (`src/app/admin/_ui/`): one page with tabs (a bottom tab bar on phones). Edits collect in a working
-  copy (a Zustand store per page) and go out together with Save. The Views tab embeds `/admin/preview/<viewId>/` and
-  pushes the working copy into it over `postMessage` (`src/lib/display/draftMessage.ts`, `LivePreview.tsx`) so layout
-  and widget options update live; wall screens still only reload the saved document. The grid editor drags with pointer
-  events (mouse and touch), resizes from any of a widget's four corners with the opposite corner held still (Melvin,
-  2026-11-21: "allow any corner of a widget to adjust the size"), and also moves and resizes with the keyboard; widgets
-  never leave the grid and never overlap, except that other widgets may sit on top of a photos widget
-  (`src/lib/config/grid.ts`).
+  copy (a Zustand store per page) and go out together with Save. The Views tab embeds `/admin/preview/<viewId>/` under a
+  transparent drag overlay (`src/app/admin/_ui/LiveLayoutEditor.tsx`) and pushes the working copy over `postMessage`
+  (`src/lib/display/draftMessage.ts`) so layout and widget options update live; wall screens still only reload the saved
+  document. The overlay drags with pointer events (mouse and touch), resizes from any of a widget's four corners with
+  the opposite corner held still (Melvin, 2026-11-21: "allow any corner of a widget to adjust the size"), and also moves
+  and resizes with the keyboard; widgets never leave the grid and never overlap, except that other widgets may sit on
+  top of a photos widget (`src/lib/config/grid.ts`). Tapping a widget opens `WidgetSettingsDrawer` from the right.
 - **Widgets over photos** (Melvin, 2026-11-21: "allow other widgets to be placed on top of the photos widget"): photos
   widgets are a backdrop layer. Any other widget may cover one; two photos widgets, or two widgets on top, still never
   overlap. A new widget goes in empty cells first and lands on the photos only when nothing else is free. The display

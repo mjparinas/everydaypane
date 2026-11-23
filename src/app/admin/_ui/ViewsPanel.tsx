@@ -7,17 +7,16 @@ import type { View, Widget, WidgetType } from "@/lib/config/schema";
 import { newWidget, WIDGET_GROUPS, WIDGET_TYPES, WIDGETS } from "@/lib/config/widgets";
 
 import { ConfirmButton, Range, Section, Segmented, Select, Stepper, Text } from "./fields";
-import { GridEditor, widgetName } from "./GridEditor";
-import { LivePreview } from "./LivePreview";
+import { LiveLayoutEditor, widgetName } from "./LiveLayoutEditor";
 import { newId, useAdmin } from "./store";
-import { WidgetSettings } from "./WidgetSettings";
+import { WidgetSettingsDrawer } from "./WidgetSettingsDrawer";
 
 // Views (Melvin, 2026-11-17: "several views to choose from"): each view is its own grid of widgets. Displays show one
 // view, or follow the time-of-day schedule. Spacing defaults (12×8, gap 16, edge 14, tile 16) are tuned for a
 // 1920 × 1080 UC-Display21 (Melvin, 2026-11-22).
 //
-// Layout (Melvin, 2026-11-22): selected widget settings at the top, a live draft preview of the real display, the
-// schematic GridEditor for drag/resize, then "This view" underneath.
+// Layout (Melvin, 2026-11-22): one live editable preview (real widgets under a drag overlay), widget settings in a
+// right slide-out, then "This view" underneath.
 
 const GRID_PRESETS = [
   { value: "12x8", label: "12×8 (1080p)", cols: 12, rows: 8 },
@@ -141,60 +140,36 @@ export function ViewsPanel() {
         </button>
       </div>
 
-      {widget ? (
-        <Section
-          title={widgetName(widget)}
-          actions={
-            <button className="btn-ghost min-h-9 px-3" onClick={() => setSelected(null)} aria-label="Close widget settings">
-              ✕
-            </button>
-          }
-        >
-          <WidgetSettings widget={widget} config={config} onChange={(change) => editWidget(widget.id, change)} />
-          <div className="flex flex-wrap gap-2 border-t border-line pt-4">
-            <button
-              className="btn-ghost"
-              onClick={() => {
-                const spot = findSpot(widget, active, active.widgets, WIDGETS[widget.type].minSize);
-                if (!spot) return setNotice("There's no room for a copy on this view.");
-                const copy = { ...structuredClone(widget), id: newId(widget.type), ...spot };
-                editView((v) => void v.widgets.push(copy));
-                setSelected(copy.id);
-              }}
-            >
-              Duplicate
-            </button>
-            <ConfirmButton
-              label="Remove widget"
-              onConfirm={() => {
-                editView((v) => void (v.widgets = v.widgets.filter((w) => w.id !== widget.id)));
-                setSelected(null);
-              }}
-            />
-          </div>
-        </Section>
-      ) : (
-        <p className="rounded-xl bg-bg p-3 text-sm text-soft" role="status">
-          Tap a widget on the layout grid below to change its settings. The live preview updates as you edit.
-        </p>
-      )}
+      <LiveLayoutEditor
+        key={active.id}
+        view={active}
+        viewId={active.id}
+        config={config}
+        version={version}
+        selectedId={selected}
+        onSelect={setSelected}
+        onChange={(id, r) => editWidget(id, (w) => Object.assign(w, r))}
+      />
 
-      <LivePreview key={active.id} viewId={active.id} config={config} version={version} />
-
-      <div className="grid gap-2">
-        <h2 className="text-sm font-semibold text-soft">Layout</h2>
-        <GridEditor
-          view={active}
-          selectedId={selected}
-          onSelect={setSelected}
-          onChange={(id, r) => editWidget(id, (w) => Object.assign(w, r))}
+      {widget && (
+        <WidgetSettingsDrawer
+          widget={widget}
+          config={config}
+          onChange={(change) => editWidget(widget.id, change)}
+          onClose={() => setSelected(null)}
+          onDuplicate={() => {
+            const spot = findSpot(widget, active, active.widgets, WIDGETS[widget.type].minSize);
+            if (!spot) return setNotice("There's no room for a copy on this view.");
+            const copy = { ...structuredClone(widget), id: newId(widget.type), ...spot };
+            editView((v) => void v.widgets.push(copy));
+            setSelected(copy.id);
+          }}
+          onRemove={() => {
+            editView((v) => void (v.widgets = v.widgets.filter((w) => w.id !== widget.id)));
+            setSelected(null);
+          }}
         />
-        <p className="text-xs text-soft">
-          Drag a widget to move it and any of its corners to resize it. Tap one to change its settings and show all four corners. With a
-          keyboard: arrows move, Shift + arrows move the bottom-right corner and Shift + Alt + arrows the top-left. Widgets can go on top of
-          a photos widget, so the photos fill the space behind them.
-        </p>
-      </div>
+      )}
 
       {notice && (
         <p className="rounded-xl bg-bg p-3 text-sm" role="status">
