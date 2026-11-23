@@ -22,7 +22,7 @@ export type FeatureWidgetGroup = {
 
 /** Extra marketing lines where the picker description is too short for the features page. */
 const FEATURE_BLURBS: Partial<Record<WidgetType, string>> = {
-  clock: "Digital or analogue, any time zone, seconds optional.",
+  clock: "Digital, analogue, flip, nixie, word, minimal or neon; any time zone.",
   date: "Today's date in a chosen zone.",
   sunTimes: "Open-Meteo sunrise, sunset and daylight length.",
   weather: "Current, hourly, up to 7 days, UV and pollen.",

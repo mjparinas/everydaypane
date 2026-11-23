@@ -2,7 +2,8 @@
 import { readFileSync } from "node:fs";
 import { gzipSync } from "node:zlib";
 
-const BUDGET = { "public/display/display.js": 40_000, "public/display/display.css": 10_000, "public/display/sw.js": 6_000 };
+// Melvin, 2026-11-23: CSS budget 10 → 20 KB so flip/nixie/word clock styles and display polish fit without starving the rest.
+const BUDGET = { "public/display/display.js": 40_000, "public/display/display.css": 20_000, "public/display/sw.js": 6_000 };
 let failed = false;
 for (const [file, max] of Object.entries(BUDGET)) {
   const size = gzipSync(readFileSync(file)).length;

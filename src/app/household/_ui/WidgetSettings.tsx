@@ -249,7 +249,12 @@ function TypeSettings({
             value={w.style}
             options={[
               { value: "digital", label: "Digital" },
-              { value: "analog", label: "Analog" },
+              { value: "analog", label: "Analogue" },
+              { value: "flip", label: "Flip" },
+              { value: "nixie", label: "Nixie" },
+              { value: "word", label: "Word" },
+              { value: "minimal", label: "Minimal" },
+              { value: "neon", label: "Neon" },
             ]}
             onChange={(v) => e((x) => void (x.style = v))}
           />

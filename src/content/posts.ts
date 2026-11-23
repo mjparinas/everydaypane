@@ -825,7 +825,7 @@ const STORIES: Post[] = [
       },
       {
         ul: [
-          "Script under 40 KB gzipped, stylesheet under 10 KB (CI checks)",
+          "Script under 40 KB gzipped, stylesheet under 20 KB (CI checks)",
           "Widgets update only the DOM nodes that change",
           "Heavy API work stays on the server with shared caches",
         ],
