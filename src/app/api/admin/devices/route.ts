@@ -6,7 +6,13 @@ import { adminFor } from "@/server/viewer";
 
 export async function GET(req: Request) {
   if (!(await adminFor(req))) return unauthorized();
-  return json({ devices: await listDevices() });
+  const origin = new URL(req.url).origin;
+  // Always include each display's address so the Displays tab can show it with a Copy button (Melvin, 2026-11-22).
+  const devices = (await listDevices()).map(({ token, ...d }) => ({
+    ...d,
+    url: token ? `${origin}/d/${token}/` : null,
+  }));
+  return json({ devices });
 }
 
 const body = z.object({ name: z.string().trim().min(1).max(40), viewId: z.string().max(64).nullable() });

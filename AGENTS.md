@@ -225,11 +225,11 @@ panel can be complex if you need it to be."
   integration creates), `file:local.db` in development, memory in tests. Tables are created on first use; migrations only
   ever add (`src/server/db.ts`).
 - **Displays** are devices with their own secret address `/d/<token>/`. Requests are matched by the token's hash; the
-  token is also kept encrypted (`token_sealed`, like the other secrets) so an admin can show and copy the address again
-  from the Displays tab any time (Melvin, 2026-11-17, who didn't want it shown only once). "New link" replaces the
-  address and the old one stops working. New addresses use a case-sensitive, 8-character alphanumeric token; the
-  database's unique token hash constraint is retried on a collision (Melvin, 2026-11-21). Existing longer addresses
-  remain valid. A device shows one view, or follows the time-of-day schedule. Deleting a device signs that screen out.
+  token is also kept encrypted (`token_sealed`, like the other secrets) so the Displays tab always shows the address with
+  a Copy button on the same row (Melvin, 2026-11-17: not shown only once; 2026-11-22: always visible, no "New link").
+  New addresses use a case-sensitive, 8-character alphanumeric token; the database's unique token hash constraint is
+  retried on a collision (Melvin, 2026-11-21). Existing longer addresses remain valid. A device shows one view, or
+  follows the time-of-day schedule. Deleting a device signs that screen out.
 - **Admin panel** (`src/app/admin/_ui/`): one page with tabs (a bottom tab bar on phones). Edits collect in a working
   copy (a Zustand store per page) and go out together with Save. The Views tab embeds `/admin/preview/<viewId>/` under a
   transparent drag overlay (`src/app/admin/_ui/LiveLayoutEditor.tsx`) and pushes the working copy over `postMessage`

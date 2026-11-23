@@ -4,10 +4,10 @@ import { decrypt, encrypt, randomAlphanumeric, randomToken, sha256 } from "./cry
 import { query, run } from "./db";
 
 // A display (the UC-Display21 in the kitchen, a tablet in the hall). Each one opens its own secret address,
-// /d/<token>/, so it can be signed out alone by deleting it or giving it a new link. Displays are found by the token's
-// hash; the token itself is also kept encrypted (like the other stored secrets) so a signed-in admin can see and copy
-// the address again any time (Melvin, 2026-11-17: the address shouldn't be shown only once). A device shows its own
-// view, or follows the time-of-day schedule (view_id null).
+// /d/<token>/, so it can be signed out alone by deleting it. Displays are found by the token's hash; the token itself
+// is also kept encrypted (like the other stored secrets) so the Displays tab can always show and copy the address
+// (Melvin, 2026-11-17: the address shouldn't be shown only once; 2026-11-22: always visible with Copy on the row). A
+// device shows its own view, or follows the time-of-day schedule (view_id null).
 
 export interface Device {
   id: string;
@@ -17,7 +17,17 @@ export interface Device {
   lastSeenAt: number | null;
 }
 
-type Row = { id: string; name: string; view_id: string | null; created_at: number; last_seen_at: number | null };
+/** A listed display plus its token when we still have it sealed (null for very old rows). */
+export type DeviceWithToken = Device & { token: string | null };
+
+type Row = {
+  id: string;
+  name: string;
+  view_id: string | null;
+  created_at: number;
+  last_seen_at: number | null;
+  token_sealed?: string | null;
+};
 const DISPLAY_TOKEN_LENGTH = 8;
 const TOKEN_ATTEMPTS = 10;
 
@@ -31,8 +41,11 @@ const toDevice = (r: Row): Device => ({
   lastSeenAt: r.last_seen_at === null ? null : Number(r.last_seen_at),
 });
 
-export async function listDevices(): Promise<Device[]> {
-  return (await query<Row>("SELECT * FROM devices ORDER BY created_at")).map(toDevice);
+export async function listDevices(): Promise<DeviceWithToken[]> {
+  return (await query<Row>("SELECT * FROM devices ORDER BY created_at")).map((r) => ({
+    ...toDevice(r),
+    token: r.token_sealed ? decrypt(r.token_sealed) : null,
+  }));
 }
 
 export async function addDevice(name: string, viewId: string | null, now = Date.now()): Promise<{ device: Device; token: string }> {
@@ -65,8 +78,8 @@ export async function updateDevice(id: string, patch: { name?: string; viewId?: 
 }
 
 /**
- * The display's token, for showing its address to an admin again. Null for a device added before tokens were kept
- * (only a new link can show one) or one that doesn't exist.
+ * The display's token, for building its address. Null for a device added before tokens were kept, or one that doesn't
+ * exist.
  */
 export async function deviceToken(id: string): Promise<string | null> {
   const row = (await query<{ token_sealed: string | null }>("SELECT token_sealed FROM devices WHERE id = ?", [id]))[0];
