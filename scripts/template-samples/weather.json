@@ -1,0 +1,38 @@
+{
+  "updatedAt": 1763937720000,
+  "units": { "temp": "°C", "wind": "km/h" },
+  "current": {
+    "temp": 9,
+    "feels": 7,
+    "code": 2,
+    "isDay": true,
+    "wind": 12,
+    "humidity": 78,
+    "uv": 1
+  },
+  "today": {
+    "sunrise": "2026-11-23T07:32:00-07:00",
+    "sunset": "2026-11-23T16:18:00-07:00",
+    "uvMax": 2
+  },
+  "pollen": 12,
+  "hours": [
+    { "time": "2026-11-23T14:00", "temp": 10, "code": 2, "precip": 10, "isDay": true },
+    { "time": "2026-11-23T15:00", "temp": 9, "code": 2, "precip": 15, "isDay": true },
+    { "time": "2026-11-23T16:00", "temp": 8, "code": 3, "precip": 25, "isDay": true },
+    { "time": "2026-11-23T17:00", "temp": 7, "code": 3, "precip": 40, "isDay": false },
+    { "time": "2026-11-23T18:00", "temp": 7, "code": 61, "precip": 55, "isDay": false },
+    { "time": "2026-11-23T19:00", "temp": 6, "code": 61, "precip": 60, "isDay": false },
+    { "time": "2026-11-23T20:00", "temp": 6, "code": 3, "precip": 35, "isDay": false },
+    { "time": "2026-11-23T21:00", "temp": 5, "code": 2, "precip": 20, "isDay": false }
+  ],
+  "days": [
+    { "date": "2026-11-23", "code": 2, "max": 11, "min": 4, "precip": 40 },
+    { "date": "2026-11-24", "code": 61, "max": 10, "min": 5, "precip": 70 },
+    { "date": "2026-11-25", "code": 3, "max": 9, "min": 4, "precip": 45 },
+    { "date": "2026-11-26", "code": 2, "max": 10, "min": 3, "precip": 20 },
+    { "date": "2026-11-27", "code": 0, "max": 11, "min": 2, "precip": 5 },
+    { "date": "2026-11-28", "code": 1, "max": 12, "min": 3, "precip": 10 },
+    { "date": "2026-11-29", "code": 2, "max": 10, "min": 4, "precip": 30 }
+  ]
+}

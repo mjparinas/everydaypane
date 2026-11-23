@@ -1,0 +1,85 @@
+{
+  "updatedAt": 1795473720000,
+  "teams": [
+    {
+      "id": "canucks",
+      "league": "nhl",
+      "name": "Canucks",
+      "abbr": "VAN",
+      "color": "#00205B",
+      "next": {
+        "id": "g1",
+        "start": 1795472400000,
+        "state": "in",
+        "detail": "2nd · 8:14",
+        "us": "home",
+        "home": {
+          "abbr": "VAN",
+          "name": "Canucks",
+          "score": "3"
+        },
+        "away": {
+          "abbr": "CGY",
+          "name": "Flames",
+          "score": "2"
+        }
+      },
+      "last": {
+        "id": "g0",
+        "start": 1795214520000,
+        "state": "post",
+        "detail": "Final",
+        "us": "away",
+        "home": {
+          "abbr": "SEA",
+          "name": "Kraken",
+          "score": "1"
+        },
+        "away": {
+          "abbr": "VAN",
+          "name": "Canucks",
+          "score": "4"
+        }
+      }
+    },
+    {
+      "id": "whitecaps",
+      "league": "mls",
+      "name": "Whitecaps",
+      "abbr": "VAN",
+      "color": "#00245D",
+      "next": {
+        "id": "g2",
+        "start": 1795905720000,
+        "state": "pre",
+        "detail": "Sat 2:00 PM",
+        "us": "home",
+        "home": {
+          "abbr": "VAN",
+          "name": "Whitecaps"
+        },
+        "away": {
+          "abbr": "POR",
+          "name": "Timbers"
+        }
+      },
+      "last": {
+        "id": "g3",
+        "start": 1795128120000,
+        "state": "post",
+        "detail": "Final",
+        "us": "home",
+        "home": {
+          "abbr": "VAN",
+          "name": "Whitecaps",
+          "score": "2"
+        },
+        "away": {
+          "abbr": "SEA",
+          "name": "Sounders",
+          "score": "1"
+        }
+      }
+    }
+  ]
+}

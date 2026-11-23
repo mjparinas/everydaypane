@@ -1,0 +1,69 @@
+{
+  "updatedAt": 1763937720000,
+  "at": 1763937000000,
+  "down": false,
+  "routes": [
+    {
+      "code": "TSASWB",
+      "name": "Tsawwassen → Swartz Bay",
+      "duration": "1h 35m",
+      "status": "",
+      "sailings": [
+        {
+          "time": "17:00",
+          "arrive": "18:35",
+          "state": "scheduled",
+          "fill": 72,
+          "carFill": 78,
+          "vessel": "Spirit of British Columbia",
+          "note": ""
+        },
+        {
+          "time": "19:00",
+          "arrive": "20:35",
+          "state": "scheduled",
+          "fill": 54,
+          "carFill": 61,
+          "vessel": "Coastal Celebration",
+          "note": ""
+        },
+        {
+          "time": "21:00",
+          "arrive": "22:35",
+          "state": "scheduled",
+          "fill": 31,
+          "carFill": 28,
+          "vessel": "Spirit of Vancouver Island",
+          "note": ""
+        }
+      ]
+    },
+    {
+      "code": "HSBLNG",
+      "name": "Horseshoe Bay → Langdale",
+      "duration": "40m",
+      "status": "",
+      "sailings": [
+        {
+          "time": "16:20",
+          "arrive": "17:00",
+          "state": "delayed",
+          "fill": 88,
+          "carFill": 92,
+          "vessel": "Queen of Surrey",
+          "delayMinutes": 15,
+          "note": "Delayed due to traffic"
+        },
+        {
+          "time": "18:20",
+          "arrive": "19:00",
+          "state": "scheduled",
+          "fill": 65,
+          "carFill": 70,
+          "vessel": "Queen of Cowichan",
+          "note": ""
+        }
+      ]
+    }
+  ]
+}

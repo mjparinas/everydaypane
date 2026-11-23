@@ -1,0 +1,59 @@
+{
+  "updatedAt": 1795473720000,
+  "configured": true,
+  "stops": {
+    "6099": [
+      {
+        "route": "501",
+        "headsign": "Surrey Central Station",
+        "time": 1795474080,
+        "delay": 60,
+        "live": true
+      },
+      {
+        "route": "501",
+        "headsign": "Langley Centre",
+        "time": 1795474500,
+        "delay": 0,
+        "live": true
+      },
+      {
+        "route": "503",
+        "headsign": "Surrey Central Station",
+        "time": 1795474800,
+        "delay": -30,
+        "live": true
+      },
+      {
+        "route": "531",
+        "headsign": "Willowbrook",
+        "time": 1795475100,
+        "delay": null,
+        "live": false
+      }
+    ],
+    "6103": [
+      {
+        "route": "337",
+        "headsign": "Guildford",
+        "time": 1795474380,
+        "delay": 120,
+        "live": true
+      },
+      {
+        "route": "337",
+        "headsign": "Carvolth Exchange",
+        "time": 1795474920,
+        "delay": 0,
+        "live": true
+      },
+      {
+        "route": "509",
+        "headsign": "Surrey Central Station",
+        "time": 1795475400,
+        "delay": null,
+        "live": false
+      }
+    ]
+  }
+}

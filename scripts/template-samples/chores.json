@@ -1,0 +1,34 @@
+{
+  "today": "2026-11-23",
+  "pinSet": false,
+  "rewards": [
+    { "id": "r1", "name": "Screen time +30 min", "starsCost": 5 },
+    { "id": "r2", "name": "Pick Friday movie", "starsCost": 8 },
+    { "id": "r3", "name": "Ice cream run", "starsCost": 10 }
+  ],
+  "people": [
+    { "id": "maya", "name": "Maya", "emoji": "🌟", "color": "#e8590c", "goal": 7, "stars": 4, "available": 4 },
+    { "id": "sam", "name": "Sam", "emoji": "🚀", "color": "#1971c2", "goal": 7, "stars": 5, "available": 5 },
+    { "id": "ana", "name": "Ana", "emoji": "🦋", "color": "#9c36b5", "goal": 5, "stars": 3, "available": 3 }
+  ],
+  "chores": [
+    { "id": "bed", "name": "Make bed", "emoji": "🛏️", "stars": 1 },
+    { "id": "dishes", "name": "Clear dishes", "emoji": "🍽️", "stars": 2 },
+    { "id": "backpack", "name": "Pack backpack", "emoji": "🎒", "stars": 1 },
+    { "id": "laundry", "name": "Put laundry away", "emoji": "👕", "stars": 2 },
+    { "id": "dog", "name": "Feed the dog", "emoji": "🐕", "stars": 1 },
+    { "id": "homework", "name": "Homework desk tidy", "emoji": "📚", "stars": 1 }
+  ],
+  "due": [
+    { "choreId": "bed", "personId": "maya", "done": true },
+    { "choreId": "backpack", "personId": "maya", "done": true },
+    { "choreId": "dishes", "personId": "maya", "done": false },
+    { "choreId": "bed", "personId": "sam", "done": true },
+    { "choreId": "dog", "personId": "sam", "done": true },
+    { "choreId": "homework", "personId": "sam", "done": false },
+    { "choreId": "laundry", "personId": "sam", "done": false },
+    { "choreId": "bed", "personId": "ana", "done": true },
+    { "choreId": "backpack", "personId": "ana", "done": false },
+    { "choreId": "dishes", "personId": "ana", "done": false }
+  ]
+}

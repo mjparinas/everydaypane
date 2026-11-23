@@ -84,7 +84,7 @@ export const BUILT_IN_THEMES: Theme[] = [
   {
     id: "mono",
     name: "Mono",
-    font: "system",
+    font: "space-grotesk",
     radius: 12,
     surfaceOpacity: 1,
     glass: false,
@@ -110,7 +110,7 @@ export const BUILT_IN_THEMES: Theme[] = [
   {
     id: "ocean",
     name: "Ocean",
-    font: "inter",
+    font: "outfit",
     radius: 22,
     surfaceOpacity: 0.78,
     glass: false,
@@ -136,7 +136,7 @@ export const BUILT_IN_THEMES: Theme[] = [
   {
     id: "mist",
     name: "Mist",
-    font: "manrope",
+    font: "literata",
     radius: 16,
     surfaceOpacity: 0.88,
     glass: false,
@@ -162,7 +162,7 @@ export const BUILT_IN_THEMES: Theme[] = [
   {
     id: "cedar",
     name: "Cedar",
-    font: "space-grotesk",
+    font: "dm-sans",
     radius: 18,
     surfaceOpacity: 0.82,
     glass: false,
@@ -188,7 +188,7 @@ export const BUILT_IN_THEMES: Theme[] = [
   {
     id: "ink",
     name: "Ink",
-    font: "system",
+    font: "manrope",
     radius: 10,
     surfaceOpacity: 0.95,
     glass: false,

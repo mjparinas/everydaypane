@@ -1,0 +1,13 @@
+{
+  "updatedAt": 1763937720000,
+  "stationId": "iwls:8320",
+  "stationName": "Point Atkinson",
+  "units": "m",
+  "events": [
+    { "time": "2026-11-23T05:42:00-07:00", "type": "low", "height": 1.1 },
+    { "time": "2026-11-23T12:18:00-07:00", "type": "high", "height": 3.8 },
+    { "time": "2026-11-23T18:05:00-07:00", "type": "low", "height": 1.4 },
+    { "time": "2026-11-24T00:52:00-07:00", "type": "high", "height": 4.1 },
+    { "time": "2026-11-24T06:30:00-07:00", "type": "low", "height": 1.0 }
+  ]
+}

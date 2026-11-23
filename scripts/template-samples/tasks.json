@@ -1,0 +1,24 @@
+{
+  "updatedAt": 1763937720000,
+  "google": {
+    "connected": true,
+    "lists": [
+      {
+        "id": "family",
+        "name": "Family",
+        "tasks": [
+          { "id": "t1", "title": "Book flights for Christmas trip", "due": "2026-11-28" },
+          { "id": "t2", "title": "Order swim meet snacks" },
+          { "id": "t3", "title": "Sign field-trip form", "due": "2026-11-24" },
+          { "id": "t4", "title": "Schedule furnace service" },
+          { "id": "t5", "title": "Pack Scout camp bag", "due": "2026-12-11", "sub": true },
+          { "id": "t6", "title": "Buy dance recital flowers", "due": "2026-12-06" },
+          { "id": "t7", "title": "Renew library books" },
+          { "id": "t8", "title": "Confirm carpool for soccer Saturday" }
+        ]
+      }
+    ]
+  },
+  "microsoft": { "connected": false, "lists": [] },
+  "todoist": { "connected": false, "lists": [] }
+}

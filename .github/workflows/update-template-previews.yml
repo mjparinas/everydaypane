@@ -1,0 +1,66 @@
+name: Update template previews
+
+# On-demand regeneration of public/templates/*.png from the real display widgets + sample feeds.
+# Run from the Actions tab (workflow_dispatch). Opens a PR with the updated screenshots.
+
+on:
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: "Branch to update (leave blank for a new branch off the default)"
+        required: false
+        type: string
+        default: ""
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: update-template-previews
+  cancel-in-progress: true
+
+env:
+  NEXT_TELEMETRY_DISABLED: 1
+
+jobs:
+  screenshots:
+    name: Render template screenshots
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ inputs.branch || github.ref }}
+
+      - uses: ./.github/actions/setup
+
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Render template previews
+        run: npm run templates:previews
+
+      - name: Create pull request
+        uses: peter-evans/create-pull-request@v7
+        with:
+          commit-message: |
+            Update starter template screenshot previews.
+
+            Regenerated with the real display widgets and scripts/template-samples/ feeds.
+          title: Update template screenshot previews
+          body: |
+            ## Summary
+            - Regenerates `public/templates/*.png` with the real display bundle
+            - Uses shared sample feeds in `scripts/template-samples/`
+            - Sample photos live under `public/templates/samples/`
+
+            ## Test plan
+            - [ ] Open Views › Templates in the admin and skim each preview
+            - [ ] Confirm calendars, photos, notes and themed fonts look filled in
+            - [ ] Spot-check photo-frame / christmas / halloween for real images
+          branch: chore/update-template-previews
+          delete-branch: true
+          add-paths: |
+            public/templates/**
+            public/templates/manifest.json
