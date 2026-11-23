@@ -126,7 +126,7 @@ export function SettingsPanel() {
               button="Find"
               placeholder="Town or neighbourhood, like Langley"
               nothing="Nothing matched. Try a town or neighbourhood name."
-              url={(q) => `/api/admin/places/?${new URLSearchParams({ q })}`}
+              url={(q) => `/api/household/places/?${new URLSearchParams({ q })}`}
               onPick={(p) =>
                 edit((c) => {
                   c.location.name = p.label.slice(0, 60);

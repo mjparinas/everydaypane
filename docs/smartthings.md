@@ -13,6 +13,6 @@ Household only. Lights, thermostats and **locks (lock only, never unlock)** on *
 - `SMARTTHINGS_CLIENT_ID`
 - `SMARTTHINGS_CLIENT_SECRET`
 
-## In the admin panel
+## In the household panel
 
 **Settings › Smart home › SmartThings** — Connect, then use a device id like `smartthings.kitchen_light` on the widget.

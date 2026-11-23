@@ -38,7 +38,7 @@ async function shrink(file: File): Promise<{ blob: Blob; w: number; h: number }>
 }
 
 async function fetchLibrary(sourceId: string): Promise<{ storage: boolean; photos: Item[] }> {
-  const r = await fetch(`/api/admin/library/?source=${encodeURIComponent(sourceId)}`).catch(() => null);
+  const r = await fetch(`/api/household/library/?source=${encodeURIComponent(sourceId)}`).catch(() => null);
   if (!r?.ok) return { storage: true, photos: [] };
   return (await r.json()) as { storage: boolean; photos: Item[] };
 }
@@ -65,7 +65,7 @@ export function LibraryAlbum({ sourceId }: { sourceId: string }) {
     fetchLibrary(sourceId)
       .then((body) => live && apply(body))
       .catch(() => undefined);
-    fetch("/api/admin/google-photos/")
+    fetch("/api/household/google-photos/")
       .then((r) => (r.ok ? (r.json() as Promise<{ allowed: boolean }>) : null))
       .then((g) => live && setGoogle(g))
       .catch(() => undefined);
@@ -83,7 +83,7 @@ export function LibraryAlbum({ sourceId }: { sourceId: string }) {
       setBusy(`Uploading ${i + 1} of ${list.length}…`);
       try {
         const { blob, w, h } = await shrink(file);
-        const r = await fetch(`/api/admin/library/?source=${encodeURIComponent(sourceId)}`, {
+        const r = await fetch(`/api/household/library/?source=${encodeURIComponent(sourceId)}`, {
           method: "POST",
           headers: { "Content-Type": "image/jpeg", "x-photo-width": String(w), "x-photo-height": String(h) },
           body: blob,
@@ -102,7 +102,7 @@ export function LibraryAlbum({ sourceId }: { sourceId: string }) {
     setError("");
     // Opened now, while the tap still counts, so the browser doesn't block it; pointed at Google once the session exists.
     const win = window.open("about:blank", "_blank");
-    const start = await fetch("/api/admin/google-photos/", {
+    const start = await fetch("/api/household/google-photos/", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ start: true }),
@@ -115,14 +115,14 @@ export function LibraryAlbum({ sourceId }: { sourceId: string }) {
     if (win) win.location.href = s.pickerUri;
     else window.open(s.pickerUri, "_blank");
     const session = s.session;
-    const end = () => void fetch(`/api/admin/google-photos/?session=${encodeURIComponent(session)}`, { method: "DELETE" });
+    const end = () => void fetch(`/api/household/google-photos/?session=${encodeURIComponent(session)}`, { method: "DELETE" });
     try {
       setBusy("Pick photos in the Google Photos window, then tap Done there…");
       const until = Date.now() + 30 * 60_000;
       let ready = false;
       while (!ready && Date.now() < until) {
         await wait(s.pollMs ?? 4000);
-        const r = await fetch(`/api/admin/google-photos/?session=${encodeURIComponent(session)}`);
+        const r = await fetch(`/api/household/google-photos/?session=${encodeURIComponent(session)}`);
         const body = (await r.json().catch(() => ({}))) as { ready?: boolean; error?: string };
         if (!r.ok) throw new Error(body.error ?? "Google Photos stopped answering");
         ready = body.ready === true;
@@ -133,7 +133,7 @@ export function LibraryAlbum({ sourceId }: { sourceId: string }) {
       let skipped = 0;
       do {
         setBusy(`Copying from Google Photos… ${added} so far`);
-        const r = await fetch("/api/admin/google-photos/", {
+        const r = await fetch("/api/household/google-photos/", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ source: sourceId, session, page }),
@@ -155,7 +155,7 @@ export function LibraryAlbum({ sourceId }: { sourceId: string }) {
   }
 
   async function remove(id: string) {
-    await fetch(`/api/admin/library/?source=${encodeURIComponent(sourceId)}&photo=${encodeURIComponent(id)}`, { method: "DELETE" });
+    await fetch(`/api/household/library/?source=${encodeURIComponent(sourceId)}&photo=${encodeURIComponent(id)}`, { method: "DELETE" });
     setItems((list) => list?.filter((p) => p.id !== id) ?? null);
   }
 

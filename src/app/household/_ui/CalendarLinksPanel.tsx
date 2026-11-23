@@ -13,7 +13,7 @@ const COLOURS = ["#16a34a", "#db2777", "#ea580c", "#7c3aed", "#0891b2", "#ca8a04
 const linkId = () => (Math.random().toString(36).slice(2) + "000000").slice(0, 10);
 
 async function fetchStored(): Promise<Record<string, boolean>> {
-  const r = await fetch("/api/admin/calendar-links/");
+  const r = await fetch("/api/household/calendar-links/");
   if (!r.ok) throw new Error(String(r.status));
   return ((await r.json()) as { links: Record<string, boolean> }).links;
 }
@@ -45,7 +45,7 @@ export function CalendarLinksPanel() {
     setBusy(true);
     const id = linkId();
     try {
-      const r = await fetch("/api/admin/calendar-links/", {
+      const r = await fetch("/api/household/calendar-links/", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id, url }),
@@ -67,7 +67,7 @@ export function CalendarLinksPanel() {
 
   function remove(id: string) {
     edit((c) => void (c.integrations.icals = c.integrations.icals.filter((l) => l.id !== id)));
-    void fetch(`/api/admin/calendar-links/?id=${id}`, { method: "DELETE" });
+    void fetch(`/api/household/calendar-links/?id=${id}`, { method: "DELETE" });
   }
 
   function change(id: string, patch: { name?: string; color?: string; enabled?: boolean }) {

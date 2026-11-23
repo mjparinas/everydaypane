@@ -9,7 +9,7 @@ export async function GET(req: Request) {
   if (!session) return unauthorized();
   const url = new URL(req.url);
   const back = (r: string) =>
-    new Response(null, { status: 303, headers: { Location: `/admin/?slack=${r}#settings/content`, "Cache-Control": "no-store" } });
+    new Response(null, { status: 303, headers: { Location: `/household/?slack=${r}#settings/content`, "Cache-Control": "no-store" } });
   const state = url.searchParams.get("state") ?? "";
   const expected = readCookie(req, SLACK_STATE_COOKIE) ?? "";
   if (!state || !expected || !safeEqual(state, expected)) return back("expired");

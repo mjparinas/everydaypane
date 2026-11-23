@@ -49,7 +49,11 @@ export async function finishMusicConnect(service: MusicService, req: Request): P
   const back = (result: string) =>
     new Response(null, {
       status: 303,
-      headers: { Location: `/admin/?${service}=${result}#settings`, "Set-Cookie": clearedMusicStateCookie(), "Cache-Control": "no-store" },
+      headers: {
+        Location: `/household/?${service}=${result}#settings`,
+        "Set-Cookie": clearedMusicStateCookie(),
+        "Cache-Control": "no-store",
+      },
     });
   const state = url.searchParams.get("state") ?? "";
   const expected = readCookie(req, MUSIC_STATE_COOKIE) ?? "";

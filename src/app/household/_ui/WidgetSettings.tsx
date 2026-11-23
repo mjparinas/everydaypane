@@ -530,7 +530,7 @@ function TypeSettings({
             button="Find"
             placeholder="Town or city, anywhere"
             nothing="Nothing matched. Try a town or city name, like \u201cManila\u201d."
-            url={(q) => `/api/admin/places/?${new URLSearchParams({ q })}`}
+            url={(q) => `/api/household/places/?${new URLSearchParams({ q })}`}
             onPick={(p) =>
               e((x) => {
                 x.place = p.label.slice(0, 80);
@@ -1624,7 +1624,7 @@ function TransitStops({
     e?.preventDefault();
     setBusy(true);
     setNote("");
-    const r = await fetch(`/api/admin/transit/?${new URLSearchParams({ q: q.trim() })}`).catch(() => null);
+    const r = await fetch(`/api/household/transit/?${new URLSearchParams({ q: q.trim() })}`).catch(() => null);
     const body = (await r?.json().catch(() => ({}))) as { stops?: StopMatch[]; keySet?: boolean; error?: string } | undefined;
     setBusy(false);
     setMatches(body?.stops ?? []);

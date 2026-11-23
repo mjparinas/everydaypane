@@ -2,8 +2,8 @@ import { NextResponse, type NextRequest } from "next/server";
 
 import { contentSecurityPolicy } from "@/lib/securityHeaders";
 
-// Sends people without a session cookie from the admin panel to sign-in. Only a fast first check: every admin page
-// and API route checks the session itself (src/server/viewer.ts).
+// Sends people without a session cookie from /household, /admin or /family to sign-in. Only a fast first check: every
+// page and API route checks the session itself (src/server/viewer.ts, src/server/staff.ts).
 //
 // Also stamps a per-request CSP nonce onto Next.js documents so script-src can drop 'unsafe-inline' (Next applies the
 // nonce to its own scripts when it sees Content-Security-Policy on the request).
@@ -21,7 +21,7 @@ function withCsp(req: NextRequest, build: (headers: Headers) => NextResponse): N
 
 export function proxy(req: NextRequest) {
   const path = req.nextUrl.pathname;
-  const needsAuth = path.startsWith("/admin") || path.startsWith("/family");
+  const needsAuth = path.startsWith("/household") || path.startsWith("/admin") || path.startsWith("/family");
 
   if (needsAuth && !req.cookies.has("ep_session")) {
     const url = req.nextUrl.clone();
@@ -33,10 +33,10 @@ export function proxy(req: NextRequest) {
   return withCsp(req, (requestHeaders) => NextResponse.next({ request: { headers: requestHeaders } }));
 }
 
-// HTML documents (not /d/ or /admin/preview/, which set their own CSP in displayHtml; not APIs or static assets).
+// HTML documents (not /d/ or /household/preview/, which set their own CSP in displayHtml; not APIs or static assets).
 export const config = {
   // Bare `/d/<token>/` sets its own CSP in displayHtml; `/d/<token>/edit/` is a Next.js phone page and needs the nonce.
   matcher: [
-    "/((?!api/|_next/static|_next/image|d/[^/]+/?$|admin/preview/|display/|brand/|fonts/|icons/|favicon.ico|icon.svg|apple-icon.png|apple-touch-icon.png|manifest.webmanifest|.*\\..*).*)",
+    "/((?!api/|_next/static|_next/image|d/[^/]+/?$|household/preview/|display/|brand/|fonts/|icons/|favicon.ico|icon.svg|apple-icon.png|apple-touch-icon.png|manifest.webmanifest|.*\\..*).*)",
   ],
 };

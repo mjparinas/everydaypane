@@ -61,7 +61,7 @@ async function lastLink(email) {
 }
 
 export async function signIn(page, email) {
-  await page.goto(`${BASE}/admin/`);
+  await page.goto(`${BASE}/household/`);
   await page.waitForURL(/\/signin\//);
   await page.getByLabel("Email").fill(email);
   await page.getByRole("button", { name: "Email me a link" }).click();
@@ -99,7 +99,7 @@ try {
 
   await step("admin signs in with a magic link", async () => {
     await signIn(page, "admin@example.com");
-    await page.waitForURL(/\/admin\//);
+    await page.waitForURL(/\/household\//);
     await page.getByText("admin@example.com").waitFor();
   });
 
@@ -113,7 +113,7 @@ try {
   });
 
   await step("admin API refuses people who aren't signed in", async () => {
-    const r = await fetch(`${BASE}/api/admin/config/`);
+    const r = await fetch(`${BASE}/api/household/config/`);
     expect(r.status === 401, `status ${r.status}`);
   });
 

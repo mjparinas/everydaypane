@@ -15,7 +15,7 @@ export async function GET(req: Request) {
   const back = (result: string) =>
     new Response(null, {
       status: 303,
-      headers: { Location: `/admin/?google=${result}#settings`, "Set-Cookie": clearedStateCookie(), "Cache-Control": "no-store" },
+      headers: { Location: `/household/?google=${result}#settings`, "Set-Cookie": clearedStateCookie(), "Cache-Control": "no-store" },
     });
 
   const state = url.searchParams.get("state") ?? "";

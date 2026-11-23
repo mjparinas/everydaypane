@@ -28,7 +28,7 @@ export function GarbagePanel() {
     setError("");
     setMatches(null);
     const q = new URLSearchParams({ address, projectId: garbage.projectId, districtId: garbage.districtId });
-    const r = await fetch(`/api/admin/garbage/?${q}`).catch(() => null);
+    const r = await fetch(`/api/household/garbage/?${q}`).catch(() => null);
     const body = (await r?.json().catch(() => ({}))) as { matches?: Match[]; error?: string } | undefined;
     setBusy(false);
     if (!r?.ok || !body?.matches) return setError(body?.error ?? "Couldn't search the collection calendar.");

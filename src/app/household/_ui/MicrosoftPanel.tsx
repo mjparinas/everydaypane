@@ -14,7 +14,7 @@ interface Status {
 }
 
 async function fetchStatus(): Promise<Status> {
-  const r = await fetch("/api/admin/microsoft/");
+  const r = await fetch("/api/household/microsoft/");
   if (!r.ok) throw new Error(String(r.status));
   return (await r.json()) as Status;
 }
@@ -48,7 +48,7 @@ export function MicrosoftPanel() {
   }, []);
 
   async function disconnect() {
-    const r = await fetch("/api/admin/microsoft/", { method: "DELETE" });
+    const r = await fetch("/api/household/microsoft/", { method: "DELETE" });
     if (!r.ok) return setError("Couldn't disconnect Microsoft 365.");
     setStatus(await fetchStatus().catch(() => null));
   }

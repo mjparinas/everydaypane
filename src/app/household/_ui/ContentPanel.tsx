@@ -15,7 +15,7 @@ export function ContentPanel() {
   const [trelloTok, setTrelloTok] = useState("");
 
   useEffect(() => {
-    void fetch("/api/admin/content/status/")
+    void fetch("/api/household/content/status/")
       .then((r) => (r.ok ? r.json() : null))
       .then((j: { ynab?: boolean; trello?: boolean; fitbit?: boolean; slack?: boolean; gmail?: boolean } | null) => {
         if (!j) return;
@@ -25,7 +25,7 @@ export function ContentPanel() {
   }, []);
 
   async function saveSecret(kind: "ynab" | "trello", token: string) {
-    await fetch(`/api/admin/content/${kind}-token/`, {
+    await fetch(`/api/household/content/${kind}-token/`, {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ token }),

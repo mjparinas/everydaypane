@@ -16,8 +16,9 @@ import { AdminProvider, useAdmin, useDirty } from "./store";
 import { ThemesPanel } from "./ThemesPanel";
 import { ViewsPanel } from "./ViewsPanel";
 
-// The admin panel: one page, with tabs, that works on a phone (Melvin, 2026-11-17). Changes collect in a working copy
-// and go out together with Save; Household displays long-poll for an instant reload, Free ones within ~30 seconds.
+// The household panel: one page, with tabs, that works on a phone (Melvin, 2026-11-17; path /household/ 2026-11-23).
+// Changes collect in a working copy and go out together with Save; Household displays long-poll for an instant reload,
+// Free ones within ~30 seconds.
 
 const TABS = [
   { id: "views", label: "Views", icon: "▦" },
@@ -55,7 +56,7 @@ function SaveBar() {
 
   useEffect(() => {
     let live = true;
-    fetch("/api/admin/billing/")
+    fetch("/api/household/billing/")
       .then((r) => (r.ok ? r.json() : null))
       .then((body: { plan?: string } | null) => {
         if (live && body?.plan === "paid") setInstant(true);
@@ -88,7 +89,7 @@ function SaveBar() {
 
   async function refreshDisplays() {
     setRefreshNote("");
-    const r = await fetch("/api/admin/refresh/", { method: "POST" });
+    const r = await fetch("/api/household/refresh/", { method: "POST" });
     const body = (await r.json().catch(() => ({}))) as { error?: string };
     setRefreshNote(r.ok ? "Told displays to reload." : (body.error ?? "Couldn't refresh displays."));
   }
@@ -141,15 +142,25 @@ function MobileStatus() {
   );
 }
 
-export function Admin({ initial, version, email }: { initial: DashboardConfig; version: number; email: string }) {
+export function Admin({
+  initial,
+  version,
+  email,
+  staff = false,
+}: {
+  initial: DashboardConfig;
+  version: number;
+  email: string;
+  staff?: boolean;
+}) {
   return (
     <AdminProvider config={initial} version={version}>
-      <AdminPanel email={email} />
+      <AdminPanel email={email} staff={staff} />
     </AdminProvider>
   );
 }
 
-function AdminPanel({ email }: { email: string }) {
+function AdminPanel({ email, staff }: { email: string; staff: boolean }) {
   const name = useAdmin((s) => s.config.name);
   const tab = useSyncExternalStore(subscribeHash, hashTab, () => "views" as Tab);
   const router = useRouter();
@@ -195,7 +206,12 @@ function AdminPanel({ email }: { email: string }) {
               {t.label}
             </button>
           ))}
-          <button className="ml-auto px-3 py-2 text-sm text-soft hover:text-ink" onClick={() => void signOut()}>
+          {staff && (
+            <a className="ml-auto px-3 py-2 text-sm text-soft hover:text-ink" href="/admin/">
+              Platform
+            </a>
+          )}
+          <button className={`px-3 py-2 text-sm text-soft hover:text-ink ${staff ? "" : "ml-auto"}`} onClick={() => void signOut()}>
             Sign out
           </button>
         </nav>

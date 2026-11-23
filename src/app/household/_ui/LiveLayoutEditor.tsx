@@ -48,7 +48,7 @@ export function LiveLayoutEditor({
   const draftTimer = useRef<number | undefined>(undefined);
   const latest = useRef({ config, version, viewId });
 
-  const src = `/admin/preview/${encodeURIComponent(viewId)}/?mode=day`;
+  const src = `/household/preview/${encodeURIComponent(viewId)}/?mode=day`;
   const grid = { cols: view.cols, rows: view.rows };
   const gapPx = (width: number) => (view.gap * width) / 1920;
 
@@ -89,7 +89,7 @@ export function LiveLayoutEditor({
       if (full && !full.closed) {
         try {
           // Only push when that tab is still on this view (pathname carries the view id).
-          if (full.location.pathname.includes(`/admin/preview/${encodeURIComponent(latest.current.viewId)}`)) {
+          if (full.location.pathname.includes(`/household/preview/${encodeURIComponent(latest.current.viewId)}`)) {
             sendDraft(full);
           }
         } catch {

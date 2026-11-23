@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { GET, POST } from "@/app/api/admin/devices/[id]/route";
-import { GET as listDevices } from "@/app/api/admin/devices/route";
+import { GET, POST } from "@/app/api/household/devices/[id]/route";
+import { GET as listDevices } from "@/app/api/household/devices/route";
 import { LEGACY_ACCOUNT_ID } from "@/server/accounts";
 import { cookieFor, req, useTestServer } from "@/test/server";
 
@@ -18,7 +18,7 @@ describe("display addresses", () => {
   it("lists each display with its address for the Displays tab", async () => {
     const { device, token } = await addDevice(LEGACY_ACCOUNT_ID, "Kitchen", null);
     const admin = await cookieFor("admin@example.com");
-    const r = await listDevices(req("/api/admin/devices/", { headers: { cookie: admin } }));
+    const r = await listDevices(req("/api/household/devices/", { headers: { cookie: admin } }));
     expect(r.status).toBe(200);
     const body = (await r.json()) as { devices: { id: string; url: string | null }[] };
     expect(body.devices).toHaveLength(1);
@@ -29,7 +29,7 @@ describe("display addresses", () => {
     const { device, token } = await addDevice(LEGACY_ACCOUNT_ID, "Kitchen", null);
     expect(token).toMatch(/^[A-Za-z0-9]{8}$/);
     const admin = await cookieFor("admin@example.com");
-    const r = await GET(req(`/api/admin/devices/${device.id}/`, { headers: { cookie: admin } }), ctx(device.id));
+    const r = await GET(req(`/api/household/devices/${device.id}/`, { headers: { cookie: admin } }), ctx(device.id));
     expect(r.status).toBe(200);
     expect(tokenOf(((await r.json()) as { url: string }).url)).toBe(token);
     const [row] = await query<{ token_sealed: string }>("SELECT token_sealed FROM devices WHERE id = ?", [device.id]);
@@ -39,14 +39,14 @@ describe("display addresses", () => {
   it("refuses family members and people who aren't signed in", async () => {
     const { device } = await addDevice(LEGACY_ACCOUNT_ID, "Kitchen", null);
     const kid = await cookieFor("kid@example.com");
-    expect((await GET(req(`/api/admin/devices/${device.id}/`, { headers: { cookie: kid } }), ctx(device.id))).status).toBe(401);
-    expect((await GET(req(`/api/admin/devices/${device.id}/`), ctx(device.id))).status).toBe(401);
+    expect((await GET(req(`/api/household/devices/${device.id}/`, { headers: { cookie: kid } }), ctx(device.id))).status).toBe(401);
+    expect((await GET(req(`/api/household/devices/${device.id}/`), ctx(device.id))).status).toBe(401);
   });
 
   it("gives a display a new link and the old one stops working", async () => {
     const { device, token } = await addDevice(LEGACY_ACCOUNT_ID, "Kitchen", null);
     const admin = await cookieFor("admin@example.com");
-    const r = await POST(req(`/api/admin/devices/${device.id}/`, { method: "POST", headers: { cookie: admin } }), ctx(device.id));
+    const r = await POST(req(`/api/household/devices/${device.id}/`, { method: "POST", headers: { cookie: admin } }), ctx(device.id));
     const fresh = tokenOf(((await r.json()) as { url: string }).url);
     expect(fresh).toMatch(/^[A-Za-z0-9]{8}$/);
     expect(fresh).not.toBe(token);
@@ -91,8 +91,8 @@ describe("display addresses", () => {
     const { device } = await addDevice(LEGACY_ACCOUNT_ID, "Hall", null);
     await query("UPDATE devices SET token_sealed = NULL WHERE id = ?", [device.id]);
     const admin = await cookieFor("admin@example.com");
-    expect((await GET(req(`/api/admin/devices/${device.id}/`, { headers: { cookie: admin } }), ctx(device.id))).status).toBe(404);
-    const listed = await listDevices(req("/api/admin/devices/", { headers: { cookie: admin } }));
+    expect((await GET(req(`/api/household/devices/${device.id}/`, { headers: { cookie: admin } }), ctx(device.id))).status).toBe(404);
+    const listed = await listDevices(req("/api/household/devices/", { headers: { cookie: admin } }));
     const body = (await listed.json()) as { devices: { id: string; url: string | null }[] };
     expect(body.devices.find((d) => d.id === device.id)?.url).toBeNull();
   });

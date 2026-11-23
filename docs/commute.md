@@ -19,7 +19,7 @@ for traffic-aware routes after 5,000 a month.)
 The key stays on the server. Displays never see it, and they never see the addresses either: only the place names and
 drive times.
 
-## In the admin panel
+## In the household panel
 
 1. Settings › **Commute**: type your home address, tap **Find**, and pick the right match.
 2. For each place, type a name (Work, School), then its address, tap **Add** and pick the match. Optionally give it an

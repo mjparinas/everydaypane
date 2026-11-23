@@ -85,7 +85,7 @@ export function MusicPanel() {
 
   async function disconnect(service: "spotify" | "sonos") {
     setError("");
-    const r = await fetch(`/api/admin/music/?service=${service}`, { method: "DELETE" }).catch(() => null);
+    const r = await fetch(`/api/household/music/?service=${service}`, { method: "DELETE" }).catch(() => null);
     if (!r?.ok) setError("Couldn't disconnect that.");
     await loadMusic(true);
   }

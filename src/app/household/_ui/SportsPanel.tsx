@@ -34,7 +34,7 @@ export function SportsPanel() {
   useEffect(() => {
     if (!adding) return;
     let live = true;
-    fetch(`/api/admin/sports/?${new URLSearchParams({ league })}`)
+    fetch(`/api/household/sports/?${new URLSearchParams({ league })}`)
       .then(async (r) => {
         const body = (await r.json().catch(() => ({}))) as { teams?: TeamChoice[]; error?: string };
         if (!live) return;
