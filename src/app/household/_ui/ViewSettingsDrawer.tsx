@@ -9,6 +9,7 @@ import { SlideDrawer } from "./SlideDrawer";
 
 const GRID_PRESETS = [
   { value: "12x8", label: "12×8 (1080p)", cols: 12, rows: 8 },
+  { value: "8x12", label: "8×12 (portrait)", cols: 8, rows: 12 },
   { value: "10x6", label: "10×6", cols: 10, rows: 6 },
   { value: "16x9", label: "16×9", cols: 16, rows: 9 },
 ] as const;
@@ -64,7 +65,7 @@ export function ViewSettingsDrawer({
           ...GRID_PRESETS.map((p) => ({ value: p.value as GridPreset, label: p.label })),
           { value: "custom" as const, label: "Custom" },
         ]}
-        hint="12×8 fits a 1920 × 1080 wall screen."
+        hint="12×8 fits a 1920 × 1080 wall; 8×12 fits a tall tablet or fridge panel."
         onChange={(v) => {
           if (v === "custom") {
             setForceCustom(true);

@@ -5,7 +5,7 @@ import { currentPeriod, msUntilLocalTime, msUntilNextPeriod, scheduleUsesSun, su
 import { widgetVisible } from "@/lib/config/visibility";
 import { parseDraftMessage, previewReadyMessage } from "@/lib/display/draftMessage";
 import type { DisplayPayload, HaData, WeatherData } from "@/lib/display/types";
-import { diffWidgets, placeWidgets, sameStageGrid, stageGridStyle, type PlacedWidget } from "@/lib/display/viewDiff";
+import { diffWidgets, isPortraitView, placeWidgets, sameStageGrid, stageGridStyle, type PlacedWidget } from "@/lib/display/viewDiff";
 
 import { onAlarm, startAlarms } from "./alarm";
 import { alertStrip } from "./alerts";
@@ -170,8 +170,13 @@ function mountPlaced(placed: PlacedWidget, ctx: WidgetContext) {
   }
 }
 
+function applyStageOrientation(view: View) {
+  document.documentElement.classList.toggle("portrait-view", isPortraitView(view));
+}
+
 function rebuildStage(view: View, p: DisplayPayload, period: Period | null) {
   clearMounts();
+  applyStageOrientation(view);
   stage.style.cssText = stageGridStyle(view);
   const ctx = ctxFor(p);
   const widgets = view.widgets.filter((w) => widgetVisible(w, period));
@@ -283,7 +288,10 @@ function applyDraft(next: DisplayPayload) {
   if (!prevView || prevView.id !== view.id || mounts.size === 0 || ctxChanged || shown.period !== periodKey) {
     rebuildStage(view, payload, period);
   } else {
-    if (!sameStageGrid(prevView, view)) stage.style.cssText = stageGridStyle(view);
+    if (!sameStageGrid(prevView, view)) {
+      applyStageOrientation(view);
+      stage.style.cssText = stageGridStyle(view);
+    }
     applyWidgetDiff(prevVisible, nextVisible, payload);
   }
 

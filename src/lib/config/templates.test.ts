@@ -26,11 +26,16 @@ describe("view templates", () => {
     }
   });
 
-  it("keeps widgets on a 12×8 grid without overlapping (photos may sit underneath)", () => {
+  it("keeps widgets on the template grid without overlapping (photos may sit underneath)", () => {
     for (const t of VIEW_TEMPLATES) {
       const view = t.build();
-      expect(view.cols).toBe(12);
-      expect(view.rows).toBe(8);
+      if (t.orientation === "portrait") {
+        expect(view.cols, t.id).toBe(8);
+        expect(view.rows, t.id).toBe(12);
+      } else {
+        expect(view.cols, t.id).toBe(12);
+        expect(view.rows, t.id).toBe(8);
+      }
       for (const w of view.widgets) {
         expect(w.x + w.w, `${t.id} ${w.id} runs off columns`).toBeLessThanOrEqual(view.cols);
         expect(w.y + w.h, `${t.id} ${w.id} runs off rows`).toBeLessThanOrEqual(view.rows);
