@@ -97,7 +97,13 @@ export async function removeDevice(id: string): Promise<boolean> {
 export async function deviceForToken(token: string, now = Date.now()): Promise<Device | null> {
   // New links are exactly 8 alphanumerics; keep accepting the earlier 10-character and legacy base64url links.
   if (!/^(?:[A-Za-z0-9]{8}|[A-Za-z0-9]{10}|[A-Za-z0-9_-]{16,64})$/.test(token)) return null;
-  const rows = await query<Row>("SELECT * FROM devices WHERE token_hash = ?", [sha256(token)]);
+  return deviceForTokenHash(sha256(token), now);
+}
+
+/** Lookup by the token's SHA-256 (used by the short-lived display cookie for image routes). */
+export async function deviceForTokenHash(tokenHash: string, now = Date.now()): Promise<Device | null> {
+  if (!/^[a-f0-9]{64}$/.test(tokenHash)) return null;
+  const rows = await query<Row>("SELECT * FROM devices WHERE token_hash = ?", [tokenHash]);
   const row = rows[0];
   if (!row) return null;
   if (row.last_seen_at === null || now - Number(row.last_seen_at) > 60_000) {

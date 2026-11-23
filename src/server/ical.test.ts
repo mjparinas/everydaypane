@@ -9,7 +9,7 @@ import { cookieFor, req, useTestServer } from "@/test/server";
 import { clearMemoryCache } from "./cache";
 import { loadConfig, saveConfig } from "./config";
 import { addDevice } from "./devices";
-import { getIcalUrl, normaliseIcalUrl, parseIcal } from "./ical";
+import { checkIcal, getIcalUrl, normaliseIcalUrl, parseIcal } from "./ical";
 
 const link = { id: "school1", name: "School", color: "#16a34a" };
 const zone = "America/Vancouver";
@@ -111,6 +111,24 @@ describe("calendar links: reading iCal", () => {
     expect("error" in normaliseIcalUrl("https://192.168.1.10/a.ics")).toBe(true);
     expect("error" in normaliseIcalUrl("https://[::1]/a.ics")).toBe(true);
     expect("error" in normaliseIcalUrl("not a url")).toBe(true);
+  });
+});
+
+describe("ical download redirects", () => {
+  useTestServer();
+
+  it("refuses a public address that redirects onto a private host", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => {
+        const r = new Response("BEGIN:VCALENDAR\nEND:VCALENDAR", { headers: { "content-type": "text/calendar" } });
+        Object.defineProperty(r, "url", { value: "https://127.0.0.1/secret.ics" });
+        return r;
+      }),
+    );
+    await expect(checkIcal("https://attacker.example/cal.ics", "2026-11-01", "2026-12-01", "America/Vancouver")).rejects.toThrow(
+      /public https/i,
+    );
   });
 });
 

@@ -4,6 +4,7 @@ import { defaultConfig } from "@/lib/config/defaults";
 import { useTestServer } from "@/test/server";
 
 import { configVersion, loadConfig, saveConfig, touchConfig } from "./config";
+import { getSecret, setSecret } from "./secrets";
 
 describe("config store", () => {
   useTestServer();
@@ -37,5 +38,26 @@ describe("config store", () => {
     expect(await configVersion()).toBe(1);
     await touchConfig();
     expect(await configVersion()).toBe(2);
+  });
+
+  it("refuses a private Home Assistant address and clears secrets when the URL changes", async () => {
+    const c = defaultConfig();
+    c.integrations.homeAssistant.url = "https://ha.example.com";
+    expect(await saveConfig(c, 0)).toEqual({ ok: true, version: 1 });
+    await setSecret("homeAssistant.token", "ha-token");
+    await setSecret("homeAssistant.accessId", "cf-id");
+    await setSecret("homeAssistant.accessSecret", "cf-secret");
+
+    const bad = structuredClone((await loadConfig()).config);
+    bad.integrations.homeAssistant.url = "https://127.0.0.1:8123";
+    expect(await saveConfig(bad, 1)).toMatchObject({ ok: false, status: 422 });
+    expect(await getSecret("homeAssistant.token")).toBe("ha-token");
+
+    const moved = structuredClone((await loadConfig()).config);
+    moved.integrations.homeAssistant.url = "https://ha-evil.example.com";
+    expect(await saveConfig(moved, 1)).toEqual({ ok: true, version: 2 });
+    expect(await getSecret("homeAssistant.token")).toBeNull();
+    expect(await getSecret("homeAssistant.accessId")).toBeNull();
+    expect(await getSecret("homeAssistant.accessSecret")).toBeNull();
   });
 });
