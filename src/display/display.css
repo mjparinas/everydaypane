@@ -1589,12 +1589,38 @@ body {
 }
 .ha-toggle,
 .ha-light {
-  cursor: pointer;
   user-select: none;
 }
 .ha-toggle.on .ha-value,
 .ha-light.on .ha-value {
   color: var(--accent);
+}
+/* Whole-tile switch (a11y audit, 2026-11-22): still a big kitchen hit target, but a real control. */
+.ha-switch {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 0.4em;
+  align-items: stretch;
+  justify-content: flex-start;
+  width: 100%;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: inherit;
+  cursor: pointer;
+}
+.ha-switch:disabled {
+  cursor: default;
+}
+.ha-switch:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: calc(var(--radius) * 0.5);
 }
 .w-ha.dead {
   opacity: 0.55;
@@ -2623,4 +2649,27 @@ body {
 }
 .pr-home .pr-where {
   color: var(--text);
+}
+
+/* Reduced motion (a11y audit, 2026-11-22): keep the danger colour on a ringing timer / alarm, drop the blink. */
+@media (prefers-reduced-motion: reduce) {
+  .boot-logo,
+  .bell,
+  .ring,
+  .alert-strip.show {
+    animation: none;
+  }
+  .tm-ringing .tm-main,
+  .pm-ringing .pm-time {
+    animation: none;
+    background: var(--danger);
+    color: #fff;
+  }
+  .ring-flash {
+    animation: none;
+    opacity: 0.9;
+  }
+  .sp-flash {
+    animation: none;
+  }
 }

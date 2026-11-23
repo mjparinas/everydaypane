@@ -7,6 +7,7 @@ import { onAlarm, startAlarms } from "./alarm";
 import { alertStrip } from "./alerts";
 import { get, offline, onOfflineChange, post, PREVIEW, previewMode, setPreviewMode, subscribe, TOKEN } from "./api";
 import { h } from "./dom";
+import { attachModal } from "./modal";
 import { screenSaver, type Saver } from "./saver";
 import { mountWidget } from "./widgets";
 import { cameraLoop, HA_EVERY } from "./widgets/ha";
@@ -201,7 +202,9 @@ function ringDoor(cameraEntityId: string, seconds: number) {
   app.append(el);
   const stopCam = cameraLoop(img, cameraEntityId, 1000, () => undefined);
   const timer = window.setTimeout(() => closeRing?.(), seconds * 1000);
+  const detach = attachModal(el, () => closeRing?.());
   closeRing = () => {
+    detach();
     stopCam();
     window.clearTimeout(timer);
     el.remove();

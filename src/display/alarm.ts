@@ -1,4 +1,5 @@
 import { h } from "./dom";
+import { attachModal } from "./modal";
 
 // Alarms for the kitchen timers and the pomodoro (Melvin, 2026-11-21: "visual and sound alerts"). The alarms belong
 // to the screen, not to a widget: they are kept in localStorage and rung from here, so a timer still goes off when
@@ -29,6 +30,7 @@ const listeners = new Set<Listener>();
 let nextTimer: number | undefined;
 let soundTimer: number | undefined;
 let overlay: HTMLElement | null = null;
+let overlayDetach: (() => void) | null = null;
 let audio: AudioContext | undefined;
 let loaded = false;
 
@@ -101,27 +103,34 @@ function soundLoop() {
   soundTimer = window.setInterval(playBar, 1600);
 }
 
+function dismissOverlay() {
+  for (const key of [...ringing.keys()]) dismissAlarm(key);
+}
+
 function drawOverlay() {
   const shown = [...ringing.values()].filter((r) => r.alarm.fullScreen).map((r) => r.alarm.title);
   if (!shown.length) {
+    overlayDetach?.();
+    overlayDetach = null;
     overlay?.remove();
     overlay = null;
     return;
   }
+  const label = shown.length === 1 ? `${shown[0]}. Tap to stop.` : `${shown.join(", ")}. Tap to stop.`;
   const el = h(
     "div",
-    { class: "ring", role: "alertdialog", "aria-live": "assertive" },
+    { class: "ring", role: "alertdialog", "aria-label": label, "aria-live": "assertive" },
     h("div", { class: "ring-flash", "aria-hidden": "true" }),
     h("div", { class: "ring-icon", "aria-hidden": "true" }, "⏰"),
     ...shown.map((t) => h("div", { class: "ring-title" }, t)),
     h("div", { class: "ring-hint" }, "Tap to stop"),
   );
-  el.addEventListener("click", () => {
-    for (const key of [...ringing.keys()]) dismissAlarm(key);
-  });
+  el.addEventListener("click", dismissOverlay);
+  overlayDetach?.();
   if (overlay) overlay.replaceWith(el);
   else (document.getElementById("app") ?? document.body).append(el);
   overlay = el;
+  overlayDetach = attachModal(el, dismissOverlay);
 }
 
 function startRinging(a: Alarm, now: number) {
@@ -202,6 +211,8 @@ export function resetAlarms(): void {
   listeners.clear();
   window.clearTimeout(nextTimer);
   window.clearInterval(soundTimer);
+  overlayDetach?.();
+  overlayDetach = null;
   overlay?.remove();
   overlay = null;
   loaded = false;

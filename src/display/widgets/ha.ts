@@ -90,14 +90,33 @@ export const haEntity: Mount<"haEntity"> = (el, w) => {
     const note = message ? h("div", { class: "ha-msg" }, message) : null;
     root.classList.toggle("on", isOn(e));
     root.classList.toggle("dead", dead(e));
-    root.onclick = null;
 
     if (kind === "sensor") return fill(root, name, h("div", { class: "ha-value" }, stateText(e)));
 
     if (kind === "toggle" || kind === "light") {
-      // The whole tile is the switch: easy to hit from across the kitchen.
-      if (!dead(e)) root.onclick = () => void act("toggle");
-      const parts = [name, h("div", { class: "ha-value" }, stateText(e)), note];
+      // A real switch that still fills the tile (a11y audit, 2026-11-22): keyboard and AT can use it; brightness stays
+      // outside the button so we don't nest interactive controls.
+      const on = isOn(e);
+      const switchBtn = h(
+        "button",
+        {
+          type: "button",
+          class: "ha-switch",
+          role: "switch",
+          "aria-checked": on ? "true" : "false",
+          "aria-label": w.title || e.name,
+          disabled: dead(e) ? true : undefined,
+        },
+        name,
+        h("div", { class: "ha-value" }, stateText(e)),
+      );
+      if (!dead(e)) {
+        switchBtn.addEventListener("click", (ev) => {
+          ev.stopPropagation();
+          void act("toggle");
+        });
+      }
+      const parts = [switchBtn, note];
       if (kind === "light" && e.state === "on" && e.brightness !== undefined) {
         const pct = Math.max(1, Math.round((e.brightness / 255) * 100));
         const range = h("input", { type: "range", class: "ha-range", min: 1, max: 100, value: pct, "aria-label": "Brightness" });
