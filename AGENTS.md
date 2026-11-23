@@ -92,6 +92,12 @@ Literata; Displays tab tips for casting
 the `/d/…` URL; Vancouver clocks, dates, calendars and scheduled views stay on UTC−7 after B.C.'s March 2026 change
 even when the display browser has old time-zone data.
 
+**Marketing site** (public pages, Melvin, 2026-11-23): homepage at `/` (no longer redirects to admin), plus `/pricing/`,
+`/features/`, `/compare/` (and per-competitor pages), `/blog/` with RSS, `/privacy/`, `/terms/`, `/contact/`, `robots.ts` and
+`sitemap.ts`. Built like Tuned/Liftsmith (`src/components/site/`, Manrope display, CSS pane mocks — no personal photos in
+OG). Free vs **Household** pricing copy in `src/lib/marketingPlans.ts`; checkout uses the existing Stripe Household flow
+(`POST /api/admin/billing/?action=checkout`). Footer shows version + short commit with no GitHub link (`src/lib/build.ts`).
+
 **Alerts** (`src/server/alerts.ts`): Alert Ready (NAAD), **Environment Canada weather warnings** (through NAAD),
 DriveBC road events and weather conditions, Earthquakes Canada, BC Hydro power outages. Each switchable in `config.alerts.sources`.
 Optional email to everyone on `ADMIN_EMAILS` and `FAMILY_EMAILS` when a new strip-worthy alert arrives (`config.alerts.notifyEmail`).
@@ -143,6 +149,7 @@ npm run templates:previews  # regenerate public/templates/*.png from real widget
   everything. Melvin’s existing install is grandfathered on Household (`acct_legacy`). Stripe Checkout + Customer Portal
   + webhooks (`src/server/billing.ts`); signup at `/api/auth/signup/`.
 
+- **Marketing homepage** (Melvin, 2026-11-23): public marketing site at `/` with pricing, features, compare, blog, privacy and terms; paid plan marketed as Household (same Stripe `STRIPE_PRICE_ID` as admin billing).
 - **Features** (Melvin, 2026-11-17): photos (Amazon Photos, choosable by person), full Google Calendar (a today
  schedule view and a month calendar view), weather for the week with icons, clocks for Vancouver and Toronto, the date,
  a WiFi QR code, countdowns to holidays and birthdays, air quality, garbage pickup from the Township of Langley's

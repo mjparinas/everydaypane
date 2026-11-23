@@ -26,7 +26,10 @@ const nextConfig: NextConfig = {
     },
     { source: "/fonts/:file*", headers: [{ key: "Cache-Control", value: "public, max-age=31536000, immutable" }] },
   ],
-  env: { NEXT_PUBLIC_COMMIT_SHA: process.env.VERCEL_GIT_COMMIT_SHA ?? process.env.GITHUB_SHA ?? "" },
+  env: {
+    NEXT_PUBLIC_COMMIT_SHA: process.env.VERCEL_GIT_COMMIT_SHA ?? process.env.GITHUB_SHA ?? "",
+    NEXT_PUBLIC_APP_VERSION: process.env.npm_package_version ?? "0.1.0",
+  },
 };
 
 // Readable error reports: when SENTRY_AUTH_TOKEN, SENTRY_ORG and SENTRY_PROJECT are set at build time (Vercel's Sentry
