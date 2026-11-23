@@ -42,7 +42,7 @@ same change, and moves it out of **In progress** when it merges.
 | Music (`media`) | Now playing, play/pause, skip, volume, sources | Home Assistant, Spotify or Sonos |
 | Note (`note`) | Fixed text from the admin | Settings document |
 | Message board (`messages`) | Family notes from phones; optional **post from the wall** (`allowAdd`) | `messages` table |
-| Meals (`meals`) | Breakfast, lunch, dinner for a day or a week | `meals` table |
+| Meals (`meals`) | Breakfast, lunch, dinner for a day or a week; recurring cadences fill future days | `account_meals` + `account_meal_rules` |
 | Shopping list (`shopping`) | Groceries from phones; **tap to tick off** (`allowCheck`); optional **add from the wall** (`allowAdd`); optional bought items | `shopping` table |
 | Who's home (`presence`) | Who is home, from person and device tracker entities, read only | Home Assistant |
 | School status (`school`) | Open, closed, delayed or late start; optional school names | District status page (`config.school`) |
@@ -186,8 +186,8 @@ npm run templates:previews  # regenerate public/templates/*.png from real widget
 - **Added the same day** (Melvin, 2026-11-17): offline mode, admin sign-in by magic link through Resend, Sentry,
   burn-in protection, UniFi Protect video (cameras and doorbell pop-ups), a family message board, and emergency alerts.
 - **Music** (Melvin, 2026-11-17): Spotify and Sonos controls on the wall, through Home Assistant.
-- **Meal planning** (Melvin, 2026-11-17): breakfast, lunch and dinner for each day, planned from a phone and shown on
-  the wall (see Architecture).
+- **Meal planning** (Melvin, 2026-11-17; repeats 2026-11-23): breakfast, lunch and dinner for each day, with optional
+  recurring cadences (every weekday, every N days), planned from a phone and shown on the wall (see Architecture).
 - **Shopping list** (Melvin, 2026-11-22): groceries the family adds from their phones, shown on the wall, ticked off
   with a tap when the widget allows it (see Architecture).
 - **Whiteboard** (Melvin, 2026-11-22): a simple shared doodle on the wall — a few colours, finger draw, eraser, hold
@@ -381,12 +381,15 @@ panel can be complex if you need it to be."
   (`src/server/whiteboard.ts`), strokes on a fixed 1600×900 board so every tile letterboxes the same doodle. Displays
   poll `/api/display/whiteboard/` every three seconds; a stroke posts on finger-up and Clear posts after an 800 ms hold.
   No brush sizes, undo or sync from phones.
-- **Meal planning** (Melvin, 2026-11-17: "add meal planning", with breakfast, lunch and dinner for each day): one row
-  per day and meal in the `meals` table (`src/server/meals.ts`), planned by anyone on `ADMIN_EMAILS` or `FAMILY_EMAILS`
-  from the admin panel's Meals tab or `/family/`, or from `/d/<token>/edit/` with the display token. A meal saves when
-  its box loses focus (not with the settings Save button, since it isn't part of the settings document), and recent
-  meals are offered as suggestions. The meals widget shows one day (the next meal highlighted; from 8 PM it shows
-  tomorrow, `nextMeal` in `src/lib/meals.ts`) or up to a week, and polls `/api/display/meals/` every minute. Plans older
+- **Meal planning** (Melvin, 2026-11-17: "add meal planning"; repeats Melvin, 2026-11-23: cereal every Monday, eggs
+  every Tuesday, every N days): one-off rows in `account_meals` and recurring rules in `account_meal_rules`
+  (`src/server/meals.ts`), planned by anyone on `ADMIN_EMAILS` or `FAMILY_EMAILS` from the admin panel's Meals tab or
+  `/family/`, or from `/d/<token>/edit/` with the display token. A meal saves when its box loses focus (not with the
+  settings Save button, since it isn't part of the settings document); a Repeat control sets a weekday cadence or every
+  N days (1–14), and rules expand at read time into the week the planner and wall see. A one-off for that day wins; clearing
+  a rule-filled day stores a skip for that day only; Stop removes the series. Recent meals (including rule text) are
+  offered as suggestions. The meals widget shows one day (the next meal highlighted; from 8 PM it shows tomorrow,
+  `nextMeal` in `src/lib/meals.ts`) or up to a week, and polls `/api/display/meals/` every minute. One-off plans older
   than 60 days are cleared as new ones are written.
 - **Shopping list** (Melvin, 2026-11-22): one row per item in the `shopping` table (`src/server/shopping.ts`), added by
   anyone on `ADMIN_EMAILS` or `FAMILY_EMAILS` from `/family/` or the admin panel's Shopping tab, or from
