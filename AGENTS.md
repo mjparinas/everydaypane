@@ -73,9 +73,10 @@ grouped with a sticky jump nav and `#settings/…` deep links; bounded numbers u
 min–max (not browser number arrows). Views default to a **12×8** grid with gap 16 / edge 14 / tile 16 for the
 1920×1080 UC-Display21, with one-tap grid presets and a grouped widget picker. The Views tab embeds one **live
 editable layout** (the real display under a transparent drag overlay, working copy over `postMessage` before Save);
-tapping a widget opens its settings in a **right slide-out** so the preview stays visible; "This view" sits underneath.
-Draft edits patch widgets in place instead of remounting the whole stage. View previews can force day or night with
-`?mode=`, and a quiet Day/Night control on the preview swaps without reloading.
+tapping a widget opens its settings in a **right slide-out**, and **Edit view** (on the view tabs row) opens the same
+kind of drawer for name, grid, gap, edge, tile and theme so the preview stays visible. Draft edits patch widgets in
+place instead of remounting the whole stage. View previews can force day or night with `?mode=`, and a quiet Day/Night
+control on the preview swaps without reloading.
 
 **Integrations connected from Settings:** Google Calendar, Google Tasks, Google Photos (Picker), iCal calendar links,
 Amazon Photos, the photo library (Vercel Blob), Home Assistant (Cloudflare Tunnel + Access), Spotify, Sonos, garbage
@@ -127,10 +128,10 @@ node scripts/e2e.mjs   # Playwright browser tests against the build (CHROMIUM_PA
   ok"). Every display asks for the settings version every 30 seconds (a tiny request answered with 304 when nothing
   changed) and reloads its settings when it moves. No WebSocket or push service. The Views tab's live preview is the
   exception: it shows the unsaved working copy over `postMessage` and never pushes that draft to wall screens.
-- **Live views editor** (Melvin, 2026-11-22: the view loaded in the UI, changes live; then one surface with a right
-  settings drawer, not two stacks): the Views tab shows one live editable layout (real widgets under a drag overlay),
-  opens widget settings in a right slide-out, then "This view". Draft `postMessage` updates patch cells in place
-  (`src/lib/display/viewDiff.ts`) so a setting tweak does not remount every widget.
+- **Live views editor** (Melvin, 2026-11-22: the view loaded in the UI, changes live; then one surface with right
+  settings drawers, not two stacks): the Views tab shows one live editable layout (real widgets under a drag overlay);
+  widget settings and view settings (Edit view) each open in a right slide-out. Draft `postMessage` updates patch cells
+  in place (`src/lib/display/viewDiff.ts`) so a setting tweak does not remount every widget.
 - **Logo** (Melvin asked for one, 2026-11-17): a rounded blue square holding three panes (a tall white one with clock
   hands, an amber "sun" pane, a pale one), and the wordmark "everyday**pane**" in Manrope 800 with "pane" in the brand
   blue. Sources are SVGs in `public/brand/` (mark, simplified 16–32 px favicon, maskable, light and dark wordmarks);
@@ -236,7 +237,8 @@ panel can be complex if you need it to be."
   document. The overlay drags with pointer events (mouse and touch), resizes from any of a widget's four corners with
   the opposite corner held still (Melvin, 2026-11-21: "allow any corner of a widget to adjust the size"), and also moves
   and resizes with the keyboard; widgets never leave the grid and never overlap, except that other widgets may sit on
-  top of a photos widget (`src/lib/config/grid.ts`). Tapping a widget opens `WidgetSettingsDrawer` from the right.
+  top of a photos widget (`src/lib/config/grid.ts`). Tapping a widget opens `WidgetSettingsDrawer` from the right; Edit
+  view opens `ViewSettingsDrawer` (shared `SlideDrawer` chrome).
 - **Widgets over photos** (Melvin, 2026-11-21: "allow other widgets to be placed on top of the photos widget"): photos
   widgets are a backdrop layer. Any other widget may cover one; two photos widgets, or two widgets on top, still never
   overlap. A new widget goes in empty cells first and lands on the photos only when nothing else is free. The display
