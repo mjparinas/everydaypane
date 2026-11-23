@@ -202,7 +202,8 @@ export const widgetSchema = z.discriminatedUnion("type", [
     ...base,
     type: z.literal("messages"),
     count: z.number().int().min(1).max(20),
-    allowAdd: z.boolean(),
+    // Off by default: anyone at the kitchen screen can post when it is on (Melvin, 2026-11-23).
+    allowAdd: z.boolean().default(false),
   }),
   // The meal plan (stored in the meals table): today's meals, or the days ahead, showing the chosen meals.
   z.object({
@@ -339,7 +340,8 @@ export const widgetSchema = z.discriminatedUnion("type", [
     type: z.literal("shopping"),
     count: z.number().int().min(1).max(40),
     allowCheck: z.boolean(),
-    allowAdd: z.boolean(),
+    // Off by default: anyone at the kitchen screen can add when it is on (Melvin, 2026-11-23).
+    allowAdd: z.boolean().default(false),
     showDone: z.boolean(),
   }),
   // Who's home (Melvin, 2026-11-22): Home Assistant person / device_tracker / presence entities, read-only.
