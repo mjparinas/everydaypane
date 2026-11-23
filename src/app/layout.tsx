@@ -1,12 +1,19 @@
 import type { Metadata, Viewport } from "next";
 import { connection } from "next/server";
 
+import "@fontsource-variable/manrope/wght.css";
+import "@fontsource-variable/inter/wght.css";
+
+import { SITE_URL } from "@/lib/site";
+
 import "./globals.css";
 
 export const metadata: Metadata = {
   title: { default: "Everydaypane", template: "%s · Everydaypane" },
-  description: "Your home, at a glance.",
-  robots: { index: false, follow: false },
+  description: "Your home, at a glance. A wall dashboard for the family kitchen.",
+  metadataBase: new URL(SITE_URL),
+  // Marketing pages set index:true via pageMeta; admin/family/sign-in stay noindex in their layouts.
+  robots: { index: true, follow: true },
   // File conventions (app/favicon.ico, icon.svg, apple-icon.png) cover the defaults; these add every
   // size phones, tablets and pinned tabs ask for (Melvin, 2026-11-23).
   icons: {
