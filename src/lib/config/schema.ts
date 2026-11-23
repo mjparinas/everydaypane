@@ -3,6 +3,7 @@ import { z } from "zod";
 import { EARTH_OVERLAYS, EARTH_ZOOMS } from "../earth";
 import { FERRY_ROUTES } from "../ferries";
 import { MEAL_SLOTS } from "../meals";
+import { NEWS_PRESETS } from "../newsPresets";
 import { SCREEN_SAVER_OFF } from "../screenSaver";
 import { LEAGUE_IDS, MAX_TEAMS } from "../sports";
 import { PERIODS } from "./periods";
@@ -426,6 +427,119 @@ export const widgetSchema = z.discriminatedUnion("type", [
   // Kitchen whiteboard (Melvin, 2026-11-22): finger draw with a few colours and an eraser; one shared doodle on
   // every display (src/server/whiteboard.ts). Wider tiles show more colours. Hold Clear to wipe.
   z.object({ ...base, type: z.literal("whiteboard") }),
+  // ---- Phase 5 (Household): finance, content, social and embeds (Melvin, 2026-11-23) ----
+  z.object({
+    ...base,
+    type: z.literal("stocks"),
+    symbols: z.array(z.string().trim().min(1).max(12)).max(12),
+    count: z.number().int().min(1).max(12),
+    showChange: z.boolean().default(true),
+  }),
+  z.object({
+    ...base,
+    type: z.literal("crypto"),
+    coins: z.array(z.string().trim().min(2).max(24)).max(12),
+    vs: z.string().trim().length(3).default("cad"),
+    count: z.number().int().min(1).max(12),
+  }),
+  z.object({
+    ...base,
+    type: z.literal("fx"),
+    pairs: z
+      .array(z.object({ base: z.string().trim().length(3), quote: z.string().trim().length(3) }))
+      .max(8)
+      .default([]),
+    count: z.number().int().min(1).max(8),
+  }),
+  z.object({
+    ...base,
+    type: z.literal("ynab"),
+    showAccounts: z.boolean().default(true),
+    showCategories: z.boolean().default(true),
+    count: z.number().int().min(1).max(12),
+  }),
+  z.object({
+    ...base,
+    type: z.literal("tradingView"),
+    symbol: z.string().trim().min(1).max(32).default("TSX:RY"),
+    interval: z.enum(["D", "60", "30", "15", "5", "1"]).default("D"),
+    style: z.enum(["0", "1", "2", "3"]).default("1"),
+    theme: z.enum(["auto", "light", "dark"]).default("auto"),
+  }),
+  z.object({
+    ...base,
+    type: z.literal("fitbit"),
+    showSteps: z.boolean().default(true),
+    showSleep: z.boolean().default(true),
+    showHeart: z.boolean().default(true),
+  }),
+  z.object({ ...base, type: z.literal("emailCount"), label: z.string().max(40).default("Gmail") }),
+  z.object({
+    ...base,
+    type: z.literal("rss"),
+    feeds: z.array(z.object({ id, name: z.string().trim().min(1).max(60), url: z.url() })).max(6),
+    count: z.number().int().min(1).max(20),
+  }),
+  z.object({
+    ...base,
+    type: z.literal("news"),
+    source: z.enum(["preset", "custom", "gnews"]).default("preset"),
+    presetId: z.enum(NEWS_PRESETS.map((p) => p.id) as [string, ...string[]]).default("cbc-bc"),
+    customUrl: z.string().max(500).default(""),
+    query: z.string().max(80).default(""),
+    count: z.number().int().min(1).max(20),
+  }),
+  z.object({ ...base, type: z.literal("dadJoke"), familyFriendly: z.boolean().default(true) }),
+  z.object({
+    ...base,
+    type: z.literal("quotes"),
+    tags: z.array(z.string().trim().min(1).max(40)).max(6),
+    count: z.number().int().min(1).max(8),
+  }),
+  z.object({
+    ...base,
+    type: z.literal("instagram"),
+    embedUrl: z.string().max(500).default(""),
+  }),
+  z.object({
+    ...base,
+    type: z.literal("trello"),
+    boardId: z.string().max(32).default(""),
+    listCount: z.number().int().min(1).max(8).default(4),
+    cardCount: z.number().int().min(1).max(12).default(6),
+  }),
+  z.object({
+    ...base,
+    type: z.literal("slack"),
+    channelIds: z.array(z.string().max(32)).max(6),
+    mode: z.enum(["unread", "latest"]).default("latest"),
+    count: z.number().int().min(1).max(15).default(8),
+  }),
+  z.object({
+    ...base,
+    type: z.literal("youtube"),
+    mode: z.enum(["video", "playlist"]).default("video"),
+    videoId: z.string().trim().max(64).default(""),
+    autoplay: z.boolean().default(false),
+  }),
+  z.object({
+    ...base,
+    type: z.literal("vimeo"),
+    videoId: z.string().trim().max(32).default(""),
+    autoplay: z.boolean().default(false),
+  }),
+  z.object({
+    ...base,
+    type: z.literal("airports"),
+    codes: z.array(z.string().trim().min(3).max(4)).max(6),
+    showMetar: z.boolean().default(true),
+  }),
+  z.object({
+    ...base,
+    type: z.literal("maps"),
+    query: z.string().trim().min(1).max(200).default("Langley, BC"),
+    zoom: z.number().int().min(1).max(20).default(12),
+  }),
 ]);
 export type Widget = z.infer<typeof widgetSchema>;
 export type WidgetType = Widget["type"];
@@ -722,6 +836,27 @@ export const configSchema = z
           }),
         })
         .default({ tempest: {}, weatherUnderground: { stationId: "" }, menus: { slug: "", schoolName: "" } }),
+      // Phase 5 integrations (Household): OAuth tokens live in secrets (src/server/secrets.ts).
+      ynab: z
+        .object({
+          budgetId: z.string().max(64).default(""),
+          budgetName: z.string().max(80).default(""),
+        })
+        .default({ budgetId: "", budgetName: "" }),
+      trello: z
+        .object({
+          boardId: z.string().max(32).default(""),
+          boardName: z.string().max(80).default(""),
+        })
+        .default({ boardId: "", boardName: "" }),
+      slack: z
+        .object({
+          channels: z
+            .array(z.object({ id: z.string().max(32), name: z.string().max(80) }))
+            .max(30)
+            .default([]),
+        })
+        .default({ channels: [] }),
     }),
   })
   .superRefine((config, ctx) => {

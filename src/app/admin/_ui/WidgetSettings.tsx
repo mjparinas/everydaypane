@@ -1245,6 +1245,94 @@ function TypeSettings({
         </>
       );
     }
+    case "stocks": {
+      const e = edit<"stocks">();
+      return (
+        <>
+          <Text
+            label="Symbols (comma-separated)"
+            value={w.symbols.join(", ")}
+            maxLength={120}
+            onChange={(v) =>
+              e(
+                (x) =>
+                  void (x.symbols = v
+                    .split(/[,\s]+/)
+                    .filter(Boolean)
+                    .slice(0, 12)),
+              )
+            }
+          />
+          <Stepper label="Rows" value={w.count} min={1} max={12} onChange={(v) => e((x) => void (x.count = v))} />
+          <Toggle label="Show daily change %" checked={w.showChange} onChange={(v) => e((x) => void (x.showChange = v))} />
+        </>
+      );
+    }
+    case "crypto": {
+      const e = edit<"crypto">();
+      return (
+        <>
+          <Text
+            label="CoinGecko ids"
+            value={w.coins.join(", ")}
+            maxLength={200}
+            onChange={(v) =>
+              e(
+                (x) =>
+                  void (x.coins = v
+                    .split(/[,\s]+/)
+                    .filter(Boolean)
+                    .slice(0, 12)),
+              )
+            }
+          />
+          <Text label="Quote currency" value={w.vs} maxLength={3} onChange={(v) => e((x) => void (x.vs = v.toLowerCase().slice(0, 3)))} />
+        </>
+      );
+    }
+    case "tradingView": {
+      const e = edit<"tradingView">();
+      return <Text label="Symbol" value={w.symbol} maxLength={32} onChange={(v) => e((x) => void (x.symbol = v))} />;
+    }
+    case "maps": {
+      const e = edit<"maps">();
+      return (
+        <>
+          <Text label="Place or query" value={w.query} maxLength={200} onChange={(v) => e((x) => void (x.query = v))} />
+          <Stepper label="Zoom" value={w.zoom} min={1} max={20} onChange={(v) => e((x) => void (x.zoom = v))} />
+        </>
+      );
+    }
+    case "youtube":
+    case "vimeo": {
+      const e = edit<"youtube" | "vimeo">();
+      return <Text label="Video or playlist id" value={w.videoId} maxLength={64} onChange={(v) => e((x) => void (x.videoId = v))} />;
+    }
+    case "instagram": {
+      const e = edit<"instagram">();
+      return (
+        <>
+          <Text label="Post URL" value={w.embedUrl} maxLength={500} type="url" onChange={(v) => e((x) => void (x.embedUrl = v))} />
+          <p className="text-xs text-soft">Public post or reel links only. Profile grids need Meta app review.</p>
+        </>
+      );
+    }
+    case "rss":
+    case "news":
+    case "dadJoke":
+    case "quotes":
+    case "fx":
+    case "ynab":
+    case "fitbit":
+    case "emailCount":
+    case "trello":
+    case "slack":
+    case "airports":
+      return (
+        <p className="text-xs text-soft">
+          More options are in Settings › Content &amp; finance. Save the dashboard when you change integrations.
+        </p>
+      );
     case "whiteboard":
       return (
         <p className="text-xs text-soft">

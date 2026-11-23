@@ -1,6 +1,6 @@
 // Security headers on every response. The display needs camera snapshots and photos from our own origin only
 // (they're proxied), so img-src stays 'self' plus data: and blob: for the QR code and offline copies. The one page from
-// elsewhere is the earth wind map widget's frame (src/lib/earth.ts), so frame-src names that site; 'self' is also
+// Earth, TradingView, YouTube, Vimeo, Google Maps and Instagram embeds need their origins in frame-src; 'self' is also
 // allowed so the admin Views tab can embed /admin/preview/ (Melvin, 2026-11-22: live draft preview).
 //
 // script-src never allows 'unsafe-inline': Next.js pages get a per-request nonce from proxy.ts; the display shell only
@@ -28,7 +28,18 @@ export function contentSecurityPolicy(opts: {
     "img-src 'self' data: blob:",
     "font-src 'self'",
     "connect-src 'self' https://*.ingest.sentry.io https://*.ingest.us.sentry.io",
-    "frame-src 'self' https://earth.nullschool.net",
+    [
+      "frame-src 'self'",
+      "https://earth.nullschool.net",
+      "https://s.tradingview.com",
+      "https://www.tradingview-widget.com",
+      "https://www.youtube.com",
+      "https://www.youtube-nocookie.com",
+      "https://player.vimeo.com",
+      "https://www.google.com",
+      "https://maps.google.com",
+      "https://www.instagram.com",
+    ].join(" "),
     "worker-src 'self'",
     "manifest-src 'self'",
     `frame-ancestors ${opts.frameAncestors ?? "'none'"}`,

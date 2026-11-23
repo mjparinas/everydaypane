@@ -19,6 +19,26 @@ import { menus } from "./menus";
 import { messages } from "./messages";
 import { note } from "./note";
 import { packages } from "./packages";
+import {
+  airports,
+  crypto,
+  dadJoke,
+  emailCount,
+  fitbit,
+  fx,
+  instagram,
+  maps,
+  news,
+  quotes,
+  rss,
+  slack,
+  stocks,
+  tradingView,
+  trello,
+  vimeo,
+  ynab,
+  youtube,
+} from "./phase5";
 import { photos } from "./photos";
 import { pomodoro } from "./pomodoro";
 import { presence } from "./presence";
@@ -121,6 +141,42 @@ export function mountWidget(el: HTMLElement, w: Widget, ctx: WidgetContext): Cle
       return school(el, w, ctx);
     case "whiteboard":
       return whiteboard(el, w, ctx);
+    case "stocks":
+      return stocks(el, w, ctx);
+    case "crypto":
+      return crypto(el, w, ctx);
+    case "fx":
+      return fx(el, w, ctx);
+    case "ynab":
+      return ynab(el, w, ctx);
+    case "tradingView":
+      return tradingView(el, w, ctx);
+    case "fitbit":
+      return fitbit(el, w, ctx);
+    case "emailCount":
+      return emailCount(el, w, ctx);
+    case "rss":
+      return rss(el, w, ctx);
+    case "news":
+      return news(el, w, ctx);
+    case "dadJoke":
+      return dadJoke(el, w, ctx);
+    case "quotes":
+      return quotes(el, w, ctx);
+    case "instagram":
+      return instagram(el, w, ctx);
+    case "trello":
+      return trello(el, w, ctx);
+    case "slack":
+      return slack(el, w, ctx);
+    case "youtube":
+      return youtube(el, w, ctx);
+    case "vimeo":
+      return vimeo(el, w, ctx);
+    case "airports":
+      return airports(el, w, ctx);
+    case "maps":
+      return maps(el, w, ctx);
     default:
       // A widget type with no screen yet (still being built) leaves an empty cell instead of crashing the dashboard.
       return () => undefined;

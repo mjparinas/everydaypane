@@ -518,3 +518,134 @@ export interface MenusFeedData {
   updatedAt: number;
   byWidget: Record<string, MenusData>;
 }
+
+/** Stock quote (Phase 5, src/server/stocks.ts). */
+export interface StockQuote {
+  symbol: string;
+  price: number;
+  change: number;
+  changePct: number;
+  currency: string;
+}
+
+export interface StocksData {
+  updatedAt: number;
+  stale?: boolean;
+  quotes: Record<string, StockQuote>;
+}
+
+export interface CryptoQuote {
+  id: string;
+  currency: string;
+  price: number;
+  changePct: number;
+}
+
+export interface CryptoData {
+  updatedAt: number;
+  stale?: boolean;
+  quotes: Record<string, CryptoQuote>;
+}
+
+export interface FxRate {
+  base: string;
+  quote: string;
+  rate: number;
+  date: string;
+}
+
+export interface FxData {
+  updatedAt: number;
+  stale?: boolean;
+  rates: FxRate[];
+}
+
+export interface YnabData {
+  updatedAt: number;
+  stale?: boolean;
+  connected: boolean;
+  budgetName: string;
+  accounts: { name: string; balance: number }[];
+  categories: { name: string; balance: number }[];
+}
+
+export interface FitbitData {
+  updatedAt: number;
+  stale?: boolean;
+  connected: boolean;
+  steps: number;
+  sleepMinutes: number;
+  restingHeartRate?: number;
+}
+
+export interface EmailCountData {
+  updatedAt: number;
+  stale?: boolean;
+  connected: boolean;
+  unread: number;
+}
+
+export interface RssItem {
+  title: string;
+  link: string;
+  feed?: string;
+}
+
+export interface RssData {
+  updatedAt: number;
+  stale?: boolean;
+  items: RssItem[];
+}
+
+export interface DadJokeData {
+  updatedAt: number;
+  stale?: boolean;
+  joke: string;
+}
+
+export interface QuotesData {
+  updatedAt: number;
+  stale?: boolean;
+  quotes: { text: string; author: string }[];
+}
+
+export interface TrelloList {
+  name: string;
+  cards: string[];
+}
+
+export interface TrelloData {
+  updatedAt: number;
+  stale?: boolean;
+  connected: boolean;
+  boardName: string;
+  lists: TrelloList[];
+}
+
+export interface SlackLine {
+  channelId: string;
+  text: string;
+}
+
+export interface SlackData {
+  updatedAt: number;
+  stale?: boolean;
+  connected: boolean;
+  unreadMentions: number;
+  lines: SlackLine[];
+}
+
+export interface AirportRow {
+  code: string;
+  summary: string;
+  temp?: number;
+  wind?: number;
+  category: string;
+  delays: string[];
+}
+
+export interface AirportsData {
+  updatedAt: number;
+  stale?: boolean;
+  airports: AirportRow[];
+}

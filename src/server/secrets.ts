@@ -25,6 +25,10 @@ export type SecretKey =
   | "microsoft.refreshToken"
   | "microsoft.scopes"
   | "todoist.refreshToken"
+  | "ynab.token"
+  | "fitbit.refreshToken"
+  | "slack.token"
+  | "trello.token"
   | "dropbox.refreshToken"
   | "box.refreshToken"
   | "flickr.refreshToken"
@@ -75,6 +79,10 @@ export async function secretsSet(accountId: string): Promise<Record<SecretKey, b
     "microsoft.refreshToken": set.has("microsoft.refreshToken"),
     "microsoft.scopes": set.has("microsoft.scopes"),
     "todoist.refreshToken": set.has("todoist.refreshToken"),
+    "ynab.token": set.has("ynab.token"),
+    "fitbit.refreshToken": set.has("fitbit.refreshToken"),
+    "slack.token": set.has("slack.token"),
+    "trello.token": set.has("trello.token"),
     "dropbox.refreshToken": set.has("dropbox.refreshToken"),
     "box.refreshToken": set.has("box.refreshToken"),
     "flickr.refreshToken": set.has("flickr.refreshToken"),

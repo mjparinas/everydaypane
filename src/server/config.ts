@@ -133,6 +133,9 @@ export function upgrade(stored: unknown): unknown {
       if (typeof sh.weatherUnderground !== "object" || sh.weatherUnderground === null) sh.weatherUnderground = dh.weatherUnderground;
       if (typeof sh.menus !== "object" || sh.menus === null) sh.menus = dh.menus;
     }
+    if (typeof ig.ynab !== "object" || ig.ynab === null) ig.ynab = di.ynab;
+    if (typeof ig.trello !== "object" || ig.trello === null) ig.trello = di.trello;
+    if (typeof ig.slack !== "object" || ig.slack === null) ig.slack = di.slack;
   }
   if (Array.isArray(out.views)) {
     out.views = out.views.map((view) => {

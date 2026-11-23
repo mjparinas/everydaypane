@@ -60,6 +60,24 @@ same change, and moves it out of **In progress** when it merges.
 | Pomodoro (`pomodoro`) | Focus and break rounds, long break after the last round, optional auto-start, chime between phases | Device (localStorage) |
 | BC Ferries (`ferries`) | Next sailings on up to four routes, how full each is, cancellations and delays | Community BC Ferries API (bcferriesapi.ca) |
 | Earth wind map (`earth`) | earth.nullschool.net's animated wind globe centred on any place, four zooms, a colour layer (temperature, rain, humidity…), place marker, animation on or off | earth.nullschool.net (framed), Open-Meteo place search |
+| Stocks (`stocks`) | Watchlist quotes with daily change | Yahoo Finance (unofficial) or Finnhub with `FINNHUB_API_KEY` |
+| Crypto (`crypto`) | Coin prices and 24 h change | CoinGecko free API |
+| FX (`fx`) | Currency pair rates | Frankfurter / ECB |
+| YNAB (`ynab`) | Budget name, on-budget accounts and categories | YNAB API (token or OAuth) |
+| TradingView (`tradingView`) | Chart iframe for a symbol | s.tradingview.com (framed) |
+| Fitbit (`fitbit`) | Steps, sleep and resting heart rate today | Fitbit OAuth |
+| Gmail unread (`emailCount`) | Inbox unread count | Google `gmail.readonly` add-on scope |
+| RSS (`rss`) | Headlines from chosen feed URLs | Server fetch + trim |
+| News (`news`) | CBC/BBC presets, custom RSS or GNews | RSS or `GNEWS_API_KEY` |
+| Dad joke (`dadJoke`) | One joke, family-friendly option | icanhazdadjoke.com |
+| Quotes (`quotes`) | Short quotations with authors | quotable.io |
+| Instagram (`instagram`) | Public post embed (not profiles) | instagram.com embed iframe |
+| Trello (`trello`) | Lists and open cards on a board | Trello REST (`TRELLO_API_KEY` + token) |
+| Slack (`slack`) | Latest messages from channels | Slack OAuth (read-only) |
+| YouTube (`youtube`) | Video or playlist embed | youtube.com iframe |
+| Vimeo (`vimeo`) | Video embed | player.vimeo.com iframe |
+| Airports (`airports`) | METAR summary per ICAO code; optional delays | Aviation Weather; Aviationstack with `AIRPORT_API_KEY` |
+| Google Maps (`maps`) | Map for a place query | google.com/maps embed iframe |
 
 **Display behaviour:** several views on a drag-and-drop grid (chosen rows and columns, gap, edge padding and **tile padding**), **per-widget visibility by part of day** (`visiblePeriods`), optional **view loop** on schedule followers (`schedule.loopSeconds`), **widgets layered on top of a photos widget**
 (photos as the backdrop), **per-widget background** (on/off and opacity; theme surface opacity is the default; clocks and dates start with no panel), a time-of-day schedule
