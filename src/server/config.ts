@@ -4,6 +4,8 @@ import { defaultConfig } from "@/lib/config/defaults";
 import { configSchema, type DashboardConfig } from "@/lib/config/schema";
 
 import { query, run } from "./db";
+import { publicHaUrl, sameHaUrl } from "./haUrl";
+import { setSecret } from "./secrets";
 
 export interface StoredConfig {
   config: DashboardConfig;
@@ -37,22 +39,36 @@ export type SaveResult = { ok: true; version: number } | { ok: false; status: 40
 export async function saveConfig(input: unknown, baseVersion: number, now = Date.now()): Promise<SaveResult> {
   const parsed = configSchema.safeParse(input);
   if (!parsed.success) return { ok: false, status: 422, error: "The dashboard settings aren't valid", issues: parsed.error.issues };
+  const haUrl = parsed.data.integrations.homeAssistant.url;
+  if (haUrl && !publicHaUrl(haUrl)) {
+    return { ok: false, status: 422, error: "Home Assistant needs a public https address." };
+  }
+  const previous = await loadConfig();
   const json = JSON.stringify(parsed.data);
+  let version: number | null = null;
   if (baseVersion === 0) {
     const inserted = await run("INSERT INTO config (id, json, version, updated_at) VALUES (1, ?, 1, ?) ON CONFLICT (id) DO NOTHING", [
       json,
       now,
     ]);
-    if (inserted === 1) return { ok: true, version: 1 };
+    if (inserted === 1) version = 1;
   } else {
     const updated = await run("UPDATE config SET json = ?, version = version + 1, updated_at = ? WHERE id = 1 AND version = ?", [
       json,
       now,
       baseVersion,
     ]);
-    if (updated === 1) return { ok: true, version: baseVersion + 1 };
+    if (updated === 1) version = baseVersion + 1;
   }
-  return { ok: false, status: 409, error: "Someone else changed the dashboard. Reload to see their changes." };
+  if (version === null) return { ok: false, status: 409, error: "Someone else changed the dashboard. Reload to see their changes." };
+  // Changing a set HA address must not keep sending the stored token to a new host (backup restore or a pasted URL).
+  const prevHa = previous.config.integrations.homeAssistant.url;
+  if (prevHa && !sameHaUrl(prevHa, haUrl)) {
+    await setSecret("homeAssistant.token", null, now);
+    await setSecret("homeAssistant.accessId", null, now);
+    await setSecret("homeAssistant.accessSecret", null, now);
+  }
+  return { ok: true, version };
 }
 
 /** Bumps the version without changing the document, so displays reload (e.g. after a device is reassigned). */

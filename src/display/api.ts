@@ -89,9 +89,12 @@ export async function sendExplained(path: string, payload: unknown): Promise<str
   }
 }
 
-/** Image URLs can't send headers, so they carry the token as ?t= (only our own routes read it). */
+/**
+ * Image URLs for `<img src>`. Auth is the short-lived `ep_display` cookie (set when `/d/<token>/` opens) or an admin
+ * session cookie in preview — never the long-lived device token in the query string (CDN/access logs).
+ */
 export function imageUrl(path: string, params: Record<string, string>): string {
-  return apiUrl(path, TOKEN ? { ...params, t: TOKEN } : params);
+  return apiUrl(path, params);
 }
 
 // ---- Shared data feeds: widgets of the same kind share one fetch and one timer. ----

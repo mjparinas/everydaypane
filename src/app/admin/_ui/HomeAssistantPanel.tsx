@@ -55,7 +55,11 @@ export function HomeAssistantPanel() {
         value={ha.url}
         maxLength={200}
         placeholder="https://ha.getliftsmith.com"
-        hint={unsaved ? "Save to use the new address, then test again." : undefined}
+        hint={
+          unsaved
+            ? "Saving a new address clears the token and Access pair so they aren't sent to the wrong place. Enter them again after save."
+            : undefined
+        }
         onChange={(v) => edit((c) => void (c.integrations.homeAssistant.url = v.trim()))}
       />
 

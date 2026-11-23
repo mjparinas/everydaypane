@@ -273,7 +273,7 @@ panel can be complex if you need it to be."
   password; the settings document keeps only `integrations.icals` (name, colour, on/off). The server reads each link
   with ical.js (recurring events, exceptions and the file's own time zones; floating times in the dashboard's zone),
   caches it 15 minutes, and merges it into the same calendar feed as Google (`src/server/calendars.ts`). A link that
-  fails never hides Google's events or the other links. Only public https addresses are fetched.
+  fails never hides Google's events or the other links. Only public https addresses are fetched (including after redirects).
 - **TransLink:** departure times come only from the GTFS-realtime trip updates
   (`gtfsapi.translink.ca/v3/gtfsrealtime`, key in `TRANSLINK_API_KEY` in Vercel), decoded by a small hand-written
   protobuf reader (`src/server/gtfs.ts`, no protobuf dependency). Route numbers, headsigns and the stop list come from
@@ -447,9 +447,16 @@ panel can be complex if you need it to be."
 - Sign-in tries are rate-limited in the database (one atomic upsert), per address and per IP.
 - Requests that change something must come from our own origin (`sameOrigin`).
 - Security headers on every response (`src/lib/securityHeaders.ts`): HSTS, nosniff, `frame-ancestors 'none'`, a CSP
-  that allows only our own origin (and Sentry's ingest, and earth.nullschool.net as the one frame), and a Permissions-Policy that turns off camera, microphone
-  and location.
-- Error reports are scrubbed of emails, display tokens and cookies before they leave (`src/lib/sentryScrub.ts`).
+  that allows only our own origin (and Sentry's ingest, and earth.nullschool.net as the one frame; `script-src` never
+  allows `'unsafe-inline'` — Next.js pages get a per-request nonce from `proxy.ts`, the display loads only
+  `/display/display.js`), and a Permissions-Policy that turns off camera, microphone and location.
+- **Family sessions** (`FAMILY_EMAILS`) use `/family/` and the meals, shopping and messages APIs only. They are not
+  accepted as display viewers (`viewerFor`), so they cannot call `/api/display/*` (Home Assistant, cameras, tasks, …).
+- **Display image auth:** `/d/<token>/` sets a short-lived HttpOnly `ep_display` cookie (`Path=/api/display/`) for
+  `<img>` requests; the long-lived device token stays in `x-display-token` for fetch, never in image query strings.
+- **Home Assistant URL:** must be public https; changing it (save or backup restore) clears the stored token and
+  Cloudflare Access pair so they are never sent to a new host.
+- Error reports are scrubbed of emails, display tokens (including 8-character `/d/` links) and cookies before they leave (`src/lib/sentryScrub.ts`).
 
 ## Monitoring (Melvin, 2026-11-17)
 

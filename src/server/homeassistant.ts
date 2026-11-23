@@ -5,6 +5,7 @@ import { createHash } from "node:crypto";
 import type { DashboardConfig } from "@/lib/config/schema";
 import type { HaData, HaEntity, HaMedia } from "@/lib/display/types";
 
+import { publicHaUrl } from "./haUrl";
 import { getSecret } from "./secrets";
 
 // Home Assistant (Melvin, 2026-11-17): controls, sensors, UniFi Protect cameras and the doorbell, all through Home
@@ -27,7 +28,7 @@ export class HaNotConfigured extends Error {
 }
 
 async function connection(config: DashboardConfig): Promise<{ base: string; headers: Record<string, string> }> {
-  const base = config.integrations.homeAssistant.url.replace(/\/+$/, "");
+  const base = publicHaUrl(config.integrations.homeAssistant.url);
   const token = await getSecret("homeAssistant.token");
   if (!base || !token) throw new HaNotConfigured();
   const headers: Record<string, string> = { Authorization: `Bearer ${token}`, "User-Agent": "Everydaypane/1.0" };

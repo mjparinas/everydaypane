@@ -1,7 +1,8 @@
 import type { ErrorEvent } from "@sentry/nextjs";
 
 const EMAIL = /[\w.+-]+@[\w-]+\.[\w.-]+/g;
-const TOKENS = /([?&](?:t|token|code)=)[^&#\s]+|(\/d\/)[A-Za-z0-9_-]{16,}/g;
+// Display tokens are 8 alphanumerics now (also 10-char and longer legacy). Scrub any /d/<token> path segment.
+const TOKENS = /([?&](?:t|token|code)=)[^&#\s]+|(\/d\/)[A-Za-z0-9_-]{8,}/g;
 
 /** Takes email addresses, display tokens, sign-in links and cookies out of an error report before it leaves. */
 export function scrubEvent(event: ErrorEvent): ErrorEvent {
