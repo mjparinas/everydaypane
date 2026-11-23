@@ -4,9 +4,9 @@ import { useTestServer } from "@/test/server";
 
 import { accountById, accountsForEmail, createAccount, ensureAccountsSeeded, LEGACY_ACCOUNT_ID } from "./accounts";
 
-useTestServer();
-
 describe("accounts", () => {
+  useTestServer();
+
   it("seeds a Paid grandfather household from ADMIN_EMAILS", async () => {
     await ensureAccountsSeeded();
     const legacy = await accountById(LEGACY_ACCOUNT_ID);

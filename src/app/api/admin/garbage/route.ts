@@ -12,9 +12,7 @@ const params = z.object({
 
 /** Finds the collection zone for an address (the admin panel's "Find my pickup days"). */
 export async function GET(req: Request) {
-  const session = await adminFor(req);
-  if (!session) return unauthorized();
-  const accountId = session.accountId;
+  if (!(await adminFor(req))) return unauthorized();
   const url = new URL(req.url);
   const p = params.safeParse(Object.fromEntries(url.searchParams));
   if (!p.success) return json({ error: "Type a street address" }, 400);
