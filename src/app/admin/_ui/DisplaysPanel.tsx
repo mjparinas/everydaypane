@@ -8,8 +8,8 @@ import { ConfirmButton, Section, Select, Text } from "./fields";
 import { useAdmin } from "./store";
 
 // Displays: each screen (the UC-Display21 in the kitchen, an old tablet in the hall) gets its own secret address.
-// The address is always shown on the row with Copy on the far right (Melvin, 2026-11-22); deleting a display signs
-// that screen out.
+// The address is always shown on the row with Copy on the far right (Melvin, 2026-11-22); "New link" replaces it if
+// it leaks, and deleting a display signs that screen out.
 
 interface Device {
   id: string;
@@ -91,6 +91,15 @@ export function DisplaysPanel() {
     if (!r.ok) setError("Couldn't save that change.");
   }
 
+  async function newLink(id: string) {
+    setError("");
+    const r = await call(`/api/admin/devices/${id}/`, "POST");
+    const body = (await r.json().catch(() => ({}))) as { url?: string };
+    if (!body.url) return setError("Couldn't get a new address.");
+    const url = body.url;
+    setDevices((d) => d?.map((x) => (x.id === id ? { ...x, url } : x)) ?? null);
+  }
+
   return (
     <div className="grid gap-4 lg:grid-cols-2">
       <Section title="Add a display">
@@ -140,15 +149,18 @@ export function DisplaysPanel() {
                 {d.url ? (
                   <Address url={d.url} />
                 ) : (
-                  <p className="text-sm text-soft">Address unavailable — delete this display and add it again.</p>
+                  <p className="text-sm text-soft">Address unavailable — give it a new link, or delete and add it again.</p>
                 )}
-                <ConfirmButton
-                  label="Delete display"
-                  confirm="Tap again: this signs the screen out"
-                  onConfirm={() => {
-                    void call(`/api/admin/devices/${d.id}/`, "DELETE").then(() => load());
-                  }}
-                />
+                <div className="flex flex-wrap gap-2">
+                  <ConfirmButton label="New link" confirm="Tap again: the old address stops working" onConfirm={() => void newLink(d.id)} />
+                  <ConfirmButton
+                    label="Delete display"
+                    confirm="Tap again: this signs the screen out"
+                    onConfirm={() => {
+                      void call(`/api/admin/devices/${d.id}/`, "DELETE").then(() => load());
+                    }}
+                  />
+                </div>
               </li>
             ))}
           </ul>
