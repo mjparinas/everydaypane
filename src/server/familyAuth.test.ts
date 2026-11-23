@@ -55,7 +55,7 @@ describe("familyEditorFor", () => {
       }),
     );
     expect(mealWrite.status).toBe(200);
-    const plan = await mealsBetween("2026-11-23", 1);
+    const plan = await mealsBetween(LEGACY_ACCOUNT_ID, "2026-11-23", 1);
     expect(plan["2026-11-23"]?.dinner).toBe("Tacos");
 
     expect((await shoppingGET(req("/api/shopping/", { headers }))).status).toBe(200);
@@ -67,7 +67,7 @@ describe("familyEditorFor", () => {
       }),
     );
     expect(shopWrite.status).toBe(201);
-    expect((await listShopping()).items.map((i) => i.text)).toContain("Milk");
+    expect((await listShopping(LEGACY_ACCOUNT_ID)).items.map((i) => i.text)).toContain("Milk");
 
     expect((await messagesGET(req("/api/messages/", { headers }))).status).toBe(200);
     const msgWrite = await messagesPOST(
@@ -78,7 +78,7 @@ describe("familyEditorFor", () => {
       }),
     );
     expect(msgWrite.status).toBe(201);
-    const board = await listMessages();
+    const board = await listMessages(LEGACY_ACCOUNT_ID);
     expect(board[0]?.text).toBe("Back by 6");
     expect(board[0]?.postedBy).toBe(`display:${device.id}`);
     const listed = (await msgWrite.json()) as { message: { canDelete: boolean }; admin?: boolean };
