@@ -207,7 +207,8 @@ export const flows = [
       await p.goto(`${base}/family/`);
       // Tomorrow, not today: from 8 PM the widget starts at tomorrow, so a meal planned for today drops off in the evening.
       const tomorrow = p.getByRole("region", { name: /^Tomorrow/ });
-      const dinner = tomorrow.getByRole("combobox", { name: /Dinner/ });
+      // Exact name: a "Repeat Dinner on …" select is also a combobox whose name contains Dinner.
+      const dinner = tomorrow.getByRole("combobox", { name: /^Dinner$/ });
       await dinner.fill("Tacos");
       const saved = p.waitForResponse((r) => r.url().includes("/api/meals/") && r.request().method() === "PUT");
       await dinner.press("Enter");

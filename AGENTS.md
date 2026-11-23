@@ -23,7 +23,7 @@ same change, and moves it out of **In progress** when it merges.
 | Clock (`clock`) | Digital, analogue, flip, nixie, word, minimal or neon; any time zone, label, seconds (Vancouver and Toronto clocks) | Device clock |
 | Date (`date`) | Today's date in a time zone | Device clock |
 | Sunrise & sunset (`sunTimes`) | Today's sunrise, sunset and length of daylight; optional emoji and daylight hours | Open-Meteo forecast |
-| Weather (`weather`) | Current conditions, hourly, up to 7 days, with icons, UV index and pollen | Open-Meteo forecast and air quality |
+| Weather (`weather`) | Current conditions, hourly, up to 7 days, with icons, UV index and pollen | Open-Meteo (default) or Environment Canada city page (`config.weather.provider`); UV/pollen/AQ still Open-Meteo |
 | Tempest (`tempest`) | Backyard station: temp, humidity, wind, rain today | WeatherFlow REST (`config.integrations.smartHome.tempest`, token secret) |
 | Weather Underground (`weatherUnderground`) | PWS current conditions | IBM WU PWS API (`WU_API_KEY` or per-account secret) |
 | School menu (`menus`) | Nutrislice breakfast and lunch for a day or week; not the meal plan | Nutrislice published JSON (`config.integrations.smartHome.menus`) |
@@ -42,13 +42,13 @@ same change, and moves it out of **In progress** when it merges.
 | Music (`media`) | Now playing, play/pause, skip, volume, sources | Home Assistant, Spotify or Sonos |
 | Note (`note`) | Fixed text from the admin | Settings document |
 | Message board (`messages`) | Family notes from phones; optional **post from the wall** (`allowAdd`) | `messages` table |
-| Meals (`meals`) | Breakfast, lunch, dinner for a day or a week | `meals` table |
+| Meals (`meals`) | Breakfast, lunch, dinner for a day or a week; recurring cadences fill future days | `account_meals` + `account_meal_rules` |
 | Shopping list (`shopping`) | Groceries from phones; **tap to tick off** (`allowCheck`); optional **add from the wall** (`allowAdd`); optional bought items | `shopping` table |
 | Who's home (`presence`) | Who is home, from person and device tracker entities, read only | Home Assistant |
 | School status (`school`) | Open, closed, delayed or late start; optional school names | District status page (`config.school`) |
 | Whiteboard (`whiteboard`) | Finger draw with a few colours and an eraser; wider tiles show more colours; hold Clear to wipe; same doodle on every display | `whiteboard` table |
 | Alerts (`alerts`) | Current emergency alerts, optional "all clear" | See alerts below |
-| Chore chart (`chores`) | Today's chores by **morning/afternoon/evening** (or anytime), **tap to tick off**, completion dots / progress rings, stars this week, optional **star rewards** and **child PIN** (uncheck/redeem) | Settings document + `chores_done` + `chore_redemptions` |
+| Chore chart (`chores`) | Today's chores by **morning/afternoon/evening** (or anytime), **tap to tick off**, completion dots / progress rings, stars this week, optional **star rewards** and **child PIN**; kids phone at `/d/<token>/chores/` and `/family/chores/` | Settings document + `chores_done` + `chore_redemptions` |
 | Sports scores (`sports`) | Live score, last result and next game for followed teams (NHL, NBA, WNBA, NFL, MLB, MLS, Premier League, Champions League) | ESPN public site API |
 | To-dos (`tasks`) | Open tasks from **Google Tasks, Microsoft To Do or Todoist** (`provider`); **tap to tick off** (`allowCheck`, 4 s undo) | Unified `/api/display/tasks/` feed |
 | Packages (`packages`) | UPS, FedEx, Canada Post, USPS tracking numbers on the widget; live status when `PACKAGE_TRACK_API_KEY` is set | Optional 17track-style API (`src/server/packages.ts`) |
@@ -186,8 +186,8 @@ npm run templates:previews  # regenerate public/templates/*.png from real widget
 - **Added the same day** (Melvin, 2026-11-17): offline mode, admin sign-in by magic link through Resend, Sentry,
   burn-in protection, UniFi Protect video (cameras and doorbell pop-ups), a family message board, and emergency alerts.
 - **Music** (Melvin, 2026-11-17): Spotify and Sonos controls on the wall, through Home Assistant.
-- **Meal planning** (Melvin, 2026-11-17): breakfast, lunch and dinner for each day, planned from a phone and shown on
-  the wall (see Architecture).
+- **Meal planning** (Melvin, 2026-11-17; repeats 2026-11-23): breakfast, lunch and dinner for each day, with optional
+  recurring cadences (every weekday, every N days), planned from a phone and shown on the wall (see Architecture).
 - **Shopping list** (Melvin, 2026-11-22): groceries the family adds from their phones, shown on the wall, ticked off
   with a tap when the widget allows it (see Architecture).
 - **Whiteboard** (Melvin, 2026-11-22): a simple shared doodle on the wall — a few colours, finger draw, eraser, hold
@@ -381,12 +381,15 @@ panel can be complex if you need it to be."
   (`src/server/whiteboard.ts`), strokes on a fixed 1600×900 board so every tile letterboxes the same doodle. Displays
   poll `/api/display/whiteboard/` every three seconds; a stroke posts on finger-up and Clear posts after an 800 ms hold.
   No brush sizes, undo or sync from phones.
-- **Meal planning** (Melvin, 2026-11-17: "add meal planning", with breakfast, lunch and dinner for each day): one row
-  per day and meal in the `meals` table (`src/server/meals.ts`), planned by anyone on `ADMIN_EMAILS` or `FAMILY_EMAILS`
-  from the admin panel's Meals tab or `/family/`, or from `/d/<token>/edit/` with the display token. A meal saves when
-  its box loses focus (not with the settings Save button, since it isn't part of the settings document), and recent
-  meals are offered as suggestions. The meals widget shows one day (the next meal highlighted; from 8 PM it shows
-  tomorrow, `nextMeal` in `src/lib/meals.ts`) or up to a week, and polls `/api/display/meals/` every minute. Plans older
+- **Meal planning** (Melvin, 2026-11-17: "add meal planning"; repeats Melvin, 2026-11-23: cereal every Monday, eggs
+  every Tuesday, every N days): one-off rows in `account_meals` and recurring rules in `account_meal_rules`
+  (`src/server/meals.ts`), planned by anyone on `ADMIN_EMAILS` or `FAMILY_EMAILS` from the admin panel's Meals tab or
+  `/family/`, or from `/d/<token>/edit/` with the display token. A meal saves when its box loses focus (not with the
+  settings Save button, since it isn't part of the settings document); a Repeat control sets a weekday cadence or every
+  N days (1–14), and rules expand at read time into the week the planner and wall see. A one-off for that day wins; clearing
+  a rule-filled day stores a skip for that day only; Stop removes the series. Recent meals (including rule text) are
+  offered as suggestions. The meals widget shows one day (the next meal highlighted; from 8 PM it shows tomorrow,
+  `nextMeal` in `src/lib/meals.ts`) or up to a week, and polls `/api/display/meals/` every minute. One-off plans older
   than 60 days are cleared as new ones are written.
 - **Shopping list** (Melvin, 2026-11-22): one row per item in the `shopping` table (`src/server/shopping.ts`), added by
   anyone on `ADMIN_EMAILS` or `FAMILY_EMAILS` from `/family/` or the admin panel's Shopping tab, or from
@@ -402,6 +405,10 @@ panel can be complex if you need it to be."
   the Displays tab (copyable `editUrl` plus `/api/household/devices/<id>/edit-qr/`) both encode that URL. Knowing the
   display link is the capability — keep the QR on the wall, not shared online. Family calendar events stay on `/family/`
   only.
+- **Kids chores phone** (Melvin, 2026-11-23): `/d/<token>/chores/` and `/family/chores/` (`KidsChores`, `/api/family/chores/`)
+  let a kid pick their name, tick today's chores by period, and redeem star rewards. Same display-token or family session
+  auth as the edit page; ticks skip the wall's `allowCheck` gate. Parents still edit people and chores in Settings › Chores;
+  uncheck and redeem still need the child PIN when set.
 - **School status** (Melvin, 2026-11-22): `src/server/school.ts` reads `config.school.statusUrl` (https only, never a private
   address), cached five minutes, and looks for closed, delayed or late start in the page's alert or notification banner,
   then in the rest of the page. Anything else is open. A widget can name schools; a notice counts when it names one of

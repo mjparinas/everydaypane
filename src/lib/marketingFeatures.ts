@@ -25,7 +25,7 @@ const FEATURE_BLURBS: Partial<Record<WidgetType, string>> = {
   clock: "Digital, analogue, flip, nixie, word, minimal or neon; any time zone.",
   date: "Today's date in a chosen zone.",
   sunTimes: "Open-Meteo sunrise, sunset and daylight length.",
-  weather: "Current, hourly, up to 7 days, UV and pollen.",
+  weather: "Current, hourly, up to 7 days; Open-Meteo or Environment Canada.",
   airQuality: "AQHI or US AQI.",
   radar: "Environment Canada observed + forecast over a map.",
   earth: "earth.nullschool.net centred on your place.",

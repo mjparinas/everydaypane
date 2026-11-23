@@ -31,6 +31,11 @@ export default async function DisplayEditPage({ params }: { params: Promise<{ to
           Anyone who can open this link can change the meal plan, shopping list and message board. Keep the QR on the wall, not shared
           online.
         </p>
+        <p className="text-sm">
+          <a className="font-semibold text-brand underline-offset-2 hover:underline" href={`/d/${token}/chores/`}>
+            Kids chores →
+          </a>
+        </p>
         <section className="mx-auto grid w-full max-w-xl gap-3" aria-labelledby="messages-heading">
           <h2 id="messages-heading" className="text-lg font-bold">
             Message board
