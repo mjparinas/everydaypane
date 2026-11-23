@@ -28,6 +28,7 @@ describe("Home Assistant actions", () => {
       y: 0,
       w: 3,
       h: 2,
+      showBackground: true,
       entities: [
         { entityId: "person.melvin", label: "Melvin" },
         { entityId: "device_tracker.phone", label: "" },
@@ -126,9 +127,9 @@ describe("Home Assistant routes", () => {
     const view = config.views[0];
     if (!view) throw new Error("no view");
     view.widgets = [
-      { id: "w1", type: "haEntity", x: 0, y: 0, w: 2, h: 1, entityId: "light.kitchen", control: "auto" },
-      { id: "w2", type: "haEntity", x: 2, y: 0, w: 2, h: 1, entityId: "lock.front", control: "auto" },
-      { id: "w3", type: "camera", x: 4, y: 0, w: 2, h: 2, entityId: "camera.driveway", refreshSeconds: 10 },
+      { id: "w1", type: "haEntity", x: 0, y: 0, w: 2, h: 1, showBackground: true, entityId: "light.kitchen", control: "auto" },
+      { id: "w2", type: "haEntity", x: 2, y: 0, w: 2, h: 1, showBackground: true, entityId: "lock.front", control: "auto" },
+      { id: "w3", type: "camera", x: 4, y: 0, w: 2, h: 2, showBackground: true, entityId: "camera.driveway", refreshSeconds: 10 },
       {
         id: "w4",
         type: "media",
@@ -136,6 +137,7 @@ describe("Home Assistant routes", () => {
         y: 0,
         w: 4,
         h: 2,
+        showBackground: true,
         provider: "homeAssistant",
         entityId: "media_player.kitchen",
         playerId: "",

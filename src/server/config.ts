@@ -93,5 +93,29 @@ export function upgrade(stored: unknown): unknown {
   for (const k of ["integrations", "burnIn", "alerts", "schedule", "location", "school"]) {
     if (typeof s[k] === "object" && s[k] !== null) out[k] = { ...(d[k] as object), ...(s[k] as object) };
   }
+  // Per-widget panel (Melvin, 2026-11-22): sunrise & sunset used to have its own `transparent` flag; clocks and
+  // dates had no panel in CSS. Map those into showBackground so older documents keep looking the same.
+  if (Array.isArray(out.views)) {
+    out.views = out.views.map((view) => {
+      if (typeof view !== "object" || view === null) return view;
+      const v = view as Record<string, unknown>;
+      if (!Array.isArray(v.widgets)) return view;
+      return {
+        ...v,
+        widgets: v.widgets.map((widget) => {
+          if (typeof widget !== "object" || widget === null) return widget;
+          const w = { ...(widget as Record<string, unknown>) };
+          if (w.type === "sunTimes" && "transparent" in w && !("showBackground" in w)) {
+            w.showBackground = w.transparent !== true;
+          }
+          delete w.transparent;
+          if ((w.type === "clock" || w.type === "date") && !("showBackground" in w)) {
+            w.showBackground = false;
+          }
+          return w;
+        }),
+      };
+    });
+  }
   return out;
 }

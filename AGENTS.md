@@ -22,7 +22,7 @@ same change, and moves it out of **In progress** when it merges.
 | --- | --- | --- |
 | Clock (`clock`) | Digital or analogue, any time zone, label, seconds (Vancouver and Toronto clocks) | Device clock |
 | Date (`date`) | Today's date in a time zone | Device clock |
-| Sunrise & sunset (`sunTimes`) | Today's sunrise, sunset and length of daylight; optional transparent background, emoji and daylight hours | Open-Meteo forecast |
+| Sunrise & sunset (`sunTimes`) | Today's sunrise, sunset and length of daylight; optional emoji and daylight hours | Open-Meteo forecast |
 | Weather (`weather`) | Current conditions, hourly, up to 7 days, with icons, UV index and pollen | Open-Meteo forecast and air quality |
 | Air quality (`airQuality`) | AQHI or US AQI | Open-Meteo air quality |
 | WiFi QR (`wifiQr`) | Join code, optionally the password | Settings document |
@@ -53,7 +53,7 @@ same change, and moves it out of **In progress** when it merges.
 | Earth wind map (`earth`) | earth.nullschool.net's animated wind globe centred on any place, four zooms, a colour layer (temperature, rain, humidity…), place marker, animation on or off | earth.nullschool.net (framed), Open-Meteo place search |
 
 **Display behaviour:** several views on a drag-and-drop grid (chosen rows and columns, gap, edge padding and **tile padding**), **widgets layered on top of a photos widget**
-(photos as the backdrop), a time-of-day schedule
+(photos as the backdrop), **per-widget background** (on/off and opacity; theme surface opacity is the default; clocks and dates start with no panel), a time-of-day schedule
 (morning, afternoon, evening, night) choosing the view, theme, day or night mode and dimming; themes with colour
 palettes, fonts, corner radius, opacity and optional glass; burn-in protection (pixel shift); offline mode (service
 worker serves the last good data and shows "Offline"); a **screen saver** (photos only or dark after idle minutes, dark
@@ -138,6 +138,10 @@ node scripts/e2e.mjs   # Playwright browser tests against the build (CHROMIUM_PA
 - **Tile padding** (Melvin, 2026-11-22: "is it possible to adjust the inner padding of the tiles"): each view has a
   **Tile** control next to Gap and Edge (`tilePadding`, 0–48 px, 16 by default) for the space inside each panel;
   photos, cameras and radar still fill their cell.
+- **Per-widget background** (Melvin, 2026-11-22: "customize whether each component has a background" and its opacity):
+  every widget has Background on/off and Background opacity (`showBackground`, `backgroundOpacity`); opacity falls
+  back to the theme's widget background. Clocks and dates start with Background off; an older sunrise & sunset
+  "transparent" setting becomes Background off.
 - **B.C. permanent daylight time** (Melvin, 2026-11-22): some display browsers have old time-zone data and move
   `America/Vancouver` back one hour in November. Everydaypane uses Vancouver's historical rules before the March 8,
   2026 transition and fixed UTC−7 after it for clocks, dates, calendars and time-of-day display schedules.

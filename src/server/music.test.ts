@@ -187,6 +187,7 @@ describe("Spotify and Sonos routes", () => {
       y: 0,
       w: 4,
       h: 2,
+      showBackground: true,
       provider,
       entityId: "",
       playerId,

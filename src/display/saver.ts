@@ -59,6 +59,7 @@ export function screenSaver(app: HTMLElement, getPayload: () => DisplayPayload |
           y: 0,
           w: 1,
           h: 1,
+          showBackground: false,
           sourceIds: s.photoSourceIds,
           intervalSeconds: 30,
           fit: "cover",

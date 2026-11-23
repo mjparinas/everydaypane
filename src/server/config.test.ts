@@ -1,9 +1,10 @@
 import { describe, expect, it } from "vitest";
 
 import { defaultConfig } from "@/lib/config/defaults";
+import { configSchema } from "@/lib/config/schema";
 import { useTestServer } from "@/test/server";
 
-import { configVersion, loadConfig, saveConfig, touchConfig } from "./config";
+import { configVersion, loadConfig, saveConfig, touchConfig, upgrade } from "./config";
 import { getSecret, setSecret } from "./secrets";
 
 describe("config store", () => {
@@ -38,6 +39,34 @@ describe("config store", () => {
     expect(await configVersion()).toBe(1);
     await touchConfig();
     expect(await configVersion()).toBe(2);
+  });
+
+  it("maps the old sunTimes transparent flag and keeps clocks without a panel", () => {
+    const c = structuredClone(defaultConfig()) as unknown as Record<string, unknown>;
+    const views = c.views as { widgets: Record<string, unknown>[] }[];
+    views[0]!.widgets = [
+      { id: "sun", type: "sunTimes", x: 0, y: 0, w: 3, h: 2, transparent: true },
+      {
+        id: "clk",
+        type: "clock",
+        x: 3,
+        y: 0,
+        w: 3,
+        h: 2,
+        timeZone: "America/Vancouver",
+        label: "Vancouver",
+        showSeconds: false,
+        style: "digital",
+      },
+    ];
+    const upgraded = upgrade(c);
+    const parsed = configSchema.safeParse(upgraded);
+    expect(parsed.success).toBe(true);
+    if (!parsed.success) return;
+    const [sun, clock] = parsed.data.views[0]!.widgets;
+    expect(sun).toMatchObject({ type: "sunTimes", showBackground: false });
+    expect(sun).not.toHaveProperty("transparent");
+    expect(clock).toMatchObject({ type: "clock", showBackground: false });
   });
 
   it("refuses a private Home Assistant address and clears secrets when the URL changes", async () => {

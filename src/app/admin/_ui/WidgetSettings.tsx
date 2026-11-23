@@ -93,8 +93,44 @@ export function WidgetSettings({
           })
         }
       />
+      <PanelBackground widget={widget} config={config} onChange={onChange} />
       <TypeSettings widget={widget} config={config} onChange={onChange} />
     </div>
+  );
+}
+
+/** Background on/off and opacity for every widget (Melvin, 2026-11-22). Opacity falls back to the theme's widget background. */
+function PanelBackground({
+  widget,
+  config,
+  onChange,
+}: {
+  widget: Widget;
+  config: DashboardConfig;
+  onChange: (change: (w: Widget) => void) => void;
+}) {
+  const themeOpacity = config.themes.find((t) => t.id === config.themeId)?.surfaceOpacity ?? config.themes[0]?.surfaceOpacity ?? 0.72;
+  return (
+    <>
+      <Toggle
+        label="Background"
+        checked={widget.showBackground}
+        hint="The panel behind this widget. Off is handy over a photos widget."
+        onChange={(v) => onChange((w) => void (w.showBackground = v))}
+      />
+      {widget.showBackground ? (
+        <Range
+          label="Background opacity"
+          value={widget.backgroundOpacity ?? themeOpacity}
+          min={0}
+          max={1}
+          step={0.05}
+          format={(v) => `${Math.round(v * 100)}%`}
+          hint={widget.backgroundOpacity == null ? "Using the theme's widget background until you move the slider." : undefined}
+          onChange={(v) => onChange((w) => void (w.backgroundOpacity = v))}
+        />
+      ) : null}
+    </>
   );
 }
 
@@ -166,12 +202,6 @@ function TypeSettings({
       const e = edit<"sunTimes">();
       return (
         <>
-          <Toggle
-            label="Transparent background"
-            checked={w.transparent}
-            hint="No panel, like the clock and date. Handy over a photos widget."
-            onChange={(v) => e((x) => void (x.transparent = v))}
-          />
           <Toggle
             label="Show emoji"
             checked={w.showEmoji}

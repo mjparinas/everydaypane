@@ -102,11 +102,12 @@ function render(force = false) {
     // Photos are a backdrop (Melvin, 2026-11-21): they're drawn first and underneath, and a widget on top of one gets
     // `on-photo`, which keeps it readable against whatever picture is showing.
     for (const { widget: w, onPhoto } of stackOrder(view.widgets)) {
-      // Sunrise & sunset can drop its panel (Melvin, 2026-11-22), matching the clock and date over photos.
-      const transparent = w.type === "sunTimes" && w.transparent;
+      // Each widget can drop its panel or override the theme's surface opacity (Melvin, 2026-11-22).
+      const transparent = !w.showBackground;
+      const alpha = !transparent && w.backgroundOpacity != null ? `--surface-alpha:${w.backgroundOpacity};` : "";
       const cell = h("section", {
         class: `cell cell-${w.type}${onPhoto ? " on-photo" : ""}${transparent ? " transparent" : ""}`,
-        style: `grid-column:${w.x + 1}/span ${w.w};grid-row:${w.y + 1}/span ${w.h}`,
+        style: `grid-column:${w.x + 1}/span ${w.w};grid-row:${w.y + 1}/span ${w.h};${alpha}`,
         "aria-label": w.title ?? w.type,
       });
       stage.append(cell);
