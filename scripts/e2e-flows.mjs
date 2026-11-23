@@ -128,7 +128,7 @@ export const flows = [
       const grown = await widget.getAttribute("aria-label");
       expect(grown.includes("3 by 3 at column 9, row 6"), `the top-left corner didn't resize: ${grown}`);
       await page.getByRole("button", { name: "Save", exact: true }).click();
-      await page.getByText("Saved. Displays update within 30 seconds.").waitFor();
+      await page.getByText(/Saved\. Displays update/).waitFor();
       const { config } = await (await page.request.get(`${base}/api/admin/config/`)).json();
       const saved = config.views.find((v) => v.id === "home").widgets.find((w) => w.id === "home-countdown");
       expect(saved.x === 8 && saved.w === 3 && saved.h === 3, `saved as ${saved.w} by ${saved.h} at ${saved.x}`);

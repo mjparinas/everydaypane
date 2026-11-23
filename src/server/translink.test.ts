@@ -6,6 +6,7 @@ import { GET as displayGET } from "@/app/api/display/transit/route";
 import { defaultConfig } from "@/lib/config/defaults";
 import { newWidget } from "@/lib/config/widgets";
 import type { TransitData } from "@/lib/display/types";
+import { LEGACY_ACCOUNT_ID } from "@/server/accounts";
 import { cookieFor, req, useTestServer } from "@/test/server";
 
 import { clearMemoryCache } from "./cache";
@@ -247,12 +248,12 @@ describe("TransLink routes", () => {
     vi.useFakeTimers({ now: NOW * 1000, toFake: ["Date"] });
     const seen: string[] = [];
     stubTransLink(seen);
-    const stored = await loadConfig();
+    const stored = await loadConfig(LEGACY_ACCOUNT_ID);
     const config = structuredClone(stored.config);
     config.views[0]?.widgets.splice(0, config.views[0].widgets.length, transitWidget());
-    await saveConfig(config, stored.version);
+    await saveConfig(LEGACY_ACCOUNT_ID, config, stored.version);
 
-    const { token } = await addDevice("Kitchen", null);
+    const { token } = await addDevice(LEGACY_ACCOUNT_ID, "Kitchen", null);
     const get = () => displayGET(req("/api/display/transit/", { headers: { "x-display-token": token } }));
     const data = (await (await get()).json()) as TransitData;
     expect(data.configured).toBe(true);
@@ -272,11 +273,11 @@ describe("TransLink routes", () => {
   it("reports a refused key as unavailable, never echoing the key", async () => {
     vi.stubEnv("TRANSLINK_API_KEY", "wrong-key");
     stubTransLink();
-    const stored = await loadConfig();
+    const stored = await loadConfig(LEGACY_ACCOUNT_ID);
     const config = structuredClone(stored.config);
     config.views[0]?.widgets.splice(0, config.views[0].widgets.length, transitWidget());
-    await saveConfig(config, stored.version);
-    const { token } = await addDevice("Kitchen", null);
+    await saveConfig(LEGACY_ACCOUNT_ID, config, stored.version);
+    const { token } = await addDevice(LEGACY_ACCOUNT_ID, "Kitchen", null);
     const r = await displayGET(req("/api/display/transit/", { headers: { "x-display-token": token } }));
     expect(r.status).toBe(502);
     expect(await r.text()).not.toContain("wrong-key");

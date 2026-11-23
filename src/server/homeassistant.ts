@@ -27,13 +27,13 @@ export class HaNotConfigured extends Error {
   }
 }
 
-async function connection(config: DashboardConfig): Promise<{ base: string; headers: Record<string, string> }> {
+async function connection(accountId: string, config: DashboardConfig): Promise<{ base: string; headers: Record<string, string> }> {
   const base = publicHaUrl(config.integrations.homeAssistant.url);
-  const token = await getSecret("homeAssistant.token");
+  const token = await getSecret(accountId, "homeAssistant.token");
   if (!base || !token) throw new HaNotConfigured();
   const headers: Record<string, string> = { Authorization: `Bearer ${token}`, "User-Agent": "Everydaypane/1.0" };
-  const accessId = await getSecret("homeAssistant.accessId");
-  const accessSecret = await getSecret("homeAssistant.accessSecret");
+  const accessId = await getSecret(accountId, "homeAssistant.accessId");
+  const accessSecret = await getSecret(accountId, "homeAssistant.accessSecret");
   if (accessId && accessSecret) {
     headers["CF-Access-Client-Id"] = accessId;
     headers["CF-Access-Client-Secret"] = accessSecret;
@@ -41,8 +41,8 @@ async function connection(config: DashboardConfig): Promise<{ base: string; head
   return { base, headers };
 }
 
-async function ha(config: DashboardConfig, path: string, init: RequestInit = {}, timeoutMs = 8000): Promise<Response> {
-  const c = await connection(config);
+async function ha(accountId: string, config: DashboardConfig, path: string, init: RequestInit = {}, timeoutMs = 8000): Promise<Response> {
+  const c = await connection(accountId, config);
   const r = await fetch(`${c.base}${path}`, {
     ...init,
     redirect: "manual",
@@ -57,8 +57,8 @@ async function ha(config: DashboardConfig, path: string, init: RequestInit = {},
 }
 
 /** Checks the URL, Cloudflare Access and the token, for the admin panel's "Test connection". */
-export async function testConnection(config: DashboardConfig): Promise<string> {
-  const r = await ha(config, "/api/");
+export async function testConnection(accountId: string, config: DashboardConfig): Promise<string> {
+  const r = await ha(accountId, config, "/api/");
   const body = (await r.json().catch(() => ({}))) as { message?: string };
   return body.message ?? "Connected";
 }
@@ -157,14 +157,14 @@ export function trimState(s: RawState): HaEntity | null {
 // A few seconds of memory cache so many displays polling at once make one call to Home Assistant.
 let memo: { key: string; at: number; data: HaData } | null = null;
 
-export async function haFeed(config: DashboardConfig, now = Date.now()): Promise<HaData> {
+export async function haFeed(accountId: string, config: DashboardConfig, now = Date.now()): Promise<HaData> {
   const { all } = usedEntities(config);
-  const key = [...all].sort().join(",") + config.integrations.homeAssistant.url;
+  const key = `${accountId}:` + [...all].sort().join(",") + config.integrations.homeAssistant.url;
   if (memo && memo.key === key && now - memo.at < 2500) return memo.data;
   if (!all.size) return { updatedAt: now, configured: true, entities: {} };
   let data: HaData;
   try {
-    const states = (await (await ha(config, "/api/states")).json()) as RawState[];
+    const states = (await (await ha(accountId, config, "/api/states")).json()) as RawState[];
     const entities: Record<string, HaEntity> = {};
     for (const s of states) {
       if (!s.entity_id || !all.has(s.entity_id)) continue;
@@ -181,8 +181,8 @@ export async function haFeed(config: DashboardConfig, now = Date.now()): Promise
 }
 
 /** Entities for the admin panel's pickers: id and name only. */
-export async function listEntities(config: DashboardConfig): Promise<{ id: string; name: string }[]> {
-  const states = (await (await ha(config, "/api/states", {}, 15_000)).json()) as RawState[];
+export async function listEntities(accountId: string, config: DashboardConfig): Promise<{ id: string; name: string }[]> {
+  const states = (await (await ha(accountId, config, "/api/states", {}, 15_000)).json()) as RawState[];
   return states
     .filter((s) => s.entity_id)
     .map((s) => ({ id: s.entity_id ?? "", name: str(s.attributes?.friendly_name) ?? s.entity_id ?? "" }))
@@ -262,6 +262,7 @@ export function serviceFor(
 }
 
 export async function act(
+  accountId: string,
   config: DashboardConfig,
   entityId: string,
   action: HaAction,
@@ -271,24 +272,24 @@ export async function act(
   if (!usedEntities(config).controls.has(entityId)) return "forbidden";
   const service = serviceFor(entityId, action, value, option);
   if (!service) return "forbidden";
-  await ha(config, service.path, { method: "POST", body: JSON.stringify(service.body) });
+  await ha(accountId, config, service.path, { method: "POST", body: JSON.stringify(service.body) });
   memo = null;
   return "ok";
 }
 
 /** A camera's current picture (UniFi Protect cameras through Home Assistant's camera proxy). */
-export async function cameraImage(config: DashboardConfig, entityId: string): Promise<Response | null> {
+export async function cameraImage(accountId: string, config: DashboardConfig, entityId: string): Promise<Response | null> {
   if (!usedEntities(config).cameras.has(entityId) || !/^camera\.[a-z0-9_]+$/.test(entityId)) return null;
-  const r = await ha(config, `/api/camera_proxy/${entityId}`, {}, 10_000);
+  const r = await ha(accountId, config, `/api/camera_proxy/${entityId}`, {}, 10_000);
   const type = r.headers.get("content-type") ?? "";
   if (!type.startsWith("image/")) return null;
   return new Response(r.body, { headers: { "Content-Type": type, "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff" } });
 }
 
 /** A music widget's album art, through Home Assistant's media player proxy. Only players the dashboard shows. */
-export async function albumArt(config: DashboardConfig, entityId: string): Promise<Response | null> {
+export async function albumArt(accountId: string, config: DashboardConfig, entityId: string): Promise<Response | null> {
   if (!usedEntities(config).players.has(entityId) || !/^media_player\.[a-z0-9_]+$/.test(entityId)) return null;
-  const r = await ha(config, `/api/media_player_proxy/${entityId}`, {}, 10_000);
+  const r = await ha(accountId, config, `/api/media_player_proxy/${entityId}`, {}, 10_000);
   const type = r.headers.get("content-type") ?? "";
   if (!type.startsWith("image/") || Number(r.headers.get("content-length") ?? 0) > 5_000_000) return null;
   // The address names the track's art (?k=), so the picture can be kept until the track changes.

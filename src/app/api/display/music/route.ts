@@ -3,13 +3,16 @@ import { z } from "zod";
 import { loadConfig } from "@/server/config";
 import { json, readJson, sameOrigin, unauthorized } from "@/server/http";
 import { MUSIC_ACTIONS, musicAct, musicFeed, PLAYER_KEY } from "@/server/music";
-import { viewerFor } from "@/server/viewer";
+import { accountIdOf, viewerFor } from "@/server/viewer";
 
 /** What the Spotify and Sonos music widgets show. Polled every few seconds by displays that have one. */
 export async function GET(req: Request) {
-  if (!(await viewerFor(req))) return unauthorized();
+  const viewer = await viewerFor(req);
+  if (!viewer) return unauthorized();
+  const accountId = accountIdOf(viewer);
   try {
-    return json(await musicFeed((await loadConfig()).config));
+    const { config } = await loadConfig(accountId);
+    return json(await musicFeed(accountId, config));
   } catch (error) {
     return json({ error: error instanceof Error ? error.message : "No answer" }, 502);
   }
@@ -26,12 +29,15 @@ const body = z.object({
 /** A tap on a display: one of a fixed set of actions, on a player that a widget shows. */
 export async function POST(req: Request) {
   if (!sameOrigin(req)) return json({ error: "Not allowed" }, 403);
-  if (!(await viewerFor(req))) return unauthorized();
+  const viewer = await viewerFor(req);
+  if (!viewer) return unauthorized();
+  const accountId = accountIdOf(viewer);
   const parsed = body.safeParse(await readJson(req, 2000).catch(() => null));
   if (!parsed.success) return json({ error: "Bad request" }, 400);
   const { player, action, value, option } = parsed.data;
   try {
-    const result = await musicAct((await loadConfig()).config, player, action, value, option);
+    const { config } = await loadConfig(accountId);
+    const result = await musicAct(accountId, config, player, action, value, option);
     return result === "ok" ? json({ ok: true }) : json({ error: "Not allowed" }, 403);
   } catch (error) {
     return json({ error: error instanceof Error ? error.message : "No answer" }, 502);

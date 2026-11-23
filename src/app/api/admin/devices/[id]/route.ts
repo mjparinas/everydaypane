@@ -14,33 +14,41 @@ const linksFor = (req: Request, token: string) => {
 
 /** The display's address, for the signed-in admin to see or copy again. */
 export async function GET(req: Request, ctx: { params: Promise<{ id: string }> }) {
-  if (!(await adminFor(req))) return unauthorized();
-  const token = await deviceToken((await ctx.params).id);
+  const session = await adminFor(req);
+  if (!session) return unauthorized();
+  const accountId = session.accountId;
+  const token = await deviceToken(accountId, (await ctx.params).id);
   return token ? json(linksFor(req, token)) : notFound();
 }
 
 /** Gives the display a new address; the old one stops working straight away. */
 export async function POST(req: Request, ctx: { params: Promise<{ id: string }> }) {
   if (!sameOrigin(req)) return json({ error: "Not allowed" }, 403);
-  if (!(await adminFor(req))) return unauthorized();
-  const token = await newDeviceToken((await ctx.params).id);
+  const session = await adminFor(req);
+  if (!session) return unauthorized();
+  const accountId = session.accountId;
+  const token = await newDeviceToken(accountId, (await ctx.params).id);
   return token ? json(linksFor(req, token)) : notFound();
 }
 
 export async function PATCH(req: Request, ctx: { params: Promise<{ id: string }> }) {
   if (!sameOrigin(req)) return json({ error: "Not allowed" }, 403);
-  if (!(await adminFor(req))) return unauthorized();
+  const session = await adminFor(req);
+  if (!session) return unauthorized();
+  const accountId = session.accountId;
   const parsed = patch.safeParse(await readJson(req, 2_000).catch(() => null));
   if (!parsed.success) return json({ error: "Bad request" }, 400);
   const { id } = await ctx.params;
   const p: { name?: string; viewId?: string | null } = {};
   if (parsed.data.name !== undefined) p.name = parsed.data.name;
   if (parsed.data.viewId !== undefined) p.viewId = parsed.data.viewId;
-  return (await updateDevice(id, p)) ? json({ ok: true }) : notFound();
+  return (await updateDevice(accountId, id, p)) ? json({ ok: true }) : notFound();
 }
 
 export async function DELETE(req: Request, ctx: { params: Promise<{ id: string }> }) {
   if (!sameOrigin(req)) return json({ error: "Not allowed" }, 403);
-  if (!(await adminFor(req))) return unauthorized();
-  return (await removeDevice((await ctx.params).id)) ? json({ ok: true }) : notFound();
+  const session = await adminFor(req);
+  if (!session) return unauthorized();
+  const accountId = session.accountId;
+  return (await removeDevice(accountId, (await ctx.params).id)) ? json({ ok: true }) : notFound();
 }

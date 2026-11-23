@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { GET, POST } from "@/app/api/display/whiteboard/route";
+import { LEGACY_ACCOUNT_ID } from "@/server/accounts";
 import { req, useTestServer } from "@/test/server";
 
 import { addDevice } from "./devices";
@@ -63,7 +64,7 @@ describe("whiteboard", () => {
   });
 
   it("serves the board to a display and accepts a stroke", async () => {
-    const { token } = await addDevice("Kitchen", null);
+    const { token } = await addDevice(LEGACY_ACCOUNT_ID, "Kitchen", null);
     const headers = { "x-display-token": token };
 
     const empty = await GET(req("/api/display/whiteboard/", { headers }));

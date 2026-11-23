@@ -5,6 +5,7 @@ import { GET as checkGET } from "@/app/api/admin/photos/route";
 import { GET as photoGET } from "@/app/api/display/photo/route";
 import { GET as photosGET } from "@/app/api/display/photos/route";
 import type { PhotoData } from "@/lib/display/types";
+import { LEGACY_ACCOUNT_ID } from "@/server/accounts";
 import { cookieFor, req, useTestServer } from "@/test/server";
 
 import { clearMemoryCache } from "./cache";
@@ -88,12 +89,12 @@ describe("photo routes", () => {
   });
 
   async function withSources(sources: unknown[]) {
-    const stored = await loadConfig();
+    const stored = await loadConfig(LEGACY_ACCOUNT_ID);
     const config = structuredClone(stored.config);
     (config.integrations.photos as { sources: unknown[] }).sources = sources;
-    const saved = await saveConfig(config, stored.version);
+    const saved = await saveConfig(LEGACY_ACCOUNT_ID, config, stored.version);
     expect(saved.ok).toBe(true);
-    return (await addDevice("Kitchen", null)).token;
+    return (await addDevice(LEGACY_ACCOUNT_ID, "Kitchen", null)).token;
   }
 
   it("lists a shared album with its sub-folders and pages, and serves its photos at display size", async () => {
@@ -186,19 +187,19 @@ describe("photo routes", () => {
       }),
     );
     await withSources([{ id: "album", kind: "amazonShare", name: "Family", url: SHARE }]);
-    const { config } = await loadConfig();
+    const { config } = await loadConfig(LEGACY_ACCOUNT_ID);
     const t0 = Date.parse("2026-11-17T08:00:00Z");
 
     // One 503, then Amazon answers: the album lists.
-    expect((await photosFeed(config, t0)).sources.album?.photos.map((p) => p[0])).toEqual(["p1", "p2"]);
+    expect((await photosFeed(LEGACY_ACCOUNT_ID, config, t0)).sources.album?.photos.map((p) => p[0])).toEqual(["p1", "p2"]);
 
     // Seven hours later the list is due again, but Amazon refuses twice: the last good list is still shown...
     busy = 2;
     clearMemoryCache();
-    expect((await photosFeed(config, t0 + 7 * 3_600_000)).sources.album?.photos).toHaveLength(2);
+    expect((await photosFeed(LEGACY_ACCOUNT_ID, config, t0 + 7 * 3_600_000)).sources.album?.photos).toHaveLength(2);
     // ...and Amazon isn't asked again for a while.
     const before = calls;
-    expect((await photosFeed(config, t0 + 7 * 3_600_000 + 60_000)).sources.album?.photos).toHaveLength(2);
+    expect((await photosFeed(LEGACY_ACCOUNT_ID, config, t0 + 7 * 3_600_000 + 60_000)).sources.album?.photos).toHaveLength(2);
     expect(calls).toBe(before);
   });
 
@@ -209,13 +210,13 @@ describe("photo routes", () => {
     );
     vi.stubGlobal("fetch", fetch);
     await withSources([{ id: "album", kind: "amazonShare", name: "Family", url: SHARE }]);
-    const { config } = await loadConfig();
+    const { config } = await loadConfig(LEGACY_ACCOUNT_ID);
     const t0 = Date.parse("2026-11-17T08:00:00Z");
-    expect((await photosFeed(config, t0)).sources.album?.error).toMatch(/turning our server away/);
+    expect((await photosFeed(LEGACY_ACCOUNT_ID, config, t0)).sources.album?.error).toMatch(/turning our server away/);
     expect(fetch).toHaveBeenCalledTimes(2);
-    expect((await photosFeed(config, t0 + 5 * 60_000)).sources.album?.error).toMatch(/turning our server away/);
+    expect((await photosFeed(LEGACY_ACCOUNT_ID, config, t0 + 5 * 60_000)).sources.album?.error).toMatch(/turning our server away/);
     expect(fetch).toHaveBeenCalledTimes(2);
-    await photosFeed(config, t0 + 25 * 60_000);
+    await photosFeed(LEGACY_ACCOUNT_ID, config, t0 + 25 * 60_000);
     expect(fetch).toHaveBeenCalledTimes(4);
   });
 
@@ -259,7 +260,7 @@ describe("photo routes", () => {
       req("/api/admin/amazon/", { method: "PUT", headers: { cookie: admin }, body: JSON.stringify({ cookie: amazonCookie, tld: "ca" }) }),
     );
     expect(ok.status).toBe(200);
-    expect(await getSecret("amazon.cookie")).toBe(amazonCookie);
+    expect(await getSecret(LEGACY_ACCOUNT_ID, "amazon.cookie")).toBe(amazonCookie);
     const status = await amazonGET(req("/api/admin/amazon/", { headers: { cookie: admin } }));
     const text = await status.text();
     expect(JSON.parse(text)).toMatchObject({ connected: true, people: [{ id: "personAAA111", name: "Mom" }] });

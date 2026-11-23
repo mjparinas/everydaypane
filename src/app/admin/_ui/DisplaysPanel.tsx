@@ -121,6 +121,7 @@ export function DisplaysPanel() {
             <p className="text-xs text-soft">
               On the UC-Display21, set the display address as the start page in its browser (kiosk) settings.
             </p>
+            <CastHints />
           </div>
         )}
         {error && (
@@ -151,7 +152,10 @@ export function DisplaysPanel() {
                   onChange={(v) => void patch(d.id, { viewId: v || null })}
                 />
                 {d.url ? (
-                  <Address url={d.url} label="Display" />
+                  <>
+                    <Address url={d.url} label="Display" />
+                    <CastHints />
+                  </>
                 ) : (
                   <p className="text-sm text-soft">Address unavailable — give it a new link, or delete and add it again.</p>
                 )}
@@ -215,6 +219,21 @@ function Address({ url, label }: { url: string; label?: string }) {
           {copied ? "Copied" : "Copy"}
         </button>
       </div>
+    </div>
+  );
+}
+
+/** How to put the castable /d/… URL on a TV or Chromecast (no custom Cast receiver). */
+function CastHints() {
+  return (
+    <div className="grid gap-1 text-xs text-soft">
+      <p>
+        <strong className="font-medium text-ink">Chromecast / Google TV:</strong> cast a Chrome tab with this address open, or use the
+        TV&apos;s browser and set the address as the start page.
+      </p>
+      <p>
+        <strong className="font-medium text-ink">UC-Display21 / tablet:</strong> set this as the start page in the browser (kiosk) settings.
+      </p>
     </div>
   );
 }

@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import { GET, POST } from "@/app/api/admin/devices/[id]/route";
 import { GET as listDevices } from "@/app/api/admin/devices/route";
+import { LEGACY_ACCOUNT_ID } from "@/server/accounts";
 import { cookieFor, req, useTestServer } from "@/test/server";
 
 import * as crypto from "./crypto";
@@ -15,7 +16,7 @@ describe("display addresses", () => {
   useTestServer();
 
   it("lists each display with its address for the Displays tab", async () => {
-    const { device, token } = await addDevice("Kitchen", null);
+    const { device, token } = await addDevice(LEGACY_ACCOUNT_ID, "Kitchen", null);
     const admin = await cookieFor("admin@example.com");
     const r = await listDevices(req("/api/admin/devices/", { headers: { cookie: admin } }));
     expect(r.status).toBe(200);
@@ -25,7 +26,7 @@ describe("display addresses", () => {
   });
 
   it("shows an admin a display's address again, and keeps the token encrypted", async () => {
-    const { device, token } = await addDevice("Kitchen", null);
+    const { device, token } = await addDevice(LEGACY_ACCOUNT_ID, "Kitchen", null);
     expect(token).toMatch(/^[A-Za-z0-9]{8}$/);
     const admin = await cookieFor("admin@example.com");
     const r = await GET(req(`/api/admin/devices/${device.id}/`, { headers: { cookie: admin } }), ctx(device.id));
@@ -36,14 +37,14 @@ describe("display addresses", () => {
   });
 
   it("refuses family members and people who aren't signed in", async () => {
-    const { device } = await addDevice("Kitchen", null);
+    const { device } = await addDevice(LEGACY_ACCOUNT_ID, "Kitchen", null);
     const kid = await cookieFor("kid@example.com");
     expect((await GET(req(`/api/admin/devices/${device.id}/`, { headers: { cookie: kid } }), ctx(device.id))).status).toBe(401);
     expect((await GET(req(`/api/admin/devices/${device.id}/`), ctx(device.id))).status).toBe(401);
   });
 
   it("gives a display a new link and the old one stops working", async () => {
-    const { device, token } = await addDevice("Kitchen", null);
+    const { device, token } = await addDevice(LEGACY_ACCOUNT_ID, "Kitchen", null);
     const admin = await cookieFor("admin@example.com");
     const r = await POST(req(`/api/admin/devices/${device.id}/`, { method: "POST", headers: { cookie: admin } }), ctx(device.id));
     const fresh = tokenOf(((await r.json()) as { url: string }).url);
@@ -54,11 +55,11 @@ describe("display addresses", () => {
   });
 
   it("retries the database constraint instead of duplicating a display code", async () => {
-    const first = await addDevice("Kitchen", null);
+    const first = await addDevice(LEGACY_ACCOUNT_ID, "Kitchen", null);
     const random = vi.spyOn(crypto, "randomAlphanumeric");
     random.mockReturnValueOnce(first.token).mockReturnValueOnce("Aa0Bb1Cc");
 
-    const second = await addDevice("Hall", null);
+    const second = await addDevice(LEGACY_ACCOUNT_ID, "Hall", null);
     expect(second.token).toBe("Aa0Bb1Cc");
     expect((await deviceForToken(first.token))?.id).toBe(first.device.id);
     expect((await deviceForToken(second.token))?.id).toBe(second.device.id);
@@ -67,7 +68,7 @@ describe("display addresses", () => {
   });
 
   it("keeps accepting existing 10-character and longer base64url display codes", async () => {
-    const { device } = await addDevice("Legacy display", null);
+    const { device } = await addDevice(LEGACY_ACCOUNT_ID, "Legacy display", null);
     const previous = "Ab1Cd2Ef3G";
     await query("UPDATE devices SET token_hash = ?, token_sealed = ? WHERE id = ?", [
       crypto.sha256(previous),
@@ -87,7 +88,7 @@ describe("display addresses", () => {
   });
 
   it("has no address to show for a display added before addresses were kept", async () => {
-    const { device } = await addDevice("Hall", null);
+    const { device } = await addDevice(LEGACY_ACCOUNT_ID, "Hall", null);
     await query("UPDATE devices SET token_sealed = NULL WHERE id = ?", [device.id]);
     const admin = await cookieFor("admin@example.com");
     expect((await GET(req(`/api/admin/devices/${device.id}/`, { headers: { cookie: admin } }), ctx(device.id))).status).toBe(404);

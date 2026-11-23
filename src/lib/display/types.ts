@@ -20,6 +20,8 @@ export interface DisplayPayload {
   alerts: Pick<DashboardConfig["alerts"], "enabled" | "banner">;
   doorbell: { enabled: boolean; seconds: number; entityId: string; cameraEntityId: string };
   screenSaver: DashboardConfig["screenSaver"];
+  /** Household plans watch for settings changes; Free keeps the 30-second poll only. */
+  instantRefresh: boolean;
 }
 
 export interface WeatherDay {

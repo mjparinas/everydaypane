@@ -88,24 +88,24 @@ async function tokenRequest(params: Record<string, string>): Promise<z.infer<typ
   return tokenSchema.parse(await r.json());
 }
 
-let access: { token: string; expiresAt: number; refresh: string } | null = null;
+const access = new Map<string, { token: string; expiresAt: number; refresh: string }>();
 
 /** Trades the one-time code from the consent screen for a refresh token and stores it. */
-export async function connect(code: string, redirect: string, now = Date.now()): Promise<void> {
+export async function connect(accountId: string, code: string, redirect: string, now = Date.now()): Promise<void> {
   const t = await tokenRequest({ grant_type: "authorization_code", code, redirect_uri: redirect });
   if (!t.refresh_token) throw new Error("Google didn't send a refresh token");
-  await setSecret("google.refreshToken", t.refresh_token, now);
-  await setSecret("google.scopes", t.scope ?? SCOPE, now);
-  access = { token: t.access_token, expiresAt: now + (t.expires_in - 60) * 1000, refresh: t.refresh_token };
+  await setSecret(accountId, "google.refreshToken", t.refresh_token, now);
+  await setSecret(accountId, "google.scopes", t.scope ?? SCOPE, now);
+  access.set(accountId, { token: t.access_token, expiresAt: now + (t.expires_in - 60) * 1000, refresh: t.refresh_token });
   await forget("calendar:");
   await forget("tasks:");
 }
 
-export async function disconnect(): Promise<void> {
-  const refresh = await getSecret("google.refreshToken");
-  access = null;
-  await setSecret("google.refreshToken", null);
-  await setSecret("google.scopes", null);
+export async function disconnect(accountId: string): Promise<void> {
+  const refresh = await getSecret(accountId, "google.refreshToken");
+  access.delete(accountId);
+  await setSecret(accountId, "google.refreshToken", null);
+  await setSecret(accountId, "google.scopes", null);
   await forget("calendar:");
   await forget("tasks:");
   if (refresh) {
@@ -117,38 +117,43 @@ export async function disconnect(): Promise<void> {
 }
 
 /** Whether the connected Google account allowed Google Photos picking. */
-export async function photosGranted(): Promise<boolean> {
-  return Boolean((await getSecret("google.refreshToken")) && (await getSecret("google.scopes"))?.split(" ").includes(PHOTOS_SCOPE));
+export async function photosGranted(accountId: string): Promise<boolean> {
+  return Boolean(
+    (await getSecret(accountId, "google.refreshToken")) && (await getSecret(accountId, "google.scopes"))?.split(" ").includes(PHOTOS_SCOPE),
+  );
 }
 
 /** Whether the connected Google account allowed Google Tasks. */
-export async function tasksGranted(): Promise<boolean> {
-  return Boolean((await getSecret("google.refreshToken")) && (await getSecret("google.scopes"))?.split(" ").includes(TASKS_SCOPE));
+export async function tasksGranted(accountId: string): Promise<boolean> {
+  return Boolean(
+    (await getSecret(accountId, "google.refreshToken")) && (await getSecret(accountId, "google.scopes"))?.split(" ").includes(TASKS_SCOPE),
+  );
 }
 
-export async function accessToken(now = Date.now()): Promise<string> {
-  const refresh = await getSecret("google.refreshToken");
+export async function accessToken(accountId: string, now = Date.now()): Promise<string> {
+  const refresh = await getSecret(accountId, "google.refreshToken");
   if (!refresh) throw new GoogleDisconnected();
-  if (access && access.refresh === refresh && access.expiresAt > now) return access.token;
+  const held = access.get(accountId);
+  if (held && held.refresh === refresh && held.expiresAt > now) return held.token;
   try {
     const t = await tokenRequest({ grant_type: "refresh_token", refresh_token: refresh });
-    access = { token: t.access_token, expiresAt: now + (t.expires_in - 60) * 1000, refresh };
+    access.set(accountId, { token: t.access_token, expiresAt: now + (t.expires_in - 60) * 1000, refresh });
     return t.access_token;
   } catch (error) {
-    if (error instanceof GoogleDisconnected) access = null;
+    if (error instanceof GoogleDisconnected) access.delete(accountId);
     throw error;
   }
 }
 
-async function api(path: string, params: Record<string, string> = {}): Promise<unknown> {
-  const token = await accessToken();
+async function api(accountId: string, path: string, params: Record<string, string> = {}): Promise<unknown> {
+  const token = await accessToken(accountId);
   const q = new URLSearchParams(params).toString();
   const r = await fetch(`${API}${path}${q ? `?${q}` : ""}`, {
     headers: { Authorization: `Bearer ${token}`, "User-Agent": "Everydaypane/1.0" },
     signal: AbortSignal.timeout(8000),
   });
   if (r.status === 401) {
-    access = null;
+    access.delete(accountId);
     throw new Error("Google refused the access token");
   }
   if (!r.ok) throw new Error(`Google Calendar answered ${r.status}`);
@@ -193,8 +198,8 @@ export function trimCalendars(raw: unknown): GoogleCalendar[] {
     .sort((a, b) => Number(b.primary) - Number(a.primary) || a.name.localeCompare(b.name));
 }
 
-export async function listCalendars(): Promise<GoogleCalendar[]> {
-  return trimCalendars(await api("/users/me/calendarList", { minAccessRole: "reader", maxResults: "250" }));
+export async function listCalendars(accountId: string): Promise<GoogleCalendar[]> {
+  return trimCalendars(await api(accountId, "/users/me/calendarList", { minAccessRole: "reader", maxResults: "250" }));
 }
 
 // ---- Events ----
@@ -248,7 +253,12 @@ export function feedRange(now: number, timeZone: string): { from: string; to: st
   return { from, to: monthEnd > sixWeeks ? monthEnd : sixWeeks, today };
 }
 
-async function eventsFor(calendar: { id: string; name: string; color: string }, from: string, to: string): Promise<CalendarEvent[]> {
+async function eventsFor(
+  accountId: string,
+  calendar: { id: string; name: string; color: string },
+  from: string,
+  to: string,
+): Promise<CalendarEvent[]> {
   const out: CalendarEvent[] = [];
   let pageToken: string | undefined;
   // A day's margin either side covers every time zone; the display places events by its own zone.
@@ -262,7 +272,7 @@ async function eventsFor(calendar: { id: string; name: string; color: string }, 
   };
   for (let page = 0; page < 4; page++) {
     const body = eventsSchema.parse(
-      await api(`/calendars/${encodeURIComponent(calendar.id)}/events`, pageToken ? { ...params, pageToken } : params),
+      await api(accountId, `/calendars/${encodeURIComponent(calendar.id)}/events`, pageToken ? { ...params, pageToken } : params),
     );
     for (const raw of body.items) {
       const e = trimEvent(raw, calendar);
@@ -280,17 +290,17 @@ export function sortEvents(events: CalendarEvent[]): CalendarEvent[] {
   return [...events].sort((a, b) => key(a).localeCompare(key(b)) || Number(b.allDay) - Number(a.allDay) || a.title.localeCompare(b.title));
 }
 
-export async function calendarFeed(config: DashboardConfig, now = Date.now()): Promise<Cached<CalendarData>> {
+export async function calendarFeed(accountId: string, config: DashboardConfig, now = Date.now()): Promise<Cached<CalendarData>> {
   // Checked first, so a revoked connection shows as such instead of the last cached events living on forever.
-  await accessToken(now);
+  await accessToken(accountId, now);
   const calendars = config.integrations.google.calendars.filter((c) => c.enabled);
   const { from, to } = feedRange(now, config.location.timeZone);
-  const key = `calendar:${from}:${calendars.map((c) => `${c.id}=${c.color}`).join(",")}`;
+  const key = `calendar:${accountId}:${from}:${calendars.map((c) => `${c.id}=${c.color}`).join(",")}`;
   return cached(
     key,
     TTL,
     async () => {
-      const lists = await Promise.all(calendars.map((c) => eventsFor(c, from, to)));
+      const lists = await Promise.all(calendars.map((c) => eventsFor(accountId, c, from, to)));
       return { updatedAt: now, from, to, events: sortEvents(lists.flat()).slice(0, 600) };
     },
     now,
@@ -299,5 +309,5 @@ export async function calendarFeed(config: DashboardConfig, now = Date.now()): P
 
 /** Tests only. */
 export function resetGoogleForTests(): void {
-  access = null;
+  access.clear();
 }

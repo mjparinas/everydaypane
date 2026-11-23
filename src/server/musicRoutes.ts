@@ -27,7 +27,8 @@ const ENV_NAMES: Record<MusicService, string> = {
 };
 
 export async function startMusicConnect(service: MusicService, req: Request): Promise<Response> {
-  if (!(await adminFor(req))) return unauthorized();
+  const session = await adminFor(req);
+  if (!session) return unauthorized();
   if (!musicConfigured(service)) return json({ error: `${ENV_NAMES[service]} aren't set` }, 503);
   const state = newMusicState();
   return new Response(null, {
@@ -41,7 +42,9 @@ export async function startMusicConnect(service: MusicService, req: Request): Pr
 }
 
 export async function finishMusicConnect(service: MusicService, req: Request): Promise<Response> {
-  if (!(await adminFor(req))) return unauthorized();
+  const session = await adminFor(req);
+  if (!session) return unauthorized();
+  const accountId = session.accountId;
   const url = new URL(req.url);
   const back = (result: string) =>
     new Response(null, {
@@ -54,7 +57,7 @@ export async function finishMusicConnect(service: MusicService, req: Request): P
   const code = url.searchParams.get("code");
   if (!code) return back("cancelled");
   try {
-    await connectMusic(service, code, musicRedirectUri(service, url.origin));
+    await connectMusic(accountId, service, code, musicRedirectUri(service, url.origin));
   } catch (error) {
     console.error(`${service} connection failed`, error);
     return back("failed");

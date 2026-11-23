@@ -31,19 +31,21 @@ const forPerson = (e: Awaited<ReturnType<typeof listFamilyEvents>>[number], emai
 export async function GET(req: Request) {
   const session = await requestSession(req);
   if (!session) return unauthorized();
+  const accountId = session.accountId;
   const admin = session.role === "admin";
-  return json({ events: (await listFamilyEvents()).map((e) => forPerson(e, session.email, admin)) });
+  return json({ events: (await listFamilyEvents(accountId)).map((e) => forPerson(e, session.email, admin)) });
 }
 
 export async function POST(req: Request) {
   if (!sameOrigin(req)) return json({ error: "Not allowed" }, 403);
   const session = await requestSession(req);
   if (!session) return unauthorized();
+  const accountId = session.accountId;
   if (!(await rateLimit(`family-event:${session.email}`, 60, 60 * 60_000)))
     return json({ error: "That's a lot of events. Try again later." }, 429);
   const parsed = body.safeParse(await readJson(req, 4_000).catch(() => null));
   if (!parsed.success) return json({ error: parsed.error.issues[0]?.message ?? "Bad request" }, 400);
-  const created = await createFamilyEvent({ ...parsed.data, createdBy: session.email });
+  const created = await createFamilyEvent(accountId, { ...parsed.data, createdBy: session.email });
   if (created === "invalid") return json({ error: "End must be after start" }, 400);
   return json({ event: forPerson(created, session.email, session.role === "admin") }, 201);
 }

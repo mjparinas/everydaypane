@@ -32,6 +32,16 @@ const MIGRATIONS = [
   `CREATE TABLE IF NOT EXISTS alert_notified (id TEXT PRIMARY KEY, sent_at INTEGER NOT NULL)`,
   // Shared kitchen whiteboard doodle (src/server/whiteboard.ts): one board for every display.
   `CREATE TABLE IF NOT EXISTS whiteboard (id INTEGER PRIMARY KEY CHECK (id = 1), revision INTEGER NOT NULL, json TEXT NOT NULL, updated_at INTEGER NOT NULL)`,
+  // Multi-tenant households (Melvin, 2026-11-22). Existing rows are backfilled into acct_legacy on first open.
+  `CREATE TABLE IF NOT EXISTS accounts (id TEXT PRIMARY KEY, name TEXT NOT NULL, plan TEXT NOT NULL, stripe_customer_id TEXT, stripe_subscription_id TEXT, created_at INTEGER NOT NULL)`,
+  `CREATE TABLE IF NOT EXISTS account_members (account_id TEXT NOT NULL, email TEXT NOT NULL, role TEXT NOT NULL, created_at INTEGER NOT NULL, PRIMARY KEY (account_id, email))`,
+  `CREATE INDEX IF NOT EXISTS account_members_by_email ON account_members (email)`,
+  `CREATE TABLE IF NOT EXISTS account_config (account_id TEXT PRIMARY KEY, json TEXT NOT NULL, version INTEGER NOT NULL, updated_at INTEGER NOT NULL)`,
+  `CREATE TABLE IF NOT EXISTS account_secrets (account_id TEXT NOT NULL, key TEXT NOT NULL, value TEXT NOT NULL, updated_at INTEGER NOT NULL, PRIMARY KEY (account_id, key))`,
+  // Meal / chore ticks keyed by household (replaces the global composite PKs for new writes).
+  `CREATE TABLE IF NOT EXISTS account_meals (account_id TEXT NOT NULL, date TEXT NOT NULL, slot TEXT NOT NULL, text TEXT NOT NULL, updated_at INTEGER NOT NULL, updated_by TEXT NOT NULL, PRIMARY KEY (account_id, date, slot))`,
+  `CREATE TABLE IF NOT EXISTS account_chores_done (account_id TEXT NOT NULL, date TEXT NOT NULL, chore_id TEXT NOT NULL, person_id TEXT NOT NULL, stars INTEGER NOT NULL, done_at INTEGER NOT NULL, PRIMARY KEY (account_id, date, chore_id, person_id))`,
+  `CREATE TABLE IF NOT EXISTS account_alert_notified (account_id TEXT NOT NULL, id TEXT NOT NULL, sent_at INTEGER NOT NULL, PRIMARY KEY (account_id, id))`,
 ];
 
 // Columns added after a table was first created. SQLite has no ADD COLUMN IF NOT EXISTS, so each one runs on its own
@@ -40,6 +50,13 @@ const COLUMNS = [
   `ALTER TABLE messages ADD COLUMN posted_by TEXT`,
   // The display's token, encrypted, so an admin can see its address again (Melvin, 2026-11-17).
   `ALTER TABLE devices ADD COLUMN token_sealed TEXT`,
+  `ALTER TABLE devices ADD COLUMN account_id TEXT`,
+  `ALTER TABLE messages ADD COLUMN account_id TEXT`,
+  `ALTER TABLE photos ADD COLUMN account_id TEXT`,
+  `ALTER TABLE shopping ADD COLUMN account_id TEXT`,
+  `ALTER TABLE family_events ADD COLUMN account_id TEXT`,
+  `ALTER TABLE sessions ADD COLUMN account_id TEXT`,
+  `ALTER TABLE sign_in_links ADD COLUMN account_id TEXT`,
 ];
 
 async function migrate(c: Client): Promise<void> {

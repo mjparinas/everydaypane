@@ -4,14 +4,16 @@ import { loadConfig } from "@/server/config";
 import { GoogleDisconnected } from "@/server/google";
 import { completeTask, tasksFeed, TasksNotAllowed } from "@/server/googleTasks";
 import { json, readJson, sameOrigin, unauthorized } from "@/server/http";
-import { viewerFor } from "@/server/viewer";
+import { accountIdOf, viewerFor } from "@/server/viewer";
 
 /** The open tasks of the lists switched on in Settings, shared by every tasks widget. Displays poll it every minute. */
 export async function GET(req: Request) {
-  if (!(await viewerFor(req))) return unauthorized();
-  const { config } = await loadConfig();
+  const viewer = await viewerFor(req);
+  if (!viewer) return unauthorized();
+  const accountId = accountIdOf(viewer);
+  const { config } = await loadConfig(accountId);
   try {
-    const data = await tasksFeed(config);
+    const data = await tasksFeed(accountId, config);
     return json({ ...data.value, stale: data.stale });
   } catch (error) {
     if (error instanceof GoogleDisconnected || error instanceof TasksNotAllowed)
@@ -25,11 +27,14 @@ const body = z.object({ list: z.string().min(1).max(255), task: z.string().min(1
 /** A tap on the wall: marks one task done, in a list a widget that allows ticking shows. */
 export async function POST(req: Request) {
   if (!sameOrigin(req)) return json({ error: "Not allowed" }, 403);
-  if (!(await viewerFor(req))) return unauthorized();
+  const viewer = await viewerFor(req);
+  if (!viewer) return unauthorized();
+  const accountId = accountIdOf(viewer);
   const parsed = body.safeParse(await readJson(req, 2000).catch(() => null));
   if (!parsed.success) return json({ error: "Bad request" }, 400);
   try {
-    const result = await completeTask((await loadConfig()).config, parsed.data.list, parsed.data.task);
+    const { config } = await loadConfig(accountId);
+    const result = await completeTask(accountId, config, parsed.data.list, parsed.data.task);
     return result === "ok" ? json({ ok: true }) : json({ error: "Not allowed" }, 403);
   } catch (error) {
     return json({ error: error instanceof Error ? error.message : "Google Tasks didn't answer" }, 502);

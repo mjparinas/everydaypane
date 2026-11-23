@@ -15,16 +15,19 @@ const API = "https://api.ws.sonos.com/control/api/v1";
 
 export class SonosError extends Error {}
 
-async function sonos(path: string, init: RequestInit = {}): Promise<Response> {
+async function sonos(accountId: string, path: string, init: RequestInit = {}): Promise<Response> {
   const send = async () =>
     fetch(`${API}${path}`, {
       ...init,
-      headers: { Authorization: `Bearer ${await musicToken("sonos")}`, ...(init.body ? { "Content-Type": "application/json" } : {}) },
+      headers: {
+        Authorization: `Bearer ${await musicToken(accountId, "sonos")}`,
+        ...(init.body ? { "Content-Type": "application/json" } : {}),
+      },
       signal: AbortSignal.timeout(8000),
     });
   let r = await send();
   if (r.status === 401) {
-    dropMusicToken("sonos");
+    dropMusicToken(accountId, "sonos");
     r = await send();
   }
   if (r.ok) return r;
@@ -34,7 +37,7 @@ async function sonos(path: string, init: RequestInit = {}): Promise<Response> {
   throw new SonosError(`Sonos answered ${r.status}`);
 }
 
-const get = async <T>(path: string): Promise<T> => (await (await sonos(path)).json()) as T;
+const get = async <T>(accountId: string, path: string): Promise<T> => (await (await sonos(accountId, path)).json()) as T;
 
 // ---- Households, groups and players ----
 
@@ -54,23 +57,23 @@ interface Household {
   players: RawPlayer[];
 }
 
-async function households(): Promise<Household[]> {
-  const list = await get<{ households?: { id?: string }[] }>("/households");
+async function households(accountId: string): Promise<Household[]> {
+  const list = await get<{ households?: { id?: string }[] }>(accountId, "/households");
   const ids = (list.households ?? [])
     .map((h) => h.id)
     .filter((id): id is string => Boolean(id))
     .slice(0, 5);
   return Promise.all(
     ids.map(async (id) => {
-      const g = await get<{ groups?: RawGroup[]; players?: RawPlayer[] }>(`/households/${encodeURIComponent(id)}/groups`);
+      const g = await get<{ groups?: RawGroup[]; players?: RawPlayer[] }>(accountId, `/households/${encodeURIComponent(id)}/groups`);
       return { id, groups: g.groups ?? [], players: g.players ?? [] };
     }),
   );
 }
 
 /** Every speaker, for the admin panel's picker. */
-export async function sonosPlayers(): Promise<{ id: string; name: string }[]> {
-  return (await households())
+export async function sonosPlayers(accountId: string): Promise<{ id: string; name: string }[]> {
+  return (await households(accountId))
     .flatMap((h) => h.players)
     .filter((p): p is { id: string; name: string } => Boolean(p.id && p.name))
     .map((p) => ({ id: p.id, name: p.name.slice(0, 80) }))
@@ -87,10 +90,10 @@ function findGroup(all: Household[], playerId: string): { household: string; gro
 // Favourites change rarely: kept ten minutes per household.
 const favMemo = new Map<string, { at: number; items: { id: string; name: string }[] }>();
 
-async function favourites(household: string, now: number): Promise<{ id: string; name: string }[]> {
+async function favourites(accountId: string, household: string, now: number): Promise<{ id: string; name: string }[]> {
   const hit = favMemo.get(household);
   if (hit && now - hit.at < 10 * 60_000) return hit.items;
-  const body = await get<{ items?: { id?: string; name?: string }[] }>(`/households/${encodeURIComponent(household)}/favorites`);
+  const body = await get<{ items?: { id?: string; name?: string }[] }>(accountId, `/households/${encodeURIComponent(household)}/favorites`);
   const items = (body.items ?? [])
     .filter((i): i is { id: string; name: string } => Boolean(i.id && i.name))
     .slice(0, 40)
@@ -168,12 +171,13 @@ export function sonosPlayer(
 
 /** The speakers' players, keyed "sonos:<player id>". A speaker Sonos no longer lists shows as unavailable. */
 export async function sonosFeed(
+  accountId: string,
   playerIds: string[],
   withSources: Set<string>,
   now = Date.now(),
 ): Promise<{ key: string; entity: HaEntity; artUrl?: string }[]> {
   if (!playerIds.length) return [];
-  const all = await households();
+  const all = await households(accountId);
   return Promise.all(
     playerIds.map(async (playerId) => {
       const key = `sonos:${playerId}`;
@@ -181,10 +185,10 @@ export async function sonosFeed(
       if (!found) return { key, entity: { id: key, state: "unavailable", name: "Sonos", changed: 0, media: { features: 0 } } };
       const g = encodeURIComponent(found.group.id);
       const [playback, meta, volume, favs] = await Promise.all([
-        get<RawPlayback>(`/groups/${g}/playback`),
-        get<RawMetadata>(`/groups/${g}/playbackMetadata`),
-        get<RawVolume>(`/groups/${g}/groupVolume`),
-        withSources.has(playerId) ? favourites(found.household, now).catch(() => []) : Promise.resolve([]),
+        get<RawPlayback>(accountId, `/groups/${g}/playback`),
+        get<RawMetadata>(accountId, `/groups/${g}/playbackMetadata`),
+        get<RawVolume>(accountId, `/groups/${g}/groupVolume`),
+        withSources.has(playerId) ? favourites(accountId, found.household, now).catch(() => []) : Promise.resolve([]),
       ]);
       return {
         key,
@@ -202,11 +206,17 @@ export async function sonosFeed(
   );
 }
 
-export async function sonosAct(playerId: string, action: MusicAction, value?: number, option?: string): Promise<"ok" | "forbidden"> {
-  const found = findGroup(await households(), playerId);
+export async function sonosAct(
+  accountId: string,
+  playerId: string,
+  action: MusicAction,
+  value?: number,
+  option?: string,
+): Promise<"ok" | "forbidden"> {
+  const found = findGroup(await households(accountId), playerId);
   if (!found) return "forbidden";
   const g = `/groups/${encodeURIComponent(found.group.id)}`;
-  const post = (path: string, body: unknown = {}) => sonos(`${g}${path}`, { method: "POST", body: JSON.stringify(body) });
+  const post = (path: string, body: unknown = {}) => sonos(accountId, `${g}${path}`, { method: "POST", body: JSON.stringify(body) });
   if (action === "playPause") await post("/playback/togglePlayPause");
   else if (action === "next") await post("/playback/skipToNextTrack");
   else if (action === "previous") await post("/playback/skipToPreviousTrack");
@@ -215,7 +225,7 @@ export async function sonosAct(playerId: string, action: MusicAction, value?: nu
   else if (action === "mute" || action === "unmute") await post("/groupVolume/mute", { muted: action === "mute" });
   else if (action === "source" && option) {
     // By name, as the widget shows them; only one of the household's own favourites.
-    const fav = (await favourites(found.household, Date.now())).find((f) => f.name === option);
+    const fav = (await favourites(accountId, found.household, Date.now())).find((f) => f.name === option);
     if (!fav) return "forbidden";
     await post("/favorites", { favoriteId: fav.id, playOnCompletion: true, action: "REPLACE" });
   } else return "forbidden";

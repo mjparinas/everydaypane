@@ -10,14 +10,16 @@ import { adminFor } from "@/server/viewer";
 // stored encrypted; the panel only learns which are set, whether the connection works, and the entity list.
 
 export async function GET(req: Request) {
-  if (!(await adminFor(req))) return unauthorized();
-  const set = await secretsSet();
+  const session = await adminFor(req);
+  if (!session) return unauthorized();
+  const accountId = session.accountId;
+  const set = await secretsSet(accountId);
   const status = { tokenSet: set["homeAssistant.token"], accessSet: set["homeAssistant.accessId"] && set["homeAssistant.accessSecret"] };
-  const { config } = await loadConfig();
+  const { config } = await loadConfig(accountId);
   if (!config.integrations.homeAssistant.url || !status.tokenSet) return json({ ...status, connected: false, entities: [] });
   try {
-    const message = await testConnection(config);
-    return json({ ...status, connected: true, message, entities: await listEntities(config) });
+    const message = await testConnection(accountId, config);
+    return json({ ...status, connected: true, message, entities: await listEntities(accountId, config) });
   } catch (error) {
     const message = error instanceof HaNotConfigured ? "Add the address and token" : error instanceof Error ? error.message : "No answer";
     return json({ ...status, connected: false, error: message, entities: [] });
@@ -30,12 +32,14 @@ const body = z.object({ token: secret, accessId: secret, accessSecret: secret })
 /** Saves secrets: a string sets one, null clears it, leaving it out keeps it. */
 export async function PUT(req: Request) {
   if (!sameOrigin(req)) return json({ error: "Not allowed" }, 403);
-  if (!(await adminFor(req))) return unauthorized();
+  const session = await adminFor(req);
+  if (!session) return unauthorized();
+  const accountId = session.accountId;
   const parsed = body.safeParse(await readJson(req, 10_000).catch(() => null));
   if (!parsed.success) return json({ error: "Bad request" }, 400);
   const { token, accessId, accessSecret } = parsed.data;
-  if (token !== undefined) await setSecret("homeAssistant.token", token);
-  if (accessId !== undefined) await setSecret("homeAssistant.accessId", accessId);
-  if (accessSecret !== undefined) await setSecret("homeAssistant.accessSecret", accessSecret);
+  if (token !== undefined) await setSecret(accountId, "homeAssistant.token", token);
+  if (accessId !== undefined) await setSecret(accountId, "homeAssistant.accessId", accessId);
+  if (accessSecret !== undefined) await setSecret(accountId, "homeAssistant.accessSecret", accessSecret);
   return json({ ok: true });
 }

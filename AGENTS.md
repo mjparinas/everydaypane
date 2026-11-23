@@ -61,8 +61,10 @@ palettes, fonts, corner radius, opacity and optional glass; burn-in protection (
 worker serves the last good data and shows "Offline"); a **screen saver** (photos only or dark after idle minutes, dark
 in a night window, woken by a tap, Home Assistant motion sensors, the doorbell, a new alert or a timer going off); doorbell pop-up full
 screen; the red, dismissible alert strip;
-no pinch zoom; settings reach displays by polling every 30 seconds; Vancouver clocks, dates, calendars and scheduled
-views stay on UTC−7 after B.C.'s March 2026 change even when the display browser has old time-zone data.
+no pinch zoom; settings reach displays by polling every 30 seconds (**Household** also long-polls for instant reload);
+**starter view templates** on the Views tab; themes include Outfit, DM Sans and Literata; Displays tab tips for casting
+the `/d/…` URL; Vancouver clocks, dates, calendars and scheduled views stay on UTC−7 after B.C.'s March 2026 change
+even when the display browser has old time-zone data.
 
 **Alerts** (`src/server/alerts.ts`): Alert Ready (NAAD), **Environment Canada weather warnings** (through NAAD),
 DriveBC road events and weather conditions, Earthquakes Canada, BC Hydro power outages. Each switchable in `config.alerts.sources`.
@@ -102,8 +104,12 @@ node scripts/e2e.mjs   # Playwright browser tests against the build (CHROMIUM_PA
 
 ## Product decisions
 
-- **Name and repo** (Melvin, 2026-11-17): the app is **Everydaypane**, in `mjparinas/everydaypane`. The domain
-  everydaypane.com was available on 2026-11-17 but has not been bought yet.
+- **Name and repo** (Melvin, 2026-11-17): the app is **Everydaypane**, in `mjparinas/everydaypane`. Melvin will register
+  **everydaypane.com** (still on `pane.getliftsmith.com` until that DNS is cut over).
+- **Paid multi-tenant product** (Melvin, 2026-11-22): Everydaypane is a **Free + one paid (“Household”)** app other
+  families can use. Free is DAKboard-like (1 view, 2 calendars, 2 displays, core widgets only). Household unlocks
+  everything. Melvin’s existing install is grandfathered on Household (`acct_legacy`). Stripe Checkout + Customer Portal
+  + webhooks (`src/server/billing.ts`); signup at `/api/auth/signup/`.
 - **Features** (Melvin, 2026-11-17): photos (Amazon Photos, choosable by person), full Google Calendar (a today
  schedule view and a month calendar view), weather for the week with icons, clocks for Vancouver and Toronto, the date,
  a WiFi QR code, countdowns to holidays and birthdays, air quality, garbage pickup from the Township of Langley's
@@ -135,9 +141,17 @@ node scripts/e2e.mjs   # Playwright browser tests against the build (CHROMIUM_PA
   outage map join the same alert strip and alerts widget (see Architecture). Weather alerts already existed
   (Environment Canada through NAAD, since 2026-11-17), so that half of the ask needed nothing new.
 - **Admin changes reach displays by polling** (Melvin, 2026-11-17: "we dont need real time push for now, polling is
-  ok"). Every display asks for the settings version every 30 seconds (a tiny request answered with 304 when nothing
-  changed) and reloads its settings when it moves. No WebSocket or push service. The Views tab's live preview is the
-  exception: it shows the unsaved working copy over `postMessage` and never pushes that draft to wall screens.
+  ok"), with **instant refresh on Household** (Melvin, 2026-11-22): every display still asks for the settings version
+  every 30 seconds (304 when nothing changed). Paid households also long-poll `/api/display/config-watch/` and reload
+  as soon as the version moves; admins can tap **Refresh displays**. Free keeps the 30-second poll only. No WebSocket.
+  The Views tab's live preview is the exception: it shows the unsaved working copy over `postMessage` and never pushes
+  that draft to wall screens.
+- **Starter view templates** (Melvin, 2026-11-22): the Views tab can add a ready-made layout (kitchen glance, photo
+  frame, calendar wall, simple day) built from Free-tier widgets (`src/lib/config/templates.ts`).
+- **More theme fonts** (Melvin, 2026-11-22): Outfit, DM Sans and Literata join Inter, Manrope and Space Grotesk
+  (self-hosted under `/fonts/`).
+- **Castable display URL** (Melvin, 2026-11-22): Displays tab copy/open tips for Chromecast (cast a browser tab) and
+  TV/kiosk start pages — no custom Cast receiver.
 - **Live views editor** (Melvin, 2026-11-22: the view loaded in the UI, changes live; then one surface with right
   settings drawers, not two stacks): the Views tab shows one live editable layout (real widgets under a drag overlay);
   widget settings and view settings (Edit view) each open in a right slide-out. Draft `postMessage` updates patch cells
@@ -225,11 +239,15 @@ panel can be complex if you need it to be."
 
 ## Architecture
 
-- **One settings document** (`src/lib/config/schema.ts`, validated with zod on every save) holds views, widgets,
-  themes, the schedule and integration settings. It is versioned: a save names the version it started from, a stale save
-  is refused with 409, and every save bumps the version displays poll for (`src/server/config.ts`).
+- **Accounts (households)** (`src/server/accounts.ts`): each family has an `accounts` row (plan, Stripe ids) and
+  `account_members` (admin|family). Sessions and display devices carry `accountId`. Env `ADMIN_EMAILS` /
+  `FAMILY_EMAILS` still seed and open the grandfather household.
+- **One settings document per account** (`account_config`; schema in `src/lib/config/schema.ts`, validated with zod on
+  every save) holds views, widgets, themes, the schedule and integration settings. It is versioned: a save names the
+  version it started from, a stale save is refused with 409, and every save bumps the version displays poll for
+  (`src/server/config.ts`). Free saves are plan-gated (`src/server/planGates.ts`).
 - **Secrets are not in the document.** Tokens (Google refresh token and its scopes, Amazon cookie, Home Assistant
-  token) are stored encrypted (AES-256-GCM, key from `SESSION_SECRET`) in the `secrets` table and never sent to a browser
+  token) are stored encrypted (AES-256-GCM, key from `SESSION_SECRET`) in `account_secrets` and never sent to a browser
   (`src/server/secrets.ts`). The WiFi password is the exception: showing it is the widget's job.
 - **Database:** Turso in production (`DATABASE_URL` + `DATABASE_AUTH_TOKEN`, or the `TURSO_*` pair Vercel's
   integration creates), `file:local.db` in development, memory in tests. Tables are created on first use; migrations only
@@ -543,11 +561,11 @@ panel can be complex if you need it to be."
 - **Preview deployments are off**, as in Liftsmith; CI's own build and browser tests cover pull requests.
 - **Vercel Authentication is off** for this project: a display can't sign in to Vercel, and every page and API route
   checks its own session or display token.
-- **Address:** `pane.getliftsmith.com` until everydaypane.com is bought (Melvin, 2026-11-17). getliftsmith.com's DNS is
-  on Cloudflare, so the record there is a DNS-only (grey cloud) CNAME `pane` → `cname.vercel-dns.com`.
-  `NEXT_PUBLIC_SITE_URL` in Vercel holds the address used in sign-in links.
+- **Address:** `pane.getliftsmith.com` until Melvin points **everydaypane.com** at the project (he is registering the
+  domain himself). getliftsmith.com's DNS is on Cloudflare, so the record there is a DNS-only (grey cloud) CNAME `pane`
+  → `cname.vercel-dns.com`. `NEXT_PUBLIC_SITE_URL` in Vercel holds the address used in sign-in links.
 - **Sign-in email** is sent from `hello@getliftsmith.com` (verified in Resend, click tracking off so links aren't
-  rewritten) until everydaypane.com is bought (Melvin, 2026-11-17). `ADMIN_EMAILS` is Melvin's own address.
+  rewritten) until everydaypane.com mail is verified. `ADMIN_EMAILS` seeds Melvin's grandfather Household admin.
 - **Database:** a Turso database from the Vercel Marketplace integration, connected to the project (its `TURSO_*`
   variables are read by `src/server/db.ts`).
 

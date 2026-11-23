@@ -17,9 +17,9 @@ export class PhotosNotAllowed extends Error {
   }
 }
 
-async function call(path: string, init: RequestInit = {}): Promise<Response> {
-  if (!(await photosGranted())) throw new PhotosNotAllowed();
-  const token = await accessToken();
+async function call(accountId: string, path: string, init: RequestInit = {}): Promise<Response> {
+  if (!(await photosGranted(accountId))) throw new PhotosNotAllowed();
+  const token = await accessToken(accountId);
   const r = await fetch(`${API}${path}`, {
     ...init,
     headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
@@ -67,8 +67,8 @@ function trimSession(raw: unknown): PickerSession {
   };
 }
 
-export async function createSession(): Promise<PickerSession> {
-  return trimSession(await (await call("/sessions", { method: "POST", body: "{}" })).json());
+export async function createSession(accountId: string): Promise<PickerSession> {
+  return trimSession(await (await call(accountId, "/sessions", { method: "POST", body: "{}" })).json());
 }
 
 const sessionId = (id: string) => {
@@ -76,12 +76,12 @@ const sessionId = (id: string) => {
   return id;
 };
 
-export async function getSession(id: string): Promise<PickerSession> {
-  return trimSession(await (await call(`/sessions/${sessionId(id)}`)).json());
+export async function getSession(accountId: string, id: string): Promise<PickerSession> {
+  return trimSession(await (await call(accountId, `/sessions/${sessionId(id)}`)).json());
 }
 
-export async function deleteSession(id: string): Promise<void> {
-  await call(`/sessions/${sessionId(id)}`, { method: "DELETE" }).catch(() => undefined);
+export async function deleteSession(accountId: string, id: string): Promise<void> {
+  await call(accountId, `/sessions/${sessionId(id)}`, { method: "DELETE" }).catch(() => undefined);
 }
 
 const itemSchema = z.object({
@@ -112,11 +112,11 @@ export interface ImportResult {
 }
 
 /** Copies one page (up to 20) of the picked photos into a library album. Videos are skipped. */
-export async function importPage(sourceId: string, session: string, pageToken: string | null): Promise<ImportResult> {
+export async function importPage(accountId: string, sourceId: string, session: string, pageToken: string | null): Promise<ImportResult> {
   const q = new URLSearchParams({ sessionId: sessionId(session), pageSize: "20" });
   if (pageToken) q.set("pageToken", pageToken);
-  const page = pageSchema.parse(await (await call(`/mediaItems?${q}`)).json());
-  const token = await accessToken();
+  const page = pageSchema.parse(await (await call(accountId, `/mediaItems?${q}`)).json());
+  const token = await accessToken(accountId);
   let added = 0;
   let skipped = 0;
   for (const raw of page.mediaItems) {
@@ -141,7 +141,7 @@ export async function importPage(sourceId: string, session: string, pageToken: s
       continue;
     }
     const size = fitted(file.mediaFileMetadata?.width ?? 0, file.mediaFileMetadata?.height ?? 0);
-    const result = await addPhoto(sourceId, new Uint8Array(await r.arrayBuffer()), {
+    const result = await addPhoto(accountId, sourceId, new Uint8Array(await r.arrayBuffer()), {
       w: size.w,
       h: size.h,
       taken: item.data.createTime ?? null,

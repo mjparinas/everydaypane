@@ -24,12 +24,12 @@ export type IcalLink = DashboardConfig["integrations"]["icals"][number];
 
 const secretKey = (id: string) => `ical.${id}` as const;
 
-export async function getIcalUrl(id: string): Promise<string | null> {
-  return getSecret(secretKey(id));
+export async function getIcalUrl(accountId: string, id: string): Promise<string | null> {
+  return getSecret(accountId, secretKey(id));
 }
 
-export async function setIcalUrl(id: string, url: string | null): Promise<void> {
-  await setSecret(secretKey(id), url);
+export async function setIcalUrl(accountId: string, id: string, url: string | null): Promise<void> {
+  await setSecret(accountId, secretKey(id), url);
 }
 
 /**
@@ -188,8 +188,15 @@ export function parseIcal(
 }
 
 /** The link's events for the feed's days, cached for 15 minutes (served stale if the calendar's server fails). */
-export async function icalEvents(link: IcalLink, from: string, to: string, timeZone: string, now = Date.now()): Promise<CalendarEvent[]> {
-  const url = await getIcalUrl(link.id);
+export async function icalEvents(
+  accountId: string,
+  link: IcalLink,
+  from: string,
+  to: string,
+  timeZone: string,
+  now = Date.now(),
+): Promise<CalendarEvent[]> {
+  const url = await getIcalUrl(accountId, link.id);
   if (!url) return [];
   const got = await cached(
     `ical:${link.id}:${from}:${to}:${link.color}:${link.name}`,

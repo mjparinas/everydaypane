@@ -3,6 +3,7 @@ import "server-only";
 import { defaultConfig } from "@/lib/config/defaults";
 import { configSchema, type DashboardConfig } from "@/lib/config/schema";
 
+import { ensureAccountsSeeded, LEGACY_ACCOUNT_ID } from "./accounts";
 import { query, run } from "./db";
 import { publicHaUrl, sameHaUrl } from "./haUrl";
 import { removePhotos } from "./library";
@@ -14,20 +15,23 @@ export interface StoredConfig {
   updatedAt: number;
 }
 
-/** The saved dashboard, or the default one before the first save. A stored document that no longer validates
- *  (after a schema change) is upgraded by filling defaults; if even that fails, the default is served. */
-export async function loadConfig(): Promise<StoredConfig> {
+/** The saved dashboard for a household, or the default one before the first save. */
+export async function loadConfig(accountId: string): Promise<StoredConfig> {
+  await ensureAccountsSeeded();
   const rows = await query<{ json: string; version: number; updated_at: number }>(
-    "SELECT json, version, updated_at FROM config WHERE id = 1",
+    "SELECT json, version, updated_at FROM account_config WHERE account_id = ?",
+    [accountId],
   );
   const row = rows[0];
-  if (!row) return { config: defaultConfig(), version: 0, updatedAt: 0 };
+  if (!row || row.json === "{}")
+    return { config: defaultConfig(), version: Number(row?.version ?? 0), updatedAt: Number(row?.updated_at ?? 0) };
   const parsed = configSchema.safeParse(upgrade(JSON.parse(row.json) as unknown));
   return { config: parsed.success ? parsed.data : defaultConfig(), version: Number(row.version), updatedAt: Number(row.updated_at) };
 }
 
-export async function configVersion(): Promise<number> {
-  const rows = await query<{ version: number }>("SELECT version FROM config WHERE id = 1");
+export async function configVersion(accountId: string): Promise<number> {
+  await ensureAccountsSeeded();
+  const rows = await query<{ version: number }>("SELECT version FROM account_config WHERE account_id = ?", [accountId]);
   return Number(rows[0]?.version ?? 0);
 }
 
@@ -37,51 +41,70 @@ export type SaveResult = { ok: true; version: number } | { ok: false; status: 40
  * Saves the whole document if `baseVersion` is still the latest (so two admin tabs can't silently overwrite each
  * other), bumping the version every display polls for.
  */
-export async function saveConfig(input: unknown, baseVersion: number, now = Date.now()): Promise<SaveResult> {
+export async function saveConfig(accountId: string, input: unknown, baseVersion: number, now = Date.now()): Promise<SaveResult> {
+  await ensureAccountsSeeded();
   const parsed = configSchema.safeParse(input);
   if (!parsed.success) return { ok: false, status: 422, error: "The dashboard settings aren't valid", issues: parsed.error.issues };
   const haUrl = parsed.data.integrations.homeAssistant.url;
   if (haUrl && !publicHaUrl(haUrl)) {
     return { ok: false, status: 422, error: "Home Assistant needs a public https address." };
   }
-  const previous = await loadConfig();
+  const previous = await loadConfig(accountId);
   const json = JSON.stringify(parsed.data);
   let version: number | null = null;
   if (baseVersion === 0) {
-    const inserted = await run("INSERT INTO config (id, json, version, updated_at) VALUES (1, ?, 1, ?) ON CONFLICT (id) DO NOTHING", [
-      json,
-      now,
-    ]);
+    const inserted = await run(
+      "INSERT INTO account_config (account_id, json, version, updated_at) VALUES (?, ?, 1, ?) ON CONFLICT (account_id) DO NOTHING",
+      [accountId, json, now],
+    );
     if (inserted === 1) version = 1;
+    else {
+      // Row exists with version 0 from account create — upgrade in place when still at 0.
+      const updated = await run("UPDATE account_config SET json = ?, version = 1, updated_at = ? WHERE account_id = ? AND version = 0", [
+        json,
+        now,
+        accountId,
+      ]);
+      if (updated === 1) version = 1;
+    }
   } else {
-    const updated = await run("UPDATE config SET json = ?, version = version + 1, updated_at = ? WHERE id = 1 AND version = ?", [
-      json,
-      now,
-      baseVersion,
-    ]);
+    const updated = await run(
+      "UPDATE account_config SET json = ?, version = version + 1, updated_at = ? WHERE account_id = ? AND version = ?",
+      [json, now, accountId, baseVersion],
+    );
     if (updated === 1) version = baseVersion + 1;
   }
   if (version === null) return { ok: false, status: 409, error: "Someone else changed the dashboard. Reload to see their changes." };
-  // Changing a set HA address must not keep sending the stored token to a new host (backup restore or a pasted URL).
   const prevHa = previous.config.integrations.homeAssistant.url;
   if (prevHa && !sameHaUrl(prevHa, haUrl)) {
-    await setSecret("homeAssistant.token", null, now);
-    await setSecret("homeAssistant.accessId", null, now);
-    await setSecret("homeAssistant.accessSecret", null, now);
+    await setSecret(accountId, "homeAssistant.token", null, now);
+    await setSecret(accountId, "homeAssistant.accessId", null, now);
+    await setSecret(accountId, "homeAssistant.accessSecret", null, now);
   }
-  // A library album leaves the document only when Save lands, so Undo still has its photos. The blobs go with it then.
   const kept = new Set(parsed.data.integrations.photos.sources.filter((s) => s.kind === "library").map((s) => s.id));
   for (const source of previous.config.integrations.photos.sources) {
-    if (source.kind === "library" && !kept.has(source.id)) await removePhotos(source.id);
+    if (source.kind === "library" && !kept.has(source.id)) await removePhotos(accountId, source.id);
   }
   return { ok: true, version };
 }
 
 /** Bumps the version without changing the document, so displays reload (e.g. after a device is reassigned). */
-export async function touchConfig(now = Date.now()): Promise<void> {
-  const changed = await run("UPDATE config SET version = version + 1, updated_at = ? WHERE id = 1", [now]);
-  if (changed === 0)
-    await run("INSERT INTO config (id, json, version, updated_at) VALUES (1, ?, 1, ?)", [JSON.stringify(defaultConfig()), now]);
+export async function touchConfig(accountId: string, now = Date.now()): Promise<void> {
+  await ensureAccountsSeeded();
+  const changed = await run("UPDATE account_config SET version = version + 1, updated_at = ? WHERE account_id = ?", [now, accountId]);
+  if (changed === 0) {
+    await run("INSERT INTO account_config (account_id, json, version, updated_at) VALUES (?, ?, 1, ?)", [
+      accountId,
+      JSON.stringify(defaultConfig()),
+      now,
+    ]);
+  }
+}
+
+/** @deprecated Prefer loadConfig(accountId). Tests / health may use the grandfather household. */
+export async function loadLegacyConfig(): Promise<StoredConfig> {
+  await ensureAccountsSeeded();
+  return loadConfig(LEGACY_ACCOUNT_ID);
 }
 
 /** Fills in sections added after a document was saved, from the defaults. */
@@ -93,8 +116,6 @@ export function upgrade(stored: unknown): unknown {
   for (const k of ["integrations", "burnIn", "alerts", "schedule", "location", "school"]) {
     if (typeof s[k] === "object" && s[k] !== null) out[k] = { ...(d[k] as object), ...(s[k] as object) };
   }
-  // Per-widget panel (Melvin, 2026-11-22): sunrise & sunset used to have its own `transparent` flag; clocks and
-  // dates had no panel in CSS. Map those into showBackground so older documents keep looking the same.
   if (Array.isArray(out.views)) {
     out.views = out.views.map((view) => {
       if (typeof view !== "object" || view === null) return view;

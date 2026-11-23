@@ -29,7 +29,14 @@ const sw = self as unknown as ServiceWorkerScope;
 const VERSION = new URLSearchParams(sw.location.search).get("v") ?? "dev";
 const SHELL = `ep-shell-${VERSION}`;
 const DATA = "ep-data";
-const FONTS = ["/fonts/inter.woff2", "/fonts/manrope.woff2", "/fonts/space-grotesk.woff2"];
+const FONTS = [
+  "/fonts/inter.woff2",
+  "/fonts/manrope.woff2",
+  "/fonts/space-grotesk.woff2",
+  "/fonts/outfit.woff2",
+  "/fonts/dm-sans.woff2",
+  "/fonts/literata.woff2",
+];
 
 sw.addEventListener("install", (e) => {
   e.waitUntil(

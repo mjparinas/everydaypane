@@ -6,6 +6,7 @@ import { GET as tileGET } from "@/app/api/display/radar/tile/route";
 import { defaultConfig } from "@/lib/config/defaults";
 import { newWidget } from "@/lib/config/widgets";
 import type { RadarData } from "@/lib/display/types";
+import { LEGACY_ACCOUNT_ID } from "@/server/accounts";
 import { req, useTestServer } from "@/test/server";
 
 import { clearMemoryCache } from "./cache";
@@ -138,7 +139,7 @@ describe("radar feed", () => {
   it("serves displays the picture times, with their token only", async () => {
     vi.useFakeTimers({ now: NOW, toFake: ["Date"] });
     geomet();
-    const { token } = await addDevice("Kitchen", null);
+    const { token } = await addDevice(LEGACY_ACCOUNT_ID, "Kitchen", null);
     const r = await feedGET(req("/api/display/radar/", { headers: { "x-display-token": token } }));
     const data = (await r.json()) as RadarData;
     expect(data.layers.rain?.past.at(-1)).toBe(at("05:00"));
@@ -150,7 +151,7 @@ describe("radar feed", () => {
   it("passes on pictures for listed times only, and keeps observed ones a day", async () => {
     vi.useFakeTimers({ now: NOW, toFake: ["Date"] });
     const { seen } = geomet();
-    const { token } = await addDevice("Kitchen", null);
+    const { token } = await addDevice(LEGACY_ACCOUNT_ID, "Kitchen", null);
     const frame = (q: string) => frameGET(req(`/api/display/radar/frame/?t=${token}&${q}`));
     const past = await frame(`p=rain&z=8&time=${at("04:54")}`);
     expect(past.status).toBe(200);
@@ -173,14 +174,14 @@ describe("radar feed", () => {
     vi.useFakeTimers({ now: NOW, toFake: ["Date"] });
     geomet({ picture: '<?xml version="1.0"?><ServiceExceptionReport/>' });
     vi.spyOn(console, "error").mockImplementation(() => undefined);
-    const { token } = await addDevice("Kitchen", null);
+    const { token } = await addDevice(LEGACY_ACCOUNT_ID, "Kitchen", null);
     expect((await frameGET(req(`/api/display/radar/frame/?t=${token}&p=rain&z=8&time=${at("04:54")}`))).status).toBe(404);
     vi.useRealTimers();
   });
 
   it("serves Esri's map tiles around home only, row before column", async () => {
     const { seen } = geomet({ picture: JPEG });
-    const { token } = await addDevice("Kitchen", null);
+    const { token } = await addDevice(LEGACY_ACCOUNT_ID, "Kitchen", null);
     const tile = (q: string) => tileGET(req(`/api/display/radar/tile/?t=${token}&${q}`));
     const ok = await tile("s=dark&z=8&x=40&y=87");
     expect(ok.status).toBe(200);
@@ -198,7 +199,7 @@ describe("radar feed", () => {
   it("never passes on a page in place of a map tile", async () => {
     geomet({ picture: "<html>Sign in for an API key</html>" });
     vi.spyOn(console, "error").mockImplementation(() => undefined);
-    const { token } = await addDevice("Kitchen", null);
+    const { token } = await addDevice(LEGACY_ACCOUNT_ID, "Kitchen", null);
     expect((await tileGET(req(`/api/display/radar/tile/?t=${token}&s=light&z=8&x=40&y=87`))).status).toBe(404);
   });
 });

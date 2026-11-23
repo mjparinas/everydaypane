@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import { GET, POST } from "@/app/api/admin/backup/route";
 import { defaultConfig } from "@/lib/config/defaults";
 import type { DashboardConfig } from "@/lib/config/schema";
+import { LEGACY_ACCOUNT_ID } from "@/server/accounts";
 import { cookieFor, req, useTestServer } from "@/test/server";
 
 import { makeBackup, readBackup } from "./backup";
@@ -80,7 +81,7 @@ describe("settings backup", () => {
     const kid = await cookieFor("kid@example.com");
     const named = withWifi("secret-pass");
     named.name = "Kitchen";
-    await saveConfig(named, 0);
+    await saveConfig(LEGACY_ACCOUNT_ID, named, 0);
 
     expect((await GET(req("/api/admin/backup/", { headers: { cookie: kid } }))).status).toBe(401);
     const res = await GET(req("/api/admin/backup/", { headers: { cookie: admin } }));
@@ -93,7 +94,7 @@ describe("settings backup", () => {
 
     const changed = withWifi("secret-pass");
     changed.name = "Hallway";
-    await saveConfig(changed, 1);
+    await saveConfig(LEGACY_ACCOUNT_ID, changed, 1);
 
     const backup = JSON.parse(text) as unknown;
     const post = (b: object, cookie = admin) =>
@@ -102,13 +103,13 @@ describe("settings backup", () => {
 
     const dry = await post({ baseVersion: 2, backup, dryRun: true });
     expect(await dry.json()).toEqual({ ok: true, summary: { views: 4, widgets: 23, themes: 8 } });
-    expect((await loadConfig()).config.name).toBe("Hallway");
+    expect((await loadConfig(LEGACY_ACCOUNT_ID)).config.name).toBe("Hallway");
 
     expect((await post({ baseVersion: 1, backup })).status).toBe(409);
     const done = await post({ baseVersion: 2, backup });
     expect(done.status).toBe(200);
     expect(await done.json()).toMatchObject({ ok: true, version: 3, config: { name: "Kitchen" } });
-    const now = await loadConfig();
+    const now = await loadConfig(LEGACY_ACCOUNT_ID);
     expect(now.config.name).toBe("Kitchen");
     expect(wifiPasswords(now.config)).toContain("secret-pass");
 

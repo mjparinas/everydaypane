@@ -1,47 +1,48 @@
 import "server-only";
 
+import { accountsForEmail, canSignIn, createAccount, ensureAccountsSeeded, type MemberRole } from "./accounts";
 import { randomToken, sha256 } from "./crypto";
 import { query, rateLimit, run } from "./db";
 import { env } from "./env";
 import { clientIp, json } from "./http";
 import { sendEmail } from "./mail";
 
-// Sign-in by magic link (Melvin, 2026-11-17), as Liftsmith's admin panel does it: a one-time link emailed through
-// Resend to an address on ADMIN_EMAILS (changes the dashboard) or FAMILY_EMAILS (posts on the message board only).
-// The lists live in the environment, so nothing a request writes can make someone an admin. Only hashes of links
-// and session tokens are stored. The emailed link opens a page with a button, and only the button's POST uses the
-// link up, so mail scanners that open links don't sign anyone in or burn the link.
+// Sign-in by magic link (Melvin, 2026-11-17), extended for multi-tenant accounts (2026-11-22): members of a household
+// or a new signup. Env ADMIN_EMAILS / FAMILY_EMAILS still open the grandfather household. Only hashes of links and
+// session tokens are stored. The emailed link opens a page with a button, and only the button's POST uses the link up.
 
 export const SESSION_COOKIE = "ep_session";
 export const LINK_MS = 15 * 60_000;
-/** A session ends after 30 days without use, and 180 days after sign-in regardless. */
 export const IDLE_MS = 30 * 86_400_000;
 export const MAX_MS = 180 * 86_400_000;
 const RENEW_MS = 86_400_000;
 
-export type Role = "admin" | "family";
+export type Role = MemberRole;
 export interface Session {
   email: string;
   role: Role;
-}
-
-export function roleOf(email: string): Role | null {
-  const e = email.trim().toLowerCase();
-  if (env.adminEmails().has(e)) return "admin";
-  if (env.familyEmails().has(e)) return "family";
-  return null;
+  accountId: string;
 }
 
 const SENT = { ok: true, message: "If that address can sign in, a link is on its way. It works once, for 15 minutes." };
 
-/** Emails a sign-in link if the address is on a list. Always answers the same, so the lists can't be probed. */
+/** Emails a sign-in link if the address belongs to a household (or env bootstrap). Always answers the same. */
 export async function startSignIn(req: Request, email: string, origin: string, now = Date.now()): Promise<Response> {
+  await ensureAccountsSeeded(now);
   const e = email.trim().toLowerCase();
   if (!(await rateLimit(`sign-in:${clientIp(req)}`, 10, 15 * 60_000, now))) return json({ error: "Too many tries. Wait 15 minutes." }, 429);
   if (!(await rateLimit(`sign-in-email:${e}`, 5, 15 * 60_000, now))) return json(SENT);
-  if (!roleOf(e)) return json(SENT);
+  if (!(await canSignIn(e))) return json(SENT);
+  const members = await accountsForEmail(e);
+  const accountId = members[0]?.accountId;
+  if (!accountId) return json(SENT);
   const token = randomToken();
-  await run("INSERT INTO sign_in_links (token_hash, email, expires_at) VALUES (?, ?, ?)", [sha256(token), e, now + LINK_MS]);
+  await run("INSERT INTO sign_in_links (token_hash, email, account_id, expires_at) VALUES (?, ?, ?, ?)", [
+    sha256(token),
+    e,
+    accountId,
+    now + LINK_MS,
+  ]);
   const link = `${env.siteUrl() || origin}/signin/verify/?token=${encodeURIComponent(token)}`;
   const sent = await sendEmail({
     to: e,
@@ -53,33 +54,52 @@ export async function startSignIn(req: Request, email: string, origin: string, n
   return json(SENT);
 }
 
+/**
+ * Starts a Free household for a new address and emails a sign-in link. Existing members get a normal link instead.
+ */
+export async function startSignUp(req: Request, email: string, name: string, origin: string, now = Date.now()): Promise<Response> {
+  await ensureAccountsSeeded(now);
+  const e = email.trim().toLowerCase();
+  if (!(await rateLimit(`sign-up:${clientIp(req)}`, 5, 15 * 60_000, now))) return json({ error: "Too many tries. Wait 15 minutes." }, 429);
+  if (!(await rateLimit(`sign-up-email:${e}`, 3, 60 * 60_000, now))) return json(SENT);
+  if (!e.includes("@")) return json(SENT);
+  if (await canSignIn(e)) return startSignIn(req, e, origin, now);
+  await createAccount(name || "Home", e, now);
+  return startSignIn(req, e, origin, now);
+}
+
 /** Uses up a link (one statement, so two racing requests can't both win) and starts a session. */
 export async function finishSignIn(token: string, now = Date.now()): Promise<{ sessionToken: string; session: Session } | null> {
-  const rows = await query<{ email: string }>(
-    "UPDATE sign_in_links SET used_at = ? WHERE token_hash = ? AND used_at IS NULL AND expires_at > ? RETURNING email",
+  await ensureAccountsSeeded(now);
+  const rows = await query<{ email: string; account_id: string | null }>(
+    "UPDATE sign_in_links SET used_at = ? WHERE token_hash = ? AND used_at IS NULL AND expires_at > ? RETURNING email, account_id",
     [now, sha256(token), now],
   );
-  const email = rows[0]?.email;
-  if (!email) return null;
-  const role = roleOf(email);
-  if (!role) return null;
+  const row = rows[0];
+  if (!row?.email) return null;
+  const members = await accountsForEmail(row.email);
+  const accountId = row.account_id && members.some((m) => m.accountId === row.account_id) ? row.account_id : members[0]?.accountId;
+  const membership = members.find((m) => m.accountId === accountId);
+  if (!accountId || !membership) return null;
   const sessionToken = randomToken();
-  await run("INSERT INTO sessions (token_hash, email, created_at, last_used_at) VALUES (?, ?, ?, ?)", [
+  await run("INSERT INTO sessions (token_hash, email, account_id, created_at, last_used_at) VALUES (?, ?, ?, ?, ?)", [
     sha256(sessionToken),
-    email,
+    row.email,
+    accountId,
     now,
     now,
   ]);
   await run("DELETE FROM sign_in_links WHERE expires_at < ?", [now - 86_400_000]);
-  return { sessionToken, session: { email, role } };
+  return { sessionToken, session: { email: row.email, role: membership.role, accountId } };
 }
 
-/** The session for a cookie value. The role is read from the environment each time, so removing an address signs it out. */
+/** The session for a cookie value. Membership is re-read each time so removing someone signs them out. */
 export async function sessionFor(cookieValue: string | undefined, now = Date.now()): Promise<Session | null> {
   if (!cookieValue) return null;
+  await ensureAccountsSeeded(now);
   const h = sha256(cookieValue);
-  const rows = await query<{ email: string; created_at: number; last_used_at: number }>(
-    "SELECT email, created_at, last_used_at FROM sessions WHERE token_hash = ?",
+  const rows = await query<{ email: string; account_id: string | null; created_at: number; last_used_at: number }>(
+    "SELECT email, account_id, created_at, last_used_at FROM sessions WHERE token_hash = ?",
     [h],
   );
   const row = rows[0];
@@ -88,10 +108,15 @@ export async function sessionFor(cookieValue: string | undefined, now = Date.now
     await run("DELETE FROM sessions WHERE token_hash = ?", [h]);
     return null;
   }
-  const role = roleOf(row.email);
-  if (!role) return null;
+  const members = await accountsForEmail(row.email);
+  const accountId = row.account_id && members.some((m) => m.accountId === row.account_id) ? row.account_id : members[0]?.accountId;
+  const membership = members.find((m) => m.accountId === accountId);
+  if (!accountId || !membership) {
+    await run("DELETE FROM sessions WHERE token_hash = ?", [h]);
+    return null;
+  }
   if (now - Number(row.last_used_at) > RENEW_MS) await run("UPDATE sessions SET last_used_at = ? WHERE token_hash = ?", [now, h]);
-  return { email: row.email, role };
+  return { email: row.email, role: membership.role, accountId };
 }
 
 export async function endSession(cookieValue: string | undefined): Promise<void> {

@@ -5,6 +5,8 @@ import { adminFor } from "@/server/viewer";
 
 /** Each saved photo source's state for the admin panel: how many photos it lists, and whether they load. */
 export async function GET(req: Request) {
-  if (!(await adminFor(req))) return unauthorized();
-  return json(await checkSources((await loadConfig()).config));
+  const session = await adminFor(req);
+  if (!session) return unauthorized();
+  const accountId = session.accountId;
+  return json(await checkSources(accountId, (await loadConfig(accountId)).config));
 }

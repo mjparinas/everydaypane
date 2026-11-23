@@ -5,6 +5,7 @@ import { defaultConfig } from "@/lib/config/defaults";
 import type { DashboardConfig } from "@/lib/config/schema";
 import { newWidget } from "@/lib/config/widgets";
 import type { FerriesData } from "@/lib/display/types";
+import { LEGACY_ACCOUNT_ID } from "@/server/accounts";
 import { req, useTestServer } from "@/test/server";
 
 import { clearMemoryCache } from "./cache";
@@ -148,12 +149,12 @@ describe("ferry route", () => {
       "fetch",
       vi.fn(() => Promise.resolve(Response.json(answer))),
     );
-    const stored = await loadConfig();
+    const stored = await loadConfig(LEGACY_ACCOUNT_ID);
     const c = structuredClone(stored.config);
     c.views[0]!.widgets = withFerries(["TSASWB"]).views[0]!.widgets;
-    await saveConfig(c, stored.version);
+    await saveConfig(LEGACY_ACCOUNT_ID, c, stored.version);
     expect((await GET(req("/api/display/ferries/"))).status).toBe(401);
-    const { token } = await addDevice("Kitchen", null);
+    const { token } = await addDevice(LEGACY_ACCOUNT_ID, "Kitchen", null);
     const r = await GET(req("/api/display/ferries/", { headers: { "x-display-token": token } }));
     expect(r.status).toBe(200);
     const data = (await r.json()) as FerriesData;

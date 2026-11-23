@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { familyEditorFor, familyEditorIsAdmin, familyEditorKey } from "@/server/familyAuth";
+import { familyEditorAccountId, familyEditorFor, familyEditorIsAdmin, familyEditorKey } from "@/server/familyAuth";
 import { forbidden, json, notFound, readJson, sameOrigin, unauthorized } from "@/server/http";
 import { pinMessage, removeMessage } from "@/server/messages";
 
@@ -8,7 +8,8 @@ export async function DELETE(req: Request, ctx: { params: Promise<{ id: string }
   if (!sameOrigin(req)) return json({ error: "Not allowed" }, 403);
   const editor = await familyEditorFor(req);
   if (!editor) return unauthorized();
-  const result = await removeMessage((await ctx.params).id, {
+  const accountId = familyEditorAccountId(editor);
+  const result = await removeMessage(accountId, (await ctx.params).id, {
     email: familyEditorKey(editor),
     admin: familyEditorIsAdmin(editor),
   });
@@ -25,7 +26,8 @@ export async function PATCH(req: Request, ctx: { params: Promise<{ id: string }>
   const editor = await familyEditorFor(req);
   if (!editor) return unauthorized();
   if (!familyEditorIsAdmin(editor)) return forbidden();
+  const accountId = familyEditorAccountId(editor);
   const parsed = patch.safeParse(await readJson(req, 1_000).catch(() => null));
   if (!parsed.success) return json({ error: "Bad request" }, 400);
-  return (await pinMessage((await ctx.params).id, parsed.data.pinned)) ? json({ ok: true }) : notFound();
+  return (await pinMessage(accountId, (await ctx.params).id, parsed.data.pinned)) ? json({ ok: true }) : notFound();
 }

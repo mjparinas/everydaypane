@@ -4,6 +4,7 @@ import { GET as adminGET } from "@/app/api/admin/google-tasks/route";
 import { GET as tasksGET, POST as tasksPOST } from "@/app/api/display/tasks/route";
 import { newWidget } from "@/lib/config/widgets";
 import type { TasksData } from "@/lib/display/types";
+import { LEGACY_ACCOUNT_ID } from "@/server/accounts";
 import { cookieFor, req, useTestServer } from "@/test/server";
 
 import { clearMemoryCache } from "./cache";
@@ -75,9 +76,9 @@ describe("Google Tasks on displays", () => {
   afterEach(() => vi.unstubAllGlobals());
 
   async function connected(scopes = `${SCOPE} ${TASKS_SCOPE}`, allowCheck = true): Promise<string> {
-    await setSecret("google.refreshToken", "refresh-1");
-    await setSecret("google.scopes", scopes);
-    const stored = await loadConfig();
+    await setSecret(LEGACY_ACCOUNT_ID, "google.refreshToken", "refresh-1");
+    await setSecret(LEGACY_ACCOUNT_ID, "google.scopes", scopes);
+    const stored = await loadConfig(LEGACY_ACCOUNT_ID);
     const config = structuredClone(stored.config);
     config.integrations.tasks.lists = [
       { id: "groceries", name: "Groceries", enabled: true },
@@ -86,8 +87,8 @@ describe("Google Tasks on displays", () => {
     const view = config.views[0];
     if (!view) throw new Error("no view");
     view.widgets = [{ ...newWidget("tasks", "tk", { x: 0, y: 0 }), allowCheck }];
-    expect((await saveConfig(config, stored.version)).ok).toBe(true);
-    return (await addDevice("Kitchen", null)).token;
+    expect((await saveConfig(LEGACY_ACCOUNT_ID, config, stored.version)).ok).toBe(true);
+    return (await addDevice(LEGACY_ACCOUNT_ID, "Kitchen", null)).token;
   }
 
   const tick = (token: string, list: string, task = "t1") =>
@@ -118,7 +119,7 @@ describe("Google Tasks on displays", () => {
 
   it("refuses ticks when no widget allows them", async () => {
     await connected(undefined, false);
-    expect(mayComplete((await loadConfig()).config, "groceries")).toBe(false);
+    expect(mayComplete((await loadConfig(LEGACY_ACCOUNT_ID)).config, "groceries")).toBe(false);
   });
 
   it("says Tasks isn't connected until the account allows it", async () => {

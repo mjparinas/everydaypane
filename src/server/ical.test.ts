@@ -4,6 +4,7 @@ import { GET as adminGET, DELETE, POST } from "@/app/api/admin/calendar-links/ro
 import { GET as displayGET } from "@/app/api/display/calendar/route";
 import type { CalendarData } from "@/lib/display/types";
 import { zonedFormatter } from "@/lib/timeZone";
+import { LEGACY_ACCOUNT_ID } from "@/server/accounts";
 import { cookieFor, req, useTestServer } from "@/test/server";
 
 import { clearMemoryCache } from "./cache";
@@ -164,10 +165,10 @@ describe("calendar links: admin and displays", () => {
         body: JSON.stringify({ id: "school1", url: "webcal://school.example.com/cal.ics" }),
       }),
     );
-    const stored = await loadConfig();
+    const stored = await loadConfig(LEGACY_ACCOUNT_ID);
     const config = structuredClone(stored.config);
     config.integrations.icals = [{ id: "school1", name: "School", color: "#16a34a", enabled: true }];
-    await saveConfig(config, stored.version);
+    await saveConfig(LEGACY_ACCOUNT_ID, config, stored.version);
     return r;
   }
 
@@ -176,12 +177,12 @@ describe("calendar links: admin and displays", () => {
     const r = await addLink(admin);
     expect(r.status).toBe(200);
     expect(await r.json()).toMatchObject({ ok: true, name: "Riverside Elementary" });
-    expect(await getIcalUrl("school1")).toBe("https://school.example.com/cal.ics");
+    expect(await getIcalUrl(LEGACY_ACCOUNT_ID, "school1")).toBe("https://school.example.com/cal.ics");
     const listed = await adminGET(req("/api/admin/calendar-links/", { headers: { cookie: admin } }));
     const text = await listed.text();
     expect(JSON.parse(text)).toEqual({ links: { school1: true } });
     expect(text).not.toContain("school.example.com");
-    expect(JSON.stringify((await loadConfig()).config)).not.toContain("school.example.com");
+    expect(JSON.stringify((await loadConfig(LEGACY_ACCOUNT_ID)).config)).not.toContain("school.example.com");
   });
 
   it("refuses an address that isn't a calendar, and people who aren't admins", async () => {
@@ -196,7 +197,7 @@ describe("calendar links: admin and displays", () => {
     );
     expect(bad.status).toBe(400);
     expect(((await bad.json()) as { error: string }).error).toContain("isn't an iCal calendar");
-    expect(await getIcalUrl("school1")).toBeNull();
+    expect(await getIcalUrl(LEGACY_ACCOUNT_ID, "school1")).toBeNull();
 
     const kid = await cookieFor("kid@example.com");
     const refused = await POST(
@@ -212,7 +213,7 @@ describe("calendar links: admin and displays", () => {
   it("gives displays the link's events without Google, and forgets the address when removed", async () => {
     const admin = await cookieFor("admin@example.com");
     await addLink(admin);
-    const { token } = await addDevice("Kitchen", null);
+    const { token } = await addDevice(LEGACY_ACCOUNT_ID, "Kitchen", null);
     const r = await displayGET(req("/api/display/calendar/", { headers: { "x-display-token": token } }));
     const data = (await r.json()) as CalendarData;
     expect(data.connected).toBe(true);
@@ -220,13 +221,13 @@ describe("calendar links: admin and displays", () => {
     expect(data.events.every((e) => e.calendar === "School")).toBe(true);
 
     await DELETE(req("/api/admin/calendar-links/?id=school1", { method: "DELETE", headers: { cookie: admin } }));
-    expect(await getIcalUrl("school1")).toBeNull();
+    expect(await getIcalUrl(LEGACY_ACCOUNT_ID, "school1")).toBeNull();
   });
 
   it("still answers when the link's server fails, from the last good copy", async () => {
     const admin = await cookieFor("admin@example.com");
     await addLink(admin);
-    const { token } = await addDevice("Kitchen", null);
+    const { token } = await addDevice(LEGACY_ACCOUNT_ID, "Kitchen", null);
     await displayGET(req("/api/display/calendar/", { headers: { "x-display-token": token } }));
     answer = () => new Response("down", { status: 503 });
     vi.setSystemTime(Date.parse("2026-11-17T21:00:00Z"));

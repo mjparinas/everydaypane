@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { GET as photoGET } from "@/app/api/display/photo/route";
+import { LEGACY_ACCOUNT_ID } from "@/server/accounts";
 import { cookieFor, req, useTestServer } from "@/test/server";
 
 import { addDevice } from "./devices";
@@ -11,7 +12,7 @@ describe("display cookie for image routes", () => {
   useTestServer();
 
   it("authenticates image requests without ?t=", async () => {
-    const { token } = await addDevice("Kitchen", null);
+    const { token } = await addDevice(LEGACY_ACCOUNT_ID, "Kitchen", null);
     const cookie = displayCookieHeader(token).split(";")[0] ?? "";
     const viewer = await viewerFor(req("/api/display/photo/?s=x&i=y", { headers: { cookie } }));
     expect(viewer?.kind).toBe("device");
@@ -19,7 +20,7 @@ describe("display cookie for image routes", () => {
   });
 
   it("rejects a tampered or expired cookie", async () => {
-    const { token } = await addDevice("Kitchen", null);
+    const { token } = await addDevice(LEGACY_ACCOUNT_ID, "Kitchen", null);
     const sealed = sealDisplayCookie(token, Date.now() - 8 * 86_400_000);
     expect(await viewerFor(req("/api/display/photo/", { headers: { cookie: `${DISPLAY_COOKIE}=${sealed}` } }))).toBeNull();
     expect(await viewerFor(req("/api/display/photo/", { headers: { cookie: `${DISPLAY_COOKIE}=${sealed}x` } }))).toBeNull();

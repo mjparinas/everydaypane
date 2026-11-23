@@ -37,6 +37,7 @@ export function storedType(b: Uint8Array): "image/jpeg" | "image/png" | "image/w
 export type AddResult = { ok: true; photo: LibraryPhoto } | { ok: false; reason: string };
 
 export async function addPhoto(
+  accountId: string,
   sourceId: string,
   bytes: Uint8Array,
   meta: { w: number; h: number; taken?: string | null; origin: "upload" | "google"; originId?: string },
@@ -46,10 +47,17 @@ export async function addPhoto(
   if (!type) return { ok: false, reason: "Not a JPEG, PNG or WebP picture" };
   if (bytes.byteLength > MAX_BYTES) return { ok: false, reason: "Bigger than 4 MB" };
   if (meta.originId) {
-    const dup = await query("SELECT id FROM photos WHERE source_id = ? AND origin_id = ?", [sourceId, meta.originId]);
+    const dup = await query("SELECT id FROM photos WHERE account_id = ? AND source_id = ? AND origin_id = ?", [
+      accountId,
+      sourceId,
+      meta.originId,
+    ]);
     if (dup.length) return { ok: false, reason: "Already added" };
   }
-  const [count] = await query<{ n: number }>("SELECT COUNT(*) AS n FROM photos WHERE source_id = ?", [sourceId]);
+  const [count] = await query<{ n: number }>("SELECT COUNT(*) AS n FROM photos WHERE account_id = ? AND source_id = ?", [
+    accountId,
+    sourceId,
+  ]);
   if (Number(count?.n ?? 0) >= MAX_PER_SOURCE) return { ok: false, reason: `This album is full (${MAX_PER_SOURCE} photos)` };
 
   const id = randomToken(12);
@@ -64,24 +72,17 @@ export async function addPhoto(
     taken: meta.taken && /^\d{4}-\d{2}-\d{2}/.test(meta.taken) ? meta.taken.slice(0, 10) : null,
     origin: meta.origin,
   };
-  await run("INSERT INTO photos (id, source_id, pathname, w, h, taken, origin, origin_id, added_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)", [
-    id,
-    sourceId,
-    pathname,
-    photo.w,
-    photo.h,
-    photo.taken,
-    photo.origin,
-    meta.originId ?? null,
-    now,
-  ]);
+  await run(
+    "INSERT INTO photos (id, account_id, source_id, pathname, w, h, taken, origin, origin_id, added_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+    [id, accountId, sourceId, pathname, photo.w, photo.h, photo.taken, photo.origin, meta.originId ?? null, now],
+  );
   return { ok: true, photo };
 }
 
-export async function listLibrary(sourceId: string): Promise<LibraryPhoto[]> {
+export async function listLibrary(accountId: string, sourceId: string): Promise<LibraryPhoto[]> {
   const rows = await query<{ id: string; pathname: string; w: number; h: number; taken: string | null; origin: string }>(
-    "SELECT id, pathname, w, h, taken, origin FROM photos WHERE source_id = ? ORDER BY added_at DESC LIMIT ?",
-    [sourceId, MAX_PER_SOURCE],
+    "SELECT id, pathname, w, h, taken, origin FROM photos WHERE account_id = ? AND source_id = ? ORDER BY added_at DESC LIMIT ?",
+    [accountId, sourceId, MAX_PER_SOURCE],
   );
   return rows.map((r) => ({
     id: r.id,
@@ -107,16 +108,20 @@ export async function libraryImage(pathname: string): Promise<Response | null> {
 }
 
 /** Removes one photo, or with no id every photo of a source. */
-export async function removePhotos(sourceId: string, photoId?: string): Promise<number> {
+export async function removePhotos(accountId: string, sourceId: string, photoId?: string): Promise<number> {
   const rows = await query<{ id: string; pathname: string }>(
-    photoId ? "SELECT id, pathname FROM photos WHERE source_id = ? AND id = ?" : "SELECT id, pathname FROM photos WHERE source_id = ?",
-    photoId ? [sourceId, photoId] : [sourceId],
+    photoId
+      ? "SELECT id, pathname FROM photos WHERE account_id = ? AND source_id = ? AND id = ?"
+      : "SELECT id, pathname FROM photos WHERE account_id = ? AND source_id = ?",
+    photoId ? [accountId, sourceId, photoId] : [accountId, sourceId],
   );
   if (!rows.length) return 0;
   for (let i = 0; i < rows.length; i += 100) await del(rows.slice(i, i + 100).map((r) => r.pathname));
   await run(
-    photoId ? "DELETE FROM photos WHERE source_id = ? AND id = ?" : "DELETE FROM photos WHERE source_id = ?",
-    photoId ? [sourceId, photoId] : [sourceId],
+    photoId
+      ? "DELETE FROM photos WHERE account_id = ? AND source_id = ? AND id = ?"
+      : "DELETE FROM photos WHERE account_id = ? AND source_id = ?",
+    photoId ? [accountId, sourceId, photoId] : [accountId, sourceId],
   );
   return rows.length;
 }

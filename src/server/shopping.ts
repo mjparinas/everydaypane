@@ -33,17 +33,23 @@ type Row = {
 const norm = (text: string) => text.trim().replace(/\s+/g, " ");
 const keyOf = (text: string) => norm(text).toLocaleLowerCase("en-CA");
 
-async function prune(now: number): Promise<void> {
-  await run("DELETE FROM shopping WHERE done = 1 AND done_at IS NOT NULL AND done_at < ?", [now - KEEP_DAYS * DAY]);
+async function prune(accountId: string, now: number): Promise<void> {
+  await run("DELETE FROM shopping WHERE account_id = ? AND done = 1 AND done_at IS NOT NULL AND done_at < ?", [
+    accountId,
+    now - KEEP_DAYS * DAY,
+  ]);
 }
 
 /**
  * Open items first, in the order they were added, then bought ones from the last week (a phone clears them, and a
  * widget can show them). Older bought items are deleted here.
  */
-export async function listShopping(now = Date.now()): Promise<ShoppingData> {
-  await prune(now);
-  const rows = await query<Row>("SELECT id, text, done, sort, added_at, done_at FROM shopping ORDER BY done ASC, sort ASC");
+export async function listShopping(accountId: string, now = Date.now()): Promise<ShoppingData> {
+  await prune(accountId, now);
+  const rows = await query<Row>(
+    "SELECT id, text, done, sort, added_at, done_at FROM shopping WHERE account_id = ? ORDER BY done ASC, sort ASC",
+    [accountId],
+  );
   let updatedAt = 0;
   const items = rows.map((r) => {
     updatedAt = Math.max(updatedAt, Number(r.added_at), r.done_at == null ? 0 : Number(r.done_at));
@@ -53,19 +59,21 @@ export async function listShopping(now = Date.now()): Promise<ShoppingData> {
 }
 
 export async function addShoppingItem(
+  accountId: string,
   input: { text: string; by: string },
   now = Date.now(),
 ): Promise<{ ok: true; item: ShoppingItem } | { ok: false; error: "empty" | "long" | "full" }> {
   const text = norm(input.text);
   if (!text) return { ok: false, error: "empty" };
   if (text.length > ITEM_MAX) return { ok: false, error: "long" };
-  await prune(now);
-  const open = await query<{ n: number | bigint }>("SELECT COUNT(*) AS n FROM shopping WHERE done = 0");
+  await prune(accountId, now);
+  const open = await query<{ n: number | bigint }>("SELECT COUNT(*) AS n FROM shopping WHERE account_id = ? AND done = 0", [accountId]);
   if (Number(open[0]?.n ?? 0) >= OPEN_MAX) return { ok: false, error: "full" };
-  const max = await query<{ n: number | bigint }>("SELECT COALESCE(MAX(sort), 0) AS n FROM shopping");
+  const max = await query<{ n: number | bigint }>("SELECT COALESCE(MAX(sort), 0) AS n FROM shopping WHERE account_id = ?", [accountId]);
   const id = randomToken(9);
-  await run("INSERT INTO shopping (id, text, done, sort, added_at, done_at, added_by) VALUES (?, ?, 0, ?, ?, NULL, ?)", [
+  await run("INSERT INTO shopping (id, account_id, text, done, sort, added_at, done_at, added_by) VALUES (?, ?, ?, 0, ?, ?, NULL, ?)", [
     id,
+    accountId,
     text,
     Number(max[0]?.n ?? 0) + 1,
     now,
@@ -74,12 +82,12 @@ export async function addShoppingItem(
   return { ok: true, item: { id, text, done: false } };
 }
 
-async function writeDone(id: string, done: boolean, now: number): Promise<"ok" | "not-found"> {
-  await prune(now);
-  const rows = await query<{ id: string }>("SELECT id FROM shopping WHERE id = ?", [id]);
+async function writeDone(accountId: string, id: string, done: boolean, now: number): Promise<"ok" | "not-found"> {
+  await prune(accountId, now);
+  const rows = await query<{ id: string }>("SELECT id FROM shopping WHERE account_id = ? AND id = ?", [accountId, id]);
   if (!rows[0]) return "not-found";
-  if (done) await run("UPDATE shopping SET done = 1, done_at = ? WHERE id = ?", [now, id]);
-  else await run("UPDATE shopping SET done = 0, done_at = NULL WHERE id = ?", [id]);
+  if (done) await run("UPDATE shopping SET done = 1, done_at = ? WHERE account_id = ? AND id = ?", [now, accountId, id]);
+  else await run("UPDATE shopping SET done = 0, done_at = NULL WHERE account_id = ? AND id = ?", [accountId, id]);
   return "ok";
 }
 
@@ -88,26 +96,31 @@ async function writeDone(id: string, done: boolean, now: number): Promise<"ok" |
  * as chores (Melvin, 2026-11-22). A signed-in phone uses setShoppingDoneFromPhone instead.
  */
 export async function setShoppingDone(
+  accountId: string,
   config: DashboardConfig,
   input: { id: string; done: boolean },
   now = Date.now(),
 ): Promise<"ok" | "forbidden" | "not-found"> {
   const allowed = config.views.some((v) => v.widgets.some((w) => w.type === "shopping" && w.allowCheck));
   if (!allowed) return "forbidden";
-  return writeDone(input.id, input.done, now);
+  return writeDone(accountId, input.id, input.done, now);
 }
 
 /** A signed-in person on their phone may always tick an item. The kitchen screen goes through setShoppingDone. */
-export async function setShoppingDoneFromPhone(input: { id: string; done: boolean }, now = Date.now()): Promise<"ok" | "not-found"> {
-  return writeDone(input.id, input.done, now);
+export async function setShoppingDoneFromPhone(
+  accountId: string,
+  input: { id: string; done: boolean },
+  now = Date.now(),
+): Promise<"ok" | "not-found"> {
+  return writeDone(accountId, input.id, input.done, now);
 }
 
-export async function removeShoppingItem(id: string): Promise<boolean> {
-  return (await run("DELETE FROM shopping WHERE id = ?", [id])) > 0;
+export async function removeShoppingItem(accountId: string, id: string): Promise<boolean> {
+  return (await run("DELETE FROM shopping WHERE account_id = ? AND id = ?", [accountId, id])) > 0;
 }
 
-export async function clearDoneShopping(): Promise<number> {
-  return run("DELETE FROM shopping WHERE done = 1");
+export async function clearDoneShopping(accountId: string): Promise<number> {
+  return run("DELETE FROM shopping WHERE account_id = ? AND done = 1", [accountId]);
 }
 
 /**
@@ -115,11 +128,11 @@ export async function clearDoneShopping(): Promise<number> {
  * isn't already open. "Tacos" and "tacos" are the same item. A meal longer than a shopping line is cut to fit.
  * Returns how many were added; a full list stops the rest.
  */
-export async function addShoppingFromMeals(config: DashboardConfig, by = "meals"): Promise<number> {
+export async function addShoppingFromMeals(accountId: string, config: DashboardConfig, by = "meals"): Promise<number> {
   const now = Date.now();
   const today = localDate(now, config.location.timeZone);
-  const plan = await mealsBetween(today, 7);
-  const open = await query<{ text: string }>("SELECT text FROM shopping WHERE done = 0");
+  const plan = await mealsBetween(accountId, today, 7);
+  const open = await query<{ text: string }>("SELECT text FROM shopping WHERE account_id = ? AND done = 0", [accountId]);
   const seen = new Set(open.map((r) => keyOf(r.text)));
   let added = 0;
   for (const date of Object.keys(plan).sort()) {
@@ -129,7 +142,7 @@ export async function addShoppingFromMeals(config: DashboardConfig, by = "meals"
       const text = norm(day[slot] ?? "").slice(0, ITEM_MAX);
       const key = keyOf(text);
       if (!text || seen.has(key)) continue;
-      const result = await addShoppingItem({ text, by }, now);
+      const result = await addShoppingItem(accountId, { text, by }, now);
       if (!result.ok) {
         if (result.error === "full") return added;
         continue;

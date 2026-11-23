@@ -24,9 +24,10 @@ export async function PATCH(req: Request, ctx: { params: Promise<{ id: string }>
   if (!sameOrigin(req)) return json({ error: "Not allowed" }, 403);
   const session = await requestSession(req);
   if (!session) return unauthorized();
+  const accountId = session.accountId;
   const parsed = body.safeParse(await readJson(req, 4_000).catch(() => null));
   if (!parsed.success) return json({ error: parsed.error.issues[0]?.message ?? "Bad request" }, 400);
-  const result = await updateFamilyEvent((await ctx.params).id, parsed.data, {
+  const result = await updateFamilyEvent(accountId, (await ctx.params).id, parsed.data, {
     email: session.email,
     admin: session.role === "admin",
   });
@@ -40,7 +41,8 @@ export async function DELETE(req: Request, ctx: { params: Promise<{ id: string }
   if (!sameOrigin(req)) return json({ error: "Not allowed" }, 403);
   const session = await requestSession(req);
   if (!session) return unauthorized();
-  const result = await removeFamilyEvent((await ctx.params).id, { email: session.email, admin: session.role === "admin" });
+  const accountId = session.accountId;
+  const result = await removeFamilyEvent(accountId, (await ctx.params).id, { email: session.email, admin: session.role === "admin" });
   if (result === "not-found") return notFound();
   if (result === "forbidden") return forbidden();
   return json({ ok: true });

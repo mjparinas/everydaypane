@@ -5,9 +5,11 @@ import { useState } from "react";
 import { findSpot, refit } from "@/lib/config/grid";
 import { PERIOD_LABELS, PERIODS } from "@/lib/config/periods";
 import type { View, Widget, WidgetType } from "@/lib/config/schema";
+import { VIEW_TEMPLATES } from "@/lib/config/templates";
 import { newWidget, WIDGETS } from "@/lib/config/widgets";
 
 import { AddWidgetDrawer } from "./AddWidgetDrawer";
+import { Section } from "./fields";
 import { LiveLayoutEditor, widgetName } from "./LiveLayoutEditor";
 import { newId, useAdmin } from "./store";
 import { ViewSettingsDrawer } from "./ViewSettingsDrawer";
@@ -98,6 +100,30 @@ export function ViewsPanel() {
     setSelected(null);
     setPicking(false);
     setEditingView(true);
+  }
+
+  function applyTemplate(templateId: string) {
+    const template = VIEW_TEMPLATES.find((t) => t.id === templateId);
+    if (!template) return;
+    if (config.views.length >= 30) {
+      setNotice("You already have the maximum number of views.");
+      return;
+    }
+    const built = template.build();
+    const id = newId("view");
+    edit((c) => {
+      c.views.push({
+        id,
+        name: template.name.slice(0, 40),
+        themeId: null,
+        ...built,
+        widgets: built.widgets.map((w) => ({ ...w, id: newId(w.type) })),
+      });
+    });
+    setViewId(id);
+    setSelected(null);
+    setEditingView(true);
+    setNotice(`Added “${template.name}”. Save when you're happy with it.`);
   }
 
   const usedBySchedule = PERIODS.filter((p) => config.schedule[p].viewId === active.id).map((p) => PERIOD_LABELS[p].toLowerCase());
@@ -227,6 +253,24 @@ export function ViewsPanel() {
           {notice}
         </p>
       )}
+
+      <Section title="Starter templates">
+        <p className="text-sm text-soft">Add a new view from a ready-made kitchen layout. You can edit it after.</p>
+        <div className="grid gap-2 sm:grid-cols-2">
+          {VIEW_TEMPLATES.map((t) => (
+            <button
+              key={t.id}
+              type="button"
+              className="card grid gap-1 p-3 text-left hover:border-brand"
+              disabled={config.views.length >= 30}
+              onClick={() => applyTemplate(t.id)}
+            >
+              <span className="font-semibold">{t.name}</span>
+              <span className="text-xs text-soft">{t.description}</span>
+            </button>
+          ))}
+        </div>
+      </Section>
     </div>
   );
 }

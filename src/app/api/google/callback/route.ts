@@ -8,7 +8,9 @@ import { adminFor } from "@/server/viewer";
 // Google sends the admin back here after the consent screen. The code is traded for a refresh token (stored
 // encrypted), and on a first connection the account's own calendar is switched on so displays show it straight away.
 export async function GET(req: Request) {
-  if (!(await adminFor(req))) return unauthorized();
+  const session = await adminFor(req);
+  if (!session) return unauthorized();
+  const accountId = session.accountId;
   const url = new URL(req.url);
   const back = (result: string) =>
     new Response(null, {
@@ -23,20 +25,20 @@ export async function GET(req: Request) {
   if (!code) return back("cancelled");
 
   try {
-    await connect(code, redirectUri(url.origin));
+    await connect(accountId, code, redirectUri(url.origin));
   } catch (error) {
     console.error("Google connection failed", error);
     return back("failed");
   }
   try {
-    const stored = await loadConfig();
+    const stored = await loadConfig(accountId);
     if (stored.config.integrations.google.calendars.length === 0) {
-      const calendars = await listCalendars();
+      const calendars = await listCalendars(accountId);
       const config = structuredClone(stored.config);
       config.integrations.google.calendars = calendars
         .slice(0, 50)
         .map((c) => ({ id: c.id, name: c.name, color: c.color, enabled: c.primary }));
-      await saveConfig(config, stored.version);
+      await saveConfig(accountId, config, stored.version);
     }
   } catch (error) {
     // Connected all the same: the calendars can be picked in the admin panel.

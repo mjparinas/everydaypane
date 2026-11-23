@@ -13,6 +13,6 @@ export default async function AdminPage() {
   const session = await sessionFor((await cookies()).get(SESSION_COOKIE)?.value);
   if (!session) redirect("/signin/?next=/admin/");
   if (session.role !== "admin") redirect("/family/");
-  const { config, version } = await loadConfig();
+  const { config, version } = await loadConfig(session.accountId);
   return <Admin initial={config} version={version} email={session.email} />;
 }

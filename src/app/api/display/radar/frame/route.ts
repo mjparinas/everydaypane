@@ -1,19 +1,21 @@
 import { loadConfig } from "@/server/config";
 import { notFound, unauthorized } from "@/server/http";
 import { isPrecip, radarFrame } from "@/server/radar";
-import { viewerFor } from "@/server/viewer";
+import { accountIdOf, viewerFor } from "@/server/viewer";
 
 // One radar picture of the area around home. The request names a kind, a zoom and a time the server listed; it never
 // carries an address.
 export async function GET(req: Request) {
-  if (!(await viewerFor(req))) return unauthorized();
+  const viewer = await viewerFor(req);
+  if (!viewer) return unauthorized();
+  const accountId = accountIdOf(viewer);
   const url = new URL(req.url);
   const precip = url.searchParams.get("p") ?? "";
   const zoom = Number(url.searchParams.get("z"));
   const time = Number(url.searchParams.get("time"));
   if (!isPrecip(precip) || !Number.isFinite(time)) return notFound();
   try {
-    return (await radarFrame((await loadConfig()).config, precip, zoom, time)) ?? notFound();
+    return (await radarFrame((await loadConfig(accountId)).config, precip, zoom, time)) ?? notFound();
   } catch {
     return new Response(null, { status: 502 });
   }

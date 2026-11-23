@@ -16,8 +16,8 @@ import { cameraLoop, HA_EVERY } from "./widgets/ha";
 import type { Cleanup, WidgetContext } from "./widgets/types";
 
 // The display. One module, no framework (AGENTS.md "Display: super lightweight"): it fetches its settings, draws the
-// view for the time of day, and then only wakes for the clock tick, data refreshes, the 30-second settings poll, the
-// next period change and the burn-in shift.
+// view for the time of day, and then only wakes for the clock tick, data refreshes, the 30-second settings poll (and
+// Household long-poll for instant refresh), the next period change and the burn-in shift.
 
 const app = document.getElementById("app") as HTMLElement;
 let payload: DisplayPayload | null = null;
@@ -277,6 +277,22 @@ async function poll() {
   window.setTimeout(() => void poll(), 30_000);
 }
 
+/** Household walls hold config-watch until the version moves, then reload; Free keeps the poll only. */
+async function watchLoop() {
+  if (PREVIEW || !TOKEN) return;
+  for (;;) {
+    if (!payload?.instantRefresh) {
+      await new Promise((r) => setTimeout(r, 60_000));
+      continue;
+    }
+    const since = payload.version;
+    const r = await get<{ version: number }>("config-watch", { since: String(since) });
+    if (r.data && typeof r.data.version === "number" && r.data.version > since) await loadState();
+    else if (!r.data) await new Promise((wait) => setTimeout(wait, 60_000));
+    else await new Promise((wait) => setTimeout(wait, 200));
+  }
+}
+
 /**
  * Admin Views tab → this preview (Melvin, 2026-11-22): apply the unsaved working copy so widget settings update
  * live. Accept the embedding iframe parent, or the admin opener for "Open full preview" (same origin only).
@@ -474,6 +490,7 @@ async function start() {
     await new Promise((r) => setTimeout(r, 10_000));
   }
   window.setTimeout(() => void poll(), 30_000);
+  void watchLoop();
   void wakeLock();
   nightlyReload();
 }

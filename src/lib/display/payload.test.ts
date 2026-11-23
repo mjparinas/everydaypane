@@ -12,7 +12,12 @@ describe("display payload", () => {
     expect(p.views.map((v) => v.id).sort()).toEqual(["home", "morning", "night"]);
     expect(Object.keys(p.themes)).toEqual(["aurora"]);
     expect(p.fixedViewId).toBeNull();
+    expect(p.instantRefresh).toBe(false);
     expect(JSON.stringify(p)).not.toContain("integrations");
+  });
+
+  it("can mark Household instant refresh", () => {
+    expect(displayPayload(defaultConfig(), 1, device(null), null, { instantRefresh: true }).instantRefresh).toBe(true);
   });
 
   it("sends only a device's own view", () => {

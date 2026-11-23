@@ -10,6 +10,9 @@ for (const [pkg, file, out] of [
   ["inter", "inter-latin-wght-normal.woff2", "inter.woff2"],
   ["manrope", "manrope-latin-wght-normal.woff2", "manrope.woff2"],
   ["space-grotesk", "space-grotesk-latin-wght-normal.woff2", "space-grotesk.woff2"],
+  ["outfit", "outfit-latin-wght-normal.woff2", "outfit.woff2"],
+  ["dm-sans", "dm-sans-latin-wght-normal.woff2", "dm-sans.woff2"],
+  ["literata", "literata-latin-wght-normal.woff2", "literata.woff2"],
 ]) {
   copyFileSync(`node_modules/@fontsource-variable/${pkg}/files/${file}`, `public/fonts/${out}`);
 }

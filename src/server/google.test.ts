@@ -5,6 +5,7 @@ import { GET as displayGET } from "@/app/api/display/calendar/route";
 import { GET as callbackGET } from "@/app/api/google/callback/route";
 import { GET as connectGET } from "@/app/api/google/connect/route";
 import type { CalendarData } from "@/lib/display/types";
+import { LEGACY_ACCOUNT_ID } from "@/server/accounts";
 import { cookieFor, req, useTestServer } from "@/test/server";
 
 import { clearMemoryCache } from "./cache";
@@ -142,12 +143,12 @@ describe("connecting Google Calendar", () => {
     expect(done.status).toBe(303);
     expect(done.headers.get("location")).toBe("/admin/?google=connected#settings");
 
-    expect(await getSecret("google.refreshToken")).toBe("refresh-1");
+    expect(await getSecret(LEGACY_ACCOUNT_ID, "google.refreshToken")).toBe("refresh-1");
     const tokenCall = calls.find((c) => c.url.startsWith("https://oauth2.googleapis.com/token"));
     expect(String(tokenCall?.init?.body)).toContain("code=one-time-code");
     expect(String(tokenCall?.init?.body)).toContain("redirect_uri=http%3A%2F%2Flocalhost%2Fapi%2Fgoogle%2Fcallback%2F");
 
-    const { config } = await loadConfig();
+    const { config } = await loadConfig(LEGACY_ACCOUNT_ID);
     expect(config.integrations.google.calendars).toEqual([
       { id: "me@example.com", name: "Melvin", color: "#4986e7", enabled: true },
       { id: "holidays", name: "Holidays in Canada", color: "#16a765", enabled: false },
@@ -162,7 +163,7 @@ describe("connecting Google Calendar", () => {
 
   it("gives displays the enabled calendars' events, sorted, all-day first", async () => {
     await connectAs(await cookieFor("admin@example.com"));
-    const { token } = await addDevice("Kitchen", null);
+    const { token } = await addDevice(LEGACY_ACCOUNT_ID, "Kitchen", null);
     const r = await displayGET(req("/api/display/calendar/", { headers: { "x-display-token": token } }));
     const data = (await r.json()) as CalendarData;
     expect(data.connected).toBe(true);
@@ -180,14 +181,14 @@ describe("connecting Google Calendar", () => {
       req("/api/google/callback/?code=x&state=attacker", { headers: { cookie: `${admin}; ep_google_state=mine` } }),
     );
     expect(forged.headers.get("location")).toBe("/admin/?google=expired#settings");
-    expect(await getSecret("google.refreshToken")).toBeNull();
+    expect(await getSecret(LEGACY_ACCOUNT_ID, "google.refreshToken")).toBeNull();
 
     const kid = await cookieFor("kid@example.com");
     expect((await connectGET(req("/api/google/connect/", { headers: { cookie: kid } }))).status).toBe(401);
   });
 
   it("tells displays when Google isn't connected, or stops accepting the token", async () => {
-    const { token } = await addDevice("Kitchen", null);
+    const { token } = await addDevice(LEGACY_ACCOUNT_ID, "Kitchen", null);
     const before = (await (
       await displayGET(req("/api/display/calendar/", { headers: { "x-display-token": token } }))
     ).json()) as CalendarData;
@@ -206,7 +207,7 @@ describe("connecting Google Calendar", () => {
     await connectAs(admin);
     const r = await adminDELETE(req("/api/admin/google/", { method: "DELETE", headers: { cookie: admin } }));
     expect(r.status).toBe(200);
-    expect(await getSecret("google.refreshToken")).toBeNull();
+    expect(await getSecret(LEGACY_ACCOUNT_ID, "google.refreshToken")).toBeNull();
     expect(calls.some((c) => c.url.startsWith("https://oauth2.googleapis.com/revoke"))).toBe(true);
   });
 });

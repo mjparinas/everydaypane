@@ -1,12 +1,14 @@
 import { loadConfig } from "@/server/config";
 import { garbageFeed } from "@/server/garbage";
 import { json, unauthorized } from "@/server/http";
-import { viewerFor } from "@/server/viewer";
+import { accountIdOf, viewerFor } from "@/server/viewer";
 
 export async function GET(req: Request) {
-  if (!(await viewerFor(req))) return unauthorized();
+  const viewer = await viewerFor(req);
+  if (!viewer) return unauthorized();
+  const accountId = accountIdOf(viewer);
   try {
-    const data = await garbageFeed((await loadConfig()).config);
+    const data = await garbageFeed((await loadConfig(accountId)).config);
     return json({ ...data.value, stale: data.stale });
   } catch {
     return json({ error: "The collection calendar is unavailable right now" }, 502);

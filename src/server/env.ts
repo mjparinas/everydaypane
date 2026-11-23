@@ -28,6 +28,9 @@ export const env = {
   // TransLink's open API (docs/translink.md): one key for the realtime departures feed.
   translinkKey: () => process.env.TRANSLINK_API_KEY ?? "",
   cronSecret: () => process.env.CRON_SECRET ?? "",
+  stripeSecretKey: () => process.env.STRIPE_SECRET_KEY ?? "",
+  stripePriceId: () => process.env.STRIPE_PRICE_ID ?? "",
+  stripeWebhookSecret: () => process.env.STRIPE_WEBHOOK_SECRET ?? "",
   isProduction: () => process.env.VERCEL_ENV === "production",
 };
 

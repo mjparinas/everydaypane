@@ -30,3 +30,8 @@ export async function adminFor(req: Request): Promise<Session | null> {
   const session = await requestSession(req);
   return session?.role === "admin" ? session : null;
 }
+
+/** The household id for a display or signed-in admin. */
+export function accountIdOf(viewer: Viewer): string {
+  return viewer.kind === "device" ? viewer.device.accountId : viewer.session.accountId;
+}

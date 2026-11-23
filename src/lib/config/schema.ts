@@ -42,7 +42,7 @@ export const themeSchema = z.object({
   name: z.string().min(1).max(40),
   day: paletteSchema,
   night: paletteSchema,
-  font: z.enum(["inter", "manrope", "space-grotesk", "system"]),
+  font: z.enum(["inter", "manrope", "space-grotesk", "outfit", "dm-sans", "literata", "system"]),
   radius: z.number().int().min(0).max(40),
   surfaceOpacity: z.number().min(0).max(1),
   // Frosted glass behind widgets. Pretty, but backdrop blur costs GPU time on a low-power display, so it's off by default.

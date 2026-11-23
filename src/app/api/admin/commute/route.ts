@@ -13,7 +13,9 @@ const address = z.string().trim().min(3).max(120);
  * dashboard's location first), so the admin can pick home and each destination.
  */
 export async function GET(req: Request) {
-  if (!(await adminFor(req))) return unauthorized();
+  const session = await adminFor(req);
+  if (!session) return unauthorized();
+  const accountId = session.accountId;
   const ready = Boolean(env.tomtomKey());
   const raw = new URL(req.url).searchParams.get("address");
   if (raw === null) return json({ ready });
@@ -21,7 +23,7 @@ export async function GET(req: Request) {
   const p = address.safeParse(raw);
   if (!p.success) return json({ error: "Type an address" }, 400);
   try {
-    return json({ matches: await findPlace(p.data, (await loadConfig()).config.location) });
+    return json({ matches: await findPlace(p.data, (await loadConfig(accountId)).config.location) });
   } catch {
     return json({ error: "TomTom didn't answer. Try again in a minute." }, 502);
   }

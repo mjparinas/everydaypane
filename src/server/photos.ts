@@ -160,10 +160,10 @@ async function listShare(url: string): Promise<Listed[]> {
 
 // ---- Amazon people (needs the admin's cookies) ----
 
-async function amazonSession(): Promise<{ origin: string; headers: Record<string, string> }> {
-  const cookie = await getSecret("amazon.cookie");
+async function amazonSession(accountId: string): Promise<{ origin: string; headers: Record<string, string> }> {
+  const cookie = await getSecret(accountId, "amazon.cookie");
   if (!cookie) throw new Error("Amazon isn't signed in");
-  const tld = (await getSecret("amazon.tld")) || "ca";
+  const tld = (await getSecret(accountId, "amazon.tld")) || "ca";
   const sessionId = /(?:^|;\s*)session-id=([^;]+)/.exec(cookie)?.[1] ?? "";
   return { origin: `https://www.amazon.${tld}`, headers: { Cookie: cookie, "x-amzn-sessionid": sessionId } };
 }
@@ -175,9 +175,9 @@ export const peopleFilter = (ids: string[]) =>
     .filter(Boolean)
     .join(" OR ")})`;
 
-async function listPeople(personIds: string[]): Promise<Listed[]> {
+async function listPeople(accountId: string, personIds: string[]): Promise<Listed[]> {
   if (!personIds.length) return [];
-  const s = await amazonSession();
+  const s = await amazonSession(accountId);
   const photos: Listed[] = [];
   for (let offset = 0; photos.length < MAX_PHOTOS;) {
     const q = new URLSearchParams({
@@ -230,8 +230,8 @@ export function trimPeople(raw: unknown): AmazonPerson[] {
   return [...out.values()].sort((a, b) => b.count - a.count).slice(0, 100);
 }
 
-export async function amazonPeople(): Promise<AmazonPerson[]> {
-  const s = await amazonSession();
+export async function amazonPeople(accountId: string): Promise<AmazonPerson[]> {
+  const s = await amazonSession(accountId);
   const q = new URLSearchParams({ aggregationContext: "all", category: "allPeople", resourceVersion: "V2", ContentType: "JSON" });
   return trimPeople(await amazonJson(`${s.origin}/drive/v1/search/aggregation?${q}`, s.headers));
 }
@@ -245,16 +245,16 @@ function listUrls(urls: string[]): Listed[] {
     .map((url, i) => ({ id: `u${i}`, url, w: 0, h: 0, taken: null }));
 }
 
-async function list(source: PhotoSource): Promise<Listed[]> {
+async function list(accountId: string, source: PhotoSource): Promise<Listed[]> {
   switch (source.kind) {
     case "amazonShare":
       return listShare(source.url);
     case "amazonPeople":
-      return listPeople(source.personIds);
+      return listPeople(accountId, source.personIds);
     case "urls":
       return listUrls(source.urls);
     case "library":
-      return (await listLibrary(source.id)).map((p) => ({ id: p.id, url: p.pathname, w: p.w, h: p.h, taken: p.taken }));
+      return (await listLibrary(accountId, source.id)).map((p) => ({ id: p.id, url: p.pathname, w: p.w, h: p.h, taken: p.taken }));
   }
 }
 
@@ -263,9 +263,9 @@ const sourceKey = (s: PhotoSource) => `photos:${s.id}:${hash(JSON.stringify(s))}
 
 const failures = new Map<string, { at: number; error: unknown }>();
 
-async function listed(source: PhotoSource, now = Date.now()): Promise<Listed[]> {
+async function listed(accountId: string, source: PhotoSource, now = Date.now()): Promise<Listed[]> {
   // Our own library is a quick database read, and must show a new upload at once: never cached.
-  if (source.kind === "library") return list(source);
+  if (source.kind === "library") return list(accountId, source);
   const key = sourceKey(source);
   const ttl = source.kind === "urls" ? LIST_TTL : AMAZON_TTL;
   const failed = failures.get(key);
@@ -281,7 +281,7 @@ async function listed(source: PhotoSource, now = Date.now()): Promise<Listed[]> 
     ).value;
   }
   try {
-    const result = await cached(key, ttl, () => list(source), now);
+    const result = await cached(key, ttl, () => list(accountId, source), now);
     if (result.stale) failures.set(key, { at: now, error: new Error("Amazon refused; showing the last list") });
     else failures.delete(key);
     return result.value;
@@ -298,9 +298,9 @@ function hash(s: string): string {
 }
 
 /** What displays get: each source's photos as ids and sizes. A source that fails is reported, not fatal. */
-export async function photosFeed(config: DashboardConfig, now = Date.now()): Promise<PhotoData> {
+export async function photosFeed(accountId: string, config: DashboardConfig, now = Date.now()): Promise<PhotoData> {
   const sources = config.integrations.photos.sources;
-  const results = await Promise.allSettled(sources.map((s) => listed(s, now)));
+  const results = await Promise.allSettled(sources.map((s) => listed(accountId, s, now)));
   const out: PhotoData = { updatedAt: now, sources: {} };
   results.forEach((r, i) => {
     const s = sources[i];
@@ -315,10 +315,16 @@ export async function photosFeed(config: DashboardConfig, now = Date.now()): Pro
 }
 
 /** Fetches one listed photo at about the size asked for. */
-export async function photoImage(config: DashboardConfig, sourceId: string, photoId: string, width: number): Promise<Response | null> {
+export async function photoImage(
+  accountId: string,
+  config: DashboardConfig,
+  sourceId: string,
+  photoId: string,
+  width: number,
+): Promise<Response | null> {
   const source = config.integrations.photos.sources.find((s) => s.id === sourceId);
   if (!source) return null;
-  const find = async () => (await listed(source)).find((p) => p.id === photoId) ?? null;
+  const find = async () => (await listed(accountId, source)).find((p) => p.id === photoId) ?? null;
   let photo = await find();
   if (!photo) return null;
   if (source.kind === "library") return libraryImage(photo.url);
@@ -339,7 +345,7 @@ export async function photoImage(config: DashboardConfig, sourceId: string, phot
     const key = sourceKey(source);
     const failed = failures.get(key);
     if (failed && Date.now() - failed.at < RETRY_AFTER_FAILURE) return null;
-    const fresh = await cached(key, 0, () => list(source));
+    const fresh = await cached(key, 0, () => list(accountId, source));
     if (fresh.stale) failures.set(key, { at: Date.now(), error: new Error("Amazon refused; showing the last list") });
     photo = fresh.value.find((p) => p.id === photoId) ?? null;
     if (!photo) return null;
@@ -380,14 +386,15 @@ export function imageType(b: Uint8Array, header: string): string | null {
 
 /** For the admin panel: whether each source lists, and whether its first photo comes through. */
 export async function checkSources(
+  accountId: string,
   config: DashboardConfig,
 ): Promise<Record<string, { count: number; error: string | null; image: string | null }>> {
   const out: Record<string, { count: number; error: string | null; image: string | null }> = {};
   for (const s of config.integrations.photos.sources) {
     try {
-      const list = await listed(s);
+      const list = await listed(accountId, s);
       const first = list[0];
-      const img = first ? await photoImage(config, s.id, first.id, 480).catch(() => null) : null;
+      const img = first ? await photoImage(accountId, config, s.id, first.id, 480).catch(() => null) : null;
       out[s.id] = { count: list.length, error: null, image: first ? (img ? null : "Its photos didn't load: see the server log") : null };
     } catch (error) {
       out[s.id] = { count: 0, error: error instanceof Error ? error.message : "Couldn't list it", image: null };
