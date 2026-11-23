@@ -8,8 +8,8 @@ import { ConfirmButton, Section, Select, Text } from "./fields";
 import { useAdmin } from "./store";
 
 // Displays: each screen (the UC-Display21 in the kitchen, an old tablet in the hall) gets its own secret address.
-// Its address can be shown and copied again any time (Melvin, 2026-11-17); "New link" replaces it if it leaks, and
-// deleting a display signs that screen out.
+// The address is always shown on the row with Copy on the far right (Melvin, 2026-11-22); deleting a display signs
+// that screen out.
 
 interface Device {
   id: string;
@@ -17,6 +17,7 @@ interface Device {
   viewId: string | null;
   createdAt: number;
   lastSeenAt: number | null;
+  url: string | null;
 }
 
 function seen(at: number | null): string {
@@ -103,7 +104,7 @@ export function DisplaysPanel() {
         {added && (
           <div className="grid gap-2 rounded-xl border border-brand p-3" role="status">
             <p className="text-sm">
-              Open this address on <strong>{added.name}</strong>. You can see it again any time under Displays.
+              Open this address on <strong>{added.name}</strong>. It stays visible under Displays.
             </p>
             <Address url={added.url} />
             <p className="text-xs text-soft">On the UC-Display21, set this as the start page in its browser (kiosk) settings.</p>
@@ -136,7 +137,11 @@ export function DisplaysPanel() {
                   options={viewOptions}
                   onChange={(v) => void patch(d.id, { viewId: v || null })}
                 />
-                <DeviceLink id={d.id} />
+                {d.url ? (
+                  <Address url={d.url} />
+                ) : (
+                  <p className="text-sm text-soft">Address unavailable — delete this display and add it again.</p>
+                )}
                 <ConfirmButton
                   label="Delete display"
                   confirm="Tap again: this signs the screen out"
@@ -153,59 +158,24 @@ export function DisplaysPanel() {
   );
 }
 
-/** A display's address with copy and open buttons. */
+/** Address on one row with Copy on the far right (Melvin, 2026-11-22). */
 function Address({ url }: { url: string }) {
   const [copied, setCopied] = useState(false);
   return (
-    <>
-      <code className="block overflow-x-auto rounded-lg bg-bg p-2 text-xs break-all">{url}</code>
-      <div className="flex flex-wrap gap-2">
-        <button
-          type="button"
-          className="btn-ghost"
-          onClick={() => {
-            void navigator.clipboard.writeText(url).then(() => setCopied(true));
-          }}
-        >
-          {copied ? "Copied" : "Copy address"}
-        </button>
-        <a className="btn-ghost" href={url} target="_blank" rel="noreferrer">
-          Open ↗
-        </a>
-      </div>
-    </>
-  );
-}
-
-/** Shows a display's address on request, and gives it a new one (the old address stops working). */
-function DeviceLink({ id }: { id: string }) {
-  const [url, setUrl] = useState<string | null>(null);
-  const [error, setError] = useState("");
-
-  async function fetchLink(method: "GET" | "POST") {
-    setError("");
-    const r = await call(`/api/admin/devices/${id}/`, method);
-    const body = (await r.json().catch(() => ({}))) as { url?: string };
-    if (body.url) return setUrl(body.url);
-    // Displays added before addresses were kept can only get a new one.
-    setError(
-      r.status === 404 && method === "GET"
-        ? "This display was added before addresses were kept. Give it a new link."
-        : "Couldn't get the address.",
-    );
-  }
-
-  return (
-    <div className="grid gap-2">
-      {url ? (
-        <Address url={url} />
-      ) : (
-        <button type="button" className="btn-ghost justify-self-start" onClick={() => void fetchLink("GET")}>
-          Show address
-        </button>
-      )}
-      {error && <p className="text-sm text-bad">{error}</p>}
-      <ConfirmButton label="New link" confirm="Tap again: the old address stops working" onConfirm={() => void fetchLink("POST")} />
+    <div className="flex items-center gap-2">
+      <code className="min-w-0 flex-1 overflow-x-auto rounded-lg bg-bg px-2 py-2 text-xs break-all">{url}</code>
+      <button
+        type="button"
+        className="btn-ghost shrink-0"
+        onClick={() => {
+          void navigator.clipboard.writeText(url).then(() => {
+            setCopied(true);
+            window.setTimeout(() => setCopied(false), 2000);
+          });
+        }}
+      >
+        {copied ? "Copied" : "Copy"}
+      </button>
     </div>
   );
 }
