@@ -152,11 +152,7 @@ export function DisplaysPanel() {
                   <p className="text-sm text-soft">Address unavailable — give it a new link, or delete and add it again.</p>
                 )}
                 <div className="flex flex-wrap gap-2">
-                  <ConfirmButton
-                    label="New link"
-                    confirm="Tap again: the old address stops working"
-                    onConfirm={() => void newLink(d.id)}
-                  />
+                  <ConfirmButton label="New link" confirm="Tap again: the old address stops working" onConfirm={() => void newLink(d.id)} />
                   <ConfirmButton
                     label="Delete display"
                     confirm="Tap again: this signs the screen out"
