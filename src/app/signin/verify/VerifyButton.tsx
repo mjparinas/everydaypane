@@ -2,6 +2,10 @@
 
 import { useState } from "react";
 
+import { APP_PATH, FAMILY_PATH } from "@/lib/site";
+
+import { NEXT_KEY, safeNext } from "../SignInForm";
+
 // The link only signs in when this button is pressed, so mail scanners that open links don't use it up.
 export function VerifyButton({ token }: { token: string }) {
   const [error, setError] = useState("");
@@ -16,7 +20,10 @@ export function VerifyButton({ token }: { token: string }) {
     });
     const body = (await r.json().catch(() => ({}))) as { role?: string; error?: string };
     if (r.ok) {
-      window.location.replace(body.role === "admin" ? "/admin/" : "/family/");
+      const fromQuery = safeNext(new URLSearchParams(window.location.search).get("next"));
+      const fromStore = safeNext(sessionStorage.getItem(NEXT_KEY));
+      sessionStorage.removeItem(NEXT_KEY);
+      window.location.replace(fromQuery ?? fromStore ?? (body.role === "admin" ? APP_PATH : FAMILY_PATH));
       return;
     }
     setBusy(false);

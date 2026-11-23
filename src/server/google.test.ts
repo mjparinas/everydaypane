@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { DELETE as adminDELETE, GET as adminGET } from "@/app/api/admin/google/route";
+import { DELETE as adminDELETE, GET as adminGET } from "@/app/api/household/google/route";
 import { GET as displayGET } from "@/app/api/display/calendar/route";
 import { GET as callbackGET } from "@/app/api/google/callback/route";
 import { GET as connectGET } from "@/app/api/google/connect/route";
@@ -141,7 +141,7 @@ describe("connecting Google Calendar", () => {
     const admin = await cookieFor("admin@example.com");
     const done = await connectAs(admin);
     expect(done.status).toBe(303);
-    expect(done.headers.get("location")).toBe("/admin/?google=connected#settings");
+    expect(done.headers.get("location")).toBe("/household/?google=connected#settings");
 
     expect(await getSecret(LEGACY_ACCOUNT_ID, "google.refreshToken")).toBe("refresh-1");
     const tokenCall = calls.find((c) => c.url.startsWith("https://oauth2.googleapis.com/token"));
@@ -155,7 +155,7 @@ describe("connecting Google Calendar", () => {
     ]);
 
     // The admin panel sees the calendars, never the token.
-    const status = await adminGET(req("/api/admin/google/", { headers: { cookie: admin } }));
+    const status = await adminGET(req("/api/household/google/", { headers: { cookie: admin } }));
     const body = await status.text();
     expect(JSON.parse(body)).toMatchObject({ configured: true, connected: true });
     expect(body).not.toContain("refresh-1");
@@ -180,7 +180,7 @@ describe("connecting Google Calendar", () => {
     const forged = await callbackGET(
       req("/api/google/callback/?code=x&state=attacker", { headers: { cookie: `${admin}; ep_google_state=mine` } }),
     );
-    expect(forged.headers.get("location")).toBe("/admin/?google=expired#settings");
+    expect(forged.headers.get("location")).toBe("/household/?google=expired#settings");
     expect(await getSecret(LEGACY_ACCOUNT_ID, "google.refreshToken")).toBeNull();
 
     const kid = await cookieFor("kid@example.com");
@@ -205,7 +205,7 @@ describe("connecting Google Calendar", () => {
   it("disconnects: forgets the token and revokes it at Google", async () => {
     const admin = await cookieFor("admin@example.com");
     await connectAs(admin);
-    const r = await adminDELETE(req("/api/admin/google/", { method: "DELETE", headers: { cookie: admin } }));
+    const r = await adminDELETE(req("/api/household/google/", { method: "DELETE", headers: { cookie: admin } }));
     expect(r.status).toBe(200);
     expect(await getSecret(LEGACY_ACCOUNT_ID, "google.refreshToken")).toBeNull();
     expect(calls.some((c) => c.url.startsWith("https://oauth2.googleapis.com/revoke"))).toBe(true);

@@ -37,8 +37,8 @@ export async function createCheckoutSession(accountId: string, email: string, or
     mode: "subscription",
     customer: customerId,
     line_items: [{ price: env.stripePriceId(), quantity: 1 }],
-    success_url: `${origin}/admin/?billing=success`,
-    cancel_url: `${origin}/admin/?billing=cancel`,
+    success_url: `${origin}/household/?billing=success`,
+    cancel_url: `${origin}/household/?billing=cancel`,
     client_reference_id: accountId,
     metadata: { accountId },
     subscription_data: { metadata: { accountId } },
@@ -53,7 +53,7 @@ export async function createPortalSession(accountId: string, origin: string): Pr
   if (!account?.stripeCustomerId) throw new Error("No Stripe customer");
   const session = await stripe().billingPortal.sessions.create({
     customer: account.stripeCustomerId,
-    return_url: `${origin}/admin/`,
+    return_url: `${origin}/household/`,
   });
   return session.url;
 }

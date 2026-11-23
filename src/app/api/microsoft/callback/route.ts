@@ -13,7 +13,7 @@ export async function GET(req: Request) {
   const back = (result: string) =>
     new Response(null, {
       status: 303,
-      headers: { Location: `/admin/?microsoft=${result}#settings`, "Set-Cookie": clearedStateCookie(), "Cache-Control": "no-store" },
+      headers: { Location: `/household/?microsoft=${result}#settings`, "Set-Cookie": clearedStateCookie(), "Cache-Control": "no-store" },
     });
 
   const state = url.searchParams.get("state") ?? "";

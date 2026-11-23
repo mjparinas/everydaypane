@@ -14,6 +14,6 @@ Household only. ecobee thermostats on the wall through **Smart device** tiles (`
 - `ECOBEE_CLIENT_ID`
 - `ECOBEE_CLIENT_SECRET`
 
-## In the admin panel
+## In the household panel
 
 **Settings › Smart home › ecobee** — Connect, then pick a device id on the widget (e.g. `ecobee.t123`).

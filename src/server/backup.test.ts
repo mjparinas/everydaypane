@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { GET, POST } from "@/app/api/admin/backup/route";
+import { GET, POST } from "@/app/api/household/backup/route";
 import { defaultConfig } from "@/lib/config/defaults";
 import type { DashboardConfig } from "@/lib/config/schema";
 import { LEGACY_ACCOUNT_ID } from "@/server/accounts";
@@ -83,13 +83,13 @@ describe("settings backup", () => {
     named.name = "Kitchen";
     await saveConfig(LEGACY_ACCOUNT_ID, named, 0);
 
-    expect((await GET(req("/api/admin/backup/", { headers: { cookie: kid } }))).status).toBe(401);
-    const res = await GET(req("/api/admin/backup/", { headers: { cookie: admin } }));
+    expect((await GET(req("/api/household/backup/", { headers: { cookie: kid } }))).status).toBe(401);
+    const res = await GET(req("/api/household/backup/", { headers: { cookie: admin } }));
     expect(res.status).toBe(200);
     expect(res.headers.get("content-disposition")).toMatch(/^attachment; filename="everydaypane-settings-\d{4}-\d{2}-\d{2}\.json"$/);
     const text = await res.text();
     expect(text).not.toContain("secret-pass");
-    const withPass = await (await GET(req("/api/admin/backup/?wifi=1", { headers: { cookie: admin } }))).text();
+    const withPass = await (await GET(req("/api/household/backup/?wifi=1", { headers: { cookie: admin } }))).text();
     expect(withPass).toContain("secret-pass");
 
     const changed = withWifi("secret-pass");
@@ -98,7 +98,7 @@ describe("settings backup", () => {
 
     const backup = JSON.parse(text) as unknown;
     const post = (b: object, cookie = admin) =>
-      POST(req("/api/admin/backup/", { method: "POST", headers: { cookie }, body: JSON.stringify(b) }));
+      POST(req("/api/household/backup/", { method: "POST", headers: { cookie }, body: JSON.stringify(b) }));
     expect((await post({ baseVersion: 2, backup }, kid)).status).toBe(401);
 
     const dry = await post({ baseVersion: 2, backup, dryRun: true });
@@ -115,7 +115,7 @@ describe("settings backup", () => {
 
     expect((await post({ baseVersion: 3, backup: { kind: "other" } })).status).toBe(422);
     const cross = await POST(
-      req("/api/admin/backup/", {
+      req("/api/household/backup/", {
         method: "POST",
         headers: { cookie: admin, origin: "https://evil.example" },
         body: JSON.stringify({ baseVersion: 3, backup }),

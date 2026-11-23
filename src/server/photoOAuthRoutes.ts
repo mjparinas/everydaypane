@@ -47,7 +47,7 @@ export async function finishPhotoOAuth(service: PhotoOAuthService, req: Request)
     new Response(null, {
       status: 303,
       headers: {
-        Location: `/admin/?${service}=${result}#settings/photos`,
+        Location: `/household/?${service}=${result}#settings/photos`,
         "Set-Cookie": clearedPhotoOAuthStateCookie(),
         "Cache-Control": "no-store",
       },

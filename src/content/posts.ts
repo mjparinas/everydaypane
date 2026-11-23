@@ -53,25 +53,11 @@ function guide(
   return { slug, title, description, date, tag, kind: "guide", image, body: [...body, { cta: true }] };
 }
 
-function compare(
-  slug: string,
-  date: string,
-  title: string,
-  description: string,
-  body: Block[],
-  image = "/templates/family-hub.png",
-): Post {
+function compare(slug: string, date: string, title: string, description: string, body: Block[], image = "/templates/family-hub.png"): Post {
   return { slug, title, description, date, tag: "Compare", kind: "compare", image, body: [...body, { cta: true }] };
 }
 
-function story(
-  slug: string,
-  date: string,
-  title: string,
-  description: string,
-  body: Block[],
-  image = "/templates/photo-frame.png",
-): Post {
+function story(slug: string, date: string, title: string, description: string, body: Block[], image = "/templates/photo-frame.png"): Post {
   return { slug, title, description, date, tag: "Family", kind: "story", image, body: [...body, { cta: true }] };
 }
 

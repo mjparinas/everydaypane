@@ -65,7 +65,7 @@ export function SiteFooter() {
             { href: "/features/", label: "Features" },
             { href: "/pricing/", label: "Pricing" },
             { href: "/compare/", label: "Compare" },
-            { href: APP_PATH, label: "Open admin" },
+            { href: APP_PATH, label: "Open household" },
             { href: FAMILY_PATH, label: "Family board" },
           ]}
         />

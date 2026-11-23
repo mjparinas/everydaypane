@@ -6,7 +6,7 @@ export const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL ?? "https://pane.getli
 export const CONTACT_EMAIL = "hello@getliftsmith.com";
 
 /** Where signed-in families land. */
-export const APP_PATH = "/admin/";
+export const APP_PATH = "/household/";
 
 export const FAMILY_PATH = "/family/";
 

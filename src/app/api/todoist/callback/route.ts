@@ -14,7 +14,7 @@ export async function GET(req: Request) {
     new Response(null, {
       status: 303,
       headers: {
-        Location: `/admin/?todoist=${result}#settings/tasks`,
+        Location: `/household/?todoist=${result}#settings/tasks`,
         "Set-Cookie": `${STATE_COOKIE}=; Path=/api/todoist/; HttpOnly; SameSite=Lax; Max-Age=0`,
         "Cache-Control": "no-store",
       },

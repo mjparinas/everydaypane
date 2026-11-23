@@ -40,7 +40,7 @@ second policy (action **Allow**, include your email) for the browser, or keep th
 
 1. In Home Assistant: your **profile › Security › Long-lived access tokens › Create token**, named `Everydaypane`.
    Copy it.
-2. In the Everydaypane admin panel: **Settings › Home Assistant**.
+2. In the Everydaypane household panel: **Settings › Home Assistant**.
    - Address: `https://ha.getliftsmith.com`, then **Save** (top of the page).
    - Paste the long-lived token and **Save token**.
    - Paste the Access **Client ID** and **Client Secret** and **Save service token**.

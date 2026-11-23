@@ -5,7 +5,7 @@ import { useState } from "react";
 
 import { APP_PATH } from "@/lib/site";
 
-/** Household upgrade via existing Stripe Checkout (`/api/admin/billing/`). */
+/** Household upgrade via existing Stripe Checkout (`/api/household/billing/`). */
 export function HouseholdCheckoutButton({ className = "", label = "Get Household" }: { className?: string; label?: string }) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
@@ -15,7 +15,7 @@ export function HouseholdCheckoutButton({ className = "", label = "Get Household
     setBusy(true);
     setError("");
     try {
-      const r = await fetch("/api/admin/billing/?action=checkout", { method: "POST" });
+      const r = await fetch("/api/household/billing/?action=checkout", { method: "POST" });
       if (r.status === 401) {
         router.push(`/signin/?next=${encodeURIComponent("/pricing/")}`);
         return;

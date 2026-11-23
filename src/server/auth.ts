@@ -1,5 +1,7 @@
 import "server-only";
 
+import { signInEmail } from "@/lib/email";
+
 import { accountsForEmail, canSignIn, createAccount, ensureAccountsSeeded, type MemberRole } from "./accounts";
 import { randomToken, sha256 } from "./crypto";
 import { query, rateLimit, run } from "./db";
@@ -44,12 +46,7 @@ export async function startSignIn(req: Request, email: string, origin: string, n
     now + LINK_MS,
   ]);
   const link = `${env.siteUrl() || origin}/signin/verify/?token=${encodeURIComponent(token)}`;
-  const sent = await sendEmail({
-    to: e,
-    subject: "Your Everydaypane sign-in link",
-    text: `Open this link to sign in to Everydaypane:\n\n${link}\n\nIt works once, for 15 minutes. If you didn't ask for it, ignore this email.`,
-    html: signInHtml(link),
-  });
+  const sent = await sendEmail({ to: e, ...signInEmail(link) });
   if (!sent) return json({ error: "The email couldn't be sent. Try again in a minute." }, 502);
   return json(SENT);
 }
@@ -140,12 +137,3 @@ export function readCookie(req: Request, name: string): string | undefined {
 }
 
 export const requestSession = (req: Request) => sessionFor(readCookie(req, SESSION_COOKIE));
-
-function signInHtml(link: string): string {
-  const safe = link.replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;");
-  return `<div style="font-family:system-ui,sans-serif;max-width:480px;margin:auto;padding:24px;color:#0f172a">
-<h1 style="font-size:20px">Sign in to Everydaypane</h1>
-<p>Tap the button to sign in. The link works once, for 15 minutes.</p>
-<p><a href="${safe}" style="display:inline-block;background:#3b5bdb;color:#fff;padding:12px 20px;border-radius:10px;text-decoration:none;font-weight:600">Sign in</a></p>
-<p style="color:#526077;font-size:13px">If you didn't ask for this, ignore this email.</p></div>`;
-}

@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { GET as adminGET } from "@/app/api/admin/google-tasks/route";
+import { GET as adminGET } from "@/app/api/household/google-tasks/route";
 import { GET as tasksGET, POST as tasksPOST } from "@/app/api/display/tasks/route";
 import { newWidget } from "@/lib/config/widgets";
 import type { TasksData } from "@/lib/display/types";
@@ -136,7 +136,7 @@ describe("Google Tasks on displays", () => {
     const data = (await (await tasksGET(req("/api/display/tasks/", { headers: { "x-display-token": token } }))).json()) as TasksData;
     expect(data.google).toMatchObject({ connected: false, lists: [] });
     const admin = await cookieFor("admin@example.com");
-    expect(await (await adminGET(req("/api/admin/google-tasks/", { headers: { cookie: admin } }))).json()).toMatchObject({
+    expect(await (await adminGET(req("/api/household/google-tasks/", { headers: { cookie: admin } }))).json()).toMatchObject({
       allowed: false,
     });
   });
@@ -144,7 +144,7 @@ describe("Google Tasks on displays", () => {
   it("lists the account's task lists for admins only", async () => {
     await connected();
     const admin = await cookieFor("admin@example.com");
-    expect(await (await adminGET(req("/api/admin/google-tasks/", { headers: { cookie: admin } }))).json()).toEqual({
+    expect(await (await adminGET(req("/api/household/google-tasks/", { headers: { cookie: admin } }))).json()).toEqual({
       configured: true,
       allowed: true,
       lists: [
@@ -153,6 +153,6 @@ describe("Google Tasks on displays", () => {
       ],
     });
     const kid = await cookieFor("kid@example.com");
-    expect((await adminGET(req("/api/admin/google-tasks/", { headers: { cookie: kid } }))).status).toBe(401);
+    expect((await adminGET(req("/api/household/google-tasks/", { headers: { cookie: kid } }))).status).toBe(401);
   });
 });

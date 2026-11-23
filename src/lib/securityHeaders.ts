@@ -1,7 +1,7 @@
 // Security headers on every response. The display needs camera snapshots and photos from our own origin only
 // (they're proxied), so img-src stays 'self' plus data: and blob: for the QR code and offline copies. The one page from
 // Earth, TradingView, YouTube, Vimeo, Google Maps and Instagram embeds need their origins in frame-src; 'self' is also
-// allowed so the admin Views tab can embed /admin/preview/ (Melvin, 2026-11-22: live draft preview).
+// allowed so the admin Views tab can embed /household/preview/ (Melvin, 2026-11-22: live draft preview).
 //
 // script-src never allows 'unsafe-inline': Next.js pages get a per-request nonce from proxy.ts; the display shell only
 // loads /display/display.js from our origin (src/server/displayHtml.ts). style-src still needs 'unsafe-inline' because
