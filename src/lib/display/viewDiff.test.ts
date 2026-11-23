@@ -11,10 +11,11 @@ describe("viewDiff", () => {
     );
   });
 
-  it("treats placement as outside the options key", () => {
+  it("treats placement and panel chrome as outside the options key", () => {
     const a = newWidget("clock", "c1", { x: 0, y: 0 });
     const b = { ...a, x: 3, y: 1, w: 3, h: 2 };
     expect(widgetOptionsKey(a)).toBe(widgetOptionsKey(b));
+    expect(widgetOptionsKey({ ...a, showBackground: true, backgroundOpacity: 0.5 })).toBe(widgetOptionsKey(a));
     expect(widgetOptionsKey({ ...a, showSeconds: true })).not.toBe(widgetOptionsKey(a));
   });
 
@@ -47,6 +48,13 @@ describe("viewDiff", () => {
     const onPhotos = { ...clock, x: 1, y: 1 };
     const ops = diffWidgets([photos, clock], [photos, onPhotos]);
     expect(ops).toEqual([{ op: "move", id: "clock", placed: expect.objectContaining({ onPhoto: true, widget: onPhotos }) }]);
+  });
+
+  it("moves when only the panel chrome changes", () => {
+    const weather = newWidget("weather", "weather", { x: 0, y: 0 });
+    const noPanel = { ...weather, showBackground: false };
+    const ops = diffWidgets([weather], [noPanel]);
+    expect(ops).toEqual([{ op: "move", id: "weather", placed: expect.objectContaining({ transparent: true, widget: noPanel }) }]);
   });
 
   it("compares stage grid settings", () => {

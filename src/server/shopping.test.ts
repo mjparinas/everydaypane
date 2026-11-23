@@ -31,7 +31,18 @@ const ctx = (id: string) => ({ params: Promise.resolve({ id }) });
 
 function withShopping(allowCheck = true): DashboardConfig {
   const c = defaultConfig();
-  c.views[0]?.widgets.push({ id: "shop", type: "shopping", x: 0, y: 0, w: 2, h: 2, count: 12, allowCheck, showDone: false });
+  c.views[0]?.widgets.push({
+    id: "shop",
+    type: "shopping",
+    x: 0,
+    y: 0,
+    w: 2,
+    h: 2,
+    showBackground: true,
+    count: 12,
+    allowCheck,
+    showDone: false,
+  });
   return c;
 }
 

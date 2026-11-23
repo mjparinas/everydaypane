@@ -28,7 +28,18 @@ function withChores(allowCheck = true): DashboardConfig {
       { id: "lawn", name: "Mow the lawn", emoji: "", stars: 5, days: [6], personIds: ["ben"], rotate: "none" },
     ],
   };
-  c.views[0]?.widgets.push({ id: "ch", type: "chores", x: 0, y: 0, w: 1, h: 1, personIds: [], showStars: true, allowCheck });
+  c.views[0]?.widgets.push({
+    id: "ch",
+    type: "chores",
+    x: 0,
+    y: 0,
+    w: 1,
+    h: 1,
+    showBackground: true,
+    personIds: [],
+    showStars: true,
+    allowCheck,
+  });
   return c;
 }
 

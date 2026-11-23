@@ -91,7 +91,9 @@ function cellClass(placed: PlacedWidget): string {
 }
 
 function cellStyle(w: Widget): string {
-  return `grid-column:${w.x + 1}/span ${w.w};grid-row:${w.y + 1}/span ${w.h}`;
+  // Each widget can drop its panel or override the theme's surface opacity (Melvin, 2026-11-22).
+  const alpha = w.showBackground && w.backgroundOpacity != null ? `--surface-alpha:${w.backgroundOpacity};` : "";
+  return `grid-column:${w.x + 1}/span ${w.w};grid-row:${w.y + 1}/span ${w.h};${alpha}`;
 }
 
 function ctxFor(p: DisplayPayload): WidgetContext {

@@ -59,6 +59,9 @@ const base = {
   w: z.number().int().min(1),
   h: z.number().int().min(1),
   title: z.string().max(60).optional(),
+  // Melvin, 2026-11-22: each widget can drop its panel or set its own opacity; the theme's surfaceOpacity is the default.
+  showBackground: z.boolean().default(true),
+  backgroundOpacity: z.number().min(0).max(1).optional(),
 };
 
 export const countdownEventSchema = z.object({
@@ -96,19 +99,26 @@ export const widgetSchema = z.discriminatedUnion("type", [
   z.object({
     ...base,
     type: z.literal("clock"),
+    // Clocks sit over photos with no panel by default (same as before the per-widget background setting).
+    showBackground: z.boolean().default(false),
     timeZone,
     label: z.string().max(40),
     showSeconds: z.boolean(),
     style: z.enum(["digital", "analog"]),
   }),
-  z.object({ ...base, type: z.literal("date"), timeZone, showYear: z.boolean() }),
+  z.object({
+    ...base,
+    type: z.literal("date"),
+    showBackground: z.boolean().default(false),
+    timeZone,
+    showYear: z.boolean(),
+  }),
   // Today's sunrise and sunset at the dashboard's location. It shares the weather feed, which already includes both.
-  // Transparent drops the panel so it can sit over photos like the clock and date; showEmoji covers the sun icons
-  // and the daylight line; showDaylight hides the hours of daylight (Melvin, 2026-11-22).
+  // showEmoji covers the sun icons and the daylight line; showDaylight hides the hours of daylight (Melvin, 2026-11-22).
+  // The old sunTimes-only `transparent` flag became showBackground on every widget (upgrade in src/server/config.ts).
   z.object({
     ...base,
     type: z.literal("sunTimes"),
-    transparent: z.boolean().default(false),
     showEmoji: z.boolean().default(true),
     showDaylight: z.boolean().default(true),
   }),

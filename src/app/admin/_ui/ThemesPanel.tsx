@@ -161,6 +161,7 @@ export function ThemesPanel() {
             max={1}
             step={0.05}
             format={(v) => `${Math.round(v * 100)}%`}
+            hint="The default panel opacity. Each widget can override this in its own settings."
             onChange={(v) => editTheme((t) => void (t.surfaceOpacity = v))}
           />
           <Toggle

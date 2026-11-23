@@ -17,23 +17,33 @@ export function stageGridStyle(view: Pick<View, "cols" | "rows" | "gap" | "paddi
   return `grid-template-columns:repeat(${view.cols},minmax(0,1fr));grid-template-rows:repeat(${view.rows},minmax(0,1fr));gap:${view.gap}px;padding:${view.padding}px;--cell-pad:${view.tilePadding}px`;
 }
 
-/** Options fingerprint: everything except grid placement. */
+/** Options fingerprint: everything except grid placement and panel chrome (handled as a move). */
 export function widgetOptionsKey(w: Widget): string {
   const rest = { ...w };
   delete (rest as { x?: number }).x;
   delete (rest as { y?: number }).y;
   delete (rest as { w?: number }).w;
   delete (rest as { h?: number }).h;
+  delete (rest as { showBackground?: boolean }).showBackground;
+  delete (rest as { backgroundOpacity?: number }).backgroundOpacity;
   return JSON.stringify(rest);
 }
 
 function placed(w: Widget, onPhoto: boolean): PlacedWidget {
-  const transparent = w.type === "sunTimes" && w.transparent;
-  return { widget: w, onPhoto, transparent };
+  // Per-widget panel (Melvin, 2026-11-22): showBackground off drops the surface.
+  return { widget: w, onPhoto, transparent: !w.showBackground };
 }
 
 export function placeWidgets(widgets: Widget[]): PlacedWidget[] {
   return stackOrder(widgets).map(({ widget, onPhoto }) => placed(widget, onPhoto));
+}
+
+function sameChrome(a: PlacedWidget, b: PlacedWidget): boolean {
+  return (
+    a.onPhoto === b.onPhoto &&
+    a.transparent === b.transparent &&
+    (a.widget.backgroundOpacity ?? null) === (b.widget.backgroundOpacity ?? null)
+  );
 }
 
 /**
@@ -65,9 +75,8 @@ export function diffWidgets(prev: Widget[], next: Widget[]): WidgetOp[] {
       prevP.widget.y === nextP.widget.y &&
       prevP.widget.w === nextP.widget.w &&
       prevP.widget.h === nextP.widget.h;
-    const sameStack = prevP.onPhoto === nextP.onPhoto && prevP.transparent === nextP.transparent;
     if (!sameOptions) ops.push({ op: "replace", id, placed: nextP });
-    else if (!sameRect || !sameStack) ops.push({ op: "move", id, placed: nextP });
+    else if (!sameRect || !sameChrome(prevP, nextP)) ops.push({ op: "move", id, placed: nextP });
   }
 
   return ops;
