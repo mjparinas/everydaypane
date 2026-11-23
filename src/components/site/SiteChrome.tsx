@@ -74,6 +74,7 @@ export function SiteFooter() {
           links={[
             { href: "/blog/", label: "Blog & updates" },
             { href: "/compare/dakboard/", label: "vs DAKboard" },
+            { href: "/compare/homescreens/", label: "vs Home Screens" },
             { href: "/compare/skylight/", label: "vs Skylight" },
             { href: "/compare/magicmirror/", label: "vs MagicMirror" },
             { href: "/compare/echo-show/", label: "vs Echo Show" },

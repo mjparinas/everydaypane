@@ -94,7 +94,7 @@ even when the display browser has old time-zone data.
 
 **Marketing site** (public pages, Melvin, 2026-11-23): homepage at `/` (no longer redirects to admin), plus `/pricing/`,
 `/features/` (every widget with a real-widget sample PNG from `public/features/widgets/`, regenerated with
-`npm run templates:previews` alongside starter templates), `/compare/` (and per-competitor pages), `/blog/` with RSS,
+`npm run templates:previews` alongside starter templates), `/compare/` (and per-competitor pages including Home Screens), `/blog/` with RSS,
 `/privacy/`, `/terms/`, `/contact/`, `robots.ts` and `sitemap.ts`. Built like Tuned/Liftsmith (`src/components/site/`,
 Manrope display, template preview screenshots from `public/templates/` — no personal photos in OG). Free vs
 **Household** pricing copy in `src/lib/marketingPlans.ts`; checkout uses the existing Stripe Household flow
