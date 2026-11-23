@@ -162,7 +162,7 @@ export function HomeView() {
               </ul>
             </div>
             <div className="site-rise" style={{ animationDelay: "80ms" }}>
-              <PaneMock variant="morning" />
+              <PaneMock variant="morning" priority />
             </div>
           </div>
         </section>
@@ -221,7 +221,7 @@ export function HomeView() {
               Colourful screens the whole family reads
             </h2>
             <p className="mt-3 max-w-2xl text-soft">
-              Illustrative layouts of what Everydaypane draws — light, touch-friendly panes on a kitchen display.
+              Real starter layouts from the Views tab — the same screenshots families pick when they set up a wall.
             </p>
             <div className="mt-10 grid gap-10 lg:gap-14">
               {FEATURES.map((f, i) => (
