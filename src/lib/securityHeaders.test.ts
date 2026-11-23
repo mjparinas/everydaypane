@@ -20,4 +20,9 @@ describe("contentSecurityPolicy", () => {
     expect(SECURITY_HEADERS.find((h) => h.key === "X-Frame-Options")?.value).toBe("DENY");
     expect(SECURITY_HEADERS_PREVIEW.find((h) => h.key === "X-Frame-Options")?.value).toBe("SAMEORIGIN");
   });
+
+  it("skips upgrade-insecure-requests on plain HTTP (e2e / local next start)", () => {
+    expect(contentSecurityPolicy({ script: "self", upgradeInsecureRequests: true })).toContain("upgrade-insecure-requests");
+    expect(contentSecurityPolicy({ script: "self", upgradeInsecureRequests: false })).not.toContain("upgrade-insecure-requests");
+  });
 });

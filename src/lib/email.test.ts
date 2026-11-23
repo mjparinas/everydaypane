@@ -28,7 +28,7 @@ describe("email chrome", () => {
   });
 
   it("builds a branded sign-in message", () => {
-    const link = "https://pane.getliftsmith.com/signin/verify/?token=abc&x=1";
+    const link = "https://www.everydaypane.com/signin/verify/?token=abc&x=1";
     const mail = signInEmail(link);
     expect(mail.subject).toBe(`Your ${BRAND.name} sign-in link`);
     expect(mail.text).toContain(link);

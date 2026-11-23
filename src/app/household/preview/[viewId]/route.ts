@@ -13,5 +13,5 @@ export async function GET(req: Request, ctx: { params: Promise<{ viewId: string 
   }
   const mode = new URL(req.url).searchParams.get("mode");
   const previewMode = mode === "day" || mode === "night" ? mode : undefined;
-  return displayHtml({ token: null, title: "Preview", previewView: viewId, previewMode });
+  return displayHtml({ token: null, title: "Preview", previewView: viewId, previewMode, requestUrl: req.url });
 }

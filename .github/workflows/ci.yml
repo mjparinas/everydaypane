@@ -110,6 +110,8 @@ jobs:
       - run: npm run build
         env:
           SESSION_SECRET: ci-only-session-secret-0123456789abcdef
+          # Baked into metadataBase / icon hrefs; must be this host so e2e doesn't fetch a dead production URL.
+          NEXT_PUBLIC_SITE_URL: http://localhost:3100
       - name: Display bundle budget
         run: node scripts/bundle-check.mjs
       - name: Install Chromium
@@ -120,6 +122,7 @@ jobs:
           SESSION_SECRET: ci-only-session-secret-0123456789abcdef
           ADMIN_PASSWORD: ci-only-admin-password
           DATABASE_URL: file:ci.db
+          NEXT_PUBLIC_SITE_URL: http://localhost:3100
 
   passed:
     name: CI passed

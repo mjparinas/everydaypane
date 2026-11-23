@@ -18,6 +18,8 @@ const server = spawn(process.execPath, ["node_modules/next/dist/bin/next", "star
     ADMIN_EMAILS: "admin@example.com",
     FAMILY_EMAILS: "kid@example.com",
     RESEND_API_KEY: "",
+    // Match CI build: absolute icon/OG URLs must hit this server, not a stale production host.
+    NEXT_PUBLIC_SITE_URL: process.env.NEXT_PUBLIC_SITE_URL ?? BASE,
     NODE_ENV: "production",
   },
   stdio: ["ignore", "pipe", "pipe"],

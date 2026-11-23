@@ -1,6 +1,6 @@
 import "server-only";
 
-import { CSP, CSP_PREVIEW } from "@/lib/securityHeaders";
+import { displayCsp } from "@/lib/securityHeaders";
 
 const ASSET_VERSION = (process.env.NEXT_PUBLIC_COMMIT_SHA || String(Date.now())).slice(0, 12);
 
@@ -13,11 +13,23 @@ const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replac
  * Admin preview pages allow same-origin framing so the Views tab can embed a live draft (Melvin, 2026-11-22).
  * Wall /d/… pages stay unframeable.
  */
+function requestIsHttps(reqUrl: string | undefined): boolean {
+  if (!reqUrl) return true;
+  try {
+    const u = new URL(reqUrl);
+    return u.protocol === "https:";
+  } catch {
+    return true;
+  }
+}
+
 export function displayHtml(opts: {
   token: string | null;
   title: string;
   previewView?: string;
   previewMode?: "day" | "night";
+  /** Request URL — used so http://localhost e2e does not get upgrade-insecure-requests. */
+  requestUrl?: string;
   /** Extra response headers (e.g. the short-lived display cookie for image routes). */
   headers?: Record<string, string>;
 }): Response {
@@ -27,6 +39,7 @@ export function displayHtml(opts: {
   if (opts.previewView) data.push(`data-preview="${esc(opts.previewView)}"`);
   if (opts.previewMode) data.push(`data-preview-mode="${esc(opts.previewMode)}"`);
   const preview = Boolean(opts.previewView);
+  const csp = displayCsp({ preview, https: requestIsHttps(opts.requestUrl) });
   const html = `<!doctype html>
 <html lang="en-CA">
 <head>
@@ -58,7 +71,7 @@ export function displayHtml(opts: {
       "Content-Type": "text/html; charset=utf-8",
       "Cache-Control": "no-store",
       "X-Robots-Tag": "noindex",
-      "Content-Security-Policy": preview ? CSP_PREVIEW : CSP,
+      "Content-Security-Policy": csp,
       // Override next.config's DENY so the admin can embed this preview same-origin.
       ...(preview ? { "X-Frame-Options": "SAMEORIGIN" } : {}),
       ...opts.headers,
