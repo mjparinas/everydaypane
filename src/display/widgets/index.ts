@@ -20,12 +20,14 @@ import { messages } from "./messages";
 import { note } from "./note";
 import { packages } from "./packages";
 import {
+  affirmation,
   airports,
   crypto,
   dadJoke,
   emailCount,
   fitbit,
   fx,
+  horoscope,
   instagram,
   maps,
   news,
@@ -163,6 +165,10 @@ export function mountWidget(el: HTMLElement, w: Widget, ctx: WidgetContext): Cle
       return dadJoke(el, w, ctx);
     case "quotes":
       return quotes(el, w, ctx);
+    case "affirmation":
+      return affirmation(el, w, ctx);
+    case "horoscope":
+      return horoscope(el, w, ctx);
     case "instagram":
       return instagram(el, w, ctx);
     case "trello":

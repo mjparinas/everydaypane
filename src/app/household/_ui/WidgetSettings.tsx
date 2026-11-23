@@ -1371,6 +1371,66 @@ function TypeSettings({
         </>
       );
     }
+    case "affirmation": {
+      const e = edit<"affirmation">();
+      return (
+        <>
+          <Select
+            label="Category"
+            value={w.category}
+            options={[
+              { value: "general", label: "General" },
+              { value: "kids", label: "Kids" },
+              { value: "calm", label: "Calm" },
+              { value: "courage", label: "Courage" },
+            ]}
+            onChange={(v) => e((x) => void (x.category = v))}
+          />
+          <TextArea
+            label="Extra lines (one per row)"
+            value={w.custom.join("\n")}
+            maxLength={2000}
+            onChange={(v) =>
+              e((x) => {
+                x.custom = v
+                  .split("\n")
+                  .map((s) => s.trim())
+                  .filter(Boolean)
+                  .slice(0, 24);
+              })
+            }
+          />
+          <p className="text-xs text-soft">Mixed with the built-in bank. The wall picks one for the local day.</p>
+        </>
+      );
+    }
+    case "horoscope": {
+      const e = edit<"horoscope">();
+      return (
+        <>
+          <Select
+            label="Sign"
+            value={w.sign}
+            options={[
+              { value: "aries", label: "Aries" },
+              { value: "taurus", label: "Taurus" },
+              { value: "gemini", label: "Gemini" },
+              { value: "cancer", label: "Cancer" },
+              { value: "leo", label: "Leo" },
+              { value: "virgo", label: "Virgo" },
+              { value: "libra", label: "Libra" },
+              { value: "scorpio", label: "Scorpio" },
+              { value: "sagittarius", label: "Sagittarius" },
+              { value: "capricorn", label: "Capricorn" },
+              { value: "aquarius", label: "Aquarius" },
+              { value: "pisces", label: "Pisces" },
+            ]}
+            onChange={(v) => e((x) => void (x.sign = v))}
+          />
+          <p className="text-xs text-soft">Playful kitchen blurbs — not a live astrology feed.</p>
+        </>
+      );
+    }
     case "rss":
     case "news":
     case "dadJoke":

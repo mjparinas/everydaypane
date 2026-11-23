@@ -609,6 +609,21 @@ export interface QuotesData {
   quotes: { text: string; author: string }[];
 }
 
+export interface AffirmationData {
+  updatedAt: number;
+  date: string;
+  category: string;
+  text: string;
+}
+
+export interface HoroscopeData {
+  updatedAt: number;
+  date: string;
+  sign: string;
+  label: string;
+  text: string;
+}
+
 export interface TrelloList {
   name: string;
   cards: string[];

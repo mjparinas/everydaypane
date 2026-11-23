@@ -503,6 +503,21 @@ export const widgetSchema = z.discriminatedUnion("type", [
     tags: z.array(z.string().trim().min(1).max(40)).max(6),
     count: z.number().int().min(1).max(8),
   }),
+  // Daily affirmation (Melvin, 2026-11-23): curated lines plus optional custom ones; stable for the local day.
+  z.object({
+    ...base,
+    type: z.literal("affirmation"),
+    category: z.enum(["general", "kids", "calm", "courage"]).default("general"),
+    custom: z.array(z.string().trim().min(1).max(160)).max(24).default([]),
+  }),
+  // Playful horoscope (Melvin, 2026-11-23): curated kitchen blurbs by sign, not a live astrology feed.
+  z.object({
+    ...base,
+    type: z.literal("horoscope"),
+    sign: z
+      .enum(["aries", "taurus", "gemini", "cancer", "leo", "virgo", "libra", "scorpio", "sagittarius", "capricorn", "aquarius", "pisces"])
+      .default("leo"),
+  }),
   z.object({
     ...base,
     type: z.literal("instagram"),

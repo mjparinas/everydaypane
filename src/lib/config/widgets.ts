@@ -486,6 +486,22 @@ export const WIDGETS: { [T in WidgetType]: WidgetInfo<T> } = {
     minSize: { w: 2, h: 2 },
     defaults: () => ({ tags: [], count: 2 }),
   },
+  affirmation: {
+    label: "Affirmation",
+    description: "A calm daily line for the household",
+    icon: "✨",
+    size: { w: 4, h: 2 },
+    minSize: { w: 2, h: 1 },
+    defaults: () => ({ category: "general" as const, custom: [] as string[] }),
+  },
+  horoscope: {
+    label: "Horoscope",
+    description: "A playful daily blurb for a zodiac sign",
+    icon: "♈",
+    size: { w: 4, h: 2 },
+    minSize: { w: 2, h: 1 },
+    defaults: () => ({ sign: "leo" as const }),
+  },
   instagram: {
     label: "Instagram",
     description: "Embed a public post (not a profile)",
@@ -578,7 +594,7 @@ export const WIDGET_GROUPS: { id: string; label: string; types: WidgetType[] }[]
   {
     id: "content",
     label: "News & fun",
-    types: ["rss", "news", "dadJoke", "quotes", "emailCount", "fitbit"],
+    types: ["rss", "news", "dadJoke", "quotes", "affirmation", "horoscope", "emailCount", "fitbit"],
   },
   {
     id: "social",
