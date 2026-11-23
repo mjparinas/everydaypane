@@ -260,7 +260,8 @@ async function loadState(): Promise<boolean> {
     return true;
   }
   if (!r.data) return false;
-  payload = r.data;
+  // Pin to the preview URL's view even if a cached or odd state answer drifts (Open full preview / iframe).
+  payload = PREVIEW ? { ...r.data, fixedViewId: PREVIEW } : r.data;
   etag = r.etag ?? undefined;
   watchSun(payload);
   render();
@@ -278,12 +279,15 @@ async function poll() {
 
 /**
  * Admin Views tab → this preview (Melvin, 2026-11-22): apply the unsaved working copy so widget settings update
- * live. Only when framed by our own origin; earth's iframe and other windows are ignored.
+ * live. Accept the embedding iframe parent, or the admin opener for "Open full preview" (same origin only).
  */
 function listenForDraft() {
   if (!PREVIEW) return;
   window.addEventListener("message", (event) => {
-    if (event.origin !== location.origin || event.source !== window.parent) return;
+    if (event.origin !== location.origin) return;
+    const fromParent = event.source === window.parent && window.parent !== window;
+    const fromOpener = window.opener != null && event.source === window.opener;
+    if (!fromParent && !fromOpener) return;
     const msg = parseDraftMessage(event.data);
     if (!msg) return;
     if (msg.type === "clear") {
@@ -299,13 +303,14 @@ function listenForDraft() {
     doorbell();
     saver?.update();
   });
-  // Tell the parent we're listening so it can push the current draft. Repeat a few times in case the
-  // admin's listener wasn't attached when the first ping fired.
+  // Tell the admin we're listening so it can push the current draft. Repeat a few times in case its
+  // listener wasn't attached when the first ping fired.
   const announce = () => {
     try {
-      window.parent.postMessage(previewReadyMessage(), location.origin);
+      if (window.parent !== window) window.parent.postMessage(previewReadyMessage(), location.origin);
+      window.opener?.postMessage(previewReadyMessage(), location.origin);
     } catch {
-      // Not framed, or the parent is cross-origin: nothing to sync.
+      // Not framed / no opener, or cross-origin: nothing to sync.
     }
   };
   announce();
