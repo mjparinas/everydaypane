@@ -94,8 +94,9 @@ even when the display browser has old time-zone data.
 
 **Marketing site** (public pages, Melvin, 2026-11-23): homepage at `/` (no longer redirects to admin), plus `/pricing/`,
 `/features/`, `/compare/` (and per-competitor pages), `/blog/` with RSS, `/privacy/`, `/terms/`, `/contact/`, `robots.ts` and
-`sitemap.ts`. Built like Tuned/Liftsmith (`src/components/site/`, Manrope display, CSS pane mocks — no personal photos in
-OG). Free vs **Household** pricing copy in `src/lib/marketingPlans.ts`; checkout uses the existing Stripe Household flow
+`sitemap.ts`. Built like Tuned/Liftsmith (`src/components/site/`, Manrope display, template preview screenshots from
+`public/templates/` — no personal photos in OG). Free vs **Household** pricing copy in `src/lib/marketingPlans.ts`;
+checkout uses the existing Stripe Household flow
 (`POST /api/admin/billing/?action=checkout`). Footer shows version + short commit with no GitHub link (`src/lib/build.ts`).
 
 **Alerts** (`src/server/alerts.ts`): Alert Ready (NAAD), **Environment Canada weather warnings** (through NAAD),
