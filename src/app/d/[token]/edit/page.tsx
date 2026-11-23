@@ -19,7 +19,7 @@ export default async function DisplayEditPage({ params }: { params: Promise<{ to
 
   return (
     <FamilyAuthProvider displayToken={token}>
-      <main className="mx-auto grid max-w-xl gap-4 p-4">
+      <main className="mx-auto grid max-w-5xl gap-4 p-4">
         <header className="flex items-center gap-3">
           <Mark size={32} />
           <div className="min-w-0">
@@ -27,11 +27,11 @@ export default async function DisplayEditPage({ params }: { params: Promise<{ to
             <p className="text-sm text-soft truncate">{device.name} · no sign-in needed</p>
           </div>
         </header>
-        <p className="text-sm text-soft">
+        <p className="text-sm text-soft max-w-xl">
           Anyone who can open this link can change the meal plan, shopping list and message board. Keep the QR on the wall, not shared
           online.
         </p>
-        <section className="grid gap-3" aria-labelledby="messages-heading">
+        <section className="mx-auto grid w-full max-w-xl gap-3" aria-labelledby="messages-heading">
           <h2 id="messages-heading" className="text-lg font-bold">
             Message board
           </h2>
@@ -43,7 +43,7 @@ export default async function DisplayEditPage({ params }: { params: Promise<{ to
           </h2>
           <MealPlanner />
         </section>
-        <section className="grid gap-3" aria-labelledby="shopping-heading">
+        <section className="mx-auto grid w-full max-w-xl gap-3" aria-labelledby="shopping-heading">
           <h2 id="shopping-heading" className="text-lg font-bold">
             Shopping list
           </h2>

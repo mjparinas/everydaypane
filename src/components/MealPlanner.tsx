@@ -104,7 +104,9 @@ export function MealPlanner() {
   const step = (n: number) => void load(addDays(plan.from, n));
 
   return (
-    <div className="grid gap-4">
+    // Columns follow the planner's width (not the viewport), so a phone-width page never packs three days across
+    // just because the screen is desktop-sized — Melvin, 2026-11-23.
+    <div className="@container grid gap-4">
       <div className="flex items-center justify-between gap-2">
         <button className="btn-ghost" onClick={() => step(-DAYS)} aria-label="Earlier week">
           ‹ Earlier
@@ -130,7 +132,7 @@ export function MealPlanner() {
           <option key={m} value={m} />
         ))}
       </datalist>
-      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+      <div className="grid gap-3 @min-[40rem]:grid-cols-2 @min-[60rem]:grid-cols-3">
         {days.map((date) => (
           <section key={date} className="card grid gap-2" aria-label={dayHeading(date, plan.today)}>
             <h3 className={`text-sm font-bold ${date === plan.today ? "text-brand" : ""}`}>{dayHeading(date, plan.today)}</h3>
@@ -140,11 +142,14 @@ export function MealPlanner() {
               const value = drafts[k] ?? saved;
               const st = status[k];
               return (
-                <label key={slot} className="grid grid-cols-[6.5rem_1fr] items-center gap-2 text-sm">
-                  <span className="font-medium">
+                <label
+                  key={slot}
+                  className="grid grid-cols-[auto_1fr] items-center gap-2 text-sm @min-[40rem]:grid-cols-1 @min-[40rem]:items-stretch @min-[40rem]:gap-1"
+                >
+                  <span className="w-[6.5rem] shrink-0 font-medium @min-[40rem]:w-auto">
                     <span aria-hidden="true">{MEAL_ICONS[slot]}</span> {MEAL_LABELS[slot]}
                   </span>
-                  <span className="relative">
+                  <span className="relative min-w-0">
                     <input
                       className="field w-full pr-8"
                       value={value}

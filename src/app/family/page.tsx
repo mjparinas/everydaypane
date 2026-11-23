@@ -18,7 +18,7 @@ export default async function FamilyPage() {
   const session = await sessionFor((await cookies()).get(SESSION_COOKIE)?.value);
   if (!session) redirect("/signin/?next=/family/");
   return (
-    <main className="mx-auto grid max-w-xl gap-4 p-4">
+    <main className="mx-auto grid max-w-5xl gap-4 p-4">
       <header className="flex items-center justify-between gap-2">
         <div className="flex min-w-0 items-center gap-3">
           <Mark size={32} />
@@ -33,15 +33,17 @@ export default async function FamilyPage() {
           <SignOut />
         </div>
       </header>
-      <MessageBoard />
-      <FamilyEvents />
+      <div className="mx-auto grid w-full max-w-xl gap-4">
+        <MessageBoard />
+        <FamilyEvents />
+      </div>
       <section className="grid gap-3" aria-labelledby="meals-heading">
         <h2 id="meals-heading" className="text-lg font-bold">
           Meal plan
         </h2>
         <MealPlanner />
       </section>
-      <section className="grid gap-3" aria-labelledby="shopping-heading">
+      <section className="mx-auto grid w-full max-w-xl gap-3" aria-labelledby="shopping-heading">
         <h2 id="shopping-heading" className="text-lg font-bold">
           Shopping list
         </h2>
