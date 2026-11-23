@@ -1,7 +1,8 @@
 import type { ChoresData } from "@/lib/display/types";
 
-import { refresh, send, subscribe } from "../api";
+import { refresh, sendExplained, subscribe } from "../api";
 import { fill, h } from "../dom";
+import { attachModal } from "../modal";
 import type { Mount } from "./types";
 
 // The chore chart (Melvin, 2026-11-21): a column for each kid with today's chores and the stars they've earned this
@@ -19,6 +20,7 @@ export function columns(data: ChoresData, personIds: string[], ticks: ReadonlyMa
     .filter((p) => personIds.length === 0 || personIds.includes(p.id))
     .map((p) => {
       let stars = p.stars;
+      let available = p.available;
       const items = data.due
         .filter((d) => d.personId === p.id)
         .flatMap((d) => {
@@ -27,10 +29,14 @@ export function columns(data: ChoresData, personIds: string[], ticks: ReadonlyMa
           const key = `${d.choreId}|${p.id}`;
           const done = ticks.get(key) ?? d.done;
           // A tick this screen hasn't heard back about yet already counts towards the stars.
-          if (done !== d.done) stars += done ? chore.stars : -chore.stars;
+          if (done !== d.done) {
+            const delta = done ? chore.stars : -chore.stars;
+            stars += delta;
+            available += delta;
+          }
           return [{ key, chore, done }];
         });
-      return { person: { ...p, stars: Math.max(0, stars) } as Person, items };
+      return { person: { ...p, stars: Math.max(0, stars), available: Math.max(0, available) } as Person, items };
     });
 }
 
@@ -69,20 +75,76 @@ export const chores: Mount<"chores"> = (el, w) => {
     }
   };
 
+  const withPin = (need: boolean, next: (pin?: string) => void) => {
+    if (!need) return next();
+    let entry = "";
+    const pad = h("div", { class: "ch-pin" }, h("p", {}, "Enter PIN"));
+    const keys = h("div", { class: "ch-pin-keys" });
+    const done = () => {
+      detach();
+      pad.remove();
+      next(entry.length === 4 ? entry : undefined);
+    };
+    const add = (d: string) => {
+      if (entry.length >= 4) return;
+      entry += d;
+      if (entry.length === 4) done();
+    };
+    for (const d of ["1", "2", "3", "4", "5", "6", "7", "8", "9", "⌫", "0", "OK"]) {
+      const b = h("button", { type: "button" }, d);
+      b.addEventListener("click", (ev) => {
+        ev.stopPropagation();
+        if (d === "⌫") entry = entry.slice(0, -1);
+        else if (d === "OK") done();
+        else add(d);
+      });
+      keys.append(b);
+    }
+    pad.append(keys);
+    root.append(pad);
+    const detach = attachModal(pad, () => {
+      pad.remove();
+      detach();
+      next();
+    });
+  };
+
+  const post = (body: Record<string, unknown>) => {
+    void sendExplained("chores", body).then((err) => {
+      if (err === null) refresh("chores");
+      else say(err || "Couldn't save that. Try again in a moment.");
+    });
+  };
+
   const tap = (choreId: string, personId: string, done: boolean, stars: number) => {
     const key = `${choreId}|${personId}`;
-    ticks.set(key, done);
-    draw();
-    if (done) {
-      const col = data ? columns(data, [personId], ticks)[0] : undefined;
-      celebrate(key, stars, Boolean(col?.items.every((i) => i.done)));
-    }
-    void send("chores", { chore: choreId, person: personId, done }).then((ok) => {
-      if (!ok) {
-        ticks.delete(key);
-        say("Couldn't save that. Try again in a moment.");
+    const needPin = Boolean(!done && data?.pinSet);
+    withPin(needPin, (pin) => {
+      if (needPin && !pin) return;
+      ticks.set(key, done);
+      draw();
+      if (done) {
+        const col = data ? columns(data, [personId], ticks)[0] : undefined;
+        celebrate(key, stars, Boolean(col?.items.every((i) => i.done)));
       }
-      refresh("chores");
+      const payload: Record<string, unknown> = { chore: choreId, person: personId, done };
+      if (pin) payload.pin = pin;
+      void sendExplained("chores", payload).then((err) => {
+        if (err !== null) {
+          ticks.delete(key);
+          say(err || "Couldn't save that. Try again in a moment.");
+        }
+        refresh("chores");
+      });
+    });
+  };
+
+  const redeem = (rewardId: string, personId: string) => {
+    withPin(Boolean(data?.pinSet), (pin) => {
+      if (data?.pinSet && !pin) return;
+      const payload: Record<string, unknown> = { redeem: rewardId, person: personId };
+      if (pin) payload.pin = pin;
+      post(payload);
     });
   };
 
@@ -107,7 +169,13 @@ export const chores: Mount<"chores"> = (el, w) => {
               { class: "ch-head" },
               h("span", { class: "ch-avatar", "aria-hidden": "true" }, p.emoji || p.name.slice(0, 1).toUpperCase()),
               h("span", { class: "ch-name" }, p.name),
-              w.showStars ? h("span", { class: "ch-stars" }, `⭐ ${p.stars}${p.goal ? ` / ${p.goal}` : ""}`) : null,
+              w.showStars
+                ? h(
+                    "span",
+                    { class: "ch-stars" },
+                    `⭐ ${p.available}${p.goal ? ` / ${p.goal}` : ""}${p.available < p.stars ? ` (${p.stars} earned)` : ""}`,
+                  )
+                : null,
             ),
             w.showStars && p.goal
               ? h("div", { class: "ch-bar" }, h("i", { style: `transform:scaleX(${Math.min(1, p.stars / p.goal)})` }))
@@ -134,6 +202,24 @@ export const chores: Mount<"chores"> = (el, w) => {
                 )
               : h("div", { class: "ch-free" }, "No chores today"),
             finished ? h("div", { class: "ch-all" }, "All done! 🎉") : null,
+            w.allowCheck && data?.rewards.length
+              ? h(
+                  "div",
+                  { class: "ch-rewards" },
+                  ...data!.rewards.map((r) => {
+                    const b = h(
+                      "button",
+                      { type: "button", class: "ch-redeem", disabled: p.available < r.starsCost ? "true" : undefined },
+                      `${r.name} (${r.starsCost}⭐)`,
+                    );
+                    b.addEventListener("click", (ev) => {
+                      ev.stopPropagation();
+                      redeem(r.id, p.id);
+                    });
+                    return b;
+                  }),
+                )
+              : null,
           );
         }),
       ),

@@ -2787,6 +2787,190 @@ body {
   color: var(--text);
 }
 
+.sh-add,
+.msg-compose {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35em;
+  align-items: center;
+  margin-top: 0.5em;
+}
+.sh-add-in,
+.msg-in {
+  flex: 1;
+  min-width: 6em;
+  font: inherit;
+  padding: 0.35em 0.5em;
+  border: 1px solid color-mix(in srgb, var(--text) 25%, transparent);
+  border-radius: calc(var(--radius) * 0.5);
+  background: color-mix(in srgb, var(--surface) 60%, transparent);
+  color: var(--text);
+}
+.msg-wide {
+  flex-basis: 100%;
+}
+.sh-add-btn,
+.msg-post {
+  font: inherit;
+  padding: 0.35em 0.75em;
+  border-radius: calc(var(--radius) * 0.5);
+  border: none;
+  background: var(--accent);
+  color: #fff;
+  font-weight: 700;
+}
+.msg-chips {
+  display: flex;
+  gap: 0.25em;
+}
+.msg-chip {
+  width: 1.5em;
+  height: 1.5em;
+  border-radius: 50%;
+  border: 2px solid transparent;
+}
+.msg-chip.on {
+  border-color: var(--text);
+}
+.msg-chip-yellow {
+  background: #fef08a;
+}
+.msg-chip-pink {
+  background: #fbcfe8;
+}
+.msg-chip-blue {
+  background: #bfdbfe;
+}
+.msg-chip-green {
+  background: #bbf7d0;
+}
+.msg-chip-purple {
+  background: #e9d5ff;
+}
+.msg-flash {
+  font-size: 0.85em;
+  color: var(--danger);
+}
+.wk-grid {
+  display: grid;
+  grid-template-columns: repeat(var(--n, 7), minmax(0, 1fr));
+  gap: 0.25em;
+  min-height: 0;
+  flex: 1;
+}
+.wk-col {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15em;
+}
+.wk-head {
+  font-size: 0.75em;
+  font-weight: 700;
+  margin: 0;
+  color: var(--muted);
+}
+.wk-today .wk-head {
+  color: var(--accent);
+}
+.wk-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.8em;
+  line-height: 1.2;
+}
+.wk-ev {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.25em;
+  overflow: hidden;
+}
+.wk-dot {
+  width: 0.45em;
+  height: 0.45em;
+  border-radius: 50%;
+  flex: none;
+  margin-top: 0.25em;
+}
+.wk-free {
+  color: var(--muted);
+  font-size: 0.8em;
+}
+.un-hero {
+  padding: 0.25em 0;
+}
+.un-time {
+  font-size: 0.9em;
+  color: var(--muted);
+  font-weight: 600;
+}
+.un-title {
+  font-size: 1.35em;
+  font-weight: 800;
+  line-height: 1.15;
+}
+.un-list {
+  margin: 0.5em 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.85em;
+}
+.un-row {
+  display: flex;
+  gap: 0.35em;
+  align-items: center;
+  margin-bottom: 0.2em;
+}
+.un-dot {
+  width: 0.45em;
+  height: 0.45em;
+  border-radius: 50%;
+  flex: none;
+}
+.ch-rewards {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35em;
+  margin-top: 0.35em;
+}
+.ch-redeem {
+  font: inherit;
+  font-size: 0.8em;
+  padding: 0.25em 0.5em;
+  border-radius: 999px;
+  border: 1px solid var(--accent);
+  background: transparent;
+  color: var(--text);
+}
+.ch-redeem:disabled {
+  opacity: 0.45;
+}
+.ch-pin {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35em;
+  background: color-mix(in srgb, var(--bg) 92%, transparent);
+  padding: 0.5em;
+}
+.ch-pin-keys {
+  display: grid;
+  grid-template-columns: repeat(3, 2.5em);
+  gap: 0.25em;
+}
+.ch-pin-keys button {
+  font: inherit;
+  height: 2.5em;
+  border-radius: 0.5em;
+  border: 1px solid color-mix(in srgb, var(--text) 20%, transparent);
+  background: var(--surface);
+}
+
 /* Reduced motion (a11y audit, 2026-11-22): keep the danger colour on a ringing timer / alarm, drop the blink. */
 @media (prefers-reduced-motion: reduce) {
   .boot-logo,

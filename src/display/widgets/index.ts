@@ -2,7 +2,7 @@ import type { Widget } from "@/lib/config/schema";
 
 import { airQuality } from "./air";
 import { alerts } from "./alerts";
-import { agenda, calendarMonth } from "./calendar";
+import { agenda, calendarMonth, calendarUpNext, calendarWeek } from "./calendar";
 import { chores } from "./chores";
 import { clock } from "./clock";
 import { commute } from "./commute";
@@ -62,6 +62,10 @@ export function mountWidget(el: HTMLElement, w: Widget, ctx: WidgetContext): Cle
       return agenda(el, w, ctx);
     case "calendarMonth":
       return calendarMonth(el, w, ctx);
+    case "calendarWeek":
+      return calendarWeek(el, w, ctx);
+    case "calendarUpNext":
+      return calendarUpNext(el, w, ctx);
     case "garbage":
       return garbage(el, w, ctx);
     case "alerts":

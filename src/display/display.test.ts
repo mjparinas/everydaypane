@@ -818,9 +818,11 @@ describe("ferries", () => {
 describe("chore chart", () => {
   const data: ChoresData = {
     today: "2026-11-18",
+    pinSet: false,
+    rewards: [],
     people: [
-      { id: "ana", name: "Ana", emoji: "🦊", color: "#e8590c", goal: 10, stars: 4 },
-      { id: "ben", name: "Ben", emoji: "", color: "#1c7ed6", goal: 0, stars: 0 },
+      { id: "ana", name: "Ana", emoji: "🦊", color: "#e8590c", goal: 10, stars: 4, available: 4 },
+      { id: "ben", name: "Ben", emoji: "", color: "#1c7ed6", goal: 0, stars: 0, available: 0 },
     ],
     chores: [
       { id: "bed", name: "Make the bed", emoji: "🛏️", stars: 1 },

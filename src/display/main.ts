@@ -1,6 +1,8 @@
 import { isBackdrop } from "@/lib/config/grid";
+import { PERIODS } from "@/lib/config/periods";
 import type { Palette, Period, Theme, View, Widget } from "@/lib/config/schema";
 import { currentPeriod, msUntilLocalTime, msUntilNextPeriod, scheduleUsesSun, sunMinutesFromIso, type SunMinutes } from "@/lib/config/time";
+import { widgetVisible } from "@/lib/config/visibility";
 import { parseDraftMessage, previewReadyMessage } from "@/lib/display/draftMessage";
 import type { DisplayPayload, HaData, WeatherData } from "@/lib/display/types";
 import { diffWidgets, placeWidgets, sameStageGrid, stageGridStyle, type PlacedWidget } from "@/lib/display/viewDiff";
@@ -23,7 +25,9 @@ const app = document.getElementById("app") as HTMLElement;
 let payload: DisplayPayload | null = null;
 let etag: string | undefined;
 const mounts = new Map<string, { cell: HTMLElement; stop: Cleanup; widget: Widget }>();
-let shown = { viewId: "", mode: "", themeId: "", version: -1 };
+let shown = { viewId: "", mode: "", themeId: "", version: -1, period: "" as Period | "" };
+let loopIndex = 0;
+let loopTimer: number | undefined;
 let shownView: View | null = null;
 let periodTimer: number | undefined;
 /** Today's sunrise/sunset in minutes (from the weather feed) when a period starts on the sun. */
@@ -54,12 +58,26 @@ document.addEventListener("wheel", (e) => e.ctrlKey && e.preventDefault(), { pas
 
 // ---- What to show now ----
 
+function loopViewIds(p: DisplayPayload): string[] {
+  const ids: string[] = [];
+  for (const part of PERIODS) {
+    const id = p.schedule[part].viewId;
+    if (!ids.includes(id)) ids.push(id);
+  }
+  return ids;
+}
+
 function pick(
   p: DisplayPayload,
   now = new Date(),
 ): { view: View; period: Period | null; theme: Theme; palette: Palette; dimLevel: number } {
   const period = p.fixedViewId ? null : currentPeriod(p.schedule, now, p.location.timeZone, sun);
-  const viewId = p.fixedViewId ?? (period ? p.schedule[period].viewId : "");
+  let viewId = p.fixedViewId ?? (period ? p.schedule[period].viewId : "");
+  const loop = p.schedule.enabled && !p.fixedViewId && p.schedule.loopSeconds;
+  if (loop) {
+    const ids = loopViewIds(p);
+    if (ids.length > 1) viewId = ids[loopIndex % ids.length] ?? viewId;
+  }
   const view = p.views.find((v) => v.id === viewId) ?? p.views[0];
   if (!view) throw new Error("No views to show");
   const theme = p.themes[view.themeId ?? p.themeId] ?? p.themes[p.themeId] ?? Object.values(p.themes)[0];
@@ -148,11 +166,12 @@ function mountPlaced(placed: PlacedWidget, ctx: WidgetContext) {
   }
 }
 
-function rebuildStage(view: View, p: DisplayPayload) {
+function rebuildStage(view: View, p: DisplayPayload, period: Period | null) {
   clearMounts();
   stage.style.cssText = stageGridStyle(view);
   const ctx = ctxFor(p);
-  for (const placed of placeWidgets(view.widgets)) mountPlaced(placed, ctx);
+  const widgets = view.widgets.filter((w) => widgetVisible(w, period));
+  for (const placed of placeWidgets(widgets)) mountPlaced(placed, ctx);
 }
 
 function applyWidgetDiff(prev: Widget[], next: Widget[], p: DisplayPayload) {
@@ -202,20 +221,35 @@ function schedulePeriod(p: DisplayPayload) {
   periodTimer = window.setTimeout(() => render(), msUntilNextPeriod(p.schedule, new Date(), p.location.timeZone, sun) + 500);
 }
 
+function scheduleLoop(p: DisplayPayload) {
+  window.clearInterval(loopTimer);
+  loopTimer = undefined;
+  const sec = p.schedule.loopSeconds;
+  if (PREVIEW || p.fixedViewId || !p.schedule.enabled || !sec) return;
+  const ids = loopViewIds(p);
+  if (ids.length < 2) return;
+  loopTimer = window.setInterval(() => {
+    loopIndex = (loopIndex + 1) % ids.length;
+    render();
+  }, sec * 1000);
+}
+
 function render(force = false) {
   if (!payload) return;
   const p = payload;
   const now = new Date();
-  const { view, theme, palette, dimLevel } = pick(p, now);
+  const { view, period, theme, palette, dimLevel } = pick(p, now);
   const mode = palette === theme.night ? "night" : "day";
   applyTheme(theme, palette, mode);
   dim.style.opacity = String(dimLevel);
-  if (force || shown.viewId !== view.id || shown.version !== p.version || shown.themeId !== theme.id) {
-    rebuildStage(view, p);
+  const periodKey = period ?? "";
+  if (force || shown.viewId !== view.id || shown.version !== p.version || shown.themeId !== theme.id || shown.period !== periodKey) {
+    rebuildStage(view, p, period);
   }
   shownView = view;
-  shown = { viewId: view.id, mode, themeId: theme.id, version: p.version };
+  shown = { viewId: view.id, mode, themeId: theme.id, version: p.version, period: periodKey };
   schedulePeriod(p);
+  scheduleLoop(p);
 }
 
 /**
@@ -226,10 +260,11 @@ function applyDraft(next: DisplayPayload) {
   const prev = payload;
   const prevView = shownView;
   payload = { ...next, fixedViewId: PREVIEW };
-  const { view, theme, palette, dimLevel } = pick(payload);
+  const { view, period, theme, palette, dimLevel } = pick(payload);
   const mode = palette === theme.night ? "night" : "day";
   applyTheme(theme, palette, mode);
   dim.style.opacity = String(dimLevel);
+  const periodKey = period ?? "";
 
   const ctxChanged =
     !prev ||
@@ -237,16 +272,21 @@ function applyDraft(next: DisplayPayload) {
     prev.location.timeZone !== payload.location.timeZone ||
     JSON.stringify(prev.units) !== JSON.stringify(payload.units);
 
-  if (!prevView || prevView.id !== view.id || mounts.size === 0 || ctxChanged) {
-    rebuildStage(view, payload);
+  const vis = (widgets: Widget[]) => widgets.filter((w) => widgetVisible(w, period));
+  const prevVisible = prevView ? vis(prevView.widgets) : [];
+  const nextVisible = vis(view.widgets);
+
+  if (!prevView || prevView.id !== view.id || mounts.size === 0 || ctxChanged || shown.period !== periodKey) {
+    rebuildStage(view, payload, period);
   } else {
     if (!sameStageGrid(prevView, view)) stage.style.cssText = stageGridStyle(view);
-    applyWidgetDiff(prevView.widgets, view.widgets, payload);
+    applyWidgetDiff(prevVisible, nextVisible, payload);
   }
 
   shownView = view;
-  shown = { viewId: view.id, mode, themeId: theme.id, version: payload.version };
+  shown = { viewId: view.id, mode, themeId: theme.id, version: payload.version, period: periodKey };
   schedulePeriod(payload);
+  scheduleLoop(payload);
 }
 
 // ---- Settings: loaded at start, then polled every 30 seconds (Melvin, 2026-11-17: polling, not push). ----

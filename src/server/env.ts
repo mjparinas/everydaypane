@@ -18,6 +18,10 @@ export const env = {
     (process.env.VERCEL_PROJECT_PRODUCTION_URL ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}` : ""),
   googleClientId: () => process.env.GOOGLE_CLIENT_ID ?? "",
   googleClientSecret: () => process.env.GOOGLE_CLIENT_SECRET ?? "",
+  microsoftClientId: () => process.env.MICROSOFT_CLIENT_ID ?? "",
+  microsoftClientSecret: () => process.env.MICROSOFT_CLIENT_SECRET ?? "",
+  /** Azure AD tenant; `common` for work, school and personal Microsoft accounts. */
+  microsoftTenant: () => process.env.MICROSOFT_TENANT || "common",
   // Direct Spotify and Sonos (docs/music.md): each from its own developer app.
   spotifyClientId: () => process.env.SPOTIFY_CLIENT_ID ?? "",
   spotifyClientSecret: () => process.env.SPOTIFY_CLIENT_SECRET ?? "",

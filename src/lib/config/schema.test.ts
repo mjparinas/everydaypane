@@ -22,7 +22,7 @@ describe("config schema", () => {
     const c = defaultConfig() as unknown as Record<string, unknown>;
     delete c.chores;
     const r = configSchema.safeParse(c);
-    expect(r.success && r.data.chores).toEqual({ people: [], items: [] });
+    expect(r.success && r.data.chores).toEqual({ people: [], items: [], rewards: [], pinSet: false });
   });
 
   it("refuses a chore with no days or nobody to do it", () => {

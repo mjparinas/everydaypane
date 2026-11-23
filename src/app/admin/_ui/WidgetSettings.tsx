@@ -2,6 +2,7 @@
 
 import { useState, type ReactNode } from "react";
 
+import { PERIOD_LABELS, PERIODS } from "@/lib/config/periods";
 import type { CountdownEvent, DashboardConfig, TimerPreset, Widget } from "@/lib/config/schema";
 import { WIDGETS } from "@/lib/config/widgets";
 import { EARTH_OVERLAY_LABELS, EARTH_OVERLAYS, EARTH_ZOOM_LABELS, EARTH_ZOOMS } from "@/lib/earth";
@@ -96,8 +97,41 @@ export function WidgetSettings({
         />
       )}
       <PanelBackground widget={widget} config={config} onChange={onChange} />
+      <VisiblePeriods widget={widget} onChange={onChange} />
       <TypeSettings widget={widget} config={config} onChange={onChange} />
     </div>
+  );
+}
+
+function VisiblePeriods({ widget, onChange }: { widget: Widget; onChange: (change: (w: Widget) => void) => void }) {
+  const picked = widget.visiblePeriods ?? [];
+  return (
+    <fieldset className="grid gap-1">
+      <legend className="mb-1 text-sm font-medium">Show during</legend>
+      <p className="text-xs text-soft">Leave all off to show through the whole day.</p>
+      <div className="flex flex-wrap gap-1.5">
+        {PERIODS.map((p) => {
+          const on = picked.includes(p);
+          return (
+            <button
+              key={p}
+              type="button"
+              aria-pressed={on}
+              className={`min-h-9 rounded-full border px-3 text-sm ${on ? "border-brand bg-brand text-white" : "border-line"}`}
+              onClick={() =>
+                onChange((w) => {
+                  const cur = w.visiblePeriods ?? [];
+                  w.visiblePeriods = on ? (cur.filter((x) => x !== p).length ? cur.filter((x) => x !== p) : undefined) : [...cur, p];
+                  if (w.visiblePeriods && w.visiblePeriods.length === 0) delete w.visiblePeriods;
+                })
+              }
+            >
+              {PERIOD_LABELS[p]}
+            </button>
+          );
+        })}
+      </div>
+    </fieldset>
   );
 }
 
@@ -295,6 +329,27 @@ function TypeSettings({
     case "countdown": {
       const e = edit<"countdown">();
       return <CountdownEvents events={w.events} count={w.count} onChange={e} />;
+    }
+    case "calendarWeek": {
+      const e = edit<"calendarWeek">();
+      return (
+        <>
+          <Select
+            label="Week starts on"
+            value={String(w.weekStartsOn)}
+            options={[
+              { value: "0", label: "Sunday" },
+              { value: "1", label: "Monday" },
+            ]}
+            onChange={(v) => e((x) => void (x.weekStartsOn = Number(v) as 0 | 1))}
+          />
+          <Toggle label="Show weekends" checked={w.showWeekends} onChange={(v) => e((x) => void (x.showWeekends = v))} />
+        </>
+      );
+    }
+    case "calendarUpNext": {
+      const e = edit<"calendarUpNext">();
+      return <Stepper label="Also show next" value={w.count} min={1} max={10} onChange={(v) => e((x) => void (x.count = v))} />;
     }
     case "agenda": {
       const e = edit<"agenda">();
@@ -663,6 +718,12 @@ function TypeSettings({
       return (
         <>
           <Stepper label="Notes shown" value={w.count} min={1} max={20} onChange={(v) => e((x) => void (x.count = v))} />
+          <Toggle
+            label="Post from the wall"
+            hint="Anyone at the screen can leave a note. Keep this off if the display is easy to reach by guests."
+            checked={w.allowAdd}
+            onChange={(v) => e((x) => void (x.allowAdd = v))}
+          />
           <p className="text-xs text-soft">
             The family posts notes from their phones at <span className="font-mono">/family/</span> (Messages tab here).
           </p>
@@ -713,6 +774,12 @@ function TypeSettings({
             hint="Anyone at the screen can mark an item bought. Tapping it again puts it back."
             checked={w.allowCheck}
             onChange={(v) => e((x) => void (x.allowCheck = v))}
+          />
+          <Toggle
+            label="Add from the wall"
+            hint="Anyone at the screen can type a new item. Keep this off if guests can reach the display."
+            checked={w.allowAdd}
+            onChange={(v) => e((x) => void (x.allowAdd = v))}
           />
           <p className="text-xs text-soft">
             The family adds items from their phones at <span className="font-mono">/family/</span> (Shopping tab here).

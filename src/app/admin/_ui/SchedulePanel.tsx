@@ -46,6 +46,23 @@ export function SchedulePanel() {
           hint="When this is off, displays that follow the schedule show the first view all day. Sunrise and sunset use today's times for your location under Settings."
           onChange={(v) => edit((c) => void (c.schedule.enabled = v))}
         />
+        {s.enabled && (
+          <Range
+            label="Rotate views"
+            value={s.loopSeconds ?? 0}
+            min={0}
+            max={300}
+            step={5}
+            format={(v) => (v === 0 ? "Off" : `${v} s`)}
+            hint="When set, displays that follow the schedule cycle through each part of the day's view every few seconds, as well as changing at the usual times."
+            onChange={(v) =>
+              edit((c) => {
+                if (v <= 0) delete c.schedule.loopSeconds;
+                else c.schedule.loopSeconds = Math.max(10, v);
+              })
+            }
+          />
+        )}
         {outOfOrder && (
           <p className="rounded-xl bg-bg p-3 text-sm text-bad" role="alert">
             The start times are out of order. Each part of the day lasts until the next one starts.
