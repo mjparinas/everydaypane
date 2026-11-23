@@ -124,7 +124,14 @@ function AdminPanel({ email }: { email: string }) {
   const router = useRouter();
 
   function go(t: Tab) {
-    history.replaceState(null, "", `#${t}`);
+    // Keep a Settings deep link (#settings/chores) when the Settings tab is already open; otherwise open Dashboard.
+    const next =
+      t === "settings"
+        ? tab === "settings" && /^#settings(\/|$)/.test(window.location.hash)
+          ? window.location.hash
+          : "#settings/dashboard"
+        : `#${t}`;
+    if (next !== window.location.hash) history.replaceState(null, "", next);
     window.dispatchEvent(new HashChangeEvent("hashchange"));
   }
 

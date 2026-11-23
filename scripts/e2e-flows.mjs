@@ -417,7 +417,6 @@ export const flows = [
       const phone = await browser.newContext({ viewport: { width: 390, height: 844 }, storageState: await page.context().storageState() });
       const p = await phone.newPage();
       await p.goto(`${base}/admin/#settings/chores`);
-      await p.getByRole("navigation", { name: "Sections" }).last().getByRole("button", { name: "Settings" }).click();
       await p.getByLabel("Add a kid").waitFor();
       await p.getByLabel("Add a kid").fill("Ana");
       await p.getByLabel("Add a kid").press("Enter");
