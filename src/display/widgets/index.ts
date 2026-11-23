@@ -30,6 +30,7 @@ import { timer } from "./timer";
 import { transit } from "./transit";
 import type { Cleanup, WidgetContext } from "./types";
 import { weather } from "./weather";
+import { whiteboard } from "./whiteboard";
 import { wifiQr } from "./wifi";
 
 /** Mounts a widget into its cell and returns what stops its timers. A widget that throws shows a quiet error, never a blank screen. */
@@ -99,6 +100,8 @@ export function mountWidget(el: HTMLElement, w: Widget, ctx: WidgetContext): Cle
       return presence(el, w, ctx);
     case "school":
       return school(el, w, ctx);
+    case "whiteboard":
+      return whiteboard(el, w, ctx);
     default:
       // A widget type with no screen yet (still being built) leaves an empty cell instead of crashing the dashboard.
       return () => undefined;

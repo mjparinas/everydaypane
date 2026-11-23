@@ -41,6 +41,7 @@ same change, and moves it out of **In progress** when it merges.
 | Shopping list (`shopping`) | Groceries added from phones, **tap to tick off** (tap again to put back), optional bought items | `shopping` table |
 | Who's home (`presence`) | Who is home, from person and device tracker entities, read only | Home Assistant |
 | School status (`school`) | Open, closed, delayed or late start; optional school names | District status page (`config.school`) |
+| Whiteboard (`whiteboard`) | Finger draw with a few colours and an eraser; wider tiles show more colours; hold Clear to wipe; same doodle on every display | `whiteboard` table |
 | Alerts (`alerts`) | Current emergency alerts, optional "all clear" | See alerts below |
 | Chore chart (`chores`) | Each kid's chores today, **tap to tick off** (tap again to take back), stars this week and a weekly goal | Settings document + `chores_done` table |
 | Sports scores (`sports`) | Live score, last result and next game for followed teams (NHL, NBA, WNBA, NFL, MLB, MLS, Premier League, Champions League) | ESPN public site API |
@@ -118,6 +119,8 @@ node scripts/e2e.mjs   # Playwright browser tests against the build (CHROMIUM_PA
   the wall (see Architecture).
 - **Shopping list** (Melvin, 2026-11-22): groceries the family adds from their phones, shown on the wall, ticked off
   with a tap when the widget allows it (see Architecture).
+- **Whiteboard** (Melvin, 2026-11-22): a simple shared doodle on the wall — a few colours, finger draw, eraser, hold
+  Clear to wipe; wider tiles show more colours; the same board on every display (see Architecture).
 - **Phone edit without login** (Melvin, 2026-11-22: QR to the display link with `/edit`): `/d/<token>/edit/` edits
   meals, shopping and the message board with no magic link; an `editQr` widget and the Displays tab both show the QR
   (see Architecture). Not Google Tasks or a new local to-do list — those stay separate.
@@ -269,6 +272,11 @@ panel can be complex if you need it to be."
 - **Family calendar events** (Melvin, 2026-11-22): dentists, concerts and the like posted from `/family/` live in
   `family_events` (`src/server/familyEvents.ts`) and merge into the same five-minute calendar feed as Google and iCal
   links (colour `#5b8def`, calendar "Family"). `/api/family-events/` serves the phone UI; authors and admins can delete.
+- **Whiteboard** (Melvin, 2026-11-22: "a very simple whiteboard", colours + finger + eraser, same doodle on every
+  display, hold Clear, wider tile → more colours): one shared board in the `whiteboard` table
+  (`src/server/whiteboard.ts`), strokes on a fixed 1600×900 board so every tile letterboxes the same doodle. Displays
+  poll `/api/display/whiteboard/` every three seconds; a stroke posts on finger-up and Clear posts after an 800 ms hold.
+  No brush sizes, undo or sync from phones.
 - **Meal planning** (Melvin, 2026-11-17: "add meal planning", with breakfast, lunch and dinner for each day): one row
   per day and meal in the `meals` table (`src/server/meals.ts`), planned by anyone on `ADMIN_EMAILS` or `FAMILY_EMAILS`
   from the admin panel's Meals tab or `/family/`, or from `/d/<token>/edit/` with the display token. A meal saves when

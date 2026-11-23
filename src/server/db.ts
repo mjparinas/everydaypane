@@ -30,6 +30,8 @@ const MIGRATIONS = [
   `CREATE TABLE IF NOT EXISTS family_events (id TEXT PRIMARY KEY, title TEXT NOT NULL, start TEXT NOT NULL, end TEXT NOT NULL, all_day INTEGER NOT NULL, created_at INTEGER NOT NULL, created_by TEXT NOT NULL)`,
   // Ids of strip-worthy alerts already emailed (src/server/alertNotify.ts), so a new alert emails once.
   `CREATE TABLE IF NOT EXISTS alert_notified (id TEXT PRIMARY KEY, sent_at INTEGER NOT NULL)`,
+  // Shared kitchen whiteboard doodle (src/server/whiteboard.ts): one board for every display.
+  `CREATE TABLE IF NOT EXISTS whiteboard (id INTEGER PRIMARY KEY CHECK (id = 1), revision INTEGER NOT NULL, json TEXT NOT NULL, updated_at INTEGER NOT NULL)`,
 ];
 
 // Columns added after a table was first created. SQLite has no ADD COLUMN IF NOT EXISTS, so each one runs on its own

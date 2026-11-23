@@ -12,9 +12,9 @@ import { upgrade, type StoredConfig } from "./config";
 //
 // What a backup never holds: the secrets table (Google, Spotify and Sonos refresh tokens, the Amazon cookie, Home
 // Assistant's token and Access pair, calendar link addresses), display devices and their addresses, meals, the message
-// board and photo library files. Those stay on the server; after restoring onto a fresh install they are connected
-// again from Settings. The WiFi password is the one secret inside the document: it is left out unless the admin asks
-// for it, and a restore without it keeps the password the dashboard already has.
+// board, the whiteboard doodle and photo library files. Those stay on the server; after restoring onto a fresh install
+// they are connected again from Settings. The WiFi password is the one secret inside the document: it is left out
+// unless the admin asks for it, and a restore without it keeps the password the dashboard already has.
 
 export const BACKUP_KIND = "everydaypane-settings";
 export const BACKUP_FORMAT = 1;
@@ -22,7 +22,7 @@ export const BACKUP_FORMAT = 1;
 /** What is never in a backup, written into the file so whoever opens it knows. */
 export const NOT_IN_BACKUP =
   "Sign-ins and tokens (Google, Spotify, Sonos, Amazon, Home Assistant), calendar link addresses, display addresses, " +
-  "meals, family messages and photo library files are not in this file. Connect them again from Settings after restoring.";
+  "meals, family messages, the whiteboard doodle and photo library files are not in this file. Connect them again from Settings after restoring.";
 
 export interface Backup {
   kind: typeof BACKUP_KIND;

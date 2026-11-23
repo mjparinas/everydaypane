@@ -337,6 +337,9 @@ export const widgetSchema = z.discriminatedUnion("type", [
     // School name fragments to match in a closure notice (empty = any district-wide alert).
     schools: z.array(z.string().trim().min(1).max(80)).max(12),
   }),
+  // Kitchen whiteboard (Melvin, 2026-11-22): finger draw with a few colours and an eraser; one shared doodle on
+  // every display (src/server/whiteboard.ts). Wider tiles show more colours. Hold Clear to wipe.
+  z.object({ ...base, type: z.literal("whiteboard") }),
 ]);
 export type Widget = z.infer<typeof widgetSchema>;
 export type WidgetType = Widget["type"];
