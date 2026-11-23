@@ -1,9 +1,9 @@
 import "server-only";
 
-import { defaultConfig } from "@/lib/config/defaults";
+import { defaultConfig, defaultConfigForPlan } from "@/lib/config/defaults";
 import { configSchema, type DashboardConfig } from "@/lib/config/schema";
 
-import { ensureAccountsSeeded, LEGACY_ACCOUNT_ID } from "./accounts";
+import { accountById, ensureAccountsSeeded, LEGACY_ACCOUNT_ID } from "./accounts";
 import { query, run } from "./db";
 import { publicHaUrl, sameHaUrl } from "./haUrl";
 import { removePhotos } from "./library";
@@ -15,6 +15,11 @@ export interface StoredConfig {
   updatedAt: number;
 }
 
+async function emptyDefault(accountId: string): Promise<DashboardConfig> {
+  const account = await accountById(accountId);
+  return defaultConfigForPlan(account?.plan === "free" ? "free" : "paid");
+}
+
 /** The saved dashboard for a household, or the default one before the first save. */
 export async function loadConfig(accountId: string): Promise<StoredConfig> {
   await ensureAccountsSeeded();
@@ -23,10 +28,19 @@ export async function loadConfig(accountId: string): Promise<StoredConfig> {
     [accountId],
   );
   const row = rows[0];
-  if (!row || row.json === "{}")
-    return { config: defaultConfig(), version: Number(row?.version ?? 0), updatedAt: Number(row?.updated_at ?? 0) };
+  if (!row || row.json === "{}") {
+    return {
+      config: await emptyDefault(accountId),
+      version: Number(row?.version ?? 0),
+      updatedAt: Number(row?.updated_at ?? 0),
+    };
+  }
   const parsed = configSchema.safeParse(upgrade(JSON.parse(row.json) as unknown));
-  return { config: parsed.success ? parsed.data : defaultConfig(), version: Number(row.version), updatedAt: Number(row.updated_at) };
+  return {
+    config: parsed.success ? parsed.data : await emptyDefault(accountId),
+    version: Number(row.version),
+    updatedAt: Number(row.updated_at),
+  };
 }
 
 export async function configVersion(accountId: string): Promise<number> {

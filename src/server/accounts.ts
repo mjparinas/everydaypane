@@ -1,5 +1,6 @@
 import "server-only";
 
+import { freeDefaultConfig } from "@/lib/config/defaults";
 import { PLAN_IDS, type PlanId } from "@/lib/plans";
 
 import { randomToken } from "./crypto";
@@ -151,13 +152,44 @@ async function migrateLegacyData(accountId: string, now: number): Promise<void> 
 
 export async function createAccount(name: string, adminEmail: string, now = Date.now()): Promise<Account> {
   await ensureAccountsSeeded(now);
+  const e = adminEmail.trim().toLowerCase();
+  const existing = await accountsForEmail(e);
+  if (existing[0]) {
+    const already = await accountById(existing[0].accountId);
+    if (already) return already;
+  }
+
   const id = `acct_${randomToken(12)}`;
+  // Claim the email first so two parallel Free signups cannot create two households.
+  const claimed = await run("INSERT OR IGNORE INTO signup_emails (email, account_id, created_at) VALUES (?, ?, ?)", [e, id, now]);
+  if (claimed === 0) {
+    for (let i = 0; i < 40; i++) {
+      const members = await accountsForEmail(e);
+      if (members[0]) {
+        const won = await accountById(members[0].accountId);
+        if (won) return won;
+      }
+      const claim = (await query<{ account_id: string }>("SELECT account_id FROM signup_emails WHERE email = ?", [e]))[0];
+      if (claim) {
+        const won = await accountById(claim.account_id);
+        if (won) return won;
+      }
+      await new Promise((r) => setTimeout(r, 25));
+    }
+    throw new Error("Couldn't finish signup. Try again in a moment.");
+  }
+
   await run(
     "INSERT INTO accounts (id, name, plan, stripe_customer_id, stripe_subscription_id, created_at) VALUES (?, ?, 'free', NULL, NULL, ?)",
     [id, name.trim() || "Home", now],
   );
-  await run("INSERT INTO account_config (account_id, json, version, updated_at) VALUES (?, ?, 0, ?)", [id, "{}", now]);
-  await upsertMember(id, adminEmail, "admin", now);
+  // Seed a Free-safe document (not "{}") so the wall and first Save match the marketed Free tier.
+  await run("INSERT INTO account_config (account_id, json, version, updated_at) VALUES (?, ?, 0, ?)", [
+    id,
+    JSON.stringify(freeDefaultConfig()),
+    now,
+  ]);
+  await upsertMember(id, e, "admin", now);
   return (await accountById(id))!;
 }
 

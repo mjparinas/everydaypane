@@ -12,20 +12,34 @@ import { env } from "./env";
 
 let client: Stripe | null = null;
 
+/** Tests inject a fake Stripe client so webhooks and Checkout can run without network. */
+export function resetBillingForTests(): void {
+  client = null;
+}
+
+export function setStripeForTests(mock: Stripe | null): void {
+  client = mock;
+}
+
 export function stripeEnabled(): boolean {
   return Boolean(env.stripeSecretKey() && env.stripePriceId());
 }
 
 export function stripe(): Stripe {
+  if (client) return client;
   const key = env.stripeSecretKey();
   if (!key) throw new Error("STRIPE_SECRET_KEY is not set");
-  client ??= new Stripe(key, { apiVersion: "2026-09-30.endive" });
+  client = new Stripe(key, { apiVersion: "2026-09-30.endive" });
   return client;
 }
 
 export async function createCheckoutSession(accountId: string, email: string, origin: string): Promise<string> {
   const account = await accountById(accountId);
   if (!account) throw new Error("Account not found");
+  // Already on Household: open the portal instead of stacking another subscription Checkout.
+  if (account.plan === "paid" && account.stripeCustomerId) {
+    return createPortalSession(accountId, origin);
+  }
   const s = stripe();
   let customerId = account.stripeCustomerId;
   if (!customerId) {
@@ -58,10 +72,31 @@ export async function createPortalSession(accountId: string, origin: string): Pr
   return session.url;
 }
 
+/** Statuses that keep Household access. `past_due` is a grace window (matches invoice.payment_failed). */
+export function planFromSubscriptionStatus(status: Stripe.Subscription.Status): PlanId {
+  return status === "active" || status === "trialing" || status === "past_due" || status === "paused" ? "paid" : "free";
+}
+
 export async function applySubscription(accountId: string, subscription: Stripe.Subscription): Promise<void> {
-  const active = subscription.status === "active" || subscription.status === "trialing";
   await setStripeIds(accountId, { subscriptionId: subscription.id });
-  await setAccountPlan(accountId, active ? "paid" : "free");
+  await setAccountPlan(accountId, planFromSubscriptionStatus(subscription.status));
+}
+
+/**
+ * Stripe API 2025+ moved the subscription id onto `invoice.parent.subscription_details.subscription`.
+ * Older webhook payloads still send top-level `subscription` — accept both.
+ */
+export function subscriptionIdFromInvoice(invoice: Stripe.Invoice): string | null {
+  const parent = invoice.parent;
+  if (parent?.type === "subscription_details" && parent.subscription_details) {
+    const sub = parent.subscription_details.subscription;
+    if (typeof sub === "string") return sub;
+    if (sub && typeof sub === "object" && "id" in sub) return sub.id;
+  }
+  const legacy = invoice as Stripe.Invoice & { subscription?: string | Stripe.Subscription | null };
+  if (typeof legacy.subscription === "string") return legacy.subscription;
+  if (legacy.subscription && typeof legacy.subscription === "object") return legacy.subscription.id;
+  return null;
 }
 
 export async function handleStripeWebhook(rawBody: string, signature: string): Promise<void> {
@@ -75,12 +110,13 @@ export async function handleStripeWebhook(rawBody: string, signature: string): P
       const accountId = session.client_reference_id || session.metadata?.accountId;
       if (!accountId || session.mode !== "subscription") break;
       if (typeof session.customer === "string") await setStripeIds(accountId, { customerId: session.customer });
-      if (typeof session.subscription === "string") {
-        const sub = await stripe().subscriptions.retrieve(session.subscription);
+      const subRef = session.subscription;
+      const subId = typeof subRef === "string" ? subRef : subRef && typeof subRef === "object" ? subRef.id : null;
+      if (subId) {
+        const sub = await stripe().subscriptions.retrieve(subId);
         await applySubscription(accountId, sub);
-      } else {
-        await setAccountPlan(accountId, "paid");
       }
+      // No subscription id yet — wait for customer.subscription.* / invoice.paid rather than guessing Paid.
       break;
     }
     case "customer.subscription.updated":
@@ -92,8 +128,7 @@ export async function handleStripeWebhook(rawBody: string, signature: string): P
     }
     case "invoice.paid": {
       const invoice = event.data.object as Stripe.Invoice;
-      const inv = invoice as Stripe.Invoice & { subscription?: string | Stripe.Subscription | null };
-      const subId = typeof inv.subscription === "string" ? inv.subscription : inv.subscription?.id;
+      const subId = subscriptionIdFromInvoice(invoice);
       if (!subId) break;
       const sub = await stripe().subscriptions.retrieve(subId);
       const accountId = sub.metadata?.accountId || (await accountIdForSubscription(sub));
@@ -102,8 +137,7 @@ export async function handleStripeWebhook(rawBody: string, signature: string): P
     }
     case "invoice.payment_failed": {
       const invoice = event.data.object as Stripe.Invoice;
-      const inv = invoice as Stripe.Invoice & { subscription?: string | Stripe.Subscription | null };
-      const subId = typeof inv.subscription === "string" ? inv.subscription : inv.subscription?.id;
+      const subId = subscriptionIdFromInvoice(invoice);
       if (!subId) break;
       const sub = await stripe().subscriptions.retrieve(subId);
       const accountId = sub.metadata?.accountId || (await accountIdForSubscription(sub));
