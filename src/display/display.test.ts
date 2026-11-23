@@ -149,6 +149,12 @@ describe("widgets", () => {
 
     expect(["clock", "photos", "radar", "earth"].every((t) => WIDGETS[t as keyof typeof WIDGETS].supportsTitle === false)).toBe(true);
     expect(WIDGETS.weather.supportsTitle).not.toBe(false);
+    expect(
+      ["photos", "radar", "camera", "earth", "tradingView", "youtube", "vimeo", "instagram", "maps", "whiteboard"].every(
+        (t) => WIDGETS[t as keyof typeof WIDGETS].supportsFontScale === false,
+      ),
+    ).toBe(true);
+    expect(WIDGETS.weather.supportsFontScale).not.toBe(false);
 
     vi.unstubAllGlobals();
   });

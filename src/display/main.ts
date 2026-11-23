@@ -131,7 +131,9 @@ function cellClass(placed: PlacedWidget): string {
 function cellStyle(w: Widget): string {
   // Each widget can drop its panel or override the theme's surface opacity (Melvin, 2026-11-22).
   const alpha = w.showBackground && w.backgroundOpacity != null ? `--surface-alpha:${w.backgroundOpacity};` : "";
-  return `grid-column:${w.x + 1}/span ${w.w};grid-row:${w.y + 1}/span ${w.h};${alpha}`;
+  // Per-widget text size (Melvin, 2026-11-23); CSS multiplies font-size by --font-scale.
+  const font = w.fontScale != null && w.fontScale !== 1 ? `--font-scale:${w.fontScale};` : "";
+  return `grid-column:${w.x + 1}/span ${w.w};grid-row:${w.y + 1}/span ${w.h};${alpha}${font}`;
 }
 
 function ctxFor(p: DisplayPayload): WidgetContext {

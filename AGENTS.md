@@ -80,7 +80,7 @@ same change, and moves it out of **In progress** when it merges.
 | Google Maps (`maps`) | Map for a place query | google.com/maps embed iframe |
 
 **Display behaviour:** several views on a drag-and-drop grid (chosen rows and columns, gap, edge padding and **tile padding**), **per-widget visibility by part of day** (`visiblePeriods`), optional **view loop** on schedule followers (`schedule.loopSeconds`), **widgets layered on top of a photos widget**
-(photos as the backdrop), **per-widget background** (on/off and opacity; theme surface opacity is the default; clocks and dates start with no panel), a time-of-day schedule
+(photos as the backdrop), **per-widget background** (on/off and opacity; theme surface opacity is the default; clocks and dates start with no panel), **per-widget font size** (`fontScale`, 70–150 %, text widgets only — not photos, radar, camera, earth, embeds or the whiteboard), a time-of-day schedule
 (morning, afternoon, evening, overnight) choosing the view, theme, day or night mode and dimming — each period can start at a **fixed time, sunrise or sunset** (sunrise/sunset from today's Open-Meteo weather at the dashboard location); themes with colour
 palettes, fonts, corner radius, opacity and optional glass; burn-in protection (pixel shift); offline mode (service
 worker serves the last good data and shows "Offline"); a **screen saver** (photos only or dark after idle minutes, dark
@@ -218,6 +218,10 @@ npm run templates:previews  # regenerate public/templates/*.png from real widget
   every widget has Background on/off and Background opacity (`showBackground`, `backgroundOpacity`); opacity falls
   back to the theme's widget background. Clocks and dates start with Background off; an older sunrise & sunset
   "transparent" setting becomes Background off.
+- **Per-widget font size** (Melvin, 2026-11-23: scale fonts on a per component basis): text widgets get a Font size
+  slider (`fontScale`, 70–150 %, 100 % when omitted). The display sets `--font-scale` on the cell; stylesheet
+  `font-size` rules multiply by it. Photos, radar, camera, earth, TradingView, YouTube, Vimeo, Instagram, Maps and
+  the whiteboard omit the control.
 - **B.C. permanent daylight time** (Melvin, 2026-11-22): some display browsers have old time-zone data and move
   `America/Vancouver` back one hour in November. Everydaypane uses Vancouver's historical rules before the March 8,
   2026 transition and fixed UTC−7 after it for clocks, dates, calendars and time-of-day display schedules.

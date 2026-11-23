@@ -63,6 +63,8 @@ const base = {
   // Melvin, 2026-11-22: each widget can drop its panel or set its own opacity; the theme's surfaceOpacity is the default.
   showBackground: z.boolean().default(true),
   backgroundOpacity: z.number().min(0).max(1).optional(),
+  // Melvin, 2026-11-23: scale text in this tile (1 = normal). Omitted on media-only widgets in the admin UI.
+  fontScale: z.number().min(0.7).max(1.5).optional(),
   // Show only during these parts of the day (empty or omitted = always). The overnight key is still `night`.
   visiblePeriods: z.array(z.enum(PERIODS)).max(4).optional(),
 };

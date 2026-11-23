@@ -26,6 +26,7 @@ export function widgetOptionsKey(w: Widget): string {
   delete (rest as { h?: number }).h;
   delete (rest as { showBackground?: boolean }).showBackground;
   delete (rest as { backgroundOpacity?: number }).backgroundOpacity;
+  delete (rest as { fontScale?: number }).fontScale;
   return JSON.stringify(rest);
 }
 
@@ -42,7 +43,8 @@ function sameChrome(a: PlacedWidget, b: PlacedWidget): boolean {
   return (
     a.onPhoto === b.onPhoto &&
     a.transparent === b.transparent &&
-    (a.widget.backgroundOpacity ?? null) === (b.widget.backgroundOpacity ?? null)
+    (a.widget.backgroundOpacity ?? null) === (b.widget.backgroundOpacity ?? null) &&
+    (a.widget.fontScale ?? null) === (b.widget.fontScale ?? null)
   );
 }
 

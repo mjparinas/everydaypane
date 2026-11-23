@@ -16,6 +16,7 @@ describe("viewDiff", () => {
     const b = { ...a, x: 3, y: 1, w: 3, h: 2 };
     expect(widgetOptionsKey(a)).toBe(widgetOptionsKey(b));
     expect(widgetOptionsKey({ ...a, showBackground: true, backgroundOpacity: 0.5 })).toBe(widgetOptionsKey(a));
+    expect(widgetOptionsKey({ ...a, fontScale: 1.2 })).toBe(widgetOptionsKey(a));
     expect(widgetOptionsKey({ ...a, showSeconds: true })).not.toBe(widgetOptionsKey(a));
   });
 
@@ -55,6 +56,13 @@ describe("viewDiff", () => {
     const noPanel = { ...weather, showBackground: false };
     const ops = diffWidgets([weather], [noPanel]);
     expect(ops).toEqual([{ op: "move", id: "weather", placed: expect.objectContaining({ transparent: true, widget: noPanel }) }]);
+  });
+
+  it("moves when only the font scale changes", () => {
+    const weather = newWidget("weather", "weather", { x: 0, y: 0 });
+    const larger = { ...weather, fontScale: 1.25 };
+    const ops = diffWidgets([weather], [larger]);
+    expect(ops).toEqual([{ op: "move", id: "weather", placed: expect.objectContaining({ widget: larger }) }]);
   });
 
   it("compares stage grid settings", () => {
