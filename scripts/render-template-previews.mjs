@@ -170,7 +170,9 @@ const server = createServer((req, res) => {
     const view = searchParams.get("view");
     const widgetId = searchParams.get("w");
     const t = previews.get(view ?? "");
-    const widget = t?.payload.views[0]?.widgets.find((w) => w.id === widgetId) ?? t?.payload.views[0]?.widgets.find((w) => w.type === "wifiQr" || w.type === "editQr");
+    const widget =
+      t?.payload.views[0]?.widgets.find((w) => w.id === widgetId) ??
+      t?.payload.views[0]?.widgets.find((w) => w.type === "wifiQr" || w.type === "editQr");
     let text = "WIFI:T:WPA;S:ParinasHome;P:welcome-friends;;";
     if (widget?.type === "wifiQr") {
       text = `WIFI:T:${widget.encryption};S:${widget.ssid};P:${widget.password};;`;
