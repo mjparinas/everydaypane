@@ -86,6 +86,19 @@ describe("kitchen timers", () => {
     stop();
   });
 
+  it("names the alarm dialog and dismisses it with Escape", async () => {
+    const { cell, stop } = mount((el) => timer(el, w, ctx));
+    click(cell.querySelector(".tm-preset"));
+    await vi.advanceTimersByTimeAsync(420_100);
+    const ring = document.querySelector<HTMLElement>(".ring");
+    expect(ring?.getAttribute("role")).toBe("alertdialog");
+    expect(ring?.getAttribute("aria-modal")).toBe("true");
+    expect(ring?.getAttribute("aria-label")).toBe("Eggs is done. Tap to stop.");
+    document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
+    expect(document.querySelector(".ring")).toBeNull();
+    stop();
+  });
+
   it("stops alerting by itself after the set time and leaves the timer as done", async () => {
     const { cell, stop } = mount((el) => timer(el, { ...w, ringSeconds: 10 }, ctx));
     click(cell.querySelector(".tm-preset"));

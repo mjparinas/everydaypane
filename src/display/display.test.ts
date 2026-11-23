@@ -15,7 +15,7 @@ import { commute, distance, duration, timing, trafficLevel } from "./widgets/com
 import { countdown } from "./widgets/countdown";
 import { earth, RELOAD_MS } from "./widgets/earth";
 import { ferries, fullness, hasLeft } from "./widgets/ferries";
-import { controlFor, stateText } from "./widgets/ha";
+import { controlFor, haEntity, stateText } from "./widgets/ha";
 import { meals } from "./widgets/meals";
 import { F, media, nowPlaying, positionNow } from "./widgets/media";
 import { pickFrames, radar, thin } from "./widgets/radar";
@@ -195,6 +195,40 @@ describe("Home Assistant tiles", () => {
     expect(stateText(e("binary_sensor.hall", "off", { deviceClass: "motion" }))).toBe("Clear");
     expect(stateText(e("lock.front", "unlocked"))).toBe("Unlocked");
     expect(stateText(e("light.kitchen", "unavailable"))).toBe("Unavailable");
+  });
+
+  it("draws a light as a keyboard-reachable switch, with brightness outside the button", async () => {
+    document.body.dataset.token = "";
+    const posts: unknown[] = [];
+    const entity = {
+      id: "light.kitchen",
+      state: "on",
+      name: "Kitchen lights",
+      changed: 0,
+      brightness: 128,
+    };
+    vi.stubGlobal("fetch", (url: string, init: RequestInit = {}) => {
+      if (init.method === "POST") {
+        posts.push(JSON.parse(String(init.body)));
+        return Promise.resolve(Response.json({ ok: true }));
+      }
+      return Promise.resolve(Response.json({ updatedAt: 0, configured: true, entities: { [entity.id]: entity } }));
+    });
+    const el = document.createElement("div");
+    document.body.append(el);
+    const w = { ...newWidget("haEntity", "ha1", { x: 0, y: 0 }), entityId: entity.id, control: "light" as const };
+    const stop = haEntity(el, w, ctx);
+    await vi.waitFor(() => expect(el.querySelector('[role="switch"]')).toBeTruthy());
+    const sw = el.querySelector<HTMLButtonElement>('[role="switch"]')!;
+    expect(sw.tagName).toBe("BUTTON");
+    expect(sw.getAttribute("aria-checked")).toBe("true");
+    expect(sw.getAttribute("aria-label")).toBe("Kitchen lights");
+    expect(el.querySelector(".ha-range")).toBeTruthy();
+    expect(sw.contains(el.querySelector(".ha-range"))).toBe(false);
+    sw.click();
+    await vi.waitFor(() => expect(posts).toEqual([{ entity: "light.kitchen", action: "toggle" }]));
+    stop();
+    vi.unstubAllGlobals();
   });
 });
 

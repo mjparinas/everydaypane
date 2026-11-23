@@ -175,10 +175,13 @@ panel can be complex if you need it to be."
   a CI step). A new dependency on the display needs a very good reason.
 - All heavy lifting happens on the server: API calls to Google, weather, Recycle Coach, Amazon and Home Assistant are
   made, cached and trimmed by our routes, and the display fetches small JSON. Images are proxied at display size.
-- **No zooming** (Melvin, 2026-11-17: "dont allow pinch zoom on the dashboard"): the display's viewport meta has
-  `maximum-scale=1,user-scalable=no`, the page has `touch-action: pan-x pan-y`, and `main.ts` cancels gesture events,
-  two-finger moves and ctrl + wheel. The admin panel can still be zoomed.
+- **No zooming** (Melvin, 2026-11-17: "dont allow pinch zoom on the dashboard"; kept after the 2026-11-22 a11y audit):
+  the display's viewport meta has `maximum-scale=1,user-scalable=no`, the page has `touch-action: pan-x pan-y`, and
+  `main.ts` cancels gesture events, two-finger moves and ctrl + wheel. That blocks WCAG 2.2 **1.4.4 Resize text** and
+  **1.4.10 Reflow** on `/d/…` on purpose — a fixed 1920 × 1080 kitchen layout must not pinch-zoom. Treat it as a known
+  exception for the wall only; the admin panel and `/family/` still allow zoom. Do not "fix" the lock without Melvin.
 - Animations use `transform` and `opacity` only. Backdrop blur ("glass") is off by default because it costs GPU time.
+  Timer, pomodoro and alarm flashes honour `prefers-reduced-motion: reduce` (solid danger colour, no blink).
 - The admin panel and backend may be as complex as needed (Next.js, React, Zustand).
 
 ## Stack (Melvin, 2026-11-17: like Liftsmith and Gradelings)
