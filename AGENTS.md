@@ -20,7 +20,7 @@ same change, and moves it out of **In progress** when it merges.
 
 | Widget (`type`) | What it shows | Data source |
 | --- | --- | --- |
-| Clock (`clock`) | Digital or analogue, any time zone, label, seconds (Vancouver and Toronto clocks) | Device clock |
+| Clock (`clock`) | Digital, analogue, flip, nixie, word, minimal or neon; any time zone, label, seconds (Vancouver and Toronto clocks) | Device clock |
 | Date (`date`) | Today's date in a time zone | Device clock |
 | Sunrise & sunset (`sunTimes`) | Today's sunrise, sunset and length of daylight; optional emoji and daylight hours | Open-Meteo forecast |
 | Weather (`weather`) | Current conditions, hourly, up to 7 days, with icons, UV index and pollen | Open-Meteo forecast and air quality |
@@ -295,8 +295,8 @@ panel can be complex if you need it to be."
 - The display (`/d/<token>/`) is **not a React page**. It is server-rendered HTML plus one small TypeScript module
   bundled by esbuild (`src/display/` → `public/display/`), with no framework. Widgets update only the DOM nodes that
   change (the clock rewrites one text node a second).
-- **Budget:** the display's script stays under 40 KB gzipped and its stylesheet under 10 KB (`scripts/bundle-check.mjs`,
-  a CI step). A new dependency on the display needs a very good reason.
+- **Budget:** the display's script stays under 40 KB gzipped and its stylesheet under 20 KB (`scripts/bundle-check.mjs`,
+  a CI step; CSS raised from 10 KB on 2026-11-23 for more clock styles). A new dependency on the display needs a very good reason.
 - All heavy lifting happens on the server: API calls to Google, weather, Recycle Coach, Amazon and Home Assistant are
   made, cached and trimmed by our routes, and the display fetches small JSON. Images are proxied at display size.
 - **No zooming** (Melvin, 2026-11-17: "dont allow pinch zoom on the dashboard"; kept after the 2026-11-22 a11y audit):

@@ -111,7 +111,8 @@ export const widgetSchema = z.discriminatedUnion("type", [
     timeZone,
     label: z.string().max(40),
     showSeconds: z.boolean(),
-    style: z.enum(["digital", "analog"]),
+    // Styles beyond digital/analog (Melvin, 2026-11-23: homescreens-inspired flip, nixie, word, …).
+    style: z.enum(["digital", "analog", "flip", "nixie", "word", "minimal", "neon"]),
   }),
   z.object({
     ...base,

@@ -5,7 +5,7 @@ import type { Widget } from "@/lib/config/schema";
 import { newWidget, WIDGETS } from "@/lib/config/widgets";
 import type { AirData, ChoresData, DisplayPayload, TasksData, TransitData, TransitDeparture, WeatherData } from "@/lib/display/types";
 
-import { shortTime } from "./format";
+import { fuzzyTime, shortTime } from "./format";
 import { kindOf, label, weatherIcon } from "./icons";
 import { airQuality, aqhiBand, usAqiBand } from "./widgets/air";
 import { calendarMonth, fitDayTitles } from "./widgets/calendar";
@@ -168,6 +168,26 @@ describe("widgets", () => {
     expect(el.querySelector(".c-ampm")?.textContent).toBe("PM");
     expect(el.textContent).toContain("Toronto");
     stop();
+  });
+
+  it("speaks fuzzy word-clock times", () => {
+    expect(fuzzyTime(15, 0)).toBe("three o'clock");
+    expect(fuzzyTime(15, 30)).toBe("half past three");
+    expect(fuzzyTime(15, 17)).toBe("quarter past three");
+    expect(fuzzyTime(15, 45)).toBe("quarter to four");
+    expect(fuzzyTime(15, 50)).toBe("ten to four");
+  });
+
+  it("draws flip cards and a word line for those styles", () => {
+    vi.useFakeTimers({ now: new Date("2026-11-17T20:15:30Z") });
+    const flipEl = document.createElement("div");
+    const wordEl = document.createElement("div");
+    const flip = clock(flipEl, { ...newWidget("clock", "f", { x: 0, y: 0 }), style: "flip", timeZone: "America/Toronto" }, ctx);
+    const word = clock(wordEl, { ...newWidget("clock", "w", { x: 0, y: 0 }), style: "word", timeZone: "America/Toronto" }, ctx);
+    expect(flipEl.querySelectorAll(".c-flip-d").length).toBe(4);
+    expect(wordEl.querySelector(".c-word")?.textContent).toBe("quarter past three");
+    flip();
+    word();
   });
 
   it("counts down to the soonest events", () => {
