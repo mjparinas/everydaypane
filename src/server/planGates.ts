@@ -35,7 +35,9 @@ export function gateConfig(plan: PlanId, config: DashboardConfig): GateResult {
     }
   }
   const calendars =
-    config.integrations.google.calendars.filter((c) => c.enabled).length + config.integrations.icals.filter((c) => c.enabled).length;
+    config.integrations.google.calendars.filter((c) => c.enabled).length +
+    config.integrations.microsoft.calendars.filter((c) => c.enabled).length +
+    config.integrations.icals.filter((c) => c.enabled).length;
   if (calendars > limits.calendars) {
     return { ok: false, error: `Free includes ${limits.calendars} calendars. Upgrade to Household for more.` };
   }

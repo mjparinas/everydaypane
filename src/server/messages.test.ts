@@ -1,14 +1,16 @@
 import { describe, expect, it } from "vitest";
 
-import { GET as displayGET } from "@/app/api/display/messages/route";
+import { GET as displayGET, POST as displayPOST } from "@/app/api/display/messages/route";
 import { DELETE, PATCH } from "@/app/api/messages/[id]/route";
 import { GET, POST } from "@/app/api/messages/route";
+import { defaultConfig } from "@/lib/config/defaults";
 import { LEGACY_ACCOUNT_ID } from "@/server/accounts";
 import { cookieFor, req, useTestServer } from "@/test/server";
 
+import { loadConfig, saveConfig } from "./config";
 import { query } from "./db";
 import { addDevice } from "./devices";
-import { boardTag, listMessages, postMessage } from "./messages";
+import { boardTag, listMessages, postMessage, postMessageFromWall } from "./messages";
 
 const note = { author: "Mom", text: "Soccer moved to 5", colour: "yellow", expiresInHours: 24 };
 const ctx = (id: string) => ({ params: Promise.resolve({ id }) });
@@ -98,5 +100,39 @@ describe("message board", () => {
     const again = await displayGET(req("/api/display/messages/", { headers: { "x-display-token": token, "if-none-match": tag } }));
     expect(again.status).toBe(304);
     expect((await displayGET(req("/api/display/messages/"))).status).toBe(401);
+  });
+
+  it("posts from the wall when a messages widget allows it", async () => {
+    const stored = await loadConfig(LEGACY_ACCOUNT_ID);
+    const config = defaultConfig();
+    config.views[0]?.widgets.push({
+      id: "msg",
+      type: "messages",
+      x: 0,
+      y: 0,
+      w: 2,
+      h: 2,
+      showBackground: true,
+      count: 5,
+      allowAdd: true,
+    });
+    expect((await saveConfig(LEGACY_ACCOUNT_ID, config, stored.version)).ok).toBe(true);
+    const { token } = await addDevice(LEGACY_ACCOUNT_ID, "Kitchen", null);
+    const headers = { "x-display-token": token };
+    const r = await displayPOST(
+      req("/api/display/messages/", {
+        method: "POST",
+        headers,
+        body: JSON.stringify({ author: "Kid", text: "Homework done", colour: "green" }),
+      }),
+    );
+    expect(r.status).toBe(201);
+    expect(
+      (await postMessageFromWall(LEGACY_ACCOUNT_ID, config, { author: "X", text: "Y", colour: "blue", postedBy: "wall" })) === "forbidden",
+    ).toBe(false);
+    const off = defaultConfig();
+    expect(await postMessageFromWall(LEGACY_ACCOUNT_ID, off, { author: "X", text: "Y", colour: "blue", postedBy: "wall" })).toBe(
+      "forbidden",
+    );
   });
 });

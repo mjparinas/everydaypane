@@ -106,6 +106,21 @@ export async function setShoppingDone(
   return writeDone(accountId, input.id, input.done, now);
 }
 
+/** Adds one line from the wall when a shopping widget allows it (Melvin, 2026-11-23). */
+export async function addShoppingFromWall(
+  accountId: string,
+  config: DashboardConfig,
+  input: { text: string },
+  by = "wall",
+  now = Date.now(),
+): Promise<{ ok: true; item: ShoppingItem } | { ok: false; error: "forbidden" | "empty" | "long" | "full" }> {
+  const allowed = config.views.some((v) => v.widgets.some((w) => w.type === "shopping" && w.allowAdd));
+  if (!allowed) return { ok: false, error: "forbidden" };
+  const result = await addShoppingItem(accountId, { text: input.text, by }, now);
+  if (!result.ok) return { ok: false, error: result.error };
+  return result;
+}
+
 /** A signed-in person on their phone may always tick an item. The kitchen screen goes through setShoppingDone. */
 export async function setShoppingDoneFromPhone(
   accountId: string,

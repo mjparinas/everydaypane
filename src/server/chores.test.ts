@@ -7,7 +7,8 @@ import type { ChoresData } from "@/lib/display/types";
 import { LEGACY_ACCOUNT_ID } from "@/server/accounts";
 import { req, useTestServer } from "@/test/server";
 
-import { choreBoard, setChoreDone } from "./chores";
+import { setChoresPin, verifyChoresPin } from "./chorePin";
+import { choreBoard, redeemChoreReward, setChoreDone } from "./chores";
 import { loadConfig, saveConfig } from "./config";
 import { addDevice } from "./devices";
 
@@ -28,6 +29,8 @@ function withChores(allowCheck = true): DashboardConfig {
       { id: "dishes", name: "Dishes", emoji: "", stars: 3, days: [0, 1, 2, 3, 4, 5, 6], personIds: ["ana", "ben"], rotate: "day" },
       { id: "lawn", name: "Mow the lawn", emoji: "", stars: 5, days: [6], personIds: ["ben"], rotate: "none" },
     ],
+    rewards: [{ id: "tv", name: "Extra TV", starsCost: 4 }],
+    pinSet: false,
   };
   c.views[0]?.widgets.push({
     id: "ch",
@@ -168,5 +171,35 @@ describe("/api/display/chores/", () => {
     expect(foreign.status).toBe(403);
     const bad = await POST(req("/api/display/chores/", { method: "POST", headers: { "x-display-token": token }, body: '{"chore":1}' }));
     expect(bad.status).toBe(400);
+  });
+});
+
+describe("rewards and PIN", () => {
+  useTestServer();
+
+  it("redeems when enough stars are available", async () => {
+    const config = withChores();
+    await setChoreDone(LEGACY_ACCOUNT_ID, config, { chore: "dishes", person: "ana", done: true }, WED);
+    await setChoreDone(LEGACY_ACCOUNT_ID, config, { chore: "bed", person: "ana", done: true }, WED);
+    expect(await redeemChoreReward(LEGACY_ACCOUNT_ID, config, { reward: "tv", person: "ana" }, WED)).toBe("ok");
+    const board = await choreBoard(LEGACY_ACCOUNT_ID, config, WED);
+    expect(board.people.find((p) => p.id === "ana")?.available).toBe(0);
+    expect(board.people.find((p) => p.id === "ana")?.stars).toBe(4);
+  });
+
+  it("refuses redeem without enough stars", async () => {
+    const config = withChores();
+    expect(await redeemChoreReward(LEGACY_ACCOUNT_ID, config, { reward: "tv", person: "ana" }, WED)).toBe("stars");
+  });
+
+  it("requires the PIN to uncheck when pinSet", async () => {
+    const config = withChores();
+    config.chores.pinSet = true;
+    await setChoresPin(LEGACY_ACCOUNT_ID, "1234");
+    await setChoreDone(LEGACY_ACCOUNT_ID, config, { chore: "bed", person: "ana", done: true }, WED);
+    expect(await setChoreDone(LEGACY_ACCOUNT_ID, config, { chore: "bed", person: "ana", done: false }, WED)).toBe("pin");
+    expect(await setChoreDone(LEGACY_ACCOUNT_ID, config, { chore: "bed", person: "ana", done: false, pin: "9999" }, WED)).toBe("pin");
+    expect(await setChoreDone(LEGACY_ACCOUNT_ID, config, { chore: "bed", person: "ana", done: false, pin: "1234" }, WED)).toBe("ok");
+    expect(await verifyChoresPin(LEGACY_ACCOUNT_ID, "1234")).toBe(true);
   });
 });

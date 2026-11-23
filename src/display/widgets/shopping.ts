@@ -90,9 +90,26 @@ export const shopping: Mount<"shopping"> = (el, w) => {
         }),
       ),
       more > 0 ? h("div", { class: "sh-more" }, `${more} more`) : null,
+      w.allowAdd ? buildAdd() : null,
       note,
     );
   }
+
+  const buildAdd = () => {
+    const input = h("input", { type: "text", class: "sh-add-in", maxlength: "80", placeholder: "Add to the list…" }) as HTMLInputElement;
+    const btn = h("button", { type: "button", class: "sh-add-btn" }, "Add");
+    btn.addEventListener("click", (ev) => {
+      ev.stopPropagation();
+      const text = input.value;
+      if (!text.trim()) return;
+      input.value = "";
+      void send("shopping", { text }).then((ok) => {
+        if (!ok) say("Couldn't add that. Try again.");
+        else refresh("shopping");
+      });
+    });
+    return h("div", { class: "sh-add" }, input, btn);
+  };
 
   const stopFeed = subscribe<ShoppingData>("shopping", SHOPPING_EVERY, (d) => {
     data = d;

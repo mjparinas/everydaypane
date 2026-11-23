@@ -16,6 +16,7 @@ import { addDevice } from "./devices";
 import { setMeal } from "./meals";
 import {
   addShoppingFromMeals,
+  addShoppingFromWall,
   addShoppingItem,
   clearDoneShopping,
   ITEM_MAX,
@@ -30,7 +31,7 @@ const DAY = 86_400_000;
 const NOON = Date.parse("2026-11-22T20:00:00Z");
 const ctx = (id: string) => ({ params: Promise.resolve({ id }) });
 
-function withShopping(allowCheck = true): DashboardConfig {
+function withShopping(allowCheck = true, allowAdd = false): DashboardConfig {
   const c = defaultConfig();
   c.views[0]?.widgets.push({
     id: "shop",
@@ -42,6 +43,7 @@ function withShopping(allowCheck = true): DashboardConfig {
     showBackground: true,
     count: 12,
     allowCheck,
+    allowAdd,
     showDone: false,
   });
   return c;
@@ -284,5 +286,25 @@ describe("/api/display/shopping/", () => {
       (await displayPOST(req("/api/display/shopping/", { method: "POST", headers, body: JSON.stringify({ id: "nope", done: true }) })))
         .status,
     ).toBe(404);
+  });
+
+  it("adds from the wall when allowAdd is on", async () => {
+    const token = await setUp(true);
+    const stored = await loadConfig(LEGACY_ACCOUNT_ID);
+    const saved = await saveConfig(LEGACY_ACCOUNT_ID, withShopping(true, true), stored.version);
+    expect(saved.ok).toBe(true);
+    const headers = { "x-display-token": token };
+    const add = await displayPOST(req("/api/display/shopping/", { method: "POST", headers, body: JSON.stringify({ text: "Butter" }) }));
+    expect(add.status).toBe(201);
+    const data = (await (await displayGET(req("/api/display/shopping/", { headers }))).json()) as ShoppingData;
+    expect(data.items.map((i) => i.text)).toContain("Butter");
+  });
+
+  it("refuses add without allowAdd", async () => {
+    const token = await setUp(true);
+    const headers = { "x-display-token": token };
+    const add = await displayPOST(req("/api/display/shopping/", { method: "POST", headers, body: JSON.stringify({ text: "Butter" }) }));
+    expect(add.status).toBe(403);
+    expect((await addShoppingFromWall(LEGACY_ACCOUNT_ID, withShopping(true, false), { text: "X" })).ok).toBe(false);
   });
 });

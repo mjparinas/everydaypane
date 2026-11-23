@@ -10,6 +10,7 @@ import { NumberInput, Range, Section, Select, Stepper, Text, Toggle } from "./fi
 import { GarbagePanel } from "./GarbagePanel";
 import { GooglePanel } from "./GooglePanel";
 import { HomeAssistantPanel } from "./HomeAssistantPanel";
+import { MicrosoftPanel } from "./MicrosoftPanel";
 import { MusicPanel } from "./MusicPanel";
 import { PhotosPanel } from "./PhotosPanel";
 import { ScreenSaverPanel } from "./ScreenSaverPanel";
@@ -178,6 +179,9 @@ export function SettingsPanel() {
         <div className="grid gap-4 lg:grid-cols-2">
           <div id="settings-google">
             <GooglePanel />
+          </div>
+          <div id="settings-microsoft">
+            <MicrosoftPanel />
           </div>
           <div id="settings-icals" className="lg:col-span-2">
             <CalendarLinksPanel />

@@ -113,8 +113,13 @@ export function upgrade(stored: unknown): unknown {
   const d = defaultConfig() as unknown as Record<string, unknown>;
   const s = stored as Record<string, unknown>;
   const out: Record<string, unknown> = { ...d, ...s };
-  for (const k of ["integrations", "burnIn", "alerts", "schedule", "location", "school"]) {
+  for (const k of ["integrations", "burnIn", "alerts", "schedule", "location", "school", "chores"]) {
     if (typeof s[k] === "object" && s[k] !== null) out[k] = { ...(d[k] as object), ...(s[k] as object) };
+  }
+  if (typeof out.integrations === "object" && out.integrations !== null) {
+    const ig = out.integrations as Record<string, unknown>;
+    const di = d.integrations as Record<string, unknown>;
+    if (typeof ig.microsoft !== "object" || ig.microsoft === null) ig.microsoft = di.microsoft;
   }
   if (Array.isArray(out.views)) {
     out.views = out.views.map((view) => {
@@ -133,6 +138,11 @@ export function upgrade(stored: unknown): unknown {
           if ((w.type === "clock" || w.type === "date") && !("showBackground" in w)) {
             w.showBackground = false;
           }
+          if (w.type === "shopping") {
+            if (!("allowAdd" in w)) w.allowAdd = false;
+            if (!("allowCheck" in w)) w.allowCheck = false;
+          }
+          if (w.type === "messages" && !("allowAdd" in w)) w.allowAdd = false;
           return w;
         }),
       };

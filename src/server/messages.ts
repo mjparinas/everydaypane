@@ -1,5 +1,7 @@
 import "server-only";
 
+import type { DashboardConfig } from "@/lib/config/schema";
+
 import { randomToken } from "./crypto";
 import { query, run } from "./db";
 
@@ -56,6 +58,18 @@ export async function listMessages(accountId: string, limit = 50, now = Date.now
     [accountId, now, Math.min(Math.max(1, limit), MAX_MESSAGES)],
   );
   return rows.map(toMessage);
+}
+
+/** Posts from the wall when a messages widget allows it (Melvin, 2026-11-23). No expiry; kitchen link uses the device id. */
+export async function postMessageFromWall(
+  accountId: string,
+  config: DashboardConfig,
+  input: { author: string; text: string; colour: MessageColour; postedBy: string },
+  now = Date.now(),
+): Promise<Message | "forbidden"> {
+  const allowed = config.views.some((v) => v.widgets.some((w) => w.type === "messages" && w.allowAdd));
+  if (!allowed) return "forbidden";
+  return postMessage(accountId, { ...input, expiresInHours: null }, now);
 }
 
 export async function postMessage(

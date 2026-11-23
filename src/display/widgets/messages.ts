@@ -1,9 +1,11 @@
 import type { BoardMessage } from "@/lib/display/types";
 
-import { subscribe } from "../api";
+import { refresh, send, subscribe } from "../api";
 import { fill, h } from "../dom";
 import { everyMinute } from "../ticker";
 import type { Mount } from "./types";
+
+const COLOURS = ["yellow", "pink", "blue", "green", "purple"] as const;
 
 /** "just now", "5 min", "3 h", "2 d": short enough for a sticky note's corner. */
 export function ago(ms: number): string {
@@ -20,15 +22,20 @@ export function ago(ms: number): string {
 export const messages: Mount<"messages"> = (el, w) => {
   const root = h("div", { class: "w-messages" });
   el.append(root);
-  let list: BoardMessage[] | null = null; // null until the first answer, so an empty board doesn't flash
+  let list: BoardMessage[] | null = null;
+  let message = "";
+  let colour: (typeof COLOURS)[number] = "yellow";
+
   const draw = (now: number) => {
     if (!list) return;
     const shown = list.slice(0, w.count);
-    if (!shown.length) {
+    const note = message ? h("div", { class: "msg-flash" }, message) : null;
+    if (!shown.length && !w.allowAdd) {
       fill(
         root,
         w.title ? h("div", { class: "w-label" }, w.title) : null,
         h("div", { class: "w-empty" }, "No notes yet. Post one from your phone."),
+        note,
       );
       return;
     }
@@ -43,13 +50,60 @@ export const messages: Mount<"messages"> = (el, w) => {
           h("div", { class: "msg-meta" }, m.pinned ? "📌 " : "", m.author, " · ", ago(now - m.createdAt)),
         ),
       ),
+      w.allowAdd ? buildAdd() : null,
+      note,
     );
   };
+
+  const buildAdd = () => {
+    const author = h("input", { type: "text", class: "msg-in", maxlength: "30", placeholder: "Name" }) as HTMLInputElement;
+    const text = h("input", { type: "text", class: "msg-in msg-wide", maxlength: "280", placeholder: "Note…" }) as HTMLInputElement;
+    const chips = h(
+      "div",
+      { class: "msg-chips" },
+      ...COLOURS.map((c) => {
+        const b = h("button", {
+          type: "button",
+          class: `msg-chip msg-chip-${c}${colour === c ? " on" : ""}`,
+          "aria-pressed": colour === c ? "true" : "false",
+        });
+        b.addEventListener("click", (ev) => {
+          ev.stopPropagation();
+          colour = c;
+          draw(Date.now());
+        });
+        return b;
+      }),
+    );
+    const post = h("button", { type: "button", class: "msg-post" }, "Post");
+    post.addEventListener("click", (ev) => {
+      ev.stopPropagation();
+      const a = author.value.trim();
+      const t = text.value.trim();
+      if (!a || !t) {
+        message = "Name and note required.";
+        draw(Date.now());
+        window.setTimeout(() => {
+          message = "";
+          draw(Date.now());
+        }, 4000);
+        return;
+      }
+      author.value = "";
+      text.value = "";
+      void send("messages", { author: a, text: t, colour }).then((ok) => {
+        if (!ok) message = "Couldn't post. Try again.";
+        else refresh("messages");
+        draw(Date.now());
+      });
+    });
+    return h("div", { class: "msg-compose" }, author, text, chips, post);
+  };
+
   const stopFeed = subscribe<{ messages: BoardMessage[] }>("messages", 30_000, (data) => {
     list = data.messages;
     draw(Date.now());
   });
-  // Keeps "5 min" honest between polls.
   const stopTick = everyMinute((now) => draw(now.getTime()));
   return () => {
     stopFeed();

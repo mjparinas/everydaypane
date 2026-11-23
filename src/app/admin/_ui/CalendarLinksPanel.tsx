@@ -83,6 +83,21 @@ export function CalendarLinksPanel() {
         Add any calendar that has an iCal address: a school or team calendar, or someone else&rsquo;s Google or Outlook calendar. In Google
         Calendar it&rsquo;s under the calendar&rsquo;s Settings › &ldquo;Secret address in iCal format&rdquo;.
       </p>
+      <details className="rounded-xl border border-line p-3 text-sm">
+        <summary className="cursor-pointer font-medium">iCloud Calendar</summary>
+        <ol className="mt-2 list-decimal space-y-1 pl-5 text-soft">
+          <li>On a Mac, open Calendar and sign in with the iCloud account.</li>
+          <li>Right-click the calendar › Share Calendar… › turn on Public Calendar and copy the link (webcal://…).</li>
+          <li>Paste the link below. Everydaypane stores it like any other calendar link.</li>
+        </ol>
+        <p className="mt-2 text-soft">
+          More detail in{" "}
+          <a className="text-brand underline-offset-2 hover:underline" href="/docs/icloud-calendar.md">
+            docs/icloud-calendar.md
+          </a>
+          .
+        </p>
+      </details>
       {links.length > 0 && (
         <div className="grid gap-3">
           {links.map((l) => (

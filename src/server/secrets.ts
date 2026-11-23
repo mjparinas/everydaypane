@@ -17,6 +17,8 @@ export type SecretKey =
   | "homeAssistant.accessSecret"
   | "spotify.refreshToken"
   | "sonos.refreshToken"
+  | "microsoft.refreshToken"
+  | "chores.pin"
   | `ical.${string}`;
 
 export async function getSecret(accountId: string, k: SecretKey): Promise<string | null> {
@@ -53,5 +55,7 @@ export async function secretsSet(accountId: string): Promise<Record<SecretKey, b
     "homeAssistant.accessSecret": set.has("homeAssistant.accessSecret"),
     "spotify.refreshToken": set.has("spotify.refreshToken"),
     "sonos.refreshToken": set.has("sonos.refreshToken"),
+    "microsoft.refreshToken": set.has("microsoft.refreshToken"),
+    "chores.pin": set.has("chores.pin"),
   };
 }

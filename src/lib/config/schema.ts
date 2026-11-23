@@ -62,6 +62,8 @@ const base = {
   // Melvin, 2026-11-22: each widget can drop its panel or set its own opacity; the theme's surfaceOpacity is the default.
   showBackground: z.boolean().default(true),
   backgroundOpacity: z.number().min(0).max(1).optional(),
+  // Show only during these parts of the day (empty or omitted = always). The overnight key is still `night`.
+  visiblePeriods: z.array(z.enum(PERIODS)).max(4).optional(),
 };
 
 export const countdownEventSchema = z.object({
@@ -153,6 +155,19 @@ export const widgetSchema = z.discriminatedUnion("type", [
     count: z.number().int().min(1).max(12),
   }),
   z.object({ ...base, type: z.literal("agenda"), range: z.enum(["today", "upcoming"]), days: z.number().int().min(1).max(14) }),
+  // One week in a grid (Melvin, 2026-11-23): same calendar feed as the schedule and month widgets.
+  z.object({
+    ...base,
+    type: z.literal("calendarWeek"),
+    weekStartsOn: z.union([z.literal(0), z.literal(1)]),
+    showWeekends: z.boolean(),
+  }),
+  // The next event large, with a short list after it (Melvin, 2026-11-23).
+  z.object({
+    ...base,
+    type: z.literal("calendarUpNext"),
+    count: z.number().int().min(1).max(10),
+  }),
   z.object({
     ...base,
     type: z.literal("calendarMonth"),
@@ -183,7 +198,12 @@ export const widgetSchema = z.discriminatedUnion("type", [
   z.object({ ...base, type: z.literal("haEntity"), entityId: z.string().max(255), control: haControlSchema }),
   z.object({ ...base, type: z.literal("note"), text: z.string().max(2000), size: z.enum(["s", "m", "l", "xl"]) }),
   // The family message board: notes anyone in the family posts from their phone (stored in the messages table).
-  z.object({ ...base, type: z.literal("messages"), count: z.number().int().min(1).max(20) }),
+  z.object({
+    ...base,
+    type: z.literal("messages"),
+    count: z.number().int().min(1).max(20),
+    allowAdd: z.boolean(),
+  }),
   // The meal plan (stored in the meals table): today's meals, or the days ahead, showing the chosen meals.
   z.object({
     ...base,
@@ -319,6 +339,7 @@ export const widgetSchema = z.discriminatedUnion("type", [
     type: z.literal("shopping"),
     count: z.number().int().min(1).max(40),
     allowCheck: z.boolean(),
+    allowAdd: z.boolean(),
     showDone: z.boolean(),
   }),
   // Who's home (Melvin, 2026-11-22): Home Assistant person / device_tracker / presence entities, read-only.
@@ -446,6 +467,13 @@ export const choreSchema = z.object({
 });
 export type Chore = z.infer<typeof choreSchema>;
 
+export const choreRewardSchema = z.object({
+  id,
+  name: z.string().trim().min(1).max(40),
+  starsCost: z.number().int().min(1).max(500),
+});
+export type ChoreReward = z.infer<typeof choreRewardSchema>;
+
 // A team the sports widget follows, picked in the admin panel from ESPN's team list for its league.
 export const sportsTeamSchema = z.object({
   id,
@@ -502,7 +530,15 @@ export const configSchema = z
       })
       .default({ districtName: "Langley School District", statusUrl: "https://www.sd35.bc.ca/" }),
     // Defaults to none, so a document saved before the chore chart existed still loads.
-    chores: z.object({ people: z.array(chorePersonSchema).max(8), items: z.array(choreSchema).max(40) }).default({ people: [], items: [] }),
+    chores: z
+      .object({
+        people: z.array(chorePersonSchema).max(8),
+        items: z.array(choreSchema).max(40),
+        rewards: z.array(choreRewardSchema).max(12).default([]),
+        /** True when a child PIN is stored on the server (hash in secrets); unlocks uncheck and rewards. */
+        pinSet: z.boolean().default(false),
+      })
+      .default({ people: [], items: [], rewards: [], pinSet: false }),
     // Burn-in protection: the whole layout drifts a few pixels every few minutes so static edges never sit on the same
     // pixels for hours, and night periods can dim the screen (periodSchema.dim).
     burnIn: z.object({ shift: z.boolean(), maxPixels: z.number().int().min(1).max(24), minutes: z.number().int().min(1).max(60) }),
@@ -515,6 +551,8 @@ export const configSchema = z
     // period's key is still `night` (Melvin, 2026-11-22: renamed in the admin only).
     schedule: z.object({
       enabled: z.boolean(),
+      /** When set, displays that follow the schedule cycle through each period's view every N seconds. */
+      loopSeconds: z.number().int().min(10).max(300).optional(),
       morning: periodSchema,
       afternoon: periodSchema,
       evening: periodSchema,
@@ -524,6 +562,11 @@ export const configSchema = z
       google: z.object({
         calendars: z.array(z.object({ id: z.string().max(255), name: z.string().max(120), color: hex, enabled: z.boolean() })).max(50),
       }),
+      microsoft: z
+        .object({
+          calendars: z.array(z.object({ id: z.string().max(255), name: z.string().max(120), color: hex, enabled: z.boolean() })).max(50),
+        })
+        .default({ calendars: [] }),
       // The Google Tasks lists of the connected account that widgets may show (src/server/googleTasks.ts). Defaults to
       // none, so a document saved before Tasks existed still loads.
       tasks: z

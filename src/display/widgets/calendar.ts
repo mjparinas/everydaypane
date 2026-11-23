@@ -1,4 +1,4 @@
-import { addDays, byDay, dayLabel, eventTime, isWeekend, localDate, monthGrid, weeksFrom } from "@/lib/calendar";
+import { addDays, byDay, dayLabel, eventDays, eventTime, isWeekend, localDate, monthGrid, weeksFrom } from "@/lib/calendar";
 import type { CalendarData, CalendarEvent } from "@/lib/display/types";
 
 import { subscribe } from "../api";
@@ -211,3 +211,118 @@ function trimDay(day: HTMLElement): void {
     more.replaceWith(h("div", { class: "mo-dots" }, ...colours.map((c) => h("i", { style: `background:${c}` }))));
   }
 }
+
+export const calendarWeek: Mount<"calendarWeek"> = (el, w, ctx) => {
+  const root = h("div", { class: "w-week" }, h("div", { class: "w-empty" }, "Loading the calendar…"));
+  el.append(root);
+  let data: CalendarData | null = null;
+  const draw = (now: number) => {
+    if (!data) return;
+    if (data.connected === false) return fill(root, notConnected());
+    const today = localDate(now, ctx.timeZone);
+    const week = weeksFrom(today, w.weekStartsOn, 1)[0] ?? [];
+    const days = w.showWeekends ? week : week.filter((d) => !isWeekend(d));
+    const map = byDay(data.events, ctx.timeZone);
+    fill(
+      root,
+      w.title ? h("div", { class: "w-label" }, w.title) : null,
+      h(
+        "div",
+        { class: "wk-grid", style: `--n:${days.length}` },
+        ...days.map((d) => {
+          const list = (map.get(d) ?? []).slice(0, 5);
+          return h(
+            "section",
+            { class: `wk-col${d === today ? " wk-today" : ""}` },
+            h("h3", { class: "wk-head" }, dayLabel(d, today)),
+            list.length
+              ? h(
+                  "ul",
+                  { class: "wk-list" },
+                  ...list.map((e) => h("li", { class: "wk-ev" }, h("span", { class: "wk-dot", style: `background:${e.color}` }), e.title)),
+                )
+              : h("div", { class: "wk-free" }, "—"),
+          );
+        }),
+      ),
+    );
+  };
+  const stopFeed = subscribe<CalendarData>(FEED, EVERY, (d) => {
+    data = d;
+    draw(Date.now());
+  });
+  const stopTick = everyMinute((now) => draw(now.getTime()));
+  return () => {
+    stopFeed();
+    stopTick();
+  };
+};
+
+function upcoming(data: CalendarData, timeZone: string, now: number): CalendarEvent[] {
+  return data.events
+    .filter((e) => {
+      const end = e.allDay ? Date.parse(`${e.end.slice(0, 10)}T00:00:00Z`) + 86_400_000 : Date.parse(e.end);
+      return end > now;
+    })
+    .sort((a, b) => {
+      const sa = a.allDay ? Date.parse(`${a.start.slice(0, 10)}T00:00:00Z`) : Date.parse(a.start);
+      const sb = b.allDay ? Date.parse(`${b.start.slice(0, 10)}T00:00:00Z`) : Date.parse(b.start);
+      return sa - sb;
+    });
+}
+
+export const calendarUpNext: Mount<"calendarUpNext"> = (el, w, ctx) => {
+  const root = h("div", { class: "w-upnext" }, h("div", { class: "w-empty" }, "Loading the calendar…"));
+  el.append(root);
+  let data: CalendarData | null = null;
+  const draw = (now: number) => {
+    if (!data) return;
+    if (data.connected === false) return fill(root, notConnected());
+    const list = upcoming(data, ctx.timeZone, now);
+    const next = list[0];
+    const more = list.slice(1, w.count);
+    if (!next) {
+      fill(root, w.title ? h("div", { class: "w-label" }, w.title) : null, h("div", { class: "w-empty" }, "Nothing coming up"));
+      return;
+    }
+    const today = localDate(now, ctx.timeZone);
+    const day = eventDays(next, ctx.timeZone)[0] ?? today;
+    fill(
+      root,
+      w.title ? h("div", { class: "w-label" }, w.title) : null,
+      h(
+        "div",
+        { class: "un-hero" },
+        h("span", { class: "un-dot", style: `background:${next.color}` }),
+        h("div", { class: "un-time" }, eventTime(next, day, ctx.timeZone, ctx.hour12)),
+        h("div", { class: "un-title" }, next.title),
+      ),
+      more.length
+        ? h(
+            "ul",
+            { class: "un-list" },
+            ...more.map((e) => {
+              const d = eventDays(e, ctx.timeZone)[0] ?? today;
+              return h(
+                "li",
+                { class: "un-row" },
+                h("span", { class: "un-dot", style: `background:${e.color}` }),
+                eventTime(e, d, ctx.timeZone, ctx.hour12),
+                " ",
+                e.title,
+              );
+            }),
+          )
+        : null,
+    );
+  };
+  const stopFeed = subscribe<CalendarData>(FEED, EVERY, (d) => {
+    data = d;
+    draw(Date.now());
+  });
+  const stopTick = everyMinute((now) => draw(now.getTime()));
+  return () => {
+    stopFeed();
+    stopTick();
+  };
+};

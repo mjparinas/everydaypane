@@ -116,7 +116,7 @@ export function defaultConfig(): DashboardConfig {
       notifyEmail: false,
     },
     school: { districtName: "Langley School District", statusUrl: "https://www.sd35.bc.ca/" },
-    chores: { people: [], items: [] },
+    chores: { people: [], items: [], rewards: [], pinSet: false },
     burnIn: { shift: true, maxPixels: 6, minutes: 3 },
     screenSaver: { ...SCREEN_SAVER_OFF, photoSourceIds: [], motionEntityIds: [] },
     schedule: {
@@ -128,6 +128,7 @@ export function defaultConfig(): DashboardConfig {
     },
     integrations: {
       google: { calendars: [] },
+      microsoft: { calendars: [] },
       tasks: { lists: [] },
       icals: [],
       // Township of Langley's Recycle Coach calendar (tol.ca collection calendars). The zone is found from the address in

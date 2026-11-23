@@ -94,6 +94,22 @@ export const WIDGETS: { [T in WidgetType]: WidgetInfo<T> } = {
     minSize: { w: 2, h: 2 },
     defaults: () => ({ range: "today", days: 3 }),
   },
+  calendarWeek: {
+    label: "Week calendar",
+    description: "This week in a grid",
+    icon: "📅",
+    size: { w: 6, h: 4 },
+    minSize: { w: 4, h: 3 },
+    defaults: () => ({ weekStartsOn: 0 as const, showWeekends: true }),
+  },
+  calendarUpNext: {
+    label: "Up next",
+    description: "The next event large, with more after",
+    icon: "⏭️",
+    size: { w: 4, h: 3 },
+    minSize: { w: 2, h: 2 },
+    defaults: () => ({ count: 4 }),
+  },
   calendarMonth: {
     label: "Month calendar",
     description: "The whole month with events",
@@ -141,7 +157,7 @@ export const WIDGETS: { [T in WidgetType]: WidgetInfo<T> } = {
     icon: "💬",
     size: { w: 4, h: 3 },
     minSize: { w: 2, h: 2 },
-    defaults: () => ({ count: 5 }),
+    defaults: () => ({ count: 5, allowAdd: false }),
   },
   meals: {
     label: "Meals",
@@ -300,7 +316,7 @@ export const WIDGETS: { [T in WidgetType]: WidgetInfo<T> } = {
     icon: "🛒",
     size: { w: 4, h: 4 },
     minSize: { w: 2, h: 2 },
-    defaults: () => ({ count: 12, allowCheck: true, showDone: false }),
+    defaults: () => ({ count: 12, allowCheck: true, allowAdd: false, showDone: false }),
   },
   presence: {
     label: "Who's home",
@@ -334,7 +350,7 @@ export const WIDGET_TYPES = Object.keys(WIDGETS) as WidgetType[];
 export const WIDGET_GROUPS: { id: string; label: string; types: WidgetType[] }[] = [
   { id: "time", label: "Time", types: ["clock", "date", "sunTimes", "timer", "pomodoro"] },
   { id: "weather", label: "Weather & map", types: ["weather", "airQuality", "radar", "earth"] },
-  { id: "calendar", label: "Calendar", types: ["agenda", "calendarMonth", "countdown", "tasks"] },
+  { id: "calendar", label: "Calendar", types: ["agenda", "calendarMonth", "calendarWeek", "calendarUpNext", "countdown", "tasks"] },
   { id: "family", label: "Family", types: ["meals", "shopping", "messages", "chores", "whiteboard", "school", "presence"] },
   { id: "home", label: "Home", types: ["haEntity", "camera", "media", "wifiQr", "editQr", "garbage", "commute", "transit", "ferries"] },
   { id: "media", label: "Outside", types: ["photos", "sports", "alerts", "note"] },

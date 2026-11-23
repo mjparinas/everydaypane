@@ -15,6 +15,8 @@ export const FREE_WIDGET_TYPES = [
   "photos",
   "agenda",
   "calendarMonth",
+  "calendarWeek",
+  "calendarUpNext",
   "note",
   "wifiQr",
   "countdown",

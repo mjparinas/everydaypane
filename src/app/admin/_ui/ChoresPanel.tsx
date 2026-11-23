@@ -5,7 +5,7 @@ import { useState } from "react";
 import { daysLabel, WEEKDAYS } from "@/lib/chores";
 import type { Chore } from "@/lib/config/schema";
 
-import { Colour, ConfirmButton, Range, Section, Select, Stepper, Text } from "./fields";
+import { Colour, ConfirmButton, Range, Section, Select, Stepper, Text, Toggle } from "./fields";
 import { newId, useAdmin } from "./store";
 
 // The chore chart (Melvin, 2026-11-21): the kids, and the chores that come back on set weekdays, shared by everyone on
@@ -14,6 +14,7 @@ import { newId, useAdmin } from "./store";
 
 const MAX_PEOPLE = 8;
 const MAX_CHORES = 40;
+const MAX_REWARDS = 12;
 const COLOURS = ["#e8590c", "#1c7ed6", "#2f9e44", "#ae3ec9", "#f08c00", "#0ca678", "#d6336c", "#4263eb"];
 const WEEK = [1, 2, 3, 4, 5, 6, 0];
 
@@ -58,10 +59,13 @@ function Chips({
 }
 
 export function ChoresPanel() {
-  const { people, items } = useAdmin((s) => s.config.chores);
+  const { people, items, rewards, pinSet } = useAdmin((s) => s.config.chores);
   const edit = useAdmin((s) => s.edit);
   const [kid, setKid] = useState("");
   const [chore, setChore] = useState("");
+  const [reward, setReward] = useState("");
+  const [pinDraft, setPinDraft] = useState("");
+  const [pinMsg, setPinMsg] = useState("");
 
   function changePerson(id: string, patch: { name?: string; emoji?: string; color?: string; goal?: number }) {
     edit((c) => {
@@ -221,6 +225,95 @@ export function ChoresPanel() {
         </form>
       )}
       <p className="text-xs text-soft">Save to send the change to your displays. Changing who is on a rotation starts the turns over.</p>
+
+      <h3 className="text-sm font-semibold">Star rewards</h3>
+      <p className="text-xs text-soft">Kids redeem these on the wall when they have enough stars this week (Monday to Sunday).</p>
+      {rewards.map((r) => (
+        <div key={r.id} className="grid grid-cols-[1fr_6rem] gap-3 rounded-xl border border-line p-3">
+          <Text
+            label="Reward"
+            value={r.name}
+            maxLength={40}
+            onChange={(v) => edit((c) => void (c.chores.rewards.find((x) => x.id === r.id)!.name = v))}
+          />
+          <Stepper
+            label="Stars"
+            value={r.starsCost}
+            min={1}
+            max={500}
+            onChange={(v) => edit((c) => void (c.chores.rewards.find((x) => x.id === r.id)!.starsCost = v))}
+          />
+          <ConfirmButton
+            label="Remove"
+            onConfirm={() => edit((c) => void (c.chores.rewards = c.chores.rewards.filter((x) => x.id !== r.id)))}
+          />
+        </div>
+      ))}
+      {rewards.length < MAX_REWARDS && (
+        <form
+          className="flex items-end gap-2"
+          onSubmit={(e) => {
+            e.preventDefault();
+            const name = reward.trim();
+            if (!name) return;
+            edit((c) => {
+              if (c.chores.rewards.length >= MAX_REWARDS) return;
+              c.chores.rewards.push({ id: newId("reward"), name, starsCost: 10 });
+            });
+            setReward("");
+          }}
+        >
+          <div className="min-w-0 flex-1">
+            <Text label="Add a reward" value={reward} maxLength={40} placeholder="Extra screen time…" onChange={setReward} />
+          </div>
+          <button className="btn-primary" disabled={!reward.trim()}>
+            Add
+          </button>
+        </form>
+      )}
+
+      <h3 className="text-sm font-semibold">Child PIN</h3>
+      <p className="text-xs text-soft">
+        Optional four-digit PIN. When set, kids need it to untick a chore or redeem a reward. Ticking chores on stays open.
+      </p>
+      <Toggle
+        label="PIN required on the wall"
+        checked={pinSet}
+        hint="Turn off after clearing the PIN below. Save after changing this."
+        onChange={(v) => edit((c) => void (c.chores.pinSet = v))}
+      />
+      <form
+        className="flex flex-wrap items-end gap-2"
+        onSubmit={(e) => {
+          e.preventDefault();
+          setPinMsg("");
+          void (async () => {
+            const pin = pinDraft.trim();
+            if (pin && !/^\d{4}$/.test(pin)) return setPinMsg("PIN must be four digits.");
+            const r = await fetch("/api/admin/chores/pin/", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ pin: pin || null }),
+            });
+            if (!r.ok) return setPinMsg("Couldn't save the PIN.");
+            edit((c) => {
+              c.chores.pinSet = Boolean(pin);
+            });
+            setPinDraft("");
+            setPinMsg(pin ? "PIN saved. Press Save to update displays." : "PIN cleared.");
+          })();
+        }}
+      >
+        <Text label="New PIN" value={pinDraft} maxLength={4} placeholder="1234" onChange={setPinDraft} />
+        <button className="btn-primary" type="submit">
+          {pinDraft ? "Set PIN" : "Clear PIN"}
+        </button>
+      </form>
+      {pinMsg && (
+        <p className="text-sm" role="status">
+          {pinMsg}
+        </p>
+      )}
     </Section>
   );
 }

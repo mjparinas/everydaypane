@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { choreBoard, choresTag, setChoreDone } from "@/server/chores";
+import { choreBoard, choresTag, redeemChoreReward, setChoreDone } from "@/server/chores";
 import { loadConfig } from "@/server/config";
 import { json, readJson, sameOrigin, unauthorized } from "@/server/http";
 import { accountIdOf, viewerFor } from "@/server/viewer";
@@ -18,16 +18,48 @@ export async function GET(req: Request) {
   return json(body, 200, { etag: tag });
 }
 
-const body = z.object({ chore: z.string().min(1).max(64), person: z.string().min(1).max(64), done: z.boolean() });
+const toggleBody = z.object({
+  chore: z.string().min(1).max(64),
+  person: z.string().min(1).max(64),
+  done: z.boolean(),
+  pin: z
+    .string()
+    .regex(/^\d{4}$/)
+    .optional(),
+});
+const redeemBody = z.object({
+  redeem: z.string().min(1).max(64),
+  person: z.string().min(1).max(64),
+  pin: z
+    .string()
+    .regex(/^\d{4}$/)
+    .optional(),
+});
 
-/** A tap on the wall: ticks one of today's chores off for one person, or takes the tick back. */
+/** A tap on the wall: tick chores, uncheck with PIN when set, or redeem a reward. */
 export async function POST(req: Request) {
   if (!sameOrigin(req)) return json({ error: "Not allowed" }, 403);
   const viewer = await viewerFor(req);
   if (!viewer) return unauthorized();
   const accountId = accountIdOf(viewer);
-  const parsed = body.safeParse(await readJson(req, 1000).catch(() => null));
+  const config = (await loadConfig(accountId)).config;
+  const raw = await readJson(req, 1000).catch(() => null);
+  const redeem = redeemBody.safeParse(raw);
+  if (redeem.success) {
+    const result = await redeemChoreReward(accountId, config, {
+      reward: redeem.data.redeem,
+      person: redeem.data.person,
+      pin: redeem.data.pin,
+    });
+    if (result === "ok") return json({ ok: true });
+    if (result === "pin") return json({ error: "Wrong PIN." }, 403);
+    if (result === "stars") return json({ error: "Not enough stars." }, 409);
+    return json({ error: "Not allowed" }, 403);
+  }
+  const parsed = toggleBody.safeParse(raw);
   if (!parsed.success) return json({ error: "Bad request" }, 400);
-  const result = await setChoreDone(accountId, (await loadConfig(accountId)).config, parsed.data);
-  return result === "ok" ? json({ ok: true }) : json({ error: "Not allowed" }, 403);
+  const result = await setChoreDone(accountId, config, parsed.data);
+  if (result === "ok") return json({ ok: true });
+  if (result === "pin") return json({ error: "Wrong PIN." }, 403);
+  return json({ error: "Not allowed" }, 403);
 }
