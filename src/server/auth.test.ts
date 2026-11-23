@@ -2,8 +2,9 @@ import { describe, expect, it, vi } from "vitest";
 
 import { req, useTestServer } from "@/test/server";
 
+import { LEGACY_ACCOUNT_ID } from "./accounts";
 import { finishSignIn, LINK_MS, sessionFor, startSignIn } from "./auth";
-import { query } from "./db";
+import { query, run } from "./db";
 
 async function linkFor(email: string, ip = "1.2.3.4"): Promise<string | null> {
   const info = vi.spyOn(console, "info").mockImplementation(() => undefined);
@@ -20,8 +21,12 @@ describe("magic link sign-in", () => {
     const token = await linkFor("Admin@Example.com");
     expect(token).not.toBeNull();
     const done = await finishSignIn(decodeURIComponent(token!));
-    expect(done?.session).toEqual({ email: "admin@example.com", role: "admin" });
-    expect(await sessionFor(done!.sessionToken)).toEqual({ email: "admin@example.com", role: "admin" });
+    expect(done?.session).toEqual({ email: "admin@example.com", role: "admin", accountId: LEGACY_ACCOUNT_ID });
+    expect(await sessionFor(done!.sessionToken)).toEqual({
+      email: "admin@example.com",
+      role: "admin",
+      accountId: LEGACY_ACCOUNT_ID,
+    });
     expect(await finishSignIn(decodeURIComponent(token!))).toBeNull();
   });
 
@@ -41,9 +46,11 @@ describe("magic link sign-in", () => {
     expect(await finishSignIn(decodeURIComponent(token!), Date.now() + LINK_MS + 1)).toBeNull();
   });
 
-  it("signs out someone removed from the list", async () => {
+  it("signs out someone removed from the household", async () => {
     const done = await finishSignIn(decodeURIComponent((await linkFor("admin@example.com"))!));
+    await run("DELETE FROM account_members WHERE email = ?", ["admin@example.com"]);
     vi.stubEnv("ADMIN_EMAILS", "");
+    vi.stubEnv("FAMILY_EMAILS", "");
     expect(await sessionFor(done!.sessionToken)).toBeNull();
   });
 

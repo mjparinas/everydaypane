@@ -1,16 +1,19 @@
 import "server-only";
 
+import { ensureAccountsSeeded } from "./accounts";
 import { decrypt, encrypt, randomAlphanumeric, randomToken, sha256 } from "./crypto";
 import { query, run } from "./db";
 
 // A display (the UC-Display21 in the kitchen, a tablet in the hall). Each one opens its own secret address,
-// /d/<token>/, so it can be signed out alone by deleting it. Displays are found by the token's hash; the token itself
-// is also kept encrypted (like the other stored secrets) so the Displays tab can always show and copy the address
-// (Melvin, 2026-11-17: the address shouldn't be shown only once; 2026-11-22: always visible with Copy on the row). A
-// device shows its own view, or follows the time-of-day schedule (view_id null).
+// /d/<token>/, so it can be signed out alone by deleting it or giving it a new link. Displays are found by the token's
+// hash; the token itself is also kept encrypted (like the other stored secrets) so the Displays tab can always show
+// and copy the address (Melvin, 2026-11-17: the address shouldn't be shown only once; 2026-11-22: always visible with
+// Copy on the row). A device shows its own view, or follows the time-of-day schedule (view_id null). Each device
+// belongs to one household.
 
 export interface Device {
   id: string;
+  accountId: string;
   name: string;
   viewId: string | null;
   createdAt: number;
@@ -22,6 +25,7 @@ export type DeviceWithToken = Device & { token: string | null };
 
 type Row = {
   id: string;
+  account_id: string | null;
   name: string;
   view_id: string | null;
   created_at: number;
@@ -35,34 +39,47 @@ const newDisplayToken = () => randomAlphanumeric(DISPLAY_TOKEN_LENGTH);
 
 const toDevice = (r: Row): Device => ({
   id: r.id,
+  accountId: r.account_id ?? "",
   name: r.name,
   viewId: r.view_id,
   createdAt: Number(r.created_at),
   lastSeenAt: r.last_seen_at === null ? null : Number(r.last_seen_at),
 });
 
-export async function listDevices(): Promise<DeviceWithToken[]> {
-  return (await query<Row>("SELECT * FROM devices ORDER BY created_at")).map((r) => ({
+export async function listDevices(accountId: string): Promise<DeviceWithToken[]> {
+  await ensureAccountsSeeded();
+  return (await query<Row>("SELECT * FROM devices WHERE account_id = ? ORDER BY created_at", [accountId])).map((r) => ({
     ...toDevice(r),
     token: r.token_sealed ? decrypt(r.token_sealed) : null,
   }));
 }
 
-export async function addDevice(name: string, viewId: string | null, now = Date.now()): Promise<{ device: Device; token: string }> {
+export async function countDevices(accountId: string): Promise<number> {
+  await ensureAccountsSeeded();
+  const rows = await query<{ n: number }>("SELECT COUNT(*) AS n FROM devices WHERE account_id = ?", [accountId]);
+  return Number(rows[0]?.n ?? 0);
+}
+
+export async function addDevice(
+  accountId: string,
+  name: string,
+  viewId: string | null,
+  now = Date.now(),
+): Promise<{ device: Device; token: string }> {
+  await ensureAccountsSeeded();
   for (let attempt = 0; attempt < TOKEN_ATTEMPTS; attempt += 1) {
     const id = randomToken(9);
     const token = newDisplayToken();
-    // The UNIQUE token_hash constraint makes this collision check atomic across all app instances.
     const inserted = await run(
-      "INSERT OR IGNORE INTO devices (id, name, token_hash, token_sealed, view_id, created_at) VALUES (?, ?, ?, ?, ?, ?)",
-      [id, name, sha256(token), encrypt(token), viewId, now],
+      "INSERT OR IGNORE INTO devices (id, account_id, name, token_hash, token_sealed, view_id, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
+      [id, accountId, name, sha256(token), encrypt(token), viewId, now],
     );
-    if (inserted === 1) return { device: { id, name, viewId, createdAt: now, lastSeenAt: null }, token };
+    if (inserted === 1) return { device: { id, accountId, name, viewId, createdAt: now, lastSeenAt: null }, token };
   }
   throw new Error("Could not generate a unique display address");
 }
 
-export async function updateDevice(id: string, patch: { name?: string; viewId?: string | null }): Promise<boolean> {
+export async function updateDevice(accountId: string, id: string, patch: { name?: string; viewId?: string | null }): Promise<boolean> {
   const sets: string[] = [];
   const args: (string | null)[] = [];
   if (patch.name !== undefined) {
@@ -74,51 +91,54 @@ export async function updateDevice(id: string, patch: { name?: string; viewId?: 
     args.push(patch.viewId);
   }
   if (sets.length === 0) return true;
-  return (await run(`UPDATE devices SET ${sets.join(", ")} WHERE id = ?`, [...args, id])) === 1;
+  return (await run(`UPDATE devices SET ${sets.join(", ")} WHERE id = ? AND account_id = ?`, [...args, id, accountId])) === 1;
 }
 
 /**
  * The display's token, for building its address. Null for a device added before tokens were kept, or one that doesn't
  * exist.
  */
-export async function deviceToken(id: string): Promise<string | null> {
-  const row = (await query<{ token_sealed: string | null }>("SELECT token_sealed FROM devices WHERE id = ?", [id]))[0];
+export async function deviceToken(accountId: string, id: string): Promise<string | null> {
+  const row = (
+    await query<{ token_sealed: string | null }>("SELECT token_sealed FROM devices WHERE id = ? AND account_id = ?", [id, accountId])
+  )[0];
   return row?.token_sealed ? decrypt(row.token_sealed) : null;
 }
 
-/** Gives a display a new address. The old one stops working at once, so a leaked link can be shut off. */
-export async function newDeviceToken(id: string): Promise<string | null> {
-  const row = (await query<{ token_hash: string }>("SELECT token_hash FROM devices WHERE id = ?", [id]))[0];
+export async function newDeviceToken(accountId: string, id: string): Promise<string | null> {
+  const row = (await query<{ token_hash: string }>("SELECT token_hash FROM devices WHERE id = ? AND account_id = ?", [id, accountId]))[0];
   if (!row) return null;
 
   for (let attempt = 0; attempt < TOKEN_ATTEMPTS; attempt += 1) {
     const token = newDisplayToken();
     const hash = sha256(token);
     if (hash === row.token_hash) continue;
-    // A collision with another display is ignored by SQLite, then retried with a fresh code.
-    const changed = await run("UPDATE OR IGNORE devices SET token_hash = ?, token_sealed = ? WHERE id = ?", [hash, encrypt(token), id]);
+    const changed = await run("UPDATE OR IGNORE devices SET token_hash = ?, token_sealed = ? WHERE id = ? AND account_id = ?", [
+      hash,
+      encrypt(token),
+      id,
+      accountId,
+    ]);
     if (changed === 1) return token;
   }
   throw new Error("Could not generate a unique display address");
 }
 
-export async function removeDevice(id: string): Promise<boolean> {
-  return (await run("DELETE FROM devices WHERE id = ?", [id])) === 1;
+export async function removeDevice(accountId: string, id: string): Promise<boolean> {
+  return (await run("DELETE FROM devices WHERE id = ? AND account_id = ?", [id, accountId])) === 1;
 }
 
-/** The device a display token belongs to, noting when it was last seen (at most once a minute, to keep writes down). */
 export async function deviceForToken(token: string, now = Date.now()): Promise<Device | null> {
-  // New links are exactly 8 alphanumerics; keep accepting the earlier 10-character and legacy base64url links.
   if (!/^(?:[A-Za-z0-9]{8}|[A-Za-z0-9]{10}|[A-Za-z0-9_-]{16,64})$/.test(token)) return null;
   return deviceForTokenHash(sha256(token), now);
 }
 
-/** Lookup by the token's SHA-256 (used by the short-lived display cookie for image routes). */
 export async function deviceForTokenHash(tokenHash: string, now = Date.now()): Promise<Device | null> {
+  await ensureAccountsSeeded();
   if (!/^[a-f0-9]{64}$/.test(tokenHash)) return null;
   const rows = await query<Row>("SELECT * FROM devices WHERE token_hash = ?", [tokenHash]);
   const row = rows[0];
-  if (!row) return null;
+  if (!row?.account_id) return null;
   if (row.last_seen_at === null || now - Number(row.last_seen_at) > 60_000) {
     await run("UPDATE devices SET last_seen_at = ? WHERE id = ?", [now, row.id]);
   }

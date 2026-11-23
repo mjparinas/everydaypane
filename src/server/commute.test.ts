@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { LEGACY_ACCOUNT_ID } from "@/server/accounts";
 
 import { GET as adminGET } from "@/app/api/admin/commute/route";
 import { GET as displayGET } from "@/app/api/display/commute/route";
@@ -153,9 +154,9 @@ describe("commute routes", () => {
       "fetch",
       vi.fn(() => Promise.resolve(Response.json(route(1800, 0, 1800)))),
     );
-    const stored = await loadConfig();
-    await saveConfig(withPlaces(stored.config), stored.version);
-    const { token } = await addDevice("Kitchen", null);
+    const stored = await loadConfig(LEGACY_ACCOUNT_ID);
+    await saveConfig(LEGACY_ACCOUNT_ID, withPlaces(stored.config), stored.version);
+    const { token } = await addDevice(LEGACY_ACCOUNT_ID, "Kitchen", null);
     const r = await displayGET(req("/api/display/commute/", { headers: { "x-display-token": token } }));
     const text = await r.text();
     expect((JSON.parse(text) as CommuteData).routes.map((x) => x.seconds)).toEqual([1800, 1800]);

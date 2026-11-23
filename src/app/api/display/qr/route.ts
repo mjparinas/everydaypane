@@ -3,14 +3,15 @@ import { loadConfig } from "@/server/config";
 import { deviceToken } from "@/server/devices";
 import { env } from "@/server/env";
 import { notFound, unauthorized } from "@/server/http";
-import { viewerFor } from "@/server/viewer";
+import { accountIdOf, viewerFor } from "@/server/viewer";
 import { qrSvg, wifiString } from "@/server/wifi";
 
 export async function GET(req: Request) {
   const viewer = await viewerFor(req);
   if (!viewer) return unauthorized();
+  const accountId = accountIdOf(viewer);
   const id = new URL(req.url).searchParams.get("w");
-  const { config } = await loadConfig();
+  const { config } = await loadConfig(accountId);
   const widget = config.views.flatMap((v) => v.widgets).find((w) => w.id === id);
   if (!widget) return notFound();
 
@@ -26,7 +27,7 @@ export async function GET(req: Request) {
     const origin = env.siteUrl() || new URL(req.url).origin;
     let text = `${origin.replace(/\/$/, "")}/d/XXXXXXXX/edit/`;
     if (viewer.kind === "device") {
-      const token = await deviceToken(viewer.device.id);
+      const token = await deviceToken(viewer.device.accountId, viewer.device.id);
       if (token) text = editPageUrl(origin, token);
     }
     return new Response(qrSvg(text), {

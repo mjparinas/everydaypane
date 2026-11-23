@@ -3,7 +3,7 @@ import { z } from "zod";
 
 import { rateLimit } from "@/server/db";
 import { clientIp, json, readJson } from "@/server/http";
-import { viewerFor } from "@/server/viewer";
+import { accountIdOf, viewerFor } from "@/server/viewer";
 
 // The display reports its errors here instead of loading Sentry (AGENTS.md "Monitoring"), and the server passes them on.
 const body = z.object({ message: z.string().max(500), stack: z.string().max(4000).optional(), where: z.string().max(100).optional() });

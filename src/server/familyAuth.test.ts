@@ -6,6 +6,8 @@ import { GET as shoppingGET, POST as shoppingPOST } from "@/app/api/shopping/rou
 import { editPagePath, editPageUrl } from "@/lib/editPage";
 import { cookieFor, req, useTestServer } from "@/test/server";
 
+import { LEGACY_ACCOUNT_ID } from "@/server/accounts";
+
 import { addDevice } from "./devices";
 import { familyEditorFor, familyEditorIsAdmin, familyEditorKey } from "./familyAuth";
 import { mealsBetween } from "./meals";
@@ -31,7 +33,7 @@ describe("familyEditorFor", () => {
     expect(familyEditorKey(fromSession)).toBe("kid@example.com");
     expect(familyEditorIsAdmin(fromSession)).toBe(false);
 
-    const { device, token } = await addDevice("Kitchen", null);
+    const { device, token } = await addDevice(LEGACY_ACCOUNT_ID, "Kitchen", null);
     const fromDisplay = await familyEditorFor(req("/api/meals/", { headers: { "x-display-token": token } }));
     expect(fromDisplay?.kind).toBe("display");
     if (fromDisplay?.kind !== "display") return;
@@ -41,7 +43,7 @@ describe("familyEditorFor", () => {
   });
 
   it("lets a display token read and write meals, shopping and messages", async () => {
-    const { device, token } = await addDevice("Kitchen", null);
+    const { device, token } = await addDevice(LEGACY_ACCOUNT_ID, "Kitchen", null);
     const headers = { "x-display-token": token, origin: "http://localhost" };
 
     expect((await mealsGET(req("/api/meals/?days=7", { headers }))).status).toBe(200);

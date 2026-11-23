@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { LEGACY_ACCOUNT_ID } from "@/server/accounts";
 
 import { GET as googleGET, POST as googlePOST } from "@/app/api/admin/google-photos/route";
 import { DELETE as libraryDELETE, GET as libraryGET, POST as libraryPOST } from "@/app/api/admin/library/route";
@@ -43,11 +44,11 @@ describe("photo library", () => {
   });
 
   async function withLibrary(): Promise<string> {
-    const stored = await loadConfig();
+    const stored = await loadConfig(LEGACY_ACCOUNT_ID);
     const config = structuredClone(stored.config);
     config.integrations.photos.sources = [{ id: "family", kind: "library", name: "Family" }];
-    expect((await saveConfig(config, stored.version)).ok).toBe(true);
-    return (await addDevice("Kitchen", null)).token;
+    expect((await saveConfig(LEGACY_ACCOUNT_ID, config, stored.version)).ok).toBe(true);
+    return (await addDevice(LEGACY_ACCOUNT_ID, "Kitchen", null)).token;
   }
 
   it("takes uploads from an admin, keeps them private, and shows them on displays", async () => {
@@ -105,10 +106,10 @@ describe("photo library", () => {
     ).toBe(200);
     expect(store.size).toBe(1);
 
-    const stored = await loadConfig();
+    const stored = await loadConfig(LEGACY_ACCOUNT_ID);
     const without = structuredClone(stored.config);
     without.integrations.photos.sources = [];
-    expect((await saveConfig(without, stored.version)).ok).toBe(true);
+    expect((await saveConfig(LEGACY_ACCOUNT_ID, without, stored.version)).ok).toBe(true);
     expect(store.size).toBe(0);
   });
 
@@ -122,8 +123,8 @@ describe("photo library", () => {
       googlePOST(req("/api/admin/google-photos/", { method: "POST", headers: { cookie: admin }, body: JSON.stringify({ start: true }) }));
     expect(((await (await start()).json()) as { connect?: boolean }).connect).toBe(true);
 
-    await setSecret("google.refreshToken", "refresh");
-    await setSecret("google.scopes", `https://www.googleapis.com/auth/calendar.readonly ${PHOTOS_SCOPE}`);
+    await setSecret(LEGACY_ACCOUNT_ID, "google.refreshToken", "refresh");
+    await setSecret(LEGACY_ACCOUNT_ID, "google.scopes", `https://www.googleapis.com/auth/calendar.readonly ${PHOTOS_SCOPE}`);
     const downloads: string[] = [];
     vi.stubGlobal(
       "fetch",
@@ -204,10 +205,10 @@ describe("photo library", () => {
       ).status,
     ).toBe(200);
     expect(store.size).toBe(1);
-    const stored = await loadConfig();
+    const stored = await loadConfig(LEGACY_ACCOUNT_ID);
     const config = structuredClone(stored.config);
     config.integrations.photos.sources = [];
-    expect((await saveConfig(config, stored.version)).ok).toBe(true);
+    expect((await saveConfig(LEGACY_ACCOUNT_ID, config, stored.version)).ok).toBe(true);
     expect(store.size).toBe(0);
     const left = await query<{ n: number }>("SELECT COUNT(*) AS n FROM photos");
     expect(Number(left[0]?.n)).toBe(0);

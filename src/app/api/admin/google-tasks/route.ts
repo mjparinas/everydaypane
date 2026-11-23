@@ -5,11 +5,13 @@ import { adminFor } from "@/server/viewer";
 
 /** Whether Google Tasks is allowed, and the account's task lists for the admin panel's picker. */
 export async function GET(req: Request) {
-  if (!(await adminFor(req))) return unauthorized();
+  const session = await adminFor(req);
+  if (!session) return unauthorized();
+  const accountId = session.accountId;
   const configured = googleConfigured();
-  if (!configured || !(await tasksGranted())) return json({ configured, allowed: false, lists: [] });
+  if (!configured || !(await tasksGranted(accountId))) return json({ configured, allowed: false, lists: [] });
   try {
-    return json({ configured, allowed: true, lists: await listTaskLists() });
+    return json({ configured, allowed: true, lists: await listTaskLists(accountId) });
   } catch (error) {
     if (error instanceof GoogleDisconnected || error instanceof TasksNotAllowed)
       return json({ configured, allowed: false, lists: [], expired: true });

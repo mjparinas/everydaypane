@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { LEGACY_ACCOUNT_ID } from "@/server/accounts";
 
 import { GET as adminGET, PUT as adminPUT } from "@/app/api/admin/ha/route";
 import { GET as artGET } from "@/app/api/display/art/route";
@@ -122,7 +123,7 @@ describe("Home Assistant routes", () => {
   });
 
   async function setUp(): Promise<string> {
-    const stored = await loadConfig();
+    const stored = await loadConfig(LEGACY_ACCOUNT_ID);
     const config: DashboardConfig = structuredClone(stored.config);
     const view = config.views[0];
     if (!view) throw new Error("no view");
@@ -150,14 +151,14 @@ describe("Home Assistant routes", () => {
       url: HA,
       doorbell: { entityId: "event.doorbell_ring", cameraEntityId: "camera.front_door", seconds: 30 },
     };
-    expect((await saveConfig(config, stored.version)).ok).toBe(true);
-    await setSecret("homeAssistant.token", "ha-token");
-    await setSecret("homeAssistant.accessId", "cf-id.access");
-    await setSecret("homeAssistant.accessSecret", "cf-secret");
+    expect((await saveConfig(LEGACY_ACCOUNT_ID, config, stored.version)).ok).toBe(true);
+    await setSecret(LEGACY_ACCOUNT_ID, "homeAssistant.token", "ha-token");
+    await setSecret(LEGACY_ACCOUNT_ID, "homeAssistant.accessId", "cf-id.access");
+    await setSecret(LEGACY_ACCOUNT_ID, "homeAssistant.accessSecret", "cf-secret");
     expect(usedEntities(config).all).toEqual(
       new Set(["light.kitchen", "lock.front", "media_player.kitchen", "camera.driveway", "camera.front_door", "event.doorbell_ring"]),
     );
-    return (await addDevice("Kitchen", null)).token;
+    return (await addDevice(LEGACY_ACCOUNT_ID, "Kitchen", null)).token;
   }
 
   const states = [
@@ -279,8 +280,8 @@ describe("Home Assistant routes", () => {
     const put = (body: object) =>
       adminPUT(req("/api/admin/ha/", { method: "PUT", headers: { cookie: admin }, body: JSON.stringify(body) }));
     expect((await put({ token: "new-token" })).status).toBe(200);
-    expect(await getSecret("homeAssistant.token")).toBe("new-token");
-    expect(await getSecret("homeAssistant.accessId")).toBe("cf-id.access");
+    expect(await getSecret(LEGACY_ACCOUNT_ID, "homeAssistant.token")).toBe("new-token");
+    expect(await getSecret(LEGACY_ACCOUNT_ID, "homeAssistant.accessId")).toBe("cf-id.access");
 
     const text = await (await adminGET(req("/api/admin/ha/", { headers: { cookie: admin } }))).text();
     expect(JSON.parse(text)).toMatchObject({ tokenSet: true, accessSet: true, connected: true, message: "API running." });
@@ -288,7 +289,7 @@ describe("Home Assistant routes", () => {
     expect(text).not.toContain("cf-secret");
 
     expect((await put({ accessId: null, accessSecret: null })).status).toBe(200);
-    expect(await getSecret("homeAssistant.accessSecret")).toBeNull();
+    expect(await getSecret(LEGACY_ACCOUNT_ID, "homeAssistant.accessSecret")).toBeNull();
     const kid = await cookieFor("kid@example.com");
     expect((await adminGET(req("/api/admin/ha/", { headers: { cookie: kid } }))).status).toBe(401);
   });

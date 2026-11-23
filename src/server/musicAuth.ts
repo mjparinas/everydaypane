@@ -102,46 +102,55 @@ async function tokenRequest(s: MusicService, params: Record<string, string>): Pr
   return tokenSchema.parse(await r.json());
 }
 
-const access = new Map<MusicService, { token: string; expiresAt: number; refresh: string }>();
+const accessKey = (accountId: string, s: MusicService) => `${accountId}:${s}`;
+
+const access = new Map<string, { token: string; expiresAt: number; refresh: string }>();
 
 /** Trades the one-time code from the sign-in page for a refresh token and stores it. */
-export async function connectMusic(s: MusicService, code: string, redirect: string, now = Date.now()): Promise<void> {
+export async function connectMusic(
+  accountId: string,
+  s: MusicService,
+  code: string,
+  redirect: string,
+  now = Date.now(),
+): Promise<void> {
   const t = await tokenRequest(s, { grant_type: "authorization_code", code, redirect_uri: redirect });
   if (!t.refresh_token) throw new Error(`${SERVICES[s].label} didn't send a refresh token`);
-  await setSecret(tokenKey(s), t.refresh_token, now);
-  access.set(s, { token: t.access_token, expiresAt: now + (t.expires_in - 60) * 1000, refresh: t.refresh_token });
+  await setSecret(accountId, tokenKey(s), t.refresh_token, now);
+  access.set(accessKey(accountId, s), { token: t.access_token, expiresAt: now + (t.expires_in - 60) * 1000, refresh: t.refresh_token });
 }
 
 /** Forgets the token here. Neither service has a revoke endpoint; the account owner can remove the app on their side. */
-export async function disconnectMusic(s: MusicService): Promise<void> {
-  access.delete(s);
-  await setSecret(tokenKey(s), null);
+export async function disconnectMusic(accountId: string, s: MusicService): Promise<void> {
+  access.delete(accessKey(accountId, s));
+  await setSecret(accountId, tokenKey(s), null);
 }
 
-export async function musicConnected(s: MusicService): Promise<boolean> {
-  return Boolean(await getSecret(tokenKey(s)));
+export async function musicConnected(accountId: string, s: MusicService): Promise<boolean> {
+  return Boolean(await getSecret(accountId, tokenKey(s)));
 }
 
-export async function musicToken(s: MusicService, now = Date.now()): Promise<string> {
-  const refresh = await getSecret(tokenKey(s));
+export async function musicToken(accountId: string, s: MusicService, now = Date.now()): Promise<string> {
+  const refresh = await getSecret(accountId, tokenKey(s));
   if (!refresh) throw new MusicDisconnected(s);
-  const held = access.get(s);
+  const key = accessKey(accountId, s);
+  const held = access.get(key);
   if (held && held.refresh === refresh && held.expiresAt > now) return held.token;
   try {
     const t = await tokenRequest(s, { grant_type: "refresh_token", refresh_token: refresh });
     // Either service may hand out a new refresh token; the old one can stop working, so keep the new one.
     const next = t.refresh_token ?? refresh;
-    if (next !== refresh) await setSecret(tokenKey(s), next, now);
-    access.set(s, { token: t.access_token, expiresAt: now + (t.expires_in - 60) * 1000, refresh: next });
+    if (next !== refresh) await setSecret(accountId, tokenKey(s), next, now);
+    access.set(key, { token: t.access_token, expiresAt: now + (t.expires_in - 60) * 1000, refresh: next });
     return t.access_token;
   } catch (error) {
-    if (error instanceof MusicDisconnected) access.delete(s);
+    if (error instanceof MusicDisconnected) access.delete(key);
     throw error;
   }
 }
 
 /** Drops the access token after the service refused it (a 401 from its API), so the next call refreshes. */
-export const dropMusicToken = (s: MusicService) => void access.delete(s);
+export const dropMusicToken = (accountId: string, s: MusicService) => void access.delete(accessKey(accountId, s));
 
 /** Tests only. */
 export function resetMusicAuthForTests(): void {

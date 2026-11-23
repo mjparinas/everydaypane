@@ -11,11 +11,13 @@ import { adminFor } from "@/server/viewer";
 
 /** Whether Amazon is signed in, and its people (face groups) for the picker. */
 export async function GET(req: Request) {
-  if (!(await adminFor(req))) return unauthorized();
-  const set = (await secretsSet())["amazon.cookie"];
-  if (!set) return json({ connected: false, people: [], tld: (await getSecret("amazon.tld")) ?? "ca" });
+  const session = await adminFor(req);
+  if (!session) return unauthorized();
+  const accountId = session.accountId;
+  const set = (await secretsSet(accountId))["amazon.cookie"];
+  if (!set) return json({ connected: false, people: [], tld: (await getSecret(accountId, "amazon.tld")) ?? "ca" });
   try {
-    return json({ connected: true, people: await amazonPeople(), tld: (await getSecret("amazon.tld")) ?? "ca" });
+    return json({ connected: true, people: await amazonPeople(accountId), tld: (await getSecret(accountId, "amazon.tld")) ?? "ca" });
   } catch (error) {
     return json({ connected: true, people: [], error: error instanceof Error ? error.message : "Amazon didn't answer" });
   }
@@ -29,13 +31,15 @@ const body = z.object({
 /** Saves (or with cookie: null, forgets) the Amazon cookies. */
 export async function PUT(req: Request) {
   if (!sameOrigin(req)) return json({ error: "Not allowed" }, 403);
-  if (!(await adminFor(req))) return unauthorized();
+  const session = await adminFor(req);
+  if (!session) return unauthorized();
+  const accountId = session.accountId;
   const parsed = body.safeParse(await readJson(req).catch(() => null));
   if (!parsed.success) return json({ error: "Bad request" }, 400);
   const { cookie, tld } = parsed.data;
   if (cookie && !/session-id=/.test(cookie)) return json({ error: "That doesn't look like Amazon's cookies (no session-id)." }, 422);
-  await setSecret("amazon.cookie", cookie || null);
-  await setSecret("amazon.tld", cookie ? tld : null);
+  await setSecret(accountId, "amazon.cookie", cookie || null);
+  await setSecret(accountId, "amazon.tld", cookie ? tld : null);
   await forget("photos:");
   return json({ ok: true });
 }

@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 import { rateLimit } from "@/server/db";
-import { familyEditorFor, familyEditorKey } from "@/server/familyAuth";
+import { familyEditorAccountId, familyEditorFor, familyEditorKey } from "@/server/familyAuth";
 import { json, notFound, readJson, sameOrigin, unauthorized } from "@/server/http";
 import { removeShoppingItem, setShoppingDoneFromPhone } from "@/server/shopping";
 
@@ -17,10 +17,11 @@ export async function PATCH(req: Request, ctx: { params: Promise<{ id: string }>
   if (!sameOrigin(req)) return json({ error: "Not allowed" }, 403);
   const editor = await familyEditorFor(req);
   if (!editor) return unauthorized();
+  const accountId = familyEditorAccountId(editor);
   if (!(await limited(familyEditorKey(editor)))) return tooMany();
   const parsed = patch.safeParse(await readJson(req, 1_000).catch(() => null));
   if (!parsed.success) return json({ error: "Bad request" }, 400);
-  const result = await setShoppingDoneFromPhone({ id: (await ctx.params).id, done: parsed.data.done });
+  const result = await setShoppingDoneFromPhone(accountId, { id: (await ctx.params).id, done: parsed.data.done });
   return result === "ok" ? json({ ok: true }) : notFound();
 }
 
@@ -28,6 +29,7 @@ export async function DELETE(req: Request, ctx: { params: Promise<{ id: string }
   if (!sameOrigin(req)) return json({ error: "Not allowed" }, 403);
   const editor = await familyEditorFor(req);
   if (!editor) return unauthorized();
+  const accountId = familyEditorAccountId(editor);
   if (!(await limited(familyEditorKey(editor)))) return tooMany();
-  return (await removeShoppingItem((await ctx.params).id)) ? json({ ok: true }) : notFound();
+  return (await removeShoppingItem(accountId, (await ctx.params).id)) ? json({ ok: true }) : notFound();
 }

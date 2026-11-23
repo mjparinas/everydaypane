@@ -8,7 +8,9 @@ const name = z.string().trim().min(2).max(80);
 
 /** Towns and cities matching a name, for a widget centred on a place (the earth wind map). */
 export async function GET(req: Request) {
-  if (!(await adminFor(req))) return unauthorized();
+  const session = await adminFor(req);
+  if (!session) return unauthorized();
+  const accountId = session.accountId;
   const p = name.safeParse(new URL(req.url).searchParams.get("q"));
   if (!p.success) return json({ error: "Type a town or city" }, 400);
   try {

@@ -1,9 +1,11 @@
 import { loadConfig } from "@/server/config";
 import { json, unauthorized } from "@/server/http";
 import { photosFeed } from "@/server/photos";
-import { viewerFor } from "@/server/viewer";
+import { accountIdOf, viewerFor } from "@/server/viewer";
 
 export async function GET(req: Request) {
-  if (!(await viewerFor(req))) return unauthorized();
-  return json(await photosFeed((await loadConfig()).config));
+  const viewer = await viewerFor(req);
+  if (!viewer) return unauthorized();
+  const accountId = accountIdOf(viewer);
+  return json(await photosFeed(accountId, (await loadConfig(accountId)).config));
 }

@@ -9,12 +9,14 @@ export const maxDuration = 60;
 
 /** The transit widget's stop search: by stop number or name, or the stops nearest the dashboard with nothing typed. */
 export async function GET(req: Request) {
-  if (!(await adminFor(req))) return unauthorized();
+  const session = await adminFor(req);
+  if (!session) return unauthorized();
+  const accountId = session.accountId;
   const q = (new URL(req.url).searchParams.get("q") ?? "").slice(0, 60);
   const keySet = Boolean(env.translinkKey());
   try {
     const pack = await staticPack();
-    return json({ keySet, stops: findStops(pack, q, (await loadConfig()).config.location) });
+    return json({ keySet, stops: findStops(pack, q, (await loadConfig(accountId)).config.location) });
   } catch {
     return json({ keySet, stops: [], error: "TransLink's stop list didn't download. Try again in a minute." }, 502);
   }

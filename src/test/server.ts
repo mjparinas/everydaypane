@@ -1,5 +1,6 @@
 import { beforeEach, vi } from "vitest";
 
+import { resetAccountsForTests } from "@/server/accounts";
 import { finishSignIn, sessionCookie, startSignIn } from "@/server/auth";
 import { resetForTests } from "@/server/db";
 
@@ -7,6 +8,7 @@ import { resetForTests } from "@/server/db";
 export function useTestServer(envs: Record<string, string> = {}) {
   beforeEach(() => {
     resetForTests();
+    resetAccountsForTests();
     vi.unstubAllEnvs();
     vi.stubEnv("SESSION_SECRET", "test-session-secret-0123456789abcdef0123");
     vi.stubEnv("DATABASE_URL", "");

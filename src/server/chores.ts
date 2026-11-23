@@ -18,12 +18,15 @@ const KEEP_DAYS = 60;
 type Row = { date: string; chore_id: string; person_id: string; stars: number };
 
 /** Today's chart for the chores widget, in the dashboard's time zone. */
-export async function choreBoard(config: DashboardConfig, now = Date.now()): Promise<ChoresData> {
+export async function choreBoard(accountId: string, config: DashboardConfig, now = Date.now()): Promise<ChoresData> {
   const today = localDate(now, config.location.timeZone);
   const { people, items } = config.chores;
   const due = dueOn(people, items, today);
   const monday = weekStart(today);
-  const rows = await query<Row>("SELECT date, chore_id, person_id, stars FROM chores_done WHERE date >= ? AND date <= ?", [monday, today]);
+  const rows = await query<Row>(
+    "SELECT date, chore_id, person_id, stars FROM account_chores_done WHERE account_id = ? AND date >= ? AND date <= ?",
+    [accountId, monday, today],
+  );
   const stars = new Map<string, number>();
   for (const r of rows) stars.set(r.person_id, (stars.get(r.person_id) ?? 0) + Number(r.stars));
   const done = new Set(rows.filter((r) => r.date === today).map((r) => `${r.chore_id}|${r.person_id}`));
@@ -41,6 +44,7 @@ export async function choreBoard(config: DashboardConfig, now = Date.now()): Pro
  * and only when a chores widget that allows ticking shows that person.
  */
 export async function setChoreDone(
+  accountId: string,
   config: DashboardConfig,
   input: { chore: string; person: string; done: boolean },
   now = Date.now(),
@@ -56,13 +60,18 @@ export async function setChoreDone(
   if (!allowed || !chore || !isDue) return "forbidden";
   if (input.done) {
     await run(
-      `INSERT INTO chores_done (date, chore_id, person_id, stars, done_at) VALUES (?, ?, ?, ?, ?)
-       ON CONFLICT (date, chore_id, person_id) DO NOTHING`,
-      [today, chore.id, input.person, chore.stars, now],
+      `INSERT INTO account_chores_done (account_id, date, chore_id, person_id, stars, done_at) VALUES (?, ?, ?, ?, ?, ?)
+       ON CONFLICT (account_id, date, chore_id, person_id) DO NOTHING`,
+      [accountId, today, chore.id, input.person, chore.stars, now],
     );
-    await run("DELETE FROM chores_done WHERE date < ?", [addDays(today, -KEEP_DAYS)]);
+    await run("DELETE FROM account_chores_done WHERE account_id = ? AND date < ?", [accountId, addDays(today, -KEEP_DAYS)]);
   } else {
-    await run("DELETE FROM chores_done WHERE date = ? AND chore_id = ? AND person_id = ?", [today, chore.id, input.person]);
+    await run("DELETE FROM account_chores_done WHERE account_id = ? AND date = ? AND chore_id = ? AND person_id = ?", [
+      accountId,
+      today,
+      chore.id,
+      input.person,
+    ]);
   }
   return "ok";
 }

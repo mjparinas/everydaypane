@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { LEGACY_ACCOUNT_ID } from "@/server/accounts";
 
 import { DELETE, PATCH } from "@/app/api/family-events/[id]/route";
 import { GET, POST } from "@/app/api/family-events/route";
@@ -36,8 +37,8 @@ describe("family events", () => {
   });
 
   it("merges into the calendar feed as Family", async () => {
-    await createFamilyEvent({ ...event, createdBy: "kid@example.com" });
-    const feed = await combinedFeed(defaultConfig());
+    await createFamilyEvent(LEGACY_ACCOUNT_ID, { ...event, createdBy: "kid@example.com" });
+    const feed = await combinedFeed(LEGACY_ACCOUNT_ID, defaultConfig());
     const got = feed.data.events.find((e) => e.title === "Dentist");
     expect(got).toMatchObject({ calendar: FAMILY_CALENDAR, color: "#5b8def", allDay: true });
     expect(feed.connected).toBe(true);
@@ -46,7 +47,7 @@ describe("family events", () => {
   it("limits delete to the author or an admin", async () => {
     const kid = await cookieFor("kid@example.com");
     const admin = await cookieFor("admin@example.com");
-    const created = await createFamilyEvent({ ...event, title: "Soccer", createdBy: "admin@example.com" });
+    const created = await createFamilyEvent(LEGACY_ACCOUNT_ID, { ...event, title: "Soccer", createdBy: "admin@example.com" });
     expect(created).not.toBe("invalid");
     if (created === "invalid") return;
     expect((await DELETE(req("/", { method: "DELETE", headers: { cookie: kid } }), ctx(created.id))).status).toBe(403);
@@ -55,7 +56,7 @@ describe("family events", () => {
 
   it("can update an event", async () => {
     const kid = await cookieFor("kid@example.com");
-    const created = await createFamilyEvent({ ...event, createdBy: "kid@example.com" });
+    const created = await createFamilyEvent(LEGACY_ACCOUNT_ID, { ...event, createdBy: "kid@example.com" });
     if (created === "invalid") throw new Error("bad event");
     const r = await PATCH(
       req("/", {
@@ -66,7 +67,7 @@ describe("family events", () => {
       ctx(created.id),
     );
     expect(r.status).toBe(200);
-    const rows = await eventsInRange("2026-11-01", "2027-01-01");
+    const rows = await eventsInRange(LEGACY_ACCOUNT_ID, "2026-11-01", "2027-01-01");
     expect(rows[0]?.title).toBe("Dentist check-up");
     expect(toCalendar(created).id).toMatch(/^family:/);
   });

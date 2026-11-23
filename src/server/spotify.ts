@@ -13,17 +13,20 @@ const API = "https://api.spotify.com/v1";
 
 export class SpotifyError extends Error {}
 
-async function spotify(path: string, init: RequestInit = {}): Promise<Response> {
+async function spotify(accountId: string, path: string, init: RequestInit = {}): Promise<Response> {
   const send = async () =>
     fetch(`${API}${path}`, {
       ...init,
-      headers: { Authorization: `Bearer ${await musicToken("spotify")}`, ...(init.body ? { "Content-Type": "application/json" } : {}) },
+      headers: {
+        Authorization: `Bearer ${await musicToken(accountId, "spotify")}`,
+        ...(init.body ? { "Content-Type": "application/json" } : {}),
+      },
       signal: AbortSignal.timeout(8000),
     });
   let r = await send();
   if (r.status === 401) {
     // The access token can be cut short on Spotify's side; one fresh try.
-    dropMusicToken("spotify");
+    dropMusicToken(accountId, "spotify");
     r = await send();
   }
   if (r.ok) return r;
@@ -120,23 +123,27 @@ export function spotifyPlayer(p: RawPlayback | null, devices: RawDevice[], now: 
 // The speaker list changes rarely and costs a call, so it is kept for a minute.
 let deviceMemo: { at: number; devices: RawDevice[] } | null = null;
 
-async function devices(now: number, fresh = false): Promise<RawDevice[]> {
+async function devices(accountId: string, now: number, fresh = false): Promise<RawDevice[]> {
   if (!fresh && deviceMemo && now - deviceMemo.at < 60_000) return deviceMemo.devices;
-  const body = (await (await spotify("/me/player/devices")).json()) as { devices?: RawDevice[] };
+  const body = (await (await spotify(accountId, "/me/player/devices")).json()) as { devices?: RawDevice[] };
   const list = (body.devices ?? []).filter((d) => d.id && d.name).slice(0, 40);
   deviceMemo = { at: now, devices: list };
   return list;
 }
 
-async function playback(): Promise<RawPlayback | null> {
-  const r = await spotify("/me/player?additional_types=episode");
+async function playback(accountId: string): Promise<RawPlayback | null> {
+  const r = await spotify(accountId, "/me/player?additional_types=episode");
   // 204: nothing is playing anywhere.
   if (r.status === 204) return null;
   return (await r.json().catch(() => null)) as RawPlayback | null;
 }
 
-export async function spotifyFeed(withSources: boolean, now = Date.now()): Promise<{ entity: HaEntity; artUrl?: string }> {
-  const [p, d] = await Promise.all([playback(), withSources ? devices(now) : Promise.resolve([])]);
+export async function spotifyFeed(
+  accountId: string,
+  withSources: boolean,
+  now = Date.now(),
+): Promise<{ entity: HaEntity; artUrl?: string }> {
+  const [p, d] = await Promise.all([playback(accountId), withSources ? devices(accountId, now) : Promise.resolve([])]);
   return spotifyPlayer(p, d, now);
 }
 
@@ -144,20 +151,25 @@ export async function spotifyFeed(withSources: boolean, now = Date.now()): Promi
 
 export type MusicAction = "playPause" | "next" | "previous" | "volume" | "mute" | "unmute" | "source";
 
-export async function spotifyAct(action: MusicAction, value?: number, option?: string): Promise<"ok" | "forbidden"> {
+export async function spotifyAct(
+  accountId: string,
+  action: MusicAction,
+  value?: number,
+  option?: string,
+): Promise<"ok" | "forbidden"> {
   if (action === "playPause") {
-    const p = await playback();
-    await spotify(p?.is_playing ? "/me/player/pause" : "/me/player/play", { method: "PUT" });
-  } else if (action === "next") await spotify("/me/player/next", { method: "POST" });
-  else if (action === "previous") await spotify("/me/player/previous", { method: "POST" });
+    const p = await playback(accountId);
+    await spotify(accountId, p?.is_playing ? "/me/player/pause" : "/me/player/play", { method: "PUT" });
+  } else if (action === "next") await spotify(accountId, "/me/player/next", { method: "POST" });
+  else if (action === "previous") await spotify(accountId, "/me/player/previous", { method: "POST" });
   else if (action === "volume" && value !== undefined && Number.isFinite(value)) {
     const pct = Math.min(100, Math.max(0, Math.round(value)));
-    await spotify(`/me/player/volume?volume_percent=${pct}`, { method: "PUT" });
+    await spotify(accountId, `/me/player/volume?volume_percent=${pct}`, { method: "PUT" });
   } else if (action === "source" && option) {
     // By name, as the widget shows them; only a speaker the account lists.
-    const device = (await devices(Date.now(), true)).find((d) => d.name === option);
+    const device = (await devices(accountId, Date.now(), true)).find((d) => d.name === option);
     if (!device?.id) return "forbidden";
-    await spotify("/me/player", { method: "PUT", body: JSON.stringify({ device_ids: [device.id], play: true }) });
+    await spotify(accountId, "/me/player", { method: "PUT", body: JSON.stringify({ device_ids: [device.id], play: true }) });
   } else return "forbidden";
   return "ok";
 }

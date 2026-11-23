@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { LEGACY_ACCOUNT_ID } from "@/server/accounts";
 
 import { DELETE as adminDELETE, GET as adminGET } from "@/app/api/admin/music/route";
 import { GET as artGET } from "@/app/api/display/art/route";
@@ -144,7 +145,7 @@ describe("Art addresses", () => {
 
 describe("Music widgets", () => {
   it("still load when saved before the provider existed, as Home Assistant players", async () => {
-    const { config } = await loadConfig();
+    const { config } = await loadConfig(LEGACY_ACCOUNT_ID);
     const raw = structuredClone(config) as unknown as { views: { widgets: Record<string, unknown>[] }[] };
     raw.views[0]?.widgets.push({
       id: "old",
@@ -197,20 +198,20 @@ describe("Spotify and Sonos routes", () => {
     }) as const;
 
   async function setUp(): Promise<string> {
-    const stored = await loadConfig();
+    const stored = await loadConfig(LEGACY_ACCOUNT_ID);
     const config: DashboardConfig = structuredClone(stored.config);
     const view = config.views[0];
     if (!view) throw new Error("no view");
     view.widgets = [media("m1", "spotify"), media("m2", "sonos", "RINCON_KITCHEN", 4)];
-    expect((await saveConfig(config, stored.version)).ok).toBe(true);
+    expect((await saveConfig(LEGACY_ACCOUNT_ID, config, stored.version)).ok).toBe(true);
     expect(usedPlayers(config)).toEqual({
       spotify: true,
       sonos: new Set(["RINCON_KITCHEN"]),
       sources: new Set(["spotify", "RINCON_KITCHEN"]),
     });
-    await setSecret("spotify.refreshToken", "spotify-refresh");
-    await setSecret("sonos.refreshToken", "sonos-refresh");
-    return (await addDevice("Kitchen", null)).token;
+    await setSecret(LEGACY_ACCOUNT_ID, "spotify.refreshToken", "spotify-refresh");
+    await setSecret(LEGACY_ACCOUNT_ID, "sonos.refreshToken", "sonos-refresh");
+    return (await addDevice(LEGACY_ACCOUNT_ID, "Kitchen", null)).token;
   }
 
   interface Call {
@@ -290,13 +291,13 @@ describe("Spotify and Sonos routes", () => {
     expect(calls.find((c) => c.url.startsWith("https://api.spotify.com/"))?.auth).toBe("Bearer spotify-access");
     expect(calls.find((c) => c.url.startsWith("https://api.ws.sonos.com/"))?.auth).toBe("Bearer sonos-access");
     // Sonos gave a new refresh token; the old one can stop working.
-    expect(await getSecret("sonos.refreshToken")).toBe("sonos-refresh-2");
+    expect(await getSecret(LEGACY_ACCOUNT_ID, "sonos.refreshToken")).toBe("sonos-refresh-2");
     expect((await musicGET(req("/api/display/music/"))).status).toBe(401);
   });
 
   it("says a service isn't connected rather than failing the other", async () => {
     const token = await setUp();
-    await setSecret("sonos.refreshToken", null);
+    await setSecret(LEGACY_ACCOUNT_ID, "sonos.refreshToken", null);
     const calls: Call[] = [];
     upstream(calls, { "https://api.spotify.com/v1/me/player": () => new Response("{}", { status: 500 }) });
     const data = (await (await musicGET(req("/api/display/music/", { headers: { "x-display-token": token } }))).json()) as MusicData;
@@ -396,7 +397,7 @@ describe("Spotify and Sonos routes", () => {
       req(`/api/music/spotify/callback/?code=c&state=${state}`, { headers: { cookie: `${admin}; ep_music_state=${state}` } }),
     );
     expect(back.headers.get("location")).toBe("/admin/?spotify=connected#settings");
-    expect(await getSecret("spotify.refreshToken")).toBe("new-refresh");
+    expect(await getSecret(LEGACY_ACCOUNT_ID, "spotify.refreshToken")).toBe("new-refresh");
     expect(calls[0]?.auth).toBe(`Basic ${Buffer.from("spotify-id:spotify-secret").toString("base64")}`);
 
     const status = await (await adminGET(req("/api/admin/music/", { headers: { cookie: admin } }))).text();
@@ -409,7 +410,7 @@ describe("Spotify and Sonos routes", () => {
     expect((await adminDELETE(req("/api/admin/music/?service=spotify", { method: "DELETE", headers: { cookie: admin } }))).status).toBe(
       200,
     );
-    expect(await getSecret("spotify.refreshToken")).toBeNull();
+    expect(await getSecret(LEGACY_ACCOUNT_ID, "spotify.refreshToken")).toBeNull();
     const kid = await cookieFor("kid@example.com");
     expect((await connectGET(req("/api/music/spotify/connect/", { headers: { cookie: kid } }))).status).toBe(401);
   });

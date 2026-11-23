@@ -28,3 +28,7 @@ export function familyEditorKey(editor: FamilyEditor): string {
 export function familyEditorIsAdmin(editor: FamilyEditor): boolean {
   return editor.kind === "session" && editor.session.role === "admin";
 }
+
+export function familyEditorAccountId(editor: FamilyEditor): string {
+  return editor.kind === "session" ? editor.session.accountId : editor.device.accountId;
+}

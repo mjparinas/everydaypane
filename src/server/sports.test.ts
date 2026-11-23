@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { LEGACY_ACCOUNT_ID } from "@/server/accounts";
 
 import { GET as adminGET } from "@/app/api/admin/sports/route";
 import { GET as displayGET } from "@/app/api/display/sports/route";
@@ -209,9 +210,9 @@ describe("sports routes", () => {
 
   it("serves displays with a token only", async () => {
     stubEspn({ events: [] });
-    const stored = await loadConfig();
-    await saveConfig(following(stored.config), stored.version);
-    const { token } = await addDevice("Kitchen", null);
+    const stored = await loadConfig(LEGACY_ACCOUNT_ID);
+    await saveConfig(LEGACY_ACCOUNT_ID, following(stored.config), stored.version);
+    const { token } = await addDevice(LEGACY_ACCOUNT_ID, "Kitchen", null);
     const r = await displayGET(req("/api/display/sports/", { headers: { "x-display-token": token } }));
     expect(((await r.json()) as SportsData).teams.map((t) => t.name)).toEqual(["Vancouver Canucks"]);
     expect((await displayGET(req("/api/display/sports/"))).status).toBe(401);

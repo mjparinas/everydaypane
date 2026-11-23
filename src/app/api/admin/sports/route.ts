@@ -9,7 +9,9 @@ const league = z.enum(LEAGUE_IDS);
 
 /** Settings › Sports: the teams of a league, so the admin can pick which to follow. */
 export async function GET(req: Request) {
-  if (!(await adminFor(req))) return unauthorized();
+  const session = await adminFor(req);
+  if (!session) return unauthorized();
+  const accountId = session.accountId;
   const p = league.safeParse(new URL(req.url).searchParams.get("league"));
   if (!p.success) return json({ error: "Pick a league" }, 400);
   try {

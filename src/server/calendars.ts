@@ -17,15 +17,15 @@ export interface Feed {
   stale: boolean;
 }
 
-export async function combinedFeed(config: DashboardConfig, now = Date.now()): Promise<Feed> {
+export async function combinedFeed(accountId: string, config: DashboardConfig, now = Date.now()): Promise<Feed> {
   const links = config.integrations.icals.filter((l) => l.enabled);
   const { from, to } = feedRange(now, config.location.timeZone);
-  const family = await familyEvents(from, to);
+  const family = await familyEvents(accountId, from, to);
 
   let google: Awaited<ReturnType<typeof calendarFeed>> | null = null;
   let googleConnected = true;
   try {
-    google = await calendarFeed(config, now);
+    google = await calendarFeed(accountId, config, now);
   } catch (error) {
     if (error instanceof GoogleDisconnected) googleConnected = false;
     else if (!links.length && !family.length) throw error;
@@ -35,7 +35,7 @@ export async function combinedFeed(config: DashboardConfig, now = Date.now()): P
   if (!googleConnected && !links.length && !family.length)
     return { data: { updatedAt: now, from: "", to: "", events: [] }, connected: false, stale: false };
 
-  const results = await Promise.allSettled(links.map((l) => icalEvents(l, from, to, config.location.timeZone, now)));
+  const results = await Promise.allSettled(links.map((l) => icalEvents(accountId, l, from, to, config.location.timeZone, now)));
   const linked = results.flatMap((r, i) => {
     if (r.status === "fulfilled") return r.value;
     console.error(`[calendar] link ${links[i]?.id} failed`, r.reason);

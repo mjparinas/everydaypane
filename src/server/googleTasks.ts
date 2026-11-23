@@ -23,9 +23,9 @@ export class TasksNotAllowed extends Error {
   }
 }
 
-async function call(path: string, init: RequestInit = {}): Promise<unknown> {
-  if (!(await tasksGranted())) throw new TasksNotAllowed();
-  const token = await accessToken();
+async function call(accountId: string, path: string, init: RequestInit = {}): Promise<unknown> {
+  if (!(await tasksGranted(accountId))) throw new TasksNotAllowed();
+  const token = await accessToken(accountId);
   const r = await fetch(`${API}${path}`, {
     ...init,
     headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json", "User-Agent": "Everydaypane/1.0" },
@@ -54,8 +54,8 @@ export function trimLists(raw: unknown): GoogleTaskList[] {
   return listsSchema.parse(raw).items.map((l) => ({ id: l.id, name: (l.title || "Untitled list").slice(0, 120) }));
 }
 
-export async function listTaskLists(): Promise<GoogleTaskList[]> {
-  return trimLists(await call("/users/@me/lists?maxResults=100"));
+export async function listTaskLists(accountId: string): Promise<GoogleTaskList[]> {
+  return trimLists(await call(accountId, "/users/@me/lists?maxResults=100"));
 }
 
 // ---- Tasks ----
@@ -96,13 +96,13 @@ export function trimTasks(raw: unknown[]): TaskItem[] {
   return out;
 }
 
-async function tasksOf(listId: string): Promise<TaskItem[]> {
+async function tasksOf(accountId: string, listId: string): Promise<TaskItem[]> {
   const raw: unknown[] = [];
   let pageToken: string | undefined;
   for (let page = 0; page < 3; page++) {
     const q = new URLSearchParams({ showCompleted: "false", showHidden: "false", maxResults: "100" });
     if (pageToken) q.set("pageToken", pageToken);
-    const body = tasksSchema.parse(await call(`/lists/${encodeURIComponent(listId)}/tasks?${q}`));
+    const body = tasksSchema.parse(await call(accountId, `/lists/${encodeURIComponent(listId)}/tasks?${q}`));
     raw.push(...body.items);
     pageToken = body.nextPageToken;
     if (!pageToken) break;
@@ -111,16 +111,16 @@ async function tasksOf(listId: string): Promise<TaskItem[]> {
 }
 
 /** Every open task of the lists switched on in Settings, for all tasks widgets to share. */
-export async function tasksFeed(config: DashboardConfig, now = Date.now()): Promise<Cached<TasksData>> {
+export async function tasksFeed(accountId: string, config: DashboardConfig, now = Date.now()): Promise<Cached<TasksData>> {
   // Checked first, so a revoked connection shows as such instead of the last cached tasks living on forever.
-  if (!(await tasksGranted())) throw new TasksNotAllowed();
-  await accessToken(now);
+  if (!(await tasksGranted(accountId))) throw new TasksNotAllowed();
+  await accessToken(accountId, now);
   const lists = config.integrations.tasks.lists.filter((l) => l.enabled);
   return cached(
-    `tasks:${lists.map((l) => l.id).join(",")}`,
+    `tasks:${accountId}:${lists.map((l) => l.id).join(",")}`,
     TTL,
     async () => {
-      const tasks = await Promise.all(lists.map((l) => tasksOf(l.id)));
+      const tasks = await Promise.all(lists.map((l) => tasksOf(accountId, l.id)));
       return { updatedAt: now, connected: true, lists: lists.map((l, i) => ({ id: l.id, name: l.name, tasks: tasks[i] ?? [] })) };
     },
     now,
@@ -137,11 +137,16 @@ export function mayComplete(config: DashboardConfig, listId: string): boolean {
 }
 
 /** Marks a task done in Google Tasks. A task Google no longer has is refused, and the cached list is dropped. */
-export async function completeTask(config: DashboardConfig, listId: string, taskId: string): Promise<"ok" | "forbidden"> {
+export async function completeTask(
+  accountId: string,
+  config: DashboardConfig,
+  listId: string,
+  taskId: string,
+): Promise<"ok" | "forbidden"> {
   if (!mayComplete(config, listId)) return "forbidden";
   const path = `/lists/${encodeURIComponent(listId)}/tasks/${encodeURIComponent(taskId)}`;
   try {
-    await call(path);
+    await call(accountId, path);
   } catch (error) {
     if (error instanceof Error && error.message.endsWith("answered 404")) {
       await forget("tasks:");
@@ -149,7 +154,7 @@ export async function completeTask(config: DashboardConfig, listId: string, task
     }
     throw error;
   }
-  await call(path, {
+  await call(accountId, path, {
     method: "PATCH",
     body: JSON.stringify({ status: "completed" }),
   });

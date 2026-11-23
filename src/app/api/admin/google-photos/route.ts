@@ -17,11 +17,13 @@ const fail = (error: unknown) =>
     : json({ error: error instanceof Error ? error.message : "Google Photos didn't answer" }, 502);
 
 export async function GET(req: Request) {
-  if (!(await adminFor(req))) return unauthorized();
+  const session = await adminFor(req);
+  if (!session) return unauthorized();
+  const accountId = session.accountId;
   const id = new URL(req.url).searchParams.get("session");
-  if (!id) return json({ allowed: await photosGranted(), storage: blobConfigured() });
+  if (!id) return json({ allowed: await photosGranted(accountId), storage: blobConfigured() });
   try {
-    const s = await getSession(id);
+    const s = await getSession(accountId, id);
     return json({ ready: s.ready, pollMs: s.pollMs });
   } catch (error) {
     return fail(error);
@@ -35,20 +37,22 @@ const body = z.union([
 
 export async function POST(req: Request) {
   if (!sameOrigin(req)) return json({ error: "Not allowed" }, 403);
-  if (!(await adminFor(req))) return unauthorized();
+  const session = await adminFor(req);
+  if (!session) return unauthorized();
+  const accountId = session.accountId;
   const parsed = body.safeParse(await readJson(req, 4000).catch(() => null));
   if (!parsed.success) return json({ error: "Bad request" }, 400);
   try {
     if ("start" in parsed.data) {
-      const s = await createSession();
+      const s = await createSession(accountId);
       return json({ session: s.id, pickerUri: s.pickerUri, pollMs: s.pollMs });
     }
     const { source, session, page } = parsed.data;
-    const { config } = await loadConfig();
+    const { config } = await loadConfig(accountId);
     if (!config.integrations.photos.sources.some((s) => s.id === source && s.kind === "library"))
       return json({ error: "Save the album first, then pick photos for it." }, 404);
     if (!blobConfigured()) return json({ error: "Photo storage isn't set up (BLOB_READ_WRITE_TOKEN)" }, 503);
-    return json(await importPage(source, session, page));
+    return json(await importPage(accountId, source, session, page));
   } catch (error) {
     return fail(error);
   }
@@ -56,8 +60,10 @@ export async function POST(req: Request) {
 
 export async function DELETE(req: Request) {
   if (!sameOrigin(req)) return json({ error: "Not allowed" }, 403);
-  if (!(await adminFor(req))) return unauthorized();
+  const session = await adminFor(req);
+  if (!session) return unauthorized();
+  const accountId = session.accountId;
   const id = new URL(req.url).searchParams.get("session") ?? "";
-  if (id) await deleteSession(id).catch(() => undefined);
+  if (id) await deleteSession(accountId, id).catch(() => undefined);
   return json({ ok: true });
 }

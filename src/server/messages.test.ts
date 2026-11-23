@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { LEGACY_ACCOUNT_ID } from "@/server/accounts";
 
 import { GET as displayGET } from "@/app/api/display/messages/route";
 import { DELETE, PATCH } from "@/app/api/messages/[id]/route";
@@ -47,41 +48,41 @@ describe("message board", () => {
     expect((await PATCH(req("/", { method: "PATCH", body: '{"pinned":true}', headers: { cookie: admin } }), ctx(message.id))).status).toBe(
       200,
     );
-    expect((await listMessages())[0]?.pinned).toBe(true);
+    expect((await listMessages(LEGACY_ACCOUNT_ID, ))[0]?.pinned).toBe(true);
     expect((await DELETE(req("/", { method: "DELETE", headers: { cookie: admin } }), ctx(message.id))).status).toBe(200);
-    expect(await listMessages()).toEqual([]);
+    expect(await listMessages(LEGACY_ACCOUNT_ID, )).toEqual([]);
   });
 
   it("lets any signed-in person delete a legacy note with no posted_by", async () => {
     const kid = await cookieFor("kid@example.com");
-    await postMessage({ author: "Mom", text: "Old note", colour: "yellow", expiresInHours: null, postedBy: "admin@example.com" });
+    await postMessage(LEGACY_ACCOUNT_ID, { author: "Mom", text: "Old note", colour: "yellow", expiresInHours: null, postedBy: "admin@example.com" });
     const [row] = await query<{ id: string }>("SELECT id FROM messages WHERE text = 'Old note'");
     await query("UPDATE messages SET posted_by = NULL WHERE id = ?", [row!.id]);
     expect((await DELETE(req("/", { method: "DELETE", headers: { cookie: kid } }), ctx(row!.id))).status).toBe(200);
-    expect(await listMessages()).toEqual([]);
+    expect(await listMessages(LEGACY_ACCOUNT_ID, )).toEqual([]);
   });
 
   it("puts pinned notes first, then the newest, and drops expired ones", async () => {
     const t = 1_800_000_000_000;
     const base = { colour: "blue" as const, postedBy: "kid@example.com" };
-    await postMessage({ ...base, author: "A", text: "old", expiresInHours: null }, t);
-    await postMessage({ ...base, author: "B", text: "short-lived", expiresInHours: 1 }, t + 1000);
-    await postMessage({ ...base, author: "C", text: "new", expiresInHours: null }, t + 2000);
+    await postMessage(LEGACY_ACCOUNT_ID, { ...base, author: "A", text: "old", expiresInHours: null }, t);
+    await postMessage(LEGACY_ACCOUNT_ID, { ...base, author: "B", text: "short-lived", expiresInHours: 1 }, t + 1000);
+    await postMessage(LEGACY_ACCOUNT_ID, { ...base, author: "C", text: "new", expiresInHours: null }, t + 2000);
     const [old] = await query<{ id: string }>("SELECT id FROM messages WHERE text = 'old'");
     await query("UPDATE messages SET pinned = 1 WHERE id = ?", [old!.id]);
-    expect((await listMessages(50, t + 3000)).map((m) => m.text)).toEqual(["old", "new", "short-lived"]);
-    expect((await listMessages(50, t + 2 * 3_600_000)).map((m) => m.text)).toEqual(["old", "new"]);
+    expect((await listMessages(LEGACY_ACCOUNT_ID, 50, t + 3000)).map((m) => m.text)).toEqual(["old", "new", "short-lived"]);
+    expect((await listMessages(LEGACY_ACCOUNT_ID, 50, t + 2 * 3_600_000)).map((m) => m.text)).toEqual(["old", "new"]);
   });
 
   it("gives displays the board with an ETag, and 304 when nothing changed", async () => {
-    await postMessage({ author: "Dad", text: "Pizza night", colour: "pink", expiresInHours: null, postedBy: "admin@example.com" });
-    const { token } = await addDevice("Kitchen", null);
+    await postMessage(LEGACY_ACCOUNT_ID, { author: "Dad", text: "Pizza night", colour: "pink", expiresInHours: null, postedBy: "admin@example.com" });
+    const { token } = await addDevice(LEGACY_ACCOUNT_ID, "Kitchen", null);
     const first = await displayGET(req("/api/display/messages/", { headers: { "x-display-token": token } }));
     const body = (await first.json()) as { messages: { text: string }[] };
     expect(body.messages.map((m) => m.text)).toEqual(["Pizza night"]);
     expect(JSON.stringify(body)).not.toContain("postedBy");
     const tag = first.headers.get("etag")!;
-    expect(tag).toBe(boardTag(await listMessages(20)));
+    expect(tag).toBe(boardTag(await listMessages(LEGACY_ACCOUNT_ID, 20)));
     const again = await displayGET(req("/api/display/messages/", { headers: { "x-display-token": token, "if-none-match": tag } }));
     expect(again.status).toBe(304);
     expect((await displayGET(req("/api/display/messages/"))).status).toBe(401);

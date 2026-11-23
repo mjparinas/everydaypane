@@ -61,7 +61,7 @@ function describe(error: unknown): string {
   return error instanceof Error ? error.message.slice(0, 120) : "No answer";
 }
 
-export async function musicFeed(config: DashboardConfig, now = Date.now()): Promise<MusicData> {
+export async function musicFeed(accountId: string, config: DashboardConfig, now = Date.now()): Promise<MusicData> {
   const used = usedPlayers(config);
   const key = `${used.spotify}|${[...used.sonos].sort().join(",")}|${[...used.sources].sort().join(",")}`;
   if (memo && memo.key === key && now - memo.at < 3500) return memo.data;
@@ -79,7 +79,7 @@ export async function musicFeed(config: DashboardConfig, now = Date.now()): Prom
   };
   // One service failing never hides the other.
   const load = async (service: MusicService, read: () => Promise<void>) => {
-    if (!(await musicConnected(service))) return void (services[service] = { connected: false });
+    if (!(await musicConnected(accountId, service))) return void (services[service] = { connected: false });
     try {
       await read();
       services[service] = { connected: true };
@@ -90,10 +90,10 @@ export async function musicFeed(config: DashboardConfig, now = Date.now()): Prom
     }
   };
   await Promise.all([
-    used.spotify ? load("spotify", async () => keep("spotify", await spotifyFeed(used.sources.has("spotify"), now))) : null,
+    used.spotify ? load("spotify", async () => keep("spotify", await spotifyFeed(accountId, used.sources.has("spotify"), now))) : null,
     used.sonos.size
       ? load("sonos", async () => {
-          for (const p of await sonosFeed([...used.sonos], used.sources, now)) keep(p.key, p);
+          for (const p of await sonosFeed(accountId, [...used.sonos], used.sources, now)) keep(p.key, p);
         })
       : null,
   ]);
@@ -106,6 +106,7 @@ export async function musicFeed(config: DashboardConfig, now = Date.now()): Prom
 
 /** A tap on a display, for a player a widget shows. */
 export async function musicAct(
+  accountId: string,
   config: DashboardConfig,
   player: string,
   action: MusicAction,
@@ -114,19 +115,20 @@ export async function musicAct(
 ): Promise<"ok" | "forbidden"> {
   const used = usedPlayers(config);
   let result: "ok" | "forbidden" = "forbidden";
-  if (player === "spotify" && used.spotify) result = await spotifyAct(action, value, option);
-  else if (player.startsWith("sonos:") && used.sonos.has(player.slice(6))) result = await sonosAct(player.slice(6), action, value, option);
+  if (player === "spotify" && used.spotify) result = await spotifyAct(accountId, action, value, option);
+  else if (player.startsWith("sonos:") && used.sonos.has(player.slice(6)))
+    result = await sonosAct(accountId, player.slice(6), action, value, option);
   if (result === "ok") memo = null;
   return result;
 }
 
 /** A direct player's album art, by the hash the feed gave out. Only addresses the feed itself read. */
-export async function musicArt(config: DashboardConfig, player: string, hash: string): Promise<Response | null> {
+export async function musicArt(accountId: string, config: DashboardConfig, player: string, hash: string): Promise<Response | null> {
   if (!PLAYER_KEY.test(player) || !/^[0-9a-f]{16}$/.test(hash)) return null;
   let url = memo?.art.get(`${player}|${hash}`);
   if (!url) {
     // A fresh server instance hasn't read the feed yet.
-    await musicFeed(config);
+    await musicFeed(accountId, config);
     url = memo?.art.get(`${player}|${hash}`);
   }
   if (!url) return null;

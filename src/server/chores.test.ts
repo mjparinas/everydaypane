@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { LEGACY_ACCOUNT_ID } from "@/server/accounts";
 
 import { GET, POST } from "@/app/api/display/chores/route";
 import { defaultConfig } from "@/lib/config/defaults";
@@ -47,7 +48,7 @@ describe("choreBoard", () => {
   useTestServer();
 
   it("lists only today's chores, who has them, and nothing done yet", async () => {
-    const board = await choreBoard(withChores(), WED);
+    const board = await choreBoard(LEGACY_ACCOUNT_ID, withChores(), WED);
     expect(board.today).toBe("2026-11-18");
     expect(board.chores.map((c) => c.id)).toEqual(["bed", "dishes"]);
     expect(board.due).toEqual([
@@ -63,38 +64,38 @@ describe("choreBoard", () => {
 
   it("counts the stars ticked off this week and starts again on Monday", async () => {
     const config = withChores();
-    expect(await setChoreDone(config, { chore: "dishes", person: "ana", done: true }, WED)).toBe("ok");
-    expect(await setChoreDone(config, { chore: "bed", person: "ana", done: true }, WED)).toBe("ok");
-    expect(await setChoreDone(config, { chore: "bed", person: "ana", done: true }, THU)).toBe("ok");
-    const wed = await choreBoard(config, WED);
+    expect(await setChoreDone(LEGACY_ACCOUNT_ID, config, { chore: "dishes", person: "ana", done: true }, WED)).toBe("ok");
+    expect(await setChoreDone(LEGACY_ACCOUNT_ID, config, { chore: "bed", person: "ana", done: true }, WED)).toBe("ok");
+    expect(await setChoreDone(LEGACY_ACCOUNT_ID, config, { chore: "bed", person: "ana", done: true }, THU)).toBe("ok");
+    const wed = await choreBoard(LEGACY_ACCOUNT_ID, config, WED);
     expect(wed.due.find((d) => d.choreId === "dishes")?.done).toBe(true);
     expect(wed.people.find((p) => p.id === "ana")?.stars).toBe(4);
-    expect((await choreBoard(config, THU)).people.find((p) => p.id === "ana")?.stars).toBe(5);
-    expect((await choreBoard(config, NEXT_MON)).people.find((p) => p.id === "ana")?.stars).toBe(0);
+    expect((await choreBoard(LEGACY_ACCOUNT_ID, config, THU)).people.find((p) => p.id === "ana")?.stars).toBe(5);
+    expect((await choreBoard(LEGACY_ACCOUNT_ID, config, NEXT_MON)).people.find((p) => p.id === "ana")?.stars).toBe(0);
   });
 
   it("keeps the stars a chore was worth when it was done", async () => {
     const config = withChores();
-    await setChoreDone(config, { chore: "dishes", person: "ana", done: true }, WED);
+    await setChoreDone(LEGACY_ACCOUNT_ID, config, { chore: "dishes", person: "ana", done: true }, WED);
     const dishes = config.chores.items.find((i) => i.id === "dishes");
     if (dishes) dishes.stars = 1;
-    expect((await choreBoard(config, WED)).people.find((p) => p.id === "ana")?.stars).toBe(3);
+    expect((await choreBoard(LEGACY_ACCOUNT_ID, config, WED)).people.find((p) => p.id === "ana")?.stars).toBe(3);
   });
 
   it("takes a tick back", async () => {
     const config = withChores();
-    await setChoreDone(config, { chore: "bed", person: "ben", done: true }, WED);
-    await setChoreDone(config, { chore: "bed", person: "ben", done: false }, WED);
-    const board = await choreBoard(config, WED);
+    await setChoreDone(LEGACY_ACCOUNT_ID, config, { chore: "bed", person: "ben", done: true }, WED);
+    await setChoreDone(LEGACY_ACCOUNT_ID, config, { chore: "bed", person: "ben", done: false }, WED);
+    const board = await choreBoard(LEGACY_ACCOUNT_ID, config, WED);
     expect(board.due.find((d) => d.personId === "ben")?.done).toBe(false);
     expect(board.people.find((p) => p.id === "ben")?.stars).toBe(0);
   });
 
   it("counts a chore once however many times it is tapped", async () => {
     const config = withChores();
-    await setChoreDone(config, { chore: "bed", person: "ben", done: true }, WED);
-    await setChoreDone(config, { chore: "bed", person: "ben", done: true }, WED + 1000);
-    expect((await choreBoard(config, WED)).people.find((p) => p.id === "ben")?.stars).toBe(1);
+    await setChoreDone(LEGACY_ACCOUNT_ID, config, { chore: "bed", person: "ben", done: true }, WED);
+    await setChoreDone(LEGACY_ACCOUNT_ID, config, { chore: "bed", person: "ben", done: true }, WED + 1000);
+    expect((await choreBoard(LEGACY_ACCOUNT_ID, config, WED)).people.find((p) => p.id === "ben")?.stars).toBe(1);
   });
 });
 
@@ -103,18 +104,18 @@ describe("setChoreDone", () => {
 
   it("refuses a chore that isn't that person's today", async () => {
     const config = withChores();
-    expect(await setChoreDone(config, { chore: "dishes", person: "ben", done: true }, WED)).toBe("forbidden"); // Ana's turn
-    expect(await setChoreDone(config, { chore: "lawn", person: "ben", done: true }, WED)).toBe("forbidden"); // Saturdays
-    expect(await setChoreDone(config, { chore: "nope", person: "ben", done: true }, WED)).toBe("forbidden");
+    expect(await setChoreDone(LEGACY_ACCOUNT_ID, config, { chore: "dishes", person: "ben", done: true }, WED)).toBe("forbidden"); // Ana's turn
+    expect(await setChoreDone(LEGACY_ACCOUNT_ID, config, { chore: "lawn", person: "ben", done: true }, WED)).toBe("forbidden"); // Saturdays
+    expect(await setChoreDone(LEGACY_ACCOUNT_ID, config, { chore: "nope", person: "ben", done: true }, WED)).toBe("forbidden");
   });
 
   it("refuses when no chores widget allows ticking, or none shows that person", async () => {
-    expect(await setChoreDone(withChores(false), { chore: "bed", person: "ana", done: true }, WED)).toBe("forbidden");
+    expect(await setChoreDone(LEGACY_ACCOUNT_ID, withChores(false), { chore: "bed", person: "ana", done: true }, WED)).toBe("forbidden");
     const config = withChores();
     const w = config.views[0]?.widgets.find((x) => x.type === "chores");
     if (w?.type === "chores") w.personIds = ["ben"];
-    expect(await setChoreDone(config, { chore: "bed", person: "ana", done: true }, WED)).toBe("forbidden");
-    expect(await setChoreDone(config, { chore: "bed", person: "ben", done: true }, WED)).toBe("ok");
+    expect(await setChoreDone(LEGACY_ACCOUNT_ID, config, { chore: "bed", person: "ana", done: true }, WED)).toBe("forbidden");
+    expect(await setChoreDone(LEGACY_ACCOUNT_ID, config, { chore: "bed", person: "ben", done: true }, WED)).toBe("ok");
   });
 });
 
@@ -122,10 +123,10 @@ describe("/api/display/chores/", () => {
   useTestServer();
 
   async function setUp() {
-    const stored = await loadConfig();
-    const saved = await saveConfig(withChores(), stored.version);
+    const stored = await loadConfig(LEGACY_ACCOUNT_ID);
+    const saved = await saveConfig(LEGACY_ACCOUNT_ID, withChores(), stored.version);
     expect(saved.ok).toBe(true);
-    return (await addDevice("Kitchen", null)).token;
+    return (await addDevice(LEGACY_ACCOUNT_ID, "Kitchen", null)).token;
   }
 
   it("needs a display or a signed-in person", async () => {

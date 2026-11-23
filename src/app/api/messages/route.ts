@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 import { rateLimit } from "@/server/db";
-import { familyEditorFor, familyEditorIsAdmin, familyEditorKey } from "@/server/familyAuth";
+import { familyEditorAccountId, familyEditorFor, familyEditorIsAdmin, familyEditorKey } from "@/server/familyAuth";
 import { json, readJson, sameOrigin, unauthorized } from "@/server/http";
 import { listMessages, MESSAGE_COLOURS, postMessage, type Message } from "@/server/messages";
 
@@ -16,9 +16,10 @@ const forPerson = (m: Message, actor: string, admin: boolean) => {
 export async function GET(req: Request) {
   const editor = await familyEditorFor(req);
   if (!editor) return unauthorized();
+  const accountId = familyEditorAccountId(editor);
   const actor = familyEditorKey(editor);
   const admin = familyEditorIsAdmin(editor);
-  return json({ messages: (await listMessages(100)).map((m) => forPerson(m, actor, admin)), admin });
+  return json({ messages: (await listMessages(accountId, 100)).map((m) => forPerson(m, actor, admin)), admin });
 }
 
 const body = z.object({
@@ -37,10 +38,11 @@ export async function POST(req: Request) {
   if (!sameOrigin(req)) return json({ error: "Not allowed" }, 403);
   const editor = await familyEditorFor(req);
   if (!editor) return unauthorized();
+  const accountId = familyEditorAccountId(editor);
   const actor = familyEditorKey(editor);
   if (!(await rateLimit(`message:${actor}`, 30, 60 * 60_000))) return json({ error: "That's a lot of notes. Try again later." }, 429);
   const parsed = body.safeParse(await readJson(req, 4_000).catch(() => null));
   if (!parsed.success) return json({ error: parsed.error.issues[0]?.message ?? "Bad request" }, 400);
-  const m = await postMessage({ ...parsed.data, postedBy: actor });
+  const m = await postMessage(accountId, { ...parsed.data, postedBy: actor });
   return json({ message: forPerson(m, actor, familyEditorIsAdmin(editor)) }, 201);
 }

@@ -19,34 +19,41 @@ type Row = { date: string; slot: string; text: string };
 const isSlot = (s: string): s is MealSlot => (MEAL_SLOTS as readonly string[]).includes(s);
 
 /** The plan for each day from `from` for `days` days (local dates). Days with nothing planned are left out. */
-export async function mealsBetween(from: string, days: number): Promise<Record<string, DayMeals>> {
-  const rows = await query<Row>("SELECT date, slot, text FROM meals WHERE date >= ? AND date < ? ORDER BY date", [
-    from,
-    addDays(from, days),
-  ]);
+export async function mealsBetween(accountId: string, from: string, days: number): Promise<Record<string, DayMeals>> {
+  const rows = await query<Row>(
+    "SELECT date, slot, text FROM account_meals WHERE account_id = ? AND date >= ? AND date < ? ORDER BY date",
+    [accountId, from, addDays(from, days)],
+  );
   const plan: Record<string, DayMeals> = {};
   for (const r of rows) if (isSlot(r.slot)) (plan[r.date] ??= {})[r.slot] = r.text;
   return plan;
 }
 
 /** Sets one meal; empty text clears it. */
-export async function setMeal(input: { date: string; slot: MealSlot; text: string; by: string }, now = Date.now()): Promise<void> {
+export async function setMeal(
+  accountId: string,
+  input: { date: string; slot: MealSlot; text: string; by: string },
+  now = Date.now(),
+): Promise<void> {
   const text = input.text.trim();
   if (!text) {
-    await run("DELETE FROM meals WHERE date = ? AND slot = ?", [input.date, input.slot]);
+    await run("DELETE FROM account_meals WHERE account_id = ? AND date = ? AND slot = ?", [accountId, input.date, input.slot]);
     return;
   }
   await run(
-    `INSERT INTO meals (date, slot, text, updated_at, updated_by) VALUES (?, ?, ?, ?, ?)
-     ON CONFLICT (date, slot) DO UPDATE SET text = excluded.text, updated_at = excluded.updated_at, updated_by = excluded.updated_by`,
-    [input.date, input.slot, text, now, input.by],
+    `INSERT INTO account_meals (account_id, date, slot, text, updated_at, updated_by) VALUES (?, ?, ?, ?, ?, ?)
+     ON CONFLICT (account_id, date, slot) DO UPDATE SET text = excluded.text, updated_at = excluded.updated_at, updated_by = excluded.updated_by`,
+    [accountId, input.date, input.slot, text, now, input.by],
   );
-  await run("DELETE FROM meals WHERE date < ?", [addDays(input.date, -KEEP_DAYS)]);
+  await run("DELETE FROM account_meals WHERE account_id = ? AND date < ?", [accountId, addDays(input.date, -KEEP_DAYS)]);
 }
 
 /** Meals planned lately, most recent first, for the planner's suggestions ("Tacos" again on Tuesday). */
-export async function recentMeals(limit = 60): Promise<string[]> {
-  const rows = await query<{ text: string }>("SELECT text FROM meals GROUP BY text ORDER BY MAX(updated_at) DESC LIMIT ?", [limit]);
+export async function recentMeals(accountId: string, limit = 60): Promise<string[]> {
+  const rows = await query<{ text: string }>(
+    "SELECT text FROM account_meals WHERE account_id = ? GROUP BY text ORDER BY MAX(updated_at) DESC LIMIT ?",
+    [accountId, limit],
+  );
   return rows.map((r) => r.text);
 }
 

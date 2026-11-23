@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { LEGACY_ACCOUNT_ID } from "@/server/accounts";
 
 import { GET as adminGET } from "@/app/api/admin/garbage/route";
 import { GET as displayGET } from "@/app/api/display/garbage/route";
@@ -119,12 +120,12 @@ describe("garbage pickup routes", () => {
         return Promise.resolve(new Response("unexpected", { status: 500 }));
       }),
     );
-    const stored = await loadConfig();
+    const stored = await loadConfig(LEGACY_ACCOUNT_ID);
     const config = structuredClone(stored.config);
     config.integrations.garbage.zoneId = "zone-z5503";
-    await saveConfig(config, stored.version);
+    await saveConfig(LEGACY_ACCOUNT_ID, config, stored.version);
 
-    const { token } = await addDevice("Kitchen", null);
+    const { token } = await addDevice(LEGACY_ACCOUNT_ID, "Kitchen", null);
     const r = await displayGET(req("/api/display/garbage/", { headers: { "x-display-token": token } }));
     const data = (await r.json()) as GarbageData;
     expect(data.configured).toBe(true);

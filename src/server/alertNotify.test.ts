@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
+import { LEGACY_ACCOUNT_ID } from "@/server/accounts";
 
 import { defaultConfig } from "@/lib/config/defaults";
 import type { EmergencyAlert } from "@/lib/display/types";
@@ -24,7 +25,7 @@ describe("alert email notify", () => {
   it("skips when notifyEmail is off", async () => {
     const send = vi.spyOn(mail, "sendEmail");
     const c = defaultConfig();
-    await notifyNewStripAlerts(c, [alert]);
+    await notifyNewStripAlerts(LEGACY_ACCOUNT_ID, c, [alert]);
     expect(send).not.toHaveBeenCalled();
     send.mockRestore();
   });
@@ -34,10 +35,10 @@ describe("alert email notify", () => {
     const c = defaultConfig();
     c.alerts.notifyEmail = true;
     c.alerts.banner = "moderate";
-    await notifyNewStripAlerts(c, [alert]);
+    await notifyNewStripAlerts(LEGACY_ACCOUNT_ID, c, [alert]);
     expect(send).toHaveBeenCalledTimes(2);
-    expect(await alreadyNotified(alert.id)).toBe(true);
-    await notifyNewStripAlerts(c, [alert]);
+    expect(await alreadyNotified(LEGACY_ACCOUNT_ID, alert.id)).toBe(true);
+    await notifyNewStripAlerts(LEGACY_ACCOUNT_ID, c, [alert]);
     expect(send).toHaveBeenCalledTimes(2);
     send.mockRestore();
   });
@@ -47,14 +48,14 @@ describe("alert email notify", () => {
     const c = defaultConfig();
     c.alerts.notifyEmail = true;
     c.alerts.banner = "extreme";
-    await notifyNewStripAlerts(c, [{ ...alert, severity: "minor" }]);
+    await notifyNewStripAlerts(LEGACY_ACCOUNT_ID, c, [{ ...alert, severity: "minor" }]);
     expect(send).not.toHaveBeenCalled();
     send.mockRestore();
   });
 
   it("tracks notification ids", async () => {
-    await markNotified("x", 100);
-    expect(await alreadyNotified("x")).toBe(true);
-    expect(await alreadyNotified("y")).toBe(false);
+    await markNotified(LEGACY_ACCOUNT_ID, "x", 100);
+    expect(await alreadyNotified(LEGACY_ACCOUNT_ID, "x")).toBe(true);
+    expect(await alreadyNotified(LEGACY_ACCOUNT_ID, "y")).toBe(false);
   });
 });

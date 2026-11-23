@@ -50,31 +50,27 @@ const toMessage = (r: Row): Message => ({
 export const MAX_MESSAGES = 200;
 
 /** Notes that haven't expired: pinned ones first, then newest first. */
-export async function listMessages(limit = 50, now = Date.now()): Promise<Message[]> {
+export async function listMessages(accountId: string, limit = 50, now = Date.now()): Promise<Message[]> {
   const rows = await query<Row>(
-    "SELECT * FROM messages WHERE expires_at IS NULL OR expires_at > ? ORDER BY pinned DESC, created_at DESC LIMIT ?",
-    [now, Math.min(Math.max(1, limit), MAX_MESSAGES)],
+    "SELECT * FROM messages WHERE account_id = ? AND (expires_at IS NULL OR expires_at > ?) ORDER BY pinned DESC, created_at DESC LIMIT ?",
+    [accountId, now, Math.min(Math.max(1, limit), MAX_MESSAGES)],
   );
   return rows.map(toMessage);
 }
 
 export async function postMessage(
+  accountId: string,
   input: { author: string; text: string; colour: MessageColour; expiresInHours: number | null; postedBy: string },
   now = Date.now(),
 ): Promise<Message> {
   const id = randomToken(9);
   const expiresAt = input.expiresInHours ? now + input.expiresInHours * 3_600_000 : null;
-  await run("INSERT INTO messages (id, author, text, colour, pinned, created_at, expires_at, posted_by) VALUES (?, ?, ?, ?, 0, ?, ?, ?)", [
-    id,
-    input.author,
-    input.text,
-    input.colour,
-    now,
-    expiresAt,
-    input.postedBy,
-  ]);
+  await run(
+    "INSERT INTO messages (id, account_id, author, text, colour, pinned, created_at, expires_at, posted_by) VALUES (?, ?, ?, ?, ?, 0, ?, ?, ?)",
+    [id, accountId, input.author, input.text, input.colour, now, expiresAt, input.postedBy],
+  );
   // Expired notes are cleared out as new ones arrive, so the table stays small without a cron job.
-  await run("DELETE FROM messages WHERE expires_at IS NOT NULL AND expires_at <= ?", [now]);
+  await run("DELETE FROM messages WHERE account_id = ? AND expires_at IS NOT NULL AND expires_at <= ?", [accountId, now]);
   return {
     id,
     author: input.author,
@@ -88,18 +84,22 @@ export async function postMessage(
 }
 
 /** Deletes a note: its author may, and so may an admin. */
-export async function removeMessage(id: string, by: { email: string; admin: boolean }): Promise<"ok" | "not-found" | "forbidden"> {
-  const rows = await query<Row>("SELECT * FROM messages WHERE id = ?", [id]);
+export async function removeMessage(
+  accountId: string,
+  id: string,
+  by: { email: string; admin: boolean },
+): Promise<"ok" | "not-found" | "forbidden"> {
+  const rows = await query<Row>("SELECT * FROM messages WHERE account_id = ? AND id = ?", [accountId, id]);
   const row = rows[0];
   if (!row) return "not-found";
   // A note from before authors were recorded (posted_by null) can be deleted by anyone in the family.
   if (!by.admin && row.posted_by !== null && row.posted_by !== by.email) return "forbidden";
-  await run("DELETE FROM messages WHERE id = ?", [id]);
+  await run("DELETE FROM messages WHERE account_id = ? AND id = ?", [accountId, id]);
   return "ok";
 }
 
-export async function pinMessage(id: string, pinned: boolean): Promise<boolean> {
-  return (await run("UPDATE messages SET pinned = ? WHERE id = ?", [pinned ? 1 : 0, id])) === 1;
+export async function pinMessage(accountId: string, id: string, pinned: boolean): Promise<boolean> {
+  return (await run("UPDATE messages SET pinned = ? WHERE account_id = ? AND id = ?", [pinned ? 1 : 0, accountId, id])) === 1;
 }
 
 /** What a display shows: no emails, no expiry times. */

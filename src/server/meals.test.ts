@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
+import { LEGACY_ACCOUNT_ID } from "@/server/accounts";
 
 import { GET as displayGET } from "@/app/api/display/meals/route";
 import { GET, PUT } from "@/app/api/meals/route";
@@ -27,7 +28,7 @@ describe("meal plan", () => {
     expect(body.recent).toEqual(expect.arrayContaining(["Spaghetti", "Soup", "Oatmeal"]));
     expect(body.recent).not.toContain("Tacos");
     expect((await put(kid, { date: "2026-11-18", slot: "lunch", text: "" })).status).toBe(200);
-    expect(await mealsBetween("2026-11-18", 1)).toEqual({});
+    expect(await mealsBetween(LEGACY_ACCOUNT_ID, "2026-11-18", 1)).toEqual({});
   });
 
   it("refuses people who aren't signed in, unknown meals and bad dates", async () => {
@@ -42,18 +43,18 @@ describe("meal plan", () => {
   });
 
   it("clears plans more than two months old as new ones are written", async () => {
-    await setMeal({ date: "2026-09-01", slot: "dinner", text: "Old stew", by: "kid@example.com" });
-    await setMeal({ date: "2026-11-17", slot: "dinner", text: "Tacos", by: "kid@example.com" });
-    expect((await query<{ date: string }>("SELECT date FROM meals")).map((r) => r.date)).toEqual(["2026-11-17"]);
-    expect(await recentMeals()).toEqual(["Tacos"]);
+    await setMeal(LEGACY_ACCOUNT_ID, { date: "2026-09-01", slot: "dinner", text: "Old stew", by: "kid@example.com" });
+    await setMeal(LEGACY_ACCOUNT_ID, { date: "2026-11-17", slot: "dinner", text: "Tacos", by: "kid@example.com" });
+    expect((await query<{ date: string }>("SELECT date FROM account_meals")).map((r) => r.date)).toEqual(["2026-11-17"]);
+    expect(await recentMeals(LEGACY_ACCOUNT_ID)).toEqual(["Tacos"]);
   });
 
   it("gives displays the plan from today with an ETag, and 304 when nothing changed", async () => {
     vi.useFakeTimers({ now: new Date("2026-11-17T20:00:00Z"), toFake: ["Date"] });
     try {
-      await setMeal({ date: "2026-11-17", slot: "dinner", text: "Tacos", by: "admin@example.com" });
-      await setMeal({ date: "2026-11-16", slot: "dinner", text: "Yesterday's pizza", by: "admin@example.com" });
-      const { token } = await addDevice("Kitchen", null);
+      await setMeal(LEGACY_ACCOUNT_ID, { date: "2026-11-17", slot: "dinner", text: "Tacos", by: "admin@example.com" });
+      await setMeal(LEGACY_ACCOUNT_ID, { date: "2026-11-16", slot: "dinner", text: "Yesterday's pizza", by: "admin@example.com" });
+      const { token } = await addDevice(LEGACY_ACCOUNT_ID, "Kitchen", null);
       const first = await displayGET(req("/api/display/meals/", { headers: { "x-display-token": token } }));
       const body = await first.json();
       expect(body).toEqual({ today: "2026-11-17", meals: { "2026-11-17": { dinner: "Tacos" } } });
@@ -61,7 +62,7 @@ describe("meal plan", () => {
       const tag = first.headers.get("etag")!;
       const again = await displayGET(req("/api/display/meals/", { headers: { "x-display-token": token, "if-none-match": tag } }));
       expect(again.status).toBe(304);
-      await setMeal({ date: "2026-11-17", slot: "dinner", text: "Burgers", by: "admin@example.com" });
+      await setMeal(LEGACY_ACCOUNT_ID, { date: "2026-11-17", slot: "dinner", text: "Burgers", by: "admin@example.com" });
       const changed = await displayGET(req("/api/display/meals/", { headers: { "x-display-token": token, "if-none-match": tag } }));
       expect(changed.status).toBe(200);
       expect((await displayGET(req("/api/display/meals/"))).status).toBe(401);
