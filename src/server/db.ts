@@ -45,6 +45,19 @@ const MIGRATIONS = [
   `CREATE TABLE IF NOT EXISTS chore_redemptions (id TEXT PRIMARY KEY, account_id TEXT NOT NULL, person_id TEXT NOT NULL, reward_id TEXT NOT NULL, stars_cost INTEGER NOT NULL, redeemed_at INTEGER NOT NULL)`,
   `CREATE INDEX IF NOT EXISTS chore_redemptions_by_week ON chore_redemptions (account_id, person_id, redeemed_at)`,
   `CREATE TABLE IF NOT EXISTS account_alert_notified (account_id TEXT NOT NULL, id TEXT NOT NULL, sent_at INTEGER NOT NULL, PRIMARY KEY (account_id, id))`,
+  // Phone QR sign-in for displays without an email app (Melvin, 2026-11-23; Tuned-style code + poll).
+  `CREATE TABLE IF NOT EXISTS device_sign_ins (
+    code_hash TEXT PRIMARY KEY,
+    poll_secret_hash TEXT NOT NULL,
+    expires_at INTEGER NOT NULL,
+    email TEXT,
+    account_id TEXT,
+    role TEXT,
+    handoff_hash TEXT,
+    handoff_sealed TEXT,
+    approved_at INTEGER,
+    claimed_at INTEGER
+  )`,
 ];
 
 // Columns added after a table was first created. SQLite has no ADD COLUMN IF NOT EXISTS, so each one runs on its own

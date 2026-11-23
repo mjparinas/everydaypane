@@ -10,14 +10,14 @@ function safeNext(raw: string | null): string | null {
   return raw;
 }
 
-export function SignInForm() {
+export function SignInForm({ next: forcedNext }: { next?: string } = {}) {
   const [email, setEmail] = useState("");
   const [state, setState] = useState<{ kind: "idle" | "sending" | "sent" | "error"; message?: string }>({ kind: "idle" });
 
   useEffect(() => {
-    const next = safeNext(new URLSearchParams(window.location.search).get("next"));
+    const next = safeNext(forcedNext ?? new URLSearchParams(window.location.search).get("next"));
     if (next) sessionStorage.setItem(NEXT_KEY, next);
-  }, []);
+  }, [forcedNext]);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
