@@ -1,0 +1,10 @@
+{
+  "updatedAt": 1763937720000,
+  "items": [
+    { "title": "B.C. keeps clocks on permanent daylight time", "link": "https://example.com/a", "feed": "CBC" },
+    { "title": "Langley Township opens new community centre wing", "link": "https://example.com/b", "feed": "CBC" },
+    { "title": "TransLink adds evening trips on the 502", "link": "https://example.com/c", "feed": "CBC" },
+    { "title": "Canucks host the Leafs at Rogers Arena tonight", "link": "https://example.com/d", "feed": "CBC" },
+    { "title": "Environment Canada watches for overnight rain", "link": "https://example.com/e", "feed": "CBC" }
+  ]
+}

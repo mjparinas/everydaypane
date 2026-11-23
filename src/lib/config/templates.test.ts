@@ -55,7 +55,18 @@ describe("view templates", () => {
 
   it("keeps the shared sample feeds and photos the screenshot script needs", () => {
     const feeds = join(process.cwd(), "scripts", "template-samples");
-    for (const name of ["calendar.json", "weather.json", "photos.json", "messages.json", "meals.json", "chores.json"]) {
+    for (const name of [
+      "calendar.json",
+      "weather.json",
+      "photos.json",
+      "messages.json",
+      "meals.json",
+      "chores.json",
+      "packages.json",
+      "stocks.json",
+      "whiteboard.json",
+      "menus.json",
+    ]) {
       expect(existsSync(join(feeds, name)), `missing sample feed ${name}`).toBe(true);
     }
     const photos = join(process.cwd(), "public", "templates", "samples");

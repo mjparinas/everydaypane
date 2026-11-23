@@ -1,0 +1,11 @@
+{
+  "updatedAt": 1763937720000,
+  "temp": 8.1,
+  "humidity": 79,
+  "wind": 11,
+  "gust": 20,
+  "rainRate": 0.2,
+  "rainToday": 1.6,
+  "observedAt": "2026-11-23T15:40:00-07:00",
+  "units": { "temp": "°C", "wind": "km/h", "rain": "mm" }
+}

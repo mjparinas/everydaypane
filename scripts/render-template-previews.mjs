@@ -1,4 +1,4 @@
-// Renders PNG screenshot previews for each starter template into public/templates/.
+// Renders PNG screenshot previews for each starter template and every widget type.
 // Uses the real display bundle + sample feeds (scripts/template-samples/), not a CSS mock.
 // Usage: npm run templates:previews
 import { spawnSync } from "node:child_process";
@@ -12,14 +12,18 @@ import qrcode from "qrcode-generator";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const outDir = join(root, "public", "templates");
+const widgetOutDir = join(root, "public", "features", "widgets");
 const samplesDir = join(outDir, "samples");
 const bundled = join(root, "node_modules", ".cache", "template-preview-data.mjs");
 // Gallery thumbs: sharp enough for the Views picker without multi‑MB photo PNGs.
 const WIDTH = 1280;
 const HEIGHT = 720;
+/** Pixels per grid cell for single-widget marketing samples. */
+const CELL = 160;
 
 mkdirSync(dirname(bundled), { recursive: true });
 mkdirSync(outDir, { recursive: true });
+mkdirSync(widgetOutDir, { recursive: true });
 
 // Display assets (JS/CSS/fonts) must be current.
 const built = spawnSync(process.execPath, ["scripts/build-display.mjs"], { cwd: root, encoding: "utf8" });
@@ -38,7 +42,7 @@ await esbuild.build({
   logLevel: "silent",
 });
 
-const { FIXED_NOW, SAMPLE_FEEDS, TEMPLATE_PREVIEWS, displayShell } = await import(pathToFileURL(bundled).href);
+const { FIXED_NOW, SAMPLE_FEEDS, TEMPLATE_PREVIEWS, WIDGET_PREVIEWS, displayShell } = await import(pathToFileURL(bundled).href);
 
 const MIME = {
   ".html": "text/html; charset=utf-8",
@@ -76,6 +80,9 @@ function feedFor(pathname) {
   if (key.startsWith("quotes")) return SAMPLE_FEEDS.quotes;
   if (key.startsWith("dad-joke"))
     return { updatedAt: FIXED_NOW, joke: "Why did the scarecrow win an award? He was outstanding in his field." };
+  if (key.startsWith("rss")) return SAMPLE_FEEDS.rss;
+  if (key.startsWith("trello")) return SAMPLE_FEEDS.trello;
+  if (key.startsWith("slack")) return SAMPLE_FEEDS.slack;
   return SAMPLE_FEEDS[key] ?? null;
 }
 
@@ -91,7 +98,7 @@ function serveStatic(urlPath, res) {
   res.end(readFileSync(file));
 }
 
-const previews = new Map(TEMPLATE_PREVIEWS.map((t) => [t.id, t]));
+const previews = new Map([...TEMPLATE_PREVIEWS, ...WIDGET_PREVIEWS].map((t) => [t.id, t]));
 
 const server = createServer((req, res) => {
   const url = new URL(req.url ?? "/", "http://127.0.0.1");
@@ -161,9 +168,15 @@ const server = createServer((req, res) => {
 
   if (pathname.startsWith("/api/display/qr")) {
     const view = searchParams.get("view");
+    const widgetId = searchParams.get("w");
     const t = previews.get(view ?? "");
-    const wifi = t?.payload.views[0]?.widgets.find((w) => w.type === "wifiQr");
-    const text = wifi ? `WIFI:T:${wifi.encryption};S:${wifi.ssid};P:${wifi.password};;` : "WIFI:T:WPA;S:ParinasHome;P:welcome-friends;;";
+    const widget = t?.payload.views[0]?.widgets.find((w) => w.id === widgetId) ?? t?.payload.views[0]?.widgets.find((w) => w.type === "wifiQr" || w.type === "editQr");
+    let text = "WIFI:T:WPA;S:ParinasHome;P:welcome-friends;;";
+    if (widget?.type === "wifiQr") {
+      text = `WIFI:T:${widget.encryption};S:${widget.ssid};P:${widget.password};;`;
+    } else if (widget?.type === "editQr") {
+      text = "https://www.everydaypane.com/d/sampletok/edit/";
+    }
     res.writeHead(200, { "Content-Type": "image/svg+xml", "Cache-Control": "no-store" });
     res.end(qrSvg(text));
     return;
@@ -211,12 +224,19 @@ const page = await browser.newPage({
   deviceScaleFactor: 1,
 });
 
-// Earth is framed from earth.nullschool.net; serve a local stand-in so CI needs no outbound net.
+// Framed third-party sites: serve a local stand-in so CI needs no outbound net.
 await page.route("**/*nullschool.net/**", async (route) => {
   route.fulfill({
     status: 200,
     contentType: "text/html",
     body: readSample("earth.html"),
+  });
+});
+await page.route(/tradingview\.com|youtube\.com|youtu\.be|vimeo\.com|google\.com\/maps|maps\.google\.|instagram\.com/, async (route) => {
+  route.fulfill({
+    status: 200,
+    contentType: "text/html",
+    body: readSample("embed.html"),
   });
 });
 
@@ -230,23 +250,39 @@ await page.addInitScript(() => {
   };
 });
 
-for (const t of TEMPLATE_PREVIEWS) {
-  await page.goto(`${base}/preview/${t.id}/`, { waitUntil: "networkidle" });
+async function settlePreview(payload) {
   await page.clock.setFixedTime(FIXED_NOW);
   await page.waitForSelector(".stage .cell", { timeout: 15_000 });
-  // Let feeds paint (photos, calendar grid, radar tiles, HA tiles).
+  // Hide the admin preview Day/Night chip so marketing and template thumbs stay clean.
+  await page.addStyleTag({ content: ".preview-mode{display:none!important}" });
   await page.waitForTimeout(1800);
-  // Prefer a painted photo when the template has one.
-  if (t.payload.views[0]?.widgets.some((w) => w.type === "photos")) {
+  if (payload.views[0]?.widgets.some((w) => w.type === "photos")) {
     await page
       .waitForFunction(() => [...document.querySelectorAll(".ph-img.on")].some((img) => img.naturalWidth > 0), null, {
         timeout: 8_000,
       })
       .catch(() => undefined);
   }
+}
+
+for (const t of TEMPLATE_PREVIEWS) {
+  await page.setViewportSize({ width: WIDTH, height: HEIGHT });
+  await page.goto(`${base}/preview/${t.id}/`, { waitUntil: "networkidle" });
+  await settlePreview(t.payload);
   const file = join(outDir, `${t.id}.png`);
   await page.screenshot({ path: file, type: "png" });
   console.log(`wrote public/templates/${t.id}.png`);
+}
+
+for (const t of WIDGET_PREVIEWS) {
+  const width = Math.max(CELL * t.cols, 280);
+  const height = Math.max(CELL * t.rows, 200);
+  await page.setViewportSize({ width, height });
+  await page.goto(`${base}/preview/${t.id}/`, { waitUntil: "networkidle" });
+  await settlePreview(t.payload);
+  const file = join(widgetOutDir, `${t.type}.png`);
+  await page.screenshot({ path: file, type: "png" });
+  console.log(`wrote public/features/widgets/${t.type}.png`);
 }
 
 writeFileSync(
@@ -258,6 +294,15 @@ writeFileSync(
   ) + "\n",
 );
 
+writeFileSync(
+  join(widgetOutDir, "manifest.json"),
+  JSON.stringify(
+    WIDGET_PREVIEWS.map((t) => ({ type: t.type, name: t.name, file: `${t.type}.png` })),
+    null,
+    2,
+  ) + "\n",
+);
+
 await browser.close();
 server.close();
-console.log(`Rendered ${TEMPLATE_PREVIEWS.length} template previews with real widgets.`);
+console.log(`Rendered ${TEMPLATE_PREVIEWS.length} template previews and ${WIDGET_PREVIEWS.length} widget samples.`);
