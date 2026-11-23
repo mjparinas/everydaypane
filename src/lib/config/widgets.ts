@@ -177,11 +177,27 @@ export const WIDGETS: { [T in WidgetType]: WidgetInfo<T> } = {
   },
   tasks: {
     label: "Tasks",
-    description: "To-do lists from Google Tasks",
+    description: "Google Tasks, Microsoft To Do or Todoist",
     icon: "✅",
     size: { w: 4, h: 4 },
     minSize: { w: 2, h: 2 },
-    defaults: () => ({ listIds: [], count: 8, showDue: true, allowCheck: true }),
+    defaults: () => ({ provider: "google" as const, listIds: [], count: 8, showDue: true, allowCheck: true }),
+  },
+  packages: {
+    label: "Packages",
+    description: "Track UPS, FedEx, Canada Post and USPS",
+    icon: "📦",
+    size: { w: 4, h: 3 },
+    minSize: { w: 2, h: 2 },
+    defaults: () => ({ packages: [], count: 6, showDelivered: false }),
+  },
+  tides: {
+    label: "Tides",
+    description: "Next high and low tides at a station",
+    icon: "🌊",
+    size: { w: 3, h: 3 },
+    minSize: { w: 2, h: 2 },
+    defaults: () => ({ stationId: "iwls:8320", stationName: "Point Atkinson", count: 4, showHeight: true }),
   },
   transit: {
     label: "TransLink",
@@ -350,7 +366,11 @@ export const WIDGET_TYPES = Object.keys(WIDGETS) as WidgetType[];
 export const WIDGET_GROUPS: { id: string; label: string; types: WidgetType[] }[] = [
   { id: "time", label: "Time", types: ["clock", "date", "sunTimes", "timer", "pomodoro"] },
   { id: "weather", label: "Weather & map", types: ["weather", "airQuality", "radar", "earth"] },
-  { id: "calendar", label: "Calendar", types: ["agenda", "calendarMonth", "calendarWeek", "calendarUpNext", "countdown", "tasks"] },
+  {
+    id: "calendar",
+    label: "Calendar",
+    types: ["agenda", "calendarMonth", "calendarWeek", "calendarUpNext", "countdown", "tasks", "packages", "tides"],
+  },
   { id: "family", label: "Family", types: ["meals", "shopping", "messages", "chores", "whiteboard", "school", "presence"] },
   { id: "home", label: "Home", types: ["haEntity", "camera", "media", "wifiQr", "editQr", "garbage", "commute", "transit", "ferries"] },
   { id: "media", label: "Outside", types: ["photos", "sports", "alerts", "note"] },

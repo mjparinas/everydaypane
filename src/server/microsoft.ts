@@ -14,7 +14,9 @@ import { getSecret, setSecret } from "./secrets";
 // Microsoft 365 calendars (Melvin, 2026-11-23): read-only OAuth through Microsoft Graph, merged into the same
 // display feed as Google Calendar and iCal links.
 
-const SCOPE = "offline_access Calendars.Read";
+const BASE_SCOPES = ["offline_access", "Calendars.Read"];
+export const FILES_SCOPE = "Files.Read";
+export const TODO_SCOPE = "Tasks.ReadWrite";
 const GRAPH = "https://graph.microsoft.com/v1.0";
 const TTL = 5 * 60_000;
 export const STATE_COOKIE = "ep_microsoft_state";
@@ -31,12 +33,13 @@ function authBase() {
 
 export const redirectUri = (origin: string) => `${env.siteUrl() || origin}/api/microsoft/callback/`;
 
-export function consentUrl(state: string, redirect: string): string {
+export function consentUrl(state: string, redirect: string, extra: { files?: boolean; todo?: boolean } = {}): string {
+  const scopes = [...BASE_SCOPES, ...(extra.files ? [FILES_SCOPE] : []), ...(extra.todo ? [TODO_SCOPE] : [])];
   const p = new URLSearchParams({
     client_id: env.microsoftClientId(),
     redirect_uri: redirect,
     response_type: "code",
-    scope: SCOPE,
+    scope: scopes.join(" "),
     response_mode: "query",
     state,
   });
@@ -86,8 +89,10 @@ export async function connect(accountId: string, code: string, redirect: string,
   const t = await tokenRequest({ grant_type: "authorization_code", code, redirect_uri: redirect });
   if (!t.refresh_token) throw new Error("Microsoft didn't send a refresh token");
   await setSecret(accountId, "microsoft.refreshToken", t.refresh_token, now);
+  if (t.scope) await setSecret(accountId, "microsoft.scopes", t.scope, now);
   access.set(accountId, { token: t.access_token, expiresAt: now + (t.expires_in - 60) * 1000, refresh: t.refresh_token });
   await forget("calendar:");
+  await forget("tasks:");
 }
 
 export async function disconnect(accountId: string): Promise<void> {
@@ -96,7 +101,7 @@ export async function disconnect(accountId: string): Promise<void> {
   await forget("calendar:");
 }
 
-async function accessToken(accountId: string, now = Date.now()): Promise<string> {
+export async function accessToken(accountId: string, now = Date.now()): Promise<string> {
   const refresh = await getSecret(accountId, "microsoft.refreshToken");
   if (!refresh) throw new MicrosoftDisconnected();
   const held = access.get(accountId);

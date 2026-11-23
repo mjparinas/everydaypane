@@ -18,11 +18,20 @@ export function dueLabel(due: string, today: string): { text: string; overdue: b
   return { text: dayLabel(due, today), overdue: false };
 }
 
+function providerLists(data: TasksData, provider: "google" | "microsoft" | "todoist") {
+  return provider === "microsoft" ? data.microsoft : provider === "todoist" ? data.todoist : data.google;
+}
+
 /** The lists a widget shows (none picked means all) and their tasks, cut to `count` in all. */
-export function shownLists(data: TasksData, listIds: string[], count: number): { id: string; name: string; tasks: TaskItem[] }[] {
+export function shownLists(
+  data: TasksData,
+  provider: "google" | "microsoft" | "todoist",
+  listIds: string[],
+  count: number,
+): { id: string; name: string; tasks: TaskItem[] }[] {
   let left = count;
-  return data.lists
-    .filter((l) => listIds.length === 0 || listIds.includes(l.id))
+  return providerLists(data, provider)
+    .lists.filter((l) => listIds.length === 0 || listIds.includes(l.id))
     .map((l) => {
       const tasks = l.tasks.slice(0, Math.max(0, left));
       left -= tasks.length;
@@ -59,7 +68,7 @@ export const tasks: Mount<"tasks"> = (el, w, ctx) => {
       listId,
       timer: window.setTimeout(() => {
         pending.delete(taskId);
-        void send("tasks", { list: listId, task: taskId }).then((ok) => {
+        void send("tasks", { provider: w.provider, list: listId, task: taskId }).then((ok) => {
           if (ok) {
             done.add(taskId);
             refresh("tasks");
@@ -91,14 +100,37 @@ export const tasks: Mount<"tasks"> = (el, w, ctx) => {
 
   function draw(now: Date, force = false) {
     if (!data) return;
-    if (!data.connected) return fill(root, h("div", { class: "w-empty" }, "Connect Google Tasks under Settings in the admin panel."));
+    const feed = providerLists(data, w.provider);
+    if (!feed.connected) {
+      const hint =
+        w.provider === "microsoft"
+          ? "Connect Microsoft To Do under Settings."
+          : w.provider === "todoist"
+            ? "Connect Todoist under Settings."
+            : "Connect Google Tasks under Settings.";
+      return fill(root, h("div", { class: "w-empty" }, hint));
+    }
     const today = localDate(now.getTime(), ctx.timeZone);
     const sig = `${data.updatedAt}|${today}`;
     if (!force && sig === drawn) return;
     drawn = sig;
-    const visible = { ...data, lists: data.lists.map((l) => ({ ...l, tasks: l.tasks.filter((t) => !done.has(t.id)) })) };
-    const lists = shownLists(visible, w.listIds, w.count);
-    if (!lists.length) return fill(root, h("div", { class: "w-empty" }, "Pick task lists under Settings › Google Tasks."));
+    const visible: TasksData = {
+      ...data,
+      google:
+        w.provider === "google"
+          ? { ...feed, lists: feed.lists.map((l) => ({ ...l, tasks: l.tasks.filter((t) => !done.has(t.id)) })) }
+          : data.google,
+      microsoft:
+        w.provider === "microsoft"
+          ? { ...feed, lists: feed.lists.map((l) => ({ ...l, tasks: l.tasks.filter((t) => !done.has(t.id)) })) }
+          : data.microsoft,
+      todoist:
+        w.provider === "todoist"
+          ? { ...feed, lists: feed.lists.map((l) => ({ ...l, tasks: l.tasks.filter((t) => !done.has(t.id)) })) }
+          : data.todoist,
+    };
+    const lists = shownLists(visible, w.provider, w.listIds, w.count);
+    if (!lists.length) return fill(root, h("div", { class: "w-empty" }, "Pick task lists under Settings."));
     const several = lists.length > 1;
     const empty = lists.every((l) => l.tasks.length === 0);
     fill(
@@ -127,7 +159,7 @@ export const tasks: Mount<"tasks"> = (el, w, ctx) => {
   const stopFeed = subscribe<TasksData>("tasks", TASKS_EVERY, (d) => {
     data = d;
     // Forget ticks the feed has caught up with.
-    const ids = new Set(d.lists.flatMap((l) => l.tasks.map((t) => t.id)));
+    const ids = new Set(providerLists(d, w.provider).lists.flatMap((l) => l.tasks.map((t) => t.id)));
     for (const id of done) if (!ids.has(id)) done.delete(id);
     draw(new Date(), true);
   });
@@ -139,7 +171,7 @@ export const tasks: Mount<"tasks"> = (el, w, ctx) => {
     // A tick still in its undo window would otherwise vanish with the widget (a view change) and never reach Google.
     for (const [taskId, { listId, timer }] of pending) {
       window.clearTimeout(timer);
-      void send("tasks", { list: listId, task: taskId });
+      void send("tasks", { provider: w.provider, list: listId, task: taskId });
     }
     pending.clear();
     window.clearTimeout(messageTimer);

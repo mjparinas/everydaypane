@@ -18,8 +18,15 @@ export type SecretKey =
   | "spotify.refreshToken"
   | "sonos.refreshToken"
   | "microsoft.refreshToken"
+  | "microsoft.scopes"
+  | "todoist.refreshToken"
+  | "dropbox.refreshToken"
+  | "box.refreshToken"
+  | "flickr.refreshToken"
+  | "smugmug.refreshToken"
   | "chores.pin"
-  | `ical.${string}`;
+  | `ical.${string}`
+  | `immich.${string}`;
 
 export async function getSecret(accountId: string, k: SecretKey): Promise<string | null> {
   await ensureAccountsSeeded();
@@ -56,6 +63,12 @@ export async function secretsSet(accountId: string): Promise<Record<SecretKey, b
     "spotify.refreshToken": set.has("spotify.refreshToken"),
     "sonos.refreshToken": set.has("sonos.refreshToken"),
     "microsoft.refreshToken": set.has("microsoft.refreshToken"),
+    "microsoft.scopes": set.has("microsoft.scopes"),
+    "todoist.refreshToken": set.has("todoist.refreshToken"),
+    "dropbox.refreshToken": set.has("dropbox.refreshToken"),
+    "box.refreshToken": set.has("box.refreshToken"),
+    "flickr.refreshToken": set.has("flickr.refreshToken"),
+    "smugmug.refreshToken": set.has("smugmug.refreshToken"),
     "chores.pin": set.has("chores.pin"),
   };
 }

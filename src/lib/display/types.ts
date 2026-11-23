@@ -111,11 +111,57 @@ export interface TaskItem {
   sub?: boolean;
 }
 
+export type TaskProvider = "google" | "microsoft" | "todoist";
+
+export interface TaskListFeed {
+  id: string;
+  name: string;
+  provider: TaskProvider;
+  tasks: TaskItem[];
+}
+
 export interface TasksData {
   updatedAt: number;
-  /** False until an admin connects Google Tasks in the admin panel. */
-  connected: boolean;
-  lists: { id: string; name: string; tasks: TaskItem[] }[];
+  google: { connected: boolean; lists: { id: string; name: string; tasks: TaskItem[] }[] };
+  microsoft: { connected: boolean; lists: { id: string; name: string; tasks: TaskItem[] }[] };
+  todoist: { connected: boolean; lists: { id: string; name: string; tasks: TaskItem[] }[] };
+}
+
+export type PackageCarrier = "ups" | "fedex" | "canadaPost" | "usps" | "other";
+
+export type PackageStatus = "unknown" | "preTransit" | "inTransit" | "outForDelivery" | "delivered" | "exception";
+
+export interface PackageTrack {
+  id: string;
+  carrier: PackageCarrier;
+  trackingNumber: string;
+  label?: string;
+  status: PackageStatus;
+  summary: string;
+  eta?: string;
+  updatedAt?: number;
+}
+
+export interface PackagesData {
+  updatedAt: number;
+  /** False when PACKAGE_TRACK_API_KEY is not set; numbers still show. */
+  trackingConfigured: boolean;
+  packages: PackageTrack[];
+}
+
+export interface TideEvent {
+  time: string;
+  type: "high" | "low";
+  height?: number;
+}
+
+export interface TidesData {
+  updatedAt: number;
+  stationId: string;
+  stationName: string;
+  events: TideEvent[];
+  units: "m" | "ft";
+  byStation?: Record<string, TideEvent[]>;
 }
 
 export type BinKind = "garbage" | "recycling" | "organics" | "glass" | "other";

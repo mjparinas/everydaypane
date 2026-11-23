@@ -14,7 +14,7 @@ for widgets). Don't suggest anything listed there as new; if an idea extends som
 and what it adds. Every pull request that adds a widget, an integration or a display behaviour updates this list in the
 same change, and moves it out of **In progress** when it merges.
 
-## What already exists (checked against the code, 2026-11-22)
+## What already exists (checked against the code, 2026-11-23)
 
 **Widgets** (`widgetSchema`, drawn by `src/display/widgets/`):
 
@@ -33,7 +33,7 @@ same change, and moves it out of **In progress** when it merges.
 | Week calendar (`calendarWeek`) | One week in a grid, optional weekends | Same calendar feed |
 | Up next (`calendarUpNext`) | The next event large, with a short following list | Same calendar feed |
 | Garbage day (`garbage`) | Next pickups, 1 to 8 weeks | Township of Langley (Recycle Coach) |
-| Photos (`photos`) | Slideshow, cover or contain, captions | Amazon shared albums, Amazon people, URL lists, photo library (uploads and Google Photos picks) |
+| Photos (`photos`) | Slideshow, cover or contain, captions | Amazon shared albums, Amazon people, URL lists, photo library (uploads and Google Photos picks), Bing picture of the day, Reddit, weather-linked albums, Immich, Dropbox, OneDrive, Box, Flickr, SmugMug, iCloud published links (`docs/icloud-photos.md`) |
 | Home Assistant tile (`haEntity`) | Toggle, light, sensor, climate, cover, lock (lock only), button | Home Assistant |
 | Camera (`camera`) | UniFi Protect snapshot on a timer | Home Assistant |
 | Music (`media`) | Now playing, play/pause, skip, volume, sources | Home Assistant, Spotify or Sonos |
@@ -47,7 +47,9 @@ same change, and moves it out of **In progress** when it merges.
 | Alerts (`alerts`) | Current emergency alerts, optional "all clear" | See alerts below |
 | Chore chart (`chores`) | Today's chores, **tap to tick off**, stars this week, optional **star rewards** and **child PIN** (uncheck/redeem) | Settings document + `chores_done` + `chore_redemptions` |
 | Sports scores (`sports`) | Live score, last result and next game for followed teams (NHL, NBA, WNBA, NFL, MLB, MLS, Premier League, Champions League) | ESPN public site API |
-| To-dos (`tasks`) | Open Google Tasks; **tap to tick off, synced back to Google** (`allowCheck`, 4 s undo) | Google Tasks |
+| To-dos (`tasks`) | Open tasks from **Google Tasks, Microsoft To Do or Todoist** (`provider`); **tap to tick off** (`allowCheck`, 4 s undo) | Unified `/api/display/tasks/` feed |
+| Packages (`packages`) | UPS, FedEx, Canada Post, USPS tracking numbers on the widget; live status when `PACKAGE_TRACK_API_KEY` is set | Optional 17track-style API (`src/server/packages.ts`) |
+| Tides (`tides`) | Next highs and lows at a station; optional height | NOAA (US) + Canadian IWLS (`docs/tides.md`) |
 | TransLink departures (`transit`) | Next buses from up to six picked stops, live times, route filter, walk-minutes cutoff | TransLink GTFS-realtime |
 | Commute time (`commute`) | Drive times with live traffic from home to up to six places, "leave by" time | TomTom Routing API |
 | Rain radar (`radar`) | Animated radar over a map around home: the past 30 min to 3 h, then up to 3 h of forecast; rain or snow, five map areas, still or looping | Environment Canada (MSC GeoMet), Esri grey canvas map |
@@ -85,9 +87,9 @@ kind of drawer for name, grid, gap, edge, tile and theme so the preview stays vi
 place instead of remounting the whole stage. View previews can force day or night with `?mode=`, and a quiet Day/Night
 control on the preview swaps without reloading.
 
-**Integrations connected from Settings:** Google Calendar, Microsoft 365 calendars (OAuth), Google Tasks, Google Photos (Picker), iCal calendar links (with iCloud publish steps in Settings and `docs/icloud-calendar.md`),
-Amazon Photos, the photo library (Vercel Blob), Home Assistant (Cloudflare Tunnel + Access), Spotify, Sonos, garbage
-zone lookup, sports teams to follow, TransLink, commute places (TomTom geocoding).
+**Integrations connected from Settings:** Google Calendar, Microsoft 365 calendars and **To Do** (OAuth, `?todo=1` / `?files=1`), Google Tasks, **Todoist**, Google Photos (Picker), iCal calendar links (with iCloud publish steps in Settings and `docs/icloud-calendar.md`),
+Amazon Photos, **photo sources** (Bing, Reddit, weather albums, Immich API keys, Dropbox/Box/SmugMug OAuth, OneDrive via Microsoft, Flickr API key, iCloud published URLs), the photo library (Vercel Blob), Home Assistant (Cloudflare Tunnel + Access), Spotify, Sonos, garbage
+zone lookup, sports teams to follow, TransLink, commute places (TomTom geocoding), optional **package tracking** key.
 
 ## In progress
 

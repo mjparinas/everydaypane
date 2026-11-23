@@ -92,12 +92,21 @@ describe("Google Tasks on displays", () => {
   }
 
   const tick = (token: string, list: string, task = "t1") =>
-    tasksPOST(req("/api/display/tasks/", { method: "POST", headers: { "x-display-token": token }, body: JSON.stringify({ list, task }) }));
+    tasksPOST(
+      req("/api/display/tasks/", {
+        method: "POST",
+        headers: { "x-display-token": token },
+        body: JSON.stringify({ provider: "google", list, task }),
+      }),
+    );
 
   it("gives displays the switched-on lists' open tasks", async () => {
     const token = await connected();
     const data = (await (await tasksGET(req("/api/display/tasks/", { headers: { "x-display-token": token } }))).json()) as TasksData;
-    expect(data).toMatchObject({ connected: true, lists: [{ id: "groceries", name: "Groceries", tasks: [{ id: "t1", title: "Milk" }] }] });
+    expect(data.google).toMatchObject({
+      connected: true,
+      lists: [{ id: "groceries", name: "Groceries", tasks: [{ id: "t1", title: "Milk" }] }],
+    });
     expect(calls.some((c) => c.url.includes("/lists/chores/"))).toBe(false);
   });
 
@@ -125,7 +134,7 @@ describe("Google Tasks on displays", () => {
   it("says Tasks isn't connected until the account allows it", async () => {
     const token = await connected(SCOPE);
     const data = (await (await tasksGET(req("/api/display/tasks/", { headers: { "x-display-token": token } }))).json()) as TasksData;
-    expect(data).toMatchObject({ connected: false, lists: [] });
+    expect(data.google).toMatchObject({ connected: false, lists: [] });
     const admin = await cookieFor("admin@example.com");
     expect(await (await adminGET(req("/api/admin/google-tasks/", { headers: { cookie: admin } }))).json()).toMatchObject({
       allowed: false,

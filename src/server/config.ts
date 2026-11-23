@@ -119,7 +119,12 @@ export function upgrade(stored: unknown): unknown {
   if (typeof out.integrations === "object" && out.integrations !== null) {
     const ig = out.integrations as Record<string, unknown>;
     const di = d.integrations as Record<string, unknown>;
-    if (typeof ig.microsoft !== "object" || ig.microsoft === null) ig.microsoft = di.microsoft;
+    if (typeof ig.microsoft === "object" && ig.microsoft !== null) {
+      const ms = ig.microsoft as Record<string, unknown>;
+      const dm = di.microsoft as Record<string, unknown>;
+      if (!Array.isArray(ms.todoLists)) ms.todoLists = dm.todoLists;
+    } else ig.microsoft = di.microsoft;
+    if (typeof ig.todoist !== "object" || ig.todoist === null) ig.todoist = di.todoist;
   }
   if (Array.isArray(out.views)) {
     out.views = out.views.map((view) => {
@@ -143,6 +148,7 @@ export function upgrade(stored: unknown): unknown {
             if (!("allowCheck" in w)) w.allowCheck = false;
           }
           if (w.type === "messages" && !("allowAdd" in w)) w.allowAdd = false;
+          if (w.type === "tasks" && !("provider" in w)) w.provider = "google";
           return w;
         }),
       };

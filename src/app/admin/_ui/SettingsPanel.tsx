@@ -16,7 +16,7 @@ import { PhotosPanel } from "./PhotosPanel";
 import { ScreenSaverPanel } from "./ScreenSaverPanel";
 import { SportsPanel } from "./SportsPanel";
 import { useAdmin } from "./store";
-import { TasksPanel } from "./TasksPanel";
+import { AllTasksPanels } from "./TasksPanel";
 import { TIME_ZONES } from "./WidgetSettings";
 
 // Settings is grouped with a sticky jump nav and #settings/<section> deep links so widgets can send people here
@@ -191,7 +191,7 @@ export function SettingsPanel() {
 
       {showGroup("tasks") && (
         <div id="settings-tasks">
-          <TasksPanel />
+          <AllTasksPanels />
         </div>
       )}
 
