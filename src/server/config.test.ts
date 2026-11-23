@@ -69,6 +69,18 @@ describe("config store", () => {
     expect(clock).toMatchObject({ type: "clock", showBackground: false });
   });
 
+  it("appends built-in colour schemes that a saved document is missing", () => {
+    const c = defaultConfig();
+    const kept = structuredClone(c.themes[0]!);
+    kept.name = "My Aurora";
+    c.themes = [kept];
+    const parsed = configSchema.safeParse(upgrade(c));
+    expect(parsed.success).toBe(true);
+    if (!parsed.success) return;
+    expect(parsed.data.themes.map((t) => t.id)).toEqual(defaultConfig().themes.map((t) => t.id));
+    expect(parsed.data.themes[0]).toMatchObject({ id: "aurora", name: "My Aurora" });
+  });
+
   it("refuses a private Home Assistant address and clears secrets when the URL changes", async () => {
     const c = defaultConfig();
     c.integrations.homeAssistant.url = "https://ha.example.com";
