@@ -61,8 +61,10 @@ palettes, fonts, corner radius, opacity and optional glass; burn-in protection (
 worker serves the last good data and shows "Offline"); a **screen saver** (photos only or dark after idle minutes, dark
 in a night window, woken by a tap, Home Assistant motion sensors, the doorbell, a new alert or a timer going off); doorbell pop-up full
 screen; the red, dismissible alert strip;
-no pinch zoom; settings reach displays by polling every 30 seconds; Vancouver clocks, dates, calendars and scheduled
-views stay on UTC−7 after B.C.'s March 2026 change even when the display browser has old time-zone data.
+no pinch zoom; settings reach displays by polling every 30 seconds (**Household** also long-polls for instant reload);
+**starter view templates** on the Views tab; themes include Outfit, DM Sans and Literata; Displays tab tips for casting
+the `/d/…` URL; Vancouver clocks, dates, calendars and scheduled views stay on UTC−7 after B.C.'s March 2026 change
+even when the display browser has old time-zone data.
 
 **Alerts** (`src/server/alerts.ts`): Alert Ready (NAAD), **Environment Canada weather warnings** (through NAAD),
 DriveBC road events and weather conditions, Earthquakes Canada, BC Hydro power outages. Each switchable in `config.alerts.sources`.
@@ -139,9 +141,17 @@ node scripts/e2e.mjs   # Playwright browser tests against the build (CHROMIUM_PA
   outage map join the same alert strip and alerts widget (see Architecture). Weather alerts already existed
   (Environment Canada through NAAD, since 2026-11-17), so that half of the ask needed nothing new.
 - **Admin changes reach displays by polling** (Melvin, 2026-11-17: "we dont need real time push for now, polling is
-  ok"). Every display asks for the settings version every 30 seconds (a tiny request answered with 304 when nothing
-  changed) and reloads its settings when it moves. No WebSocket or push service. The Views tab's live preview is the
-  exception: it shows the unsaved working copy over `postMessage` and never pushes that draft to wall screens.
+  ok"), with **instant refresh on Household** (Melvin, 2026-11-22): every display still asks for the settings version
+  every 30 seconds (304 when nothing changed). Paid households also long-poll `/api/display/config-watch/` and reload
+  as soon as the version moves; admins can tap **Refresh displays**. Free keeps the 30-second poll only. No WebSocket.
+  The Views tab's live preview is the exception: it shows the unsaved working copy over `postMessage` and never pushes
+  that draft to wall screens.
+- **Starter view templates** (Melvin, 2026-11-22): the Views tab can add a ready-made layout (kitchen glance, photo
+  frame, calendar wall, simple day) built from Free-tier widgets (`src/lib/config/templates.ts`).
+- **More theme fonts** (Melvin, 2026-11-22): Outfit, DM Sans and Literata join Inter, Manrope and Space Grotesk
+  (self-hosted under `/fonts/`).
+- **Castable display URL** (Melvin, 2026-11-22): Displays tab copy/open tips for Chromecast (cast a browser tab) and
+  TV/kiosk start pages — no custom Cast receiver.
 - **Live views editor** (Melvin, 2026-11-22: the view loaded in the UI, changes live; then one surface with right
   settings drawers, not two stacks): the Views tab shows one live editable layout (real widgets under a drag overlay);
   widget settings and view settings (Edit view) each open in a right slide-out. Draft `postMessage` updates patch cells

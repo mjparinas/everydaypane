@@ -10,6 +10,7 @@ export function displayPayload(
   version: number,
   device: DisplayDevice | null,
   previewViewId: string | null = null,
+  opts: { instantRefresh?: boolean } = {},
 ): DisplayPayload {
   const fixed = previewViewId ?? (device?.viewId && config.views.some((v) => v.id === device.viewId) ? device.viewId : null);
   const scheduled = config.schedule.enabled
@@ -42,5 +43,6 @@ export function displayPayload(
       cameraEntityId: doorbell.cameraEntityId,
     },
     screenSaver: config.screenSaver,
+    instantRefresh: opts.instantRefresh === true,
   };
 }

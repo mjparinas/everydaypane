@@ -141,6 +141,9 @@ export function ThemesPanel() {
               { value: "inter", label: "Inter" },
               { value: "manrope", label: "Manrope" },
               { value: "space-grotesk", label: "Space Grotesk" },
+              { value: "outfit", label: "Outfit" },
+              { value: "dm-sans", label: "DM Sans" },
+              { value: "literata", label: "Literata" },
               { value: "system", label: "The display's own font" },
             ]}
             onChange={(v) => editTheme((t) => void (t.font = v))}

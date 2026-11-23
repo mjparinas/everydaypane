@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useSyncExternalStore } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 
 import { MealPlanner } from "@/components/MealPlanner";
 import { MessageBoard } from "@/components/MessageBoard";
@@ -17,7 +17,7 @@ import { ThemesPanel } from "./ThemesPanel";
 import { ViewsPanel } from "./ViewsPanel";
 
 // The admin panel: one page, with tabs, that works on a phone (Melvin, 2026-11-17). Changes collect in a working copy
-// and go out together with Save; every display picks them up within 30 seconds.
+// and go out together with Save; Household displays long-poll for an instant reload, Free ones within ~30 seconds.
 
 const TABS = [
   { id: "views", label: "Views", icon: "▦" },
@@ -50,6 +50,21 @@ function SaveBar() {
   const discard = useAdmin((s) => s.discard);
   const clearConflict = useAdmin((s) => s.clearConflict);
   const dirty = useDirty();
+  const [instant, setInstant] = useState(false);
+  const [refreshNote, setRefreshNote] = useState("");
+
+  useEffect(() => {
+    let live = true;
+    fetch("/api/admin/billing/")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((body: { plan?: string } | null) => {
+        if (live && body?.plan === "paid") setInstant(true);
+      })
+      .catch(() => undefined);
+    return () => {
+      live = false;
+    };
+  }, []);
 
   useEffect(() => {
     if (!dirty) return;
@@ -61,11 +76,22 @@ function SaveBar() {
   const message =
     status.kind === "conflict" || status.kind === "invalid" || status.kind === "error"
       ? status.message
-      : status.kind === "saved" && !dirty
-        ? "Saved. Displays update within 30 seconds."
-        : dirty
-          ? "Unsaved changes"
-          : "";
+      : refreshNote
+        ? refreshNote
+        : status.kind === "saved" && !dirty
+          ? instant
+            ? "Saved. Displays update right away."
+            : "Saved. Displays update within 30 seconds."
+          : dirty
+            ? "Unsaved changes"
+            : "";
+
+  async function refreshDisplays() {
+    setRefreshNote("");
+    const r = await fetch("/api/admin/refresh/", { method: "POST" });
+    const body = (await r.json().catch(() => ({}))) as { error?: string };
+    setRefreshNote(r.ok ? "Told displays to reload." : (body.error ?? "Couldn't refresh displays."));
+  }
 
   return (
     <div className="flex min-w-0 items-center gap-2">
@@ -86,6 +112,11 @@ function SaveBar() {
         </>
       ) : (
         <>
+          {instant && !dirty && (
+            <button type="button" className="btn-ghost" onClick={() => void refreshDisplays()}>
+              Refresh displays
+            </button>
+          )}
           {dirty && (
             <button className="btn-ghost" onClick={discard}>
               Undo all
