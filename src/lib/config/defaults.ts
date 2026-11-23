@@ -154,6 +154,7 @@ const baseShell = (): Omit<DashboardConfig, "views" | "schedule" | "themeId"> =>
   location: { name: "Langley, BC", latitude: 49.1044, longitude: -122.6604, timeZone: VAN },
   units: "metric",
   hour12: true,
+  weather: { provider: "openMeteo" },
   themes: structuredClone(BUILT_IN_THEMES),
   alerts: {
     enabled: true,

@@ -156,6 +156,19 @@ export function SettingsPanel() {
             />
             <Text label="Place name" value={location.name} maxLength={60} onChange={(v) => edit((c) => void (c.location.name = v))} />
             <Select
+              label="Weather forecast"
+              value={config.weather?.provider ?? "openMeteo"}
+              options={[
+                { value: "openMeteo", label: "Open-Meteo (default)" },
+                { value: "environmentCanada", label: "Environment Canada" },
+              ]}
+              onChange={(v) => edit((c) => void (c.weather.provider = v))}
+            />
+            <p className="text-xs text-soft">
+              Environment Canada uses the nearest official city page (best for Canada). Open-Meteo still supplies UV, pollen and air
+              quality. Outside Canada, Everydaypane falls back to Open-Meteo.
+            </p>
+            <Select
               label="Time zone"
               value={location.timeZone}
               options={

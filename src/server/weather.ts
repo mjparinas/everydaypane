@@ -7,9 +7,10 @@ import type { AirData, WeatherData } from "@/lib/display/types";
 import { zonedFormatter } from "@/lib/timeZone";
 
 import { cached, getJson, type Cached } from "./cache";
+import { canadaCityUrl, fetchCanadaCityId, trimCanada } from "./weatherCanada";
 
-// Weather and air quality from Open-Meteo (free, no key, Environment Canada's GEM model among its sources). The
-// server fetches, trims and caches; a display gets a few hundred bytes.
+// Weather and air quality: Open-Meteo by default (free, no key; UV and pollen), or Environment Canada's city-page
+// forecast (Melvin, 2026-11-23). The server fetches, trims and caches; a display gets a few hundred bytes.
 
 const forecastSchema = z.object({
   current: z.object({
@@ -140,18 +141,58 @@ export function maxPollen(raw: unknown): number | undefined {
   return values.length ? Math.round(Math.max(...values)) : undefined;
 }
 
+async function openMeteoWeather(config: DashboardConfig, now: number): Promise<WeatherData> {
+  const data = trimForecast(await getJson(forecastUrl(config)), config.units, now);
+  try {
+    const level = maxPollen(await getJson(pollenUrl(config)));
+    if (level !== undefined) data.pollen = level;
+  } catch {
+    // Pollen is extra, and often absent in North America. A failure still leaves the forecast.
+  }
+  return data;
+}
+
+async function environmentCanadaWeather(config: DashboardConfig, now: number): Promise<WeatherData> {
+  const { latitude, longitude, timeZone } = config.location;
+  const cityId = await cached(`weather:ec-city:${latitude.toFixed(3)},${longitude.toFixed(3)}`, 7 * 24 * 60_000, () =>
+    fetchCanadaCityId(latitude, longitude),
+  );
+  const data = trimCanada(await getJson(canadaCityUrl(cityId.value)), config.units, timeZone, now);
+  // UV and pollen still come from Open-Meteo when EC is the forecast source (city pages don't publish them).
+  try {
+    const om = trimForecast(await getJson(forecastUrl(config)), config.units, now);
+    if (om.current.uv !== undefined) data.current.uv = om.current.uv;
+    if (om.today.uvMax !== undefined) data.today.uvMax = om.today.uvMax;
+  } catch {
+    // Forecast from EC is enough; UV is optional.
+  }
+  try {
+    const level = maxPollen(await getJson(pollenUrl(config)));
+    if (level !== undefined) data.pollen = level;
+  } catch {
+    // Same as Open-Meteo path.
+  }
+  return data;
+}
+
 export function weather(config: DashboardConfig): Promise<Cached<WeatherData>> {
-  const url = forecastUrl(config);
-  const pollen = pollenUrl(config);
-  return cached(`weather:${url}`, 15 * 60_000, async () => {
-    const data = trimForecast(await getJson(url), config.units, Date.now());
-    try {
-      const level = maxPollen(await getJson(pollen));
-      if (level !== undefined) data.pollen = level;
-    } catch {
-      // Pollen is extra, and often absent in North America. A failure still leaves the forecast.
+  const provider = config.weather?.provider ?? "openMeteo";
+  const { latitude, longitude } = config.location;
+  const key =
+    provider === "environmentCanada"
+      ? `weather:ec:${latitude.toFixed(3)},${longitude.toFixed(3)}:${config.units}`
+      : `weather:${forecastUrl(config)}`;
+  return cached(key, 15 * 60_000, async () => {
+    const now = Date.now();
+    if (provider === "environmentCanada") {
+      try {
+        return await environmentCanadaWeather(config, now);
+      } catch {
+        // Outside Canada, or GeoMet down: keep the wall useful with Open-Meteo.
+        return openMeteoWeather(config, now);
+      }
     }
-    return data;
+    return openMeteoWeather(config, now);
   });
 }
 
