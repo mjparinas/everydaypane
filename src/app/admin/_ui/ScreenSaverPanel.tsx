@@ -3,6 +3,7 @@
 import { Range, Section, Select, Text, Toggle } from "./fields";
 import { HaEntityList } from "./haEntities";
 import { useAdmin } from "./store";
+import { TimePicker } from "./TimePicker";
 
 const MAX_MOTION = 5;
 
@@ -10,6 +11,7 @@ const MAX_MOTION = 5;
 // Assistant motion sensors that wake the screen. The display side is src/display/saver.ts.
 export function ScreenSaverPanel() {
   const s = useAdmin((st) => st.config.screenSaver);
+  const hour12 = useAdmin((st) => st.config.hour12);
   const sources = useAdmin((st) => st.config.integrations.photos.sources);
   const haUrl = useAdmin((st) => st.config.integrations.homeAssistant.url);
   const edit = useAdmin((st) => st.edit);
@@ -70,8 +72,13 @@ export function ScreenSaverPanel() {
       />
       {s.night && (
         <div className="grid grid-cols-2 gap-3">
-          <Text label="From" type="time" value={s.nightStart} onChange={(v) => v && edit((c) => void (c.screenSaver.nightStart = v))} />
-          <Text label="Until" type="time" value={s.nightEnd} onChange={(v) => v && edit((c) => void (c.screenSaver.nightEnd = v))} />
+          <TimePicker
+            label="From"
+            value={s.nightStart}
+            hour12={hour12}
+            onChange={(v) => edit((c) => void (c.screenSaver.nightStart = v))}
+          />
+          <TimePicker label="Until" value={s.nightEnd} hour12={hour12} onChange={(v) => edit((c) => void (c.screenSaver.nightEnd = v))} />
         </div>
       )}
 

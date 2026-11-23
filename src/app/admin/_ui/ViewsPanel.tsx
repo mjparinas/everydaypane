@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 
 import { findSpot, refit } from "@/lib/config/grid";
+import { PERIOD_LABELS, PERIODS } from "@/lib/config/periods";
 import type { View, Widget, WidgetType } from "@/lib/config/schema";
 import { newWidget, WIDGET_GROUPS, WIDGET_TYPES, WIDGETS } from "@/lib/config/widgets";
 
@@ -108,7 +109,7 @@ export function ViewsPanel() {
     setEditingView(true);
   }
 
-  const usedBySchedule = (["morning", "afternoon", "evening", "night"] as const).filter((p) => config.schedule[p].viewId === active.id);
+  const usedBySchedule = PERIODS.filter((p) => config.schedule[p].viewId === active.id).map((p) => PERIOD_LABELS[p].toLowerCase());
 
   return (
     <div className="grid content-start gap-4">

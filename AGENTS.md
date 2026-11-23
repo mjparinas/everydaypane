@@ -54,7 +54,7 @@ same change, and moves it out of **In progress** when it merges.
 
 **Display behaviour:** several views on a drag-and-drop grid (chosen rows and columns, gap, edge padding and **tile padding**), **widgets layered on top of a photos widget**
 (photos as the backdrop), **per-widget background** (on/off and opacity; theme surface opacity is the default; clocks and dates start with no panel), a time-of-day schedule
-(morning, afternoon, evening, night) choosing the view, theme, day or night mode and dimming; themes with colour
+(morning, afternoon, evening, overnight) choosing the view, theme, day or night mode and dimming — each period can start at a **fixed time, sunrise or sunset** (sunrise/sunset from today's Open-Meteo weather at the dashboard location); themes with colour
 palettes, fonts, corner radius, opacity and optional glass; burn-in protection (pixel shift); offline mode (service
 worker serves the last good data and shows "Offline"); a **screen saver** (photos only or dark after idle minutes, dark
 in a night window, woken by a tap, Home Assistant motion sensors, the doorbell, a new alert or a timer going off); doorbell pop-up full
@@ -102,11 +102,13 @@ node scripts/e2e.mjs   # Playwright browser tests against the build (CHROMIUM_PA
 - **Name and repo** (Melvin, 2026-11-17): the app is **Everydaypane**, in `mjparinas/everydaypane`. The domain
   everydaypane.com was available on 2026-11-17 but has not been bought yet.
 - **Features** (Melvin, 2026-11-17): photos (Amazon Photos, choosable by person), full Google Calendar (a today
-  schedule view and a month calendar view), weather for the week with icons, clocks for Vancouver and Toronto, the date,
-  a WiFi QR code, countdowns to holidays and birthdays, air quality, garbage pickup from the Township of Langley's
-  collection calendar, Home Assistant controls, several views to choose from, views that change by time of day
-  (morning, afternoon, evening, night), day and night mode, customizable colour schemes and every widget's settings,
-  a drag-and-drop grid with a chosen number of rows and columns.
+ schedule view and a month calendar view), weather for the week with icons, clocks for Vancouver and Toronto, the date,
+ a WiFi QR code, countdowns to holidays and birthdays, air quality, garbage pickup from the Township of Langley's
+ collection calendar, Home Assistant controls, several views to choose from, views that change by time of day
+ (morning, afternoon, evening, overnight), day and night mode, customizable colour schemes and every widget's settings,
+ a drag-and-drop grid with a chosen number of rows and columns.
+- **Schedule sunrise/sunset and overnight** (Melvin, 2026-11-22): each part of the day can start at a fixed time,
+ sunrise or sunset; the overnight period was renamed from "night" in the admin (the settings key stays `night`).
 - **Added the same day** (Melvin, 2026-11-17): offline mode, admin sign-in by magic link through Resend, Sentry,
   burn-in protection, UniFi Protect video (cameras and doorbell pop-ups), a family message board, and emergency alerts.
 - **Music** (Melvin, 2026-11-17): Spotify and Sonos controls on the wall, through Home Assistant.
