@@ -8,9 +8,19 @@ import { contentSecurityPolicy } from "@/lib/securityHeaders";
 // Also stamps a per-request CSP nonce onto Next.js documents so script-src can drop 'unsafe-inline' (Next applies the
 // nonce to its own scripts when it sees Content-Security-Policy on the request).
 
+function requestIsHttps(req: NextRequest): boolean {
+  const forwarded = req.headers.get("x-forwarded-proto")?.split(",")[0]?.trim();
+  if (forwarded) return forwarded === "https";
+  return req.nextUrl.protocol === "https:";
+}
+
 function withCsp(req: NextRequest, build: (headers: Headers) => NextResponse): NextResponse {
   const nonce = Buffer.from(crypto.randomUUID()).toString("base64");
-  const csp = contentSecurityPolicy({ nonce, script: "nonce" });
+  const csp = contentSecurityPolicy({
+    nonce,
+    script: "nonce",
+    upgradeInsecureRequests: requestIsHttps(req),
+  });
   const requestHeaders = new Headers(req.headers);
   requestHeaders.set("x-nonce", nonce);
   requestHeaders.set("Content-Security-Policy", csp);

@@ -148,7 +148,7 @@ npm run templates:previews  # regenerate public/templates/*.png from real widget
 ## Product decisions
 
 - **Name and repo** (Melvin, 2026-11-17): the app is **Everydaypane**, in `mjparinas/everydaypane`. Melvin will register
-  **everydaypane.com** (still on `pane.getliftsmith.com` until that DNS is cut over).
+  **everydaypane.com** (live; `NEXT_PUBLIC_SITE_URL` points at www).
 - **Brand name casing** (Melvin, 2026-11-23): written and titled as **Everydaypane** (one word, capital E only — not
   EverydayPane or Everyday Pane). The wordmark keeps everyday**pane** with "pane" in the brand blue; URLs and handles
   stay `everydaypane`. "Everyday Pane" is fine once when saying the name aloud; don't invent a third written form.
@@ -649,9 +649,9 @@ panel can be complex if you need it to be."
 - **Preview deployments are off**, as in Liftsmith; CI's own build and browser tests cover pull requests.
 - **Vercel Authentication is off** for this project: a display can't sign in to Vercel, and every page and API route
   checks its own session or display token.
-- **Address:** `pane.getliftsmith.com` until Melvin points **everydaypane.com** at the project (he is registering the
-  domain himself). getliftsmith.com's DNS is on Cloudflare, so the record there is a DNS-only (grey cloud) CNAME `pane`
-  → `cname.vercel-dns.com`. `NEXT_PUBLIC_SITE_URL` in Vercel holds the address used in sign-in links.
+- **Address:** **www.everydaypane.com** (and apex). `NEXT_PUBLIC_SITE_URL` in Vercel must match (baked into
+  `metadataBase` / icon hrefs at build — a stale host makes CI e2e fail with `net::ERR_SSL_PROTOCOL_ERROR`). CI and
+  `scripts/e2e.mjs` set it to `http://localhost:3100`.
 - **Sign-in email** is sent from `hello@getliftsmith.com` (verified in Resend, click tracking off so links aren't
   rewritten) until everydaypane.com mail is verified. `ADMIN_EMAILS` seeds Melvin's grandfather Household admin.
 - **Database:** a Turso database from the Vercel Marketplace integration, connected to the project (its `TURSO_*`

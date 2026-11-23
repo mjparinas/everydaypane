@@ -15,13 +15,18 @@ export function contentSecurityPolicy(opts: {
   script: "nonce" | "self";
   /** Who may embed this document. Default: nobody. Preview pages use 'self'. */
   frameAncestors?: "'none'" | "'self'";
+  /**
+   * When the page itself was served over HTTPS. Off for http://localhost e2e/dev — otherwise the browser upgrades
+   * every asset to https://localhost and Chromium logs net::ERR_SSL_PROTOCOL_ERROR (plain HTTP has no cert).
+   */
+  upgradeInsecureRequests?: boolean;
 }): string {
   const isDev = process.env.NODE_ENV === "development";
   const script =
     opts.script === "nonce" && opts.nonce
       ? `'self' 'nonce-${opts.nonce}' 'strict-dynamic'${isDev ? " 'unsafe-eval'" : ""}`
       : `'self'${isDev ? " 'unsafe-eval'" : ""}`;
-  return [
+  const directives = [
     "default-src 'self'",
     `script-src ${script}`,
     "style-src 'self' 'unsafe-inline'",
@@ -46,8 +51,9 @@ export function contentSecurityPolicy(opts: {
     "object-src 'none'",
     "base-uri 'self'",
     "form-action 'self'",
-    "upgrade-insecure-requests",
-  ].join("; ");
+  ];
+  if (opts.upgradeInsecureRequests !== false) directives.push("upgrade-insecure-requests");
+  return directives.join("; ");
 }
 
 /** Baseline CSP (no nonce): APIs, the display shell, and anything that isn't a Next.js document. */
@@ -55,6 +61,15 @@ export const CSP = contentSecurityPolicy({ script: "self" });
 
 /** Admin preview shell: same as CSP, but the Views tab may embed it same-origin. */
 export const CSP_PREVIEW = contentSecurityPolicy({ script: "self", frameAncestors: "'self'" });
+
+/** Display/preview CSP with upgrade-insecure-requests only when the page was served over HTTPS. */
+export function displayCsp(opts: { preview: boolean; https: boolean }): string {
+  return contentSecurityPolicy({
+    script: "self",
+    frameAncestors: opts.preview ? "'self'" : "'none'",
+    upgradeInsecureRequests: opts.https,
+  });
+}
 
 /** Headers that don't need a per-request nonce. CSP for HTML documents is set in proxy.ts / displayHtml. */
 export const SECURITY_HEADERS = [
