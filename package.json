@@ -20,6 +20,7 @@
     "predev": "node scripts/build-display.mjs",
     "prebuild": "node scripts/build-display.mjs",
     "build:display": "node scripts/build-display.mjs",
+    "build:icons": "node scripts/build-icons.mjs",
     "bundle:check": "node scripts/bundle-check.mjs",
     "templates:previews": "node scripts/render-template-previews.mjs"
   },

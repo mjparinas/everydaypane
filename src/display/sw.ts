@@ -42,7 +42,9 @@ sw.addEventListener("install", (e) => {
   e.waitUntil(
     caches
       .open(SHELL)
-      .then((c) => c.addAll([`/display/display.js?v=${VERSION}`, `/display/display.css?v=${VERSION}`, "/icon.svg", ...FONTS]))
+      .then((c) =>
+        c.addAll([`/display/display.js?v=${VERSION}`, `/display/display.css?v=${VERSION}`, "/icon.svg", "/brand/mark.svg", ...FONTS]),
+      )
       .then(() => sw.skipWaiting()),
   );
 });

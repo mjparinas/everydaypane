@@ -125,6 +125,7 @@ npm test               # Vitest unit and integration tests
 npm run test:coverage
 npm run lint && npm run typecheck && npm run format:check
 npm run build          # production build (what Vercel runs)
+npm run build:icons    # favicon.ico, Apple touch icons and PWA PNGs from public/brand/
 node scripts/e2e.mjs   # Playwright browser tests against the build (CHROMIUM_PATH=… to use a local Chromium)
 npm run templates:previews  # regenerate public/templates/*.png from real widgets + sample feeds
 ```
@@ -133,10 +134,15 @@ npm run templates:previews  # regenerate public/templates/*.png from real widget
 
 - **Name and repo** (Melvin, 2026-11-17): the app is **Everydaypane**, in `mjparinas/everydaypane`. Melvin will register
   **everydaypane.com** (still on `pane.getliftsmith.com` until that DNS is cut over).
+- **Brand name casing** (Melvin, 2026-11-23): written and titled as **Everydaypane** (one word, capital E only — not
+  EverydayPane or Everyday Pane). The wordmark keeps everyday**pane** with "pane" in the brand blue; URLs and handles
+  stay `everydaypane`. "Everyday Pane" is fine once when saying the name aloud; don't invent a third written form.
+  Short form later, once the full name is known: Pane.
 - **Paid multi-tenant product** (Melvin, 2026-11-22): Everydaypane is a **Free + one paid (“Household”)** app other
   families can use. Free is DAKboard-like (1 view, 2 calendars, 2 displays, core widgets only). Household unlocks
   everything. Melvin’s existing install is grandfathered on Household (`acct_legacy`). Stripe Checkout + Customer Portal
   + webhooks (`src/server/billing.ts`); signup at `/api/auth/signup/`.
+
 - **Features** (Melvin, 2026-11-17): photos (Amazon Photos, choosable by person), full Google Calendar (a today
  schedule view and a month calendar view), weather for the week with icons, clocks for Vancouver and Toronto, the date,
  a WiFi QR code, countdowns to holidays and birthdays, air quality, garbage pickup from the Township of Langley's
@@ -188,8 +194,11 @@ npm run templates:previews  # regenerate public/templates/*.png from real widget
   in place (`src/lib/display/viewDiff.ts`) so a setting tweak does not remount every widget.
 - **Logo** (Melvin asked for one, 2026-11-17): a rounded blue square holding three panes (a tall white one with clock
   hands, an amber "sun" pane, a pale one), and the wordmark "everyday**pane**" in Manrope 800 with "pane" in the brand
-  blue. Sources are SVGs in `public/brand/` (mark, simplified 16–32 px favicon, maskable, light and dark wordmarks);
-  the PNG icons, `favicon.ico` and the web app manifest (`src/app/manifest.ts`) are made from them.
+  blue. Sources are SVGs in `public/brand/` (mark, favicon with clock hands, full-bleed apple, maskable, Safari pinned
+  silhouette, light and dark wordmarks). `npm run build:icons` (`scripts/build-icons.mjs`) rasterises them into
+  `public/icons/` (16–512 PNG, Apple 120/152/167/180, maskable 192/512), `favicon.ico`, `icon.svg`,
+  `apple-touch-icon.png` and the Next `src/app/` copies; the root layout, display shell and web app manifest
+  (`src/app/manifest.ts`) all point at that set (Melvin, 2026-11-23: favicon and high-res icons for phones and tablets).
 - **Month calendar title** (Melvin, 2026-11-19: "add a toggle to show/hide month title"): the month widget's
   "November 2026" line can be switched off in its settings (`showTitle`, on by default); the grid takes the space.
 - **Tile padding** (Melvin, 2026-11-22: "is it possible to adjust the inner padding of the tiles"): each view has a
@@ -584,6 +593,8 @@ panel can be complex if you need it to be."
   (`scripts/e2e.mjs`, which signs in through a real magic link and fails on any console error). **"CI passed"** is the
   one check to require. A new push to a pull request cancels its stale run, but runs on `main` are never cancelled:
   each merge commit gets its own full run, because merges land minutes apart and a cancelled run left them unchecked.
+  Markdown-only changes still get a green "CI passed" (so branch protection is happy), but types, tests and the build
+  are skipped (Melvin, 2026-11-23: document changes shouldn't trigger CI tests).
 - A bug fix comes with a test that fails without it. Flaky tests are fixed at the cause, never retried.
 - Test data is plain and readable; nothing random.
 - **Agents fix and merge their own pull requests** (Melvin, 2026-11-17: "auto fix and merge prs please"). An agent

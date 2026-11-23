@@ -37,6 +37,6 @@ export function proxy(req: NextRequest) {
 export const config = {
   // Bare `/d/<token>/` sets its own CSP in displayHtml; `/d/<token>/edit/` is a Next.js phone page and needs the nonce.
   matcher: [
-    "/((?!api/|_next/static|_next/image|d/[^/]+/?$|admin/preview/|display/|brand/|fonts/|favicon.ico|icon.svg|apple-icon.png|.*\\..*).*)",
+    "/((?!api/|_next/static|_next/image|d/[^/]+/?$|admin/preview/|display/|brand/|fonts/|icons/|favicon.ico|icon.svg|apple-icon.png|apple-touch-icon.png|manifest.webmanifest|.*\\..*).*)",
   ],
 };
