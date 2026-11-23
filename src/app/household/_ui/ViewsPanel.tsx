@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 
 import { findSpot, refit } from "@/lib/config/grid";
 import { PERIOD_LABELS, PERIODS } from "@/lib/config/periods";
@@ -31,6 +31,7 @@ export function ViewsPanel() {
   const [editingView, setEditingView] = useState(false);
   const [picking, setPicking] = useState(false);
   const [notice, setNotice] = useState("");
+  const previewRef = useRef<HTMLDivElement>(null);
 
   const found = config.views.find((v) => v.id === viewId) ?? config.views[0];
   const vi = found ? config.views.indexOf(found) : -1;
@@ -129,6 +130,10 @@ export function ViewsPanel() {
         ? `Added “${template.name}” (Household). Save when you're happy with it.`
         : `Added “${template.name}”. Save when you're happy with it.`,
     );
+    // Templates sit below a long gallery; bring the live preview back into view.
+    requestAnimationFrame(() => {
+      previewRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
   }
 
   const templatesByCategory = TEMPLATE_CATEGORIES.map((category) => ({
@@ -200,22 +205,24 @@ export function ViewsPanel() {
         </button>
       </div>
 
-      <LiveLayoutEditor
-        key={active.id}
-        view={active}
-        viewId={active.id}
-        config={config}
-        version={version}
-        selectedId={selected}
-        onSelect={(id) => {
-          setSelected(id);
-          if (id) {
-            setEditingView(false);
-            setPicking(false);
-          }
-        }}
-        onChange={(id, r) => editWidget(id, (w) => Object.assign(w, r))}
-      />
+      <div ref={previewRef} className="scroll-mt-28">
+        <LiveLayoutEditor
+          key={active.id}
+          view={active}
+          viewId={active.id}
+          config={config}
+          version={version}
+          selectedId={selected}
+          onSelect={(id) => {
+            setSelected(id);
+            if (id) {
+              setEditingView(false);
+              setPicking(false);
+            }
+          }}
+          onChange={(id, r) => editWidget(id, (w) => Object.assign(w, r))}
+        />
+      </div>
 
       {picking && !widget && !editingView && <AddWidgetDrawer onClose={() => setPicking(false)} onPick={add} />}
 

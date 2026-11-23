@@ -430,49 +430,62 @@ body {
   font-size: calc(min(28cqh, 11cqw) * var(--font-scale, 1));
 }
 
-/* Sunrise and sunset — sizes track the cell so a 1- or 2-row tile fills the height (Melvin, 2026-11-22). */
+/* Sunrise and sunset — sizes track the cell so a 1- or 2-row tile fills the height (Melvin, 2026-11-22).
+   Cap on cqw so a narrow 3-column tile still fits "7:32 AM" beside the sunset column on 1080p. */
 .w-sun-times {
   display: flex;
   flex-direction: column;
   justify-content: center;
   gap: min(6cqh, 2.5cqw);
   height: 100%;
+  min-width: 0;
 }
 .st-times {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 3cqw;
+  min-width: 0;
 }
 .st-time {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
   align-items: center;
   column-gap: 2cqw;
+  min-width: 0;
+  overflow: hidden;
 }
 .st-time.no-emoji {
   grid-template-columns: minmax(0, 1fr);
 }
 .st-icon {
   grid-row: 1 / 3;
-  font-size: calc(min(48cqh, 14cqw) * var(--font-scale, 1));
+  font-size: calc(min(36cqh, 9cqw) * var(--font-scale, 1));
   line-height: 1;
 }
 .st-label {
   color: var(--muted);
-  font-size: calc(min(16cqh, 5.5cqw) * var(--font-scale, 1));
+  font-size: calc(min(12cqh, 4cqw) * var(--font-scale, 1));
   font-weight: 600;
   line-height: 1.1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .st-value {
-  font-size: calc(min(32cqh, 12cqw) * var(--font-scale, 1));
+  font-size: calc(min(22cqh, 7.5cqw) * var(--font-scale, 1));
   font-weight: 700;
   line-height: 1.05;
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .st-daylight {
   color: var(--muted);
-  font-size: calc(min(12cqh, 4.5cqw) * var(--font-scale, 1));
+  font-size: calc(min(10cqh, 3.8cqw) * var(--font-scale, 1));
   text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* One-row cells: drop daylight and use almost the full height for the times. */
@@ -483,22 +496,24 @@ body {
   }
   .st-times {
     flex: 1;
+    min-width: 0;
   }
   .st-daylight {
     display: none;
   }
   .st-icon {
-    font-size: calc(min(70cqh, 16cqw) * var(--font-scale, 1));
+    font-size: calc(min(48cqh, 11cqw) * var(--font-scale, 1));
   }
   .st-label {
-    font-size: calc(min(28cqh, 6.5cqw) * var(--font-scale, 1));
+    font-size: calc(min(18cqh, 4.5cqw) * var(--font-scale, 1));
   }
   .st-value {
-    font-size: calc(min(52cqh, 14cqw) * var(--font-scale, 1));
+    font-size: calc(min(34cqh, 9cqw) * var(--font-scale, 1));
   }
 }
 
-/* Weather */
+/* Weather — fonts are cell-relative; [data-dense] tightens them when hourly + days share a
+   1080p tile so temp/meta don't collide with the rows below. */
 .w-weather {
   display: flex;
   flex-direction: column;
@@ -512,34 +527,45 @@ body {
   gap: 3cqw;
   flex: 1 1 0;
   min-height: 0;
+  min-width: 0;
+  overflow: hidden;
 }
 .wx-now-icon {
-  height: min(100%, 46cqh, 42cqw);
+  height: min(100%, 36cqh, 32cqw);
   aspect-ratio: 1;
   flex: none;
 }
 .wx-now-text {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0.12em;
   min-width: 0;
+  overflow: hidden;
 }
 .wx-temp {
-  font-size: calc(min(30cqh, 14cqw) * var(--font-scale, 1));
+  font-size: calc(min(24cqh, 12cqw) * var(--font-scale, 1));
   font-weight: 700;
   letter-spacing: -0.04em;
   line-height: 0.95;
 }
 .wx-desc {
-  font-size: calc(min(9cqh, 5cqw) * var(--font-scale, 1));
+  font-size: calc(min(7.5cqh, 4cqw) * var(--font-scale, 1));
   font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .wx-meta,
 .wx-extra {
   color: var(--muted);
-  font-size: calc(min(6.5cqh, 3.4cqw) * var(--font-scale, 1));
+  font-size: calc(min(5.2cqh, 2.8cqw) * var(--font-scale, 1));
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 .wx-extra {
+  flex: 0 0 auto;
   font-weight: 600;
 }
 .wx-hilo {
@@ -547,8 +573,36 @@ body {
   display: grid;
   gap: 0.2em;
   text-align: right;
-  font-size: calc(min(8cqh, 4cqw) * var(--font-scale, 1));
+  font-size: calc(min(6.5cqh, 3.2cqw) * var(--font-scale, 1));
   font-weight: 600;
+  flex: none;
+}
+.w-weather[data-dense="1"] {
+  gap: 2.5cqh;
+}
+.w-weather[data-dense="1"] .wx-now-icon {
+  height: min(100%, 22cqh, 18cqw);
+}
+.w-weather[data-dense="1"] .wx-temp {
+  font-size: calc(min(14cqh, 8cqw) * var(--font-scale, 1));
+}
+.w-weather[data-dense="1"] .wx-desc {
+  font-size: calc(min(5.2cqh, 3cqw) * var(--font-scale, 1));
+}
+.w-weather[data-dense="1"] .wx-meta,
+.w-weather[data-dense="1"] .wx-extra {
+  font-size: calc(min(4cqh, 2.3cqw) * var(--font-scale, 1));
+}
+.w-weather[data-dense="1"] .wx-hilo {
+  font-size: calc(min(5cqh, 2.6cqw) * var(--font-scale, 1));
+}
+.w-weather[data-dense="1"] .wx-hour,
+.w-weather[data-dense="1"] .wx-day {
+  font-size: calc(min(4.5cqh, 2.4cqw) * var(--font-scale, 1));
+}
+.w-weather[data-dense="1"] .wx-hour .icon,
+.w-weather[data-dense="1"] .wx-day .icon {
+  width: min(9cqh, 4.5cqw);
 }
 .wx-hi {
   color: var(--text);
@@ -566,8 +620,6 @@ body {
   grid-auto-flow: column;
   grid-auto-columns: minmax(0, 1fr);
   gap: 1cqw;
-}
-.wx-days {
   flex: 0 0 auto;
   min-height: 0;
 }
@@ -597,6 +649,7 @@ body {
   .wx-now {
     flex: 0 1 auto;
     height: 100%;
+    container-type: size;
   }
   .wx-now-icon {
     height: min(64cqh, 15cqw);

@@ -15,9 +15,10 @@ const outDir = join(root, "public", "templates");
 const widgetOutDir = join(root, "public", "features", "widgets");
 const samplesDir = join(outDir, "samples");
 const bundled = join(root, "node_modules", ".cache", "template-preview-data.mjs");
-// Gallery thumbs: sharp enough for the Views picker without multi‑MB photo PNGs.
-const WIDTH = 1280;
-const HEIGHT = 720;
+// Match the UC-Display21 (1920 × 1080). Container-query breakpoints in display.css are tuned for
+// that size; a 720p viewport makes 2-row tiles look "short" and blows up sun / weather fonts.
+const WIDTH = 1920;
+const HEIGHT = 1080;
 /** Pixels per grid cell for single-widget marketing samples. */
 const CELL = 160;
 
