@@ -3,7 +3,7 @@ import type { ReactNode } from "react";
 
 import { Mark, Wordmark } from "@/components/Wordmark";
 import { BRAND } from "@/lib/brand";
-import { APP_PATH, CONTACT_EMAIL, FAMILY_PATH, SITE_URL } from "@/lib/site";
+import { APP_PATH, CONTACT_EMAIL, FAMILY_PATH, SIGNUP_PATH, SITE_URL } from "@/lib/site";
 
 import { BuildStamp } from "./BuildStamp";
 
@@ -39,7 +39,7 @@ export function SiteHeader() {
           <Link href="/signin/" className="hidden min-[380px]:inline-flex rounded-lg px-3 py-2 text-soft hover:bg-panel hover:text-ink">
             Sign in
           </Link>
-          <Link href={APP_PATH} className="btn-primary ml-1 rounded-xl px-3.5 text-sm sm:px-4">
+          <Link href={SIGNUP_PATH} className="btn-primary ml-1 rounded-xl px-3.5 text-sm sm:px-4" data-cta="nav-start-free">
             Start free
           </Link>
         </nav>
@@ -141,7 +141,7 @@ export function CtaBanner({ title, body, cta }: { title: string; body: string; c
       <h2 className="font-display relative text-2xl font-extrabold tracking-tight sm:text-3xl">{title}</h2>
       <p className="relative mt-2 max-w-xl text-white/90">{body}</p>
       <Link
-        href={APP_PATH}
+        href={SIGNUP_PATH}
         data-cta={cta}
         className="relative mt-6 inline-flex min-h-12 items-center rounded-2xl bg-white px-6 font-semibold text-brand shadow-md"
       >

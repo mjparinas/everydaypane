@@ -2,8 +2,8 @@ import { describe, expect, it, vi } from "vitest";
 
 import { req, useTestServer } from "@/test/server";
 
-import { LEGACY_ACCOUNT_ID } from "./accounts";
-import { finishSignIn, LINK_MS, sessionFor, startSignIn } from "./auth";
+import { accountsForEmail, LEGACY_ACCOUNT_ID } from "./accounts";
+import { finishSignIn, LINK_MS, sessionFor, startSignIn, startSignUp } from "./auth";
 import { query, run } from "./db";
 
 async function linkFor(email: string, ip = "1.2.3.4"): Promise<string | null> {
@@ -58,5 +58,39 @@ describe("magic link sign-in", () => {
     for (let i = 0; i < 10; i++) await startSignIn(req("/x", { ip: "9.9.9.9" }), `p${i}@example.com`, "http://localhost");
     const r = await startSignIn(req("/x", { ip: "9.9.9.9" }), "admin@example.com", "http://localhost");
     expect(r.status).toBe(429);
+  });
+});
+
+describe("public Free signup", () => {
+  useTestServer();
+
+  it("creates a Free household and emails a link for a new address", async () => {
+    const info = vi.spyOn(console, "info").mockImplementation(() => undefined);
+    const r = await startSignUp(
+      req("/api/auth/signup/", { method: "POST", ip: "5.5.5.5" }),
+      "new.family@example.com",
+      "Pat's home",
+      "http://localhost",
+    );
+    expect(r.status).toBe(200);
+    const members = await accountsForEmail("new.family@example.com");
+    expect(members).toHaveLength(1);
+    expect(members[0]?.role).toBe("admin");
+    const printed = info.mock.calls.map((c) => String(c[0])).join("\n");
+    info.mockRestore();
+    expect(printed).toMatch(/token=/);
+    expect(await query("SELECT * FROM sign_in_links")).toHaveLength(1);
+  });
+
+  it("signs an existing member in without creating a second household", async () => {
+    const before = await accountsForEmail("admin@example.com");
+    const r = await startSignUp(
+      req("/api/auth/signup/", { method: "POST", ip: "5.5.5.6" }),
+      "admin@example.com",
+      "Ignored",
+      "http://localhost",
+    );
+    expect(r.status).toBe(200);
+    expect(await accountsForEmail("admin@example.com")).toHaveLength(before.length);
   });
 });

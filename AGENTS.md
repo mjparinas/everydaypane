@@ -133,7 +133,7 @@ zone lookup, sports teams to follow, TransLink, commute places (TomTom geocoding
 
 ## In progress
 
-_(none)_
+- **Launch & growth** (Melvin, 2026-11-23): public Free signup, Household billing UI, marketing/legal copy, SEO polish and GTM checklist — see [`docs/launch.md`](docs/launch.md).
 
 ## Commands
 
@@ -174,6 +174,7 @@ npm run templates:previews  # regenerate public/templates/*.png from real widget
   `/household/`. Member role `admin` in the database still means “household admin”.
 
 - **Marketing homepage** (Melvin, 2026-11-23): public marketing site at `/` with pricing, features, compare, blog, privacy and terms; paid plan marketed as Household (same Stripe `STRIPE_PRICE_ID` as household billing).
+- **Launch & organic growth** (Melvin, 2026-11-23): self-serve Free signup from “Start free”, honest Free limits (2 displays / 1 view / 2 calendars), Household upgrade in Settings, privacy-first measurement (Search Console + Stripe, no product analytics until opted in). Living checklist and promo playbook: [`docs/launch.md`](docs/launch.md).
 - **Features** (Melvin, 2026-11-17): photos (Amazon Photos, choosable by person), full Google Calendar (a today
  schedule view and a month calendar view), weather for the week with icons, clocks for Vancouver and Toronto, the date,
  a WiFi QR code, countdowns to holidays and birthdays, air quality, garbage pickup from the Township of Langley's

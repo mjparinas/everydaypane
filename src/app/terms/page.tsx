@@ -29,19 +29,20 @@ export default function TermsPage() {
 
       <h2 className="mt-10 text-xl font-bold">Accounts</h2>
       <p className="mt-3 text-soft">
-        Access is limited to email addresses the household operator lists. You are responsible for who is on those lists and for keeping
-        display links private. Do not share a display address publicly.
+        Anyone may create a Free household with a working email address. You are responsible for who you invite as family members and for
+        keeping display links private. Do not share a display address publicly.
       </p>
 
       <h2 className="mt-10 text-xl font-bold">Plans</h2>
       <p className="mt-3 text-soft">
-        The Free plan covers one display with the essentials. The Household plan unlocks the full widget set and unlimited displays, as
-        described on the{" "}
+        The Free plan covers two displays, one view and two calendars with the essential widgets. The Household plan unlocks the full widget
+        set and higher limits, as described on the{" "}
         <Link href="/pricing/" className="text-brand underline">
           pricing page
         </Link>
-        . Prices are in US dollars unless we say otherwise. Family is sold through Stripe Checkout; you manage the card, invoices and
-        cancellation in Stripe&rsquo;s customer portal. Until Stripe is configured on a deploy, features stay unlocked.
+        . Prices are in US dollars unless we say otherwise. Household is sold through Stripe Checkout; you manage the card, invoices and
+        cancellation in Stripe&rsquo;s customer portal (also linked from Settings › Plan). Plan limits are enforced from your
+        household&rsquo;s plan in our database.
       </p>
 
       <h2 className="mt-10 text-xl font-bold">Acceptable use</h2>

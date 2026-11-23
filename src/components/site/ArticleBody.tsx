@@ -1,7 +1,7 @@
 import Link from "next/link";
 
 import type { Block } from "@/content/posts";
-import { APP_PATH } from "@/lib/site";
+import { SIGNUP_PATH } from "@/lib/site";
 
 /** Renders blog blocks. Inline **bold** and [label](/path/) links. */
 export function ArticleBody({ blocks }: { blocks: Block[] }) {
@@ -48,7 +48,7 @@ export function ArticleBody({ blocks }: { blocks: Block[] }) {
           return (
             <p key={i} className="rounded-2xl border border-line bg-panel px-5 py-4">
               <span className="font-semibold">Ready to try it? </span>
-              <Link href={APP_PATH} className="font-semibold text-brand hover:underline">
+              <Link href={SIGNUP_PATH} className="font-semibold text-brand hover:underline">
                 Start free on Everydaypane
               </Link>
               .

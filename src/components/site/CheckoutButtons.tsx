@@ -17,7 +17,7 @@ export function HouseholdCheckoutButton({ className = "", label = "Get Household
     try {
       const r = await fetch("/api/household/billing/?action=checkout", { method: "POST" });
       if (r.status === 401) {
-        router.push(`/signin/?next=${encodeURIComponent("/pricing/")}`);
+        router.push(`/signin/?intent=signup&next=${encodeURIComponent("/pricing/")}`);
         return;
       }
       const j = (await r.json()) as { url?: string; error?: string };
