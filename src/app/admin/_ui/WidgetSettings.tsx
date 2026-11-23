@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 
 import type { CountdownEvent, DashboardConfig, TimerPreset, Widget } from "@/lib/config/schema";
 import { WIDGETS } from "@/lib/config/widgets";
@@ -9,13 +9,30 @@ import { FERRY_ROUTES, ferryRouteName } from "@/lib/ferries";
 import { MEAL_LABELS, MEAL_SLOTS } from "@/lib/meals";
 
 import { PlaceFinder } from "./CommutePanel";
-import { NumberInput, Select, Text, TextArea, Toggle } from "./fields";
+import { Range, Segmented, Select, Stepper, Text, TextArea, Toggle } from "./fields";
 import { HaEntityList } from "./haEntities";
 import { useMusic } from "./music";
 import { newId } from "./store";
 
 // Every widget's own settings (Melvin, 2026-11-17: "settings for every feature"). One form per widget type; each
-// change is applied at once to the working copy and saved with the Save button.
+// change is applied at once to the working copy and saved with the Save button. Bounded numbers use Range/Stepper
+// (Melvin, 2026-11-22 admin UX).
+
+function SettingsLink({ href, children }: { href: string; children: ReactNode }) {
+  return (
+    <a className="font-medium text-brand underline-offset-2 hover:underline" href={href}>
+      {children}
+    </a>
+  );
+}
+
+const PHOTO_INTERVALS = [
+  { value: "10", label: "10 s" },
+  { value: "30", label: "30 s" },
+  { value: "60", label: "1 min" },
+  { value: "300", label: "5 min" },
+  { value: "custom", label: "Custom" },
+] as const;
 
 export const TIME_ZONES = [
   { value: "America/Vancouver", label: "Vancouver" },
@@ -184,8 +201,11 @@ function TypeSettings({
             hint="The highest count Open-Meteo reports. Often missing in North America."
             onChange={(v) => e((x) => void (x.showPollen = v))}
           />
-          <NumberInput label="Days ahead" value={w.days} min={0} max={7} onChange={(v) => e((x) => void (x.days = v))} />
-          <p className="text-xs text-soft">Weather is for {config.location.name || "the dashboard's location"} (Settings).</p>
+          <Stepper label="Days ahead" value={w.days} min={0} max={7} onChange={(v) => e((x) => void (x.days = v))} />
+          <p className="text-xs text-soft">
+            Weather is for {config.location.name || "the dashboard's location"} (
+            <SettingsLink href="#settings/location">Settings › Location</SettingsLink>).
+          </p>
         </>
       );
     }
@@ -250,10 +270,12 @@ function TypeSettings({
             ]}
             onChange={(v) => e((x) => void (x.range = v))}
           />
-          {w.range === "upcoming" && (
-            <NumberInput label="Days" value={w.days} min={1} max={14} onChange={(v) => e((x) => void (x.days = v))} />
-          )}
-          <p className="text-xs text-soft">Google Calendar is connected in a later update.</p>
+          {w.range === "upcoming" && <Stepper label="Days" value={w.days} min={1} max={14} onChange={(v) => e((x) => void (x.days = v))} />}
+          <p className="text-xs text-soft">
+            Connect calendars under <SettingsLink href="#settings/google">Settings › Google Calendar</SettingsLink> or{" "}
+            <SettingsLink href="#settings/icals">Calendar links</SettingsLink>. Family events come from{" "}
+            <span className="font-mono">/family/</span>.
+          </p>
         </>
       );
     }
@@ -288,7 +310,7 @@ function TypeSettings({
     }
     case "garbage": {
       const e = edit<"garbage">();
-      return <NumberInput label="Weeks ahead" value={w.weeks} min={1} max={8} onChange={(v) => e((x) => void (x.weeks = v))} />;
+      return <Stepper label="Weeks ahead" value={w.weeks} min={1} max={8} onChange={(v) => e((x) => void (x.weeks = v))} />;
     }
     case "commute": {
       const e = edit<"commute">();
@@ -298,7 +320,9 @@ function TypeSettings({
           <Toggle label="Show arrival time" checked={w.showArrival} onChange={(v) => e((x) => void (x.showArrival = v))} />
           <Toggle label="Show distance" checked={w.showDistance} onChange={(v) => e((x) => void (x.showDistance = v))} />
           {places.length === 0 ? (
-            <p className="text-xs text-soft">Add home and the places to drive to under Settings › Commute.</p>
+            <p className="text-xs text-soft">
+              Add home and the places to drive to under <SettingsLink href="#settings/commute">Settings › Commute</SettingsLink>.
+            </p>
           ) : (
             <>
               <p className="text-xs text-soft">Pick the places to show. With none picked, it shows them all.</p>
@@ -443,7 +467,7 @@ function TypeSettings({
       const e = edit<"ferries">();
       return (
         <>
-          <NumberInput label="Sailings per route" value={w.count} min={1} max={8} onChange={(v) => e((x) => void (x.count = v))} />
+          <Stepper label="Sailings per route" value={w.count} min={1} max={8} onChange={(v) => e((x) => void (x.count = v))} />
           <Toggle label="Show the ship's name" checked={w.showVessel} onChange={(v) => e((x) => void (x.showVessel = v))} />
           <p className="text-xs text-soft">Pick up to four routes. These are the ones BC Ferries says how full they are for.</p>
           {FERRY_ROUTES.map((code) => (
@@ -475,7 +499,9 @@ function TypeSettings({
             onChange={(v) => e((x) => void (x.showLast = v))}
           />
           {teams.length === 0 ? (
-            <p className="text-xs text-soft">Pick the teams to follow under Settings › Sports.</p>
+            <p className="text-xs text-soft">
+              Pick the teams to follow under <SettingsLink href="#settings/sports">Settings › Sports</SettingsLink>.
+            </p>
           ) : (
             <>
               <p className="text-xs text-soft">Pick the teams to show. With none picked, it shows them all.</p>
@@ -497,13 +523,7 @@ function TypeSettings({
       const sources = config.integrations.photos.sources;
       return (
         <>
-          <NumberInput
-            label="Seconds per photo"
-            value={w.intervalSeconds}
-            min={5}
-            max={3600}
-            onChange={(v) => e((x) => void (x.intervalSeconds = v))}
-          />
+          <PhotoInterval value={w.intervalSeconds} onChange={(v) => e((x) => void (x.intervalSeconds = v))} />
           <Select
             label="Fit"
             value={w.fit}
@@ -515,7 +535,9 @@ function TypeSettings({
           />
           <Toggle label="Show captions" checked={w.showCaption} onChange={(v) => e((x) => void (x.showCaption = v))} />
           {sources.length === 0 ? (
-            <p className="text-xs text-soft">Add photo albums under Settings › Photos.</p>
+            <p className="text-xs text-soft">
+              Add photo albums under <SettingsLink href="#settings/photos">Settings › Photos</SettingsLink>.
+            </p>
           ) : (
             <>
               <p className="text-xs text-soft">Pick the albums to show. With none picked, it shows them all.</p>
@@ -586,7 +608,7 @@ function TypeSettings({
       const e = edit<"messages">();
       return (
         <>
-          <NumberInput label="Notes shown" value={w.count} min={1} max={20} onChange={(v) => e((x) => void (x.count = v))} />
+          <Stepper label="Notes shown" value={w.count} min={1} max={20} onChange={(v) => e((x) => void (x.count = v))} />
           <p className="text-xs text-soft">
             The family posts notes from their phones at <span className="font-mono">/family/</span> (Messages tab here).
           </p>
@@ -630,7 +652,7 @@ function TypeSettings({
       const e = edit<"shopping">();
       return (
         <>
-          <NumberInput label="Items shown" value={w.count} min={1} max={40} onChange={(v) => e((x) => void (x.count = v))} />
+          <Stepper label="Items shown" value={w.count} min={1} max={40} onChange={(v) => e((x) => void (x.count = v))} />
           <Toggle label="Show bought items" checked={w.showDone} onChange={(v) => e((x) => void (x.showDone = v))} />
           <Toggle
             label="Tap to tick off"
@@ -649,7 +671,7 @@ function TypeSettings({
       const lists = config.integrations.tasks.lists.filter((l) => l.enabled);
       return (
         <>
-          <NumberInput label="Tasks shown" value={w.count} min={1} max={30} onChange={(v) => e((x) => void (x.count = v))} />
+          <Stepper label="Tasks shown" value={w.count} min={1} max={30} onChange={(v) => e((x) => void (x.count = v))} />
           <Toggle label="Show due dates" checked={w.showDue} onChange={(v) => e((x) => void (x.showDue = v))} />
           <Toggle
             label="Tap to tick off"
@@ -658,7 +680,10 @@ function TypeSettings({
             onChange={(v) => e((x) => void (x.allowCheck = v))}
           />
           {lists.length === 0 ? (
-            <p className="text-xs text-soft">Connect Google Tasks and switch on some lists under Settings › Google Tasks.</p>
+            <p className="text-xs text-soft">
+              Connect Google Tasks and switch on some lists under{" "}
+              <SettingsLink href="#settings/tasks">Settings › Google Tasks</SettingsLink>.
+            </p>
           ) : (
             <>
               <p className="text-xs text-soft">Pick the lists to show. With none picked, it shows them all.</p>
@@ -688,7 +713,9 @@ function TypeSettings({
             onChange={(v) => e((x) => void (x.allowCheck = v))}
           />
           {people.length === 0 ? (
-            <p className="text-xs text-soft">Add the kids and their chores under Settings › Chores.</p>
+            <p className="text-xs text-soft">
+              Add the kids and their chores under <SettingsLink href="#settings/chores">Settings › Chores</SettingsLink>.
+            </p>
           ) : (
             <>
               <p className="text-xs text-soft">Pick whose chores to show. With nobody picked, it shows everyone.</p>
@@ -724,11 +751,13 @@ function TypeSettings({
             onChange={(v) => e((x) => void (x.entityId = v.trim()))}
           />
           <HaEntityList id="ha-cameras" only="camera." />
-          <NumberInput
-            label="Refresh every (seconds)"
+          <Range
+            label="Refresh every"
             value={w.refreshSeconds}
             min={2}
             max={600}
+            step={1}
+            format={(n) => `${n} s`}
             onChange={(v) => e((x) => void (x.refreshSeconds = v))}
           />
         </>
@@ -744,12 +773,14 @@ function TypeSettings({
             onRemove={(id) => e((x) => void (x.stops = x.stops.filter((s) => s.id !== id)))}
           />
           <RoutesField routes={w.routes} onChange={(routes) => e((x) => void (x.routes = routes))} />
-          <NumberInput label="Departures per stop" value={w.count} min={1} max={12} onChange={(v) => e((x) => void (x.count = v))} />
-          <NumberInput
-            label="Walk to the stop (minutes)"
+          <Stepper label="Departures per stop" value={w.count} min={1} max={12} onChange={(v) => e((x) => void (x.count = v))} />
+          <Range
+            label="Walk to the stop"
             value={w.walkMinutes}
             min={0}
             max={60}
+            step={1}
+            format={(n) => `${n} min`}
             hint="Buses leaving sooner than this are left out, since nobody could catch them."
             onChange={(v) => e((x) => void (x.walkMinutes = v))}
           />
@@ -768,7 +799,12 @@ function TypeSettings({
               { value: "spotify", label: "Spotify (signed in directly)" },
               { value: "sonos", label: "Sonos (signed in directly)" },
             ]}
-            hint="Connect Spotify or Sonos under Settings › Music to use them without Home Assistant."
+            hint={
+              <>
+                Connect Spotify or Sonos under <SettingsLink href="#settings/music">Settings › Music</SettingsLink> to use them without Home
+                Assistant.
+              </>
+            }
             onChange={(v) => e((x) => void (x.provider = v))}
           />
           {w.provider === "homeAssistant" && (
@@ -815,24 +851,34 @@ function TypeSettings({
       const e = edit<"pomodoro">();
       return (
         <>
-          <div className="grid grid-cols-3 gap-2">
-            <NumberInput label="Focus (min)" value={w.workMinutes} min={1} max={120} onChange={(v) => e((x) => void (x.workMinutes = v))} />
-            <NumberInput
-              label="Break (min)"
-              value={w.shortBreakMinutes}
-              min={1}
-              max={60}
-              onChange={(v) => e((x) => void (x.shortBreakMinutes = v))}
-            />
-            <NumberInput
-              label="Long break (min)"
-              value={w.longBreakMinutes}
-              min={1}
-              max={90}
-              onChange={(v) => e((x) => void (x.longBreakMinutes = v))}
-            />
-          </div>
-          <NumberInput
+          <Range
+            label="Focus"
+            value={w.workMinutes}
+            min={1}
+            max={120}
+            step={1}
+            format={(n) => `${n} min`}
+            onChange={(v) => e((x) => void (x.workMinutes = v))}
+          />
+          <Range
+            label="Break"
+            value={w.shortBreakMinutes}
+            min={1}
+            max={60}
+            step={1}
+            format={(n) => `${n} min`}
+            onChange={(v) => e((x) => void (x.shortBreakMinutes = v))}
+          />
+          <Range
+            label="Long break"
+            value={w.longBreakMinutes}
+            min={1}
+            max={90}
+            step={1}
+            format={(n) => `${n} min`}
+            onChange={(v) => e((x) => void (x.longBreakMinutes = v))}
+          />
+          <Stepper
             label="Focus rounds before the long break"
             value={w.rounds}
             min={1}
@@ -902,7 +948,9 @@ function TypeSettings({
       return (
         <>
           <SchoolNames schools={w.schools} onChange={(schools) => e((x) => void (x.schools = schools))} />
-          <p className="text-xs text-soft">The district page is set under Settings › School status.</p>
+          <p className="text-xs text-soft">
+            The district page is set under <SettingsLink href="#settings/school">Settings › School status</SettingsLink>.
+          </p>
         </>
       );
     }
@@ -953,16 +1001,25 @@ function AlertSettings<T extends Alerting>({ w, onChange }: { w: T; onChange: (c
         hint="Flashes the whole screen with what's done, until someone taps."
         onChange={(v) => onChange((x) => void (x.fullScreen = v))}
       />
-      <NumberInput
-        label="Stop alerting after (seconds)"
+      <Range
+        label="Stop alerting after"
         value={w.ringSeconds}
         min={5}
         max={600}
+        step={5}
+        format={(n) => `${n} s`}
         onChange={(v) => onChange((x) => void (x.ringSeconds = v))}
       />
     </>
   );
 }
+
+const QUICK_TIMERS = [
+  { label: "1 min", seconds: 60 },
+  { label: "3 min", seconds: 180 },
+  { label: "5 min", seconds: 300 },
+  { label: "10 min", seconds: 600 },
+] as const;
 
 function TimerPresets({ presets, onChange }: { presets: TimerPreset[]; onChange: Edit<"timer"> }) {
   const setLength = (i: number, minutes: number, seconds: number) =>
@@ -970,6 +1027,25 @@ function TimerPresets({ presets, onChange }: { presets: TimerPreset[]; onChange:
   return (
     <div className="grid gap-3">
       <p className="text-xs text-soft">The buttons on the wall. A tap starts a timer; up to six run at once.</p>
+      {presets.length < 12 && (
+        <div className="flex flex-wrap gap-2">
+          {QUICK_TIMERS.map((q) => (
+            <button
+              key={q.seconds}
+              type="button"
+              className="btn-ghost min-h-11"
+              onClick={() =>
+                onChange((x) => {
+                  if (x.presets.length >= 12) return;
+                  x.presets.push({ id: newId("tm"), label: "", emoji: "", seconds: q.seconds });
+                })
+              }
+            >
+              + {q.label}
+            </button>
+          ))}
+        </div>
+      )}
       {presets.map((p, i) => (
         <div key={p.id} className="grid gap-2 rounded-xl border border-line p-3">
           <div className="grid grid-cols-[4rem_1fr] gap-2">
@@ -983,14 +1059,14 @@ function TimerPresets({ presets, onChange }: { presets: TimerPreset[]; onChange:
             />
           </div>
           <div className="grid grid-cols-2 gap-2">
-            <NumberInput
+            <Stepper
               label="Minutes"
               value={Math.floor(p.seconds / 60)}
               min={0}
               max={1440}
               onChange={(v) => setLength(i, v, p.seconds % 60)}
             />
-            <NumberInput
+            <Stepper
               label="Seconds"
               value={p.seconds % 60}
               min={0}
@@ -1020,11 +1096,41 @@ function TimerPresets({ presets, onChange }: { presets: TimerPreset[]; onChange:
   );
 }
 
+function PhotoInterval({ value, onChange }: { value: number; onChange: (v: number) => void }) {
+  const known = PHOTO_INTERVALS.some((o) => o.value !== "custom" && Number(o.value) === value);
+  const [forceCustom, setForceCustom] = useState(!known);
+  const segment = forceCustom || !known ? "custom" : (String(value) as (typeof PHOTO_INTERVALS)[number]["value"]);
+  return (
+    <div className="grid gap-3">
+      <Segmented
+        label="Seconds per photo"
+        value={segment}
+        options={PHOTO_INTERVALS}
+        onChange={(v) => {
+          if (v === "custom") setForceCustom(true);
+          else {
+            setForceCustom(false);
+            onChange(Number(v));
+          }
+        }}
+      />
+      {(forceCustom || !known) && (
+        <Range label="Custom interval" value={value} min={5} max={3600} step={5} format={(n) => `${n} s`} onChange={onChange} />
+      )}
+    </div>
+  );
+}
+
 function SonosSpeaker({ value, onChange }: { value: string; onChange: (v: string) => void }) {
   const status = useMusic();
   const players = status?.sonos.players ?? [];
   if (!status) return <p className="text-xs text-soft">Loading the Sonos speakers…</p>;
-  if (!status.sonos.connected) return <p className="text-xs text-soft">Connect Sonos under Settings › Music first.</p>;
+  if (!status.sonos.connected)
+    return (
+      <p className="text-xs text-soft">
+        Connect Sonos under <SettingsLink href="#settings/music">Settings › Music</SettingsLink> first.
+      </p>
+    );
   // A saved speaker Sonos no longer lists stays selectable, so it can be seen and changed.
   const options = [
     { value: "", label: "Pick a speaker" },
@@ -1045,7 +1151,7 @@ function SonosSpeaker({ value, onChange }: { value: string; onChange: (v: string
 function CountdownEvents({ events, count, onChange }: { events: CountdownEvent[]; count: number; onChange: Edit<"countdown"> }) {
   return (
     <>
-      <NumberInput label="Events shown" value={count} min={1} max={12} onChange={(v) => onChange((x) => void (x.count = v))} />
+      <Stepper label="Events shown" value={count} min={1} max={12} onChange={(v) => onChange((x) => void (x.count = v))} />
       <div className="grid gap-3">
         {events.map((ev, i) => (
           <div key={ev.id} className="grid gap-2 rounded-xl border border-line p-3">

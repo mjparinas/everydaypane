@@ -136,10 +136,20 @@ export function mayComplete(config: DashboardConfig, listId: string): boolean {
   );
 }
 
-/** Marks a task done in Google Tasks. */
+/** Marks a task done in Google Tasks. A task Google no longer has is refused, and the cached list is dropped. */
 export async function completeTask(config: DashboardConfig, listId: string, taskId: string): Promise<"ok" | "forbidden"> {
   if (!mayComplete(config, listId)) return "forbidden";
-  await call(`/lists/${encodeURIComponent(listId)}/tasks/${encodeURIComponent(taskId)}`, {
+  const path = `/lists/${encodeURIComponent(listId)}/tasks/${encodeURIComponent(taskId)}`;
+  try {
+    await call(path);
+  } catch (error) {
+    if (error instanceof Error && error.message.endsWith("answered 404")) {
+      await forget("tasks:");
+      return "forbidden";
+    }
+    throw error;
+  }
+  await call(path, {
     method: "PATCH",
     body: JSON.stringify({ status: "completed" }),
   });

@@ -137,8 +137,9 @@ export const flows = [
   {
     name: "settings download as a backup file and restore from it",
     async run({ page, base, expect }) {
-      await page.goto(`${base}/admin/#settings`);
+      await page.goto(`${base}/admin/#settings/backup`);
       await page.reload();
+      await page.getByRole("link", { name: "Download backup" }).waitFor();
       const [download] = await Promise.all([page.waitForEvent("download"), page.getByRole("link", { name: "Download backup" }).click()]);
       expect(/^everydaypane-settings-\d{4}-\d{2}-\d{2}\.json$/.test(download.suggestedFilename()), download.suggestedFilename());
       const file = await download.path();
@@ -415,8 +416,8 @@ export const flows = [
       // Settings › Chores on a phone: add a kid, then a chore for them.
       const phone = await browser.newContext({ viewport: { width: 390, height: 844 }, storageState: await page.context().storageState() });
       const p = await phone.newPage();
-      await p.goto(`${base}/admin/`);
-      await p.getByRole("navigation", { name: "Sections" }).last().getByRole("button", { name: "Settings" }).click();
+      await p.goto(`${base}/admin/#settings/chores`);
+      await p.getByLabel("Add a kid").waitFor();
       await p.getByLabel("Add a kid").fill("Ana");
       await p.getByLabel("Add a kid").press("Enter");
       await p.getByLabel("Add a chore").fill("Make the bed");

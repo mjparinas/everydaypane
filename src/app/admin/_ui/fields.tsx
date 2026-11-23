@@ -3,6 +3,7 @@
 import { useEffect, useId, useState, type ReactNode } from "react";
 
 // Small form controls for the admin panel. Every control is at least 44 px tall so it works with a thumb.
+// Bounded numbers use Range or Stepper (min/max always visible); NumberInput is only for rare free-form values.
 
 export function Field({ label, hint, children }: { label: string; hint?: ReactNode; children: (id: string) => ReactNode }) {
   const id = useId();
@@ -76,6 +77,7 @@ export function TextArea({
   );
 }
 
+/** Free-form number (lat/lon). Drafts while focused so typing mid-value is not clamped. Prefer Range/Stepper for bounded UI. */
 export function NumberInput({
   label,
   value,
@@ -93,22 +95,52 @@ export function NumberInput({
   step?: number;
   hint?: ReactNode;
 }) {
+  const [draft, setDraft] = useState(String(value));
+  const [focused, setFocused] = useState(false);
+
+  function commit(raw: string) {
+    const n = Number(raw);
+    if (raw.trim() === "" || !Number.isFinite(n)) {
+      setDraft(String(value));
+      return;
+    }
+    const clamped = Math.min(max, Math.max(min, n));
+    onChange(clamped);
+    setDraft(String(clamped));
+  }
+
   return (
-    <Field label={label} hint={hint}>
+    <Field
+      label={label}
+      hint={
+        hint ?? (
+          <span className="tabular-nums">
+            {min} – {max}
+          </span>
+        )
+      }
+    >
       {(id) => (
         <input
           id={id}
-          className="field"
-          type="number"
+          className="field tabular-nums"
+          type="text"
           inputMode="decimal"
-          value={value}
-          min={min}
-          max={max}
-          step={step}
-          onChange={(e) => {
-            const n = Number(e.target.value);
-            if (e.target.value !== "" && Number.isFinite(n)) onChange(Math.min(max, Math.max(min, n)));
+          // While focused, keep the draft so mid-typing isn't clamped; otherwise show the live value.
+          value={focused ? draft : String(value)}
+          onFocus={() => {
+            setFocused(true);
+            setDraft(String(value));
           }}
+          onChange={(e) => setDraft(e.target.value)}
+          onBlur={() => {
+            setFocused(false);
+            commit(draft);
+          }}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") (e.target as HTMLInputElement).blur();
+          }}
+          data-step={step}
         />
       )}
     </Field>
@@ -123,6 +155,7 @@ export function Range({
   max,
   step,
   format = (v) => String(v),
+  hint,
 }: {
   label: string;
   value: number;
@@ -131,22 +164,131 @@ export function Range({
   max: number;
   step: number;
   format?: (v: number) => string;
+  hint?: ReactNode;
 }) {
   return (
-    <Field label={`${label}: ${format(value)}`}>
+    <Field label={`${label}: ${format(value)}`} hint={hint}>
       {(id) => (
-        <input
-          id={id}
-          className="h-11 w-full accent-brand"
-          type="range"
-          value={value}
-          min={min}
-          max={max}
-          step={step}
-          onChange={(e) => onChange(Number(e.target.value))}
-        />
+        <div className="grid gap-1">
+          <input
+            id={id}
+            className="h-11 w-full accent-brand"
+            type="range"
+            value={value}
+            min={min}
+            max={max}
+            step={step}
+            onChange={(e) => onChange(Number(e.target.value))}
+          />
+          <div className="flex justify-between text-xs tabular-nums text-soft">
+            <span>{format(min)}</span>
+            <span>{format(max)}</span>
+          </div>
+        </div>
       )}
     </Field>
+  );
+}
+
+/** Large − / + for discrete counts where a slider is awkward. Shows min–max under the value. */
+export function Stepper({
+  label,
+  value,
+  onChange,
+  min,
+  max,
+  step = 1,
+  format = (v) => String(v),
+  hint,
+}: {
+  label: string;
+  value: number;
+  onChange: (v: number) => void;
+  min: number;
+  max: number;
+  step?: number;
+  format?: (v: number) => string;
+  hint?: ReactNode;
+}) {
+  const id = useId();
+  const dec = () => onChange(Math.max(min, roundStep(value - step, step, min)));
+  const inc = () => onChange(Math.min(max, roundStep(value + step, step, min)));
+  return (
+    <div className="grid gap-1">
+      <label htmlFor={id} className="text-sm font-medium">
+        {label}
+      </label>
+      <div className="flex items-center gap-2">
+        <button
+          type="button"
+          className="btn-ghost min-h-11 min-w-11 px-0 text-xl"
+          aria-label={`Decrease ${label}`}
+          disabled={value <= min}
+          onClick={dec}
+        >
+          −
+        </button>
+        <output id={id} className="min-w-0 flex-1 text-center text-base font-semibold tabular-nums" aria-live="polite">
+          {format(value)}
+        </output>
+        <button
+          type="button"
+          className="btn-ghost min-h-11 min-w-11 px-0 text-xl"
+          aria-label={`Increase ${label}`}
+          disabled={value >= max}
+          onClick={inc}
+        >
+          +
+        </button>
+      </div>
+      <p className="text-center text-xs tabular-nums text-soft">
+        {format(min)} – {format(max)}
+      </p>
+      {hint ? <p className="text-xs text-soft">{hint}</p> : null}
+    </div>
+  );
+}
+
+function roundStep(n: number, step: number, min: number): number {
+  const steps = Math.round((n - min) / step);
+  return min + steps * step;
+}
+
+/** Chip row for 2–6 fixed choices (grid presets, common intervals). */
+export function Segmented<T extends string>({
+  label,
+  value,
+  onChange,
+  options,
+  hint,
+}: {
+  label: string;
+  value: T;
+  onChange: (v: T) => void;
+  options: readonly { value: T; label: string }[];
+  hint?: ReactNode;
+}) {
+  const id = useId();
+  return (
+    <div className="grid gap-1" role="group" aria-labelledby={id}>
+      <p id={id} className="text-sm font-medium">
+        {label}
+      </p>
+      <div className="flex flex-wrap gap-2">
+        {options.map((o) => (
+          <button
+            key={o.value}
+            type="button"
+            className={value === o.value ? "btn-primary min-h-11" : "btn-ghost min-h-11"}
+            aria-pressed={value === o.value}
+            onClick={() => onChange(o.value)}
+          >
+            {o.label}
+          </button>
+        ))}
+      </div>
+      {hint ? <p className="text-xs text-soft">{hint}</p> : null}
+    </div>
   );
 }
 
@@ -239,9 +381,20 @@ export function Colour({ label, value, onChange }: { label: string; value: strin
   );
 }
 
-export function Section({ title, children, actions }: { title: string; children: ReactNode; actions?: ReactNode }) {
+export function Section({
+  title,
+  children,
+  actions,
+  id,
+}: {
+  title: string;
+  children: ReactNode;
+  actions?: ReactNode;
+  /** Anchor id for Settings jump links (#settings/…). */
+  id?: string;
+}) {
   return (
-    <section className="card grid content-start gap-4">
+    <section id={id} className="card grid scroll-mt-28 content-start gap-4">
       <div className="flex items-center justify-between gap-2">
         <h2 className="text-lg font-semibold">{title}</h2>
         {actions}

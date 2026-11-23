@@ -37,8 +37,8 @@ export const tasks: Mount<"tasks"> = (el, w, ctx) => {
   let drawn = "";
   let message = "";
   let messageTimer: number | undefined;
-  // Ticked on this screen and waiting out the undo time (task id → timer), then sent and hidden until the feed drops it.
-  const pending = new Map<string, number>();
+  // Ticked on this screen and waiting out the undo time, then sent and hidden until the feed drops it.
+  const pending = new Map<string, { listId: string; timer: number }>();
   const done = new Set<string>();
 
   const say = (text: string) => {
@@ -49,17 +49,17 @@ export const tasks: Mount<"tasks"> = (el, w, ctx) => {
   };
 
   const tap = (listId: string, taskId: string) => {
-    const timer = pending.get(taskId);
-    if (timer !== undefined) {
-      window.clearTimeout(timer);
+    const entry = pending.get(taskId);
+    if (entry) {
+      window.clearTimeout(entry.timer);
       pending.delete(taskId);
       return draw(new Date(), true);
     }
-    pending.set(
-      taskId,
-      window.setTimeout(() => {
+    pending.set(taskId, {
+      listId,
+      timer: window.setTimeout(() => {
+        pending.delete(taskId);
         void send("tasks", { list: listId, task: taskId }).then((ok) => {
-          pending.delete(taskId);
           if (ok) {
             done.add(taskId);
             refresh("tasks");
@@ -67,7 +67,7 @@ export const tasks: Mount<"tasks"> = (el, w, ctx) => {
           say(ok ? "" : "Couldn't reach Google Tasks");
         });
       }, UNDO_MS),
-    );
+    });
     draw(new Date(), true);
   };
 
@@ -136,7 +136,12 @@ export const tasks: Mount<"tasks"> = (el, w, ctx) => {
   return () => {
     stopFeed();
     stopTick();
-    for (const t of pending.values()) window.clearTimeout(t);
+    // A tick still in its undo window would otherwise vanish with the widget (a view change) and never reach Google.
+    for (const [taskId, { listId, timer }] of pending) {
+      window.clearTimeout(timer);
+      void send("tasks", { list: listId, task: taskId });
+    }
+    pending.clear();
     window.clearTimeout(messageTimer);
   };
 };

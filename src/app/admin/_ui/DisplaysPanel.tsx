@@ -1,6 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+
+import type { DashboardConfig } from "@/lib/config/schema";
 
 import { ConfirmButton, Section, Select, Text } from "./fields";
 import { useAdmin } from "./store";
@@ -44,7 +46,9 @@ async function fetchDevices(): Promise<Device[]> {
 }
 
 export function DisplaysPanel() {
-  const views = useAdmin((s) => s.config.views);
+  // Only views that have been saved can be assigned: a display reloads the saved document, not this draft.
+  const saved = useAdmin((s) => s.saved);
+  const views = useMemo(() => (JSON.parse(saved) as DashboardConfig).views, [saved]);
   const [devices, setDevices] = useState<Device[] | null>(null);
   const [error, setError] = useState("");
   const [name, setName] = useState("Kitchen");

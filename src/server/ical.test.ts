@@ -11,6 +11,11 @@ import { loadConfig, saveConfig } from "./config";
 import { addDevice } from "./devices";
 import { checkIcal, getIcalUrl, normaliseIcalUrl, parseIcal } from "./ical";
 
+// Reserved names such as school.example.com don't resolve here; the fetch itself is stubbed.
+vi.mock("node:dns/promises", () => ({
+  lookup: () => Promise.resolve([{ address: "1.1.1.1", family: 4 }]),
+}));
+
 const link = { id: "school1", name: "School", color: "#16a34a" };
 const zone = "America/Vancouver";
 
@@ -108,8 +113,10 @@ describe("calendar links: reading iCal", () => {
     });
     expect("error" in normaliseIcalUrl("http://example.com/a.ics")).toBe(true);
     expect("error" in normaliseIcalUrl("https://localhost/a.ics")).toBe(true);
+    expect("error" in normaliseIcalUrl("https://printer.local/a.ics")).toBe(true);
     expect("error" in normaliseIcalUrl("https://192.168.1.10/a.ics")).toBe(true);
     expect("error" in normaliseIcalUrl("https://[::1]/a.ics")).toBe(true);
+    expect("error" in normaliseIcalUrl("https://calendar.local/a.ics")).toBe(true);
     expect("error" in normaliseIcalUrl("not a url")).toBe(true);
   });
 });

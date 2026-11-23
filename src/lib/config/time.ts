@@ -24,6 +24,17 @@ export function currentPeriod(schedule: DashboardConfig["schedule"], now: Date, 
   return current;
 }
 
+/**
+ * Milliseconds until the next `hour`:`minute` in `timeZone`. Once that time has passed (or it is that exact second),
+ * it is tomorrow's. Seconds are the same in every zone; the hour and minute come from the zone.
+ */
+export function msUntilLocalTime(now: Date, timeZone: string, hour: number, minute: number): number {
+  const target = hour * 60 + minute;
+  let ahead = target - minutesInZone(now, timeZone);
+  if (ahead <= 0) ahead += 24 * 60;
+  return Math.max(0, (ahead * 60 - now.getSeconds()) * 1000 - now.getMilliseconds());
+}
+
 /** Milliseconds until the next period starts, so a display can switch exactly on time instead of polling. */
 export function msUntilNextPeriod(schedule: DashboardConfig["schedule"], now: Date, timeZone: string): number {
   const minute = minutesInZone(now, timeZone);

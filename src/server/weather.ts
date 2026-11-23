@@ -4,6 +4,7 @@ import { z } from "zod";
 
 import type { DashboardConfig } from "@/lib/config/schema";
 import type { AirData, WeatherData } from "@/lib/display/types";
+import { zonedFormatter } from "@/lib/timeZone";
 
 import { cached, getJson, type Cached } from "./cache";
 
@@ -209,16 +210,16 @@ export function air(config: DashboardConfig): Promise<Cached<AirData>> {
   });
   const url = `https://air-quality-api.open-meteo.com/v1/air-quality?${p}`;
   return cached(`air:${url}`, 30 * 60_000, async () => {
-    const hour = new Intl.DateTimeFormat("sv-SE", {
-      timeZone,
+    // The home's zone, including B.C.'s fixed UTC−7 after March 2026 (a raw America/Vancouver formatter can be an hour off).
+    const parts = zonedFormatter(timeZone, {
       year: "numeric",
       month: "2-digit",
       day: "2-digit",
       hour: "2-digit",
       hourCycle: "h23",
-    })
-      .format(new Date())
-      .replace(" ", "T");
+    }).formatToParts(new Date());
+    const n = (type: string) => parts.find((p) => p.type === type)?.value ?? "00";
+    const hour = `${n("year")}-${n("month")}-${n("day")}T${n("hour")}`;
     return trimAir(await getJson(url), Date.now(), `${hour}:00`);
   });
 }

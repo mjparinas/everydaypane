@@ -7,6 +7,7 @@ import type { CalendarEvent } from "@/lib/display/types";
 import { reliableTimeZone } from "@/lib/timeZone";
 
 import { cached } from "./cache";
+import { fetchPublicHttps, publicHttpsUrl } from "./publicUrl";
 import { getSecret, setSecret } from "./secrets";
 
 // Calendar links (Melvin, 2026-11-17: "can you add support for multiple calendars"). Any calendar that offers an iCal
@@ -43,20 +44,17 @@ export function normaliseIcalUrl(raw: string): { url: string } | { error: string
     return { error: "That doesn't look like a web address." };
   }
   if (u.protocol !== "https:") return { error: "Use the calendar's https:// or webcal:// address." };
-  const host = u.hostname.toLowerCase();
-  if (host === "localhost" || host.endsWith(".localhost") || host.endsWith(".internal") || /^[\d.]+$/.test(host) || host.includes(":")) {
-    return { error: "Use the calendar's public address." };
-  }
   if (u.username || u.password) return { error: "Use an address without a name and password in it." };
-  return { url: u.toString() };
+  const url = publicHttpsUrl(u.toString());
+  if (!url) return { error: "Use the calendar's public address." };
+  return { url };
 }
 
 async function download(url: string): Promise<string> {
-  const r = await fetch(url, { headers: { accept: "text/calendar, */*" }, redirect: "follow", signal: AbortSignal.timeout(15_000) });
+  const r = await fetchPublicHttps(url, { headers: { accept: "text/calendar, */*" }, signal: AbortSignal.timeout(15_000) });
   if (!r.ok) throw new Error(r.status === 404 ? "The calendar address wasn't found (404)." : `The calendar's server answered ${r.status}.`);
   // Redirects must land on the same public-https policy as a pasted address (not https://127.0.0.1/…).
-  const landed = normaliseIcalUrl(r.url || url);
-  if ("error" in landed) throw new Error("The calendar moved off a public https address.");
+  if (!publicHttpsUrl(r.url || url)) throw new Error("The calendar moved off a public https address.");
   const length = Number(r.headers.get("content-length") ?? 0);
   if (length > MAX_BYTES) throw new Error("The calendar is too big to read.");
   const text = await r.text();

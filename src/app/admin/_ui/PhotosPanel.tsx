@@ -123,11 +123,11 @@ export function PhotosPanel() {
             <ConfirmButton
               label="Remove"
               onConfirm={() => {
-                // A library album's stored photos go with it.
-                if (s.kind === "library")
-                  void fetch(`/api/admin/library/?source=${encodeURIComponent(s.id)}`, { method: "DELETE" }).catch(() => undefined);
+                // The album stays in the saved document until Save, so Undo can bring it back. Stored photos are
+                // deleted then (saveConfig). The screen saver must not keep pointing at an album that's gone.
                 edit((c) => {
                   c.integrations.photos.sources = c.integrations.photos.sources.filter((x) => x.id !== s.id);
+                  c.screenSaver.photoSourceIds = c.screenSaver.photoSourceIds.filter((x) => x !== s.id);
                   for (const v of c.views)
                     for (const w of v.widgets) if (w.type === "photos") w.sourceIds = w.sourceIds.filter((x) => x !== s.id);
                 });

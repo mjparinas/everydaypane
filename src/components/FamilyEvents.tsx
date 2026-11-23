@@ -49,16 +49,22 @@ function fmtWhen(e: EventRow): string {
   return `${day}, ${t0} – ${t1}`;
 }
 
+function localYmd(d: Date): string {
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+}
+
 function defaultFormTimes(now = new Date()) {
   const pad = (n: number) => String(n).padStart(2, "0");
-  const today = now.toISOString().slice(0, 10);
+  // The phone's own calendar date. toISOString() is UTC, so late evening in B.C. would start the form on tomorrow.
+  const today = localYmd(now);
   const startLocal = `${today}T${pad(now.getHours())}:${pad(now.getMinutes())}`;
   const later = new Date(now.getTime() + 3_600_000);
   return {
     startDate: today,
     endDate: addDays(today, 1),
     startLocal,
-    endLocal: `${later.toISOString().slice(0, 10)}T${pad(later.getHours())}:${pad(later.getMinutes())}`,
+    endLocal: `${localYmd(later)}T${pad(later.getHours())}:${pad(later.getMinutes())}`,
   };
 }
 

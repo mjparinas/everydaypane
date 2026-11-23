@@ -52,6 +52,15 @@ describe("message board", () => {
     expect(await listMessages()).toEqual([]);
   });
 
+  it("lets any signed-in person delete a legacy note with no posted_by", async () => {
+    const kid = await cookieFor("kid@example.com");
+    await postMessage({ author: "Mom", text: "Old note", colour: "yellow", expiresInHours: null, postedBy: "admin@example.com" });
+    const [row] = await query<{ id: string }>("SELECT id FROM messages WHERE text = 'Old note'");
+    await query("UPDATE messages SET posted_by = NULL WHERE id = ?", [row!.id]);
+    expect((await DELETE(req("/", { method: "DELETE", headers: { cookie: kid } }), ctx(row!.id))).status).toBe(200);
+    expect(await listMessages()).toEqual([]);
+  });
+
   it("puts pinned notes first, then the newest, and drops expired ones", async () => {
     const t = 1_800_000_000_000;
     const base = { colour: "blue" as const, postedBy: "kid@example.com" };

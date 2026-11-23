@@ -39,6 +39,7 @@ export const photos: Mount<"photos"> = (el, w) => {
   let timer: number | undefined;
   let signature = "";
   let failures = 0;
+  let stopped = false;
 
   const next = (): Pick | undefined => {
     if (!queue.length) queue = shuffle(deck);
@@ -47,11 +48,13 @@ export const photos: Mount<"photos"> = (el, w) => {
 
   const show = () => {
     window.clearTimeout(timer);
+    if (stopped) return;
     const pick = next();
     if (!pick) return;
     const back = layers[1 - front] as HTMLImageElement;
     const [id, , , taken] = pick.photo;
     const done = () => {
+      if (stopped) return;
       back.onload = back.onerror = null;
       if (!back.naturalWidth && ++failures >= Math.min(3, deck.length)) {
         // Every photo tried so far failed: say so rather than "Loading photos…" forever.
@@ -98,8 +101,15 @@ export const photos: Mount<"photos"> = (el, w) => {
   });
 
   return () => {
+    stopped = true;
     stop();
     window.clearTimeout(timer);
+    for (const layer of layers) {
+      const img = layer as HTMLImageElement;
+      img.onload = null;
+      img.onerror = null;
+      img.src = "";
+    }
   };
 };
 

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { defaultConfig } from "./defaults";
-import { currentPeriod, dateInZone, daysBetween, minutesInZone, msUntilNextPeriod } from "./time";
+import { currentPeriod, dateInZone, daysBetween, minutesInZone, msUntilLocalTime, msUntilNextPeriod } from "./time";
 
 const VAN = "America/Vancouver";
 function at(hhmm: string): Date {
@@ -35,6 +35,14 @@ describe("time of day", () => {
   it("counts down to the next period, across midnight", () => {
     expect(msUntilNextPeriod(schedule, at("10:00"), VAN)).toBe(60 * 60_000);
     expect(msUntilNextPeriod(schedule, at("23:00"), VAN)).toBe(7 * 60 * 60_000);
+  });
+
+  it("counts down to a wall-clock time in the dashboard zone (nightly reload)", () => {
+    expect(msUntilLocalTime(at("03:00"), VAN, 3, 30)).toBe(30 * 60_000);
+    expect(msUntilLocalTime(at("03:30"), VAN, 3, 30)).toBe(24 * 60 * 60_000);
+    expect(msUntilLocalTime(at("02:00"), VAN, 3, 30)).toBe(90 * 60_000);
+    expect(msUntilLocalTime(at("04:00"), VAN, 3, 30)).toBe(23.5 * 60 * 60_000);
+    expect(msUntilLocalTime(new Date(at("03:29").getTime() + 30_000), VAN, 3, 30)).toBe(30_000);
   });
 
   it("finds the date in a zone", () => {

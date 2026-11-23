@@ -92,7 +92,8 @@ export async function removeMessage(id: string, by: { email: string; admin: bool
   const rows = await query<Row>("SELECT * FROM messages WHERE id = ?", [id]);
   const row = rows[0];
   if (!row) return "not-found";
-  if (!by.admin && row.posted_by !== by.email) return "forbidden";
+  // A note from before authors were recorded (posted_by null) can be deleted by anyone in the family.
+  if (!by.admin && row.posted_by !== null && row.posted_by !== by.email) return "forbidden";
   await run("DELETE FROM messages WHERE id = ?", [id]);
   return "ok";
 }

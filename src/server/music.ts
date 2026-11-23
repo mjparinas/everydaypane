@@ -6,6 +6,7 @@ import type { DashboardConfig } from "@/lib/config/schema";
 import type { HaEntity, MusicData, MusicService } from "@/lib/display/types";
 
 import { musicConnected, MusicDisconnected } from "./musicAuth";
+import { fetchPublicHttps, publicHttpsUrl } from "./publicUrl";
 import { sonosAct, sonosFeed } from "./sonos";
 import { spotifyAct, spotifyFeed, type MusicAction } from "./spotify";
 
@@ -50,16 +51,7 @@ const hashOf = (url: string) => createHash("sha256").update(url).digest("hex").s
 /** Only art on a public https address is fetched (a Sonos speaker playing local files names a picture on the LAN). */
 export function publicHttps(raw: string | undefined): string | null {
   if (!raw) return null;
-  try {
-    const u = new URL(raw);
-    const host = u.hostname.toLowerCase();
-    if (u.protocol !== "https:" || u.username || u.password) return null;
-    if (host === "localhost" || host.endsWith(".local") || host.endsWith(".localhost") || /^[\d.]+$/.test(host) || host.includes(":"))
-      return null;
-    return u.toString();
-  } catch {
-    return null;
-  }
+  return publicHttpsUrl(raw);
 }
 
 // A few seconds of memory so every display polling at once makes one round of calls; art addresses stay server-side.
@@ -138,7 +130,12 @@ export async function musicArt(config: DashboardConfig, player: string, hash: st
     url = memo?.art.get(`${player}|${hash}`);
   }
   if (!url) return null;
-  const r = await fetch(url, { signal: AbortSignal.timeout(10_000) });
+  let r: Response;
+  try {
+    r = await fetchPublicHttps(url, { signal: AbortSignal.timeout(10_000) });
+  } catch {
+    return null;
+  }
   const type = r.headers.get("content-type") ?? "";
   // A redirect must land on a public https address too.
   if (r.url && !publicHttps(r.url)) return null;

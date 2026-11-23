@@ -104,24 +104,41 @@ interface Feed<T> {
   listeners: Set<(data: T) => void>;
   timer: number | undefined;
   load: () => Promise<void>;
+  /** Bumps when a load is superseded, so a late response doesn't paint or schedule another. */
+  generation: number;
+  loading: boolean;
 }
 const feeds = new Map<string, Feed<unknown>>();
 
 export function subscribe<T>(path: string, everyMs: number, listener: (data: T) => void): () => void {
   let feed = feeds.get(path) as Feed<T> | undefined;
   if (!feed) {
-    const f: Feed<T> = { data: null, listeners: new Set(), timer: undefined, load: async () => undefined };
+    const f: Feed<T> = {
+      data: null,
+      listeners: new Set(),
+      timer: undefined,
+      load: async () => undefined,
+      generation: 0,
+      loading: false,
+    };
     feed = f;
     feeds.set(path, f as Feed<unknown>);
     const load = async () => {
+      const gen = ++f.generation;
+      f.loading = true;
       window.clearTimeout(f.timer);
+      f.timer = undefined;
       const { data } = await get<T>(path);
+      // Unsubscribed, or refresh() started a newer load, while this one was in flight.
+      if (gen !== f.generation || feeds.get(path) !== f) return;
+      f.loading = false;
       if (data) {
         f.data = data;
         for (const l of f.listeners) l(data);
       }
-      // Back off to a minute while offline, so a dead network isn't hammered.
-      f.timer = window.setTimeout(() => void load(), offline ? Math.min(everyMs, 60_000) : everyMs);
+      if (gen !== f.generation || feeds.get(path) !== f) return;
+      // Back off to at least a minute while offline, so a dead network isn't hammered.
+      f.timer = window.setTimeout(() => void load(), offline ? Math.max(everyMs, 60_000) : everyMs);
     };
     f.load = load;
     void load();
@@ -141,5 +158,13 @@ export function subscribe<T>(path: string, everyMs: number, listener: (data: T) 
 
 /** Fetches a feed now instead of at its next tick (after a tap changed something). */
 export function refresh(path: string): void {
-  void feeds.get(path)?.load();
+  const f = feeds.get(path);
+  if (!f) return;
+  window.clearTimeout(f.timer);
+  f.timer = undefined;
+  if (f.loading) {
+    f.generation += 1;
+    f.loading = false;
+  }
+  void f.load();
 }

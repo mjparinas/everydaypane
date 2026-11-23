@@ -5,7 +5,7 @@ import { useState } from "react";
 import { daysLabel, WEEKDAYS } from "@/lib/chores";
 import type { Chore } from "@/lib/config/schema";
 
-import { Colour, ConfirmButton, NumberInput, Section, Select, Text } from "./fields";
+import { Colour, ConfirmButton, Range, Section, Select, Stepper, Text } from "./fields";
 import { newId, useAdmin } from "./store";
 
 // The chore chart (Melvin, 2026-11-21): the kids, and the chores that come back on set weekdays, shared by everyone on
@@ -92,11 +92,13 @@ export function ChoresPanel() {
           </div>
           <div className="grid grid-cols-2 gap-3">
             <Colour label="Colour" value={p.color} onChange={(v) => changePerson(p.id, { color: v })} />
-            <NumberInput
+            <Range
               label="Weekly star goal"
               value={p.goal}
               min={0}
               max={500}
+              step={1}
+              format={(n) => (n === 0 ? "None" : String(n))}
               hint="0 for none."
               onChange={(v) => changePerson(p.id, { goal: v })}
             />
@@ -153,7 +155,7 @@ export function ChoresPanel() {
               onChange={(v) => changeChore(i.id, (x) => void (x.emoji = v))}
             />
             <Text label="Chore" value={i.name} maxLength={40} onChange={(v) => changeChore(i.id, (x) => void (x.name = v))} />
-            <NumberInput label="Stars" value={i.stars} min={1} max={5} onChange={(v) => changeChore(i.id, (x) => void (x.stars = v))} />
+            <Stepper label="Stars" value={i.stars} min={1} max={5} onChange={(v) => changeChore(i.id, (x) => void (x.stars = v))} />
           </div>
           <Chips
             label={`Days: ${daysLabel(i.days)}`}

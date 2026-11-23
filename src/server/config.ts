@@ -5,6 +5,7 @@ import { configSchema, type DashboardConfig } from "@/lib/config/schema";
 
 import { query, run } from "./db";
 import { publicHaUrl, sameHaUrl } from "./haUrl";
+import { removePhotos } from "./library";
 import { setSecret } from "./secrets";
 
 export interface StoredConfig {
@@ -67,6 +68,11 @@ export async function saveConfig(input: unknown, baseVersion: number, now = Date
     await setSecret("homeAssistant.token", null, now);
     await setSecret("homeAssistant.accessId", null, now);
     await setSecret("homeAssistant.accessSecret", null, now);
+  }
+  // A library album leaves the document only when Save lands, so Undo still has its photos. The blobs go with it then.
+  const kept = new Set(parsed.data.integrations.photos.sources.filter((s) => s.kind === "library").map((s) => s.id));
+  for (const source of previous.config.integrations.photos.sources) {
+    if (source.kind === "library" && !kept.has(source.id)) await removePhotos(source.id);
   }
   return { ok: true, version };
 }

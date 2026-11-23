@@ -32,13 +32,15 @@ const TABS = [
 type Tab = (typeof TABS)[number]["id"];
 
 // The open tab lives in the address (#themes), so a reload or a shared link opens the same tab.
+// Settings sections use #settings/photos (and so on) so widgets can deep-link into the right group.
 const subscribeHash = (cb: () => void) => {
   window.addEventListener("hashchange", cb);
   return () => window.removeEventListener("hashchange", cb);
 };
 const hashTab = (): Tab => {
   const h = window.location.hash.slice(1);
-  return TABS.find((t) => t.id === h)?.id ?? "views";
+  const tabId = h.split("/")[0] ?? "";
+  return TABS.find((t) => t.id === tabId)?.id ?? "views";
 };
 
 function SaveBar() {
@@ -46,6 +48,7 @@ function SaveBar() {
   const save = useAdmin((s) => s.save);
   const reload = useAdmin((s) => s.reload);
   const discard = useAdmin((s) => s.discard);
+  const clearConflict = useAdmin((s) => s.clearConflict);
   const dirty = useDirty();
 
   useEffect(() => {
@@ -73,9 +76,14 @@ function SaveBar() {
         {message}
       </p>
       {status.kind === "conflict" ? (
-        <button className="btn-primary" onClick={() => void reload()}>
-          Load their changes
-        </button>
+        <>
+          <button className="btn-ghost" onClick={clearConflict}>
+            Keep editing
+          </button>
+          <button className="btn-primary" onClick={() => void reload()}>
+            Load their changes
+          </button>
+        </>
       ) : (
         <>
           {dirty && (
@@ -116,7 +124,14 @@ function AdminPanel({ email }: { email: string }) {
   const router = useRouter();
 
   function go(t: Tab) {
-    history.replaceState(null, "", `#${t}`);
+    // Keep a Settings deep link (#settings/chores) when the Settings tab is already open; otherwise open Dashboard.
+    const next =
+      t === "settings"
+        ? tab === "settings" && /^#settings(\/|$)/.test(window.location.hash)
+          ? window.location.hash
+          : "#settings/dashboard"
+        : `#${t}`;
+    if (next !== window.location.hash) history.replaceState(null, "", next);
     window.dispatchEvent(new HashChangeEvent("hashchange"));
   }
 

@@ -28,6 +28,8 @@ interface AdminState {
   save: () => Promise<void>;
   reload: () => Promise<void>;
   discard: () => void;
+  /** Dismisses a conflict so the draft can be edited and saved again. */
+  clearConflict: () => void;
 }
 
 interface Issue {
@@ -59,8 +61,10 @@ export function describeIssue(config: DashboardConfig, issues: unknown): string 
 }
 
 // One store per admin page, made with the settings the server rendered, so the first render (on the server too) has them.
-const createAdminStore = (initial: DashboardConfig, initialVersion: number) =>
-  createStore<AdminState>()((set, get) => ({
+const createAdminStore = (initial: DashboardConfig, initialVersion: number) => {
+  // Bumps on every save so a response from an earlier attempt can't overwrite a newer one.
+  let saveGeneration = 0;
+  return createStore<AdminState>()((set, get) => ({
     config: initial,
     version: initialVersion,
     saved: JSON.stringify(initial),
@@ -69,11 +73,17 @@ const createAdminStore = (initial: DashboardConfig, initialVersion: number) =>
     edit: (change) => {
       const draft = structuredClone(get().config);
       change(draft);
-      const s = get().status.kind;
-      set({ config: draft, status: s === "conflict" ? get().status : { kind: "idle" } });
+      const status = get().status;
+      // A save in flight stays "saving", so a second Save is ignored until it lands. A conflict stays up until
+      // "Keep editing" or "Load their changes".
+      const keep = status.kind === "conflict" || status.kind === "saving" ? status : { kind: "idle" as const };
+      set({ config: draft, status: keep });
     },
     save: async () => {
+      if (get().status.kind === "saving") return;
+      const generation = ++saveGeneration;
       const { config, version } = get();
+      const snapshot = JSON.stringify(config);
       set({ status: { kind: "saving" } });
       try {
         const r = await fetch("/api/admin/config/", {
@@ -82,9 +92,14 @@ const createAdminStore = (initial: DashboardConfig, initialVersion: number) =>
           body: JSON.stringify({ baseVersion: version, config }),
         });
         const body = (await r.json().catch(() => ({}))) as { version?: number; error?: string; issues?: unknown };
+        if (generation !== saveGeneration) return;
         if (r.ok && typeof body.version === "number") {
-          set({ version: body.version, saved: JSON.stringify(config), status: { kind: "saved" } });
+          // The draft may have moved while this request was in flight: keep it, and only mark the copy we sent as saved.
+          const dirty = JSON.stringify(get().config) !== snapshot;
+          set({ version: body.version, saved: snapshot, status: dirty ? { kind: "idle" } : { kind: "saved" } });
         } else if (r.status === 409) {
+          // A late refusal after our own version already moved (an overlapping save landed) is not a conflict to show.
+          if (get().version !== version) return;
           set({ status: { kind: "conflict", message: body.error ?? "Someone else changed the dashboard." } });
         } else if (r.status === 422) {
           set({ status: { kind: "invalid", message: describeIssue(config, body.issues) } });
@@ -94,6 +109,7 @@ const createAdminStore = (initial: DashboardConfig, initialVersion: number) =>
           set({ status: { kind: "error", message: body.error ?? "Couldn't save. Try again." } });
         }
       } catch {
+        if (generation !== saveGeneration) return;
         set({ status: { kind: "error", message: "No connection. Your changes are still here; try again." } });
       }
     },
@@ -104,7 +120,11 @@ const createAdminStore = (initial: DashboardConfig, initialVersion: number) =>
       get().init(body.config, body.version);
     },
     discard: () => set({ config: JSON.parse(get().saved) as DashboardConfig, status: { kind: "idle" } }),
+    clearConflict: () => {
+      if (get().status.kind === "conflict") set({ status: { kind: "idle" } });
+    },
   }));
+};
 
 const AdminStore = createContext<StoreApi<AdminState> | null>(null);
 
