@@ -17,7 +17,10 @@ export type GateResult = { ok: true } | { ok: false; error: string };
 export function gateConfig(plan: PlanId, config: DashboardConfig): GateResult {
   const limits = limitsFor(plan);
   if (config.views.length > limits.views) {
-    return { ok: false, error: `Free includes ${limits.views} view. Upgrade to Household for more.` };
+    return {
+      ok: false,
+      error: plan === "free" ? `Free includes ${limits.views} view. Upgrade to Household for more.` : `At most ${limits.views} views.`,
+    };
   }
   if (plan === "free") {
     for (const view of config.views) {
@@ -33,13 +36,32 @@ export function gateConfig(plan: PlanId, config: DashboardConfig): GateResult {
         }
       }
     }
+    if (config.schedule.enabled) {
+      return { ok: false, error: "Time-of-day schedules need Household. Turn the schedule off or upgrade." };
+    }
+    if (config.screenSaver.idle || config.screenSaver.night) {
+      return { ok: false, error: "The screen saver needs Household. Turn it off or upgrade." };
+    }
+    if (config.alerts.notifyEmail) {
+      return { ok: false, error: "Alert emails need Household. Turn them off or upgrade." };
+    }
+    // Marketing: iCal links are Household-only (Google/Microsoft calendars still count toward Free's calendar cap).
+    if (config.integrations.icals.some((c) => c.enabled)) {
+      return { ok: false, error: "iCal calendar links need Household. Remove them or upgrade." };
+    }
   }
   const calendars =
     config.integrations.google.calendars.filter((c) => c.enabled).length +
     config.integrations.microsoft.calendars.filter((c) => c.enabled).length +
     config.integrations.icals.filter((c) => c.enabled).length;
   if (calendars > limits.calendars) {
-    return { ok: false, error: `Free includes ${limits.calendars} calendars. Upgrade to Household for more.` };
+    return {
+      ok: false,
+      error:
+        plan === "free"
+          ? `Free includes ${limits.calendars} calendars. Upgrade to Household for more.`
+          : `At most ${limits.calendars} calendars.`,
+    };
   }
   return { ok: true };
 }

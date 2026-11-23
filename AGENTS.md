@@ -321,7 +321,9 @@ panel can be complex if you need it to be."
 
 - **Accounts (households)** (`src/server/accounts.ts`): each family has an `accounts` row (plan, Stripe ids) and
   `account_members` (admin|family). Sessions and display devices carry `accountId`. Env `ADMIN_EMAILS` /
-  `FAMILY_EMAILS` still seed and open the grandfather household.
+  `FAMILY_EMAILS` still seed and open the grandfather household. Public Free signup seeds
+  `freeDefaultConfig()` (one Free-safe view, schedule off); Paid / grandfather empty docs still use the full
+  multi-view `defaultConfig()`.
 - **One settings document per account** (`account_config`; schema in `src/lib/config/schema.ts`, validated with zod on
   every save) holds views, widgets, themes, the schedule and integration settings. It is versioned: a save names the
   version it started from, a stale save is refused with 409, and every save bumps the version displays poll for

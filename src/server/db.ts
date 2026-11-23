@@ -58,6 +58,8 @@ const MIGRATIONS = [
     approved_at INTEGER,
     claimed_at INTEGER
   )`,
+  // One Free signup household per email (Melvin, 2026-11-23): stops parallel /api/auth/signup/ creating two accounts.
+  `CREATE TABLE IF NOT EXISTS signup_emails (email TEXT PRIMARY KEY, account_id TEXT NOT NULL, created_at INTEGER NOT NULL)`,
 ];
 
 // Columns added after a table was first created. SQLite has no ADD COLUMN IF NOT EXISTS, so each one runs on its own

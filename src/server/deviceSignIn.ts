@@ -146,8 +146,8 @@ export async function pollDeviceSignIn(req: Request, rawCode: string, pollSecret
 
   const handoff = decrypt(row.handoff_sealed);
   if (!handoff) return json({ status: "expired" as DevicePollStatus });
-  // Clear the sealed copy so a later poll doesn't keep re-issuing; claim still uses handoff_hash once.
-  await run("UPDATE device_sign_ins SET handoff_sealed = NULL WHERE code_hash = ? AND handoff_sealed IS NOT NULL", [sha256(code)]);
+  // Keep re-issuing the same handoff until claim: a lost poll response must not leave the display stuck on
+  // "pending" after the phone already approved. Claim still consumes handoff_hash once.
   return json({
     status: "ready" as DevicePollStatus,
     handoff,
