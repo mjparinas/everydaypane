@@ -36,8 +36,14 @@ export function displayHtml(opts: {
 <meta name="theme-color" content="#000000">
 <title>${esc(opts.title)} · Everydaypane</title>
 <link rel="icon" href="/favicon.ico" sizes="48x48">
-<link rel="icon" href="/brand/favicon.svg" type="image/svg+xml">
-<link rel="apple-touch-icon" href="/apple-icon.png">
+<link rel="icon" href="/icon.svg" type="image/svg+xml">
+<link rel="icon" href="/icons/icon-32.png" type="image/png" sizes="32x32">
+<link rel="icon" href="/icons/icon-16.png" type="image/png" sizes="16x16">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png" sizes="180x180">
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon-167.png" sizes="167x167">
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon-152.png" sizes="152x152">
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon-120.png" sizes="120x120">
+<link rel="mask-icon" href="/brand/safari-pinned.svg" color="#3b5bdb">
 <link rel="preload" href="/fonts/inter.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="/display/display.css?v=${v}">
 <script type="module" src="/display/display.js?v=${v}"></script>

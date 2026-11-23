@@ -1,13 +1,20 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Everydaypane">
+  <!-- Safe-zone mark for Android adaptive icons (content stays in the centre 70%). -->
   <defs>
-    <linearGradient id="b" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#5b7bff"/><stop offset="1" stop-color="#2a3796"/></linearGradient>
-    <linearGradient id="s" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffd76a"/><stop offset="1" stop-color="#ff9f43"/></linearGradient>
+    <linearGradient id="ep-bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#5b7bff"/>
+      <stop offset="1" stop-color="#2a3796"/>
+    </linearGradient>
+    <linearGradient id="ep-sun" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffd76a"/>
+      <stop offset="1" stop-color="#ff9f43"/>
+    </linearGradient>
   </defs>
-  <rect width="64" height="64" fill="url(#b)"/>
+  <rect width="64" height="64" fill="url(#ep-bg)"/>
   <g transform="translate(32 32) scale(.7) translate(-32 -32)">
     <rect x="11" y="11" width="24" height="42" rx="6" fill="#fff"/>
     <path d="M23 22v10l6 4" fill="none" stroke="#2a3796" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/>
-    <rect x="39" y="11" width="14" height="19" rx="5" fill="url(#s)"/>
+    <rect x="39" y="11" width="14" height="19" rx="5" fill="url(#ep-sun)"/>
     <rect x="39" y="34" width="14" height="19" rx="5" fill="#fff" fill-opacity=".72"/>
   </g>
 </svg>
