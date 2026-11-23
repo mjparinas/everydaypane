@@ -153,7 +153,7 @@ export function HomeView() {
                 </a>
               </div>
               <ul className="mt-5 flex flex-wrap gap-x-5 gap-y-2 text-sm text-soft">
-                {["Free plan, no ads", "Phone admin that works", "Made for the UC-Display21"].map((c) => (
+                {["Free plan, no ads", "Optimized for speed", "Made for the UC-Display21"].map((c) => (
                   <li key={c} className="flex gap-1.5">
                     <Check />
                     {c}
@@ -171,7 +171,7 @@ export function HomeView() {
           <dl className="mx-auto grid max-w-6xl grid-cols-2 gap-6 px-4 py-9 text-center sm:grid-cols-4">
             {[
               { value: "30+", label: "widgets on the wall" },
-              { value: "Light", label: "enough for a wall screen" },
+              { value: "Fast", label: "optimized for the wall" },
               { value: "0", label: "ads, ever" },
               { value: "Live", label: "calendars, weather & photos" },
             ].map((f) => (
@@ -221,7 +221,8 @@ export function HomeView() {
               Colourful screens the whole family reads
             </h2>
             <p className="mt-3 max-w-2xl text-soft">
-              Illustrative layouts of what Everydaypane draws — light, touch-friendly panes on a kitchen display.
+              Illustrative layouts of what Everydaypane draws — light, touch-friendly panes built for speed on a kitchen
+              display.
             </p>
             <div className="mt-10 grid gap-10 lg:gap-14">
               {FEATURES.map((f, i) => (
