@@ -28,6 +28,7 @@ export default function BlogIndex() {
             headline: p.title,
             url: `${SITE_URL}/blog/${p.slug}/`,
             datePublished: p.date,
+            image: `${SITE_URL}${p.image}`,
           })),
         }}
       />
@@ -43,24 +44,32 @@ export default function BlogIndex() {
       <ul className="mt-10 grid gap-4 md:grid-cols-2">
         {first ? (
           <li className="md:col-span-2">
-            <Link href={`/blog/${first.slug}/`} className="card block hover:border-brand/50">
-              <span className="text-xs font-bold tracking-wide text-brand uppercase">{first.tag}</span>
-              <span className="mt-1 block font-display text-2xl font-extrabold tracking-tight sm:text-3xl">{first.title}</span>
-              <span className="mt-2 block text-soft">{first.description}</span>
-              <span className="mt-3 block text-xs text-soft">
-                {first.date} · {readMinutes(first)} min read
+            <Link href={`/blog/${first.slug}/`} className="card block overflow-hidden p-0 hover:border-brand/50">
+              {/* eslint-disable-next-line @next/next/no-img-element -- static PNG previews in /public/templates */}
+              <img src={first.image} alt="" className="aspect-[16/9] w-full object-cover" width={1920} height={1080} />
+              <span className="block p-5 sm:p-6">
+                <span className="text-xs font-bold tracking-wide text-brand uppercase">{first.tag}</span>
+                <span className="mt-1 block font-display text-2xl font-extrabold tracking-tight sm:text-3xl">{first.title}</span>
+                <span className="mt-2 block text-soft">{first.description}</span>
+                <span className="mt-3 block text-xs text-soft">
+                  {first.date} · {readMinutes(first)} min read
+                </span>
               </span>
             </Link>
           </li>
         ) : null}
         {rest.map((p) => (
           <li key={p.slug}>
-            <Link href={`/blog/${p.slug}/`} className="card block h-full hover:border-brand/50">
-              <span className="text-xs font-bold tracking-wide text-brand uppercase">{p.tag}</span>
-              <span className="mt-1 block font-bold tracking-tight">{p.title}</span>
-              <span className="mt-2 block text-sm text-soft">{p.description}</span>
-              <span className="mt-3 block text-xs text-soft">
-                {p.date} · {readMinutes(p)} min
+            <Link href={`/blog/${p.slug}/`} className="card block h-full overflow-hidden p-0 hover:border-brand/50">
+              {/* eslint-disable-next-line @next/next/no-img-element -- static PNG previews in /public/templates */}
+              <img src={p.image} alt="" className="aspect-[16/9] w-full object-cover" width={960} height={540} />
+              <span className="block p-4 sm:p-5">
+                <span className="text-xs font-bold tracking-wide text-brand uppercase">{p.tag}</span>
+                <span className="mt-1 block font-bold tracking-tight">{p.title}</span>
+                <span className="mt-2 block text-sm text-soft">{p.description}</span>
+                <span className="mt-3 block text-xs text-soft">
+                  {p.date} · {readMinutes(p)} min
+                </span>
               </span>
             </Link>
           </li>

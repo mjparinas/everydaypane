@@ -1,0 +1,7 @@
+{
+  "updatedAt": 1763937720000,
+  "rates": [
+    { "base": "USD", "quote": "CAD", "rate": 1.3921, "date": "2026-11-21" },
+    { "base": "EUR", "quote": "CAD", "rate": 1.5114, "date": "2026-11-21" }
+  ]
+}

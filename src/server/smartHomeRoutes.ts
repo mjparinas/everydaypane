@@ -47,7 +47,7 @@ export async function finishSmartHomeConnect(provider: NativeSmartProvider, req:
     new Response(null, {
       status: 303,
       headers: {
-        Location: `/admin/?${provider}=${result}#settings/smart-home`,
+        Location: `/household/?${provider}=${result}#settings/smart-home`,
         "Set-Cookie": clearedSmartStateCookie(),
         "Cache-Control": "no-store",
       },

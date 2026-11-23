@@ -23,7 +23,7 @@ export default function ContactPage() {
         .
       </p>
       <p className="mt-6 text-soft">
-        We built Everydaypane for a family kitchen in Langley, BC. If something on the wall is wrong, include your display name from the
+        We built Everydaypane for kitchen walls in Langley, BC. If something on the wall is wrong, include your display name from the
         Displays tab and about when it happened.
       </p>
     </SitePage>

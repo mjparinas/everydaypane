@@ -1,7 +1,7 @@
 import { deflateRawSync } from "node:zlib";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { GET as adminGET } from "@/app/api/admin/transit/route";
+import { GET as adminGET } from "@/app/api/household/transit/route";
 import { GET as displayGET } from "@/app/api/display/transit/route";
 import { defaultConfig } from "@/lib/config/defaults";
 import { newWidget } from "@/lib/config/widgets";
@@ -285,11 +285,11 @@ describe("TransLink routes", () => {
 
   it("searches stops for admins only", async () => {
     stubTransLink();
-    expect((await adminGET(req("/api/admin/transit/?q=55210"))).status).toBe(401);
+    expect((await adminGET(req("/api/household/transit/?q=55210"))).status).toBe(401);
     const kid = await cookieFor("kid@example.com");
-    expect((await adminGET(req("/api/admin/transit/?q=55210", { headers: { cookie: kid } }))).status).toBe(401);
+    expect((await adminGET(req("/api/household/transit/?q=55210", { headers: { cookie: kid } }))).status).toBe(401);
     const cookie = await cookieFor("admin@example.com");
-    const body = (await (await adminGET(req("/api/admin/transit/?q=55210", { headers: { cookie } }))).json()) as {
+    const body = (await (await adminGET(req("/api/household/transit/?q=55210", { headers: { cookie } }))).json()) as {
       keySet: boolean;
       stops: { code: string }[];
     };

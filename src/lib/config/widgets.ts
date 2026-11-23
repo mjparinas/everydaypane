@@ -5,7 +5,7 @@ import type { Widget, WidgetType } from "./schema";
 
 type Defaults<T extends WidgetType> = Omit<
   Extract<Widget, { type: T }>,
-  "id" | "x" | "y" | "w" | "h" | "type" | "title" | "showBackground" | "backgroundOpacity"
+  "id" | "x" | "y" | "w" | "h" | "type" | "title" | "showBackground" | "backgroundOpacity" | "fontScale"
 >;
 
 interface WidgetInfo<T extends WidgetType> {
@@ -18,6 +18,9 @@ interface WidgetInfo<T extends WidgetType> {
   // False when the wall never draws `title` (clock uses Label; photos / radar / earth fill the cell).
   // Melvin, 2026-11-22: Title in settings only when the widget shows it.
   supportsTitle?: boolean;
+  // False for media-fill tiles with little or no text (photos, radar, camera, embeds, whiteboard).
+  // Melvin, 2026-11-23: Font scale in settings only when the widget shows text.
+  supportsFontScale?: boolean;
 }
 
 export const WIDGETS: { [T in WidgetType]: WidgetInfo<T> } = {
@@ -133,6 +136,7 @@ export const WIDGETS: { [T in WidgetType]: WidgetInfo<T> } = {
     size: { w: 6, h: 5 },
     minSize: { w: 2, h: 2 },
     supportsTitle: false,
+    supportsFontScale: false,
     defaults: () => ({ sourceIds: [], intervalSeconds: 30, fit: "cover", showCaption: false }),
   },
   haEntity: {
@@ -237,6 +241,7 @@ export const WIDGETS: { [T in WidgetType]: WidgetInfo<T> } = {
     icon: "📹",
     size: { w: 4, h: 3 },
     minSize: { w: 2, h: 2 },
+    supportsFontScale: false,
     defaults: () => ({ entityId: "", refreshSeconds: 10 }),
   },
   media: {
@@ -277,6 +282,7 @@ export const WIDGETS: { [T in WidgetType]: WidgetInfo<T> } = {
     size: { w: 4, h: 4 },
     minSize: { w: 2, h: 2 },
     supportsTitle: false,
+    supportsFontScale: false,
     defaults: () => ({ precip: "rain" as const, zoom: 8, pastMinutes: 60, forecastMinutes: 60, animate: true }),
   },
   timer: {
@@ -339,6 +345,7 @@ export const WIDGETS: { [T in WidgetType]: WidgetInfo<T> } = {
     size: { w: 6, h: 4 },
     minSize: { w: 2, h: 2 },
     supportsTitle: false,
+    supportsFontScale: false,
     // Langley until another place is picked; the widget's settings can copy the dashboard's own location.
     defaults: () => ({
       place: "Langley",
@@ -380,6 +387,7 @@ export const WIDGETS: { [T in WidgetType]: WidgetInfo<T> } = {
     icon: "✏️",
     size: { w: 4, h: 3 },
     minSize: { w: 2, h: 2 },
+    supportsFontScale: false,
     defaults: () => ({}),
   },
   stocks: {
@@ -427,6 +435,7 @@ export const WIDGETS: { [T in WidgetType]: WidgetInfo<T> } = {
     size: { w: 6, h: 4 },
     minSize: { w: 3, h: 2 },
     supportsTitle: false,
+    supportsFontScale: false,
     defaults: () => ({ symbol: "TSX:RY", interval: "D", style: "1", theme: "auto" }),
   },
   fitbit: {
@@ -484,6 +493,7 @@ export const WIDGETS: { [T in WidgetType]: WidgetInfo<T> } = {
     size: { w: 4, h: 5 },
     minSize: { w: 2, h: 3 },
     supportsTitle: false,
+    supportsFontScale: false,
     defaults: () => ({ embedUrl: "" }),
   },
   trello: {
@@ -509,6 +519,7 @@ export const WIDGETS: { [T in WidgetType]: WidgetInfo<T> } = {
     size: { w: 6, h: 4 },
     minSize: { w: 3, h: 2 },
     supportsTitle: false,
+    supportsFontScale: false,
     defaults: () => ({ mode: "video", videoId: "", autoplay: false }),
   },
   vimeo: {
@@ -518,6 +529,7 @@ export const WIDGETS: { [T in WidgetType]: WidgetInfo<T> } = {
     size: { w: 6, h: 4 },
     minSize: { w: 3, h: 2 },
     supportsTitle: false,
+    supportsFontScale: false,
     defaults: () => ({ videoId: "", autoplay: false }),
   },
   airports: {
@@ -535,6 +547,7 @@ export const WIDGETS: { [T in WidgetType]: WidgetInfo<T> } = {
     size: { w: 6, h: 4 },
     minSize: { w: 3, h: 2 },
     supportsTitle: false,
+    supportsFontScale: false,
     defaults: () => ({ query: "Langley, BC", zoom: 12 }),
   },
 };

@@ -6,7 +6,7 @@ export interface Faq {
 export const HOME_FAQS: Faq[] = [
   {
     q: "What is Everydaypane?",
-    a: "Everydaypane is a wall dashboard for the home. It shows your family's calendars, weather, photos, chores, meals, transit, sports and smart-home controls on a kitchen screen — built to feel fast on a UniFi UC-Display21 or any browser.",
+    a: "Everydaypane is a wall dashboard for the home. It shows your family's calendars, weather, photos, chores, meals, transit, sports and smart-home controls on a kitchen screen — built to feel fast on tablets, wall panels and any browser.",
   },
   {
     q: "Is it free?",
@@ -14,11 +14,11 @@ export const HOME_FAQS: Faq[] = [
   },
   {
     q: "Do I need to buy special hardware?",
-    a: 'No. Everydaypane runs in a browser. We designed it for the Ubiquiti UniFi UC-Display21 (21.5" 1920×1080 touch), and it works on tablets, smart displays and any screen you already have.',
+    a: "No. Everydaypane runs in a browser. It is tuned for a landscape kitchen panel around 1920×1080, and it works on tablets, smart displays and any screen you already have.",
   },
   {
     q: "How is this different from DAKboard or MagicMirror?",
-    a: "Everydaypane is built for a Canadian family kitchen first: Township of Langley garbage, TransLink, BC Ferries, Environment Canada radar, Alert Ready and BC Hydro outages, plus Home Assistant, chores and meals. The wall display is a lightweight page under 40 KB of script — not a heavy web app — so it stays snappy on low-power screens.",
+    a: "Everydaypane ships kitchen integrations out of the box: Township of Langley garbage, TransLink, BC Ferries, Environment Canada radar, Alert Ready and BC Hydro outages, plus Home Assistant, chores and meals. The wall display is a lightweight page under 40 KB of script — not a heavy web app — so it stays snappy on low-power screens.",
   },
   {
     q: "Can the kids tick off chores and groceries on the wall?",

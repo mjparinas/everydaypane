@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { GET } from "@/app/api/admin/places/route";
+import { GET } from "@/app/api/household/places/route";
 import { cookieFor, req, useTestServer } from "@/test/server";
 
 import { trimPlaces } from "./places";
@@ -36,14 +36,14 @@ describe("trimPlaces", () => {
   });
 });
 
-describe("/api/admin/places/", () => {
+describe("/api/household/places/", () => {
   useTestServer();
   afterEach(() => vi.unstubAllGlobals());
 
   it("looks up places for admins only, by name", async () => {
     const fetch = vi.fn<(input: string | URL | Request) => Promise<Response>>(() => Promise.resolve(Response.json(answer)));
     vi.stubGlobal("fetch", fetch);
-    const url = "/api/admin/places/?q=Langley";
+    const url = "/api/household/places/?q=Langley";
     const kid = await cookieFor("kid@example.com");
     expect((await GET(req(url, { headers: { cookie: kid } }))).status).toBe(401);
     const admin = await cookieFor("admin@example.com");
@@ -52,12 +52,12 @@ describe("/api/admin/places/", () => {
     const asked = new URL(String(fetch.mock.calls[0]?.[0]));
     expect(asked.host).toBe("geocoding-api.open-meteo.com");
     expect(asked.searchParams.get("name")).toBe("Langley");
-    expect((await GET(req("/api/admin/places/?q=x", { headers: { cookie: admin } }))).status).toBe(400);
+    expect((await GET(req("/api/household/places/?q=x", { headers: { cookie: admin } }))).status).toBe(400);
   });
 
   it("says so when the search doesn't answer", async () => {
     vi.stubGlobal("fetch", () => Promise.resolve(new Response("busy", { status: 503 })));
     const admin = await cookieFor("admin@example.com");
-    expect((await GET(req("/api/admin/places/?q=Langley", { headers: { cookie: admin } }))).status).toBe(502);
+    expect((await GET(req("/api/household/places/?q=Langley", { headers: { cookie: admin } }))).status).toBe(502);
   });
 });

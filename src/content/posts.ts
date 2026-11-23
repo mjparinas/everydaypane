@@ -14,10 +14,20 @@ export interface Post {
   kind: PostKind;
   /** Semver when kind is release. */
   version?: string;
+  /** App screenshot under public/, e.g. /templates/kitchen-glance.png */
+  image: string;
   body: Block[];
 }
 
-function release(version: string, date: string, title: string, description: string, bullets: string[], more: Block[] = []): Post {
+function release(
+  version: string,
+  date: string,
+  title: string,
+  description: string,
+  bullets: string[],
+  more: Block[] = [],
+  image = "/templates/kitchen-glance.png",
+): Post {
   return {
     slug: `whats-new-${version.replace(/\./g, "-")}`,
     title,
@@ -26,20 +36,29 @@ function release(version: string, date: string, title: string, description: stri
     tag: "Updates",
     kind: "release",
     version,
+    image,
     body: [{ p: description }, { h2: "New" }, { ul: bullets }, ...more, { cta: true }],
   };
 }
 
-function guide(slug: string, date: string, title: string, description: string, tag: string, body: Block[]): Post {
-  return { slug, title, description, date, tag, kind: "guide", body: [...body, { cta: true }] };
+function guide(
+  slug: string,
+  date: string,
+  title: string,
+  description: string,
+  tag: string,
+  body: Block[],
+  image = "/templates/morning-brief.png",
+): Post {
+  return { slug, title, description, date, tag, kind: "guide", image, body: [...body, { cta: true }] };
 }
 
-function compare(slug: string, date: string, title: string, description: string, body: Block[]): Post {
-  return { slug, title, description, date, tag: "Compare", kind: "compare", body: [...body, { cta: true }] };
+function compare(slug: string, date: string, title: string, description: string, body: Block[], image = "/templates/family-hub.png"): Post {
+  return { slug, title, description, date, tag: "Compare", kind: "compare", image, body: [...body, { cta: true }] };
 }
 
-function story(slug: string, date: string, title: string, description: string, body: Block[]): Post {
-  return { slug, title, description, date, tag: "Family", kind: "story", body: [...body, { cta: true }] };
+function story(slug: string, date: string, title: string, description: string, body: Block[], image = "/templates/photo-frame.png"): Post {
+  return { slug, title, description, date, tag: "Family", kind: "story", image, body: [...body, { cta: true }] };
 }
 
 const RELEASES: Post[] = [
@@ -47,7 +66,7 @@ const RELEASES: Post[] = [
     "0.1.0",
     "2026-11-17",
     "What's new in Everydaypane 0.1.0",
-    "The first Everydaypane build for Melvin's family in Langley: clocks, weather, Google Calendar, photos, Home Assistant, alerts and a phone admin.",
+    "The first Everydaypane build: clocks, weather, Google Calendar, photos, Home Assistant, alerts and a phone admin.",
     [
       "Digital and analogue clocks for any time zone, with Vancouver and Toronto ready",
       "Weather for the week with icons, plus air quality",
@@ -58,6 +77,8 @@ const RELEASES: Post[] = [
       "Drag-and-drop views, day and night themes, offline mode and burn-in protection",
       "Magic-link admin sign-in through Resend",
     ],
+    [],
+    "/templates/kitchen-glance.png",
   ),
   release(
     "0.1.1",
@@ -69,6 +90,8 @@ const RELEASES: Post[] = [
       "Album art proxied at display size",
       "Doorbell pop-up full screen when the ring entity changes",
     ],
+    [],
+    "/templates/smart-home.png",
   ),
   release(
     "0.1.2",
@@ -80,6 +103,8 @@ const RELEASES: Post[] = [
       "Plan from the admin Meals tab or /family/",
       "Widget shows the next meal, or up to a week",
     ],
+    [],
+    "/templates/week-planner.png",
   ),
   release(
     "0.2.0",
@@ -93,6 +118,8 @@ const RELEASES: Post[] = [
       "Settings › Backup: download and restore the settings document as JSON",
       "Month calendar title toggle",
     ],
+    [],
+    "/templates/commute-dash.png",
   ),
   release(
     "0.3.0",
@@ -109,6 +136,8 @@ const RELEASES: Post[] = [
       "Screen saver: photos or dark after idle, night window, motion wake",
       "Widgets may sit on top of a photos backdrop",
     ],
+    [],
+    "/templates/rainy-day.png",
   ),
   release(
     "0.4.0",
@@ -126,6 +155,8 @@ const RELEASES: Post[] = [
       "Fixed UTC−7 for Vancouver after B.C.'s March 2026 permanent daylight time",
       "Locks can lock, never unlock from the wall",
     ],
+    [],
+    "/templates/kids-routine.png",
   ),
   release(
     "0.5.0",
@@ -140,35 +171,37 @@ const RELEASES: Post[] = [
       "robots.txt, sitemap, RSS feed and production legal pages",
       "Version and build hash in the site footer (plain text, no links)",
     ],
+    [],
+    "/templates/simple-day.png",
   ),
 ];
 
 const GUIDES: Post[] = [
   guide(
-    "setup-unifi-uc-display21",
+    "setup-wall-display",
     "2026-11-18",
-    "Set up Everydaypane on a UniFi UC-Display21",
-    "How to hang Everydaypane on Ubiquiti's 21.5\" 1920×1080 touchscreen: display link, kiosk tips and the default 12×8 grid.",
+    "Set up Everydaypane on a wall display",
+    "How to hang Everydaypane on a kitchen touchscreen or tablet: display link, kiosk tips and the default 12×8 grid.",
     "Setup",
     [
       {
-        p: 'Everydaypane was designed for the **Ubiquiti UniFi UC-Display21**: a low-power 21.5" 1920×1080 touch panel that lives well in a kitchen. Any browser works; this guide is for that screen.',
+        p: "Everydaypane runs in any modern browser. It is tuned for a landscape kitchen panel around **1920×1080**, and it also works on tablets, smart displays and TVs you already own.",
       },
       { h2: "1. Create a display address" },
       {
         p: "In the admin, open **Displays** and add a device. Copy the secret `/d/…` link. New addresses are eight characters; older longer ones still work. You can show and copy the address again any time — it is stored encrypted.",
       },
-      { h2: "2. Open the link on the UC-Display21" },
+      { h2: "2. Open the link on the screen" },
       {
         ul: [
-          "Use the display's browser (or a kiosk mode if you wrap it).",
-          "Pinch zoom is locked on purpose so the 1920×1080 layout stays fixed.",
+          "Use the display's browser, or set the address as the start page in kiosk settings.",
+          "Pinch zoom is locked on purpose so a fixed wall layout stays put.",
           "The page sets a short-lived cookie for images; the long token stays in a header for fetches.",
         ],
       },
       { h2: "3. Match the default grid" },
       {
-        p: "Views default to a **12×8** grid with gap 16, edge 14 and tile padding 16 — tuned for this panel. One-tap presets and a grouped widget picker speed the first layout.",
+        p: "Views default to a **12×8** grid with gap 16, edge 14 and tile padding 16 — a good fit for landscape wall panels. One-tap presets and a grouped widget picker speed the first layout.",
       },
       { h2: "4. Schedule morning to night" },
       {
@@ -178,6 +211,7 @@ const GUIDES: Post[] = [
         tip: "After B.C.'s permanent daylight time, Everydaypane keeps Vancouver clocks on UTC−7 even when the panel's browser has old time-zone data.",
       },
     ],
+    "/templates/kitchen-command.png",
   ),
   guide(
     "connect-google-calendar-and-tasks",
@@ -203,6 +237,7 @@ const GUIDES: Post[] = [
       },
       { tip: "Family calendar events from /family/ merge into the same feed in Everydaypane blue (#5b8def)." },
     ],
+    "/templates/calendar-wall.png",
   ),
   guide(
     "home-assistant-cloudflare-tunnel",
@@ -230,6 +265,7 @@ const GUIDES: Post[] = [
       },
       { tip: "Changing the Home Assistant URL clears stored tokens so credentials never follow a new host." },
     ],
+    "/templates/smart-home.png",
   ),
   guide(
     "translink-departures-on-the-wall",
@@ -253,6 +289,7 @@ const GUIDES: Post[] = [
         p: "One 30-second server read is shared by every display. Between polls the wall counts minutes down from absolute times. Live times from TransLink are credited on the widget.",
       },
     ],
+    "/templates/commute-dash.png",
   ),
   guide(
     "commute-times-with-tomtom",
@@ -273,6 +310,7 @@ const GUIDES: Post[] = [
         ],
       },
     ],
+    "/templates/commute-dash.png",
   ),
   guide(
     "rain-radar-environment-canada",
@@ -288,6 +326,7 @@ const GUIDES: Post[] = [
         p: "Displays get times and tile indexes only; frames and tiles are proxied. The widget loops at most 10 observed and 6 forecast frames, resting on the latest and the last.",
       },
     ],
+    "/templates/rainy-day.png",
   ),
   guide(
     "chore-chart-for-kids",
@@ -307,6 +346,7 @@ const GUIDES: Post[] = [
         ],
       },
     ],
+    "/templates/kids-routine.png",
   ),
   guide(
     "shopping-list-and-meals",
@@ -326,6 +366,7 @@ const GUIDES: Post[] = [
         ],
       },
     ],
+    "/templates/week-planner.png",
   ),
   guide(
     "emergency-alerts-for-bc",
@@ -347,6 +388,7 @@ const GUIDES: Post[] = [
       },
       { tip: "Optional email to ADMIN_EMAILS and FAMILY_EMAILS when a new strip-worthy alert arrives." },
     ],
+    "/templates/morning-brief.png",
   ),
   guide(
     "photos-amazon-google-library",
@@ -362,16 +404,17 @@ const GUIDES: Post[] = [
         p: "The photo library stores uploads and Google Photos picks in a private Blob store. Displays only receive ids the server listed; `/api/display/photo/` fetches at the width the cell draws.",
       },
     ],
+    "/templates/photo-frame.png",
   ),
   guide(
     "screen-saver-and-burn-in",
     "2026-11-21",
     "Screen saver, dimming and burn-in protection",
-    "Idle photos or dark, night window, motion wake, pixel shift — and why a browser cannot turn the UC-Display21 backlight off.",
+    "Idle photos or dark, night window, motion wake, pixel shift — and why a browser cannot switch a panel's backlight off.",
     "Display",
     [
       {
-        p: "The saver sits above the dashboard and below the doorbell and alert strip, so emergencies stay visible. Underneath, the dashboard stays mounted but `visibility: hidden` so wake is instant.",
+        p: "The saver sits above the dashboard and below the doorbell and alert strip, so emergencies stay visible. Underneath, the dashboard stays mounted but `visibility: hidden` so wake is instant. Dark mode is a black screen: a browser cannot turn the panel backlight off.",
       },
       {
         ul: [
@@ -381,6 +424,7 @@ const GUIDES: Post[] = [
         ],
       },
     ],
+    "/templates/night-clock.png",
   ),
   guide(
     "bc-ferries-on-everydaypane",
@@ -396,6 +440,7 @@ const GUIDES: Post[] = [
         p: "Pick up to four routes in the widget. Sailings drop five minutes after departure on the wall clock; conditions older than 15 minutes show their age.",
       },
     ],
+    "/templates/ferry-weekend.png",
   ),
   guide(
     "sports-scores-espn",
@@ -408,6 +453,7 @@ const GUIDES: Post[] = [
         p: "Settings › Sports lists a league's teams (cached a day). Schedules refresh every 30 minutes; live scoreboards poll every 30 seconds only while a game might be on. No logos — each row uses the team's colour.",
       },
     ],
+    "/templates/sports-lounge.png",
   ),
   guide(
     "kitchen-timers-and-pomodoro",
@@ -420,6 +466,7 @@ const GUIDES: Post[] = [
         p: "Timers and pomodoro run entirely on the display in localStorage. Alarms belong to the screen, so they still ring after a settings save or when the schedule switches views. Sound needs a prior tap — starting a timer counts.",
       },
     ],
+    "/templates/focus-desk.png",
   ),
   guide(
     "offline-mode-service-worker",
@@ -432,6 +479,7 @@ const GUIDES: Post[] = [
         p: "The display is server-rendered HTML plus one small script. When the network drops, the service worker keeps the last good JSON and marks the UI offline. Radar frames are left alone so forecast URLs do not fill the cache.",
       },
     ],
+    "/templates/dual-city.png",
   ),
 ];
 
@@ -440,14 +488,14 @@ const COMPARES: Post[] = [
     "everydaypane-vs-dakboard",
     "2026-11-23",
     "Everydaypane vs DAKboard",
-    "DAKboard is a flexible cloud dashboard; Everydaypane is a Canadian family kitchen wall with transit, garbage, ferries and alerts built in.",
+    "DAKboard is a flexible cloud dashboard; Everydaypane is a kitchen wall with transit, garbage, ferries and alerts built in.",
     [
       {
         p: "Both products put calendars, photos and weather on a wall. DAKboard wins on sheer block variety and optional hardware. Everydaypane wins when you want **Langley garbage, TransLink, BC Ferries, Environment Canada radar and Alert Ready** without assembling third-party feeds.",
       },
       { h2: "Hardware" },
       {
-        p: 'DAKboard sells 22" and 27" touch displays (hundreds of dollars) or runs on a browser / Pi. Everydaypane is software-first: bring a UniFi UC-Display21, tablet or TV you already own.',
+        p: 'DAKboard sells 22" and 27" touch displays (hundreds of dollars) or runs on a browser / Pi. Everydaypane is software-first: bring a tablet, TV or wall panel you already own.',
       },
       { h2: "Price" },
       {
@@ -461,6 +509,7 @@ const COMPARES: Post[] = [
         p: "See the full matrix on the [DAKboard comparison page](/compare/dakboard/).",
       },
     ],
+    "/templates/kitchen-glance.png",
   ),
   compare(
     "everydaypane-vs-magicmirror",
@@ -476,6 +525,7 @@ const COMPARES: Post[] = [
       },
       { p: "Full side-by-side: [compare MagicMirror](/compare/magicmirror/)." },
     ],
+    "/templates/dual-city.png",
   ),
   compare(
     "everydaypane-vs-skylight",
@@ -491,6 +541,7 @@ const COMPARES: Post[] = [
       },
       { p: "Details: [compare Skylight](/compare/skylight/)." },
     ],
+    "/templates/calendar-wall.png",
   ),
   compare(
     "everydaypane-vs-echo-show",
@@ -506,6 +557,7 @@ const COMPARES: Post[] = [
       },
       { p: "More: [compare Echo Show](/compare/echo-show/)." },
     ],
+    "/templates/simple-day.png",
   ),
   compare(
     "everydaypane-vs-hearth",
@@ -518,6 +570,7 @@ const COMPARES: Post[] = [
       },
       { p: "Matrix: [compare Hearth](/compare/hearth/)." },
     ],
+    "/templates/kids-routine.png",
   ),
   compare(
     "everydaypane-vs-cozyla",
@@ -526,16 +579,17 @@ const COMPARES: Post[] = [
     "Cozyla ships large Android calendar tablets. Everydaypane keeps software independent from the panel so you are not locked into one OEM.",
     [
       {
-        p: 'Cozyla\'s 24" and 32" panels are impressive hardware. Everydaypane prefers a browser on whatever panel you choose — including UniFi — with Home Assistant and UniFi Protect first-class.',
+        p: 'Cozyla\'s 24" and 32" panels are impressive hardware. Everydaypane prefers a browser on whatever panel you choose, with Home Assistant and UniFi Protect first-class.',
       },
       { p: "Matrix: [compare Cozyla](/compare/cozyla/)." },
     ],
+    "/templates/family-hub.png",
   ),
   compare(
     "best-family-dashboard-2026",
     "2026-11-23",
     "Best family wall dashboard in 2026",
-    "How to choose between Everydaypane, DAKboard, Skylight, MagicMirror, Echo Show, Hearth and Cozyla for a Canadian kitchen.",
+    "How to choose between Everydaypane, DAKboard, Skylight, MagicMirror, Echo Show, Hearth and Cozyla for a kitchen wall.",
     [
       { h2: "Start with the job" },
       {
@@ -544,7 +598,7 @@ const COMPARES: Post[] = [
           "**DIY mirror project:** MagicMirror².",
           "**Alexa already runs the kitchen:** Echo Show.",
           "**Maximum third-party blocks:** DAKboard.",
-          "**Canadian family + smart home + bring your own screen:** Everydaypane.",
+          "**Smart home + BC transit + bring your own screen:** Everydaypane.",
         ],
       },
       { h2: "Three-year cost thinking" },
@@ -553,6 +607,7 @@ const COMPARES: Post[] = [
       },
       { p: "Browse every matrix on the [compare index](/compare/)." },
     ],
+    "/templates/kitchen-command.png",
   ),
 ];
 
@@ -571,6 +626,7 @@ const MORE_GUIDES: Post[] = [
         p: "The server reads each link with ical.js (recurrence, exceptions, floating times in the dashboard zone), caches 15 minutes, and merges into the same feed as Google. Only public https addresses are fetched, including after redirects.",
       },
     ],
+    "/templates/calendar-wall.png",
   ),
   guide(
     "month-calendar-weeks-and-weekends",
@@ -583,6 +639,7 @@ const MORE_GUIDES: Post[] = [
         p: "The month widget can show the whole month or 1–6 weeks from this one. Turn off weekends to drop Saturday and Sunday columns. Fit titles wrap and shrink instead of ellipsis; busy days still use “+N more”. When week rows exceed `scrollWeeks` (default 3), the tile scrolls by touch.",
       },
     ],
+    "/templates/week-planner.png",
   ),
   guide(
     "widgets-on-top-of-photos",
@@ -595,6 +652,7 @@ const MORE_GUIDES: Post[] = [
         p: "A photos widget is a backdrop layer. Any other widget may cover it; two photos widgets still never overlap. New widgets fill empty cells first and only land on photos when nothing else is free.",
       },
     ],
+    "/templates/photo-frame.png",
   ),
   guide(
     "per-widget-backgrounds",
@@ -607,6 +665,7 @@ const MORE_GUIDES: Post[] = [
         p: "Every widget has Background on/off and Background opacity. Theme surface opacity is the default. An older sunrise “transparent” setting becomes Background off.",
       },
     ],
+    "/templates/night-clock.png",
   ),
   guide(
     "live-views-editor",
@@ -619,6 +678,7 @@ const MORE_GUIDES: Post[] = [
         p: "Tap a widget for a right slide-out of its settings; Edit view opens the same drawer for grid, gap, edge, tile and theme. Wall screens still only reload the saved document every 30 seconds — drafts never push to the kitchen until Save.",
       },
     ],
+    "/templates/kitchen-command.png",
   ),
   guide(
     "bc-permanent-daylight-time",
@@ -631,6 +691,7 @@ const MORE_GUIDES: Post[] = [
         p: "Some display browsers still move `America/Vancouver` back an hour in November. Everydaypane keeps clocks, dates, calendars and time-of-day schedules correct with historical rules before the March 8, 2026 transition and fixed UTC−7 afterward.",
       },
     ],
+    "/templates/dual-city.png",
   ),
   guide(
     "school-status-langley-sd35",
@@ -643,6 +704,7 @@ const MORE_GUIDES: Post[] = [
         p: "Settings › School status holds an https status URL. The server looks for closed, delayed or late start in the page banner, then the rest of the page. A widget can name schools; a notice counts when it names one of them or says all schools.",
       },
     ],
+    "/templates/morning-brief.png",
   ),
   guide(
     "spotify-and-sonos-without-ha",
@@ -655,6 +717,7 @@ const MORE_GUIDES: Post[] = [
         p: "Connect accounts from Settings › Music. Spotify sources are Connect devices; Sonos sources are favourites for the grouped speaker. Art only comes from addresses the feed already read.",
       },
     ],
+    "/templates/smart-home.png",
   ),
   guide(
     "garbage-day-langley",
@@ -667,6 +730,7 @@ const MORE_GUIDES: Post[] = [
         p: "The schedule is cached twelve hours. The widget shows the next pickups for one to eight weeks so packing night is obvious from the island.",
       },
     ],
+    "/templates/simple-day.png",
   ),
   guide(
     "settings-backup-and-restore",
@@ -679,6 +743,7 @@ const MORE_GUIDES: Post[] = [
         p: "Settings › Backup runs a dry run first so you can see what the file holds. Restore is an ordinary versioned save — stale versions get 409, and displays reload when it lands.",
       },
     ],
+    "/templates/focus-desk.png",
   ),
 ];
 
@@ -690,7 +755,7 @@ const STORIES: Post[] = [
     "Phones fragment the family calendar. A shared pane by the kettle answers the questions everyone asks out loud.",
     [
       {
-        p: "Every family invents the same ritual: shouting from the hallway about swim practice, garbage night and whether the Canucks play. Phones hide that information behind lock screens and different accounts.",
+        p: "Every household invents the same ritual: shouting from the hallway about swim practice, garbage night and whether the Canucks play. Phones hide that information behind lock screens and different accounts.",
       },
       {
         p: "A wall dashboard is not another notification stream. It is a **calm, always-on composition** — clocks, weather, the next three events, who's home — readable from the island.",
@@ -699,23 +764,25 @@ const STORIES: Post[] = [
         p: "Everydaypane leans into that: a lightweight display page, phone admin, and widgets for the life we actually live in Langley.",
       },
     ],
+    "/templates/family-hub.png",
   ),
   story(
     "canadian-english-on-purpose",
     "2026-11-22",
     "Canadian English on purpose",
-    "Colour, centre, favourite — Everydaypane is written the way Melvin's family reads.",
+    "Colour, centre, favourite — Everydaypane is written the way Canadian readers expect.",
     [
       {
         p: "Product copy uses Canadian English throughout, as in Liftsmith. It is a small signal that the dashboard was made here — next to Township of Langley garbage codes and TransLink stop numbers.",
       },
     ],
+    "/templates/morning-brief.png",
   ),
   story(
     "lightweight-display-budget",
     "2026-11-17",
     "Why the display stays under 40 KB",
-    "The wall is not a React app. Server-rendered HTML plus one esbuild bundle keeps the UC-Display21 snappy.",
+    "The wall is not a React app. Server-rendered HTML plus one esbuild bundle keeps low-power screens snappy.",
     [
       {
         p: "Melvin's rule: emphasize a super lightweight front end so the dashboard loads quickly. The admin may be complex; the `/d/` page may not.",
@@ -728,6 +795,7 @@ const STORIES: Post[] = [
         ],
       },
     ],
+    "/templates/kitchen-glance.png",
   ),
   story(
     "privacy-without-tracking",
@@ -740,6 +808,7 @@ const STORIES: Post[] = [
       },
       { p: "Read the full [privacy policy](/privacy/)." },
     ],
+    "/templates/photo-frame.png",
   ),
   story(
     "family-emails-vs-admin",
@@ -751,6 +820,7 @@ const STORIES: Post[] = [
         p: "`ADMIN_EMAILS` get the full panel. `FAMILY_EMAILS` get `/family/` plus meals, shopping and messages — never `/api/display/*`. The wall remains a display token world.",
       },
     ],
+    "/templates/kids-routine.png",
   ),
 ];
 

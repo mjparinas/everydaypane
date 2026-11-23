@@ -1,10 +1,10 @@
 // Display flows for scripts/e2e.mjs: add a device through the admin API, open its address like a wall screen would,
 // and check it draws, ticks, polls for changes and survives going offline.
 
-const VIEWPORT = { width: 1920, height: 1080 }; // the UC-Display21
+const VIEWPORT = { width: 1920, height: 1080 }; // kitchen wall panel size
 
 async function addDevice(page, base, viewId = null) {
-  const r = await page.request.post(`${base}/api/admin/devices/`, { headers: { origin: base }, data: { name: "Kitchen", viewId } });
+  const r = await page.request.post(`${base}/api/household/devices/`, { headers: { origin: base }, data: { name: "Kitchen", viewId } });
   if (r.status() !== 201) throw new Error(`add device: ${r.status()}`);
   return (await r.json()).url.replace(/^https?:\/\/[^/]+/, base);
 }
@@ -50,14 +50,14 @@ export const flows = [
       const url = await addDevice(page, base, "home");
       const d = await openDisplay(browser, url);
       await d.page.locator(".cell").first().waitFor();
-      const { config, version } = await (await page.request.get(`${base}/api/admin/config/`)).json();
+      const { config, version } = await (await page.request.get(`${base}/api/household/config/`)).json();
       config.views
         .find((v) => v.id === "home")
         .widgets.push({ id: "e2e-note", type: "note", x: 4, y: 2, w: 2, h: 1, text: "Hello from the admin", size: "m" });
       config.views.find((v) => v.id === "home").widgets = config.views
         .find((v) => v.id === "home")
         .widgets.filter((w) => w.id !== "home-aq");
-      const saved = await page.request.put(`${base}/api/admin/config/`, {
+      const saved = await page.request.put(`${base}/api/household/config/`, {
         headers: { origin: base },
         data: { baseVersion: version, config },
       });
@@ -107,7 +107,7 @@ export const flows = [
     name: "the admin panel resizes a widget and saves it",
     async run({ page, base, expect }) {
       // A fresh load: earlier flows changed the settings behind this page's back.
-      await page.goto(`${base}/admin/`);
+      await page.goto(`${base}/household/`);
       await page.reload();
       await page.getByTestId("grid-editor").waitFor();
       const widget = page.locator('[data-widget="home-countdown"]');
@@ -129,7 +129,7 @@ export const flows = [
       expect(grown.includes("3 by 3 at column 9, row 6"), `the top-left corner didn't resize: ${grown}`);
       await page.getByRole("button", { name: "Save", exact: true }).click();
       await page.getByText(/Saved\. Displays update/).waitFor();
-      const { config } = await (await page.request.get(`${base}/api/admin/config/`)).json();
+      const { config } = await (await page.request.get(`${base}/api/household/config/`)).json();
       const saved = config.views.find((v) => v.id === "home").widgets.find((w) => w.id === "home-countdown");
       expect(saved.x === 8 && saved.w === 3 && saved.h === 3, `saved as ${saved.w} by ${saved.h} at ${saved.x}`);
     },
@@ -137,16 +137,16 @@ export const flows = [
   {
     name: "settings download as a backup file and restore from it",
     async run({ page, base, expect }) {
-      await page.goto(`${base}/admin/#settings/backup`);
+      await page.goto(`${base}/household/#settings/backup`);
       await page.reload();
       await page.getByRole("link", { name: "Download backup" }).waitFor();
       const [download] = await Promise.all([page.waitForEvent("download"), page.getByRole("link", { name: "Download backup" }).click()]);
       expect(/^everydaypane-settings-\d{4}-\d{2}-\d{2}\.json$/.test(download.suggestedFilename()), download.suggestedFilename());
       const file = await download.path();
       // Change the settings behind the page's back, then put the backup's back.
-      const before = await (await page.request.get(`${base}/api/admin/config/`)).json();
+      const before = await (await page.request.get(`${base}/api/household/config/`)).json();
       const renamed = { ...before.config, name: "Renamed after the backup" };
-      const put = await page.request.put(`${base}/api/admin/config/`, {
+      const put = await page.request.put(`${base}/api/household/config/`, {
         headers: { origin: base },
         data: { baseVersion: before.version, config: renamed },
       });
@@ -156,7 +156,7 @@ export const flows = [
       await page.getByTestId("restore-confirm").waitFor();
       await page.getByRole("button", { name: "Restore these settings" }).click();
       await page.getByText(/^Restored .*Displays pick it up within 30 seconds\.$/).waitFor();
-      const after = await (await page.request.get(`${base}/api/admin/config/`)).json();
+      const after = await (await page.request.get(`${base}/api/household/config/`)).json();
       expect(after.config.name === before.config.name, `name is ${after.config.name}`);
       expect(after.version === before.version + 2, `version ${after.version}`);
     },
@@ -166,7 +166,7 @@ export const flows = [
     async run({ browser, page, base, expect }) {
       const phone = await browser.newContext({ viewport: { width: 390, height: 844 }, storageState: await page.context().storageState() });
       const p = await phone.newPage();
-      await p.goto(`${base}/admin/`);
+      await p.goto(`${base}/household/`);
       await p.getByTestId("grid-editor").waitFor();
       await p.getByRole("navigation", { name: "Sections" }).last().getByRole("button", { name: "Colours" }).click();
       await p.getByRole("button", { name: "Copy this scheme" }).waitFor();
@@ -183,11 +183,11 @@ export const flows = [
         data: { author: "Mom", text: "Soccer moved to 5", colour: "pink", expiresInHours: 24 },
       });
       expect(r.status() === 201, `post: ${r.status()}`);
-      const { config, version } = await (await page.request.get(`${base}/api/admin/config/`)).json();
+      const { config, version } = await (await page.request.get(`${base}/api/household/config/`)).json();
       const home = config.views.find((v) => v.id === "home");
       home.widgets = home.widgets.filter((w) => w.id !== "home-photos");
       home.widgets.push({ id: "e2e-board", type: "messages", x: 4, y: 3, w: 5, h: 5, count: 5 });
-      const saved = await page.request.put(`${base}/api/admin/config/`, {
+      const saved = await page.request.put(`${base}/api/household/config/`, {
         headers: { origin: base },
         data: { baseVersion: version, config },
       });
@@ -216,11 +216,11 @@ export const flows = [
       expect(!overflow, "the family page scrolls sideways on a phone");
       await phone.close();
 
-      const { config, version } = await (await page.request.get(`${base}/api/admin/config/`)).json();
+      const { config, version } = await (await page.request.get(`${base}/api/household/config/`)).json();
       const home = config.views.find((v) => v.id === "home");
       home.widgets = home.widgets.filter((w) => w.id !== "home-photos" && w.id !== "e2e-board");
       home.widgets.push({ id: "e2e-meals", type: "meals", x: 4, y: 3, w: 5, h: 5, days: 7, slots: ["breakfast", "lunch", "dinner"] });
-      const put = await page.request.put(`${base}/api/admin/config/`, {
+      const put = await page.request.put(`${base}/api/household/config/`, {
         headers: { origin: base },
         data: { baseVersion: version, config },
       });
@@ -235,7 +235,7 @@ export const flows = [
   {
     name: "widgets on top of a photos widget are drawn above the photo and stay readable",
     async run({ browser, page, base, expect }) {
-      const { config, version } = await (await page.request.get(`${base}/api/admin/config/`)).json();
+      const { config, version } = await (await page.request.get(`${base}/api/household/config/`)).json();
       const home = config.views.find((v) => v.id === "home");
       const countdown = home.widgets.find((w) => w.type === "countdown");
       config.views.push({
@@ -276,7 +276,7 @@ export const flows = [
           { ...countdown, id: "f-countdown", x: 9, y: 0, w: 3, h: 3 },
         ],
       });
-      const saved = await page.request.put(`${base}/api/admin/config/`, {
+      const saved = await page.request.put(`${base}/api/household/config/`, {
         headers: { origin: base },
         data: { baseVersion: version, config },
       });
@@ -416,7 +416,7 @@ export const flows = [
       // Settings › Chores on a phone: add a kid, then a chore for them.
       const phone = await browser.newContext({ viewport: { width: 390, height: 844 }, storageState: await page.context().storageState() });
       const p = await phone.newPage();
-      await p.goto(`${base}/admin/#settings/chores`);
+      await p.goto(`${base}/household/#settings/chores`);
       await p.getByLabel("Add a kid").waitFor();
       await p.getByLabel("Add a kid").fill("Ana");
       await p.getByLabel("Add a kid").press("Enter");
@@ -427,7 +427,7 @@ export const flows = [
       expect(!overflow, "Settings › Chores scrolls sideways on a phone");
       await phone.close();
 
-      const { config, version } = await (await page.request.get(`${base}/api/admin/config/`)).json();
+      const { config, version } = await (await page.request.get(`${base}/api/household/config/`)).json();
       config.chores = {
         people: [
           { id: "ana", name: "Ana", emoji: "🦊", color: "#e8590c", goal: 10 },
@@ -457,7 +457,7 @@ export const flows = [
         themeId: null,
         widgets: [{ id: "c-chart", type: "chores", x: 0, y: 0, w: 8, h: 6, personIds: [], showStars: true, allowCheck: true }],
       });
-      const put = await page.request.put(`${base}/api/admin/config/`, {
+      const put = await page.request.put(`${base}/api/household/config/`, {
         headers: { origin: base },
         data: { baseVersion: version, config },
       });

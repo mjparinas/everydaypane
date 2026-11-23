@@ -37,6 +37,10 @@ describe("alert email notify", () => {
     c.alerts.banner = "moderate";
     await notifyNewStripAlerts(LEGACY_ACCOUNT_ID, c, [alert]);
     expect(send).toHaveBeenCalledTimes(2);
+    const first = send.mock.calls[0]?.[0];
+    expect(first?.subject).toContain("Wind warning");
+    expect(first?.html).toContain("everyday");
+    expect(first?.html).toContain("#3b5bdb");
     expect(await alreadyNotified(LEGACY_ACCOUNT_ID, alert.id)).toBe(true);
     await notifyNewStripAlerts(LEGACY_ACCOUNT_ID, c, [alert]);
     expect(send).toHaveBeenCalledTimes(2);

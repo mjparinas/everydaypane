@@ -3,16 +3,22 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
 import { SESSION_COOKIE, sessionFor } from "@/server/auth";
-import { loadConfig } from "@/server/config";
+import { isStaffEmail, staffEnabled } from "@/server/staff";
 
-import { Admin } from "./_ui/Admin";
+import { PlatformAdmin } from "./_ui/PlatformAdmin";
 
 export const metadata: Metadata = { title: "Admin" };
 
-export default async function AdminPage() {
+/**
+ * Platform ops (/admin/), reserved like Tuned and Liftsmith. Household settings are /household/.
+ * Old /admin bookmarks for a household admin who is not staff land on /household/.
+ */
+export default async function PlatformAdminPage() {
+  if (!staffEnabled()) redirect("/household/");
   const session = await sessionFor((await cookies()).get(SESSION_COOKIE)?.value);
   if (!session) redirect("/signin/?next=/admin/");
-  if (session.role !== "admin") redirect("/family/");
-  const { config, version } = await loadConfig(session.accountId);
-  return <Admin initial={config} version={version} email={session.email} />;
+  if (!isStaffEmail(session.email)) {
+    redirect(session.role === "admin" ? "/household/" : "/family/");
+  }
+  return <PlatformAdmin email={session.email} />;
 }

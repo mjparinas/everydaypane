@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { DELETE as adminDELETE, GET as adminGET } from "@/app/api/admin/music/route";
+import { DELETE as adminDELETE, GET as adminGET } from "@/app/api/household/music/route";
 import { GET as artGET } from "@/app/api/display/art/route";
 import { GET as musicGET, POST as musicPOST } from "@/app/api/display/music/route";
 import { GET as callbackGET } from "@/app/api/music/spotify/callback/route";
@@ -392,22 +392,22 @@ describe("Spotify and Sonos routes", () => {
     const forged = await callbackGET(
       req(`/api/music/spotify/callback/?code=c&state=other`, { headers: { cookie: `${admin}; ep_music_state=${state}` } }),
     );
-    expect(forged.headers.get("location")).toBe("/admin/?spotify=expired#settings");
+    expect(forged.headers.get("location")).toBe("/household/?spotify=expired#settings");
     const back = await callbackGET(
       req(`/api/music/spotify/callback/?code=c&state=${state}`, { headers: { cookie: `${admin}; ep_music_state=${state}` } }),
     );
-    expect(back.headers.get("location")).toBe("/admin/?spotify=connected#settings");
+    expect(back.headers.get("location")).toBe("/household/?spotify=connected#settings");
     expect(await getSecret(LEGACY_ACCOUNT_ID, "spotify.refreshToken")).toBe("new-refresh");
     expect(calls[0]?.auth).toBe(`Basic ${Buffer.from("spotify-id:spotify-secret").toString("base64")}`);
 
-    const status = await (await adminGET(req("/api/admin/music/", { headers: { cookie: admin } }))).text();
+    const status = await (await adminGET(req("/api/household/music/", { headers: { cookie: admin } }))).text();
     expect(JSON.parse(status)).toMatchObject({
       spotify: { configured: true, connected: true },
       sonos: { configured: true, connected: false },
     });
     expect(status).not.toContain("new-refresh");
 
-    expect((await adminDELETE(req("/api/admin/music/?service=spotify", { method: "DELETE", headers: { cookie: admin } }))).status).toBe(
+    expect((await adminDELETE(req("/api/household/music/?service=spotify", { method: "DELETE", headers: { cookie: admin } }))).status).toBe(
       200,
     );
     expect(await getSecret(LEGACY_ACCOUNT_ID, "spotify.refreshToken")).toBeNull();
@@ -419,7 +419,7 @@ describe("Spotify and Sonos routes", () => {
     await setUp();
     upstream([]);
     const admin = await cookieFor("admin@example.com");
-    const body = (await (await adminGET(req("/api/admin/music/", { headers: { cookie: admin } }))).json()) as {
+    const body = (await (await adminGET(req("/api/household/music/", { headers: { cookie: admin } }))).json()) as {
       sonos: { players: { id: string; name: string }[] };
     };
     expect(body.sonos.players).toEqual([

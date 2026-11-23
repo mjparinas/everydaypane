@@ -15,7 +15,7 @@ Use the same project as the Google Calendar sign-in (console.cloud.google.com, c
 
 Nothing changes in Vercel: the same `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` are used.
 
-## In the admin panel
+## In the household panel
 
 1. Settings › **Google Tasks** › **Connect Google Tasks**, and allow access. Google may warn that the app isn't
    verified: tap **Advanced › Go to getliftsmith.com**. Your calendar (and Google Photos) stay connected.

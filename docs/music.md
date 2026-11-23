@@ -8,7 +8,7 @@ Assistant):
 - **Spotify:** the Spotify account you connect, on whatever speaker it is playing.
 - **Sonos:** one Sonos speaker, controlled through your Sonos account, together with whatever group it is in.
 
-Each needs a free developer app, made once. The keys go in Vercel; the sign-in happens in the admin panel.
+Each needs a free developer app, made once. The keys go in Vercel; the sign-in happens in the household panel.
 
 ## Spotify
 
@@ -22,7 +22,7 @@ Each needs a free developer app, made once. The keys go in Vercel; the sign-in h
    redeploy.
 4. A new Spotify app is in **development mode**, which only lets in the Spotify accounts listed under the app's
    **User Management**. Add the email of each account you'll connect (your own is usually there already).
-5. In the admin panel: **Settings › Music › Connect Spotify**, and sign in.
+5. In the household panel: **Settings › Music › Connect Spotify**, and sign in.
 
 Then add a Music widget, set **Player from** to **Spotify**, and save. It shows whatever the account is playing on
 any speaker (phone, Sonos, a smart speaker, the car). With **Sources to play** on, the list moves the music to
@@ -41,7 +41,7 @@ speaker that has been idle for a while may need opening in the Spotify app once.
      `https://pane.getliftsmith.com/api/music/sonos/callback/`. No event callback is needed (displays poll).
 2. Copy the **Key** and the **Secret**.
 3. In Vercel add `SONOS_CLIENT_ID` (the key) and `SONOS_CLIENT_SECRET` (the secret), then redeploy.
-4. In the admin panel: **Settings › Music › Connect Sonos**, sign in with your **Sonos account** (the one in the Sonos
+4. In the household panel: **Settings › Music › Connect Sonos**, sign in with your **Sonos account** (the one in the Sonos
    app) and allow access to your household.
 
 Then add a Music widget, set **Player from** to **Sonos** and pick a speaker. The widget plays, pauses, skips and

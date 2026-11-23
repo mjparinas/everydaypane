@@ -3,13 +3,14 @@ import "server-only";
 import { meetsBanner } from "@/lib/alerts";
 import type { DashboardConfig } from "@/lib/config/schema";
 import type { EmergencyAlert } from "@/lib/display/types";
+import { alertEmail } from "@/lib/email";
 
 import { ensureAccountsSeeded } from "./accounts";
 import { query, run } from "./db";
 import { sendEmail } from "./mail";
 
 // Email when a new strip-worthy alert appears (Melvin, 2026-11-22): one message per alert id to household members,
-// tracked in account_alert_notified so repeats are never sent.
+// tracked in account_alert_notified so repeats are never sent. Branded HTML chrome lives in src/lib/email.ts.
 
 export async function alreadyNotified(accountId: string, id: string): Promise<boolean> {
   return Boolean(
@@ -27,15 +28,6 @@ async function recipients(accountId: string): Promise<string[]> {
   return [...new Set(rows.map((r) => r.email))];
 }
 
-const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;");
-
-function mailFor(alert: EmergencyAlert): { subject: string; text: string; html: string } {
-  const subject = `Everydaypane: ${alert.title}`.slice(0, 180);
-  const text = [alert.title, alert.area, alert.description].filter(Boolean).join("\n\n").slice(0, 4000);
-  const html = `<p><strong>${esc(alert.title)}</strong></p><p>${esc(alert.area)}</p><p>${esc(alert.description).replace(/\n/g, "<br>")}</p>`;
-  return { subject, text, html };
-}
-
 /** Sends email for any current strip-worthy alerts that have not been notified yet. */
 export async function notifyNewStripAlerts(
   accountId: string,
@@ -51,7 +43,7 @@ export async function notifyNewStripAlerts(
   if (!to.length) return;
   for (const alert of worthy) {
     if (await alreadyNotified(accountId, alert.id)) continue;
-    const mail = mailFor(alert);
+    const mail = alertEmail(alert);
     const results = await Promise.all(to.map((email) => sendEmail({ to: email, ...mail })));
     if (results.some(Boolean)) await markNotified(accountId, alert.id, now);
   }

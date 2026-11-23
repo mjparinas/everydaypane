@@ -1,0 +1,292 @@
+[
+  {
+    "type": "clock",
+    "name": "Clock",
+    "file": "clock.png"
+  },
+  {
+    "type": "date",
+    "name": "Date",
+    "file": "date.png"
+  },
+  {
+    "type": "sunTimes",
+    "name": "Sunrise & sunset",
+    "file": "sunTimes.png"
+  },
+  {
+    "type": "weather",
+    "name": "Weather",
+    "file": "weather.png"
+  },
+  {
+    "type": "airQuality",
+    "name": "Air quality",
+    "file": "airQuality.png"
+  },
+  {
+    "type": "wifiQr",
+    "name": "WiFi QR code",
+    "file": "wifiQr.png"
+  },
+  {
+    "type": "editQr",
+    "name": "Phone edit QR",
+    "file": "editQr.png"
+  },
+  {
+    "type": "countdown",
+    "name": "Countdown",
+    "file": "countdown.png"
+  },
+  {
+    "type": "agenda",
+    "name": "Schedule",
+    "file": "agenda.png"
+  },
+  {
+    "type": "calendarWeek",
+    "name": "Week calendar",
+    "file": "calendarWeek.png"
+  },
+  {
+    "type": "calendarUpNext",
+    "name": "Up next",
+    "file": "calendarUpNext.png"
+  },
+  {
+    "type": "calendarMonth",
+    "name": "Month calendar",
+    "file": "calendarMonth.png"
+  },
+  {
+    "type": "garbage",
+    "name": "Garbage day",
+    "file": "garbage.png"
+  },
+  {
+    "type": "photos",
+    "name": "Photos",
+    "file": "photos.png"
+  },
+  {
+    "type": "haEntity",
+    "name": "Smart device",
+    "file": "haEntity.png"
+  },
+  {
+    "type": "tempest",
+    "name": "Tempest",
+    "file": "tempest.png"
+  },
+  {
+    "type": "weatherUnderground",
+    "name": "Weather Underground",
+    "file": "weatherUnderground.png"
+  },
+  {
+    "type": "menus",
+    "name": "School menu",
+    "file": "menus.png"
+  },
+  {
+    "type": "note",
+    "name": "Note",
+    "file": "note.png"
+  },
+  {
+    "type": "messages",
+    "name": "Message board",
+    "file": "messages.png"
+  },
+  {
+    "type": "meals",
+    "name": "Meals",
+    "file": "meals.png"
+  },
+  {
+    "type": "alerts",
+    "name": "Alerts",
+    "file": "alerts.png"
+  },
+  {
+    "type": "tasks",
+    "name": "Tasks",
+    "file": "tasks.png"
+  },
+  {
+    "type": "packages",
+    "name": "Packages",
+    "file": "packages.png"
+  },
+  {
+    "type": "tides",
+    "name": "Tides",
+    "file": "tides.png"
+  },
+  {
+    "type": "transit",
+    "name": "TransLink",
+    "file": "transit.png"
+  },
+  {
+    "type": "camera",
+    "name": "Camera",
+    "file": "camera.png"
+  },
+  {
+    "type": "media",
+    "name": "Music",
+    "file": "media.png"
+  },
+  {
+    "type": "chores",
+    "name": "Chore chart",
+    "file": "chores.png"
+  },
+  {
+    "type": "commute",
+    "name": "Commute",
+    "file": "commute.png"
+  },
+  {
+    "type": "radar",
+    "name": "Rain radar",
+    "file": "radar.png"
+  },
+  {
+    "type": "timer",
+    "name": "Timers",
+    "file": "timer.png"
+  },
+  {
+    "type": "pomodoro",
+    "name": "Pomodoro",
+    "file": "pomodoro.png"
+  },
+  {
+    "type": "ferries",
+    "name": "BC Ferries",
+    "file": "ferries.png"
+  },
+  {
+    "type": "sports",
+    "name": "Sports scores",
+    "file": "sports.png"
+  },
+  {
+    "type": "earth",
+    "name": "Earth wind map",
+    "file": "earth.png"
+  },
+  {
+    "type": "shopping",
+    "name": "Shopping list",
+    "file": "shopping.png"
+  },
+  {
+    "type": "presence",
+    "name": "Who's home",
+    "file": "presence.png"
+  },
+  {
+    "type": "school",
+    "name": "School status",
+    "file": "school.png"
+  },
+  {
+    "type": "whiteboard",
+    "name": "Whiteboard",
+    "file": "whiteboard.png"
+  },
+  {
+    "type": "stocks",
+    "name": "Stocks",
+    "file": "stocks.png"
+  },
+  {
+    "type": "crypto",
+    "name": "Crypto",
+    "file": "crypto.png"
+  },
+  {
+    "type": "fx",
+    "name": "FX rates",
+    "file": "fx.png"
+  },
+  {
+    "type": "ynab",
+    "name": "YNAB",
+    "file": "ynab.png"
+  },
+  {
+    "type": "tradingView",
+    "name": "TradingView",
+    "file": "tradingView.png"
+  },
+  {
+    "type": "fitbit",
+    "name": "Fitbit",
+    "file": "fitbit.png"
+  },
+  {
+    "type": "emailCount",
+    "name": "Gmail unread",
+    "file": "emailCount.png"
+  },
+  {
+    "type": "rss",
+    "name": "RSS",
+    "file": "rss.png"
+  },
+  {
+    "type": "news",
+    "name": "News",
+    "file": "news.png"
+  },
+  {
+    "type": "dadJoke",
+    "name": "Dad joke",
+    "file": "dadJoke.png"
+  },
+  {
+    "type": "quotes",
+    "name": "Quotes",
+    "file": "quotes.png"
+  },
+  {
+    "type": "instagram",
+    "name": "Instagram",
+    "file": "instagram.png"
+  },
+  {
+    "type": "trello",
+    "name": "Trello",
+    "file": "trello.png"
+  },
+  {
+    "type": "slack",
+    "name": "Slack",
+    "file": "slack.png"
+  },
+  {
+    "type": "youtube",
+    "name": "YouTube",
+    "file": "youtube.png"
+  },
+  {
+    "type": "vimeo",
+    "name": "Vimeo",
+    "file": "vimeo.png"
+  },
+  {
+    "type": "airports",
+    "name": "Airports",
+    "file": "airports.png"
+  },
+  {
+    "type": "maps",
+    "name": "Google Maps",
+    "file": "maps.png"
+  }
+]

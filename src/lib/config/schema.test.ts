@@ -115,6 +115,17 @@ describe("config schema", () => {
     expect(r.data.views[0]!.widgets.map((w) => w.showBackground)).toEqual([false, true]);
   });
 
+  it("accepts a per-widget font scale and rejects values outside 70–150 %", () => {
+    const weather = { ...newWidget("weather", "w", { x: 0, y: 0 }), fontScale: 1.2 };
+    const c = defaultConfig();
+    c.views[0]!.widgets = [weather];
+    expect(configSchema.safeParse(c).success).toBe(true);
+    c.views[0]!.widgets = [{ ...weather, fontScale: 0.5 }];
+    expect(configSchema.safeParse(c).success).toBe(false);
+    c.views[0]!.widgets = [{ ...weather, fontScale: 2 }];
+    expect(configSchema.safeParse(c).success).toBe(false);
+  });
+
   it("rejects a widget that runs off its grid", () => {
     const c = defaultConfig();
     c.views[0]!.widgets[0]!.x = 11;

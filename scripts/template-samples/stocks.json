@@ -1,0 +1,7 @@
+{
+  "updatedAt": 1763937720000,
+  "quotes": {
+    "RY.TO": { "symbol": "RY.TO", "price": 168.42, "change": 1.15, "changePct": 0.7, "currency": "CAD" },
+    "SHOP.TO": { "symbol": "SHOP.TO", "price": 142.8, "change": -2.3, "changePct": -1.6, "currency": "CAD" }
+  }
+}

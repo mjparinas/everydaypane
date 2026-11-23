@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { GET as adminGET } from "@/app/api/admin/garbage/route";
+import { GET as adminGET } from "@/app/api/household/garbage/route";
 import { GET as displayGET } from "@/app/api/display/garbage/route";
 import { defaultConfig } from "@/lib/config/defaults";
 import type { GarbageData } from "@/lib/display/types";
@@ -140,7 +140,7 @@ describe("garbage pickup routes", () => {
       "fetch",
       vi.fn(() => Promise.resolve(Response.json({ results: [{ address: "20338 65 AVE", zones: { p: "z5503" } }] }))),
     );
-    const url = "/api/admin/garbage/?address=20338%2065%20Ave&projectId=521&districtId=LANGL";
+    const url = "/api/household/garbage/?address=20338%2065%20Ave&projectId=521&districtId=LANGL";
     const kid = await cookieFor("kid@example.com");
     expect((await adminGET(req(url, { headers: { cookie: kid } }))).status).toBe(401);
     const admin = await cookieFor("admin@example.com");

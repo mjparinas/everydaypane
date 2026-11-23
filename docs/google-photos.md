@@ -1,7 +1,7 @@
 # Photos on the dashboard
 
 Amazon refuses requests from our server, so Everydaypane keeps its own copies of the photos it shows, privately
-(Melvin, 2026-11-17). There are two ways to add them, both from **Settings › Photos** in the admin panel.
+(Melvin, 2026-11-17). There are two ways to add them, both from **Settings › Photos** in the household panel.
 
 ## Set up an album (once)
 
@@ -28,7 +28,7 @@ Then, in Settings › Photos:
 1. Tap **Connect Google Photos** under the album and allow access. Google may warn that the app isn't verified: tap
    **Advanced › Go to getliftsmith.com**. This also keeps your Google Calendar connected.
 2. Tap **Pick from Google Photos**. Google's picker opens in a new window: choose photos (or an album) and tap **Done**.
-3. Back in the admin panel, the photos are copied over. Leave the page open until it shows the new count.
+3. Back in the household panel, the photos are copied over. Leave the page open until it shows the new count.
 
 ## Removing photos
 

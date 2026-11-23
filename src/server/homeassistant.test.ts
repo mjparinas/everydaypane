@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { GET as adminGET, PUT as adminPUT } from "@/app/api/admin/ha/route";
+import { GET as adminGET, PUT as adminPUT } from "@/app/api/household/ha/route";
 import { GET as artGET } from "@/app/api/display/art/route";
 import { GET as cameraGET } from "@/app/api/display/camera/route";
 import { GET as haGET, POST as haPOST } from "@/app/api/display/ha/route";
@@ -300,12 +300,12 @@ describe("Home Assistant routes", () => {
     vi.stubGlobal("fetch", (url: string) => Promise.resolve(Response.json(url.endsWith("/api/") ? { message: "API running." } : states)));
     const admin = await cookieFor("admin@example.com");
     const put = (body: object) =>
-      adminPUT(req("/api/admin/ha/", { method: "PUT", headers: { cookie: admin }, body: JSON.stringify(body) }));
+      adminPUT(req("/api/household/ha/", { method: "PUT", headers: { cookie: admin }, body: JSON.stringify(body) }));
     expect((await put({ token: "new-token" })).status).toBe(200);
     expect(await getSecret(LEGACY_ACCOUNT_ID, "homeAssistant.token")).toBe("new-token");
     expect(await getSecret(LEGACY_ACCOUNT_ID, "homeAssistant.accessId")).toBe("cf-id.access");
 
-    const text = await (await adminGET(req("/api/admin/ha/", { headers: { cookie: admin } }))).text();
+    const text = await (await adminGET(req("/api/household/ha/", { headers: { cookie: admin } }))).text();
     expect(JSON.parse(text)).toMatchObject({ tokenSet: true, accessSet: true, connected: true, message: "API running." });
     expect(text).not.toContain("new-token");
     expect(text).not.toContain("cf-secret");
@@ -313,6 +313,6 @@ describe("Home Assistant routes", () => {
     expect((await put({ accessId: null, accessSecret: null })).status).toBe(200);
     expect(await getSecret(LEGACY_ACCOUNT_ID, "homeAssistant.accessSecret")).toBeNull();
     const kid = await cookieFor("kid@example.com");
-    expect((await adminGET(req("/api/admin/ha/", { headers: { cookie: kid } }))).status).toBe(401);
+    expect((await adminGET(req("/api/household/ha/", { headers: { cookie: kid } }))).status).toBe(401);
   });
 });

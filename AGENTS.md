@@ -1,8 +1,8 @@
 # Everydaypane: guide for agents
 
 Everydaypane is a wall dashboard for the home (in the spirit of MagicMirror, DAKboard and homescreens.dev), built for
-Melvin's family in Langley, BC. It runs on a **Ubiquiti UniFi UC-Display21** (a low-power 21.5" 1920 × 1080 touchscreen)
-and any other screen with a browser, and is set up from an admin panel that works on phones. This file holds the
+Melvin's family in Langley, BC. It runs on a **landscape kitchen wall panel** (about 1920 × 1080 touch)
+and any other screen with a browser, and is set up from an household panel that works on phones. This file holds the
 decisions behind it, with who made them and when. Follow them; if a task seems to need one changed, raise it with
 Melvin first, and update this file in the same change when a decision changes.
 
@@ -80,7 +80,7 @@ same change, and moves it out of **In progress** when it merges.
 | Google Maps (`maps`) | Map for a place query | google.com/maps embed iframe |
 
 **Display behaviour:** several views on a drag-and-drop grid (chosen rows and columns, gap, edge padding and **tile padding**), **per-widget visibility by part of day** (`visiblePeriods`), optional **view loop** on schedule followers (`schedule.loopSeconds`), **widgets layered on top of a photos widget**
-(photos as the backdrop), **per-widget background** (on/off and opacity; theme surface opacity is the default; clocks and dates start with no panel), a time-of-day schedule
+(photos as the backdrop), **per-widget background** (on/off and opacity; theme surface opacity is the default; clocks and dates start with no panel), **per-widget font size** (`fontScale`, 70–150 %, text widgets only — not photos, radar, camera, earth, embeds or the whiteboard), a time-of-day schedule
 (morning, afternoon, evening, overnight) choosing the view, theme, day or night mode and dimming — each period can start at a **fixed time, sunrise or sunset** (sunrise/sunset from today's Open-Meteo weather at the dashboard location); themes with colour
 palettes, fonts, corner radius, opacity and optional glass; burn-in protection (pixel shift); offline mode (service
 worker serves the last good data and shows "Offline"); a **screen saver** (photos only or dark after idle minutes, dark
@@ -93,27 +93,35 @@ the `/d/…` URL; Vancouver clocks, dates, calendars and scheduled views stay on
 even when the display browser has old time-zone data.
 
 **Marketing site** (public pages, Melvin, 2026-11-23): homepage at `/` (no longer redirects to admin), plus `/pricing/`,
-`/features/`, `/compare/` (and per-competitor pages), `/blog/` with RSS, `/privacy/`, `/terms/`, `/contact/`, `robots.ts` and
-`sitemap.ts`. Built like Tuned/Liftsmith (`src/components/site/`, Manrope display, CSS pane mocks — no personal photos in
-OG). Free vs **Household** pricing copy in `src/lib/marketingPlans.ts`; checkout uses the existing Stripe Household flow
-(`POST /api/admin/billing/?action=checkout`). Footer shows version + short commit with no GitHub link (`src/lib/build.ts`).
+`/features/` (every widget with a real-widget sample PNG from `public/features/widgets/`, regenerated with
+`npm run templates:previews` alongside starter templates), `/compare/` (and per-competitor pages), `/blog/` with RSS,
+`/privacy/`, `/terms/`, `/contact/`, `robots.ts` and `sitemap.ts`. Built like Tuned/Liftsmith (`src/components/site/`,
+Manrope display, template preview screenshots from `public/templates/` — no personal photos in OG). Free vs
+**Household** pricing copy in `src/lib/marketingPlans.ts`; checkout uses the existing Stripe Household flow
+(`POST /api/household/billing/?action=checkout`). Footer shows version + short commit with no GitHub link (`src/lib/build.ts`).
+The features catalogue lives in `src/lib/marketingFeatures.ts` (grouped like the admin widget picker).
 
 **Alerts** (`src/server/alerts.ts`): Alert Ready (NAAD), **Environment Canada weather warnings** (through NAAD),
 DriveBC road events and weather conditions, Earthquakes Canada, BC Hydro power outages. Each switchable in `config.alerts.sources`.
 Optional email to everyone on `ADMIN_EMAILS` and `FAMILY_EMAILS` when a new strip-worthy alert arrives (`config.alerts.notifyEmail`).
 
-**Admin and family:** magic-link sign-in (Resend), admin panel tabs (views and grid editor, themes, displays with
-copyable addresses **and a phone-edit QR/link**, meals, shopping, settings for every integration, Settings › Chores for the kids and their chores), **settings backup and restore** (Settings › Backup, a JSON
-file), `/family/` for the message board, **family calendar events**, meals and the shopping list, **`/d/<token>/edit/`**
-(same meals, shopping and messages with no login — scan the edit QR or open the Displays link), Sentry. Settings is
-grouped with a sticky jump nav and `#settings/…` deep links; bounded numbers use sliders or −/+ steppers that show
-min–max (not browser number arrows). Views default to a **12×8** grid with gap 16 / edge 14 / tile 16 for the
-1920×1080 UC-Display21, with one-tap grid presets and a grouped widget picker. The Views tab embeds one **live
-editable layout** (the real display under a transparent drag overlay, working copy over `postMessage` before Save);
-tapping a widget opens its settings in a **right slide-out**, and **Edit view** (on the view tabs row) opens the same
-kind of drawer for name, grid, gap, edge, tile and theme so the preview stays visible. Draft edits patch widgets in
-place instead of remounting the whole stage. View previews can force day or night with `?mode=`, and a quiet Day/Night
-control on the preview swaps without reloading.
+**Household and family:** magic-link sign-in (Resend, branded HTML from `src/lib/email.ts`) with marketing header/footer
+on `/signin/`, household panel at `/household/` (views and grid editor, themes, displays with copyable addresses **and a
+phone-edit QR/link**, meals, shopping, settings for every integration, Settings › Chores for the kids and their chores),
+**settings backup and restore** (Settings › Backup, a JSON file), `/family/` for the message board, **family calendar
+events**, meals and the shopping list, **`/d/<token>/edit/`** (same meals, shopping and messages with no login — scan the
+edit QR or open the Displays link), Sentry. Settings is grouped with a sticky jump nav and `#settings/…` deep links;
+bounded numbers use sliders or −/+ steppers that show min–max (not browser number arrows). Views default to a **12×8**
+grid with gap 16 / edge 14 / tile 16 for the 1920×1080 wall panels, with one-tap grid presets and a grouped widget
+picker. The Views tab embeds one **live editable layout** (the real display under a transparent drag overlay, working
+copy over `postMessage` before Save); tapping a widget opens its settings in a **right slide-out**, and **Edit view**
+(on the view tabs row) opens the same kind of drawer for name, grid, gap, edge, tile and theme so the preview stays
+visible. Draft edits patch widgets in place instead of remounting the whole stage. View previews can force day or night
+with `?mode=`, and a quiet Day/Night control on the preview swaps without reloading.
+
+**Platform admin** (`/admin/`): Everydaypane ops for addresses on `ADMIN_EMAILS` (households list), separate from the
+household panel — same split as Tuned (`/account` vs `/admin`) and Liftsmith, with Everydaypane’s customer path named
+`/household/`.
 
 **Integrations connected from Settings:** Google Calendar, Microsoft 365 calendars and **To Do** (OAuth, `?todo=1` / `?files=1`), Google Tasks, **Todoist**, Google Photos (Picker), iCal calendar links (with iCloud publish steps in Settings and `docs/icloud-calendar.md`),
 Amazon Photos, **photo sources** (Bing, Reddit, weather albums, Immich API keys, Dropbox/Box/SmugMug OAuth, OneDrive via Microsoft, Flickr API key, iCloud published URLs), the photo library (Vercel Blob), Home Assistant (Cloudflare Tunnel + Access), Spotify, Sonos, garbage
@@ -126,7 +134,7 @@ _(none)_
 ## Commands
 
 ```bash
-npm run dev            # http://localhost:3000 (admin at /admin/, sign-in links print to the terminal)
+npm run dev            # http://localhost:3000 (household at /household/, platform admin at /admin/, sign-in links print to the terminal)
 npm test               # Vitest unit and integration tests
 npm run test:coverage
 npm run lint && npm run typecheck && npm run format:check
@@ -144,12 +152,20 @@ npm run templates:previews  # regenerate public/templates/*.png from real widget
   EverydayPane or Everyday Pane). The wordmark keeps everyday**pane** with "pane" in the brand blue; URLs and handles
   stay `everydaypane`. "Everyday Pane" is fine once when saying the name aloud; don't invent a third written form.
   Short form later, once the full name is known: Pane.
+- **Branded outbound email** (Melvin, 2026-11-23): every message we send through Resend (magic-link sign-in and alert
+  notifications) uses the shared chrome in `src/lib/email.ts` — brand blue `#3b5bdb`, the mark, everyday**pane**
+  wordmark, soft `#f6f7fb` page and white card — so mail looks like the site and feels trustworthy. New email kinds
+  reuse that layout; don't invent a third template style.
 - **Paid multi-tenant product** (Melvin, 2026-11-22): Everydaypane is a **Free + one paid (“Household”)** app other
   families can use. Free is DAKboard-like (1 view, 2 calendars, 2 displays, core widgets only). Household unlocks
   everything. Melvin’s existing install is grandfathered on Household (`acct_legacy`). Stripe Checkout + Customer Portal
   + webhooks (`src/server/billing.ts`); signup at `/api/auth/signup/`.
+- **Household vs platform admin** (Melvin, 2026-11-23: rename `/admin` → `/household`, reserve `/admin` like Tuned and
+  Liftsmith): household settings live at **`/household/`** (API `/api/household/`); **`/admin/`** is Everydaypane platform
+  ops for `ADMIN_EMAILS` only (households overview). A household admin who is not staff and opens `/admin/` is sent to
+  `/household/`. Member role `admin` in the database still means “household admin”.
 
-- **Marketing homepage** (Melvin, 2026-11-23): public marketing site at `/` with pricing, features, compare, blog, privacy and terms; paid plan marketed as Household (same Stripe `STRIPE_PRICE_ID` as admin billing).
+- **Marketing homepage** (Melvin, 2026-11-23): public marketing site at `/` with pricing, features, compare, blog, privacy and terms; paid plan marketed as Household (same Stripe `STRIPE_PRICE_ID` as household billing).
 - **Features** (Melvin, 2026-11-17): photos (Amazon Photos, choosable by person), full Google Calendar (a today
  schedule view and a month calendar view), weather for the week with icons, clocks for Vancouver and Toronto, the date,
  a WiFi QR code, countdowns to holidays and birthdays, air quality, garbage pickup from the Township of Langley's
@@ -215,6 +231,10 @@ npm run templates:previews  # regenerate public/templates/*.png from real widget
   every widget has Background on/off and Background opacity (`showBackground`, `backgroundOpacity`); opacity falls
   back to the theme's widget background. Clocks and dates start with Background off; an older sunrise & sunset
   "transparent" setting becomes Background off.
+- **Per-widget font size** (Melvin, 2026-11-23: scale fonts on a per component basis): text widgets get a Font size
+  slider (`fontScale`, 70–150 %, 100 % when omitted). The display sets `--font-scale` on the cell; stylesheet
+  `font-size` rules multiply by it. Photos, radar, camera, earth, TradingView, YouTube, Vimeo, Instagram, Maps and
+  the whiteboard omit the control.
 - **B.C. permanent daylight time** (Melvin, 2026-11-22): some display browsers have old time-zone data and move
   `America/Vancouver` back one hour in November. Everydaypane uses Vancouver's historical rules before the March 8,
   2026 transition and fixed UTC−7 after it for clocks, dates, calendars and time-of-day display schedules.
@@ -304,15 +324,17 @@ panel can be complex if you need it to be."
   New addresses use a case-sensitive, 8-character alphanumeric token; the database's unique token hash constraint is
   retried on a collision (Melvin, 2026-11-21). Existing longer addresses remain valid. A device shows one view, or
   follows the time-of-day schedule. Deleting a device signs that screen out.
-- **Admin panel** (`src/app/admin/_ui/`): one page with tabs (a bottom tab bar on phones). Edits collect in a working
-  copy (a Zustand store per page) and go out together with Save. The Views tab embeds `/admin/preview/<viewId>/` under a
-  transparent drag overlay (`src/app/admin/_ui/LiveLayoutEditor.tsx`) and pushes the working copy over `postMessage`
+- **Household panel** (`src/app/household/_ui/`): one page with tabs (a bottom tab bar on phones). Edits collect in a working
+  copy (a Zustand store per page) and go out together with Save. The Views tab embeds `/household/preview/<viewId>/` under a
+  transparent drag overlay (`src/app/household/_ui/LiveLayoutEditor.tsx`) and pushes the working copy over `postMessage`
   (`src/lib/display/draftMessage.ts`) so layout and widget options update live; wall screens still only reload the saved
   document. The overlay drags with pointer events (mouse and touch), resizes from any of a widget's four corners with
   the opposite corner held still (Melvin, 2026-11-21: "allow any corner of a widget to adjust the size"), and also moves
   and resizes with the keyboard; widgets never leave the grid and never overlap, except that other widgets may sit on
   top of a photos widget (`src/lib/config/grid.ts`). Tapping a widget opens `WidgetSettingsDrawer` from the right; Edit
   view opens `ViewSettingsDrawer` (shared `SlideDrawer` chrome).
+- **Platform admin** (`src/app/admin/`, `/api/admin/`): staff-only ops gated by `ADMIN_EMAILS` (`src/server/staff.ts`);
+  lists households. Not the household settings UI.
 - **Widgets over photos** (Melvin, 2026-11-21: "allow other widgets to be placed on top of the photos widget"): photos
   widgets are a backdrop layer. Any other widget may cover one; two photos widgets, or two widgets on top, still never
   overlap. A new widget goes in empty cells first and lands on the photos only when nothing else is free. The display
@@ -328,7 +350,7 @@ panel can be complex if you need it to be."
   wakes the screen and never presses the widget underneath. Photo mode reuses the photos widget full screen; the clock
   on it wanders a few pixels each minute against burn-in. Motion sensors (`binary_sensor.*`, up to five) are added to
   the entities read from Home Assistant (`usedEntities().all`), never to those that can be controlled; while one is
-  `on`, the screen counts as in use. "Dark" is a black screen: a browser can't switch the UC-Display21's backlight off.
+  `on`, the screen counts as in use. "Dark" is a black screen: a browser can't switch a panel's backlight off.
   An admin's preview never shows the saver.
 - **Family message board:** anyone on `ADMIN_EMAILS` or `FAMILY_EMAILS` posts notes from `/family/`; the author name is
   typed, never the email, because the wall is readable by anyone in the kitchen. Notes can expire; admins pin. Displays
@@ -359,7 +381,7 @@ panel can be complex if you need it to be."
 - **Phone edit page** (Melvin, 2026-11-22): `/d/<token>/edit/` reuses the family meal, shopping and message components
   with no magic link (`FamilyAuthProvider` sends `x-display-token`; `familyEditorFor` in `src/server/familyAuth.ts`
   accepts a session or that token). Kitchen posts are keyed `display:<deviceId>` (no admin pin). An `editQr` widget and
-  the Displays tab (copyable `editUrl` plus `/api/admin/devices/<id>/edit-qr/`) both encode that URL. Knowing the
+  the Displays tab (copyable `editUrl` plus `/api/household/devices/<id>/edit-qr/`) both encode that URL. Knowing the
   display link is the capability — keep the QR on the wall, not shared online. Family calendar events stay on `/family/`
   only.
 - **School status** (Melvin, 2026-11-22): `src/server/school.ts` reads `config.school.statusUrl` (https only, never a private
@@ -398,9 +420,9 @@ panel can be complex if you need it to be."
   TransLink's licence notice is shown in the widget's settings and as "Live times from TransLink" on the wall.
   Setup: `docs/translink.md`.
 - **Alert email:** when `config.alerts.notifyEmail` is on, each new strip-worthy alert (`meetsBanner` in `src/lib/alerts.ts`)
-  triggers one email per alert id to everyone on `ADMIN_EMAILS` and `FAMILY_EMAILS` (`src/server/alertNotify.ts`,
-  `sendEmail` through Resend); ids are stored in `alert_notified` so repeats are never sent. The display alerts route
-  calls this after each feed read.
+  triggers one email per alert id to household members (`src/server/alertNotify.ts`, `sendEmail` through Resend, HTML from
+  `alertEmail` in `src/lib/email.ts`); ids are stored in `account_alert_notified` so repeats are never sent. The display
+  alerts route calls this after each feed read.
 - **Emergency alerts:** `src/server/alerts.ts` reads NAAD's Atom feed (Alert Ready, and Environment Canada's warnings,
   whose own GeoMet API refuses automated readers), DriveBC Open511 (major events and weather conditions) and Earthquakes
   Canada's FDSN text service (the last 24 hours; its distance filter is ignored, so distance is checked here) and BC
@@ -477,7 +499,7 @@ panel can be complex if you need it to be."
   hash (`#current/wind/surface/level/overlay=…/orthographic=lon,lat,scale/loc=…/anim=off`), built by `earthUrl` in
   `src/lib/earth.ts`; its scale is the globe's radius in pixels, so the widget's zoom (globe, continent, region, local)
   is a multiple of the cell's short side. The place is stored on the widget (`place` label, `latitude`, `longitude`),
-  found by name through `/api/admin/places/` (Open-Meteo's free geocoding, `src/server/places.ts`) or copied from the
+  found by name through `/api/household/places/` (Open-Meteo's free geocoding, `src/server/places.ts`) or copied from the
   dashboard's location, and sent to earth rounded to two decimals. Earth's wind lines are the heaviest thing a screen
   can run (a load is about 600 KB; it animates on the GPU), so the frame exists only while it can be seen: it is
   removed while the screen saver is up (`html.saving`) or the page is hidden, made again on waking, and made again
@@ -487,7 +509,7 @@ panel can be complex if you need it to be."
   `frame-src` allows `'self'` (admin live preview) and earth.nullschool.net. This sandbox can't reach earth, so tests
   check the address and the frame's life, not earth itself.
 - **Settings backup and restore** (Melvin, 2026-11-21): Settings › Backup downloads the whole settings document as
-  `everydaypane-settings-<date>.json` and restores one (`src/server/backup.ts`, `/api/admin/backup/`). The file is the
+  `everydaypane-settings-<date>.json` and restores one (`src/server/backup.ts`, `/api/household/backup/`). The file is the
   document itself, walked generically, so new widget types and settings are in it with no change there. It never holds
   the `secrets` table (tokens, cookies, calendar link addresses), display devices, meals, messages or library photos;
   the file says so in `notIncluded`. WiFi passwords (the one secret in the document) are blanked unless the admin
@@ -532,7 +554,7 @@ panel can be complex if you need it to be."
     five-second feed shared by every tile, the doorbell and who's home.
   - UniFi Protect cameras and the doorbell come through Home Assistant's UniFi Protect integration, because Protect
     itself is only on the local network. Camera pictures go through `/api/display/camera/` (snapshots from
-    `camera_proxy`, refreshed on a timer, never a video stream, which would be heavy for the UC-Display21).
+    `camera_proxy`, refreshed on a timer, never a video stream, which would be heavy for a low-power wall panel).
   - **Doorbell pop-up:** when the ring entity (an `event.` entity's new timestamp, or a `binary_sensor.` turning on)
     changes, every display shows that camera full screen for the set seconds, refreshed each second; a tap closes it.
   - **Music** (Melvin, 2026-11-17: Spotify and Sonos controls): the Music widget drives a `media_player` from Home
@@ -571,7 +593,7 @@ panel can be complex if you need it to be."
 - Sign-in tries are rate-limited in the database (one atomic upsert), per address and per IP.
 - Requests that change something must come from our own origin (`sameOrigin`).
 - Security headers on every response (`src/lib/securityHeaders.ts`): HSTS, nosniff, `frame-ancestors 'none'` (wall
-  `/d/…` stays unframeable; `/admin/preview/` allows `frame-ancestors 'self'` so the Views tab can embed it), a CSP
+  `/d/…` stays unframeable; `/household/preview/` allows `frame-ancestors 'self'` so the Views tab can embed it), a CSP
   that allows only our own origin (and Sentry's ingest, `'self'` plus earth.nullschool.net in `frame-src`; `script-src`
   never allows `'unsafe-inline'` — Next.js pages get a per-request nonce from `proxy.ts`, the display loads only
   `/display/display.js`), and a Permissions-Policy that turns off camera, microphone and location.

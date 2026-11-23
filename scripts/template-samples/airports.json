@@ -1,0 +1,21 @@
+{
+  "updatedAt": 1763937720000,
+  "airports": [
+    {
+      "code": "CYVR",
+      "summary": "VFR · 9°C · wind 280° at 12 kt",
+      "temp": 9,
+      "wind": 12,
+      "category": "VFR",
+      "delays": []
+    },
+    {
+      "code": "CYYZ",
+      "summary": "MVFR · 4°C · wind 090° at 18G26 kt",
+      "temp": 4,
+      "wind": 18,
+      "category": "MVFR",
+      "delays": ["Arrival delays 15–30 min"]
+    }
+  ]
+}
