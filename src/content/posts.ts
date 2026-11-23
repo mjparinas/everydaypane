@@ -588,16 +588,38 @@ const COMPARES: Post[] = [
     "/templates/family-hub.png",
   ),
   compare(
+    "everydaypane-vs-homescreens",
+    "2026-11-23",
+    "Everydaypane vs Home Screens",
+    "Home Screens is a self-hosted Pi family dashboard with freeform layouts. Everydaypane is cloud SaaS with the same chore and clock energy plus BC kitchen integrations.",
+    [
+      {
+        p: "Home Screens shines if you want a free forever LAN hub, a freeform canvas and a dedicated kids chores page on a Raspberry Pi. Everydaypane keeps the family UX (chore bands, flip clocks, portrait templates) while hosting the admin and feeds for you — with TransLink, Langley garbage, BC Ferries and Alert Ready built in.",
+      },
+      { h2: "Hosting" },
+      {
+        p: "Home Screens runs on your Pi and network. Everydaypane runs on Vercel with a Turso database; displays are just a browser URL.",
+      },
+      { h2: "Layout" },
+      {
+        p: "Home Screens defaults to a portrait freeform canvas. Everydaypane uses a CSS grid (12×8 landscape or 8×12 portrait) with live phone editing and starter templates.",
+      },
+      { p: "Full matrix: [compare Home Screens](/compare/homescreens/)." },
+    ],
+    "/templates/family-hub-portrait.png",
+  ),
+  compare(
     "best-family-dashboard-2026",
     "2026-11-23",
     "Best family wall dashboard in 2026",
-    "How to choose between Everydaypane, DAKboard, Skylight, MagicMirror, Echo Show, Hearth and Cozyla for a kitchen wall.",
+    "How to choose between Everydaypane, DAKboard, Home Screens, Skylight, MagicMirror, Echo Show, Hearth and Cozyla for a kitchen wall.",
     [
       { h2: "Start with the job" },
       {
         ul: [
           "**Appliance, zero config:** Skylight Calendar 2.",
           "**DIY mirror project:** MagicMirror².",
+          "**Self-hosted Pi family hub:** Home Screens.",
           "**Alexa already runs the kitchen:** Echo Show.",
           "**Maximum third-party blocks:** DAKboard.",
           "**Smart home + BC transit + bring your own screen:** Everydaypane.",

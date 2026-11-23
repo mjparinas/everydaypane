@@ -32,12 +32,12 @@ export const OURS: Record<Topic, string> = {
   subscription: "Free forever for two displays with essentials. Household unlocks every widget — best value.",
   calendars: "Google Calendar, Google Tasks and any iCal link, merged into schedule and month views.",
   photos: "Amazon shared albums and people, Google Photos picks, uploads to a private library, screen saver.",
-  chores: "Recurring chore chart with stars and weekly goals; shopping list and message board from phones.",
+  chores: "Morning/afternoon/evening chore bands, stars and rewards; kids phone page; shopping list and message board from phones.",
   meals: "Breakfast, lunch and dinner planned from a phone, shown for a day or a week on the wall.",
   smartHome: "Home Assistant tiles, UniFi Protect cameras, doorbell pop-up, Spotify and Sonos, who's home.",
   local:
-    "Township of Langley garbage, TransLink departures, commute with traffic, Environment Canada radar, BC Ferries, Alert Ready, DriveBC, earthquakes, BC Hydro outages, Langley school status.",
-  diy: "Sign in, drag widgets on a 12×8 grid from your phone. No Raspberry Pi image and no config files.",
+    "Township of Langley garbage, TransLink departures, commute with traffic, Environment Canada radar and city-page weather, BC Ferries, Alert Ready, DriveBC, earthquakes, BC Hydro outages, Langley school status.",
+  diy: "Sign in, drag widgets on a 12×8 or 8×12 grid from your phone. No Raspberry Pi image and no config files.",
   touch: "Tap to tick chores, shopping and tasks; control lights and media; dismiss alerts. Locks can lock, never unlock.",
   ads: "No ads, ever.",
 };
@@ -336,6 +336,82 @@ export const COMPETITORS: Competitor[] = [
           checked: CHECKED,
         },
       ],
+    },
+  },
+  {
+    slug: "homescreens",
+    name: "Home Screens",
+    summary:
+      "An open-source family dashboard for a Raspberry Pi: freeform pixel layouts, dozens of modules, and a kids chores phone page — usually run on the LAN.",
+    theirPick:
+      "Choose Home Screens if you want a self-hosted Pi image, a freeform canvas and the joy of running everything on your own network forever.",
+    ourEdge:
+      "Everydaypane is cloud SaaS with the same family chore/clock/weather energy, plus BC transit, Alert Ready, Home Assistant and a phone admin — without flashing an SD card or keeping a hub online.",
+    rows: {
+      hardware: [
+        {
+          text: "Designed around a Raspberry Pi image and a local hub; any browser can view screens on the LAN.",
+          source: "https://homescreens.dev/",
+          checked: CHECKED,
+        },
+      ],
+      price: [
+        {
+          text: "Software is free and open source; you buy and maintain the Pi and display.",
+          source: "https://homescreens.dev/",
+          checked: CHECKED,
+        },
+      ],
+      subscription: [
+        {
+          text: "No subscription — self-hosted forever.",
+          source: "https://homescreens.dev/",
+          checked: CHECKED,
+        },
+      ],
+      calendars: [
+        {
+          text: "Calendar modules via common feeds; setup lives on the hub.",
+          source: "https://homescreens.dev/docs/module-reference",
+          checked: CHECKED,
+        },
+      ],
+      chores: [
+        {
+          text: "Strong chore chart with morning/afternoon/evening bands and a dedicated kids /chores phone page.",
+          source: "https://homescreens.dev/docs/chores",
+          checked: CHECKED,
+        },
+      ],
+      photos: [
+        {
+          text: "Photo modules available; cloud album connectors depend on plugins and local config.",
+          source: "https://homescreens.dev/docs/module-reference",
+          checked: CHECKED,
+        },
+      ],
+      smartHome: [
+        {
+          text: "Home Assistant and other plugins; Strava/Garmin-style modules exist in the ecosystem.",
+          source: "https://homescreens.dev/docs/module-reference",
+          checked: CHECKED,
+        },
+      ],
+      local: [
+        {
+          text: "No first-party TransLink, Township of Langley garbage, BC Ferries or Alert Ready widgets.",
+          source: "https://homescreens.dev/",
+          checked: CHECKED,
+        },
+      ],
+      diy: [
+        {
+          text: "Freeform 20 px canvas, auto-save on the hub, portrait-first defaults; you operate the Pi and updates.",
+          source: "https://homescreens.dev/docs/first-screen",
+          checked: CHECKED,
+        },
+      ],
+      ads: [{ text: "No ads.", source: "https://homescreens.dev/", checked: CHECKED }],
     },
   },
 ];
