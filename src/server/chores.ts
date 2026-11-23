@@ -64,19 +64,24 @@ export async function choreBoard(accountId: string, config: DashboardConfig, now
   };
 }
 
+function wallCheckAllowed(config: DashboardConfig, personId: string): boolean {
+  return config.views.some((v) =>
+    v.widgets.some((w) => w.type === "chores" && w.allowCheck && (w.personIds.length === 0 || w.personIds.includes(personId))),
+  );
+}
+
 /**
- * A tap on the wall: ticks a chore off for one person today, or takes the tick back. Only a chore that is theirs today,
- * and only when a chores widget that allows ticking shows that person.
+ * A tap on the wall or kids phone page: ticks a chore off for one person today, or takes the tick back. Only a chore
+ * that is theirs today. Wall taps also need a chores widget with `allowCheck` for that person; the kids phone page
+ * (`fromPhone`) skips that so kids can tick without the kitchen screen allowing it (Melvin, 2026-11-23).
  */
 export async function setChoreDone(
   accountId: string,
   config: DashboardConfig,
-  input: { chore: string; person: string; done: boolean; pin?: string },
+  input: { chore: string; person: string; done: boolean; pin?: string; fromPhone?: boolean },
   now = Date.now(),
 ): Promise<"ok" | "forbidden" | "pin"> {
-  const allowed = config.views.some((v) =>
-    v.widgets.some((w) => w.type === "chores" && w.allowCheck && (w.personIds.length === 0 || w.personIds.includes(input.person))),
-  );
+  const allowed = input.fromPhone || wallCheckAllowed(config, input.person);
   const today = localDate(now, config.location.timeZone);
   const chore = config.chores.items.find((c) => c.id === input.chore);
   const isDue = dueOn(config.chores.people, config.chores.items, today).some(
@@ -105,16 +110,14 @@ export async function setChoreDone(
   return "ok";
 }
 
-/** Redeems a reward for one person when a chores widget allows checks and they have enough stars. */
+/** Redeems a reward for one person when they have enough stars (wall needs allowCheck; kids phone skips that). */
 export async function redeemChoreReward(
   accountId: string,
   config: DashboardConfig,
-  input: { reward: string; person: string; pin?: string },
+  input: { reward: string; person: string; pin?: string; fromPhone?: boolean },
   now = Date.now(),
 ): Promise<"ok" | "forbidden" | "pin" | "stars"> {
-  const allowed = config.views.some((v) =>
-    v.widgets.some((w) => w.type === "chores" && w.allowCheck && (w.personIds.length === 0 || w.personIds.includes(input.person))),
-  );
+  const allowed = input.fromPhone || wallCheckAllowed(config, input.person);
   const reward = config.chores.rewards.find((r) => r.id === input.reward);
   const person = config.chores.people.find((p) => p.id === input.person);
   if (!allowed || !reward || !person) return "forbidden";

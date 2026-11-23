@@ -405,6 +405,10 @@ panel can be complex if you need it to be."
   the Displays tab (copyable `editUrl` plus `/api/household/devices/<id>/edit-qr/`) both encode that URL. Knowing the
   display link is the capability — keep the QR on the wall, not shared online. Family calendar events stay on `/family/`
   only.
+- **Kids chores phone** (Melvin, 2026-11-23): `/d/<token>/chores/` and `/family/chores/` (`KidsChores`, `/api/family/chores/`)
+  let a kid pick their name, tick today's chores by period, and redeem star rewards. Same display-token or family session
+  auth as the edit page; ticks skip the wall's `allowCheck` gate. Parents still edit people and chores in Settings › Chores;
+  uncheck and redeem still need the child PIN when set.
 - **School status** (Melvin, 2026-11-22): `src/server/school.ts` reads `config.school.statusUrl` (https only, never a private
   address), cached five minutes, and looks for closed, delayed or late start in the page's alert or notification banner,
   then in the rest of the page. Anything else is open. A widget can name schools; a notice counts when it names one of
