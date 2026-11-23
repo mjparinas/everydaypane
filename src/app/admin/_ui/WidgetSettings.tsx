@@ -161,6 +161,12 @@ function TypeSettings({
             hint="The sunrise and sunset icons, and the sun on the daylight line."
             onChange={(v) => e((x) => void (x.showEmoji = v))}
           />
+          <Toggle
+            label="Show hours of daylight"
+            checked={w.showDaylight}
+            hint="The line under the times, like “8 hr 51 min of daylight”."
+            onChange={(v) => e((x) => void (x.showDaylight = v))}
+          />
           <p className="text-xs text-soft">Times are for {config.location.name || "the dashboard's location"} (Settings).</p>
         </>
       );

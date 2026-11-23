@@ -21,7 +21,7 @@ export const sunTimes: Mount<"sunTimes"> = (el, w, ctx) => {
   el.append(root);
   return subscribe<WeatherData>("weather", 15 * 60_000, (data) => {
     const { sunrise, sunset } = data.today;
-    const daylight = daylightLength(sunrise, sunset);
+    const daylight = w.showDaylight ? daylightLength(sunrise, sunset) : "";
     const emoji = w.showEmoji;
     fill(
       root,
