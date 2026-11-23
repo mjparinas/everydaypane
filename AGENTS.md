@@ -106,7 +106,8 @@ DriveBC road events and weather conditions, Earthquakes Canada, BC Hydro power o
 Optional email to everyone on `ADMIN_EMAILS` and `FAMILY_EMAILS` when a new strip-worthy alert arrives (`config.alerts.notifyEmail`).
 
 **Household and family:** magic-link sign-in (Resend, branded HTML from `src/lib/email.ts`) with marketing header/footer
-on `/signin/`, household panel at `/household/` (views and grid editor, themes, displays with copyable addresses **and a
+on `/signin/`, plus **sign in with your phone** (QR + short code on a display/TV without an email app; phone approves at
+`/signin/phone/`), household panel at `/household/` (views and grid editor, themes, displays with copyable addresses **and a
 phone-edit QR/link**, meals, shopping, settings for every integration, Settings › Chores for the kids and their chores),
 **settings backup and restore** (Settings › Backup, a JSON file), `/family/` for the message board, **family calendar
 events**, meals and the shopping list, **`/d/<token>/edit/`** (same meals, shopping and messages with no login — scan the
@@ -593,6 +594,11 @@ panel can be complex if you need it to be."
   the environment, so nothing a request writes can make someone an admin; removing an address signs it out. Links and
   sessions are stored only as hashes. The emailed link opens a page whose button uses the link up, so mail scanners
   can't. A link is used up in one statement, so two racing requests can't both sign in.
+- **Sign in with your phone** (Melvin, 2026-11-23: magic link on a display fails when there's no email app — Tuned-style
+  QR): `/signin/` can show a QR and eight-character code (`device_sign_ins`, 10 minutes). The phone opens
+  `/signin/phone/`, signs in with the usual magic link if needed, and taps Approve; the display polls and claims a
+  one-time handoff for its session cookie. Codes and poll secrets are stored only as hashes; the handoff is encrypted
+  until the display takes it once.
 - Sign-in tries are rate-limited in the database (one atomic upsert), per address and per IP.
 - Requests that change something must come from our own origin (`sameOrigin`).
 - Security headers on every response (`src/lib/securityHeaders.ts`): HSTS, nosniff, `frame-ancestors 'none'` (wall
