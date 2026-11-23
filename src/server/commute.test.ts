@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { GET as adminGET } from "@/app/api/household/commute/route";
 import { GET as displayGET } from "@/app/api/display/commute/route";
+import { GET as adminGET } from "@/app/api/household/commute/route";
 import { defaultConfig } from "@/lib/config/defaults";
 import type { DashboardConfig } from "@/lib/config/schema";
 import type { CommuteData } from "@/lib/display/types";

@@ -27,6 +27,7 @@ export function widgetOptionsKey(w: Widget): string {
   delete (rest as { showBackground?: boolean }).showBackground;
   delete (rest as { backgroundOpacity?: number }).backgroundOpacity;
   delete (rest as { fontScale?: number }).fontScale;
+  delete (rest as { outerPadding?: number }).outerPadding;
   return JSON.stringify(rest);
 }
 
@@ -44,7 +45,8 @@ function sameChrome(a: PlacedWidget, b: PlacedWidget): boolean {
     a.onPhoto === b.onPhoto &&
     a.transparent === b.transparent &&
     (a.widget.backgroundOpacity ?? null) === (b.widget.backgroundOpacity ?? null) &&
-    (a.widget.fontScale ?? null) === (b.widget.fontScale ?? null)
+    (a.widget.fontScale ?? null) === (b.widget.fontScale ?? null) &&
+    (a.widget.outerPadding ?? 0) === (b.widget.outerPadding ?? 0)
   );
 }
 

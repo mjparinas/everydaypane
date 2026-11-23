@@ -1,9 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { GET as amazonGET, PUT as amazonPUT } from "@/app/api/household/amazon/route";
-import { GET as checkGET } from "@/app/api/household/photos/route";
 import { GET as photoGET } from "@/app/api/display/photo/route";
 import { GET as photosGET } from "@/app/api/display/photos/route";
+import { GET as amazonGET, PUT as amazonPUT } from "@/app/api/household/amazon/route";
+import { GET as checkGET } from "@/app/api/household/photos/route";
 import type { PhotoData } from "@/lib/display/types";
 import { LEGACY_ACCOUNT_ID } from "@/server/accounts";
 import { cookieFor, req, useTestServer } from "@/test/server";
@@ -257,7 +257,11 @@ describe("photo routes", () => {
     expect(bad.status).toBe(422);
     const amazonCookie = "session-id=123-4567890-1234567; ubid-acbca=999; at-acbca=Atza|secret";
     const ok = await amazonPUT(
-      req("/api/household/amazon/", { method: "PUT", headers: { cookie: admin }, body: JSON.stringify({ cookie: amazonCookie, tld: "ca" }) }),
+      req("/api/household/amazon/", {
+        method: "PUT",
+        headers: { cookie: admin },
+        body: JSON.stringify({ cookie: amazonCookie, tld: "ca" }),
+      }),
     );
     expect(ok.status).toBe(200);
     expect(await getSecret(LEGACY_ACCOUNT_ID, "amazon.cookie")).toBe(amazonCookie);

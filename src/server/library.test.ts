@@ -1,9 +1,9 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { GET as googleGET, POST as googlePOST } from "@/app/api/household/google-photos/route";
-import { DELETE as libraryDELETE, GET as libraryGET, POST as libraryPOST } from "@/app/api/household/library/route";
 import { GET as photoGET } from "@/app/api/display/photo/route";
 import { GET as photosGET } from "@/app/api/display/photos/route";
+import { GET as googleGET, POST as googlePOST } from "@/app/api/household/google-photos/route";
+import { DELETE as libraryDELETE, GET as libraryGET, POST as libraryPOST } from "@/app/api/household/library/route";
 import type { PhotoData } from "@/lib/display/types";
 import { LEGACY_ACCOUNT_ID } from "@/server/accounts";
 import { cookieFor, req, useTestServer } from "@/test/server";
@@ -121,7 +121,9 @@ describe("photo library", () => {
       allowed: false,
     });
     const start = () =>
-      googlePOST(req("/api/household/google-photos/", { method: "POST", headers: { cookie: admin }, body: JSON.stringify({ start: true }) }));
+      googlePOST(
+        req("/api/household/google-photos/", { method: "POST", headers: { cookie: admin }, body: JSON.stringify({ start: true }) }),
+      );
     expect(((await (await start()).json()) as { connect?: boolean }).connect).toBe(true);
 
     await setSecret(LEGACY_ACCOUNT_ID, "google.refreshToken", "refresh");

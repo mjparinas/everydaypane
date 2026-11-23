@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { GET as adminGET } from "@/app/api/household/sports/route";
 import { GET as displayGET } from "@/app/api/display/sports/route";
+import { GET as adminGET } from "@/app/api/household/sports/route";
 import { defaultConfig } from "@/lib/config/defaults";
 import type { DashboardConfig } from "@/lib/config/schema";
 import type { SportsData } from "@/lib/display/types";

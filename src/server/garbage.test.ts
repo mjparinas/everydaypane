@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { GET as adminGET } from "@/app/api/household/garbage/route";
 import { GET as displayGET } from "@/app/api/display/garbage/route";
+import { GET as adminGET } from "@/app/api/household/garbage/route";
 import { defaultConfig } from "@/lib/config/defaults";
 import type { GarbageData } from "@/lib/display/types";
 import { LEGACY_ACCOUNT_ID } from "@/server/accounts";

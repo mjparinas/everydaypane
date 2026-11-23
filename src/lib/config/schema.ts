@@ -65,6 +65,8 @@ const base = {
   backgroundOpacity: z.number().min(0).max(1).optional(),
   // Melvin, 2026-11-23: scale text in this tile (1 = normal). Omitted on media-only widgets in the admin UI.
   fontScale: z.number().min(0.7).max(1.5).optional(),
+  // Melvin, 2026-11-23: space around the panel inside its grid cell (view Tile padding is inside the panel).
+  outerPadding: z.number().int().min(0).max(48).optional(),
   // Show only during these parts of the day (empty or omitted = always). The overnight key is still `night`.
   visiblePeriods: z.array(z.enum(PERIODS)).max(4).optional(),
 };

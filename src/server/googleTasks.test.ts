@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { GET as adminGET } from "@/app/api/household/google-tasks/route";
 import { GET as tasksGET, POST as tasksPOST } from "@/app/api/display/tasks/route";
+import { GET as adminGET } from "@/app/api/household/google-tasks/route";
 import { newWidget } from "@/lib/config/widgets";
 import type { TasksData } from "@/lib/display/types";
 import { LEGACY_ACCOUNT_ID } from "@/server/accounts";
