@@ -117,5 +117,16 @@ export function upgrade(stored: unknown): unknown {
       };
     });
   }
+  // Append built-in schemes added after this document was saved (edited copies keep their id and are left alone).
+  if (Array.isArray(out.themes)) {
+    const have = new Set(
+      out.themes.map((t) => (typeof t === "object" && t !== null && "id" in t ? String((t as { id: unknown }).id) : "")),
+    );
+    const room = 30 - out.themes.length;
+    if (room > 0) {
+      const missing = (d.themes as { id: string }[]).filter((t) => !have.has(t.id)).slice(0, room);
+      if (missing.length > 0) out.themes = [...out.themes, ...structuredClone(missing)];
+    }
+  }
   return out;
 }
