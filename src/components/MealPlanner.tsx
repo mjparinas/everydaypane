@@ -2,12 +2,13 @@
 
 import { useEffect, useState } from "react";
 
+import { familyAuthError, useFamilyAuth, useFamilyFetch } from "@/components/FamilyAuth";
 import { addDays } from "@/lib/calendar";
 import { MEAL_ICONS, MEAL_LABELS, MEAL_SLOTS, type DayMeals, type MealSlot } from "@/lib/meals";
 
 // The meal planner (Melvin, 2026-11-17), for phones: a week of days, each with breakfast, lunch and dinner. A meal
 // saves as soon as you leave its box (no Save button), and displays show it within a minute. Meals planned lately are
-// offered as suggestions. Used by /family/ and the admin panel's Meals tab.
+// offered as suggestions. Used by /family/, the admin Meals tab, and `/d/<token>/edit/`.
 
 interface Plan {
   today: string;
@@ -29,21 +30,24 @@ function dayHeading(date: string, today: string): string {
 
 type Status = "saving" | "saved" | "error";
 
-async function fetchPlan(from: string | null): Promise<Plan | string> {
-  try {
-    const r = await fetch(`/api/meals/?days=${DAYS}${from ? `&from=${from}` : ""}`);
-    if (!r.ok) return r.status === 401 ? "You've been signed out. Sign in again." : "Couldn't load the meal plan.";
-    return (await r.json()) as Plan;
-  } catch {
-    return "No connection.";
-  }
-}
-
 export function MealPlanner() {
+  const familyFetch = useFamilyFetch();
+  const { displayToken } = useFamilyAuth();
+  const viaDisplay = Boolean(displayToken);
   const [plan, setPlan] = useState<Plan | null>(null);
   const [drafts, setDrafts] = useState<Record<string, string>>({});
   const [status, setStatus] = useState<Record<string, Status>>({});
   const [error, setError] = useState("");
+
+  async function fetchPlan(from: string | null): Promise<Plan | string> {
+    try {
+      const r = await familyFetch(`/api/meals/?days=${DAYS}${from ? `&from=${from}` : ""}`);
+      if (!r.ok) return familyAuthError(r.status, viaDisplay, "Couldn't load the meal plan.");
+      return (await r.json()) as Plan;
+    } catch {
+      return "No connection.";
+    }
+  }
 
   function show(p: Plan | string) {
     if (typeof p === "string") return setError(p);
@@ -58,13 +62,14 @@ export function MealPlanner() {
     return () => {
       live = false;
     };
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- load once per token
+  }, [displayToken]);
 
   async function save(date: string, slot: MealSlot, text: string) {
     const k = key(date, slot);
     setStatus((s) => ({ ...s, [k]: "saving" }));
     try {
-      const r = await fetch("/api/meals/", {
+      const r = await familyFetch("/api/meals/", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ date, slot, text }),

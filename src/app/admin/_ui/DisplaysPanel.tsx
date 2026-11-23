@@ -18,6 +18,7 @@ interface Device {
   createdAt: number;
   lastSeenAt: number | null;
   url: string | null;
+  editUrl: string | null;
 }
 
 function seen(at: number | null): string {
@@ -54,7 +55,7 @@ export function DisplaysPanel() {
   const [error, setError] = useState("");
   const [name, setName] = useState("Kitchen");
   const [viewId, setViewId] = useState("");
-  const [added, setAdded] = useState<{ name: string; url: string } | null>(null);
+  const [added, setAdded] = useState<{ name: string; url: string; editUrl: string } | null>(null);
 
   function load() {
     return fetchDevices().then(
@@ -79,9 +80,9 @@ export function DisplaysPanel() {
     e.preventDefault();
     setError("");
     const r = await call("/api/admin/devices/", "POST", { name, viewId: viewId || null });
-    const body = (await r.json().catch(() => ({}))) as { url?: string; error?: string };
-    if (!r.ok || !body.url) return setError(body.error ?? "Couldn't add the display.");
-    setAdded({ name, url: body.url });
+    const body = (await r.json().catch(() => ({}))) as { url?: string; editUrl?: string; error?: string };
+    if (!r.ok || !body.url || !body.editUrl) return setError(body.error ?? "Couldn't add the display.");
+    setAdded({ name, url: body.url, editUrl: body.editUrl });
     void load();
   }
 
@@ -106,8 +107,11 @@ export function DisplaysPanel() {
             <p className="text-sm">
               Open this address on <strong>{added.name}</strong>. It stays visible under Displays.
             </p>
-            <Address url={added.url} />
-            <p className="text-xs text-soft">On the UC-Display21, set this as the start page in its browser (kiosk) settings.</p>
+            <Address url={added.url} label="Display" />
+            <Address url={added.editUrl} label="Phone edit" />
+            <p className="text-xs text-soft">
+              On the UC-Display21, set the display address as the start page in its browser (kiosk) settings.
+            </p>
           </div>
         )}
         {error && (
@@ -138,9 +142,28 @@ export function DisplaysPanel() {
                   onChange={(v) => void patch(d.id, { viewId: v || null })}
                 />
                 {d.url ? (
-                  <Address url={d.url} />
+                  <Address url={d.url} label="Display" />
                 ) : (
                   <p className="text-sm text-soft">Address unavailable — delete this display and add it again.</p>
+                )}
+                {d.editUrl && (
+                  <div className="grid gap-2 rounded-lg border border-line bg-bg p-3">
+                    <Address url={d.editUrl} label="Phone edit" />
+                    <div className="flex items-start gap-3">
+                      {/* eslint-disable-next-line @next/next/no-img-element -- admin SVG from our own route */}
+                      <img
+                        src={`/api/admin/devices/${encodeURIComponent(d.id)}/edit-qr/`}
+                        alt={`QR code for editing from ${d.name}`}
+                        className="h-28 w-28 rounded-lg bg-white p-1"
+                        width={112}
+                        height={112}
+                      />
+                      <p className="text-xs text-soft">
+                        Scan to edit meals, shopping and messages with no sign-in. Anyone with this link can change those. Also available as
+                        a Phone edit QR widget on the wall.
+                      </p>
+                    </div>
+                  </div>
                 )}
                 <ConfirmButton
                   label="Delete display"
@@ -159,23 +182,26 @@ export function DisplaysPanel() {
 }
 
 /** Address on one row with Copy on the far right (Melvin, 2026-11-22). */
-function Address({ url }: { url: string }) {
+function Address({ url, label }: { url: string; label?: string }) {
   const [copied, setCopied] = useState(false);
   return (
-    <div className="flex items-center gap-2">
-      <code className="min-w-0 flex-1 overflow-x-auto rounded-lg bg-bg px-2 py-2 text-xs break-all">{url}</code>
-      <button
-        type="button"
-        className="btn-ghost shrink-0"
-        onClick={() => {
-          void navigator.clipboard.writeText(url).then(() => {
-            setCopied(true);
-            window.setTimeout(() => setCopied(false), 2000);
-          });
-        }}
-      >
-        {copied ? "Copied" : "Copy"}
-      </button>
+    <div className="grid gap-1">
+      {label && <p className="text-xs font-medium text-soft">{label}</p>}
+      <div className="flex items-center gap-2">
+        <code className="min-w-0 flex-1 overflow-x-auto rounded-lg bg-bg px-2 py-2 text-xs break-all">{url}</code>
+        <button
+          type="button"
+          className="btn-ghost shrink-0"
+          onClick={() => {
+            void navigator.clipboard.writeText(url).then(() => {
+              setCopied(true);
+              window.setTimeout(() => setCopied(false), 2000);
+            });
+          }}
+        >
+          {copied ? "Copied" : "Copy"}
+        </button>
+      </div>
     </div>
   );
 }

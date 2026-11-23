@@ -1,0 +1,55 @@
+import type { Metadata } from "next";
+import { notFound } from "next/navigation";
+
+import { FamilyAuthProvider } from "@/components/FamilyAuth";
+import { MealPlanner } from "@/components/MealPlanner";
+import { MessageBoard } from "@/components/MessageBoard";
+import { ShoppingList } from "@/components/ShoppingList";
+import { Mark } from "@/components/Wordmark";
+import { deviceForToken } from "@/server/devices";
+
+export const metadata: Metadata = { title: "Edit · Everydaypane" };
+
+// Kitchen phone page (Melvin, 2026-11-22): open `/d/<token>/edit/` (or scan the edit QR) to change meals, shopping
+// and the message board with no magic-link sign-in. Auth is knowing this display's secret address.
+export default async function DisplayEditPage({ params }: { params: Promise<{ token: string }> }) {
+  const { token } = await params;
+  const device = await deviceForToken(token);
+  if (!device) notFound();
+
+  return (
+    <FamilyAuthProvider displayToken={token}>
+      <main className="mx-auto grid max-w-xl gap-4 p-4">
+        <header className="flex items-center gap-3">
+          <Mark size={32} />
+          <div className="min-w-0">
+            <h1 className="text-xl font-bold">Edit</h1>
+            <p className="text-sm text-soft truncate">{device.name} · no sign-in needed</p>
+          </div>
+        </header>
+        <p className="text-sm text-soft">
+          Anyone who can open this link can change the meal plan, shopping list and message board. Keep the QR on the wall, not shared
+          online.
+        </p>
+        <section className="grid gap-3" aria-labelledby="messages-heading">
+          <h2 id="messages-heading" className="text-lg font-bold">
+            Message board
+          </h2>
+          <MessageBoard />
+        </section>
+        <section className="grid gap-3" aria-labelledby="meals-heading">
+          <h2 id="meals-heading" className="text-lg font-bold">
+            Meal plan
+          </h2>
+          <MealPlanner />
+        </section>
+        <section className="grid gap-3" aria-labelledby="shopping-heading">
+          <h2 id="shopping-heading" className="text-lg font-bold">
+            Shopping list
+          </h2>
+          <ShoppingList />
+        </section>
+      </main>
+    </FamilyAuthProvider>
+  );
+}
