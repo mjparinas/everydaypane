@@ -40,9 +40,9 @@ const subscribeHash = (cb: () => void) => {
 
 function settingsSectionFromHash(): string | null {
   const h = window.location.hash.slice(1);
+  if (h === "settings") return "dashboard";
   if (!h.startsWith("settings/")) return null;
-  const section = h.slice("settings/".length);
-  return section || null;
+  return h.slice("settings/".length) || "dashboard";
 }
 
 function groupForSection(section: string | null): GroupId {
