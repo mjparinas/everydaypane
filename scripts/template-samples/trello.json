@@ -1,0 +1,10 @@
+{
+  "updatedAt": 1763937720000,
+  "connected": true,
+  "boardName": "Family projects",
+  "lists": [
+    { "name": "To do", "cards": ["Order furnace filter", "Book dentist for Maya"] },
+    { "name": "Doing", "cards": ["Paint guest room"] },
+    { "name": "Done", "cards": ["Renew parking pass"] }
+  ]
+}

@@ -7,6 +7,9 @@ const nextConfig: NextConfig = {
   trailingSlash: true,
   poweredByHeader: false,
   reactStrictMode: true,
+  async redirects() {
+    return [{ source: "/blog/setup-unifi-uc-display21/", destination: "/blog/setup-wall-display/", permanent: true }];
+  },
   // The display page is plain HTML plus one small script (public/display/), not a React page: see AGENTS.md "Display".
   // Document CSP with a per-request nonce is set in proxy.ts; APIs and /d/ get a baseline CSP here / in displayHtml.
   // /admin/preview/ may be framed by the Views tab (SAMEORIGIN); wall /d/… stays DENY.

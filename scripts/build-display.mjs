@@ -20,7 +20,7 @@ for (const [pkg, file, out] of [
 const common = {
   bundle: true,
   minify: true,
-  // The UC-Display21 runs a recent Android WebView; Chrome 109 covers container queries and color-mix.
+  // Kitchen wall panels often run a recent Android WebView; Chrome 109 covers container queries and color-mix.
   target: ["chrome109", "safari16"],
   legalComments: "none",
   logLevel: "warning",

@@ -16,6 +16,8 @@ export interface PageMetaInput {
   published?: string;
   modified?: string;
   noindex?: boolean;
+  /** Absolute or site-relative image path for Open Graph (defaults to brand OG). */
+  image?: string;
 }
 
 const TITLE_MAX = 65;
@@ -24,7 +26,8 @@ const withBrand = (title: string) => !title.includes(BRAND.name) && `${title} ·
 export function pageMeta(o: PageMetaInput): Metadata {
   const shareTitle = o.shareTitle ?? o.title;
   const url = `${SITE_URL}${o.path}`;
-  const image = { ...OG, alt: shareTitle };
+  const imageUrl = o.image ? (o.image.startsWith("http") ? o.image : `${SITE_URL}${o.image}`) : OG.url;
+  const image = { url: imageUrl, width: OG.width, height: OG.height, alt: shareTitle };
   return {
     title: o.absoluteTitle || !withBrand(o.title) ? { absolute: o.title } : o.title,
     description: o.description,

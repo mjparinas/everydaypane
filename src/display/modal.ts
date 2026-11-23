@@ -1,5 +1,5 @@
 // Full-screen overlays on the wall (doorbell, timer alarm). Kitchen use is mostly touch, but Escape and a moved
-// focus still matter for a keyboard plugged into the UC-Display21 or for assistive tech (a11y audit, 2026-11-22).
+// focus still matter for a keyboard plugged into the wall panel or for assistive tech (a11y audit, 2026-11-22).
 
 /** Focuses `el`, closes on Escape, restores the previous focus when the returned function runs. */
 export function attachModal(el: HTMLElement, onDismiss: () => void): () => void {

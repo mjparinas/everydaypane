@@ -17,7 +17,7 @@ import { WidgetSettingsDrawer } from "./WidgetSettingsDrawer";
 
 // Views (Melvin, 2026-11-17: "several views to choose from"): each view is its own grid of widgets. Displays show one
 // view, or follow the time-of-day schedule. Spacing defaults (12×8, gap 16, edge 14, tile 16) are tuned for a
-// 1920 × 1080 UC-Display21 (Melvin, 2026-11-22).
+// 1920 × 1080 landscape wall panel (Melvin, 2026-11-22).
 //
 // Layout (Melvin, 2026-11-22): one live editable preview; widget and view settings open in right slide-outs so gap,
 // edge, tile and theme updates stay visible on the layout. Add a widget uses the same drawer.
