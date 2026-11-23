@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
 import { GET, POST } from "@/app/api/admin/devices/[id]/route";
+import { GET as listDevices } from "@/app/api/admin/devices/route";
 import { cookieFor, req, useTestServer } from "@/test/server";
 
 import * as crypto from "./crypto";
@@ -12,6 +13,16 @@ const tokenOf = (url: string) => /\/d\/([^/]+)\//.exec(url)?.[1] ?? "";
 
 describe("display addresses", () => {
   useTestServer();
+
+  it("lists each display with its address for the Displays tab", async () => {
+    const { device, token } = await addDevice("Kitchen", null);
+    const admin = await cookieFor("admin@example.com");
+    const r = await listDevices(req("/api/admin/devices/", { headers: { cookie: admin } }));
+    expect(r.status).toBe(200);
+    const body = (await r.json()) as { devices: { id: string; url: string | null }[] };
+    expect(body.devices).toHaveLength(1);
+    expect(body.devices[0]).toMatchObject({ id: device.id, url: expect.stringContaining(`/d/${token}/`) });
+  });
 
   it("shows an admin a display's address again, and keeps the token encrypted", async () => {
     const { device, token } = await addDevice("Kitchen", null);
@@ -75,10 +86,13 @@ describe("display addresses", () => {
     expect((await deviceForToken(legacy))?.id).toBe(device.id);
   });
 
-  it("offers only a new link for a display added before addresses were kept", async () => {
+  it("has no address to show for a display added before addresses were kept", async () => {
     const { device } = await addDevice("Hall", null);
     await query("UPDATE devices SET token_sealed = NULL WHERE id = ?", [device.id]);
     const admin = await cookieFor("admin@example.com");
     expect((await GET(req(`/api/admin/devices/${device.id}/`, { headers: { cookie: admin } }), ctx(device.id))).status).toBe(404);
+    const listed = await listDevices(req("/api/admin/devices/", { headers: { cookie: admin } }));
+    const body = (await listed.json()) as { devices: { id: string; url: string | null }[] };
+    expect(body.devices.find((d) => d.id === device.id)?.url).toBeNull();
   });
 });

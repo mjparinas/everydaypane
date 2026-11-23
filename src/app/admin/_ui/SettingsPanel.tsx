@@ -23,10 +23,11 @@ import { TIME_ZONES } from "./WidgetSettings";
 
 const GROUPS = [
   { id: "home", label: "Home", sections: ["dashboard", "location"] },
-  { id: "calendars", label: "Calendars", sections: ["google", "tasks", "icals"] },
+  { id: "calendars", label: "Calendars", sections: ["google", "icals"] },
+  { id: "tasks", label: "Tasks", sections: ["tasks"] },
   { id: "family", label: "Family", sections: ["garbage", "commute", "chores", "sports", "school"] },
   { id: "photos-music", label: "Photos & music", sections: ["photos", "music"] },
-  { id: "ha", label: "Home tech", sections: ["ha"] },
+  { id: "ha", label: "Home Assistant", sections: ["ha"] },
   { id: "screen", label: "Screen", sections: ["screen-care", "screen-saver"] },
   { id: "alerts", label: "Alerts & backup", sections: ["alerts", "backup"] },
 ] as const;
@@ -178,12 +179,15 @@ export function SettingsPanel() {
           <div id="settings-google">
             <GooglePanel />
           </div>
-          <div id="settings-tasks">
-            <TasksPanel />
-          </div>
           <div id="settings-icals" className="lg:col-span-2">
             <CalendarLinksPanel />
           </div>
+        </div>
+      )}
+
+      {showGroup("tasks") && (
+        <div id="settings-tasks">
+          <TasksPanel />
         </div>
       )}
 

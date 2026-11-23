@@ -1,7 +1,18 @@
 import { describe, expect, it } from "vitest";
 
 import { defaultConfig } from "./defaults";
-import { currentPeriod, dateInZone, daysBetween, minutesInZone, msUntilLocalTime, msUntilNextPeriod } from "./time";
+import {
+  currentPeriod,
+  dateInZone,
+  daysBetween,
+  minutesFromLocalIso,
+  minutesInZone,
+  msUntilLocalTime,
+  msUntilNextPeriod,
+  periodStartMinutes,
+  scheduleUsesSun,
+  sunMinutesFromIso,
+} from "./time";
 
 const VAN = "America/Vancouver";
 function at(hhmm: string): Date {
@@ -49,5 +60,36 @@ describe("time of day", () => {
     expect(dateInZone(at("23:30"), VAN)).toBe("2026-11-17");
     expect(dateInZone(new Date("2026-11-18T03:00:00Z"), "America/Toronto")).toBe("2026-11-17");
     expect(daysBetween("2026-11-17", "2026-12-25")).toBe(38);
+  });
+});
+
+describe("sunrise and sunset starts", () => {
+  it("parses Open-Meteo's local ISO times", () => {
+    expect(minutesFromLocalIso("2026-11-17T08:21")).toBe(8 * 60 + 21);
+    expect(minutesFromLocalIso("2026-11-17T17:24")).toBe(17 * 60 + 24);
+    expect(minutesFromLocalIso("bad")).toBeNull();
+    expect(sunMinutesFromIso("2026-11-17T08:21", "2026-11-17T17:24")).toEqual({
+      sunrise: 8 * 60 + 21,
+      sunset: 17 * 60 + 24,
+    });
+  });
+
+  it("resolves sunrise and sunset, falling back when unknown", () => {
+    expect(periodStartMinutes("sunrise", { sunrise: 500, sunset: 1000 })).toBe(500);
+    expect(periodStartMinutes("sunset", { sunrise: 500, sunset: 1000 })).toBe(1000);
+    expect(periodStartMinutes("sunrise")).toBe(7 * 60);
+    expect(periodStartMinutes("06:30")).toBe(6 * 60 + 30);
+  });
+
+  it("switches periods on today's sun times", () => {
+    const schedule = defaultConfig().schedule;
+    schedule.morning.start = "sunrise";
+    schedule.evening.start = "sunset";
+    const sun = { sunrise: 8 * 60, sunset: 17 * 60 };
+    expect(scheduleUsesSun(schedule)).toBe(true);
+    expect(currentPeriod(schedule, at("07:59"), VAN, sun)).toBe("night");
+    expect(currentPeriod(schedule, at("08:00"), VAN, sun)).toBe("morning");
+    expect(currentPeriod(schedule, at("17:00"), VAN, sun)).toBe("evening");
+    expect(msUntilNextPeriod(schedule, at("07:00"), VAN, sun)).toBe(60 * 60_000);
   });
 });

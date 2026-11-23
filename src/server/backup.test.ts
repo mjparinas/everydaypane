@@ -101,7 +101,7 @@ describe("settings backup", () => {
     expect((await post({ baseVersion: 2, backup }, kid)).status).toBe(401);
 
     const dry = await post({ baseVersion: 2, backup, dryRun: true });
-    expect(await dry.json()).toEqual({ ok: true, summary: { views: 4, widgets: 23, themes: 4 } });
+    expect(await dry.json()).toEqual({ ok: true, summary: { views: 4, widgets: 23, themes: 8 } });
     expect((await loadConfig()).config.name).toBe("Hallway");
 
     expect((await post({ baseVersion: 1, backup })).status).toBe(409);

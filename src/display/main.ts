@@ -1,8 +1,8 @@
 import { isBackdrop } from "@/lib/config/grid";
 import type { Palette, Period, Theme, View, Widget } from "@/lib/config/schema";
-import { currentPeriod, msUntilLocalTime, msUntilNextPeriod } from "@/lib/config/time";
+import { currentPeriod, msUntilLocalTime, msUntilNextPeriod, scheduleUsesSun, sunMinutesFromIso, type SunMinutes } from "@/lib/config/time";
 import { parseDraftMessage, previewReadyMessage } from "@/lib/display/draftMessage";
-import type { DisplayPayload, HaData } from "@/lib/display/types";
+import type { DisplayPayload, HaData, WeatherData } from "@/lib/display/types";
 import { diffWidgets, placeWidgets, sameStageGrid, stageGridStyle, type PlacedWidget } from "@/lib/display/viewDiff";
 
 import { onAlarm, startAlarms } from "./alarm";
@@ -26,6 +26,9 @@ const mounts = new Map<string, { cell: HTMLElement; stop: Cleanup; widget: Widge
 let shown = { viewId: "", mode: "", themeId: "", version: -1 };
 let shownView: View | null = null;
 let periodTimer: number | undefined;
+/** Today's sunrise/sunset in minutes (from the weather feed) when a period starts on the sun. */
+let sun: SunMinutes | null = null;
+let sunStop: Cleanup | null = null;
 /** Admin Views tab is pushing an unsaved draft; the 30s saved poll must not overwrite it. */
 let draftActive = false;
 
@@ -55,18 +58,35 @@ function pick(
   p: DisplayPayload,
   now = new Date(),
 ): { view: View; period: Period | null; theme: Theme; palette: Palette; dimLevel: number } {
-  const period = p.fixedViewId ? null : currentPeriod(p.schedule, now, p.location.timeZone);
+  const period = p.fixedViewId ? null : currentPeriod(p.schedule, now, p.location.timeZone, sun);
   const viewId = p.fixedViewId ?? (period ? p.schedule[period].viewId : "");
   const view = p.views.find((v) => v.id === viewId) ?? p.views[0];
   if (!view) throw new Error("No views to show");
   const theme = p.themes[view.themeId ?? p.themeId] ?? p.themes[p.themeId] ?? Object.values(p.themes)[0];
   if (!theme) throw new Error("No theme");
   // A fixed view still follows day and night from the schedule; an admin preview can force either.
-  const modePeriod = period ?? currentPeriod(p.schedule, now, p.location.timeZone);
+  const modePeriod = period ?? currentPeriod(p.schedule, now, p.location.timeZone, sun);
   const mode = previewMode || p.schedule[modePeriod].mode;
-  // Preview night uses the night period's dim so the palette and dimming match what evening/night look like.
+  // Preview night uses the overnight period's dim so the palette and dimming match what evening/overnight look like.
   const dimLevel = previewMode === "night" ? p.schedule.night.dim : previewMode === "day" ? 0 : p.schedule[modePeriod].dim;
   return { view, period, theme, palette: mode === "night" ? theme.night : theme.day, dimLevel };
+}
+
+/** Keep today's sunrise/sunset when any period starts on them (shared weather feed, same as sunTimes widgets). */
+function watchSun(p: DisplayPayload) {
+  if (!scheduleUsesSun(p.schedule)) {
+    sunStop?.();
+    sunStop = null;
+    sun = null;
+    return;
+  }
+  if (sunStop) return;
+  sunStop = subscribe<WeatherData>("weather", 15 * 60_000, (data) => {
+    const next = sunMinutesFromIso(data.today.sunrise, data.today.sunset);
+    if (next?.sunrise === sun?.sunrise && next?.sunset === sun?.sunset) return;
+    sun = next;
+    render();
+  });
 }
 
 function applyTheme(theme: Theme, palette: Palette, mode: string) {
@@ -179,7 +199,7 @@ function applyWidgetDiff(prev: Widget[], next: Widget[], p: DisplayPayload) {
 
 function schedulePeriod(p: DisplayPayload) {
   window.clearTimeout(periodTimer);
-  periodTimer = window.setTimeout(() => render(), msUntilNextPeriod(p.schedule, new Date(), p.location.timeZone) + 500);
+  periodTimer = window.setTimeout(() => render(), msUntilNextPeriod(p.schedule, new Date(), p.location.timeZone, sun) + 500);
 }
 
 function render(force = false) {
@@ -242,6 +262,7 @@ async function loadState(): Promise<boolean> {
   if (!r.data) return false;
   payload = r.data;
   etag = r.etag ?? undefined;
+  watchSun(payload);
   render();
   burnIn();
   alerts();
@@ -271,6 +292,7 @@ function listenForDraft() {
       return;
     }
     draftActive = true;
+    watchSun(msg.payload);
     applyDraft(msg.payload);
     burnIn();
     alerts();

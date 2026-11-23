@@ -26,6 +26,7 @@ same change, and moves it out of **In progress** when it merges.
 | Weather (`weather`) | Current conditions, hourly, up to 7 days, with icons, UV index and pollen | Open-Meteo forecast and air quality |
 | Air quality (`airQuality`) | AQHI or US AQI | Open-Meteo air quality |
 | WiFi QR (`wifiQr`) | Join code, optionally the password | Settings document |
+| Phone edit QR (`editQr`) | QR to `/d/<token>/edit/` for meals, shopping and messages with no sign-in | This display's address |
 | Countdowns (`countdown`) | Days until holidays, birthdays and events, yearly ones roll over | Settings document |
 | Schedule (`agenda`) | Today, or the next 1 to 14 days | Google Calendar + iCal links, family events |
 | Month calendar (`calendarMonth`) | Month grid or 1 to 6 weeks from this one, Sunday or Monday start, weekends on or off, title toggle, fit titles (wrap/shrink, on by default), scroll after N weeks (default 3) | Google Calendar + iCal links, family events |
@@ -55,7 +56,7 @@ same change, and moves it out of **In progress** when it merges.
 
 **Display behaviour:** several views on a drag-and-drop grid (chosen rows and columns, gap, edge padding and **tile padding**), **widgets layered on top of a photos widget**
 (photos as the backdrop), **per-widget background** (on/off and opacity; theme surface opacity is the default; clocks and dates start with no panel), a time-of-day schedule
-(morning, afternoon, evening, night) choosing the view, theme, day or night mode and dimming; themes with colour
+(morning, afternoon, evening, overnight) choosing the view, theme, day or night mode and dimming — each period can start at a **fixed time, sunrise or sunset** (sunrise/sunset from today's Open-Meteo weather at the dashboard location); themes with colour
 palettes, fonts, corner radius, opacity and optional glass; burn-in protection (pixel shift); offline mode (service
 worker serves the last good data and shows "Offline"); a **screen saver** (photos only or dark after idle minutes, dark
 in a night window, woken by a tap, Home Assistant motion sensors, the doorbell, a new alert or a timer going off); doorbell pop-up full
@@ -68,8 +69,9 @@ DriveBC road events and weather conditions, Earthquakes Canada, BC Hydro power o
 Optional email to everyone on `ADMIN_EMAILS` and `FAMILY_EMAILS` when a new strip-worthy alert arrives (`config.alerts.notifyEmail`).
 
 **Admin and family:** magic-link sign-in (Resend), admin panel tabs (views and grid editor, themes, displays with
-copyable addresses, meals, shopping, settings for every integration, Settings › Chores for the kids and their chores), **settings backup and restore** (Settings › Backup, a JSON
-file), `/family/` for the message board, **family calendar events**, meals and the shopping list, Sentry. Settings is
+copyable addresses **and a phone-edit QR/link**, meals, shopping, settings for every integration, Settings › Chores for the kids and their chores), **settings backup and restore** (Settings › Backup, a JSON
+file), `/family/` for the message board, **family calendar events**, meals and the shopping list, **`/d/<token>/edit/`**
+(same meals, shopping and messages with no login — scan the edit QR or open the Displays link), Sentry. Settings is
 grouped with a sticky jump nav and `#settings/…` deep links; bounded numbers use sliders or −/+ steppers that show
 min–max (not browser number arrows). Views default to a **12×8** grid with gap 16 / edge 14 / tile 16 for the
 1920×1080 UC-Display21, with one-tap grid presets and a grouped widget picker. The Views tab embeds one **live
@@ -85,7 +87,7 @@ zone lookup, sports teams to follow, TransLink, commute places (TomTom geocoding
 
 ## In progress
 
-Nothing in progress right now. Move new work here when it starts, and to **What already exists** when it merges.
+- **Phone edit page** (Melvin, 2026-11-22): `/d/<token>/edit/`, `editQr` widget, Displays tab QR — meals, shopping, messages without magic link.
 
 ## Commands
 
@@ -103,11 +105,13 @@ node scripts/e2e.mjs   # Playwright browser tests against the build (CHROMIUM_PA
 - **Name and repo** (Melvin, 2026-11-17): the app is **Everydaypane**, in `mjparinas/everydaypane`. The domain
   everydaypane.com was available on 2026-11-17 but has not been bought yet.
 - **Features** (Melvin, 2026-11-17): photos (Amazon Photos, choosable by person), full Google Calendar (a today
-  schedule view and a month calendar view), weather for the week with icons, clocks for Vancouver and Toronto, the date,
-  a WiFi QR code, countdowns to holidays and birthdays, air quality, garbage pickup from the Township of Langley's
-  collection calendar, Home Assistant controls, several views to choose from, views that change by time of day
-  (morning, afternoon, evening, night), day and night mode, customizable colour schemes and every widget's settings,
-  a drag-and-drop grid with a chosen number of rows and columns.
+ schedule view and a month calendar view), weather for the week with icons, clocks for Vancouver and Toronto, the date,
+ a WiFi QR code, countdowns to holidays and birthdays, air quality, garbage pickup from the Township of Langley's
+ collection calendar, Home Assistant controls, several views to choose from, views that change by time of day
+ (morning, afternoon, evening, overnight), day and night mode, customizable colour schemes and every widget's settings,
+ a drag-and-drop grid with a chosen number of rows and columns.
+- **Schedule sunrise/sunset and overnight** (Melvin, 2026-11-22): each part of the day can start at a fixed time,
+ sunrise or sunset; the overnight period was renamed from "night" in the admin (the settings key stays `night`).
 - **Added the same day** (Melvin, 2026-11-17): offline mode, admin sign-in by magic link through Resend, Sentry,
   burn-in protection, UniFi Protect video (cameras and doorbell pop-ups), a family message board, and emergency alerts.
 - **Music** (Melvin, 2026-11-17): Spotify and Sonos controls on the wall, through Home Assistant.
@@ -117,6 +121,9 @@ node scripts/e2e.mjs   # Playwright browser tests against the build (CHROMIUM_PA
   with a tap when the widget allows it (see Architecture).
 - **Whiteboard** (Melvin, 2026-11-22): a simple shared doodle on the wall — a few colours, finger draw, eraser, hold
   Clear to wipe; wider tiles show more colours; the same board on every display (see Architecture).
+- **Phone edit without login** (Melvin, 2026-11-22: QR to the display link with `/edit`): `/d/<token>/edit/` edits
+  meals, shopping and the message board with no magic link; an `editQr` widget and the Displays tab both show the QR
+  (see Architecture). Not Google Tasks or a new local to-do list — those stay separate.
 - **UV, pollen, school status and who's home** (Melvin, 2026-11-22): the weather widget can show the UV index and the
   highest pollen count Open-Meteo reports; a school widget reads the district page (Langley SD35 by default) for closed,
   delayed or late start; a who's-home widget reads Home Assistant person and device tracker entities and never controls them.
@@ -228,11 +235,11 @@ panel can be complex if you need it to be."
   integration creates), `file:local.db` in development, memory in tests. Tables are created on first use; migrations only
   ever add (`src/server/db.ts`).
 - **Displays** are devices with their own secret address `/d/<token>/`. Requests are matched by the token's hash; the
-  token is also kept encrypted (`token_sealed`, like the other secrets) so an admin can show and copy the address again
-  from the Displays tab any time (Melvin, 2026-11-17, who didn't want it shown only once). "New link" replaces the
-  address and the old one stops working. New addresses use a case-sensitive, 8-character alphanumeric token; the
-  database's unique token hash constraint is retried on a collision (Melvin, 2026-11-21). Existing longer addresses
-  remain valid. A device shows one view, or follows the time-of-day schedule. Deleting a device signs that screen out.
+  token is also kept encrypted (`token_sealed`, like the other secrets) so the Displays tab always shows the address with
+  a Copy button on the same row (Melvin, 2026-11-17: not shown only once; 2026-11-22: always visible, no "New link").
+  New addresses use a case-sensitive, 8-character alphanumeric token; the database's unique token hash constraint is
+  retried on a collision (Melvin, 2026-11-21). Existing longer addresses remain valid. A device shows one view, or
+  follows the time-of-day schedule. Deleting a device signs that screen out.
 - **Admin panel** (`src/app/admin/_ui/`): one page with tabs (a bottom tab bar on phones). Edits collect in a working
   copy (a Zustand store per page) and go out together with Save. The Views tab embeds `/admin/preview/<viewId>/` under a
   transparent drag overlay (`src/app/admin/_ui/LiveLayoutEditor.tsx`) and pushes the working copy over `postMessage`
@@ -261,7 +268,7 @@ panel can be complex if you need it to be."
   An admin's preview never shows the saver.
 - **Family message board:** anyone on `ADMIN_EMAILS` or `FAMILY_EMAILS` posts notes from `/family/`; the author name is
   typed, never the email, because the wall is readable by anyone in the kitchen. Notes can expire; admins pin. Displays
-  poll the board every 30 seconds with an ETag.
+  poll the board every 30 seconds with an ETag. The kitchen edit page (`/d/<token>/edit/`) can post too (no pin).
 - **Family calendar events** (Melvin, 2026-11-22): dentists, concerts and the like posted from `/family/` live in
   `family_events` (`src/server/familyEvents.ts`) and merge into the same five-minute calendar feed as Google and iCal
   links (colour `#5b8def`, calendar "Family"). `/api/family-events/` serves the phone UI; authors and admins can delete.
@@ -272,17 +279,25 @@ panel can be complex if you need it to be."
   No brush sizes, undo or sync from phones.
 - **Meal planning** (Melvin, 2026-11-17: "add meal planning", with breakfast, lunch and dinner for each day): one row
   per day and meal in the `meals` table (`src/server/meals.ts`), planned by anyone on `ADMIN_EMAILS` or `FAMILY_EMAILS`
-  from the admin panel's Meals tab or `/family/`. A meal saves when its box loses focus (not with the settings Save
-  button, since it isn't part of the settings document), and recent meals are offered as suggestions. The meals widget
-  shows one day (the next meal highlighted; from 8 PM it shows tomorrow, `nextMeal` in `src/lib/meals.ts`) or up to a
-  week, and polls `/api/display/meals/` every minute. Plans older than 60 days are cleared as new ones are written.
+  from the admin panel's Meals tab or `/family/`, or from `/d/<token>/edit/` with the display token. A meal saves when
+  its box loses focus (not with the settings Save button, since it isn't part of the settings document), and recent
+  meals are offered as suggestions. The meals widget shows one day (the next meal highlighted; from 8 PM it shows
+  tomorrow, `nextMeal` in `src/lib/meals.ts`) or up to a week, and polls `/api/display/meals/` every minute. Plans older
+  than 60 days are cleared as new ones are written.
 - **Shopping list** (Melvin, 2026-11-22): one row per item in the `shopping` table (`src/server/shopping.ts`), added by
-  anyone on `ADMIN_EMAILS` or `FAMILY_EMAILS` from `/family/` or the admin panel's Shopping tab. Open items stay in
-  the order they were added; bought ones drop off after 7 days, and the open list stops around 100. "Add from this
-  week's meals" copies each distinct meal for the next seven days that isn't already open. Displays poll
-  `/api/display/shopping/` every minute with an ETag. A tap on the wall ticks an item off at once (a second tap puts
-  it back) only when a shopping widget has `allowCheck`, because anyone in the kitchen can reach the screen; a
-  signed-in phone can always tick. The widget shows a chosen number of items and can show or hide what's already bought.
+  anyone on `ADMIN_EMAILS` or `FAMILY_EMAILS` from `/family/` or the admin panel's Shopping tab, or from
+  `/d/<token>/edit/`. Open items stay in the order they were added; bought ones drop off after 7 days, and the open
+  list stops around 100. "Add from this week's meals" copies each distinct meal for the next seven days that isn't
+  already open. Displays poll `/api/display/shopping/` every minute with an ETag. A tap on the wall ticks an item off
+  at once (a second tap puts it back) only when a shopping widget has `allowCheck`, because anyone in the kitchen can
+  reach the screen; a signed-in phone (or the kitchen edit link) can always tick. The widget shows a chosen number of
+  items and can show or hide what's already bought.
+- **Phone edit page** (Melvin, 2026-11-22): `/d/<token>/edit/` reuses the family meal, shopping and message components
+  with no magic link (`FamilyAuthProvider` sends `x-display-token`; `familyEditorFor` in `src/server/familyAuth.ts`
+  accepts a session or that token). Kitchen posts are keyed `display:<deviceId>` (no admin pin). An `editQr` widget and
+  the Displays tab (copyable `editUrl` plus `/api/admin/devices/<id>/edit-qr/`) both encode that URL. Knowing the
+  display link is the capability — keep the QR on the wall, not shared online. Family calendar events stay on `/family/`
+  only.
 - **School status** (Melvin, 2026-11-22): `src/server/school.ts` reads `config.school.statusUrl` (https only, never a private
   address), cached five minutes, and looks for closed, delayed or late start in the page's alert or notification banner,
   then in the rest of the page. Anything else is open. A widget can name schools; a notice counts when it names one of
@@ -489,6 +504,10 @@ panel can be complex if you need it to be."
   `/display/display.js`), and a Permissions-Policy that turns off camera, microphone and location.
 - **Family sessions** (`FAMILY_EMAILS`) use `/family/` and the meals, shopping and messages APIs only. They are not
   accepted as display viewers (`viewerFor`), so they cannot call `/api/display/*` (Home Assistant, cameras, tasks, …).
+- **Display-token family edits:** a valid `x-display-token` may use the meals, shopping and messages APIs the same way
+  a family session does (`familyEditorFor`), so `/d/<token>/edit/` works without login. It does not grant admin pin,
+  settings, or anything beyond those three APIs through that helper — but the same token still unlocks `/api/display/*`
+  if someone crafts requests (as the wall already can).
 - **Display image auth:** `/d/<token>/` sets a short-lived HttpOnly `ep_display` cookie (`Path=/api/display/`) for
   `<img>` requests; the long-lived device token stays in `x-display-token` for fetch, never in image query strings.
 - **Home Assistant URL:** must be public https; changing it (save or backup restore) clears the stored token and

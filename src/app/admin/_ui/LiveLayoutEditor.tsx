@@ -265,10 +265,6 @@ export function LiveLayoutEditor({
           })}
         </div>
       </div>
-      <p className="text-xs text-soft">
-        Drag a widget to move it and any of its corners to resize it. Tap one to open its settings. With a keyboard: arrows move, Shift +
-        arrows move the bottom-right corner and Shift + Alt + arrows the top-left. Save still sends the view to the wall screens.
-      </p>
     </div>
   );
 }

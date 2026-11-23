@@ -2,33 +2,38 @@
 
 import { useEffect, useState, type FormEvent } from "react";
 
+import { familyAuthError, useFamilyAuth, useFamilyFetch } from "@/components/FamilyAuth";
 import type { ShoppingData, ShoppingItem } from "@/lib/display/types";
 
 // The family shopping list (Melvin, 2026-11-22), for phones: add an item, tick it off, remove it, clear what's
-// bought, or pull in this week's meals. Displays show it within a minute. Used by /family/ and the admin Shopping tab.
-
-async function fetchList(): Promise<ShoppingItem[] | string> {
-  try {
-    const r = await fetch("/api/shopping/");
-    if (!r.ok) return r.status === 401 ? "You've been signed out. Sign in again." : "Couldn't load the list.";
-    return ((await r.json()) as ShoppingData).items;
-  } catch {
-    return "No connection.";
-  }
-}
-
-async function errorOf(r: Response, fallback: string): Promise<string> {
-  if (r.status === 401) return "You've been signed out. Sign in again.";
-  const body = (await r.json().catch(() => null)) as { error?: unknown } | null;
-  return typeof body?.error === "string" ? body.error : fallback;
-}
+// bought, or pull in this week's meals. Displays show it within a minute. Used by /family/, the admin Shopping tab,
+// and `/d/<token>/edit/`.
 
 export function ShoppingList() {
+  const familyFetch = useFamilyFetch();
+  const { displayToken } = useFamilyAuth();
+  const viaDisplay = Boolean(displayToken);
   const [items, setItems] = useState<ShoppingItem[] | null>(null);
   const [text, setText] = useState("");
   const [error, setError] = useState("");
   const [note, setNote] = useState("");
   const [busy, setBusy] = useState(false);
+
+  async function fetchList(): Promise<ShoppingItem[] | string> {
+    try {
+      const r = await familyFetch("/api/shopping/");
+      if (!r.ok) return familyAuthError(r.status, viaDisplay, "Couldn't load the list.");
+      return ((await r.json()) as ShoppingData).items;
+    } catch {
+      return "No connection.";
+    }
+  }
+
+  async function errorOf(r: Response, fallback: string): Promise<string> {
+    if (r.status === 401) return familyAuthError(401, viaDisplay, fallback);
+    const body = (await r.json().catch(() => null)) as { error?: unknown } | null;
+    return typeof body?.error === "string" ? body.error : fallback;
+  }
 
   function show(list: ShoppingItem[] | string) {
     if (typeof list === "string") return setError(list);
@@ -42,7 +47,8 @@ export function ShoppingList() {
     return () => {
       live = false;
     };
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- load once per token
+  }, [displayToken]);
 
   async function reload() {
     show(await fetchList());
@@ -55,7 +61,7 @@ export function ShoppingList() {
     setBusy(true);
     setNote("");
     try {
-      const r = await fetch("/api/shopping/", {
+      const r = await familyFetch("/api/shopping/", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ text: next }),
@@ -74,7 +80,7 @@ export function ShoppingList() {
     setBusy(true);
     setNote("");
     try {
-      const r = await fetch(`/api/shopping/${encodeURIComponent(item.id)}`, {
+      const r = await familyFetch(`/api/shopping/${encodeURIComponent(item.id)}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ done: !item.done }),
@@ -92,7 +98,7 @@ export function ShoppingList() {
     setBusy(true);
     setNote("");
     try {
-      const r = await fetch(`/api/shopping/${encodeURIComponent(item.id)}`, { method: "DELETE" });
+      const r = await familyFetch(`/api/shopping/${encodeURIComponent(item.id)}`, { method: "DELETE" });
       if (!r.ok) return setError(await errorOf(r, "Couldn't remove that."));
       await reload();
     } catch {
@@ -106,7 +112,7 @@ export function ShoppingList() {
     setBusy(true);
     setNote("");
     try {
-      const r = await fetch("/api/shopping/?done=1", { method: "DELETE" });
+      const r = await familyFetch("/api/shopping/?done=1", { method: "DELETE" });
       if (!r.ok) return setError(await errorOf(r, "Couldn't clear bought items."));
       await reload();
     } catch {
@@ -120,7 +126,7 @@ export function ShoppingList() {
     setBusy(true);
     setNote("");
     try {
-      const r = await fetch("/api/shopping/from-meals/", { method: "POST" });
+      const r = await familyFetch("/api/shopping/from-meals/", { method: "POST" });
       if (!r.ok) return setError(await errorOf(r, "Couldn't add meals."));
       const body = (await r.json()) as { added?: number };
       const added = body.added ?? 0;

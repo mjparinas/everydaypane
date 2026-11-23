@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useId, useState, type ReactNode } from "react";
+import { useEffect, useId, useLayoutEffect, useRef, useState, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 
 // Small form controls for the admin panel. Every control is at least 44 px tall so it works with a thumb.
 // Bounded numbers use Range or Stepper (min/max always visible); NumberInput is only for rare free-form values.
@@ -305,16 +306,135 @@ export function Select<T extends string>({
   options: readonly { value: T; label: string }[];
   hint?: ReactNode;
 }) {
+  const listId = useId();
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const listRef = useRef<HTMLUListElement>(null);
+  const [open, setOpen] = useState(false);
+  const [pos, setPos] = useState({ top: 0, left: 0, width: 0, maxHeight: 280 });
+  const [active, setActive] = useState(-1);
+  const selected = options.find((o) => o.value === value);
+  const selectedIndex = options.findIndex((o) => o.value === value);
+
+  useLayoutEffect(() => {
+    if (!open || !triggerRef.current) return;
+    const r = triggerRef.current.getBoundingClientRect();
+    const spaceBelow = window.innerHeight - r.bottom - 8;
+    const spaceAbove = r.top - 8;
+    const maxHeight = Math.min(280, Math.max(160, Math.max(spaceBelow, spaceAbove)));
+    const openUp = spaceBelow < Math.min(maxHeight, options.length * 44) && spaceAbove > spaceBelow;
+    const top = openUp ? Math.max(8, r.top - maxHeight - 4) : r.bottom + 4;
+    setPos({ top, left: r.left, width: r.width, maxHeight });
+    setActive(selectedIndex >= 0 ? selectedIndex : 0);
+  }, [open, options.length, selectedIndex]);
+
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        e.preventDefault();
+        setOpen(false);
+        triggerRef.current?.focus();
+        return;
+      }
+      if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+        e.preventDefault();
+        setActive((i) => {
+          const next = e.key === "ArrowDown" ? Math.min(options.length - 1, i + 1) : Math.max(0, i - 1);
+          listRef.current?.children[next]?.scrollIntoView({ block: "nearest" });
+          return next;
+        });
+        return;
+      }
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        const pick = options[active];
+        if (pick) {
+          onChange(pick.value);
+          setOpen(false);
+          triggerRef.current?.focus();
+        }
+      }
+    };
+    const onDown = (e: MouseEvent) => {
+      const t = e.target as Node;
+      if (listRef.current?.contains(t) || triggerRef.current?.contains(t)) return;
+      setOpen(false);
+    };
+    document.addEventListener("keydown", onKey);
+    document.addEventListener("mousedown", onDown);
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      document.removeEventListener("mousedown", onDown);
+    };
+  }, [open, active, onChange, options]);
+
+  const menu =
+    open && typeof document !== "undefined"
+      ? createPortal(
+          <ul
+            ref={listRef}
+            id={listId}
+            role="listbox"
+            aria-label={label}
+            className="fixed z-50 overflow-auto rounded-xl border border-line bg-panel py-1 shadow-xl"
+            style={{ top: pos.top, left: pos.left, width: pos.width, maxHeight: pos.maxHeight }}
+          >
+            {options.map((o, i) => {
+              const isSelected = o.value === value;
+              const isActive = i === active;
+              return (
+                <li key={o.value} role="option" aria-selected={isSelected}>
+                  <button
+                    type="button"
+                    className={`flex min-h-11 w-full items-center px-3 text-left text-sm ${
+                      isSelected ? "bg-brand/15 font-semibold text-brand" : isActive ? "bg-bg" : "hover:bg-bg"
+                    }`}
+                    onMouseEnter={() => setActive(i)}
+                    onClick={() => {
+                      onChange(o.value);
+                      setOpen(false);
+                      triggerRef.current?.focus();
+                    }}
+                  >
+                    <span className="min-w-0 flex-1 truncate">{o.label}</span>
+                    {isSelected ? (
+                      <span aria-hidden="true" className="ml-2 text-brand">
+                        ✓
+                      </span>
+                    ) : null}
+                  </button>
+                </li>
+              );
+            })}
+          </ul>,
+          document.body,
+        )
+      : null;
+
   return (
     <Field label={label} hint={hint}>
       {(id) => (
-        <select id={id} className="field" value={value} onChange={(e) => onChange(e.target.value as T)}>
-          {options.map((o) => (
-            <option key={o.value} value={o.value}>
-              {o.label}
-            </option>
-          ))}
-        </select>
+        <>
+          <button
+            ref={triggerRef}
+            id={id}
+            type="button"
+            className="field flex items-center justify-between gap-2 text-left"
+            aria-haspopup="listbox"
+            aria-expanded={open}
+            aria-controls={open ? listId : undefined}
+            onClick={() => setOpen((v) => !v)}
+          >
+            <span className="min-w-0 truncate">{selected?.label ?? "Choose…"}</span>
+            <svg aria-hidden="true" viewBox="0 0 20 20" className={`h-4 w-4 flex-none text-soft transition ${open ? "rotate-180" : ""}`}>
+              <path
+                fill="currentColor"
+                d="M5.3 7.3a1 1 0 0 1 1.4 0L10 10.6l3.3-3.3a1 1 0 1 1 1.4 1.4l-4 4a1 1 0 0 1-1.4 0l-4-4a1 1 0 0 1 0-1.4Z"
+              />
+            </svg>
+          </button>
+          {menu}
+        </>
       )}
     </Field>
   );

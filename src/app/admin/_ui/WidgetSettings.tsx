@@ -80,19 +80,21 @@ export function WidgetSettings({
       <p className="text-sm text-soft">
         {info.icon} {info.description}
       </p>
-      <Text
-        label="Title"
-        value={widget.title ?? ""}
-        maxLength={60}
-        placeholder="None"
-        hint="A small heading above the widget."
-        onChange={(v) =>
-          onChange((w) => {
-            if (v) w.title = v;
-            else delete w.title;
-          })
-        }
-      />
+      {info.supportsTitle !== false && (
+        <Text
+          label="Title"
+          value={widget.title ?? ""}
+          maxLength={60}
+          placeholder="None"
+          hint="A small heading above the widget."
+          onChange={(v) =>
+            onChange((w) => {
+              if (v) w.title = v;
+              else delete w.title;
+            })
+          }
+        />
+      )}
       <PanelBackground widget={widget} config={config} onChange={onChange} />
       <TypeSettings widget={widget} config={config} onChange={onChange} />
     </div>
@@ -283,6 +285,13 @@ function TypeSettings({
         </>
       );
     }
+    case "editQr":
+      return (
+        <p className="text-sm text-soft">
+          Encodes this display&apos;s <code className="text-xs">/d/…/edit/</code> link. Anyone who scans it can change the meal plan,
+          shopping list and message board with no sign-in. The same link is under Displays.
+        </p>
+      );
     case "countdown": {
       const e = edit<"countdown">();
       return <CountdownEvents events={w.events} count={w.count} onChange={e} />;

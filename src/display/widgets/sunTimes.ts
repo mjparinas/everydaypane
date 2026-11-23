@@ -25,6 +25,7 @@ export const sunTimes: Mount<"sunTimes"> = (el, w, ctx) => {
     const emoji = w.showEmoji;
     fill(
       root,
+      w.title ? h("div", { class: "w-label" }, w.title) : null,
       h(
         "div",
         { class: "st-times" },

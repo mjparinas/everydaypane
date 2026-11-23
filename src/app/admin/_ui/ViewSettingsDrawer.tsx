@@ -1,5 +1,7 @@
 "use client";
 
+import { useState } from "react";
+
 import type { DashboardConfig, View } from "@/lib/config/schema";
 
 import { ConfirmButton, Range, Segmented, Select, Stepper, Text } from "./fields";
@@ -40,7 +42,11 @@ export function ViewSettingsDrawer({
   onDuplicate: () => void;
   onDelete: () => void;
 }) {
-  const gridPreset = presetFor(view.cols, view.rows);
+  const known = presetFor(view.cols, view.rows);
+  // Custom must still light up when the grid already matches a preset, so the column/row steppers appear
+  // (same idea as the photos widget's custom interval).
+  const [forceCustom, setForceCustom] = useState(known === "custom");
+  const gridPreset: GridPreset = forceCustom || known === "custom" ? "custom" : known;
 
   return (
     <SlideDrawer
@@ -60,12 +66,16 @@ export function ViewSettingsDrawer({
         ]}
         hint="12×8 fits a 1920 × 1080 wall screen."
         onChange={(v) => {
-          if (v === "custom") return;
+          if (v === "custom") {
+            setForceCustom(true);
+            return;
+          }
+          setForceCustom(false);
           const p = GRID_PRESETS.find((x) => x.value === v);
           if (p) onResize(p.cols, p.rows);
         }}
       />
-      {gridPreset === "custom" && (
+      {(forceCustom || known === "custom") && (
         <div className="grid grid-cols-2 gap-3">
           <Stepper label="Columns" value={view.cols} min={1} max={24} onChange={(n) => onResize(n, view.rows)} />
           <Stepper label="Rows" value={view.rows} min={1} max={24} onChange={(n) => onResize(view.cols, n)} />

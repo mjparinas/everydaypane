@@ -2,17 +2,18 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import type { Widget } from "@/lib/config/schema";
-import { newWidget } from "@/lib/config/widgets";
-import type { ChoresData, DisplayPayload, TasksData, TransitData, TransitDeparture, WeatherData } from "@/lib/display/types";
+import { newWidget, WIDGETS } from "@/lib/config/widgets";
+import type { AirData, ChoresData, DisplayPayload, TasksData, TransitData, TransitDeparture, WeatherData } from "@/lib/display/types";
 
 import { shortTime } from "./format";
 import { kindOf, label, weatherIcon } from "./icons";
-import { aqhiBand, usAqiBand } from "./widgets/air";
+import { airQuality, aqhiBand, usAqiBand } from "./widgets/air";
 import { calendarMonth, fitDayTitles } from "./widgets/calendar";
 import { chores, columns } from "./widgets/chores";
 import { clock } from "./widgets/clock";
 import { commute, distance, duration, timing, trafficLevel } from "./widgets/commute";
 import { countdown } from "./widgets/countdown";
+import { date } from "./widgets/date";
 import { earth, RELOAD_MS } from "./widgets/earth";
 import { ferries, fullness, hasLeft } from "./widgets/ferries";
 import { controlFor, haEntity, stateText } from "./widgets/ha";
@@ -23,6 +24,7 @@ import { describe as describeTeam, opponent, result, score, sports, when } from 
 import { daylightLength, sunTimes } from "./widgets/sunTimes";
 import { dueLabel, shownLists, tasks, UNDO_MS } from "./widgets/tasks";
 import { delayLabel, minutesLabel, shownDepartures, transit } from "./widgets/transit";
+import { wifiQr } from "./widgets/wifi";
 
 const ctx = { payload: {} as DisplayPayload, timeZone: "America/Vancouver", hour12: true };
 
@@ -111,6 +113,43 @@ describe("widgets", () => {
     await vi.waitFor(() => expect(el.querySelectorAll(".st-value")).toHaveLength(2));
     expect(el.querySelector(".st-daylight")).toBeNull();
     stop();
+    vi.unstubAllGlobals();
+  });
+
+  it("shows a custom title on widgets that support one", async () => {
+    const weather = {
+      today: { sunrise: "2026-11-21T07:33", sunset: "2026-11-21T16:24" },
+    } as WeatherData;
+    const air = { updatedAt: 1, aqhi: 2, usAqi: 40, pm25: 5 } satisfies AirData;
+    vi.stubGlobal("fetch", (input: RequestInfo) => {
+      const url = String(input);
+      if (url.includes("/air")) return Promise.resolve(Response.json(air));
+      return Promise.resolve(Response.json(weather));
+    });
+
+    const sun = document.createElement("div");
+    const stopSun = sunTimes(sun, { ...newWidget("sunTimes", "sun", { x: 0, y: 0 }), title: "Daylight" }, ctx);
+    await vi.waitFor(() => expect(sun.querySelector(".w-label")?.textContent).toBe("Daylight"));
+    stopSun();
+
+    const airEl = document.createElement("div");
+    const stopAir = airQuality(airEl, { ...newWidget("airQuality", "aq", { x: 0, y: 0 }), title: "Outside air" }, ctx);
+    await vi.waitFor(() => expect(airEl.querySelector(".w-label")?.textContent).toBe("Outside air"));
+    stopAir();
+
+    const day = document.createElement("div");
+    const stopDate = date(day, { ...newWidget("date", "d", { x: 0, y: 0 }), title: "Today" }, ctx);
+    expect(day.querySelector(".w-label")?.textContent).toBe("Today");
+    stopDate();
+
+    const wifi = document.createElement("div");
+    const stopWifi = wifiQr(wifi, { ...newWidget("wifiQr", "w", { x: 0, y: 0 }), title: "Guest Wi-Fi", ssid: "pane" }, ctx);
+    expect(wifi.querySelector(".w-label")?.textContent).toBe("Guest Wi-Fi");
+    stopWifi();
+
+    expect(["clock", "photos", "radar", "earth"].every((t) => WIDGETS[t as keyof typeof WIDGETS].supportsTitle === false)).toBe(true);
+    expect(WIDGETS.weather.supportsTitle).not.toBe(false);
+
     vi.unstubAllGlobals();
   });
 

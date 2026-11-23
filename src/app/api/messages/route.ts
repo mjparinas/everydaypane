@@ -1,23 +1,24 @@
 import { z } from "zod";
 
 import { rateLimit } from "@/server/db";
+import { familyEditorFor, familyEditorIsAdmin, familyEditorKey } from "@/server/familyAuth";
 import { json, readJson, sameOrigin, unauthorized } from "@/server/http";
 import { listMessages, MESSAGE_COLOURS, postMessage, type Message } from "@/server/messages";
-import { requestSession } from "@/server/viewer";
 
-// The family message board, for people signed in from their phones (admins and FAMILY_EMAILS).
+// The family message board, for signed-in phones and `/d/<token>/edit/` (no pin from the kitchen link).
 
 /** What a person sees: whether they may delete each note, but never who else's email posted it. */
-const forPerson = (m: Message, email: string, admin: boolean) => {
+const forPerson = (m: Message, actor: string, admin: boolean) => {
   const { postedBy, ...rest } = m;
-  return { ...rest, mine: postedBy === email, canDelete: admin || postedBy === email };
+  return { ...rest, mine: postedBy === actor, canDelete: admin || postedBy === actor };
 };
 
 export async function GET(req: Request) {
-  const session = await requestSession(req);
-  if (!session) return unauthorized();
-  const admin = session.role === "admin";
-  return json({ messages: (await listMessages(100)).map((m) => forPerson(m, session.email, admin)), admin });
+  const editor = await familyEditorFor(req);
+  if (!editor) return unauthorized();
+  const actor = familyEditorKey(editor);
+  const admin = familyEditorIsAdmin(editor);
+  return json({ messages: (await listMessages(100)).map((m) => forPerson(m, actor, admin)), admin });
 }
 
 const body = z.object({
@@ -34,12 +35,12 @@ const body = z.object({
 
 export async function POST(req: Request) {
   if (!sameOrigin(req)) return json({ error: "Not allowed" }, 403);
-  const session = await requestSession(req);
-  if (!session) return unauthorized();
-  if (!(await rateLimit(`message:${session.email}`, 30, 60 * 60_000)))
-    return json({ error: "That's a lot of notes. Try again later." }, 429);
+  const editor = await familyEditorFor(req);
+  if (!editor) return unauthorized();
+  const actor = familyEditorKey(editor);
+  if (!(await rateLimit(`message:${actor}`, 30, 60 * 60_000))) return json({ error: "That's a lot of notes. Try again later." }, 429);
   const parsed = body.safeParse(await readJson(req, 4_000).catch(() => null));
   if (!parsed.success) return json({ error: parsed.error.issues[0]?.message ?? "Bad request" }, 400);
-  const m = await postMessage({ ...parsed.data, postedBy: session.email });
-  return json({ message: forPerson(m, session.email, session.role === "admin") }, 201);
+  const m = await postMessage({ ...parsed.data, postedBy: actor });
+  return json({ message: forPerson(m, actor, familyEditorIsAdmin(editor)) }, 201);
 }

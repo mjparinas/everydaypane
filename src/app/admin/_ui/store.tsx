@@ -53,7 +53,9 @@ export function describeIssue(config: DashboardConfig, issues: unknown): string 
   } else if (path[0] === "themes" && typeof path[1] === "number") {
     where.push(`Theme “${config.themes[path[1]]?.name ?? ""}”`);
   } else if (path[0] === "schedule" && typeof path[1] === "string") {
-    where.push(`The ${path[1]} schedule`);
+    const labels = { morning: "morning", afternoon: "afternoon", evening: "evening", night: "overnight" } as const;
+    const period = path[1] in labels ? labels[path[1] as keyof typeof labels] : path[1];
+    where.push(`The ${period} schedule`);
   } else if (typeof path[0] === "string") {
     where.push(path[0]);
   }

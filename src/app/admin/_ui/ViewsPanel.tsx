@@ -1,12 +1,13 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 
 import { findSpot, refit } from "@/lib/config/grid";
+import { PERIOD_LABELS, PERIODS } from "@/lib/config/periods";
 import type { View, Widget, WidgetType } from "@/lib/config/schema";
-import { newWidget, WIDGET_GROUPS, WIDGET_TYPES, WIDGETS } from "@/lib/config/widgets";
+import { newWidget, WIDGETS } from "@/lib/config/widgets";
 
-import { Text } from "./fields";
+import { AddWidgetDrawer } from "./AddWidgetDrawer";
 import { LiveLayoutEditor, widgetName } from "./LiveLayoutEditor";
 import { newId, useAdmin } from "./store";
 import { ViewSettingsDrawer } from "./ViewSettingsDrawer";
@@ -17,7 +18,7 @@ import { WidgetSettingsDrawer } from "./WidgetSettingsDrawer";
 // 1920 × 1080 UC-Display21 (Melvin, 2026-11-22).
 //
 // Layout (Melvin, 2026-11-22): one live editable preview; widget and view settings open in right slide-outs so gap,
-// edge, tile and theme updates stay visible on the layout.
+// edge, tile and theme updates stay visible on the layout. Add a widget uses the same drawer.
 
 export function ViewsPanel() {
   const config = useAdmin((s) => s.config);
@@ -26,22 +27,12 @@ export function ViewsPanel() {
   const [viewId, setViewId] = useState(config.views[0]?.id ?? "");
   const [selected, setSelected] = useState<string | null>(null);
   const [editingView, setEditingView] = useState(false);
-  const [notice, setNotice] = useState("");
   const [picking, setPicking] = useState(false);
-  const [pickerQuery, setPickerQuery] = useState("");
+  const [notice, setNotice] = useState("");
 
   const found = config.views.find((v) => v.id === viewId) ?? config.views[0];
   const vi = found ? config.views.indexOf(found) : -1;
   const widget = found?.widgets.find((w) => w.id === selected) ?? null;
-
-  const filteredTypes = useMemo(() => {
-    const q = pickerQuery.trim().toLowerCase();
-    if (!q) return null;
-    return WIDGET_TYPES.filter((t) => {
-      const info = WIDGETS[t];
-      return info.label.toLowerCase().includes(q) || info.description.toLowerCase().includes(q);
-    });
-  }, [pickerQuery]);
 
   if (!found) return null;
   const active: View = found;
@@ -67,7 +58,6 @@ export function ViewsPanel() {
     const info = WIDGETS[type];
     const spot = findSpot({ ...info.size, type }, active, active.widgets, info.minSize);
     setPicking(false);
-    setPickerQuery("");
     if (!spot) {
       setNotice(`There's no room for a ${info.label.toLowerCase()} widget. Make the grid bigger or move things around.`);
       return;
@@ -97,6 +87,7 @@ export function ViewsPanel() {
     );
     setViewId(id);
     setSelected(null);
+    setPicking(false);
     setEditingView(true);
   }
 
@@ -105,10 +96,11 @@ export function ViewsPanel() {
     edit((c) => void c.views.push({ ...structuredClone(active), id, name: `${active.name} copy`.slice(0, 40) }));
     setViewId(id);
     setSelected(null);
+    setPicking(false);
     setEditingView(true);
   }
 
-  const usedBySchedule = (["morning", "afternoon", "evening", "night"] as const).filter((p) => config.schedule[p].viewId === active.id);
+  const usedBySchedule = PERIODS.filter((p) => config.schedule[p].viewId === active.id).map((p) => PERIOD_LABELS[p].toLowerCase());
 
   return (
     <div className="grid content-start gap-4">
@@ -123,6 +115,7 @@ export function ViewsPanel() {
               onClick={() => {
                 setViewId(v.id);
                 setSelected(null);
+                setPicking(false);
                 setNotice("");
               }}
             >
@@ -135,14 +128,37 @@ export function ViewsPanel() {
         </div>
         <button
           type="button"
+          className={picking ? "btn-primary" : "btn-ghost"}
+          aria-expanded={picking}
+          aria-controls={picking ? "add-widget-drawer" : undefined}
+          onClick={() => {
+            setPicking((open) => !open);
+            setEditingView(false);
+            setSelected(null);
+          }}
+        >
+          + Add a widget
+        </button>
+        <button
+          type="button"
           className={editingView ? "btn-primary" : "btn-ghost"}
           aria-expanded={editingView}
           aria-controls={editingView ? "view-settings-drawer" : undefined}
           onClick={() => {
             setEditingView((open) => !open);
+            setPicking(false);
             setSelected(null);
           }}
         >
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+            <path
+              d="M11.5 1.5a1.4 1.4 0 0 1 2 2L4.8 12.2 2 13l.8-2.8L11.5 1.5Z"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinejoin="round"
+            />
+            <path d="M10.2 2.8 13.2 5.8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+          </svg>
           Edit view
         </button>
       </div>
@@ -156,10 +172,15 @@ export function ViewsPanel() {
         selectedId={selected}
         onSelect={(id) => {
           setSelected(id);
-          if (id) setEditingView(false);
+          if (id) {
+            setEditingView(false);
+            setPicking(false);
+          }
         }}
         onChange={(id, r) => editWidget(id, (w) => Object.assign(w, r))}
       />
+
+      {picking && !widget && !editingView && <AddWidgetDrawer onClose={() => setPicking(false)} onPick={add} />}
 
       {widget && (
         <WidgetSettingsDrawer
@@ -181,8 +202,9 @@ export function ViewsPanel() {
         />
       )}
 
-      {editingView && !widget && (
+      {editingView && !widget && !picking && (
         <ViewSettingsDrawer
+          key={active.id}
           view={active}
           config={config}
           usedBySchedule={usedBySchedule}
@@ -204,35 +226,6 @@ export function ViewsPanel() {
         <p className="rounded-xl bg-bg p-3 text-sm" role="status">
           {notice}
         </p>
-      )}
-
-      <div className="flex flex-wrap gap-2">
-        <button className="btn-primary" onClick={() => setPicking(!picking)} aria-expanded={picking}>
-          + Add a widget
-        </button>
-      </div>
-      {picking && (
-        <div className="grid gap-4 rounded-xl border border-line p-3">
-          <Text label="Search widgets" value={pickerQuery} maxLength={40} placeholder="Clock, weather…" onChange={setPickerQuery} />
-          {(filteredTypes ? [{ id: "search", label: "Matches", types: filteredTypes }] : WIDGET_GROUPS).map((group) =>
-            group.types.length === 0 ? null : (
-              <div key={group.id} className="grid gap-2">
-                <h3 className="text-sm font-semibold text-soft">{group.label}</h3>
-                <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-4">
-                  {group.types.map((t) => (
-                    <button key={t} className="card grid gap-1 p-3 text-left hover:border-brand" onClick={() => add(t)}>
-                      <span className="text-2xl" aria-hidden="true">
-                        {WIDGETS[t].icon}
-                      </span>
-                      <span className="font-semibold">{WIDGETS[t].label}</span>
-                      <span className="text-xs text-soft">{WIDGETS[t].description}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            ),
-          )}
-        </div>
       )}
     </div>
   );

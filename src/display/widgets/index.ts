@@ -9,6 +9,7 @@ import { commute } from "./commute";
 import { countdown } from "./countdown";
 import { date } from "./date";
 import { earth } from "./earth";
+import { editQr } from "./editQr";
 import { ferries } from "./ferries";
 import { garbage } from "./garbage";
 import { camera, haEntity } from "./ha";
@@ -47,6 +48,8 @@ export function mountWidget(el: HTMLElement, w: Widget, ctx: WidgetContext): Cle
       return airQuality(el, w, ctx);
     case "wifiQr":
       return wifiQr(el, w, ctx);
+    case "editQr":
+      return editQr(el, w, ctx);
     case "countdown":
       return countdown(el, w, ctx);
     case "note":
