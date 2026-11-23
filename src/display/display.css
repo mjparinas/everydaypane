@@ -1028,6 +1028,13 @@ body {
   flex: 1;
   min-height: 0;
 }
+/* Touch scroll when the grid has more weeks than scrollWeeks (Melvin, 2026-11-22). Local only — the page stays locked. */
+.mo-days.mo-scroll {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  touch-action: pan-y;
+  -webkit-overflow-scrolling: touch;
+}
 .mo-day {
   display: flex;
   flex-direction: column;
@@ -1069,6 +1076,13 @@ body {
   line-height: 1.45;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+/* Fit titles: wrap first; display JS shrinks further only when a title still overflows (Melvin, 2026-11-22). */
+.mo-fit .mo-ev {
+  overflow-wrap: anywhere;
+  text-overflow: clip;
+  white-space: normal;
+  word-break: break-word;
 }
 .mo-all {
   background: color-mix(in srgb, var(--c) 30%, transparent);

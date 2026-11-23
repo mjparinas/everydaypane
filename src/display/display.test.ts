@@ -8,7 +8,7 @@ import type { ChoresData, DisplayPayload, TasksData, TransitData, TransitDepartu
 import { shortTime } from "./format";
 import { kindOf, label, weatherIcon } from "./icons";
 import { aqhiBand, usAqiBand } from "./widgets/air";
-import { calendarMonth } from "./widgets/calendar";
+import { calendarMonth, fitDayTitles } from "./widgets/calendar";
 import { chores, columns } from "./widgets/chores";
 import { clock } from "./widgets/clock";
 import { commute, distance, duration, timing, trafficLevel } from "./widgets/commute";
@@ -448,19 +448,24 @@ describe("tasks", () => {
 
 describe("month calendar", () => {
   type Month = Extract<Widget, { type: "calendarMonth" }>;
-  const month = async (settings: Partial<Month>) => {
+  const month = async (settings: Partial<Month>, events: unknown[] = []) => {
     vi.useFakeTimers({ now: new Date("2026-11-17T20:00:00Z") });
-    vi.stubGlobal("fetch", () => Promise.resolve(Response.json({ connected: true, updatedAt: 1, events: [] })));
+    vi.stubGlobal("fetch", () => Promise.resolve(Response.json({ connected: true, updatedAt: 1, events })));
     const el = document.createElement("div");
     const stop = calendarMonth(el, { ...(newWidget("calendarMonth", "mo", { x: 0, y: 0 }) as Month), ...settings }, ctx);
     await vi.advanceTimersByTimeAsync(0);
+    const root = el.querySelector(".w-month");
     const title = el.querySelector(".mo-title")?.textContent ?? null;
     const days = [...el.querySelectorAll(".mo-num")].map((n) => n.textContent);
     const names = [...el.querySelectorAll(".mo-name")].map((n) => n.textContent);
-    const rows = el.querySelector<HTMLElement>(".mo-days")?.style.gridTemplateRows;
+    const daysEl = el.querySelector<HTMLElement>(".mo-days");
+    const rows = daysEl?.style.gridTemplateRows;
+    const scroll = daysEl?.classList.contains("mo-scroll") ?? false;
+    const fit = root?.classList.contains("mo-fit") ?? false;
+    const titles = [...el.querySelectorAll(".mo-ev")].map((e) => e.textContent);
     stop();
     vi.unstubAllGlobals();
-    return { title, days, names, rows };
+    return { title, days, names, rows, scroll, fit, titles };
   };
 
   it("shows the whole month with its title by default", async () => {
@@ -468,6 +473,11 @@ describe("month calendar", () => {
     expect(m.title).toBe("November 2026");
     expect(m.days).toHaveLength(35);
     expect(m.names).toEqual(["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]);
+    expect(m.fit).toBe(true);
+    expect(m.scroll).toBe(true);
+    // Browsers may simplify the calc; what matters is fixed-height rows (not 1fr) so the grid can scroll.
+    expect(m.rows).toMatch(/^repeat\(5,/);
+    expect(m.rows).not.toMatch(/1fr/);
   });
 
   it("leaves the title out when it is switched off, keeping the grid", async () => {
@@ -485,14 +495,63 @@ describe("month calendar", () => {
     const m = await month({ weeks: 6 });
     expect(m.days).toHaveLength(42);
     expect(m.rows).toMatch(/^repeat\(6,/);
+    expect(m.scroll).toBe(true);
     expect(m.days.slice(16, 18)).toEqual(["Dec 1", "2"]);
     expect(m.title).toBe("November – December 2026");
+  });
+
+  it("fills the tile without scrolling when there are at most scrollWeeks rows", async () => {
+    const m = await month({ weeks: 2, scrollWeeks: 3 });
+    expect(m.scroll).toBe(false);
+    expect(m.rows).toMatch(/^repeat\(2,/);
+    expect(m.rows).toMatch(/1fr/);
+  });
+
+  it("can turn fit titles off", async () => {
+    const m = await month({ fitTitles: false });
+    expect(m.fit).toBe(false);
+  });
+
+  it("keeps the full event title in the DOM when fitting titles", async () => {
+    const long = "Orthodontist appointment for both kids after school pickup";
+    const m = await month({ weeks: 1 }, [
+      {
+        id: "e1",
+        title: long,
+        start: "2026-11-17T15:00:00-08:00",
+        end: "2026-11-17T16:00:00-08:00",
+        allDay: false,
+        color: "#3b82f6",
+        calendar: "family",
+      },
+    ]);
+    expect(m.fit).toBe(true);
+    expect(m.titles.some((t) => t?.includes(long))).toBe(true);
   });
 
   it("hides Saturday and Sunday when weekends are off", async () => {
     const m = await month({ weeks: 2, showWeekends: false, weekStartsOn: 1 });
     expect(m.names).toEqual(["Mon", "Tue", "Wed", "Thu", "Fri"]);
     expect(m.days).toEqual(["16", "17", "18", "19", "20", "23", "24", "25", "26", "27"]);
+  });
+
+  it("shrinks an overflowing event title until it fits", () => {
+    const day = document.createElement("div");
+    const ev = document.createElement("div");
+    ev.className = "mo-ev";
+    ev.textContent = "A very long calendar title that needs to shrink";
+    day.append(ev);
+    vi.spyOn(window, "getComputedStyle").mockReturnValue({ fontSize: "16px" } as CSSStyleDeclaration);
+    Object.defineProperty(ev, "clientWidth", { configurable: true, get: () => 40 });
+    Object.defineProperty(ev, "clientHeight", { configurable: true, get: () => 20 });
+    Object.defineProperty(ev, "scrollHeight", { configurable: true, get: () => 20 });
+    // Pretend the title only fits once the font has been stepped down far enough.
+    Object.defineProperty(ev, "scrollWidth", {
+      configurable: true,
+      get: () => ((parseFloat(ev.style.fontSize) || 16) <= 10 ? 40 : 100),
+    });
+    fitDayTitles(day);
+    expect(parseFloat(ev.style.fontSize)).toBe(10);
   });
 });
 

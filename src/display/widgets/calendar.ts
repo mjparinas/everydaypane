@@ -79,6 +79,11 @@ export const agenda: Mount<"agenda"> = (el, w, ctx) => {
   };
 };
 
+/** Gap between week rows in `.mo-grid` (must match display.css). */
+const MO_GAP_PX = 3;
+/** Smallest event title size when fitting (Melvin, 2026-11-22). */
+const FIT_FLOOR_PX = 8;
+
 export const calendarMonth: Mount<"calendarMonth"> = (el, w, ctx) => {
   const root = h("div", { class: "w-month" }, h("div", { class: "w-empty" }, "Loading the calendar…"));
   el.append(root);
@@ -87,9 +92,12 @@ export const calendarMonth: Mount<"calendarMonth"> = (el, w, ctx) => {
 
   const draw = (now: number) => {
     if (!data) return;
-    if (data.connected === false) return fill(root, notConnected());
+    if (data.connected === false) {
+      root.className = "w-month";
+      return fill(root, notConnected());
+    }
     const today = localDate(now, ctx.timeZone);
-    const sig = `${data.updatedAt}|${today}|${el.clientHeight}`;
+    const sig = `${data.updatedAt}|${today}|${el.clientHeight}|${w.fitTitles}|${w.scrollWeeks}`;
     if (sig === drawn) return;
     drawn = sig;
 
@@ -102,14 +110,20 @@ export const calendarMonth: Mount<"calendarMonth"> = (el, w, ctx) => {
     const month = today.slice(0, 7);
     const weekdayNames = (weeks[0] ?? []).map((d) => fmt("UTC", { weekday: "short" }).format(Date.parse(`${d}T12:00:00Z`)));
     const cols = w.showWeekends ? "mo-grid" : "mo-grid mo-5";
+    // More weeks than scrollWeeks: size each row as if only scrollWeeks fit, and scroll the rest (Melvin, 2026-11-22).
+    const scrolling = weeks.length > w.scrollWeeks;
+    const rows = scrolling
+      ? `repeat(${weeks.length},minmax(calc((100% - ${(w.scrollWeeks - 1) * MO_GAP_PX}px) / ${w.scrollWeeks}),0))`
+      : `repeat(${weeks.length},minmax(0,1fr))`;
 
+    root.className = w.fitTitles ? "w-month mo-fit" : "w-month";
     fill(
       root,
       w.showTitle ? h("div", { class: "mo-title" }, w.title || monthTitle(today, rolling ? weeks.flat() : [today])) : null,
       h("div", { class: `${cols} mo-names`, "aria-hidden": "true" }, ...weekdayNames.map((n) => h("div", { class: "mo-name" }, n))),
       h(
         "div",
-        { class: `${cols} mo-days`, style: `grid-template-rows:repeat(${weeks.length},minmax(0,1fr))` },
+        { class: `${cols} mo-days${scrolling ? " mo-scroll" : ""}`, style: `grid-template-rows:${rows}` },
         ...weeks.flat().map((d) => {
           const list = days.get(d) ?? [];
           return h(
@@ -131,7 +145,10 @@ export const calendarMonth: Mount<"calendarMonth"> = (el, w, ctx) => {
         }),
       ),
     );
-    for (const day of root.querySelectorAll<HTMLElement>(".mo-day")) trimDay(day);
+    for (const day of root.querySelectorAll<HTMLElement>(".mo-day")) {
+      if (w.fitTitles) fitDayTitles(day);
+      trimDay(day);
+    }
   };
 
   const stopFeed = subscribe<CalendarData>(FEED, EVERY, (d) => {
@@ -155,6 +172,22 @@ function monthTitle(today: string, shown: string[]): string {
   const long = (d: string, year: boolean) => fmt("UTC", year ? { month: "long", year: "numeric" } : { month: "long" }).format(noon(d));
   if (first.slice(0, 7) === last.slice(0, 7)) return long(first, true);
   return `${long(first, first.slice(0, 4) !== last.slice(0, 4))} – ${long(last, true)}`;
+}
+
+/**
+ * Shrinks each event's font until its full title fits (wrap is already on via `.mo-fit`). Busy days still go through
+ * trimDay afterward for “+N more” (Melvin, 2026-11-22).
+ */
+export function fitDayTitles(day: HTMLElement): void {
+  for (const ev of day.querySelectorAll<HTMLElement>(".mo-ev")) {
+    if (ev.scrollWidth <= ev.clientWidth && ev.scrollHeight <= ev.clientHeight) continue;
+    let px = parseFloat(getComputedStyle(ev).fontSize);
+    if (!Number.isFinite(px) || px <= FIT_FLOOR_PX) continue;
+    while (px > FIT_FLOOR_PX && (ev.scrollWidth > ev.clientWidth || ev.scrollHeight > ev.clientHeight)) {
+      px = Math.max(FIT_FLOOR_PX, px - 0.5);
+      ev.style.fontSize = `${px}px`;
+    }
+  }
 }
 
 /**
