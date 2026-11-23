@@ -237,7 +237,9 @@ export function MealPlanner() {
   const step = (n: number) => void load(addDays(plan.from, n));
 
   return (
-    <div className="grid gap-4">
+    // Columns follow the planner's width (not the viewport), so a phone-width page never packs three days across
+    // just because the screen is desktop-sized — Melvin, 2026-11-23.
+    <div className="@container grid gap-4">
       <div className="flex items-center justify-between gap-2">
         <button type="button" className="btn-ghost" onClick={() => step(-DAYS)} aria-label="Earlier week">
           ‹ Earlier
@@ -263,7 +265,7 @@ export function MealPlanner() {
           <option key={m} value={m} />
         ))}
       </datalist>
-      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+      <div className="grid gap-3 @min-[40rem]:grid-cols-2 @min-[60rem]:grid-cols-3">
         {days.map((date) => (
           <section key={date} className="card grid gap-3" aria-label={dayHeading(date, plan.today)}>
             <h3 className={`text-sm font-bold ${date === plan.today ? "text-brand" : ""}`}>{dayHeading(date, plan.today)}</h3>
@@ -281,11 +283,11 @@ export function MealPlanner() {
               }
               return (
                 <div key={slot} className="grid gap-1.5">
-                  <label className="grid grid-cols-[6.5rem_1fr] items-center gap-2 text-sm">
-                    <span className="font-medium">
+                  <label className="grid grid-cols-[auto_1fr] items-center gap-2 text-sm @min-[40rem]:grid-cols-1 @min-[40rem]:items-stretch @min-[40rem]:gap-1">
+                    <span className="w-[6.5rem] shrink-0 font-medium @min-[40rem]:w-auto">
                       <span aria-hidden="true">{MEAL_ICONS[slot]}</span> {MEAL_LABELS[slot]}
                     </span>
-                    <span className="relative">
+                    <span className="relative min-w-0">
                       <input
                         className="field w-full pr-8"
                         value={value}
@@ -312,11 +314,11 @@ export function MealPlanner() {
                       </span>
                     </span>
                   </label>
-                  <div className="grid grid-cols-[6.5rem_1fr] items-center gap-2 text-xs">
-                    <span className="text-soft">Repeat</span>
-                    <div className="flex flex-wrap items-center gap-2">
+                  <div className="grid grid-cols-[auto_1fr] items-center gap-2 text-xs @min-[40rem]:grid-cols-1 @min-[40rem]:items-stretch @min-[40rem]:gap-1">
+                    <span className="w-[6.5rem] shrink-0 text-soft @min-[40rem]:w-auto">Repeat</span>
+                    <div className="flex min-w-0 flex-wrap items-center gap-2">
                       <select
-                        className="field py-1 text-xs"
+                        className="field min-w-0 flex-1 py-1 text-xs"
                         value={chosen}
                         aria-label={`Repeat ${MEAL_LABELS[slot]} on ${dayName(date)}`}
                         onChange={(e) => {
