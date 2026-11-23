@@ -110,7 +110,7 @@ export function BackupPanel() {
 
   const s = pending?.summary;
   return (
-    <section className="card grid content-start gap-4">
+    <section id="settings-backup-card" className="card grid scroll-mt-28 content-start gap-4">
       <h2 className="text-lg font-semibold">Backup</h2>
       <p className="text-xs text-soft">
         Every view, widget, theme, schedule and integration setting, in one file. Sign-ins and tokens, calendar link addresses, display

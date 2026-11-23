@@ -75,7 +75,7 @@ export const WIDGETS: { [T in WidgetType]: WidgetInfo<T> } = {
     label: "Schedule",
     description: "Today's events from Google Calendar",
     icon: "🗓️",
-    size: { w: 4, h: 4 },
+    size: { w: 4, h: 5 },
     minSize: { w: 2, h: 2 },
     defaults: () => ({ range: "today", days: 3 }),
   },
@@ -123,7 +123,7 @@ export const WIDGETS: { [T in WidgetType]: WidgetInfo<T> } = {
     label: "Message board",
     description: "Notes the family posts from their phones",
     icon: "💬",
-    size: { w: 3, h: 3 },
+    size: { w: 4, h: 3 },
     minSize: { w: 2, h: 2 },
     defaults: () => ({ count: 5 }),
   },
@@ -147,7 +147,7 @@ export const WIDGETS: { [T in WidgetType]: WidgetInfo<T> } = {
     label: "Tasks",
     description: "To-do lists from Google Tasks",
     icon: "✅",
-    size: { w: 3, h: 4 },
+    size: { w: 4, h: 4 },
     minSize: { w: 2, h: 2 },
     defaults: () => ({ listIds: [], count: 8, showDue: true, allowCheck: true }),
   },
@@ -155,7 +155,7 @@ export const WIDGETS: { [T in WidgetType]: WidgetInfo<T> } = {
     label: "TransLink",
     description: "Next buses from your stops, live",
     icon: "🚌",
-    size: { w: 4, h: 3 },
+    size: { w: 5, h: 3 },
     minSize: { w: 2, h: 2 },
     defaults: () => ({ stops: [], routes: [], count: 4, walkMinutes: 0 }),
   },
@@ -171,7 +171,7 @@ export const WIDGETS: { [T in WidgetType]: WidgetInfo<T> } = {
     label: "Music",
     description: "Spotify or Sonos, directly or via Home Assistant",
     icon: "🎵",
-    size: { w: 4, h: 2 },
+    size: { w: 4, h: 3 },
     minSize: { w: 2, h: 2 },
     defaults: () => ({
       provider: "homeAssistant" as const,
@@ -255,7 +255,7 @@ export const WIDGETS: { [T in WidgetType]: WidgetInfo<T> } = {
     label: "Sports scores",
     description: "Live scores and next games for your teams",
     icon: "🏒",
-    size: { w: 3, h: 3 },
+    size: { w: 4, h: 3 },
     minSize: { w: 2, h: 1 },
     defaults: () => ({ teamIds: [], showLast: true }),
   },
@@ -280,7 +280,7 @@ export const WIDGETS: { [T in WidgetType]: WidgetInfo<T> } = {
     label: "Shopping list",
     description: "Groceries the family adds from their phones, ticked off with a tap",
     icon: "🛒",
-    size: { w: 3, h: 4 },
+    size: { w: 4, h: 4 },
     minSize: { w: 2, h: 2 },
     defaults: () => ({ count: 12, allowCheck: true, showDone: false }),
   },
@@ -303,6 +303,16 @@ export const WIDGETS: { [T in WidgetType]: WidgetInfo<T> } = {
 };
 
 export const WIDGET_TYPES = Object.keys(WIDGETS) as WidgetType[];
+
+/** Groups for the admin widget picker (Views › Add a widget). */
+export const WIDGET_GROUPS: { id: string; label: string; types: WidgetType[] }[] = [
+  { id: "time", label: "Time", types: ["clock", "date", "sunTimes", "timer", "pomodoro"] },
+  { id: "weather", label: "Weather & map", types: ["weather", "airQuality", "radar", "earth"] },
+  { id: "calendar", label: "Calendar", types: ["agenda", "calendarMonth", "countdown", "tasks"] },
+  { id: "family", label: "Family", types: ["meals", "shopping", "messages", "chores", "school", "presence"] },
+  { id: "home", label: "Home", types: ["haEntity", "camera", "media", "wifiQr", "garbage", "commute", "transit", "ferries"] },
+  { id: "media", label: "Outside", types: ["photos", "sports", "alerts", "note"] },
+];
 
 export function newWidget<T extends WidgetType>(type: T, id: string, at: { x: number; y: number }): Extract<Widget, { type: T }> {
   const info = WIDGETS[type];

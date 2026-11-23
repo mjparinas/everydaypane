@@ -4,7 +4,7 @@ import { useState } from "react";
 
 import type { DashboardConfig } from "@/lib/config/schema";
 
-import { ConfirmButton, NumberInput, Section, Text } from "./fields";
+import { ConfirmButton, Range, Section, Text } from "./fields";
 import { HaEntityList, loadHa, useHa } from "./haEntities";
 import { useAdmin } from "./store";
 
@@ -165,11 +165,13 @@ export function HomeAssistantPanel() {
           onChange={(v) => edit((c) => void (c.integrations.homeAssistant.doorbell.cameraEntityId = v.trim()))}
         />
         <HaEntityList id="ha-cams" only="camera." />
-        <NumberInput
-          label="Show for (seconds)"
+        <Range
+          label="Show for"
           value={ha.doorbell.seconds}
           min={5}
           max={300}
+          step={5}
+          format={(n) => `${n} s`}
           onChange={(v) => edit((c) => void (c.integrations.homeAssistant.doorbell.seconds = v))}
         />
       </div>

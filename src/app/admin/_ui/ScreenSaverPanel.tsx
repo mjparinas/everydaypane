@@ -1,6 +1,6 @@
 "use client";
 
-import { NumberInput, Section, Select, Text, Toggle } from "./fields";
+import { Range, Section, Select, Text, Toggle } from "./fields";
 import { HaEntityList } from "./haEntities";
 import { useAdmin } from "./store";
 
@@ -77,11 +77,13 @@ export function ScreenSaverPanel() {
 
       {(s.idle || s.night) && (
         <>
-          <NumberInput
+          <Range
             label="Minutes without a touch"
             value={s.minutes}
             min={1}
             max={240}
+            step={1}
+            format={(n) => `${n} min`}
             hint="How long the dashboard stays up after the last touch or motion."
             onChange={(v) => edit((c) => void (c.screenSaver.minutes = v))}
           />
