@@ -311,8 +311,9 @@ function TypeSettings({
           />
           <Stepper label="Days ahead" value={w.days} min={0} max={7} onChange={(v) => e((x) => void (x.days = v))} />
           <p className="text-xs text-soft">
-            Weather is for {config.location.name || "the dashboard's location"} (
-            <SettingsLink href="#settings/location">Settings › Location</SettingsLink>).
+            Forecast from {(config.weather?.provider ?? "openMeteo") === "environmentCanada" ? "Environment Canada" : "Open-Meteo"} for{" "}
+            {config.location.name || "the dashboard's location"} (<SettingsLink href="#settings/location">Settings › Location</SettingsLink>
+            ).
           </p>
         </>
       );

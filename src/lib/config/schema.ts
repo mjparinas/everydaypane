@@ -723,6 +723,13 @@ export const configSchema = z
     }),
     units: z.enum(["metric", "imperial"]),
     hour12: z.boolean(),
+    // Forecast source for the weather / sun widgets (Melvin, 2026-11-23). Open-Meteo stays the default; Environment
+    // Canada uses the official city-page feed near home (no key). Air quality stays on Open-Meteo either way.
+    weather: z
+      .object({
+        provider: z.enum(["openMeteo", "environmentCanada"]).default("openMeteo"),
+      })
+      .default({ provider: "openMeteo" }),
     themeId: id,
     themes: z.array(themeSchema).min(1).max(30),
     views: z.array(viewSchema).min(1).max(30),

@@ -23,7 +23,7 @@ same change, and moves it out of **In progress** when it merges.
 | Clock (`clock`) | Digital, analogue, flip, nixie, word, minimal or neon; any time zone, label, seconds (Vancouver and Toronto clocks) | Device clock |
 | Date (`date`) | Today's date in a time zone | Device clock |
 | Sunrise & sunset (`sunTimes`) | Today's sunrise, sunset and length of daylight; optional emoji and daylight hours | Open-Meteo forecast |
-| Weather (`weather`) | Current conditions, hourly, up to 7 days, with icons, UV index and pollen | Open-Meteo forecast and air quality |
+| Weather (`weather`) | Current conditions, hourly, up to 7 days, with icons, UV index and pollen | Open-Meteo (default) or Environment Canada city page (`config.weather.provider`); UV/pollen/AQ still Open-Meteo |
 | Tempest (`tempest`) | Backyard station: temp, humidity, wind, rain today | WeatherFlow REST (`config.integrations.smartHome.tempest`, token secret) |
 | Weather Underground (`weatherUnderground`) | PWS current conditions | IBM WU PWS API (`WU_API_KEY` or per-account secret) |
 | School menu (`menus`) | Nutrislice breakfast and lunch for a day or week; not the meal plan | Nutrislice published JSON (`config.integrations.smartHome.menus`) |
