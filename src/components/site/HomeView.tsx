@@ -153,7 +153,7 @@ export function HomeView() {
                 </a>
               </div>
               <ul className="mt-5 flex flex-wrap gap-x-5 gap-y-2 text-sm text-soft">
-                {["Free plan, no ads", "Family edits from a phone", "Any browser, any screen"].map((c) => (
+                {["Free plan, no ads", "Optimized for speed", "Any browser, any screen"].map((c) => (
                   <li key={c} className="flex gap-1.5">
                     <Check />
                     {c}
@@ -171,9 +171,9 @@ export function HomeView() {
           <dl className="mx-auto grid max-w-6xl grid-cols-2 gap-6 px-4 py-9 text-center sm:grid-cols-4">
             {[
               { value: "30+", label: "widgets on the wall" },
-              { value: "<40 KB", label: "display script, gzipped" },
+              { value: "Fast", label: "optimized for the wall" },
               { value: "0", label: "ads, ever" },
-              { value: "BC", label: "alerts, transit & ferries" },
+              { value: "Live", label: "calendars, weather & photos" },
             ].map((f) => (
               <div key={f.label}>
                 <dt className="sr-only">{f.label}</dt>
