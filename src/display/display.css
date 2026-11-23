@@ -146,6 +146,18 @@ body {
   width: 100%;
   transition: translate 3s ease-in-out;
 }
+/* Portrait grids (e.g. 8×12) letterbox on a landscape panel so tiles keep their intended shape. */
+html.portrait-view .app {
+  justify-content: center;
+  align-items: center;
+  background: #000;
+}
+html.portrait-view .stage {
+  flex: 0 0 auto;
+  width: min(100vw, calc(100dvh * var(--stage-cols, 8) / var(--stage-rows, 12)));
+  height: min(100dvh, calc(100vw * var(--stage-rows, 12) / var(--stage-cols, 8)));
+  margin: auto;
+}
 .connecting {
   grid-column: 1 / -1;
   grid-row: 1 / -1;

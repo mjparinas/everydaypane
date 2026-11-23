@@ -29,6 +29,8 @@ export interface ViewTemplate {
   themeId: string | null;
   /** Static preview under /templates/<id>.png */
   preview: string;
+  /** Landscape (12×8) is the kitchen default; portrait (8×12) for tall tablets (Melvin, 2026-11-23). */
+  orientation?: "landscape" | "portrait";
   /** Builds a fresh view (caller assigns id / name). */
   build: () => Omit<View, "id" | "name" | "themeId">;
 }
@@ -56,6 +58,7 @@ const thanksgiving = {
 };
 
 const GRID = { cols: 12, rows: 8, gap: 16, padding: 14, tilePadding: 16 } as const;
+const PORTRAIT = { cols: 8, rows: 12, gap: 14, padding: 12, tilePadding: 14 } as const;
 
 export const VIEW_TEMPLATES: ViewTemplate[] = [
   {
@@ -572,6 +575,69 @@ export const VIEW_TEMPLATES: ViewTemplate[] = [
         w("media", "t-music", { x: 0, y: 6, w: 6, h: 2 }),
         w("alerts", "t-alerts", { x: 6, y: 4, w: 6, h: 2 }),
         w("agenda", "t-agenda", { x: 6, y: 6, w: 6, h: 2 }),
+      ],
+    }),
+  },
+  {
+    id: "family-hub-portrait",
+    name: "Family hub (portrait)",
+    description: "Tall twin of Family hub for a hallway tablet or fridge panel.",
+    category: "family",
+    tier: "paid",
+    themeId: "forest",
+    preview: "/templates/family-hub-portrait.png",
+    orientation: "portrait",
+    build: () => ({
+      ...PORTRAIT,
+      widgets: [
+        w("clock", "t-clock", { x: 0, y: 0, w: 4, h: 2 }),
+        w("school", "t-school", { x: 4, y: 0, w: 4, h: 2 }),
+        w("weather", "t-weather", { x: 0, y: 2, w: 8, h: 2 }, { days: 0, showHourly: false }),
+        w("chores", "t-chores", { x: 0, y: 4, w: 8, h: 4 }, { allowCheck: true, showStars: true, layout: "byPeriod" }),
+        w("meals", "t-meals", { x: 0, y: 8, w: 4, h: 2 }, { days: 1 }),
+        w("messages", "t-msg", { x: 4, y: 8, w: 4, h: 2 }),
+        w("photos", "t-photos", { x: 0, y: 10, w: 8, h: 2 }),
+      ],
+    }),
+  },
+  {
+    id: "kids-routine-portrait",
+    name: "Kids routine (portrait)",
+    description: "Tall twin of Kids routine — chores first, dinner and agenda below.",
+    category: "family",
+    tier: "paid",
+    themeId: "sunset",
+    preview: "/templates/kids-routine-portrait.png",
+    orientation: "portrait",
+    build: () => ({
+      ...PORTRAIT,
+      widgets: [
+        w("clock", "t-clock", { x: 0, y: 0, w: 8, h: 2 }, { style: "flip" }),
+        w("school", "t-school", { x: 0, y: 2, w: 4, h: 1 }),
+        w("date", "t-date", { x: 4, y: 2, w: 4, h: 1 }),
+        w("chores", "t-chores", { x: 0, y: 3, w: 8, h: 5 }, { allowCheck: true, showStars: true, layout: "byPeriod" }),
+        w("meals", "t-meals", { x: 0, y: 8, w: 8, h: 2 }, { days: 1 }),
+        w("timer", "t-timer", { x: 0, y: 10, w: 4, h: 2 }),
+        w("agenda", "t-agenda", { x: 4, y: 10, w: 4, h: 2 }),
+      ],
+    }),
+  },
+  {
+    id: "playroom-portrait",
+    name: "Playroom (portrait)",
+    description: "Word clock, chore bands and a joke — a tall kids corner.",
+    category: "family",
+    tier: "paid",
+    themeId: "sunset",
+    preview: "/templates/playroom-portrait.png",
+    orientation: "portrait",
+    build: () => ({
+      ...PORTRAIT,
+      widgets: [
+        w("clock", "t-clock", { x: 0, y: 0, w: 8, h: 3 }, { style: "word", showSeconds: false }),
+        w("chores", "t-chores", { x: 0, y: 3, w: 8, h: 5 }, { allowCheck: true, showStars: true, layout: "byPeriod" }),
+        w("dadJoke", "t-joke", { x: 0, y: 8, w: 8, h: 2 }),
+        w("messages", "t-msg", { x: 0, y: 10, w: 8, h: 2 }, { allowAdd: false }),
       ],
     }),
   },

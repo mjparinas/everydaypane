@@ -79,7 +79,7 @@ same change, and moves it out of **In progress** when it merges.
 | Airports (`airports`) | METAR summary per ICAO code; optional delays | Aviation Weather; Aviationstack with `AIRPORT_API_KEY` |
 | Google Maps (`maps`) | Map for a place query | google.com/maps embed iframe |
 
-**Display behaviour:** several views on a drag-and-drop grid (chosen rows and columns, gap, edge padding and **tile padding**), **per-widget visibility by part of day** (`visiblePeriods`), optional **view loop** on schedule followers (`schedule.loopSeconds`), **widgets layered on top of a photos widget**
+**Display behaviour:** several views on a drag-and-drop grid (chosen rows and columns, gap, edge padding and **tile padding**; presets include **12×8 landscape** and **8×12 portrait**, with portrait stages letterboxed on a landscape panel), **per-widget visibility by part of day** (`visiblePeriods`), optional **view loop** on schedule followers (`schedule.loopSeconds`), **widgets layered on top of a photos widget**
 (photos as the backdrop), **per-widget background** (on/off and opacity; theme surface opacity is the default; clocks and dates start with no panel), **per-widget font size** (`fontScale`, 70–150 %, text widgets only — not photos, radar, camera, earth, embeds or the whiteboard), **per-widget outer padding** (`outerPadding`, 0–48 px, omitted means none; insets the panel in its grid cell), a time-of-day schedule
 (morning, afternoon, evening, overnight) choosing the view, theme, day or night mode and dimming — each period can start at a **fixed time, sunrise or sunset** (sunrise/sunset from today's Open-Meteo weather at the dashboard location); themes with colour
 palettes, fonts, corner radius, opacity and optional glass; burn-in protection (pixel shift); offline mode (service
@@ -215,7 +215,10 @@ npm run templates:previews  # regenerate public/templates/*.png from real widget
   PNG screenshot previews of the **real display widgets** (`public/templates/`, regenerate with
   `npm run templates:previews` or the **Update template previews** GitHub Action). Sample feeds and photos live in
   `scripts/template-samples/` and `public/templates/samples/`. Free templates use only Free-tier widgets; Household ones
-  add productivity, family, holiday, commute and smart-home layouts (`src/lib/config/templates.ts`).
+  add productivity, family, holiday, commute and smart-home layouts (`src/lib/config/templates.ts`). Portrait twins
+  (`family-hub-portrait`, `kids-routine-portrait`, `playroom-portrait`) use an 8×12 grid for tall tablets.
+- **Portrait grid** (Melvin, 2026-11-23): Edit view includes an **8×12 (portrait)** preset; when a view has more rows
+  than columns the display letterboxes the stage on a landscape panel (`html.portrait-view`).
 - **More theme fonts** (Melvin, 2026-11-22): Outfit, DM Sans and Literata join Inter, Manrope and Space Grotesk
   (self-hosted under `/fonts/`). Built-in themes spread those fonts so starter template previews look distinct.
 - **Castable display URL** (Melvin, 2026-11-22): Displays tab copy/open tips for Chromecast (cast a browser tab) and

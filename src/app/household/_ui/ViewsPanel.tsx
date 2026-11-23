@@ -322,14 +322,15 @@ export function ViewsPanel() {
                       <img
                         src={t.preview}
                         alt=""
-                        width={960}
-                        height={540}
-                        className="aspect-video w-full bg-bg object-cover"
+                        width={t.orientation === "portrait" ? 540 : 960}
+                        height={t.orientation === "portrait" ? 960 : 540}
+                        className={`w-full bg-bg object-cover ${t.orientation === "portrait" ? "aspect-[9/16] max-h-56 justify-self-center" : "aspect-video"}`}
                         loading="lazy"
                       />
                       <span className="grid gap-1 px-3 pb-3">
                         <span className="flex flex-wrap items-center gap-2">
                           <span className="font-semibold">{t.name}</span>
+                          {t.orientation === "portrait" ? <span className="text-xs text-soft">Portrait</span> : null}
                           {t.tier === "paid" && <HouseholdBadge />}
                         </span>
                         <span className="text-xs text-soft">{t.description}</span>

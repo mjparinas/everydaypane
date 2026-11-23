@@ -14,7 +14,17 @@ export type WidgetOp =
 
 /** Stage grid CSS shared by the wall and the draft patcher. */
 export function stageGridStyle(view: Pick<View, "cols" | "rows" | "gap" | "padding" | "tilePadding">): string {
-  return `grid-template-columns:repeat(${view.cols},minmax(0,1fr));grid-template-rows:repeat(${view.rows},minmax(0,1fr));gap:${view.gap}px;padding:${view.padding}px;--cell-pad:${view.tilePadding}px`;
+  const grid = `grid-template-columns:repeat(${view.cols},minmax(0,1fr));grid-template-rows:repeat(${view.rows},minmax(0,1fr));gap:${view.gap}px;padding:${view.padding}px;--cell-pad:${view.tilePadding}px`;
+  // Portrait grids (more rows than columns) letterbox on a landscape panel (Melvin, 2026-11-23).
+  if (view.rows > view.cols) {
+    return `${grid};--stage-cols:${view.cols};--stage-rows:${view.rows}`;
+  }
+  return grid;
+}
+
+/** True when the view's grid is taller than it is wide (8×12 portrait presets). */
+export function isPortraitView(view: Pick<View, "cols" | "rows">): boolean {
+  return view.rows > view.cols;
 }
 
 /** Options fingerprint: everything except grid placement and panel chrome (handled as a move). */
