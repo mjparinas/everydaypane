@@ -27,15 +27,22 @@ export function WidgetSettingsDrawer({
 }) {
   const titleId = useId();
   const closeBtn = useRef<HTMLButtonElement>(null);
+  const onCloseRef = useRef(onClose);
   const name = widgetName(widget);
 
+  useEffect(() => {
+    onCloseRef.current = onClose;
+  }, [onClose]);
+
+  // Focus the close control only when the drawer opens or the selected widget changes — not on every
+  // parent re-render (inline onClose would otherwise steal focus after each keystroke in Title).
   useEffect(() => {
     const prev = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     closeBtn.current?.focus();
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
         e.preventDefault();
-        onClose();
+        onCloseRef.current();
       }
     };
     window.addEventListener("keydown", onKey);
@@ -43,7 +50,7 @@ export function WidgetSettingsDrawer({
       window.removeEventListener("keydown", onKey);
       prev?.focus();
     };
-  }, [widget.id, onClose]);
+  }, [widget.id]);
 
   return (
     <div className="fixed inset-0 z-40 flex justify-end" data-testid="widget-settings-drawer">
