@@ -1,0 +1,10 @@
+{
+  "updatedAt": 1763937720000,
+  "connected": true,
+  "unreadMentions": 2,
+  "lines": [
+    { "channelId": "C1", "text": "#general · Melvin: Dinner is lasagna tonight" },
+    { "channelId": "C2", "text": "#school · Alex: Reminder — field trip forms due Friday" },
+    { "channelId": "C1", "text": "#general · Maya: Can we do hot chocolate after practice?" }
+  ]
+}

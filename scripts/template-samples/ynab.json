@@ -1,0 +1,16 @@
+{
+  "updatedAt": 1763937720000,
+  "connected": true,
+  "budgetName": "Parinas household",
+  "accounts": [
+    { "name": "Chequing", "balance": 4250.12 },
+    { "name": "Savings", "balance": 18200 },
+    { "name": "Visa", "balance": -612.4 }
+  ],
+  "categories": [
+    { "name": "Groceries", "balance": 340.5 },
+    { "name": "Dining out", "balance": 85 },
+    { "name": "Kids activities", "balance": 120 },
+    { "name": "Fuel", "balance": 160 }
+  ]
+}

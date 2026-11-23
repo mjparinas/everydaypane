@@ -1,0 +1,21 @@
+{
+  "updatedAt": 1763937720000,
+  "byWidget": {
+    "menus": {
+      "updatedAt": 1763937720000,
+      "slug": "douglas-park-elementary",
+      "school": "Douglas Park",
+      "slots": ["breakfast", "lunch"],
+      "days": {
+        "2026-11-23": {
+          "breakfast": ["Oatmeal", "Banana", "Milk"],
+          "lunch": ["Chicken burrito bowl", "Apple slices", "Carrot sticks", "Milk"]
+        },
+        "2026-11-24": {
+          "breakfast": ["Yogurt parfait", "Orange", "Milk"],
+          "lunch": ["Cheese pizza", "Garden salad", "Pear", "Milk"]
+        }
+      }
+    }
+  }
+}
