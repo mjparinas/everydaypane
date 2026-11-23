@@ -1,0 +1,331 @@
+{
+  "updatedAt": 1763937720000,
+  "from": "2026-10-26",
+  "to": "2027-01-05",
+  "connected": true,
+  "events": [
+    {
+      "id": "school-drop-mon",
+      "title": "School drop-off",
+      "start": "2026-11-23T08:15:00-07:00",
+      "end": "2026-11-23T08:35:00-07:00",
+      "allDay": false,
+      "color": "#5b8def",
+      "calendar": "Family",
+      "location": "Alice Brown Elementary"
+    },
+    {
+      "id": "tutoring-mon",
+      "title": "Math tutoring — Maya",
+      "start": "2026-11-23T15:30:00-07:00",
+      "end": "2026-11-23T16:30:00-07:00",
+      "allDay": false,
+      "color": "#e8590c",
+      "calendar": "Kids",
+      "location": "Kumon Willowbrook"
+    },
+    {
+      "id": "swim-mon",
+      "title": "Swim lessons",
+      "start": "2026-11-23T17:00:00-07:00",
+      "end": "2026-11-23T17:45:00-07:00",
+      "allDay": false,
+      "color": "#0c8599",
+      "calendar": "Kids",
+      "location": "Walnut Grove WLC"
+    },
+    {
+      "id": "dinner-guest",
+      "title": "Grandma for dinner",
+      "start": "2026-11-23T18:30:00-07:00",
+      "end": "2026-11-23T20:30:00-07:00",
+      "allDay": false,
+      "color": "#5b8def",
+      "calendar": "Family"
+    },
+    {
+      "id": "school-drop-tue",
+      "title": "School drop-off",
+      "start": "2026-11-24T08:15:00-07:00",
+      "end": "2026-11-24T08:35:00-07:00",
+      "allDay": false,
+      "color": "#5b8def",
+      "calendar": "Family",
+      "location": "Alice Brown Elementary"
+    },
+    {
+      "id": "dance-tue",
+      "title": "Dance lessons — Ana",
+      "start": "2026-11-24T16:00:00-07:00",
+      "end": "2026-11-24T17:00:00-07:00",
+      "allDay": false,
+      "color": "#be4bdb",
+      "calendar": "Kids",
+      "location": "Langley Dance Academy"
+    },
+    {
+      "id": "dentist-tue",
+      "title": "Dentist — kids",
+      "start": "2026-11-24T15:00:00-07:00",
+      "end": "2026-11-24T15:45:00-07:00",
+      "allDay": false,
+      "color": "#868e96",
+      "calendar": "Family",
+      "location": "Willowbrook Dental"
+    },
+    {
+      "id": "school-drop-wed",
+      "title": "School drop-off",
+      "start": "2026-11-25T08:15:00-07:00",
+      "end": "2026-11-25T08:35:00-07:00",
+      "allDay": false,
+      "color": "#5b8def",
+      "calendar": "Family"
+    },
+    {
+      "id": "scouts-wed",
+      "title": "Boy Scouts",
+      "start": "2026-11-25T18:30:00-07:00",
+      "end": "2026-11-25T20:00:00-07:00",
+      "allDay": false,
+      "color": "#2b8a3e",
+      "calendar": "Kids",
+      "location": "1st Langley Scouts"
+    },
+    {
+      "id": "piano-wed",
+      "title": "Piano lesson — Sam",
+      "start": "2026-11-25T16:30:00-07:00",
+      "end": "2026-11-25T17:15:00-07:00",
+      "allDay": false,
+      "color": "#e67700",
+      "calendar": "Kids"
+    },
+    {
+      "id": "school-drop-thu",
+      "title": "School drop-off",
+      "start": "2026-11-26T08:15:00-07:00",
+      "end": "2026-11-26T08:35:00-07:00",
+      "allDay": false,
+      "color": "#5b8def",
+      "calendar": "Family"
+    },
+    {
+      "id": "tutoring-thu",
+      "title": "Reading tutoring — Sam",
+      "start": "2026-11-26T15:45:00-07:00",
+      "end": "2026-11-26T16:45:00-07:00",
+      "allDay": false,
+      "color": "#e8590c",
+      "calendar": "Kids"
+    },
+    {
+      "id": "swim-thu",
+      "title": "Swim lessons",
+      "start": "2026-11-26T17:00:00-07:00",
+      "end": "2026-11-26T17:45:00-07:00",
+      "allDay": false,
+      "color": "#0c8599",
+      "calendar": "Kids",
+      "location": "Walnut Grove WLC"
+    },
+    {
+      "id": "school-drop-fri",
+      "title": "School drop-off",
+      "start": "2026-11-27T08:15:00-07:00",
+      "end": "2026-11-27T08:35:00-07:00",
+      "allDay": false,
+      "color": "#5b8def",
+      "calendar": "Family"
+    },
+    {
+      "id": "dance-fri",
+      "title": "Dance lessons — Ana",
+      "start": "2026-11-27T16:00:00-07:00",
+      "end": "2026-11-27T17:00:00-07:00",
+      "allDay": false,
+      "color": "#be4bdb",
+      "calendar": "Kids",
+      "location": "Langley Dance Academy"
+    },
+    {
+      "id": "pizza-fri",
+      "title": "Pizza + movie night",
+      "start": "2026-11-27T18:00:00-07:00",
+      "end": "2026-11-27T21:00:00-07:00",
+      "allDay": false,
+      "color": "#5b8def",
+      "calendar": "Family"
+    },
+    {
+      "id": "soccer-sat",
+      "title": "Soccer practice",
+      "start": "2026-11-28T09:30:00-07:00",
+      "end": "2026-11-28T10:45:00-07:00",
+      "allDay": false,
+      "color": "#2b8a3e",
+      "calendar": "Kids",
+      "location": "Yorkson Community Park"
+    },
+    {
+      "id": "grocery-sat",
+      "title": "Grocery run",
+      "start": "2026-11-28T11:30:00-07:00",
+      "end": "2026-11-28T12:30:00-07:00",
+      "allDay": false,
+      "color": "#868e96",
+      "calendar": "Family",
+      "location": "Save-On-Foods"
+    },
+    {
+      "id": "birthday-party",
+      "title": "Birthday party — Noah",
+      "start": "2026-11-29T14:00:00-07:00",
+      "end": "2026-11-29T16:00:00-07:00",
+      "allDay": false,
+      "color": "#e8590c",
+      "calendar": "Kids",
+      "location": "Pump It Up Langley"
+    },
+    {
+      "id": "family-hike",
+      "title": "Family walk — Derby Reach",
+      "start": "2026-11-29T10:00:00-07:00",
+      "end": "2026-11-29T12:00:00-07:00",
+      "allDay": false,
+      "color": "#2b8a3e",
+      "calendar": "Family"
+    },
+    {
+      "id": "teacher-conf",
+      "title": "Parent-teacher conferences",
+      "start": "2026-11-26",
+      "end": "2026-11-27",
+      "allDay": true,
+      "color": "#5b8def",
+      "calendar": "School"
+    },
+    {
+      "id": "pd-day",
+      "title": "Pro-D day (no school)",
+      "start": "2026-11-20",
+      "end": "2026-11-21",
+      "allDay": true,
+      "color": "#fab005",
+      "calendar": "School"
+    },
+    {
+      "id": "book-fair",
+      "title": "School book fair",
+      "start": "2026-11-17",
+      "end": "2026-11-21",
+      "allDay": true,
+      "color": "#be4bdb",
+      "calendar": "School"
+    },
+    {
+      "id": "early-dismissal",
+      "title": "Early dismissal",
+      "start": "2026-12-04",
+      "end": "2026-12-05",
+      "allDay": true,
+      "color": "#fab005",
+      "calendar": "School"
+    },
+    {
+      "id": "winter-concert",
+      "title": "Winter concert",
+      "start": "2026-12-10T18:30:00-07:00",
+      "end": "2026-12-10T20:00:00-07:00",
+      "allDay": false,
+      "color": "#5b8def",
+      "calendar": "School",
+      "location": "Alice Brown gym"
+    },
+    {
+      "id": "swim-meet",
+      "title": "Swim meet",
+      "start": "2026-12-05T08:00:00-07:00",
+      "end": "2026-12-05T13:00:00-07:00",
+      "allDay": false,
+      "color": "#0c8599",
+      "calendar": "Kids",
+      "location": "Surrey Sport & Leisure"
+    },
+    {
+      "id": "scout-camp",
+      "title": "Scout camp weekend",
+      "start": "2026-12-12",
+      "end": "2026-12-14",
+      "allDay": true,
+      "color": "#2b8a3e",
+      "calendar": "Kids"
+    },
+    {
+      "id": "dance-recital",
+      "title": "Dance recital dress rehearsal",
+      "start": "2026-12-06T16:00:00-07:00",
+      "end": "2026-12-06T18:00:00-07:00",
+      "allDay": false,
+      "color": "#be4bdb",
+      "calendar": "Kids"
+    },
+    {
+      "id": "work-offsite",
+      "title": "Work offsite",
+      "start": "2026-11-19T09:00:00-07:00",
+      "end": "2026-11-19T17:00:00-07:00",
+      "allDay": false,
+      "color": "#364fc7",
+      "calendar": "Work"
+    },
+    {
+      "id": "library",
+      "title": "Library storytime",
+      "start": "2026-11-18T10:30:00-07:00",
+      "end": "2026-11-18T11:15:00-07:00",
+      "allDay": false,
+      "color": "#5b8def",
+      "calendar": "Kids",
+      "location": "Murrayville Library"
+    },
+    {
+      "id": "hockey-game",
+      "title": "Canucks game",
+      "start": "2026-11-30T19:00:00-07:00",
+      "end": "2026-11-30T22:00:00-07:00",
+      "allDay": false,
+      "color": "#00843D",
+      "calendar": "Family",
+      "location": "Rogers Arena"
+    },
+    {
+      "id": "christmas-break",
+      "title": "Winter break",
+      "start": "2026-12-21",
+      "end": "2027-01-05",
+      "allDay": true,
+      "color": "#c92a2a",
+      "calendar": "School"
+    },
+    {
+      "id": "boxing-day",
+      "title": "Boxing Day shopping",
+      "start": "2026-12-26T10:00:00-07:00",
+      "end": "2026-12-26T14:00:00-07:00",
+      "allDay": false,
+      "color": "#5b8def",
+      "calendar": "Family",
+      "location": "Willowbrook Mall"
+    },
+    {
+      "id": "new-years-brunch",
+      "title": "New Year's brunch",
+      "start": "2027-01-01T11:00:00-07:00",
+      "end": "2027-01-01T14:00:00-07:00",
+      "allDay": false,
+      "color": "#5b8def",
+      "calendar": "Family"
+    }
+  ]
+}

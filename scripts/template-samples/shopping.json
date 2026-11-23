@@ -1,0 +1,17 @@
+{
+  "updatedAt": 1763937720000,
+  "items": [
+    { "id": "s1", "text": "Milk (2%)", "done": false },
+    { "id": "s2", "text": "Eggs", "done": false },
+    { "id": "s3", "text": "Apples", "done": false },
+    { "id": "s4", "text": "Tortillas", "done": false },
+    { "id": "s5", "text": "Ground turkey", "done": false },
+    { "id": "s6", "text": "Cheese", "done": false },
+    { "id": "s7", "text": "Baby carrots", "done": false },
+    { "id": "s8", "text": "Bread", "done": false },
+    { "id": "s9", "text": "Yogurt tubes", "done": false },
+    { "id": "s10", "text": "Dish soap", "done": false },
+    { "id": "s11", "text": "Bananas", "done": true },
+    { "id": "s12", "text": "Coffee", "done": true }
+  ]
+}

@@ -1,0 +1,40 @@
+{
+  "today": "2026-11-23",
+  "meals": {
+    "2026-11-23": {
+      "breakfast": "Oatmeal + berries",
+      "lunch": "Turkey sandwiches",
+      "dinner": "Tacos + rice"
+    },
+    "2026-11-24": {
+      "breakfast": "Eggs + toast",
+      "lunch": "Leftover tacos",
+      "dinner": "Salmon + veggies"
+    },
+    "2026-11-25": {
+      "breakfast": "Yogurt parfait",
+      "lunch": "Soup + buns",
+      "dinner": "Spaghetti Bolognese"
+    },
+    "2026-11-26": {
+      "breakfast": "Pancakes",
+      "lunch": "Bagels + fruit",
+      "dinner": "Chicken stir-fry"
+    },
+    "2026-11-27": {
+      "breakfast": "Smoothies",
+      "lunch": "Pizza pockets",
+      "dinner": "Pizza + movie night"
+    },
+    "2026-11-28": {
+      "breakfast": "Waffles",
+      "lunch": "Out — cafe",
+      "dinner": "Homemade burgers"
+    },
+    "2026-11-29": {
+      "breakfast": "French toast",
+      "lunch": "Leftovers",
+      "dinner": "Roast chicken"
+    }
+  }
+}

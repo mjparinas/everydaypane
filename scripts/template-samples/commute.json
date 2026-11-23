@@ -1,0 +1,39 @@
+{
+  "updatedAt": 1795473720000,
+  "missing": "",
+  "routes": [
+    {
+      "id": "work",
+      "name": "Work",
+      "emoji": "💼",
+      "arriveBy": "08:30",
+      "seconds": 1320,
+      "freeFlowSeconds": 1080,
+      "delaySeconds": 240,
+      "meters": 18500,
+      "at": 1795473720000
+    },
+    {
+      "id": "school",
+      "name": "School",
+      "emoji": "🏫",
+      "arriveBy": "08:20",
+      "seconds": 480,
+      "freeFlowSeconds": 420,
+      "delaySeconds": 60,
+      "meters": 3200,
+      "at": 1795473720000
+    },
+    {
+      "id": "swim",
+      "name": "Swim club",
+      "emoji": "🏊",
+      "arriveBy": "",
+      "seconds": 900,
+      "freeFlowSeconds": 780,
+      "delaySeconds": 120,
+      "meters": 7800,
+      "at": 1795473720000
+    }
+  ]
+}

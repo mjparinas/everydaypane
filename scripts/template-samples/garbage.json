@@ -1,0 +1,28 @@
+{
+  "updatedAt": 1763937720000,
+  "configured": true,
+  "pickups": [
+    {
+      "date": "2026-11-24",
+      "bins": [
+        { "name": "Recycling", "kind": "recycling" },
+        { "name": "Organics", "kind": "organics" }
+      ]
+    },
+    {
+      "date": "2026-12-01",
+      "bins": [
+        { "name": "Garbage", "kind": "garbage" },
+        { "name": "Recycling", "kind": "recycling" },
+        { "name": "Organics", "kind": "organics" }
+      ]
+    },
+    {
+      "date": "2026-12-08",
+      "bins": [
+        { "name": "Recycling", "kind": "recycling" },
+        { "name": "Organics", "kind": "organics" }
+      ]
+    }
+  ]
+}

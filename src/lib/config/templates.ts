@@ -3,8 +3,8 @@ import type { View, Widget, WidgetType } from "./schema";
 import { newWidget } from "./widgets";
 
 // Starter layouts for the Views tab (Melvin, 2026-11-22; expanded 2026-11-23 with screenshots and more variety).
-// Free templates use only Free-tier widgets; Household ones may use any widget. Preview images live in
-// public/templates/<id>.png (regenerate with `npm run templates:previews`).
+// Free templates use only Free-tier widgets; Household ones may use any widget. Preview images are real-widget
+// screenshots in public/templates/<id>.png (regenerate with `npm run templates:previews` or the GitHub Action).
 
 export const TEMPLATE_CATEGORIES = ["everyday", "productivity", "family", "holiday", "commute", "media"] as const;
 export type TemplateCategory = (typeof TEMPLATE_CATEGORIES)[number];
@@ -64,7 +64,7 @@ export const VIEW_TEMPLATES: ViewTemplate[] = [
     description: "Clock, weather, today's schedule and photos — the everyday kitchen wall.",
     category: "everyday",
     tier: "free",
-    themeId: null,
+    themeId: "aurora",
     preview: "/templates/kitchen-glance.png",
     build: () => ({
       ...GRID,
@@ -106,12 +106,12 @@ export const VIEW_TEMPLATES: ViewTemplate[] = [
     description: "Month grid with the week ahead and a clock.",
     category: "everyday",
     tier: "free",
-    themeId: null,
+    themeId: "ink",
     preview: "/templates/calendar-wall.png",
     build: () => ({
       ...GRID,
       widgets: [
-        w("calendarMonth", "t-month", { x: 0, y: 0, w: 9, h: 8 }),
+        w("calendarMonth", "t-month", { x: 0, y: 0, w: 9, h: 8 }, { scrollWeeks: 6, fitTitles: true }),
         w("clock", "t-clock", { x: 9, y: 0, w: 3, h: 2 }),
         w("agenda", "t-agenda", { x: 9, y: 2, w: 3, h: 6 }, { range: "upcoming", days: 7 }),
       ],
@@ -135,7 +135,15 @@ export const VIEW_TEMPLATES: ViewTemplate[] = [
         w("clock", "t-clock", { x: 0, y: 0, w: 6, h: 4 }, { showSeconds: false, style: "digital" }),
         w("date", "t-date", { x: 6, y: 0, w: 6, h: 2 }),
         w("weather", "t-weather", { x: 6, y: 2, w: 6, h: 3 }, { days: 3, showHourly: false }),
-        w("note", "t-note", { x: 0, y: 4, w: 6, h: 4 }, { text: "Add a family note here.", size: "l" }),
+        w(
+          "note",
+          "t-note",
+          { x: 0, y: 4, w: 6, h: 4 },
+          {
+            text: "Today's reminders\n• Library books due\n• Pack swim bag\n• Confirm carpool",
+            size: "l",
+          },
+        ),
         w("sunTimes", "t-sun", { x: 6, y: 5, w: 6, h: 3 }),
       ],
     }),
@@ -157,7 +165,15 @@ export const VIEW_TEMPLATES: ViewTemplate[] = [
         w("weather", "t-weather", { x: 7, y: 0, w: 5, h: 3 }, { showHourly: true, days: 3 }),
         w("agenda", "t-agenda", { x: 0, y: 2, w: 4, h: 6 }),
         w("airQuality", "t-aq", { x: 4, y: 3, w: 3, h: 2 }),
-        w("note", "t-note", { x: 4, y: 5, w: 3, h: 3 }, { text: "Have a great day!", size: "m" }),
+        w(
+          "note",
+          "t-note",
+          { x: 4, y: 5, w: 3, h: 3 },
+          {
+            text: "Morning checklist\n☐ Lunches packed\n☐ Permission slip\n☐ Water bottles",
+            size: "m",
+          },
+        ),
         w("countdown", "t-cd", { x: 7, y: 3, w: 5, h: 5 }, { events: [christmas, halloween, canadaDay], count: 3 }),
       ],
     }),
@@ -221,7 +237,15 @@ export const VIEW_TEMPLATES: ViewTemplate[] = [
         w("date", "t-date", { x: 0, y: 5, w: 4, h: 1 }),
         w("weather", "t-weather", { x: 0, y: 6, w: 6, h: 2 }, { days: 3, showHourly: false }),
         w("wifiQr", "t-wifi", { x: 6, y: 5, w: 3, h: 3 }),
-        w("note", "t-note", { x: 9, y: 5, w: 3, h: 3 }, { text: "Good night.", size: "l" }),
+        w(
+          "note",
+          "t-note",
+          { x: 9, y: 5, w: 3, h: 3 },
+          {
+            text: "Good night\nPhones charging\nDoors locked\nAlarm 6:45",
+            size: "m",
+          },
+        ),
       ],
     }),
   },
@@ -241,7 +265,15 @@ export const VIEW_TEMPLATES: ViewTemplate[] = [
         w("date", "t-date", { x: 8, y: 0, w: 4, h: 1 }),
         w("quotes", "t-quote", { x: 8, y: 1, w: 4, h: 2 }),
         w("tasks", "t-tasks", { x: 4, y: 2, w: 4, h: 6 }, { count: 10, allowCheck: true }),
-        w("note", "t-note", { x: 0, y: 4, w: 4, h: 4 }, { text: "Today's focus:\n\n1.\n2.\n3.", size: "m" }),
+        w(
+          "note",
+          "t-note",
+          { x: 0, y: 4, w: 4, h: 4 },
+          {
+            text: "Today's focus\n1. Finish budget draft\n2. Book dentist\n3. Inbox to zero",
+            size: "m",
+          },
+        ),
         w("agenda", "t-agenda", { x: 8, y: 3, w: 4, h: 5 }),
       ],
     }),
@@ -351,7 +383,15 @@ export const VIEW_TEMPLATES: ViewTemplate[] = [
         w("ferries", "t-ferry", { x: 0, y: 2, w: 7, h: 4 }, { routes: ["TSASWB", "HSBLNG"], count: 4 }),
         w("agenda", "t-agenda", { x: 7, y: 2, w: 5, h: 4 }, { range: "upcoming", days: 3 }),
         w("sunTimes", "t-sun", { x: 0, y: 6, w: 4, h: 2 }),
-        w("note", "t-note", { x: 4, y: 6, w: 8, h: 2 }, { text: "Pack snacks & ferry cards.", size: "s" }),
+        w(
+          "note",
+          "t-note",
+          { x: 4, y: 6, w: 8, h: 2 },
+          {
+            text: "Ferry day: snacks, cards, layers, and leave 90 min before sailing.",
+            size: "s",
+          },
+        ),
       ],
     }),
   },
@@ -384,14 +424,14 @@ export const VIEW_TEMPLATES: ViewTemplate[] = [
           "t-note",
           { x: 7, y: 0, w: 5, h: 2 },
           {
-            text: "🎄 Merry Christmas from our kitchen!",
+            text: "🎄 Merry Christmas!\nHam in at 2 · presents after dinner · cocoa at 8",
             size: "m",
             backgroundOpacity: 0.85,
           },
         ),
         w("meals", "t-meals", { x: 0, y: 5, w: 4, h: 3 }, { days: 1, backgroundOpacity: 0.9 }),
         w("agenda", "t-agenda", { x: 4, y: 5, w: 4, h: 3 }, { backgroundOpacity: 0.9 }),
-        w("calendarMonth", "t-month", { x: 8, y: 2, w: 4, h: 6 }, { backgroundOpacity: 0.9 }),
+        w("calendarMonth", "t-month", { x: 8, y: 2, w: 4, h: 6 }, { backgroundOpacity: 0.9, scrollWeeks: 6 }),
       ],
     }),
   },
@@ -423,7 +463,7 @@ export const VIEW_TEMPLATES: ViewTemplate[] = [
           "t-note",
           { x: 4, y: 0, w: 4, h: 2 },
           {
-            text: "🎃 Trick-or-treat route on the fridge!",
+            text: "🎃 Trick-or-treat 5:30–8\nRoute on the fridge · glow sticks by the door",
             size: "m",
             backgroundOpacity: 0.88,
           },
@@ -448,8 +488,16 @@ export const VIEW_TEMPLATES: ViewTemplate[] = [
         w("countdown", "t-cd", { x: 0, y: 0, w: 5, h: 3 }, { events: [newYear, valentines], count: 2 }),
         w("clock", "t-clock", { x: 5, y: 0, w: 4, h: 3 }),
         w("date", "t-date", { x: 9, y: 0, w: 3, h: 1 }),
-        w("note", "t-note", { x: 9, y: 1, w: 3, h: 2 }, { text: "Resolutions:\n•\n•\n•", size: "m" }),
-        w("calendarMonth", "t-month", { x: 5, y: 3, w: 7, h: 5 }),
+        w(
+          "note",
+          "t-note",
+          { x: 9, y: 1, w: 3, h: 2 },
+          {
+            text: "Resolutions\n• Family hike monthly\n• Cook Sundays\n• Phones away at dinner",
+            size: "s",
+          },
+        ),
+        w("calendarMonth", "t-month", { x: 5, y: 3, w: 7, h: 5 }, { scrollWeeks: 6 }),
         w("tasks", "t-tasks", { x: 0, y: 3, w: 5, h: 5 }, { count: 8 }),
       ],
     }),
@@ -471,7 +519,15 @@ export const VIEW_TEMPLATES: ViewTemplate[] = [
         w("sunTimes", "t-sun", { x: 3, y: 6, w: 3, h: 2 }),
         w("airQuality", "t-aq", { x: 6, y: 4, w: 3, h: 2 }),
         w("earth", "t-earth", { x: 9, y: 4, w: 3, h: 4 }, { zoom: "region", overlay: "precip_3hr" }),
-        w("note", "t-note", { x: 6, y: 6, w: 3, h: 2 }, { text: "Umbrellas by the door.", size: "s" }),
+        w(
+          "note",
+          "t-note",
+          { x: 6, y: 6, w: 3, h: 2 },
+          {
+            text: "Rain plan\nUmbrellas by door\nBoots in the porch",
+            size: "s",
+          },
+        ),
       ],
     }),
   },

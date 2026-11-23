@@ -1,0 +1,76 @@
+{
+  "updatedAt": 1795473720000,
+  "configured": true,
+  "entities": {
+    "person.melvin": {
+      "id": "person.melvin",
+      "state": "home",
+      "name": "Melvin",
+      "changed": 1763930000000
+    },
+    "person.partner": {
+      "id": "person.partner",
+      "state": "not_home",
+      "name": "Alex",
+      "changed": 1763922000000
+    },
+    "person.maya": {
+      "id": "person.maya",
+      "state": "home",
+      "name": "Maya",
+      "changed": 1763931000000
+    },
+    "person.sam": {
+      "id": "person.sam",
+      "state": "not_home",
+      "name": "Sam",
+      "changed": 1763934000000
+    },
+    "light.kitchen": {
+      "id": "light.kitchen",
+      "state": "on",
+      "name": "Kitchen",
+      "changed": 1763937000000,
+      "brightness": 180
+    },
+    "climate.house": {
+      "id": "climate.house",
+      "state": "heat",
+      "name": "Thermostat",
+      "changed": 1763935000000,
+      "current": 20.5,
+      "target": 21,
+      "min": 10,
+      "max": 30,
+      "step": 0.5,
+      "action": "heating",
+      "unit": "°C"
+    },
+    "camera.front_door": {
+      "id": "camera.front_door",
+      "state": "idle",
+      "name": "Front door",
+      "changed": 1763937720000
+    },
+    "media_player.kitchen": {
+      "id": "media_player.kitchen",
+      "state": "playing",
+      "name": "Kitchen Sonos",
+      "changed": 1763937600000,
+      "media": {
+        "title": "Here Comes the Sun",
+        "artist": "The Beatles",
+        "album": "Abbey Road",
+        "art": "abbey-road",
+        "duration": 185,
+        "position": 62,
+        "positionAt": 1795473720000,
+        "volume": 0.35,
+        "muted": false,
+        "source": "Spotify",
+        "sources": ["Spotify", "Radio Paradise", "Kitchen TV"],
+        "features": 450487
+      }
+    }
+  }
+}

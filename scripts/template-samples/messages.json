@@ -1,0 +1,44 @@
+{
+  "messages": [
+    {
+      "id": "m1",
+      "author": "Dad",
+      "text": "Running 10 min late — please start dinner without me.",
+      "colour": "blue",
+      "pinned": true,
+      "createdAt": 1763934000000
+    },
+    {
+      "id": "m2",
+      "author": "Maya",
+      "text": "Need the permission slip signed for the field trip!",
+      "colour": "pink",
+      "pinned": false,
+      "createdAt": 1763926800000
+    },
+    {
+      "id": "m3",
+      "author": "Mom",
+      "text": "Swim bag is by the door. Cap + goggles packed.",
+      "colour": "yellow",
+      "pinned": false,
+      "createdAt": 1763919600000
+    },
+    {
+      "id": "m4",
+      "author": "Sam",
+      "text": "Can someone pick me up after Scouts tonight?",
+      "colour": "green",
+      "pinned": false,
+      "createdAt": 1763912400000
+    },
+    {
+      "id": "m5",
+      "author": "Ana",
+      "text": "Dance recital costume fitting Thursday — don't forget!",
+      "colour": "purple",
+      "pinned": false,
+      "createdAt": 1763905200000
+    }
+  ]
+}

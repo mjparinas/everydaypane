@@ -126,6 +126,7 @@ npm run test:coverage
 npm run lint && npm run typecheck && npm run format:check
 npm run build          # production build (what Vercel runs)
 node scripts/e2e.mjs   # Playwright browser tests against the build (CHROMIUM_PATH=… to use a local Chromium)
+npm run templates:previews  # regenerate public/templates/*.png from real widgets + sample feeds
 ```
 
 ## Product decisions
@@ -173,11 +174,12 @@ node scripts/e2e.mjs   # Playwright browser tests against the build (CHROMIUM_PA
   The Views tab's live preview is the exception: it shows the unsaved working copy over `postMessage` and never pushes
   that draft to wall screens.
 - **Starter view templates** (Melvin, 2026-11-22; expanded 2026-11-23): the Views tab shows ~20 ready-made layouts with
-  PNG screenshot previews (`public/templates/`, regenerate with `npm run templates:previews`). Free templates use only
-  Free-tier widgets; Household ones add productivity, family, holiday, commute and smart-home layouts
-  (`src/lib/config/templates.ts`).
+  PNG screenshot previews of the **real display widgets** (`public/templates/`, regenerate with
+  `npm run templates:previews` or the **Update template previews** GitHub Action). Sample feeds and photos live in
+  `scripts/template-samples/` and `public/templates/samples/`. Free templates use only Free-tier widgets; Household ones
+  add productivity, family, holiday, commute and smart-home layouts (`src/lib/config/templates.ts`).
 - **More theme fonts** (Melvin, 2026-11-22): Outfit, DM Sans and Literata join Inter, Manrope and Space Grotesk
-  (self-hosted under `/fonts/`).
+  (self-hosted under `/fonts/`). Built-in themes spread those fonts so starter template previews look distinct.
 - **Castable display URL** (Melvin, 2026-11-22): Displays tab copy/open tips for Chromecast (cast a browser tab) and
   TV/kiosk start pages — no custom Cast receiver.
 - **Live views editor** (Melvin, 2026-11-22: the view loaded in the UI, changes live; then one surface with right
