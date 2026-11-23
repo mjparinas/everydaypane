@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+import { SMART_ENTITY_RE } from "@/lib/smartHome";
 import { loadConfig } from "@/server/config";
 import { act, HA_ACTIONS, haFeed } from "@/server/homeassistant";
 import { json, readJson, sameOrigin, unauthorized } from "@/server/http";
@@ -18,7 +19,7 @@ export async function GET(req: Request) {
 }
 
 const body = z.object({
-  entity: z.string().regex(/^[a-z_]+\.[a-z0-9_]+$/),
+  entity: z.string().regex(SMART_ENTITY_RE),
   action: z.enum(HA_ACTIONS),
   value: z.number().optional(),
   // A media player's source by name (a Sonos favourite, a Spotify Connect speaker).

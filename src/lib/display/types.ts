@@ -476,3 +476,45 @@ export interface TransitData {
   /** Stop id → its next departures, soonest first. */
   stops: Record<string, TransitDeparture[]>;
 }
+
+/** WeatherFlow Tempest / AIR observation (src/server/tempest.ts). */
+export interface TempestData {
+  updatedAt: number;
+  temp?: number;
+  humidity?: number;
+  wind?: number;
+  gust?: number;
+  rain?: number;
+  pressure?: number;
+  units: { temp: string; wind: string; rain: string };
+  stale?: boolean;
+}
+
+/** Weather Underground PWS current observation (src/server/weatherUnderground.ts). */
+export interface WeatherUndergroundData {
+  updatedAt: number;
+  temp?: number;
+  humidity?: number;
+  wind?: number;
+  gust?: number;
+  rainRate?: number;
+  rainToday?: number;
+  observedAt?: string;
+  units: { temp: string; wind: string; rain: string };
+  stale?: boolean;
+}
+
+/** Nutrislice menu items for one widget (src/server/menus.ts). */
+export interface MenusData {
+  updatedAt: number;
+  slug: string;
+  school: string;
+  slots: ("breakfast" | "lunch" | "dinner")[];
+  days: Record<string, Partial<Record<"breakfast" | "lunch" | "dinner", string[]>>>;
+  stale?: boolean;
+}
+
+export interface MenusFeedData {
+  updatedAt: number;
+  byWidget: Record<string, MenusData>;
+}

@@ -14,6 +14,7 @@ import { MicrosoftPanel } from "./MicrosoftPanel";
 import { MusicPanel } from "./MusicPanel";
 import { PhotosPanel } from "./PhotosPanel";
 import { ScreenSaverPanel } from "./ScreenSaverPanel";
+import { SmartHomePanel } from "./SmartHomePanel";
 import { SportsPanel } from "./SportsPanel";
 import { useAdmin } from "./store";
 import { AllTasksPanels } from "./TasksPanel";
@@ -28,7 +29,7 @@ const GROUPS = [
   { id: "tasks", label: "Tasks", sections: ["tasks"] },
   { id: "family", label: "Family", sections: ["garbage", "commute", "chores", "sports", "school"] },
   { id: "photos-music", label: "Photos & music", sections: ["photos", "music"] },
-  { id: "ha", label: "Home Assistant", sections: ["ha"] },
+  { id: "ha", label: "Home & devices", sections: ["ha", "smart-home", "weather-stations", "menus"] },
   { id: "screen", label: "Screen", sections: ["screen-care", "screen-saver"] },
   { id: "alerts", label: "Alerts & backup", sections: ["alerts", "backup"] },
 ] as const;
@@ -243,8 +244,11 @@ export function SettingsPanel() {
       )}
 
       {showGroup("ha") && (
-        <div id="settings-ha">
-          <HomeAssistantPanel />
+        <div className="grid gap-4">
+          <div id="settings-ha">
+            <HomeAssistantPanel />
+          </div>
+          <SmartHomePanel />
         </div>
       )}
 

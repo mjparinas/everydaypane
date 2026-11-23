@@ -17,6 +17,11 @@ export type SecretKey =
   | "homeAssistant.accessSecret"
   | "spotify.refreshToken"
   | "sonos.refreshToken"
+  | "nest.refreshToken"
+  | "ecobee.refreshToken"
+  | "smartthings.refreshToken"
+  | "tempest.token"
+  | "wu.apiKey"
   | "microsoft.refreshToken"
   | "microsoft.scopes"
   | "todoist.refreshToken"
@@ -62,6 +67,11 @@ export async function secretsSet(accountId: string): Promise<Record<SecretKey, b
     "homeAssistant.accessSecret": set.has("homeAssistant.accessSecret"),
     "spotify.refreshToken": set.has("spotify.refreshToken"),
     "sonos.refreshToken": set.has("sonos.refreshToken"),
+    "nest.refreshToken": set.has("nest.refreshToken"),
+    "ecobee.refreshToken": set.has("ecobee.refreshToken"),
+    "smartthings.refreshToken": set.has("smartthings.refreshToken"),
+    "tempest.token": set.has("tempest.token"),
+    "wu.apiKey": set.has("wu.apiKey"),
     "microsoft.refreshToken": set.has("microsoft.refreshToken"),
     "microsoft.scopes": set.has("microsoft.scopes"),
     "todoist.refreshToken": set.has("todoist.refreshToken"),

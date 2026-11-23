@@ -24,6 +24,9 @@ same change, and moves it out of **In progress** when it merges.
 | Date (`date`) | Today's date in a time zone | Device clock |
 | Sunrise & sunset (`sunTimes`) | Today's sunrise, sunset and length of daylight; optional emoji and daylight hours | Open-Meteo forecast |
 | Weather (`weather`) | Current conditions, hourly, up to 7 days, with icons, UV index and pollen | Open-Meteo forecast and air quality |
+| Tempest (`tempest`) | Backyard station: temp, humidity, wind, rain today | WeatherFlow REST (`config.integrations.smartHome.tempest`, token secret) |
+| Weather Underground (`weatherUnderground`) | PWS current conditions | IBM WU PWS API (`WU_API_KEY` or per-account secret) |
+| School menu (`menus`) | Nutrislice breakfast and lunch for a day or week; not the meal plan | Nutrislice published JSON (`config.integrations.smartHome.menus`) |
 | Air quality (`airQuality`) | AQHI or US AQI | Open-Meteo air quality |
 | WiFi QR (`wifiQr`) | Join code, optionally the password | Settings document |
 | Phone edit QR (`editQr`) | QR to `/d/<token>/edit/` for meals, shopping and messages with no sign-in | This display's address |
@@ -34,7 +37,7 @@ same change, and moves it out of **In progress** when it merges.
 | Up next (`calendarUpNext`) | The next event large, with a short following list | Same calendar feed |
 | Garbage day (`garbage`) | Next pickups, 1 to 8 weeks | Township of Langley (Recycle Coach) |
 | Photos (`photos`) | Slideshow, cover or contain, captions | Amazon shared albums, Amazon people, URL lists, photo library (uploads and Google Photos picks), Bing picture of the day, Reddit, weather-linked albums, Immich, Dropbox, OneDrive, Box, Flickr, SmugMug, iCloud published links (`docs/icloud-photos.md`) |
-| Home Assistant tile (`haEntity`) | Toggle, light, sensor, climate, cover, lock (lock only), button | Home Assistant |
+| Smart device (`haEntity`) | Toggle, light, sensor, climate, cover, lock (lock only), button; `provider` Home Assistant (default), **Nest**, **ecobee** or **SmartThings** | Shared `/api/display/ha/` feed; OAuth + REST for native providers (`docs/nest.md`, `docs/ecobee.md`, `docs/smartthings.md`) |
 | Camera (`camera`) | UniFi Protect snapshot on a timer | Home Assistant |
 | Music (`media`) | Now playing, play/pause, skip, volume, sources | Home Assistant, Spotify or Sonos |
 | Note (`note`) | Fixed text from the admin | Settings document |
@@ -509,6 +512,15 @@ panel can be complex if you need it to be."
     widget, a fixed set of actions, and speakers or favourites from the account's own list; art only from addresses
     the feed read, public https only. Controlling Spotify needs Premium, and the widget says so when Spotify refuses.
     Setup: `docs/music.md`.
+- **Nest, ecobee and SmartThings without Home Assistant** (Phase 4, Household): a Smart device widget's `provider`
+  picks Home Assistant (default), Nest, ecobee or SmartThings. OAuth and refresh tokens live like Music
+  (`src/server/smartHomeAuth.ts`); device states merge into the same five-second `/api/display/ha/` feed as HaEntity rows
+  keyed `nest.*`, `ecobee.*`, `smartthings.*` (`src/server/smartDevices.ts`). Only entities on a widget can be controlled;
+  locks are **lock only** on SmartThings. Nest needs Google Device Access (`NEST_PROJECT_ID`, paid subscription).
+  Setup: `docs/nest.md`, `docs/ecobee.md`, `docs/smartthings.md`.
+- **Tempest, Weather Underground and Nutrislice** (Phase 4, Household): Tempest and WU station settings in
+  `config.integrations.smartHome`; Tempest token and optional WU key in secrets. **Menus** widget reads Nutrislice JSON
+  only (`src/server/menus.ts`), never the `meals` table.
 
 ## Security
 
