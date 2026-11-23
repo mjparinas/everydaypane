@@ -80,19 +80,21 @@ export function WidgetSettings({
       <p className="text-sm text-soft">
         {info.icon} {info.description}
       </p>
-      <Text
-        label="Title"
-        value={widget.title ?? ""}
-        maxLength={60}
-        placeholder="None"
-        hint="A small heading above the widget."
-        onChange={(v) =>
-          onChange((w) => {
-            if (v) w.title = v;
-            else delete w.title;
-          })
-        }
-      />
+      {info.supportsTitle !== false && (
+        <Text
+          label="Title"
+          value={widget.title ?? ""}
+          maxLength={60}
+          placeholder="None"
+          hint="A small heading above the widget."
+          onChange={(v) =>
+            onChange((w) => {
+              if (v) w.title = v;
+              else delete w.title;
+            })
+          }
+        />
+      )}
       <PanelBackground widget={widget} config={config} onChange={onChange} />
       <TypeSettings widget={widget} config={config} onChange={onChange} />
     </div>

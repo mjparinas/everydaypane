@@ -15,6 +15,9 @@ interface WidgetInfo<T extends WidgetType> {
   size: { w: number; h: number };
   minSize: { w: number; h: number };
   defaults: () => Defaults<T>;
+  // False when the wall never draws `title` (clock uses Label; photos / radar / earth fill the cell).
+  // Melvin, 2026-11-22: Title in settings only when the widget shows it.
+  supportsTitle?: boolean;
 }
 
 export const WIDGETS: { [T in WidgetType]: WidgetInfo<T> } = {
@@ -24,6 +27,7 @@ export const WIDGETS: { [T in WidgetType]: WidgetInfo<T> } = {
     icon: "🕒",
     size: { w: 3, h: 2 },
     minSize: { w: 2, h: 1 },
+    supportsTitle: false,
     defaults: () => ({ timeZone: "America/Vancouver", label: "Vancouver", showSeconds: false, style: "digital" }),
   },
   date: {
@@ -104,6 +108,7 @@ export const WIDGETS: { [T in WidgetType]: WidgetInfo<T> } = {
     icon: "🖼️",
     size: { w: 6, h: 5 },
     minSize: { w: 2, h: 2 },
+    supportsTitle: false,
     defaults: () => ({ sourceIds: [], intervalSeconds: 30, fit: "cover", showCaption: false }),
   },
   haEntity: {
@@ -207,6 +212,7 @@ export const WIDGETS: { [T in WidgetType]: WidgetInfo<T> } = {
     icon: "🌧️",
     size: { w: 4, h: 4 },
     minSize: { w: 2, h: 2 },
+    supportsTitle: false,
     defaults: () => ({ precip: "rain" as const, zoom: 8, pastMinutes: 60, forecastMinutes: 60, animate: true }),
   },
   timer: {
@@ -268,6 +274,7 @@ export const WIDGETS: { [T in WidgetType]: WidgetInfo<T> } = {
     icon: "🌀",
     size: { w: 6, h: 4 },
     minSize: { w: 2, h: 2 },
+    supportsTitle: false,
     // Langley until another place is picked; the widget's settings can copy the dashboard's own location.
     defaults: () => ({
       place: "Langley",
