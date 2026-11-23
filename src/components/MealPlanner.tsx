@@ -4,16 +4,33 @@ import { useEffect, useState } from "react";
 
 import { familyAuthError, useFamilyAuth, useFamilyFetch } from "@/components/FamilyAuth";
 import { addDays } from "@/lib/calendar";
-import { MEAL_ICONS, MEAL_LABELS, MEAL_SLOTS, type DayMeals, type MealSlot } from "@/lib/meals";
+import {
+  MEAL_ICONS,
+  MEAL_LABELS,
+  MEAL_SLOTS,
+  MEAL_WEEKDAYS,
+  mealWeekday,
+  normalizeRepeat,
+  repeatLabel,
+  type DayMeals,
+  type MealOrigins,
+  type MealRepeat,
+  type MealRule,
+  type MealSlot,
+} from "@/lib/meals";
 
 // The meal planner (Melvin, 2026-11-17), for phones: a week of days, each with breakfast, lunch and dinner. A meal
 // saves as soon as you leave its box (no Save button), and displays show it within a minute. Meals planned lately are
-// offered as suggestions. Used by /family/, the admin Meals tab, and `/d/<token>/edit/`.
+// offered as suggestions. Recurring cadences (Melvin, 2026-11-23) fill future days from a rule; a one-off still wins
+// for a single day, and clearing a rule-filled day skips only that day. Used by /family/, the admin Meals tab, and
+// `/d/<token>/edit/`.
 
 interface Plan {
   today: string;
   from: string;
   meals: Record<string, DayMeals>;
+  origins: MealOrigins;
+  rules: MealRule[];
   recent: string[];
 }
 
@@ -30,12 +47,47 @@ function dayHeading(date: string, today: string): string {
 
 type Status = "saving" | "saved" | "error";
 
+type CadenceKey = "once" | `interval:${number}` | `weekdays:${string}`;
+
+function cadenceKey(repeat: MealRepeat | null | undefined): CadenceKey {
+  if (!repeat) return "once";
+  if (repeat.kind === "interval") return `interval:${repeat.every}`;
+  return `weekdays:${repeat.days.join(",")}`;
+}
+
+function parseCadence(value: string): MealRepeat | null {
+  if (value === "once") return null;
+  if (value.startsWith("interval:")) {
+    return normalizeRepeat({ kind: "interval", every: Number(value.slice("interval:".length)) });
+  }
+  if (value.startsWith("weekdays:")) {
+    const days = value.slice("weekdays:".length).split(",").filter(Boolean).map(Number);
+    return normalizeRepeat({ kind: "weekdays", days });
+  }
+  return null;
+}
+
+function optionsFor(date: string): { value: CadenceKey; label: string }[] {
+  const wd = mealWeekday(date);
+  const day = MEAL_WEEKDAYS[wd] ?? "day";
+  return [
+    { value: "once", label: "Just this day" },
+    { value: "interval:1", label: "Every day" },
+    { value: "interval:2", label: "Every 2 days" },
+    { value: "interval:3", label: "Every 3 days" },
+    { value: `weekdays:${wd}`, label: `Every ${day}` },
+    { value: "weekdays:1,2,3,4,5", label: "Weekdays (Mon–Fri)" },
+    { value: "weekdays:0,6", label: "Weekends" },
+  ];
+}
+
 export function MealPlanner() {
   const familyFetch = useFamilyFetch();
   const { displayToken } = useFamilyAuth();
   const viaDisplay = Boolean(displayToken);
   const [plan, setPlan] = useState<Plan | null>(null);
   const [drafts, setDrafts] = useState<Record<string, string>>({});
+  const [cadence, setCadence] = useState<Record<string, CadenceKey>>({});
   const [status, setStatus] = useState<Record<string, Status>>({});
   const [error, setError] = useState("");
 
@@ -43,7 +95,8 @@ export function MealPlanner() {
     try {
       const r = await familyFetch(`/api/meals/?days=${DAYS}${from ? `&from=${from}` : ""}`);
       if (!r.ok) return familyAuthError(r.status, viaDisplay, "Couldn't load the meal plan.");
-      return (await r.json()) as Plan;
+      const body = (await r.json()) as Plan;
+      return { ...body, origins: body.origins ?? {}, rules: body.rules ?? [] };
     } catch {
       return "No connection.";
     }
@@ -65,36 +118,116 @@ export function MealPlanner() {
     // eslint-disable-next-line react-hooks/exhaustive-deps -- load once per token
   }, [displayToken]);
 
-  async function save(date: string, slot: MealSlot, text: string) {
+  function ruleFor(date: string, slot: MealSlot): MealRule | undefined {
+    const origin = plan?.origins[date]?.[slot];
+    if (!origin || origin.source !== "rule") return undefined;
+    return plan?.rules.find((r) => r.id === origin.ruleId);
+  }
+
+  function currentCadence(date: string, slot: MealSlot): CadenceKey {
+    const k = key(date, slot);
+    if (cadence[k]) return cadence[k];
+    const rule = ruleFor(date, slot);
+    return cadenceKey(rule?.repeat);
+  }
+
+  async function save(date: string, slot: MealSlot, text: string, chosen: CadenceKey) {
+    const k = key(date, slot);
+    setStatus((s) => ({ ...s, [k]: "saving" }));
+    const repeat = parseCadence(chosen);
+    const existing = ruleFor(date, slot);
+    try {
+      const body =
+        repeat && text.trim()
+          ? { date, slot, text, repeat, ruleId: existing && cadenceKey(existing.repeat) === chosen ? existing.id : undefined }
+          : { date, slot, text };
+      const r = await familyFetch("/api/meals/", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      if (!r.ok) {
+        const errBody = (await r.json().catch(() => ({}))) as { error?: string };
+        setError(errBody.error ?? "Couldn't save that meal.");
+        return setStatus((s) => ({ ...s, [k]: "error" }));
+      }
+      // Reload the week so origins and expanded days stay honest after a rule change.
+      const refreshed = await fetchPlan(plan?.from ?? null);
+      if (typeof refreshed === "string") {
+        setError(refreshed);
+        return setStatus((s) => ({ ...s, [k]: "error" }));
+      }
+      setPlan(refreshed);
+      setDrafts((d) => {
+        if (d[k] !== undefined && d[k] !== text) return d;
+        return Object.fromEntries(Object.entries(d).filter(([x]) => x !== k));
+      });
+      setCadence((c) => {
+        const next = { ...c };
+        delete next[k];
+        return next;
+      });
+      setStatus((s) => ({ ...s, [k]: "saved" }));
+      setError("");
+    } catch {
+      setError("No connection. That meal wasn't saved.");
+      setStatus((s) => ({ ...s, [k]: "error" }));
+    }
+  }
+
+  async function stopRule(date: string, slot: MealSlot) {
+    const rule = ruleFor(date, slot);
+    if (!rule) return;
     const k = key(date, slot);
     setStatus((s) => ({ ...s, [k]: "saving" }));
     try {
       const r = await familyFetch("/api/meals/", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ date, slot, text }),
+        body: JSON.stringify({ stopRuleId: rule.id }),
       });
       if (!r.ok) {
-        const body = (await r.json().catch(() => ({}))) as { error?: string };
-        setError(body.error ?? "Couldn't save that meal.");
+        setError("Couldn't stop that repeat.");
         return setStatus((s) => ({ ...s, [k]: "error" }));
       }
-      setPlan((p) => {
-        if (!p) return p;
-        const day = { ...p.meals[date] };
-        if (text.trim()) day[slot] = text.trim();
-        else delete day[slot];
-        const recent = text.trim() && !p.recent.includes(text.trim()) ? [text.trim(), ...p.recent] : p.recent;
-        return { ...p, meals: { ...p.meals, [date]: day }, recent };
-      });
-      // Only clear the draft when it still matches what we saved — keystrokes typed during the request stay.
-      setDrafts((d) => {
-        if (d[k] !== undefined && d[k] !== text) return d;
-        return Object.fromEntries(Object.entries(d).filter(([x]) => x !== k));
-      });
+      const refreshed = await fetchPlan(plan?.from ?? null);
+      if (typeof refreshed === "string") {
+        setError(refreshed);
+        return setStatus((s) => ({ ...s, [k]: "error" }));
+      }
+      setPlan(refreshed);
       setStatus((s) => ({ ...s, [k]: "saved" }));
     } catch {
-      setError("No connection. That meal wasn't saved.");
+      setError("No connection. That repeat wasn't stopped.");
+      setStatus((s) => ({ ...s, [k]: "error" }));
+    }
+  }
+
+  async function updateSeries(date: string, slot: MealSlot, text: string) {
+    const rule = ruleFor(date, slot);
+    if (!rule) return;
+    const k = key(date, slot);
+    setStatus((s) => ({ ...s, [k]: "saving" }));
+    try {
+      const r = await familyFetch("/api/meals/", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ apply: "series", ruleId: rule.id, text }),
+      });
+      if (!r.ok) {
+        setError("Couldn't update that series.");
+        return setStatus((s) => ({ ...s, [k]: "error" }));
+      }
+      const refreshed = await fetchPlan(plan?.from ?? null);
+      if (typeof refreshed === "string") {
+        setError(refreshed);
+        return setStatus((s) => ({ ...s, [k]: "error" }));
+      }
+      setPlan(refreshed);
+      setDrafts((d) => Object.fromEntries(Object.entries(d).filter(([x]) => x !== k)));
+      setStatus((s) => ({ ...s, [k]: "saved" }));
+    } catch {
+      setError("No connection. That series wasn't updated.");
       setStatus((s) => ({ ...s, [k]: "error" }));
     }
   }
@@ -106,17 +239,17 @@ export function MealPlanner() {
   return (
     <div className="grid gap-4">
       <div className="flex items-center justify-between gap-2">
-        <button className="btn-ghost" onClick={() => step(-DAYS)} aria-label="Earlier week">
+        <button type="button" className="btn-ghost" onClick={() => step(-DAYS)} aria-label="Earlier week">
           ‹ Earlier
         </button>
         {plan.from !== plan.today ? (
-          <button className="btn-ghost" onClick={() => void load(null)}>
+          <button type="button" className="btn-ghost" onClick={() => void load(null)}>
             Back to today
           </button>
         ) : (
-          <p className="text-sm text-soft">Saves as you go</p>
+          <p className="text-sm text-soft">Saves as you go · set a repeat to fill future days</p>
         )}
-        <button className="btn-ghost" onClick={() => step(DAYS)} aria-label="Later week">
+        <button type="button" className="btn-ghost" onClick={() => step(DAYS)} aria-label="Later week">
           Later ›
         </button>
       </div>
@@ -132,42 +265,94 @@ export function MealPlanner() {
       </datalist>
       <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
         {days.map((date) => (
-          <section key={date} className="card grid gap-2" aria-label={dayHeading(date, plan.today)}>
+          <section key={date} className="card grid gap-3" aria-label={dayHeading(date, plan.today)}>
             <h3 className={`text-sm font-bold ${date === plan.today ? "text-brand" : ""}`}>{dayHeading(date, plan.today)}</h3>
             {MEAL_SLOTS.map((slot) => {
               const k = key(date, slot);
               const saved = plan.meals[date]?.[slot] ?? "";
               const value = drafts[k] ?? saved;
               const st = status[k];
+              const rule = ruleFor(date, slot);
+              const chosen = currentCadence(date, slot);
+              const opts = optionsFor(date);
+              // Keep the current rule's cadence in the list even if it isn't a preset.
+              if (rule && !opts.some((o) => o.value === cadenceKey(rule.repeat))) {
+                opts.splice(1, 0, { value: cadenceKey(rule.repeat), label: repeatLabel(rule.repeat) });
+              }
               return (
-                <label key={slot} className="grid grid-cols-[6.5rem_1fr] items-center gap-2 text-sm">
-                  <span className="font-medium">
-                    <span aria-hidden="true">{MEAL_ICONS[slot]}</span> {MEAL_LABELS[slot]}
-                  </span>
-                  <span className="relative">
-                    <input
-                      className="field w-full pr-8"
-                      value={value}
-                      maxLength={120}
-                      list="meal-suggestions"
-                      placeholder="Not planned"
-                      enterKeyHint="done"
-                      onChange={(e) => setDrafts((d) => ({ ...d, [k]: e.target.value }))}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter") e.currentTarget.blur();
-                      }}
-                      onBlur={() => {
-                        if (value.trim() !== saved) void save(date, slot, value);
-                      }}
-                    />
-                    <span
-                      className={`pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 text-xs ${st === "error" ? "text-bad" : "text-soft"}`}
-                      aria-live="polite"
-                    >
-                      {st === "saving" ? "…" : st === "saved" ? "✓" : st === "error" ? "!" : ""}
+                <div key={slot} className="grid gap-1.5">
+                  <label className="grid grid-cols-[6.5rem_1fr] items-center gap-2 text-sm">
+                    <span className="font-medium">
+                      <span aria-hidden="true">{MEAL_ICONS[slot]}</span> {MEAL_LABELS[slot]}
                     </span>
-                  </span>
-                </label>
+                    <span className="relative">
+                      <input
+                        className="field w-full pr-8"
+                        value={value}
+                        maxLength={120}
+                        list="meal-suggestions"
+                        placeholder="Not planned"
+                        enterKeyHint="done"
+                        onChange={(e) => setDrafts((d) => ({ ...d, [k]: e.target.value }))}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") e.currentTarget.blur();
+                        }}
+                        onBlur={() => {
+                          const sameText = value.trim() === saved;
+                          const sameCadence = cadenceKey(rule?.repeat) === chosen || (!rule && chosen === "once");
+                          if (sameText && sameCadence && !cadence[k]) return;
+                          void save(date, slot, value, chosen);
+                        }}
+                      />
+                      <span
+                        className={`pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 text-xs ${st === "error" ? "text-bad" : "text-soft"}`}
+                        aria-live="polite"
+                      >
+                        {st === "saving" ? "…" : st === "saved" ? "✓" : st === "error" ? "!" : ""}
+                      </span>
+                    </span>
+                  </label>
+                  <div className="grid grid-cols-[6.5rem_1fr] items-center gap-2 text-xs">
+                    <span className="text-soft">Repeat</span>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <select
+                        className="field py-1 text-xs"
+                        value={chosen}
+                        aria-label={`Repeat ${MEAL_LABELS[slot]} on ${dayName(date)}`}
+                        onChange={(e) => {
+                          const next = e.target.value as CadenceKey;
+                          setCadence((c) => ({ ...c, [k]: next }));
+                          if (value.trim()) void save(date, slot, value, next);
+                        }}
+                      >
+                        {opts.map((o) => (
+                          <option key={o.value} value={o.value}>
+                            {o.label}
+                          </option>
+                        ))}
+                      </select>
+                      {rule ? (
+                        <>
+                          <span className="text-soft" title={repeatLabel(rule.repeat)}>
+                            ↻ {repeatLabel(rule.repeat)}
+                          </span>
+                          {value.trim() && value.trim() !== rule.text ? (
+                            <button
+                              type="button"
+                              className="btn-ghost px-1.5 py-0.5 text-xs"
+                              onClick={() => void updateSeries(date, slot, value)}
+                            >
+                              Update series
+                            </button>
+                          ) : null}
+                          <button type="button" className="btn-ghost px-1.5 py-0.5 text-xs" onClick={() => void stopRule(date, slot)}>
+                            Stop
+                          </button>
+                        </>
+                      ) : null}
+                    </div>
+                  </div>
+                </div>
               );
             })}
           </section>
