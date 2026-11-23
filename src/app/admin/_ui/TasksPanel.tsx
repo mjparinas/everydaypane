@@ -65,7 +65,7 @@ export function TasksPanel() {
       {!status ? (
         !error && <p className="text-sm text-soft">Checking…</p>
       ) : !status.configured ? (
-        <p className="text-sm text-soft">Google sign-in isn&rsquo;t set up on the server yet (see Google Calendar above).</p>
+        <p className="text-sm text-soft">Google sign-in isn&rsquo;t set up on the server yet (connect Google Calendar under Settings › Calendars first).</p>
       ) : !status.allowed ? (
         <>
           <p className="text-sm text-soft">
