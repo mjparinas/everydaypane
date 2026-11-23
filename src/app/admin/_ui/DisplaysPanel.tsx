@@ -7,7 +7,7 @@ import type { DashboardConfig } from "@/lib/config/schema";
 import { ConfirmButton, Section, Select, Text } from "./fields";
 import { useAdmin } from "./store";
 
-// Displays: each screen (the UC-Display21 in the kitchen, an old tablet in the hall) gets its own secret address.
+// Displays: each screen (kitchen wall panel, an old tablet in the hall) gets its own secret address.
 // The address is always shown on the row with Copy on the far right (Melvin, 2026-11-22); "New link" replaces it if
 // it leaks, and deleting a display signs that screen out.
 
@@ -119,7 +119,7 @@ export function DisplaysPanel() {
             <Address url={added.url} label="Display" />
             <Address url={added.editUrl} label="Phone edit" />
             <p className="text-xs text-soft">
-              On the UC-Display21, set the display address as the start page in its browser (kiosk) settings.
+              On a wall panel or tablet, set the display address as the start page in its browser (kiosk) settings.
             </p>
             <CastHints />
           </div>
@@ -232,7 +232,7 @@ function CastHints() {
         TV&apos;s browser and set the address as the start page.
       </p>
       <p>
-        <strong className="font-medium text-ink">UC-Display21 / tablet:</strong> set this as the start page in the browser (kiosk) settings.
+        <strong className="font-medium text-ink">Wall panel / tablet:</strong> set this as the start page in the browser (kiosk) settings.
       </p>
     </div>
   );

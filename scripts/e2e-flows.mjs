@@ -1,7 +1,7 @@
 // Display flows for scripts/e2e.mjs: add a device through the admin API, open its address like a wall screen would,
 // and check it draws, ticks, polls for changes and survives going offline.
 
-const VIEWPORT = { width: 1920, height: 1080 }; // the UC-Display21
+const VIEWPORT = { width: 1920, height: 1080 }; // kitchen wall panel size
 
 async function addDevice(page, base, viewId = null) {
   const r = await page.request.post(`${base}/api/admin/devices/`, { headers: { origin: base }, data: { name: "Kitchen", viewId } });

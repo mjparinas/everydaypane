@@ -170,7 +170,7 @@ export function ThemesPanel() {
           <Toggle
             label="Frosted glass"
             checked={theme.glass}
-            hint="Blurs the background behind widgets. It looks nice but makes a low-power screen like the UC-Display21 work harder."
+            hint="Blurs the background behind widgets. It looks nice but makes a low-power wall panel work harder."
             onChange={(v) => editTheme((t) => void (t.glass = v))}
           />
         </Section>

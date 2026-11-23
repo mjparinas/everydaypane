@@ -27,7 +27,7 @@ export const TOPIC_LABEL: Record<Topic, string> = {
 };
 
 export const OURS: Record<Topic, string> = {
-  hardware: "Any browser: UniFi UC-Display21, tablet, TV or laptop. No appliance to buy.",
+  hardware: "Any browser: tablet, TV, wall panel or laptop. No appliance to buy.",
   price: "Software: Free plan $0. Household $7/mo or $59/yr. Use a screen you already own.",
   subscription: "Free forever for one display with essentials. Family unlocks every widget — best value.",
   calendars: "Google Calendar, Google Tasks and any iCal link, merged into schedule and month views.",
@@ -61,7 +61,7 @@ export const COMPETITORS: Competitor[] = [
     theirPick:
       "Choose DAKboard if you want the broadest catalogue of third-party blocks and are happy managing layouts and API quirks yourself.",
     ourEdge:
-      "Everydaypane ships Canadian family integrations out of the box (TransLink, Langley garbage, BC Ferries, Alert Ready, BC Hydro) and a phone-first admin with live layout editing — without a separate player image.",
+      "Everydaypane ships BC kitchen integrations out of the box (TransLink, Langley garbage, BC Ferries, Alert Ready, BC Hydro) and a phone-first admin with live layout editing — without a separate player image.",
     rows: {
       hardware: [
         {

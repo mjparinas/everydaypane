@@ -22,6 +22,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     path: `/blog/${post.slug}/`,
     type: "article",
     published: post.date,
+    image: post.image,
   });
 }
 
@@ -30,6 +31,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
   const post = postBySlug(slug);
   if (!post) notFound();
   const related = POSTS.filter((p) => p.slug !== post.slug && p.kind === post.kind).slice(0, 3);
+  const imageUrl = `${SITE_URL}${post.image}`;
 
   return (
     <SitePage>
@@ -41,6 +43,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
           description: post.description,
           datePublished: post.date,
           dateModified: post.date,
+          image: imageUrl,
           author: { "@type": "Organization", name: "Everydaypane" },
           mainEntityOfPage: `${SITE_URL}/blog/${post.slug}/`,
         }}
@@ -58,6 +61,10 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
         {post.version ? ` · v${post.version}` : ""} · {readMinutes(post)} min read
       </p>
       <p className="mt-6 text-lg text-soft">{post.description}</p>
+      <figure className="mt-8 overflow-hidden rounded-2xl border border-line bg-panel">
+        {/* eslint-disable-next-line @next/next/no-img-element -- static PNG previews in /public/templates */}
+        <img src={post.image} alt={`Everydaypane screenshot for ${post.title}`} className="h-auto w-full" width={1920} height={1080} />
+      </figure>
       <div className="mt-10">
         <ArticleBody blocks={post.body} />
       </div>
