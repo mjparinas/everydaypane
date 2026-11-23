@@ -70,6 +70,14 @@ export const WIDGETS: { [T in WidgetType]: WidgetInfo<T> } = {
     minSize: { w: 2, h: 2 },
     defaults: () => ({ ssid: "Home", password: "", encryption: "WPA", hidden: false, showPassword: false }),
   },
+  editQr: {
+    label: "Phone edit QR",
+    description: "Scan to edit meals, shopping and messages",
+    icon: "📱",
+    size: { w: 2, h: 3 },
+    minSize: { w: 2, h: 2 },
+    defaults: () => ({}),
+  },
   countdown: {
     label: "Countdown",
     description: "Days until holidays and birthdays",
@@ -320,7 +328,7 @@ export const WIDGET_GROUPS: { id: string; label: string; types: WidgetType[] }[]
   { id: "weather", label: "Weather & map", types: ["weather", "airQuality", "radar", "earth"] },
   { id: "calendar", label: "Calendar", types: ["agenda", "calendarMonth", "countdown", "tasks"] },
   { id: "family", label: "Family", types: ["meals", "shopping", "messages", "chores", "school", "presence"] },
-  { id: "home", label: "Home", types: ["haEntity", "camera", "media", "wifiQr", "garbage", "commute", "transit", "ferries"] },
+  { id: "home", label: "Home", types: ["haEntity", "camera", "media", "wifiQr", "editQr", "garbage", "commute", "transit", "ferries"] },
   { id: "media", label: "Outside", types: ["photos", "sports", "alerts", "note"] },
 ];
 

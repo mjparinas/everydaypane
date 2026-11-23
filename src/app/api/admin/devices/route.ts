@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+import { editPageUrl } from "@/lib/editPage";
 import { addDevice, listDevices } from "@/server/devices";
 import { json, readJson, sameOrigin, unauthorized } from "@/server/http";
 import { adminFor } from "@/server/viewer";
@@ -11,6 +12,7 @@ export async function GET(req: Request) {
   const devices = (await listDevices()).map(({ token, ...d }) => ({
     ...d,
     url: token ? `${origin}/d/${token}/` : null,
+    editUrl: token ? editPageUrl(origin, token) : null,
   }));
   return json({ devices });
 }
@@ -24,5 +26,6 @@ export async function POST(req: Request) {
   const parsed = body.safeParse(await readJson(req, 2_000).catch(() => null));
   if (!parsed.success) return json({ error: "Give the display a name" }, 400);
   const { device, token } = await addDevice(parsed.data.name, parsed.data.viewId);
-  return json({ device, url: `${new URL(req.url).origin}/d/${token}/` }, 201);
+  const origin = new URL(req.url).origin;
+  return json({ device, url: `${origin}/d/${token}/`, editUrl: editPageUrl(origin, token) }, 201);
 }

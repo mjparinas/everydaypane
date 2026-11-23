@@ -285,6 +285,13 @@ function TypeSettings({
         </>
       );
     }
+    case "editQr":
+      return (
+        <p className="text-sm text-soft">
+          Encodes this display&apos;s <code className="text-xs">/d/…/edit/</code> link. Anyone who scans it can change the meal plan,
+          shopping list and message board with no sign-in. The same link is under Displays.
+        </p>
+      );
     case "countdown": {
       const e = edit<"countdown">();
       return <CountdownEvents events={w.events} count={w.count} onChange={e} />;

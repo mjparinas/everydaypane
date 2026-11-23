@@ -144,6 +144,8 @@ export const widgetSchema = z.discriminatedUnion("type", [
     hidden: z.boolean(),
     showPassword: z.boolean(),
   }),
+  // Phone edit QR (Melvin, 2026-11-22): encodes `/d/<this display's token>/edit/` for meals, shopping and messages.
+  z.object({ ...base, type: z.literal("editQr") }),
   z.object({
     ...base,
     type: z.literal("countdown"),

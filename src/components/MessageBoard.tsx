@@ -2,8 +2,10 @@
 
 import { useEffect, useState } from "react";
 
+import { familyAuthError, useFamilyAuth, useFamilyFetch } from "@/components/FamilyAuth";
+
 // The family message board (Melvin, 2026-11-17), for phones: post a note, see what's on the wall, delete your own.
-// Admins can also pin a note to the top and delete any. Used by /family/ and the admin panel's Messages tab.
+// Admins can also pin a note to the top and delete any. Used by /family/, the admin Messages tab, and `/d/<token>/edit/`.
 
 type Colour = "yellow" | "pink" | "blue" | "green" | "purple";
 interface Note {
@@ -47,17 +49,10 @@ function readName(): string {
 
 type Board = { messages: Note[]; admin: boolean };
 
-async function fetchBoard(): Promise<Board | string> {
-  try {
-    const r = await fetch("/api/messages/");
-    if (!r.ok) return r.status === 401 ? "You've been signed out. Sign in again." : "Couldn't load the board.";
-    return (await r.json()) as Board;
-  } catch {
-    return "No connection.";
-  }
-}
-
 export function MessageBoard() {
+  const familyFetch = useFamilyFetch();
+  const { displayToken } = useFamilyAuth();
+  const viaDisplay = Boolean(displayToken);
   const [notes, setNotes] = useState<Note[] | null>(null);
   const [admin, setAdmin] = useState(false);
   const [author, setAuthor] = useState("");
@@ -66,6 +61,16 @@ export function MessageBoard() {
   const [expiry, setExpiry] = useState<string>("24");
   const [error, setError] = useState("");
   const [sending, setSending] = useState(false);
+
+  async function fetchBoard(): Promise<Board | string> {
+    try {
+      const r = await familyFetch("/api/messages/");
+      if (!r.ok) return familyAuthError(r.status, viaDisplay, "Couldn't load the board.");
+      return (await r.json()) as Board;
+    } catch {
+      return "No connection.";
+    }
+  }
 
   function show(board: Board | string) {
     if (typeof board === "string") return setError(board);
@@ -82,7 +87,9 @@ export function MessageBoard() {
     return () => {
       live = false;
     };
-  }, []);
+    // familyFetch identity changes only when the display token does.
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- load once per token
+  }, [displayToken]);
 
   async function post(e: React.FormEvent) {
     e.preventDefault();
@@ -93,7 +100,7 @@ export function MessageBoard() {
     } catch {
       // Private browsing: the name just isn't remembered.
     }
-    const r = await fetch("/api/messages/", {
+    const r = await familyFetch("/api/messages/", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ author, text, colour, expiresInHours: expiry ? Number(expiry) : null }),
@@ -107,12 +114,12 @@ export function MessageBoard() {
 
   async function remove(id: string) {
     setNotes((n) => n?.filter((x) => x.id !== id) ?? null);
-    await fetch(`/api/messages/${id}/`, { method: "DELETE" });
+    await familyFetch(`/api/messages/${id}/`, { method: "DELETE" });
     void load();
   }
 
   async function pin(id: string, pinned: boolean) {
-    await fetch(`/api/messages/${id}/`, {
+    await familyFetch(`/api/messages/${id}/`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ pinned }),
