@@ -71,6 +71,8 @@ same change, and moves it out of **In progress** when it merges.
 | News (`news`) | CBC/BBC presets, custom RSS or GNews | RSS or `GNEWS_API_KEY` |
 | Dad joke (`dadJoke`) | One joke, family-friendly option | icanhazdadjoke.com |
 | Quotes (`quotes`) | Short quotations with authors | quotable.io |
+| Affirmation (`affirmation`) | One calm daily line; categories and optional custom lines | Curated bank (`src/lib/affirmations.ts`) |
+| Horoscope (`horoscope`) | Playful daily blurb for a zodiac sign | Curated bank (`src/lib/horoscope.ts`) — not a live astrology feed |
 | Instagram (`instagram`) | Public post embed (not profiles) | instagram.com embed iframe |
 | Trello (`trello`) | Lists and open cards on a board | Trello REST (`TRELLO_API_KEY` + token) |
 | Slack (`slack`) | Latest messages from channels | Slack OAuth (read-only) |

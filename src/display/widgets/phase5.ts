@@ -1,10 +1,12 @@
 import type {
+  AffirmationData,
   AirportsData,
   CryptoData,
   DadJokeData,
   EmailCountData,
   FitbitData,
   FxData,
+  HoroscopeData,
   QuotesData,
   RssData,
   SlackData,
@@ -179,6 +181,23 @@ export const quotes: Mount<"quotes"> = (el, w) => {
   el.append(root);
   return subscribe<QuotesData>(`quotes?count=${w.count}&tags=${encodeURIComponent(w.tags.join(","))}`, 15 * 60_000, (d) =>
     fill(root, ...d.quotes.map((q) => h("blockquote", { class: "p5-quote" }, q.text, h("cite", {}, `— ${q.author}`)))),
+  );
+};
+
+export const affirmation: Mount<"affirmation"> = (el, w) => {
+  const root = h("div", { class: "w-affirm" }, h("div", { class: "w-empty" }, "Loading…"));
+  el.append(root);
+  const custom = encodeURIComponent(w.custom.join("\n"));
+  return subscribe<AffirmationData>(`affirmation?category=${encodeURIComponent(w.category)}&custom=${custom}`, 60 * 60_000, (d) =>
+    fill(root, h("p", { class: "p5-quote" }, d.text)),
+  );
+};
+
+export const horoscope: Mount<"horoscope"> = (el, w) => {
+  const root = h("div", { class: "w-horoscope" }, h("div", { class: "w-empty" }, "Loading…"));
+  el.append(root);
+  return subscribe<HoroscopeData>(`horoscope?sign=${encodeURIComponent(w.sign)}`, 60 * 60_000, (d) =>
+    fill(root, h("div", { class: "w-label" }, d.label), h("p", { class: "p5-quote" }, d.text)),
   );
 };
 

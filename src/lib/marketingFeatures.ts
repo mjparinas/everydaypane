@@ -73,6 +73,8 @@ const FEATURE_BLURBS: Partial<Record<WidgetType, string>> = {
   news: "CBC/BBC presets, custom RSS or GNews.",
   dadJoke: "One joke, family-friendly option.",
   quotes: "Short quotations with authors.",
+  affirmation: "A calm daily line; kids, calm or courage categories.",
+  horoscope: "Playful daily blurb for a zodiac sign.",
   instagram: "Public post embed (not profiles).",
   trello: "Lists and open cards on a board.",
   slack: "Latest messages from channels.",
