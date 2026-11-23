@@ -1,9 +1,10 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import { GET, POST } from "@/app/api/household/backup/route";
 import { defaultConfig } from "@/lib/config/defaults";
 import type { DashboardConfig } from "@/lib/config/schema";
-import { LEGACY_ACCOUNT_ID } from "@/server/accounts";
+import { createAccount, LEGACY_ACCOUNT_ID } from "@/server/accounts";
+import { finishSignIn, sessionCookie, startSignIn } from "@/server/auth";
 import { cookieFor, req, useTestServer } from "@/test/server";
 
 import { makeBackup, readBackup } from "./backup";
@@ -122,5 +123,29 @@ describe("settings backup", () => {
       }),
     );
     expect(cross.status).toBe(403);
+  });
+
+  it("refuses backup download and restore on Free", async () => {
+    const account = await createAccount("Free backup", "free.backup@example.com");
+    const info = vi.spyOn(console, "info").mockImplementation(() => undefined);
+    await startSignIn(req("/api/auth/start/", { method: "POST" }), "free.backup@example.com", "http://localhost");
+    const printed = info.mock.calls.map((c) => String(c[0])).join("\n");
+    info.mockRestore();
+    const token = /token=([A-Za-z0-9_%-]+)/.exec(printed)?.[1];
+    const done = await finishSignIn(decodeURIComponent(token ?? ""));
+    expect(done).toBeTruthy();
+    const cookie = sessionCookie(done!.sessionToken).split(";")[0] ?? "";
+
+    expect((await GET(req("/api/household/backup/", { headers: { cookie } }))).status).toBe(402);
+    const backup = makeBackup({ config: defaultConfig(), version: 0, updatedAt: 0 }, { wifiPasswords: false });
+    const restore = await POST(
+      req("/api/household/backup/", {
+        method: "POST",
+        headers: { cookie },
+        body: JSON.stringify({ baseVersion: 0, backup, dryRun: true }),
+      }),
+    );
+    expect(restore.status).toBe(402);
+    expect(account.plan).toBe("free");
   });
 });

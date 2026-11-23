@@ -53,13 +53,13 @@ describe("phone QR sign-in", () => {
     expect(readyBody.handoff).toBeTruthy();
     expect(readyBody.role).toBe("admin");
 
-    // Second poll no longer re-issues the sealed handoff.
+    // A lost first response must not strand the display: keep re-issuing until claim.
     const again = await pollDeviceSignIn(
       req("/api/auth/device/poll/", { method: "POST", ip: "1.2.3.4" }),
       started.code,
       started.pollSecret,
     );
-    expect(await again.json()).toEqual({ status: "pending" });
+    expect(await again.json()).toEqual(readyBody);
 
     const claimed = await claimDeviceSignIn(req("/api/auth/device/claim/", { method: "POST" }), readyBody.handoff!);
     expect(claimed.status).toBe(200);

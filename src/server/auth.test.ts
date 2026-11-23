@@ -4,7 +4,9 @@ import { req, useTestServer } from "@/test/server";
 
 import { accountsForEmail, LEGACY_ACCOUNT_ID } from "./accounts";
 import { finishSignIn, LINK_MS, sessionFor, startSignIn, startSignUp } from "./auth";
+import { loadConfig } from "./config";
 import { query, run } from "./db";
+import { gateConfig } from "./planGates";
 
 async function linkFor(email: string, ip = "1.2.3.4"): Promise<string | null> {
   const info = vi.spyOn(console, "info").mockImplementation(() => undefined);
@@ -80,6 +82,9 @@ describe("public Free signup", () => {
     info.mockRestore();
     expect(printed).toMatch(/token=/);
     expect(await query("SELECT * FROM sign_in_links")).toHaveLength(1);
+    const { config } = await loadConfig(members[0]!.accountId);
+    expect(config.views).toHaveLength(1);
+    expect(gateConfig("free", config)).toEqual({ ok: true });
   });
 
   it("signs an existing member in without creating a second household", async () => {
@@ -92,5 +97,18 @@ describe("public Free signup", () => {
     );
     expect(r.status).toBe(200);
     expect(await accountsForEmail("admin@example.com")).toHaveLength(before.length);
+  });
+
+  it("creates only one household when two Free signups race", async () => {
+    const info = vi.spyOn(console, "info").mockImplementation(() => undefined);
+    const email = "race.family@example.com";
+    await Promise.all([
+      startSignUp(req("/api/auth/signup/", { method: "POST", ip: "7.7.7.1" }), email, "A", "http://localhost"),
+      startSignUp(req("/api/auth/signup/", { method: "POST", ip: "7.7.7.2" }), email, "B", "http://localhost"),
+    ]);
+    info.mockRestore();
+    const members = await accountsForEmail(email);
+    expect(members).toHaveLength(1);
+    expect(await query("SELECT * FROM signup_emails WHERE email = ?", [email])).toHaveLength(1);
   });
 });
