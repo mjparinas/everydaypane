@@ -5,7 +5,7 @@ import type { Widget, WidgetType } from "./schema";
 
 type Defaults<T extends WidgetType> = Omit<
   Extract<Widget, { type: T }>,
-  "id" | "x" | "y" | "w" | "h" | "type" | "title" | "showBackground" | "backgroundOpacity" | "fontScale"
+  "id" | "x" | "y" | "w" | "h" | "type" | "title" | "showBackground" | "backgroundOpacity" | "fontScale" | "outerPadding"
 >;
 
 interface WidgetInfo<T extends WidgetType> {

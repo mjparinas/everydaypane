@@ -133,7 +133,9 @@ function cellStyle(w: Widget): string {
   const alpha = w.showBackground && w.backgroundOpacity != null ? `--surface-alpha:${w.backgroundOpacity};` : "";
   // Per-widget text size (Melvin, 2026-11-23); CSS multiplies font-size by --font-scale.
   const font = w.fontScale != null && w.fontScale !== 1 ? `--font-scale:${w.fontScale};` : "";
-  return `grid-column:${w.x + 1}/span ${w.w};grid-row:${w.y + 1}/span ${w.h};${alpha}${font}`;
+  // Outer padding insets the panel inside its grid cell (Melvin, 2026-11-23).
+  const outer = (w.outerPadding ?? 0) > 0 ? `margin:${w.outerPadding}px;` : "";
+  return `grid-column:${w.x + 1}/span ${w.w};grid-row:${w.y + 1}/span ${w.h};${alpha}${font}${outer}`;
 }
 
 function ctxFor(p: DisplayPayload): WidgetContext {

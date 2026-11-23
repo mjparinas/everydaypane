@@ -126,6 +126,16 @@ describe("config schema", () => {
     expect(configSchema.safeParse(c).success).toBe(false);
   });
 
+  it("accepts outer padding on a widget and keeps it optional", () => {
+    const weather = { ...newWidget("weather", "w", { x: 0, y: 0 }), outerPadding: 12 };
+    const c = defaultConfig();
+    c.views[0]!.widgets = [weather];
+    const r = configSchema.safeParse(c);
+    expect(r.success && r.data.views[0]!.widgets[0]).toMatchObject({ type: "weather", outerPadding: 12 });
+    const plain = newWidget("weather", "w2", { x: 0, y: 0 });
+    expect(plain.outerPadding).toBeUndefined();
+  });
+
   it("rejects a widget that runs off its grid", () => {
     const c = defaultConfig();
     c.views[0]!.widgets[0]!.x = 11;

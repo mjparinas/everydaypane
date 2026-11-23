@@ -15,7 +15,7 @@ describe("viewDiff", () => {
     const a = newWidget("clock", "c1", { x: 0, y: 0 });
     const b = { ...a, x: 3, y: 1, w: 3, h: 2 };
     expect(widgetOptionsKey(a)).toBe(widgetOptionsKey(b));
-    expect(widgetOptionsKey({ ...a, showBackground: true, backgroundOpacity: 0.5 })).toBe(widgetOptionsKey(a));
+    expect(widgetOptionsKey({ ...a, showBackground: true, backgroundOpacity: 0.5, outerPadding: 12 })).toBe(widgetOptionsKey(a));
     expect(widgetOptionsKey({ ...a, fontScale: 1.2 })).toBe(widgetOptionsKey(a));
     expect(widgetOptionsKey({ ...a, showSeconds: true })).not.toBe(widgetOptionsKey(a));
   });
@@ -56,6 +56,10 @@ describe("viewDiff", () => {
     const noPanel = { ...weather, showBackground: false };
     const ops = diffWidgets([weather], [noPanel]);
     expect(ops).toEqual([{ op: "move", id: "weather", placed: expect.objectContaining({ transparent: true, widget: noPanel }) }]);
+    const padded = { ...weather, outerPadding: 8 };
+    expect(diffWidgets([weather], [padded])).toEqual([
+      { op: "move", id: "weather", placed: expect.objectContaining({ widget: padded }) },
+    ]);
   });
 
   it("moves when only the font scale changes", () => {

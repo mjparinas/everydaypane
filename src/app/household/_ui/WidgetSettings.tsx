@@ -136,7 +136,7 @@ function VisiblePeriods({ widget, onChange }: { widget: Widget; onChange: (chang
   );
 }
 
-/** Background on/off and opacity for every widget (Melvin, 2026-11-22). Opacity falls back to the theme's widget background. */
+/** Background on/off, opacity and outer padding for every widget (Melvin, 2026-11-22 / 2026-11-23). Opacity falls back to the theme's widget background. */
 function PanelBackground({
   widget,
   config,
@@ -167,6 +167,21 @@ function PanelBackground({
           onChange={(v) => onChange((w) => void (w.backgroundOpacity = v))}
         />
       ) : null}
+      <Range
+        label="Outer padding"
+        value={widget.outerPadding ?? 0}
+        min={0}
+        max={48}
+        step={1}
+        format={(n) => `${n} px`}
+        hint="Space around this panel inside its grid cell. The view's Tile padding is inside the panel."
+        onChange={(v) =>
+          onChange((w) => {
+            if (v) w.outerPadding = v;
+            else delete w.outerPadding;
+          })
+        }
+      />
     </>
   );
 }
