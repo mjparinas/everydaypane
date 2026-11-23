@@ -1,8 +1,9 @@
-import { stackOrder } from "@/lib/config/grid";
-import type { Palette, Period, Theme, View } from "@/lib/config/schema";
+import { isBackdrop } from "@/lib/config/grid";
+import type { Palette, Period, Theme, View, Widget } from "@/lib/config/schema";
 import { currentPeriod, msUntilLocalTime, msUntilNextPeriod } from "@/lib/config/time";
 import { parseDraftMessage, previewReadyMessage } from "@/lib/display/draftMessage";
 import type { DisplayPayload, HaData } from "@/lib/display/types";
+import { diffWidgets, placeWidgets, sameStageGrid, stageGridStyle, type PlacedWidget } from "@/lib/display/viewDiff";
 
 import { onAlarm, startAlarms } from "./alarm";
 import { alertStrip } from "./alerts";
@@ -12,7 +13,7 @@ import { attachModal } from "./modal";
 import { screenSaver, type Saver } from "./saver";
 import { mountWidget } from "./widgets";
 import { cameraLoop, HA_EVERY } from "./widgets/ha";
-import type { Cleanup } from "./widgets/types";
+import type { Cleanup, WidgetContext } from "./widgets/types";
 
 // The display. One module, no framework (AGENTS.md "Display: super lightweight"): it fetches its settings, draws the
 // view for the time of day, and then only wakes for the clock tick, data refreshes, the 30-second settings poll, the
@@ -21,12 +22,12 @@ import type { Cleanup } from "./widgets/types";
 const app = document.getElementById("app") as HTMLElement;
 let payload: DisplayPayload | null = null;
 let etag: string | undefined;
-let cleanups: Cleanup[] = [];
+const mounts = new Map<string, { cell: HTMLElement; stop: Cleanup; widget: Widget }>();
 let shown = { viewId: "", mode: "", themeId: "", version: -1 };
+let shownView: View | null = null;
 let periodTimer: number | undefined;
 /** Admin Views tab is pushing an unsaved draft; the 30s saved poll must not overwrite it. */
 let draftActive = false;
-let draftSeq = 0;
 
 const stage = h("main", { class: "stage" });
 const dim = h("div", { class: "dim", "aria-hidden": "true" });
@@ -85,6 +86,100 @@ function applyTheme(theme: Theme, palette: Palette, mode: string) {
   document.querySelector('meta[name="theme-color"]')?.setAttribute("content", palette.background);
 }
 
+function cellClass(placed: PlacedWidget): string {
+  return `cell cell-${placed.widget.type}${placed.onPhoto ? " on-photo" : ""}${placed.transparent ? " transparent" : ""}`;
+}
+
+function cellStyle(w: Widget): string {
+  return `grid-column:${w.x + 1}/span ${w.w};grid-row:${w.y + 1}/span ${w.h}`;
+}
+
+function ctxFor(p: DisplayPayload): WidgetContext {
+  return { payload: p, timeZone: p.location.timeZone, hour12: p.hour12 };
+}
+
+function clearMounts() {
+  for (const m of mounts.values()) m.stop();
+  mounts.clear();
+  stage.replaceChildren();
+}
+
+function mountPlaced(placed: PlacedWidget, ctx: WidgetContext) {
+  const w = placed.widget;
+  const cell = h("section", {
+    class: cellClass(placed),
+    style: cellStyle(w),
+    "aria-label": w.title ?? w.type,
+  });
+  // Photos stay underneath (Melvin, 2026-11-21); append order matches stackOrder when rebuilding.
+  if (isBackdrop(w)) {
+    const firstOther = [...stage.children].find((el) => !el.classList.contains("cell-photos"));
+    if (firstOther) stage.insertBefore(cell, firstOther);
+    else stage.append(cell);
+  } else stage.append(cell);
+  try {
+    mounts.set(w.id, { cell, stop: mountWidget(cell, w, ctx), widget: w });
+  } catch (e) {
+    cell.textContent = "This widget couldn't load.";
+    mounts.set(w.id, { cell, stop: () => undefined, widget: w });
+    report(e instanceof Error ? e.message : String(e), e instanceof Error ? e.stack : undefined);
+  }
+}
+
+function rebuildStage(view: View, p: DisplayPayload) {
+  clearMounts();
+  stage.style.cssText = stageGridStyle(view);
+  const ctx = ctxFor(p);
+  for (const placed of placeWidgets(view.widgets)) mountPlaced(placed, ctx);
+}
+
+function applyWidgetDiff(prev: Widget[], next: Widget[], p: DisplayPayload) {
+  const ctx = ctxFor(p);
+  for (const op of diffWidgets(prev, next)) {
+    if (op.op === "remove") {
+      const m = mounts.get(op.id);
+      if (!m) continue;
+      m.stop();
+      m.cell.remove();
+      mounts.delete(op.id);
+      continue;
+    }
+    if (op.op === "add") {
+      mountPlaced(op.placed, ctx);
+      continue;
+    }
+    const m = mounts.get(op.id);
+    if (!m) {
+      mountPlaced(op.placed, ctx);
+      continue;
+    }
+    const w = op.placed.widget;
+    m.cell.className = cellClass(op.placed);
+    m.cell.style.cssText = cellStyle(w);
+    m.cell.setAttribute("aria-label", w.title ?? w.type);
+    if (op.op === "move") {
+      m.widget = w;
+      continue;
+    }
+    // replace: remount this cell only (options or type changed).
+    m.stop();
+    m.cell.replaceChildren();
+    try {
+      m.stop = mountWidget(m.cell, w, ctx);
+    } catch (e) {
+      m.cell.textContent = "This widget couldn't load.";
+      m.stop = () => undefined;
+      report(e instanceof Error ? e.message : String(e), e instanceof Error ? e.stack : undefined);
+    }
+    m.widget = w;
+  }
+}
+
+function schedulePeriod(p: DisplayPayload) {
+  window.clearTimeout(periodTimer);
+  periodTimer = window.setTimeout(() => render(), msUntilNextPeriod(p.schedule, new Date(), p.location.timeZone) + 500);
+}
+
 function render(force = false) {
   if (!payload) return;
   const p = payload;
@@ -94,33 +189,42 @@ function render(force = false) {
   applyTheme(theme, palette, mode);
   dim.style.opacity = String(dimLevel);
   if (force || shown.viewId !== view.id || shown.version !== p.version || shown.themeId !== theme.id) {
-    for (const c of cleanups) c();
-    cleanups = [];
-    stage.replaceChildren();
-    stage.style.cssText = `grid-template-columns:repeat(${view.cols},minmax(0,1fr));grid-template-rows:repeat(${view.rows},minmax(0,1fr));gap:${view.gap}px;padding:${view.padding}px;--cell-pad:${view.tilePadding}px`;
-    const ctx = { payload: p, timeZone: p.location.timeZone, hour12: p.hour12 };
-    // Photos are a backdrop (Melvin, 2026-11-21): they're drawn first and underneath, and a widget on top of one gets
-    // `on-photo`, which keeps it readable against whatever picture is showing.
-    for (const { widget: w, onPhoto } of stackOrder(view.widgets)) {
-      // Sunrise & sunset can drop its panel (Melvin, 2026-11-22), matching the clock and date over photos.
-      const transparent = w.type === "sunTimes" && w.transparent;
-      const cell = h("section", {
-        class: `cell cell-${w.type}${onPhoto ? " on-photo" : ""}${transparent ? " transparent" : ""}`,
-        style: `grid-column:${w.x + 1}/span ${w.w};grid-row:${w.y + 1}/span ${w.h}`,
-        "aria-label": w.title ?? w.type,
-      });
-      stage.append(cell);
-      try {
-        cleanups.push(mountWidget(cell, w, ctx));
-      } catch (e) {
-        cell.textContent = "This widget couldn't load.";
-        report(e instanceof Error ? e.message : String(e), e instanceof Error ? e.stack : undefined);
-      }
-    }
+    rebuildStage(view, p);
   }
+  shownView = view;
   shown = { viewId: view.id, mode, themeId: theme.id, version: p.version };
-  window.clearTimeout(periodTimer);
-  periodTimer = window.setTimeout(() => render(), msUntilNextPeriod(p.schedule, new Date(), p.location.timeZone) + 500);
+  schedulePeriod(p);
+}
+
+/**
+ * Admin draft push: patch cells in place so a settings tweak doesn't remount the whole stage (Melvin, 2026-11-22).
+ * Full rebuild when the view id changes, the stage is empty, or hour/zone context the widgets captured would go stale.
+ */
+function applyDraft(next: DisplayPayload) {
+  const prev = payload;
+  const prevView = shownView;
+  payload = { ...next, fixedViewId: PREVIEW };
+  const { view, theme, palette, dimLevel } = pick(payload);
+  const mode = palette === theme.night ? "night" : "day";
+  applyTheme(theme, palette, mode);
+  dim.style.opacity = String(dimLevel);
+
+  const ctxChanged =
+    !prev ||
+    prev.hour12 !== payload.hour12 ||
+    prev.location.timeZone !== payload.location.timeZone ||
+    JSON.stringify(prev.units) !== JSON.stringify(payload.units);
+
+  if (!prevView || prevView.id !== view.id || mounts.size === 0 || ctxChanged) {
+    rebuildStage(view, payload);
+  } else {
+    if (!sameStageGrid(prevView, view)) stage.style.cssText = stageGridStyle(view);
+    applyWidgetDiff(prevView.widgets, view.widgets, payload);
+  }
+
+  shownView = view;
+  shown = { viewId: view.id, mode, themeId: theme.id, version: payload.version };
+  schedulePeriod(payload);
 }
 
 // ---- Settings: loaded at start, then polled every 30 seconds (Melvin, 2026-11-17: polling, not push). ----
@@ -165,10 +269,7 @@ function listenForDraft() {
       return;
     }
     draftActive = true;
-    draftSeq += 1;
-    // Bump version so render() remounts widgets when only options changed (same view/theme id).
-    payload = { ...msg.payload, version: msg.payload.version + draftSeq, fixedViewId: PREVIEW };
-    render(true);
+    applyDraft(msg.payload);
     burnIn();
     alerts();
     doorbell();
