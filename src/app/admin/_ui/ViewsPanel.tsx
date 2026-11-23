@@ -5,7 +5,7 @@ import { useState } from "react";
 import { findSpot, refit } from "@/lib/config/grid";
 import { PERIOD_LABELS, PERIODS } from "@/lib/config/periods";
 import type { View, Widget, WidgetType } from "@/lib/config/schema";
-import { VIEW_TEMPLATES } from "@/lib/config/templates";
+import { TEMPLATE_CATEGORIES, TEMPLATE_CATEGORY_LABELS, VIEW_TEMPLATES } from "@/lib/config/templates";
 import { newWidget, WIDGETS } from "@/lib/config/widgets";
 
 import { AddWidgetDrawer } from "./AddWidgetDrawer";
@@ -111,20 +111,31 @@ export function ViewsPanel() {
     }
     const built = template.build();
     const id = newId("view");
+    const themeOk = template.themeId === null || config.themes.some((th) => th.id === template.themeId);
     edit((c) => {
       c.views.push({
         id,
         name: template.name.slice(0, 40),
-        themeId: null,
         ...built,
+        themeId: themeOk ? template.themeId : null,
         widgets: built.widgets.map((w) => ({ ...w, id: newId(w.type) })),
       });
     });
     setViewId(id);
     setSelected(null);
     setEditingView(true);
-    setNotice(`Added “${template.name}”. Save when you're happy with it.`);
+    setNotice(
+      template.tier === "paid"
+        ? `Added “${template.name}” (Household). Save when you're happy with it.`
+        : `Added “${template.name}”. Save when you're happy with it.`,
+    );
   }
+
+  const templatesByCategory = TEMPLATE_CATEGORIES.map((category) => ({
+    category,
+    label: TEMPLATE_CATEGORY_LABELS[category],
+    templates: VIEW_TEMPLATES.filter((t) => t.category === category),
+  })).filter((g) => g.templates.length > 0);
 
   const usedBySchedule = PERIODS.filter((p) => config.schedule[p].viewId === active.id).map((p) => PERIOD_LABELS[p].toLowerCase());
 
@@ -255,19 +266,46 @@ export function ViewsPanel() {
       )}
 
       <Section title="Starter templates">
-        <p className="text-sm text-soft">Add a new view from a ready-made kitchen layout. You can edit it after.</p>
-        <div className="grid gap-2 sm:grid-cols-2">
-          {VIEW_TEMPLATES.map((t) => (
-            <button
-              key={t.id}
-              type="button"
-              className="card grid gap-1 p-3 text-left hover:border-brand"
-              disabled={config.views.length >= 30}
-              onClick={() => applyTemplate(t.id)}
-            >
-              <span className="font-semibold">{t.name}</span>
-              <span className="text-xs text-soft">{t.description}</span>
-            </button>
+        <p className="text-sm text-soft">
+          Add a new view from a ready-made layout. Household templates need a paid plan to save; you can edit any of them after.
+        </p>
+        <div className="grid gap-6">
+          {templatesByCategory.map((group) => (
+            <div key={group.category} className="grid gap-2">
+              <h3 className="text-sm font-semibold text-soft">{group.label}</h3>
+              <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                {group.templates.map((t) => (
+                  <button
+                    key={t.id}
+                    type="button"
+                    className="card grid gap-2 overflow-hidden p-0 text-left hover:border-brand"
+                    disabled={config.views.length >= 30}
+                    onClick={() => applyTemplate(t.id)}
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element -- static PNG previews in /public/templates */}
+                    <img
+                      src={t.preview}
+                      alt=""
+                      width={960}
+                      height={540}
+                      className="aspect-video w-full bg-bg object-cover"
+                      loading="lazy"
+                    />
+                    <span className="grid gap-1 px-3 pb-3">
+                      <span className="flex flex-wrap items-center gap-2">
+                        <span className="font-semibold">{t.name}</span>
+                        {t.tier === "paid" && (
+                          <span className="rounded-md bg-bg px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-soft">
+                            Household
+                          </span>
+                        )}
+                      </span>
+                      <span className="text-xs text-soft">{t.description}</span>
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </div>
           ))}
         </div>
       </Section>

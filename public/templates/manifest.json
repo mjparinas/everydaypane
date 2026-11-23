@@ -1,0 +1,102 @@
+[
+  {
+    "id": "kitchen-glance",
+    "name": "Kitchen glance",
+    "file": "kitchen-glance.png"
+  },
+  {
+    "id": "photo-frame",
+    "name": "Photo frame",
+    "file": "photo-frame.png"
+  },
+  {
+    "id": "calendar-wall",
+    "name": "Calendar wall",
+    "file": "calendar-wall.png"
+  },
+  {
+    "id": "simple-day",
+    "name": "Simple day",
+    "file": "simple-day.png"
+  },
+  {
+    "id": "morning-brief",
+    "name": "Morning brief",
+    "file": "morning-brief.png"
+  },
+  {
+    "id": "dual-city",
+    "name": "Two cities",
+    "file": "dual-city.png"
+  },
+  {
+    "id": "week-planner",
+    "name": "Week planner",
+    "file": "week-planner.png"
+  },
+  {
+    "id": "night-clock",
+    "name": "Night clock",
+    "file": "night-clock.png"
+  },
+  {
+    "id": "focus-desk",
+    "name": "Focus desk",
+    "file": "focus-desk.png"
+  },
+  {
+    "id": "kitchen-command",
+    "name": "Kitchen command",
+    "file": "kitchen-command.png"
+  },
+  {
+    "id": "family-hub",
+    "name": "Family hub",
+    "file": "family-hub.png"
+  },
+  {
+    "id": "kids-routine",
+    "name": "Kids routine",
+    "file": "kids-routine.png"
+  },
+  {
+    "id": "commute-dash",
+    "name": "Commute dash",
+    "file": "commute-dash.png"
+  },
+  {
+    "id": "ferry-weekend",
+    "name": "Ferry weekend",
+    "file": "ferry-weekend.png"
+  },
+  {
+    "id": "christmas",
+    "name": "Christmas",
+    "file": "christmas.png"
+  },
+  {
+    "id": "halloween",
+    "name": "Halloween",
+    "file": "halloween.png"
+  },
+  {
+    "id": "new-year",
+    "name": "New Year",
+    "file": "new-year.png"
+  },
+  {
+    "id": "rainy-day",
+    "name": "Rainy day",
+    "file": "rainy-day.png"
+  },
+  {
+    "id": "sports-lounge",
+    "name": "Sports lounge",
+    "file": "sports-lounge.png"
+  },
+  {
+    "id": "smart-home",
+    "name": "Smart home",
+    "file": "smart-home.png"
+  }
+]

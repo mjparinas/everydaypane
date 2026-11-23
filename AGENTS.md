@@ -87,7 +87,8 @@ worker serves the last good data and shows "Offline"); a **screen saver** (photo
 in a night window, woken by a tap, Home Assistant motion sensors, the doorbell, a new alert or a timer going off); doorbell pop-up full
 screen; the red, dismissible alert strip;
 no pinch zoom; settings reach displays by polling every 30 seconds (**Household** also long-polls for instant reload);
-**starter view templates** on the Views tab; themes include Outfit, DM Sans and Literata; Displays tab tips for casting
+**starter view templates** (~20 layouts with screenshot previews) on the Views tab; themes include Outfit, DM Sans and
+Literata; Displays tab tips for casting
 the `/d/…` URL; Vancouver clocks, dates, calendars and scheduled views stay on UTC−7 after B.C.'s March 2026 change
 even when the display browser has old time-zone data.
 
@@ -171,8 +172,10 @@ node scripts/e2e.mjs   # Playwright browser tests against the build (CHROMIUM_PA
   as soon as the version moves; admins can tap **Refresh displays**. Free keeps the 30-second poll only. No WebSocket.
   The Views tab's live preview is the exception: it shows the unsaved working copy over `postMessage` and never pushes
   that draft to wall screens.
-- **Starter view templates** (Melvin, 2026-11-22): the Views tab can add a ready-made layout (kitchen glance, photo
-  frame, calendar wall, simple day) built from Free-tier widgets (`src/lib/config/templates.ts`).
+- **Starter view templates** (Melvin, 2026-11-22; expanded 2026-11-23): the Views tab shows ~20 ready-made layouts with
+  PNG screenshot previews (`public/templates/`, regenerate with `npm run templates:previews`). Free templates use only
+  Free-tier widgets; Household ones add productivity, family, holiday, commute and smart-home layouts
+  (`src/lib/config/templates.ts`).
 - **More theme fonts** (Melvin, 2026-11-22): Outfit, DM Sans and Literata join Inter, Manrope and Space Grotesk
   (self-hosted under `/fonts/`).
 - **Castable display URL** (Melvin, 2026-11-22): Displays tab copy/open tips for Chromecast (cast a browser tab) and
