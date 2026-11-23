@@ -118,7 +118,10 @@ picker. The Views tab embeds one **live editable layout** (the real display unde
 copy over `postMessage` before Save); tapping a widget opens its settings in a **right slide-out**, and **Edit view**
 (on the view tabs row) opens the same kind of drawer for name, grid, gap, edge, tile and theme so the preview stays
 visible. Draft edits patch widgets in place instead of remounting the whole stage. View previews can force day or night
-with `?mode=`, and a quiet Day/Night control on the preview swaps without reloading.
+with `?mode=`, and a quiet Day/Night control on the preview swaps without reloading. **Free upgrade CTAs** (Melvin,
+2026-11-23): Free accounts see a dismissible banner, plan chip, **Household** badges on paid tabs/widgets/settings,
+greyed controls that open an in-app upgrade dialog (`#upgrade`, Stripe Checkout), and Settings › Plan; core Free tools
+(views editor, colours, displays within limit, photos, calendars) stay fully usable.
 
 **Platform admin** (`/admin/`): Everydaypane ops for addresses on `ADMIN_EMAILS` (households list), separate from the
 household panel — same split as Tuned (`/account` vs `/admin`) and Liftsmith, with Everydaypane’s customer path named
@@ -158,9 +161,13 @@ npm run templates:previews  # regenerate public/templates/*.png from real widget
   wordmark, soft `#f6f7fb` page and white card — so mail looks like the site and feels trustworthy. New email kinds
   reuse that layout; don't invent a third template style.
 - **Paid multi-tenant product** (Melvin, 2026-11-22): Everydaypane is a **Free + one paid (“Household”)** app other
-  families can use. Free is DAKboard-like (1 view, 2 calendars, 2 displays, core widgets only). Household unlocks
-  everything. Melvin’s existing install is grandfathered on Household (`acct_legacy`). Stripe Checkout + Customer Portal
-  + webhooks (`src/server/billing.ts`); signup at `/api/auth/signup/`.
+ families can use. Free is DAKboard-like (1 view, 2 calendars, 2 displays, core widgets only). Household unlocks
+ everything. Melvin’s existing install is grandfathered on Household (`acct_legacy`). Stripe Checkout + Customer Portal
+ + webhooks (`src/server/billing.ts`); signup at `/api/auth/signup/`.
+- **Free upgrade UX in household** (Melvin, 2026-11-23: articulate what Free is missing without being annoying): paid
+ features show a **Household** label and are soft-locked (greyed; tap opens the upgrade dialog with why-upgrade copy and
+ Checkout). Lots of quiet CTAs (banner, plan chip, Save errors, Displays limit, widget picker, settings groups); Free
+ core remains highly usable. Plan state from `/api/household/billing/` via `PlanProvider` (`src/app/household/_ui/plan.tsx`).
 - **Household vs platform admin** (Melvin, 2026-11-23: rename `/admin` → `/household`, reserve `/admin` like Tuned and
   Liftsmith): household settings live at **`/household/`** (API `/api/household/`); **`/admin/`** is Everydaypane platform
   ops for `ADMIN_EMAILS` only (households overview). A household admin who is not staff and opens `/admin/` is sent to
@@ -336,7 +343,9 @@ panel can be complex if you need it to be."
   the opposite corner held still (Melvin, 2026-11-21: "allow any corner of a widget to adjust the size"), and also moves
   and resizes with the keyboard; widgets never leave the grid and never overlap, except that other widgets may sit on
   top of a photos widget (`src/lib/config/grid.ts`). Tapping a widget opens `WidgetSettingsDrawer` from the right; Edit
-  view opens `ViewSettingsDrawer` (shared `SlideDrawer` chrome).
+  view opens `ViewSettingsDrawer` (shared `SlideDrawer` chrome). Free plan soft-locks (`PlanProvider` in `plan.tsx`) badge
+  and gate Schedule / Meals / Shopping / Messages tabs, paid widgets in Add widget, Household starter templates, and
+  paid Settings groups; `#upgrade` opens the why-upgrade dialog with Stripe Checkout.
 - **Platform admin** (`src/app/admin/`, `/api/admin/`): staff-only ops gated by `ADMIN_EMAILS` (`src/server/staff.ts`);
   lists households. Not the household settings UI.
 - **Widgets over photos** (Melvin, 2026-11-21: "allow other widgets to be placed on top of the photos widget"): photos

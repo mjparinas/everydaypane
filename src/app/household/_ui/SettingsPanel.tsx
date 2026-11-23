@@ -2,6 +2,8 @@
 
 import { useEffect, useState, useSyncExternalStore } from "react";
 
+import { isHouseholdSettingsGroup } from "@/lib/plans";
+
 import { BackupPanel } from "./BackupPanel";
 import { CalendarLinksPanel } from "./CalendarLinksPanel";
 import { ChoresPanel } from "./ChoresPanel";
@@ -14,6 +16,7 @@ import { HomeAssistantPanel } from "./HomeAssistantPanel";
 import { MicrosoftPanel } from "./MicrosoftPanel";
 import { MusicPanel } from "./MusicPanel";
 import { PhotosPanel } from "./PhotosPanel";
+import { HouseholdBadge, HouseholdSoftLock, PlanSettingsCard, usePlan } from "./plan";
 import { ScreenSaverPanel } from "./ScreenSaverPanel";
 import { SmartHomePanel } from "./SmartHomePanel";
 import { SportsPanel } from "./SportsPanel";
@@ -22,10 +25,11 @@ import { AllTasksPanels } from "./TasksPanel";
 import { TIME_ZONES } from "./WidgetSettings";
 
 // Settings is grouped with a sticky jump nav and #settings/<section> deep links so widgets can send people here
-// without scrolling the whole page (Melvin, 2026-11-22 admin UX revamp).
+// without scrolling the whole page (Melvin, 2026-11-22 admin UX revamp). Free users see Household badges and soft
+// locks on paid groups (Melvin, 2026-11-23).
 
 const GROUPS = [
-  { id: "home", label: "Home", sections: ["dashboard", "location"] },
+  { id: "home", label: "Home", sections: ["dashboard", "location", "plan"] },
   { id: "calendars", label: "Calendars", sections: ["google", "icals"] },
   { id: "tasks", label: "Tasks", sections: ["tasks"] },
   { id: "family", label: "Family", sections: ["garbage", "commute", "chores", "sports", "school"] },
@@ -65,6 +69,7 @@ function goSettingsSection(section: string) {
 export function SettingsPanel() {
   const config = useAdmin((s) => s.config);
   const edit = useAdmin((s) => s.edit);
+  const { isPaid, openUpgrade } = usePlan();
   const { location, burnIn, alerts } = config;
   const section = useSyncExternalStore(subscribeHash, settingsSectionFromHash, () => null);
   // Which group is open comes from the hash (deep links from widgets), not from effect-synced state.
@@ -90,21 +95,35 @@ export function SettingsPanel() {
         className="sticky top-[4.5rem] z-10 -mx-1 flex gap-2 overflow-x-auto bg-bg/95 px-1 py-2 backdrop-blur md:top-[6.5rem]"
         aria-label="Settings sections"
       >
-        {GROUPS.map((g) => (
-          <button
-            key={g.id}
-            type="button"
-            className={openGroup === g.id ? "btn-primary shrink-0" : "btn-ghost shrink-0"}
-            aria-pressed={openGroup === g.id}
-            onClick={() => goSettingsSection(g.sections[0]!)}
-          >
-            {g.label}
-          </button>
-        ))}
+        {GROUPS.map((g) => {
+          const locked = !isPaid && isHouseholdSettingsGroup(g.id);
+          return (
+            <button
+              key={g.id}
+              type="button"
+              className={`${openGroup === g.id ? "btn-primary shrink-0" : "btn-ghost shrink-0"} ${locked ? "opacity-70" : ""}`}
+              aria-pressed={openGroup === g.id}
+              onClick={() => {
+                if (locked) {
+                  // Still open the group so they can see the soft lock; also offer the upgrade screen.
+                  goSettingsSection(g.sections[0]!);
+                  return;
+                }
+                goSettingsSection(g.sections[0]!);
+              }}
+            >
+              <span className="inline-flex items-center gap-1.5">
+                {g.label}
+                {locked ? <HouseholdBadge /> : null}
+              </span>
+            </button>
+          );
+        })}
       </nav>
 
       {showGroup("home") && (
         <div className="grid gap-4 lg:grid-cols-2">
+          <PlanSettingsCard />
           <Section id="settings-dashboard" title="Dashboard">
             <Text label="Name" value={config.name} maxLength={60} onChange={(v) => edit((c) => void (c.name = v))} />
             <Select
@@ -180,6 +199,18 @@ export function SettingsPanel() {
 
       {showGroup("calendars") && (
         <div className="grid gap-4 lg:grid-cols-2">
+          {!isPaid && (
+            <p className="text-sm text-soft lg:col-span-2">
+              Free includes 2 calendars across Google, Microsoft and iCal.{" "}
+              <button
+                type="button"
+                className="font-semibold text-brand underline-offset-2 hover:underline"
+                onClick={() => openUpgrade("calendar")}
+              >
+                Need more?
+              </button>
+            </p>
+          )}
           <div id="settings-google">
             <GooglePanel />
           </div>
@@ -187,51 +218,57 @@ export function SettingsPanel() {
             <MicrosoftPanel />
           </div>
           <div id="settings-icals" className="lg:col-span-2">
-            <CalendarLinksPanel />
+            <HouseholdSoftLock reason="icals" label="iCal links need Household">
+              <CalendarLinksPanel />
+            </HouseholdSoftLock>
           </div>
         </div>
       )}
 
       {showGroup("tasks") && (
         <div id="settings-tasks">
-          <AllTasksPanels />
+          <HouseholdSoftLock reason="tasks" label="Tasks need Household">
+            <AllTasksPanels />
+          </HouseholdSoftLock>
         </div>
       )}
 
       {showGroup("family") && (
-        <div className="grid gap-4 lg:grid-cols-2">
-          <div id="settings-garbage">
-            <GarbagePanel />
+        <HouseholdSoftLock reason="family" label="Family tools need Household">
+          <div className="grid gap-4 lg:grid-cols-2">
+            <div id="settings-garbage">
+              <GarbagePanel />
+            </div>
+            <div id="settings-commute">
+              <CommutePanel />
+            </div>
+            <div id="settings-chores" className="lg:col-span-2">
+              <ChoresPanel />
+            </div>
+            <div id="settings-sports">
+              <SportsPanel />
+            </div>
+            <Section id="settings-school" title="School status">
+              <p className="text-xs text-soft">
+                The school widget reads this page for a closure, delay or late start. With nothing like that on the page, it says open.
+              </p>
+              <Text
+                label="District name"
+                value={config.school.districtName}
+                maxLength={80}
+                onChange={(v) => edit((c) => void (c.school.districtName = v))}
+              />
+              <Text
+                label="Status page"
+                type="url"
+                value={config.school.statusUrl}
+                maxLength={300}
+                hint="A public https page, such as the district site. Langley School District is the default."
+                onChange={(v) => edit((c) => void (c.school.statusUrl = v))}
+              />
+            </Section>
           </div>
-          <div id="settings-commute">
-            <CommutePanel />
-          </div>
-          <div id="settings-chores" className="lg:col-span-2">
-            <ChoresPanel />
-          </div>
-          <div id="settings-sports">
-            <SportsPanel />
-          </div>
-          <Section id="settings-school" title="School status">
-            <p className="text-xs text-soft">
-              The school widget reads this page for a closure, delay or late start. With nothing like that on the page, it says open.
-            </p>
-            <Text
-              label="District name"
-              value={config.school.districtName}
-              maxLength={80}
-              onChange={(v) => edit((c) => void (c.school.districtName = v))}
-            />
-            <Text
-              label="Status page"
-              type="url"
-              value={config.school.statusUrl}
-              maxLength={300}
-              hint="A public https page, such as the district site. Langley School District is the default."
-              onChange={(v) => edit((c) => void (c.school.statusUrl = v))}
-            />
-          </Section>
-        </div>
+        </HouseholdSoftLock>
       )}
 
       {showGroup("photos-music") && (
@@ -240,24 +277,30 @@ export function SettingsPanel() {
             <PhotosPanel />
           </div>
           <div id="settings-music" className="lg:col-span-2">
-            <MusicPanel />
+            <HouseholdSoftLock reason="music" label="Music needs Household">
+              <MusicPanel />
+            </HouseholdSoftLock>
           </div>
         </div>
       )}
 
       {showGroup("content") && (
         <div id="settings-content">
-          <ContentPanel />
+          <HouseholdSoftLock reason="content" label="Content & finance need Household">
+            <ContentPanel />
+          </HouseholdSoftLock>
         </div>
       )}
 
       {showGroup("ha") && (
-        <div className="grid gap-4">
-          <div id="settings-ha">
-            <HomeAssistantPanel />
+        <HouseholdSoftLock reason="ha" label="Smart home needs Household">
+          <div className="grid gap-4">
+            <div id="settings-ha">
+              <HomeAssistantPanel />
+            </div>
+            <SmartHomePanel />
           </div>
-          <SmartHomePanel />
-        </div>
+        </HouseholdSoftLock>
       )}
 
       {showGroup("screen") && (
@@ -294,7 +337,9 @@ export function SettingsPanel() {
             <p className="text-xs text-soft">Night dimming is set for each part of the day under Schedule.</p>
           </Section>
           <div id="settings-screen-saver">
-            <ScreenSaverPanel />
+            <HouseholdSoftLock reason="screenSaver" label="Screen saver needs Household">
+              <ScreenSaverPanel />
+            </HouseholdSoftLock>
           </div>
         </div>
       )}
@@ -343,12 +388,23 @@ export function SettingsPanel() {
                   checked={alerts.sources.power}
                   onChange={(v) => edit((c) => void (c.alerts.sources.power = v))}
                 />
-                <Toggle
-                  label="Email admins and family for new red-strip alerts"
-                  checked={alerts.notifyEmail}
-                  onChange={(v) => edit((c) => void (c.alerts.notifyEmail = v))}
-                  hint="Each alert is emailed once to everyone on ADMIN_EMAILS and FAMILY_EMAILS."
-                />
+                {isPaid ? (
+                  <Toggle
+                    label="Email admins and family for new red-strip alerts"
+                    checked={alerts.notifyEmail}
+                    onChange={(v) => edit((c) => void (c.alerts.notifyEmail = v))}
+                    hint="Each alert is emailed once to everyone on ADMIN_EMAILS and FAMILY_EMAILS."
+                  />
+                ) : (
+                  <button
+                    type="button"
+                    className="flex min-h-11 items-center justify-between gap-3 rounded-xl border border-line bg-panel px-3 text-left opacity-70"
+                    onClick={() => openUpgrade("alertEmail")}
+                  >
+                    <span className="text-sm font-medium">Email admins and family for new red-strip alerts</span>
+                    <HouseholdBadge />
+                  </button>
+                )}
                 <Range
                   label="Within"
                   value={alerts.radiusKm}
@@ -385,7 +441,9 @@ export function SettingsPanel() {
             )}
           </Section>
           <div id="settings-backup">
-            <BackupPanel />
+            <HouseholdSoftLock reason="backup" label="Backup needs Household">
+              <BackupPanel />
+            </HouseholdSoftLock>
           </div>
         </div>
       )}

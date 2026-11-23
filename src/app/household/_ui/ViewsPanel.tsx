@@ -7,10 +7,12 @@ import { PERIOD_LABELS, PERIODS } from "@/lib/config/periods";
 import type { View, Widget, WidgetType } from "@/lib/config/schema";
 import { TEMPLATE_CATEGORIES, TEMPLATE_CATEGORY_LABELS, VIEW_TEMPLATES } from "@/lib/config/templates";
 import { newWidget, WIDGETS } from "@/lib/config/widgets";
+import { FREE_LIMITS, PAID_LIMITS } from "@/lib/plans";
 
 import { AddWidgetDrawer } from "./AddWidgetDrawer";
 import { Section } from "./fields";
 import { LiveLayoutEditor, widgetName } from "./LiveLayoutEditor";
+import { HouseholdBadge, UpgradeLink, usePlan } from "./plan";
 import { newId, useAdmin } from "./store";
 import { ViewSettingsDrawer } from "./ViewSettingsDrawer";
 import { WidgetSettingsDrawer } from "./WidgetSettingsDrawer";
@@ -26,6 +28,8 @@ export function ViewsPanel() {
   const config = useAdmin((s) => s.config);
   const version = useAdmin((s) => s.version);
   const edit = useAdmin((s) => s.edit);
+  const { isPaid, openUpgrade } = usePlan();
+  const viewLimit = isPaid ? PAID_LIMITS.views : FREE_LIMITS.views;
   const [viewId, setViewId] = useState(config.views[0]?.id ?? "");
   const [selected, setSelected] = useState<string | null>(null);
   const [editingView, setEditingView] = useState(false);
@@ -73,6 +77,11 @@ export function ViewsPanel() {
   }
 
   function addView() {
+    if (config.views.length >= viewLimit) {
+      if (!isPaid) openUpgrade("view");
+      else setNotice("You already have the maximum number of views.");
+      return;
+    }
     const id = newId("view");
     edit(
       (c) =>
@@ -95,6 +104,11 @@ export function ViewsPanel() {
   }
 
   function duplicateView() {
+    if (config.views.length >= viewLimit) {
+      if (!isPaid) openUpgrade("view");
+      else setNotice("You already have the maximum number of views.");
+      return;
+    }
     const id = newId("view");
     edit((c) => void c.views.push({ ...structuredClone(active), id, name: `${active.name} copy`.slice(0, 40) }));
     setViewId(id);
@@ -106,8 +120,13 @@ export function ViewsPanel() {
   function applyTemplate(templateId: string) {
     const template = VIEW_TEMPLATES.find((t) => t.id === templateId);
     if (!template) return;
-    if (config.views.length >= 30) {
-      setNotice("You already have the maximum number of views.");
+    if (!isPaid && template.tier === "paid") {
+      openUpgrade("template");
+      return;
+    }
+    if (config.views.length >= viewLimit) {
+      if (!isPaid) openUpgrade("view");
+      else setNotice("You already have the maximum number of views.");
       return;
     }
     const built = template.build();
@@ -125,11 +144,7 @@ export function ViewsPanel() {
     setViewId(id);
     setSelected(null);
     setEditingView(true);
-    setNotice(
-      template.tier === "paid"
-        ? `Added “${template.name}” (Household). Save when you're happy with it.`
-        : `Added “${template.name}”. Save when you're happy with it.`,
-    );
+    setNotice(`Added “${template.name}”. Save when you're happy with it.`);
     // Templates sit below a long gallery; bring the live preview back into view.
     requestAnimationFrame(() => {
       previewRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -164,8 +179,13 @@ export function ViewsPanel() {
               {v.name}
             </button>
           ))}
-          <button className="btn-ghost" onClick={addView} disabled={config.views.length >= 30}>
+          <button
+            className={`btn-ghost ${!isPaid && config.views.length >= viewLimit ? "opacity-60" : ""}`}
+            onClick={addView}
+            disabled={isPaid && config.views.length >= viewLimit}
+          >
             + View
+            {!isPaid && config.views.length >= viewLimit ? <HouseholdBadge className="ml-1.5" /> : null}
           </button>
         </div>
         <button
@@ -274,43 +294,49 @@ export function ViewsPanel() {
 
       <Section title="Starter templates">
         <p className="text-sm text-soft">
-          Add a new view from a ready-made layout. Household templates need a paid plan to save; you can edit any of them after.
+          Add a new view from a ready-made layout.
+          {!isPaid ? (
+            <>
+              {" "}
+              Free layouts apply straight away; ones marked <HouseholdBadge className="align-middle" /> open{" "}
+              <UpgradeLink reason="template">Household</UpgradeLink> instead.
+            </>
+          ) : null}
         </p>
         <div className="grid gap-6">
           {templatesByCategory.map((group) => (
             <div key={group.category} className="grid gap-2">
               <h3 className="text-sm font-semibold text-soft">{group.label}</h3>
               <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-                {group.templates.map((t) => (
-                  <button
-                    key={t.id}
-                    type="button"
-                    className="card grid gap-2 overflow-hidden p-0 text-left hover:border-brand"
-                    disabled={config.views.length >= 30}
-                    onClick={() => applyTemplate(t.id)}
-                  >
-                    {/* eslint-disable-next-line @next/next/no-img-element -- static PNG previews in /public/templates */}
-                    <img
-                      src={t.preview}
-                      alt=""
-                      width={960}
-                      height={540}
-                      className="aspect-video w-full bg-bg object-cover"
-                      loading="lazy"
-                    />
-                    <span className="grid gap-1 px-3 pb-3">
-                      <span className="flex flex-wrap items-center gap-2">
-                        <span className="font-semibold">{t.name}</span>
-                        {t.tier === "paid" && (
-                          <span className="rounded-md bg-bg px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-soft">
-                            Household
-                          </span>
-                        )}
+                {group.templates.map((t) => {
+                  const locked = !isPaid && t.tier === "paid";
+                  return (
+                    <button
+                      key={t.id}
+                      type="button"
+                      className={`card grid gap-2 overflow-hidden p-0 text-left ${locked ? "opacity-55 grayscale-[0.35] hover:opacity-80" : "hover:border-brand"}`}
+                      disabled={isPaid && config.views.length >= viewLimit}
+                      onClick={() => applyTemplate(t.id)}
+                    >
+                      {/* eslint-disable-next-line @next/next/no-img-element -- static PNG previews in /public/templates */}
+                      <img
+                        src={t.preview}
+                        alt=""
+                        width={960}
+                        height={540}
+                        className="aspect-video w-full bg-bg object-cover"
+                        loading="lazy"
+                      />
+                      <span className="grid gap-1 px-3 pb-3">
+                        <span className="flex flex-wrap items-center gap-2">
+                          <span className="font-semibold">{t.name}</span>
+                          {t.tier === "paid" && <HouseholdBadge />}
+                        </span>
+                        <span className="text-xs text-soft">{t.description}</span>
                       </span>
-                      <span className="text-xs text-soft">{t.description}</span>
-                    </span>
-                  </button>
-                ))}
+                    </button>
+                  );
+                })}
               </div>
             </div>
           ))}
