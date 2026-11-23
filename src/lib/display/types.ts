@@ -1,7 +1,7 @@
 import type { DashboardConfig, Theme, View } from "@/lib/config/schema";
 
 // What a display receives: the parts of the settings document it needs, nothing secret. Built by
-// src/server/display.ts, read by src/display/. Types only, so the display bundle carries no schema code.
+// src/lib/display/payload.ts, read by src/display/. Types only, so the display bundle carries no schema code.
 
 export interface DisplayPayload {
   version: number;

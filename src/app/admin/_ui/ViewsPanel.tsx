@@ -8,12 +8,16 @@ import { newWidget, WIDGET_GROUPS, WIDGET_TYPES, WIDGETS } from "@/lib/config/wi
 
 import { ConfirmButton, Range, Section, Segmented, Select, Stepper, Text } from "./fields";
 import { GridEditor, widgetName } from "./GridEditor";
+import { LivePreview } from "./LivePreview";
 import { newId, useAdmin } from "./store";
 import { WidgetSettings } from "./WidgetSettings";
 
 // Views (Melvin, 2026-11-17: "several views to choose from"): each view is its own grid of widgets. Displays show one
 // view, or follow the time-of-day schedule. Spacing defaults (12×8, gap 16, edge 14, tile 16) are tuned for a
 // 1920 × 1080 UC-Display21 (Melvin, 2026-11-22).
+//
+// Layout (Melvin, 2026-11-22): selected widget settings at the top, a live draft preview of the real display, the
+// schematic GridEditor for drag/resize, then "This view" underneath.
 
 const GRID_PRESETS = [
   { value: "12x8", label: "12×8 (1080p)", cols: 12, rows: 8 },
@@ -29,6 +33,7 @@ function presetFor(cols: number, rows: number): GridPreset {
 
 export function ViewsPanel() {
   const config = useAdmin((s) => s.config);
+  const version = useAdmin((s) => s.version);
   const edit = useAdmin((s) => s.edit);
   const [viewId, setViewId] = useState(config.views[0]?.id ?? "");
   const [selected, setSelected] = useState<string | null>(null);
@@ -113,151 +118,77 @@ export function ViewsPanel() {
   const usedBySchedule = (["morning", "afternoon", "evening", "night"] as const).filter((p) => config.schedule[p].viewId === active.id);
   const gridPreset = presetFor(active.cols, active.rows);
 
-  const viewChrome = (
-    <Section title="This view">
-      <Text label="Name" value={active.name} maxLength={40} onChange={(v) => editView((x) => void (x.name = v))} />
-      <Segmented
-        label="Grid size"
-        value={gridPreset}
-        options={[
-          ...GRID_PRESETS.map((p) => ({ value: p.value as GridPreset, label: p.label })),
-          { value: "custom" as const, label: "Custom" },
-        ]}
-        hint="12×8 fits a 1920 × 1080 wall screen."
-        onChange={(v) => {
-          if (v === "custom") return;
-          const p = GRID_PRESETS.find((x) => x.value === v);
-          if (p) resize(p.cols, p.rows);
-        }}
-      />
-      {gridPreset === "custom" && (
-        <div className="grid grid-cols-2 gap-3">
-          <Stepper label="Columns" value={active.cols} min={1} max={24} onChange={(n) => resize(n, active.rows)} />
-          <Stepper label="Rows" value={active.rows} min={1} max={24} onChange={(n) => resize(active.cols, n)} />
-        </div>
-      )}
-      <Range
-        label="Gap"
-        value={active.gap}
-        min={0}
-        max={48}
-        step={1}
-        format={(n) => `${n} px`}
-        onChange={(n) => editView((x) => void (x.gap = n))}
-      />
-      <Range
-        label="Edge"
-        value={active.padding}
-        min={0}
-        max={96}
-        step={1}
-        format={(n) => `${n} px`}
-        onChange={(n) => editView((x) => void (x.padding = n))}
-      />
-      <Range
-        label="Tile"
-        value={active.tilePadding}
-        min={0}
-        max={48}
-        step={1}
-        format={(n) => `${n} px`}
-        hint="Space inside each panel. Photos, cameras and radar still fill their cell."
-        onChange={(n) => editView((x) => void (x.tilePadding = n))}
-      />
-      <Select
-        label="Colour scheme"
-        value={active.themeId ?? ""}
-        options={[{ value: "", label: "The dashboard's scheme" }, ...config.themes.map((t) => ({ value: t.id, label: t.name }))]}
-        onChange={(v) => editView((x) => void (x.themeId = v || null))}
-      />
-      <div className="flex flex-wrap gap-2">
-        <button className="btn-ghost" onClick={duplicateView} disabled={config.views.length >= 30}>
-          Duplicate view
+  return (
+    <div className="grid content-start gap-4">
+      <div className="flex flex-wrap items-center gap-2" role="tablist" aria-label="Views">
+        {config.views.map((v) => (
+          <button
+            key={v.id}
+            role="tab"
+            aria-selected={v.id === active.id}
+            className={v.id === active.id ? "btn-primary" : "btn-ghost"}
+            onClick={() => {
+              setViewId(v.id);
+              setSelected(null);
+              setNotice("");
+            }}
+          >
+            {v.name}
+          </button>
+        ))}
+        <button className="btn-ghost" onClick={addView} disabled={config.views.length >= 30}>
+          + View
         </button>
-        {config.views.length > 1 &&
-          (usedBySchedule.length ? (
-            <p className="text-xs text-soft">The {usedBySchedule.join(" and ")} schedule uses this view, so it can&rsquo;t be deleted.</p>
-          ) : (
+      </div>
+
+      {widget ? (
+        <Section
+          title={widgetName(widget)}
+          actions={
+            <button className="btn-ghost min-h-9 px-3" onClick={() => setSelected(null)} aria-label="Close widget settings">
+              ✕
+            </button>
+          }
+        >
+          <WidgetSettings widget={widget} config={config} onChange={(change) => editWidget(widget.id, change)} />
+          <div className="flex flex-wrap gap-2 border-t border-line pt-4">
+            <button
+              className="btn-ghost"
+              onClick={() => {
+                const spot = findSpot(widget, active, active.widgets, WIDGETS[widget.type].minSize);
+                if (!spot) return setNotice("There's no room for a copy on this view.");
+                const copy = { ...structuredClone(widget), id: newId(widget.type), ...spot };
+                editView((v) => void v.widgets.push(copy));
+                setSelected(copy.id);
+              }}
+            >
+              Duplicate
+            </button>
             <ConfirmButton
-              label="Delete view"
+              label="Remove widget"
               onConfirm={() => {
-                edit((c) => void (c.views = c.views.filter((v) => v.id !== active.id)));
-                setViewId(config.views.find((v) => v.id !== active.id)?.id ?? "");
+                editView((v) => void (v.widgets = v.widgets.filter((w) => w.id !== widget.id)));
                 setSelected(null);
               }}
             />
-          ))}
-      </div>
-    </Section>
-  );
+          </div>
+        </Section>
+      ) : (
+        <p className="rounded-xl bg-bg p-3 text-sm text-soft" role="status">
+          Tap a widget on the layout grid below to change its settings. The live preview updates as you edit.
+        </p>
+      )}
 
-  return (
-    <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_22rem]">
-      <div className="grid content-start gap-4">
-        <div className="flex flex-wrap items-center gap-2" role="tablist" aria-label="Views">
-          {config.views.map((v) => (
-            <button
-              key={v.id}
-              role="tab"
-              aria-selected={v.id === active.id}
-              className={v.id === active.id ? "btn-primary" : "btn-ghost"}
-              onClick={() => {
-                setViewId(v.id);
-                setSelected(null);
-                setNotice("");
-              }}
-            >
-              {v.name}
-            </button>
-          ))}
-          <button className="btn-ghost" onClick={addView} disabled={config.views.length >= 30}>
-            + View
-          </button>
-        </div>
+      <LivePreview key={active.id} viewId={active.id} config={config} version={version} />
 
+      <div className="grid gap-2">
+        <h2 className="text-sm font-semibold text-soft">Layout</h2>
         <GridEditor
           view={active}
           selectedId={selected}
           onSelect={setSelected}
           onChange={(id, r) => editWidget(id, (w) => Object.assign(w, r))}
         />
-        {notice && (
-          <p className="rounded-xl bg-bg p-3 text-sm" role="status">
-            {notice}
-          </p>
-        )}
-
-        <div className="flex flex-wrap gap-2">
-          <button className="btn-primary" onClick={() => setPicking(!picking)} aria-expanded={picking}>
-            + Add a widget
-          </button>
-          <a className="btn-ghost" href={`/admin/preview/${encodeURIComponent(active.id)}/`} target="_blank" rel="noreferrer">
-            Preview ↗
-          </a>
-        </div>
-        {picking && (
-          <div className="grid gap-4 rounded-xl border border-line p-3">
-            <Text label="Search widgets" value={pickerQuery} maxLength={40} placeholder="Clock, weather…" onChange={setPickerQuery} />
-            {(filteredTypes ? [{ id: "search", label: "Matches", types: filteredTypes }] : WIDGET_GROUPS).map((group) =>
-              group.types.length === 0 ? null : (
-                <div key={group.id} className="grid gap-2">
-                  <h3 className="text-sm font-semibold text-soft">{group.label}</h3>
-                  <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-4">
-                    {group.types.map((t) => (
-                      <button key={t} className="card grid gap-1 p-3 text-left hover:border-brand" onClick={() => add(t)}>
-                        <span className="text-2xl" aria-hidden="true">
-                          {WIDGETS[t].icon}
-                        </span>
-                        <span className="font-semibold">{WIDGETS[t].label}</span>
-                        <span className="text-xs text-soft">{WIDGETS[t].description}</span>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              ),
-            )}
-          </div>
-        )}
         <p className="text-xs text-soft">
           Drag a widget to move it and any of its corners to resize it. Tap one to change its settings and show all four corners. With a
           keyboard: arrows move, Shift + arrows move the bottom-right corner and Shift + Alt + arrows the top-left. Widgets can go on top of
@@ -265,43 +196,116 @@ export function ViewsPanel() {
         </p>
       </div>
 
-      <div className="grid content-start gap-4">
-        {/* Spacing stays reachable above the widget form so Gap/Edge/Tile are not buried. */}
-        {viewChrome}
-        {widget ? (
-          <Section
-            title={widgetName(widget)}
-            actions={
-              <button className="btn-ghost min-h-9 px-3" onClick={() => setSelected(null)} aria-label="Close widget settings">
-                ✕
-              </button>
-            }
-          >
-            <WidgetSettings widget={widget} config={config} onChange={(change) => editWidget(widget.id, change)} />
-            <div className="flex flex-wrap gap-2 border-t border-line pt-4">
-              <button
-                className="btn-ghost"
-                onClick={() => {
-                  const spot = findSpot(widget, active, active.widgets, WIDGETS[widget.type].minSize);
-                  if (!spot) return setNotice("There's no room for a copy on this view.");
-                  const copy = { ...structuredClone(widget), id: newId(widget.type), ...spot };
-                  editView((v) => void v.widgets.push(copy));
-                  setSelected(copy.id);
-                }}
-              >
-                Duplicate
-              </button>
+      {notice && (
+        <p className="rounded-xl bg-bg p-3 text-sm" role="status">
+          {notice}
+        </p>
+      )}
+
+      <div className="flex flex-wrap gap-2">
+        <button className="btn-primary" onClick={() => setPicking(!picking)} aria-expanded={picking}>
+          + Add a widget
+        </button>
+      </div>
+      {picking && (
+        <div className="grid gap-4 rounded-xl border border-line p-3">
+          <Text label="Search widgets" value={pickerQuery} maxLength={40} placeholder="Clock, weather…" onChange={setPickerQuery} />
+          {(filteredTypes ? [{ id: "search", label: "Matches", types: filteredTypes }] : WIDGET_GROUPS).map((group) =>
+            group.types.length === 0 ? null : (
+              <div key={group.id} className="grid gap-2">
+                <h3 className="text-sm font-semibold text-soft">{group.label}</h3>
+                <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-4">
+                  {group.types.map((t) => (
+                    <button key={t} className="card grid gap-1 p-3 text-left hover:border-brand" onClick={() => add(t)}>
+                      <span className="text-2xl" aria-hidden="true">
+                        {WIDGETS[t].icon}
+                      </span>
+                      <span className="font-semibold">{WIDGETS[t].label}</span>
+                      <span className="text-xs text-soft">{WIDGETS[t].description}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ),
+          )}
+        </div>
+      )}
+
+      <Section title="This view">
+        <Text label="Name" value={active.name} maxLength={40} onChange={(v) => editView((x) => void (x.name = v))} />
+        <Segmented
+          label="Grid size"
+          value={gridPreset}
+          options={[
+            ...GRID_PRESETS.map((p) => ({ value: p.value as GridPreset, label: p.label })),
+            { value: "custom" as const, label: "Custom" },
+          ]}
+          hint="12×8 fits a 1920 × 1080 wall screen."
+          onChange={(v) => {
+            if (v === "custom") return;
+            const p = GRID_PRESETS.find((x) => x.value === v);
+            if (p) resize(p.cols, p.rows);
+          }}
+        />
+        {gridPreset === "custom" && (
+          <div className="grid grid-cols-2 gap-3">
+            <Stepper label="Columns" value={active.cols} min={1} max={24} onChange={(n) => resize(n, active.rows)} />
+            <Stepper label="Rows" value={active.rows} min={1} max={24} onChange={(n) => resize(active.cols, n)} />
+          </div>
+        )}
+        <Range
+          label="Gap"
+          value={active.gap}
+          min={0}
+          max={48}
+          step={1}
+          format={(n) => `${n} px`}
+          onChange={(n) => editView((x) => void (x.gap = n))}
+        />
+        <Range
+          label="Edge"
+          value={active.padding}
+          min={0}
+          max={96}
+          step={1}
+          format={(n) => `${n} px`}
+          onChange={(n) => editView((x) => void (x.padding = n))}
+        />
+        <Range
+          label="Tile"
+          value={active.tilePadding}
+          min={0}
+          max={48}
+          step={1}
+          format={(n) => `${n} px`}
+          hint="Space inside each panel. Photos, cameras and radar still fill their cell."
+          onChange={(n) => editView((x) => void (x.tilePadding = n))}
+        />
+        <Select
+          label="Colour scheme"
+          value={active.themeId ?? ""}
+          options={[{ value: "", label: "The dashboard's scheme" }, ...config.themes.map((t) => ({ value: t.id, label: t.name }))]}
+          onChange={(v) => editView((x) => void (x.themeId = v || null))}
+        />
+        <div className="flex flex-wrap gap-2">
+          <button className="btn-ghost" onClick={duplicateView} disabled={config.views.length >= 30}>
+            Duplicate view
+          </button>
+          {config.views.length > 1 &&
+            (usedBySchedule.length ? (
+              <p className="text-xs text-soft">The {usedBySchedule.join(" and ")} schedule uses this view, so it can&rsquo;t be deleted.</p>
+            ) : (
               <ConfirmButton
-                label="Remove widget"
+                label="Delete view"
                 onConfirm={() => {
-                  editView((v) => void (v.widgets = v.widgets.filter((w) => w.id !== widget.id)));
+                  edit((c) => void (c.views = c.views.filter((v) => v.id !== active.id)));
+                  setViewId(config.views.find((v) => v.id !== active.id)?.id ?? "");
                   setSelected(null);
                 }}
               />
-            </div>
-          </Section>
-        ) : null}
-      </div>
+            ))}
+        </div>
+      </Section>
     </div>
   );
 }

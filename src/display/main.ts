@@ -1,6 +1,7 @@
 import { stackOrder } from "@/lib/config/grid";
 import type { Palette, Period, Theme, View } from "@/lib/config/schema";
 import { currentPeriod, msUntilLocalTime, msUntilNextPeriod } from "@/lib/config/time";
+import { parseDraftMessage, previewReadyMessage } from "@/lib/display/draftMessage";
 import type { DisplayPayload, HaData } from "@/lib/display/types";
 
 import { onAlarm, startAlarms } from "./alarm";
@@ -23,6 +24,9 @@ let etag: string | undefined;
 let cleanups: Cleanup[] = [];
 let shown = { viewId: "", mode: "", themeId: "", version: -1 };
 let periodTimer: number | undefined;
+/** Admin Views tab is pushing an unsaved draft; the 30s saved poll must not overwrite it. */
+let draftActive = false;
+let draftSeq = 0;
 
 const stage = h("main", { class: "stage" });
 const dim = h("div", { class: "dim", "aria-hidden": "true" });
@@ -124,6 +128,11 @@ function render(force = false) {
 async function loadState(): Promise<boolean> {
   const r = await get<DisplayPayload>("state", {}, etag);
   if (r.notModified) return true;
+  // An embedded Views preview keeps showing the admin's draft until they clear it or leave.
+  if (draftActive && payload) {
+    if (r.data) etag = r.etag ?? etag;
+    return true;
+  }
   if (!r.data) return false;
   payload = r.data;
   etag = r.etag ?? undefined;
@@ -138,6 +147,45 @@ async function loadState(): Promise<boolean> {
 async function poll() {
   await loadState();
   window.setTimeout(() => void poll(), 30_000);
+}
+
+/**
+ * Admin Views tab → this preview (Melvin, 2026-11-22): apply the unsaved working copy so widget settings update
+ * live. Only when framed by our own origin; earth's iframe and other windows are ignored.
+ */
+function listenForDraft() {
+  if (!PREVIEW) return;
+  window.addEventListener("message", (event) => {
+    if (event.origin !== location.origin || event.source !== window.parent) return;
+    const msg = parseDraftMessage(event.data);
+    if (!msg) return;
+    if (msg.type === "clear") {
+      draftActive = false;
+      void loadState();
+      return;
+    }
+    draftActive = true;
+    draftSeq += 1;
+    // Bump version so render() remounts widgets when only options changed (same view/theme id).
+    payload = { ...msg.payload, version: msg.payload.version + draftSeq, fixedViewId: PREVIEW };
+    render(true);
+    burnIn();
+    alerts();
+    doorbell();
+    saver?.update();
+  });
+  // Tell the parent we're listening so it can push the current draft. Repeat a few times in case the
+  // admin's listener wasn't attached when the first ping fired.
+  const announce = () => {
+    try {
+      window.parent.postMessage(previewReadyMessage(), location.origin);
+    } catch {
+      // Not framed, or the parent is cross-origin: nothing to sync.
+    }
+  };
+  announce();
+  window.setTimeout(announce, 200);
+  window.setTimeout(announce, 800);
 }
 
 // ---- Emergency strip: polled every minute while alerts are on. ----
@@ -290,6 +338,7 @@ async function start() {
   if (TOKEN && !PREVIEW && "serviceWorker" in navigator) {
     void navigator.serviceWorker.register(`/display/sw.js?v=${document.body.dataset.v ?? ""}`, { scope: "/d/" }).catch(() => undefined);
   }
+  listenForDraft();
   while (!(await loadState())) {
     stage.replaceChildren(h("div", { class: "connecting" }, "Connecting…"));
     await new Promise((r) => setTimeout(r, 10_000));

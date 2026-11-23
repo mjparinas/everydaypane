@@ -13,4 +13,14 @@ describe("display page", () => {
     expect(html).toContain('data-preview="home"');
     expect(html).toContain('data-preview-mode="night"');
   });
+
+  it("lets the admin frame a preview, and keeps a wall display unframeable", () => {
+    const wall = displayHtml({ token: "abc", title: "Kitchen" });
+    expect(wall.headers.get("Content-Security-Policy")).toContain("frame-ancestors 'none'");
+    expect(wall.headers.get("X-Frame-Options")).toBeNull();
+
+    const preview = displayHtml({ token: null, title: "Preview", previewView: "home" });
+    expect(preview.headers.get("Content-Security-Policy")).toContain("frame-ancestors 'self'");
+    expect(preview.headers.get("X-Frame-Options")).toBe("SAMEORIGIN");
+  });
 });
