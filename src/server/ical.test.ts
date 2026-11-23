@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { GET as adminGET, DELETE, POST } from "@/app/api/household/calendar-links/route";
 import { GET as displayGET } from "@/app/api/display/calendar/route";
+import { GET as adminGET, DELETE, POST } from "@/app/api/household/calendar-links/route";
 import type { CalendarData } from "@/lib/display/types";
 import { zonedFormatter } from "@/lib/timeZone";
 import { LEGACY_ACCOUNT_ID } from "@/server/accounts";

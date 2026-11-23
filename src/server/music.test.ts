@@ -1,8 +1,8 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { DELETE as adminDELETE, GET as adminGET } from "@/app/api/household/music/route";
 import { GET as artGET } from "@/app/api/display/art/route";
 import { GET as musicGET, POST as musicPOST } from "@/app/api/display/music/route";
+import { DELETE as adminDELETE, GET as adminGET } from "@/app/api/household/music/route";
 import { GET as callbackGET } from "@/app/api/music/spotify/callback/route";
 import { GET as connectGET } from "@/app/api/music/spotify/connect/route";
 import { configSchema, type DashboardConfig } from "@/lib/config/schema";

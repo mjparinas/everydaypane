@@ -1,8 +1,8 @@
 import { deflateRawSync } from "node:zlib";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { GET as adminGET } from "@/app/api/household/transit/route";
 import { GET as displayGET } from "@/app/api/display/transit/route";
+import { GET as adminGET } from "@/app/api/household/transit/route";
 import { defaultConfig } from "@/lib/config/defaults";
 import { newWidget } from "@/lib/config/widgets";
 import type { TransitData } from "@/lib/display/types";

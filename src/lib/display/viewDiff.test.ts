@@ -57,9 +57,7 @@ describe("viewDiff", () => {
     const ops = diffWidgets([weather], [noPanel]);
     expect(ops).toEqual([{ op: "move", id: "weather", placed: expect.objectContaining({ transparent: true, widget: noPanel }) }]);
     const padded = { ...weather, outerPadding: 8 };
-    expect(diffWidgets([weather], [padded])).toEqual([
-      { op: "move", id: "weather", placed: expect.objectContaining({ widget: padded }) },
-    ]);
+    expect(diffWidgets([weather], [padded])).toEqual([{ op: "move", id: "weather", placed: expect.objectContaining({ widget: padded }) }]);
   });
 
   it("moves when only the font scale changes", () => {
