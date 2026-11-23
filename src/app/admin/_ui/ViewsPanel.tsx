@@ -6,29 +6,18 @@ import { findSpot, refit } from "@/lib/config/grid";
 import type { View, Widget, WidgetType } from "@/lib/config/schema";
 import { newWidget, WIDGET_GROUPS, WIDGET_TYPES, WIDGETS } from "@/lib/config/widgets";
 
-import { ConfirmButton, Range, Section, Segmented, Select, Stepper, Text } from "./fields";
+import { Text } from "./fields";
 import { LiveLayoutEditor, widgetName } from "./LiveLayoutEditor";
 import { newId, useAdmin } from "./store";
+import { ViewSettingsDrawer } from "./ViewSettingsDrawer";
 import { WidgetSettingsDrawer } from "./WidgetSettingsDrawer";
 
 // Views (Melvin, 2026-11-17: "several views to choose from"): each view is its own grid of widgets. Displays show one
 // view, or follow the time-of-day schedule. Spacing defaults (12×8, gap 16, edge 14, tile 16) are tuned for a
 // 1920 × 1080 UC-Display21 (Melvin, 2026-11-22).
 //
-// Layout (Melvin, 2026-11-22): one live editable preview (real widgets under a drag overlay), widget settings in a
-// right slide-out, then "This view" underneath.
-
-const GRID_PRESETS = [
-  { value: "12x8", label: "12×8 (1080p)", cols: 12, rows: 8 },
-  { value: "10x6", label: "10×6", cols: 10, rows: 6 },
-  { value: "16x9", label: "16×9", cols: 16, rows: 9 },
-] as const;
-
-type GridPreset = (typeof GRID_PRESETS)[number]["value"] | "custom";
-
-function presetFor(cols: number, rows: number): GridPreset {
-  return GRID_PRESETS.find((p) => p.cols === cols && p.rows === rows)?.value ?? "custom";
-}
+// Layout (Melvin, 2026-11-22): one live editable preview; widget and view settings open in right slide-outs so gap,
+// edge, tile and theme updates stay visible on the layout.
 
 export function ViewsPanel() {
   const config = useAdmin((s) => s.config);
@@ -36,6 +25,7 @@ export function ViewsPanel() {
   const edit = useAdmin((s) => s.edit);
   const [viewId, setViewId] = useState(config.views[0]?.id ?? "");
   const [selected, setSelected] = useState<string | null>(null);
+  const [editingView, setEditingView] = useState(false);
   const [notice, setNotice] = useState("");
   const [picking, setPicking] = useState(false);
   const [pickerQuery, setPickerQuery] = useState("");
@@ -84,6 +74,7 @@ export function ViewsPanel() {
     }
     const w = { ...newWidget(type, newId(type), spot), w: spot.w, h: spot.h };
     editView((v) => void v.widgets.push(w));
+    setEditingView(false);
     setSelected(w.id);
     setNotice("");
   }
@@ -106,37 +97,53 @@ export function ViewsPanel() {
     );
     setViewId(id);
     setSelected(null);
+    setEditingView(true);
   }
 
   function duplicateView() {
     const id = newId("view");
     edit((c) => void c.views.push({ ...structuredClone(active), id, name: `${active.name} copy`.slice(0, 40) }));
     setViewId(id);
+    setSelected(null);
+    setEditingView(true);
   }
 
   const usedBySchedule = (["morning", "afternoon", "evening", "night"] as const).filter((p) => config.schedule[p].viewId === active.id);
-  const gridPreset = presetFor(active.cols, active.rows);
 
   return (
     <div className="grid content-start gap-4">
-      <div className="flex flex-wrap items-center gap-2" role="tablist" aria-label="Views">
-        {config.views.map((v) => (
-          <button
-            key={v.id}
-            role="tab"
-            aria-selected={v.id === active.id}
-            className={v.id === active.id ? "btn-primary" : "btn-ghost"}
-            onClick={() => {
-              setViewId(v.id);
-              setSelected(null);
-              setNotice("");
-            }}
-          >
-            {v.name}
+      <div className="flex flex-wrap items-center gap-2">
+        <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2" role="tablist" aria-label="Views">
+          {config.views.map((v) => (
+            <button
+              key={v.id}
+              role="tab"
+              aria-selected={v.id === active.id}
+              className={v.id === active.id ? "btn-primary" : "btn-ghost"}
+              onClick={() => {
+                setViewId(v.id);
+                setSelected(null);
+                setNotice("");
+              }}
+            >
+              {v.name}
+            </button>
+          ))}
+          <button className="btn-ghost" onClick={addView} disabled={config.views.length >= 30}>
+            + View
           </button>
-        ))}
-        <button className="btn-ghost" onClick={addView} disabled={config.views.length >= 30}>
-          + View
+        </div>
+        <button
+          type="button"
+          className={editingView ? "btn-primary" : "btn-ghost"}
+          aria-expanded={editingView}
+          aria-controls={editingView ? "view-settings-drawer" : undefined}
+          onClick={() => {
+            setEditingView((open) => !open);
+            setSelected(null);
+          }}
+        >
+          Edit view
         </button>
       </div>
 
@@ -147,7 +154,10 @@ export function ViewsPanel() {
         config={config}
         version={version}
         selectedId={selected}
-        onSelect={setSelected}
+        onSelect={(id) => {
+          setSelected(id);
+          if (id) setEditingView(false);
+        }}
         onChange={(id, r) => editWidget(id, (w) => Object.assign(w, r))}
       />
 
@@ -167,6 +177,25 @@ export function ViewsPanel() {
           onRemove={() => {
             editView((v) => void (v.widgets = v.widgets.filter((w) => w.id !== widget.id)));
             setSelected(null);
+          }}
+        />
+      )}
+
+      {editingView && !widget && (
+        <ViewSettingsDrawer
+          view={active}
+          config={config}
+          usedBySchedule={usedBySchedule}
+          canDelete={config.views.length > 1}
+          onClose={() => setEditingView(false)}
+          onEdit={editView}
+          onResize={resize}
+          onDuplicate={duplicateView}
+          onDelete={() => {
+            edit((c) => void (c.views = c.views.filter((v) => v.id !== active.id)));
+            setViewId(config.views.find((v) => v.id !== active.id)?.id ?? "");
+            setSelected(null);
+            setEditingView(false);
           }}
         />
       )}
@@ -205,82 +234,6 @@ export function ViewsPanel() {
           )}
         </div>
       )}
-
-      <Section title="This view">
-        <Text label="Name" value={active.name} maxLength={40} onChange={(v) => editView((x) => void (x.name = v))} />
-        <Segmented
-          label="Grid size"
-          value={gridPreset}
-          options={[
-            ...GRID_PRESETS.map((p) => ({ value: p.value as GridPreset, label: p.label })),
-            { value: "custom" as const, label: "Custom" },
-          ]}
-          hint="12×8 fits a 1920 × 1080 wall screen."
-          onChange={(v) => {
-            if (v === "custom") return;
-            const p = GRID_PRESETS.find((x) => x.value === v);
-            if (p) resize(p.cols, p.rows);
-          }}
-        />
-        {gridPreset === "custom" && (
-          <div className="grid grid-cols-2 gap-3">
-            <Stepper label="Columns" value={active.cols} min={1} max={24} onChange={(n) => resize(n, active.rows)} />
-            <Stepper label="Rows" value={active.rows} min={1} max={24} onChange={(n) => resize(active.cols, n)} />
-          </div>
-        )}
-        <Range
-          label="Gap"
-          value={active.gap}
-          min={0}
-          max={48}
-          step={1}
-          format={(n) => `${n} px`}
-          onChange={(n) => editView((x) => void (x.gap = n))}
-        />
-        <Range
-          label="Edge"
-          value={active.padding}
-          min={0}
-          max={96}
-          step={1}
-          format={(n) => `${n} px`}
-          onChange={(n) => editView((x) => void (x.padding = n))}
-        />
-        <Range
-          label="Tile"
-          value={active.tilePadding}
-          min={0}
-          max={48}
-          step={1}
-          format={(n) => `${n} px`}
-          hint="Space inside each panel. Photos, cameras and radar still fill their cell."
-          onChange={(n) => editView((x) => void (x.tilePadding = n))}
-        />
-        <Select
-          label="Colour scheme"
-          value={active.themeId ?? ""}
-          options={[{ value: "", label: "The dashboard's scheme" }, ...config.themes.map((t) => ({ value: t.id, label: t.name }))]}
-          onChange={(v) => editView((x) => void (x.themeId = v || null))}
-        />
-        <div className="flex flex-wrap gap-2">
-          <button className="btn-ghost" onClick={duplicateView} disabled={config.views.length >= 30}>
-            Duplicate view
-          </button>
-          {config.views.length > 1 &&
-            (usedBySchedule.length ? (
-              <p className="text-xs text-soft">The {usedBySchedule.join(" and ")} schedule uses this view, so it can&rsquo;t be deleted.</p>
-            ) : (
-              <ConfirmButton
-                label="Delete view"
-                onConfirm={() => {
-                  edit((c) => void (c.views = c.views.filter((v) => v.id !== active.id)));
-                  setViewId(config.views.find((v) => v.id !== active.id)?.id ?? "");
-                  setSelected(null);
-                }}
-              />
-            ))}
-        </div>
-      </Section>
     </div>
   );
 }

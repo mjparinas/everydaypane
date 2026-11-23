@@ -76,7 +76,13 @@ try {
   const context = await browser.newContext();
   const page = await context.newPage();
   const consoleErrors = [];
-  page.on("console", (m) => m.type() === "error" && consoleErrors.push(m.text()));
+  // Weather and air come from Open-Meteo; CI without outbound net answers 502, which the display handles. The Views
+  // live preview loads those routes in an iframe, and Chrome logs the 502 as a console error on this page.
+  page.on("console", (m) => {
+    if (m.type() !== "error") return;
+    if (/Failed to load resource: the server responded with a status of 50[23]/.test(m.text())) return;
+    consoleErrors.push(m.text());
+  });
   page.on("pageerror", (e) => consoleErrors.push(e.message));
 
   await step("health check answers", async () => {
