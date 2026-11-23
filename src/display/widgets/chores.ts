@@ -1,5 +1,4 @@
-import { activePeriod, PERIOD_LABELS, periodRank } from "@/lib/chores";
-import type { ChorePeriod } from "@/lib/config/schema";
+import { activePeriod, PERIOD_LABELS, periodRank, type ChorePeriod } from "@/lib/chores";
 import type { ChoresData } from "@/lib/display/types";
 
 import { refresh, sendExplained, subscribe } from "../api";

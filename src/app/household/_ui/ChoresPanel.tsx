@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 
-import { daysLabel, PERIOD_LABELS, WEEKDAYS } from "@/lib/chores";
-import { CHORE_PERIODS, type Chore, type ChorePeriod } from "@/lib/config/schema";
+import { CHORE_PERIODS, daysLabel, PERIOD_LABELS, WEEKDAYS, type ChorePeriod } from "@/lib/chores";
+import type { Chore } from "@/lib/config/schema";
 
 import { Colour, ConfirmButton, Range, Section, Select, Stepper, Text, Toggle } from "./fields";
 import { newId, useAdmin } from "./store";

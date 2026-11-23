@@ -672,8 +672,7 @@ export const chorePersonSchema = z.object({
 export type ChorePerson = z.infer<typeof chorePersonSchema>;
 
 /** When in the day a chore belongs (Melvin, 2026-11-23: homescreens-style morning/afternoon/evening bands). */
-export const CHORE_PERIODS = ["morning", "afternoon", "evening", "anytime"] as const;
-export type ChorePeriod = (typeof CHORE_PERIODS)[number];
+export type ChorePeriod = "morning" | "afternoon" | "evening" | "anytime";
 
 export const choreSchema = z.object({
   id,
@@ -690,7 +689,7 @@ export const choreSchema = z.object({
   // "none": everyone picked does it; "day": one of them each time it's due, in turn; "week": one of them all week.
   rotate: z.enum(["none", "day", "week"]),
   // Defaults to anytime so documents saved before periods existed still load.
-  period: z.enum(CHORE_PERIODS).default("anytime"),
+  period: z.enum(["morning", "afternoon", "evening", "anytime"]).default("anytime"),
 });
 export type Chore = z.infer<typeof choreSchema>;
 
