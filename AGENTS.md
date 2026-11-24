@@ -645,7 +645,7 @@ panel can be complex if you need it to be."
   a family session does (`familyEditorFor`), so `/d/<token>/edit/` works without login. It does not grant admin pin,
   settings, or anything beyond those three APIs through that helper — but the same token still unlocks `/api/display/*`
   if someone crafts requests (as the wall already can).
-- **Display image auth:** unlocking `/display/` sets HttpOnly `ep_wall` (`Path=/display`) and `ep_display`
+- **Display image auth:** unlocking `/display/` sets HttpOnly `ep_wall` (`Path=/`) and `ep_display`
   (`Path=/api/display/`) for about a week; `<img>` uses `ep_display`; the long-lived device token stays in
   `x-display-token` / `data-token` for fetch, never in image query strings.
 - **Home Assistant URL:** must be public https; changing it (save or backup restore) clears the stored token and

@@ -40,6 +40,8 @@ async function unlockOnPage(page, device) {
     const path = new URL(u).pathname;
     return path === "/display/" || path === "/display";
   });
+  // Confirm the lightweight shell actually booted (URL alone can race a redirect).
+  await page.locator("body[data-token]").waitFor({ timeout: 15_000 });
 }
 
 /** Copy the admin session, unlock, leave cookies for later pages in this context. */

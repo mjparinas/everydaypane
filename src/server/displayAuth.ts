@@ -42,11 +42,11 @@ export function displayCookieHeader(token: string, now = Date.now()): string {
 /** Same seal as `ep_display`, readable by `GET /display/` so overnight reload skips the QR gate. */
 export function wallCookieHeader(token: string, now = Date.now()): string {
   const secure = process.env.NODE_ENV === "production" ? "; Secure" : "";
-  // Lax (not Strict): set from `/api/auth/device/select/` then navigate to `/display/` in the same tab.
-  return `${WALL_COOKIE}=${sealDisplayCookie(token, now)}; Path=/display; HttpOnly; SameSite=Lax; Max-Age=${Math.floor(DISPLAY_COOKIE_MS / 1000)}${secure}`;
+  // Path=/ so a Set-Cookie from `/api/auth/device/select/` is always sent on the next `/display/` navigation.
+  return `${WALL_COOKIE}=${sealDisplayCookie(token, now)}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${Math.floor(DISPLAY_COOKIE_MS / 1000)}${secure}`;
 }
 
-export const clearedWallCookie = () => `${WALL_COOKIE}=; Path=/display; HttpOnly; SameSite=Lax; Max-Age=0`;
+export const clearedWallCookie = () => `${WALL_COOKIE}=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0`;
 
 /** Set-Cookie headers that unlock the wall for this device token (`ep_wall` + `ep_display`). */
 export function unlockDisplayCookies(token: string, now = Date.now()): string[] {
