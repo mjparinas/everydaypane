@@ -4,7 +4,9 @@
 const VIEWPORT = { width: 1920, height: 1080 }; // kitchen wall panel size
 
 async function addDevice(page, base, viewId = null) {
-  const r = await page.request.post(`${base}/api/household/devices/`, { headers: { origin: base }, data: { name: "Kitchen", viewId } });
+  // Unique names: the unlock picker lists every device, and e2e adds many "Kitchen" rows.
+  const name = `Wall ${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
+  const r = await page.request.post(`${base}/api/household/devices/`, { headers: { origin: base }, data: { name, viewId } });
   if (r.status() !== 201) throw new Error(`add device: ${r.status()}`);
   const body = await r.json();
   return {
@@ -15,34 +17,43 @@ async function addDevice(page, base, viewId = null) {
   };
 }
 
-/** Copy the admin session onto a context, then unlock via the signed-in picker (sets ep_wall in the real browser). */
-async function unlockDisplayContext(context, adminPage, device) {
+async function copyAdminSession(context, adminPage, base) {
   const session = (await adminPage.context().cookies()).filter((c) => c.name === "ep_session");
   await context.addCookies(
     session.map((c) => ({
       name: c.name,
       value: c.value,
-      url: device.base,
+      url: base,
       httpOnly: c.httpOnly,
       secure: c.secure,
       sameSite: c.sameSite,
       expires: c.expires > 0 ? c.expires : undefined,
     })),
   );
-  const page = await context.newPage();
+}
+
+/** Unlock on this page via the signed-in picker; leaves the dashboard loaded. */
+async function unlockOnPage(page, device) {
   await page.goto(`${device.base}/display/unlock/`);
   await page.getByRole("button", { name: device.name, exact: true }).click();
   await page.waitForURL((u) => {
     const path = new URL(u).pathname;
     return path === "/display/" || path === "/display";
   });
+}
+
+/** Copy the admin session, unlock, leave cookies for later pages in this context. */
+async function unlockDisplayContext(context, adminPage, device) {
+  await copyAdminSession(context, adminPage, device.base);
+  const page = await context.newPage();
+  await unlockOnPage(page, device);
   await page.close();
 }
 
-/** Opens the wall after unlocking with the admin session. */
+/** Opens the wall after unlocking with the admin session (same tab stays on the dashboard). */
 async function openDisplay(browser, adminPage, device) {
   const context = await browser.newContext({ viewport: VIEWPORT });
-  await unlockDisplayContext(context, adminPage, device);
+  await copyAdminSession(context, adminPage, device.base);
   const page = await context.newPage();
   const errors = [];
   page.on("pageerror", (e) => errors.push(e.message));
@@ -50,7 +61,7 @@ async function openDisplay(browser, adminPage, device) {
   page.on("response", (r) => {
     if (r.status() >= 400 && !/\/api\/display\/(weather|air)\//.test(r.url())) errors.push(`${r.status()} ${r.url()}`);
   });
-  await page.goto(device.url);
+  await unlockOnPage(page, device);
   return { context, page, errors };
 }
 

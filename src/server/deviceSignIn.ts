@@ -45,9 +45,13 @@ async function purgeExpired(now: number): Promise<void> {
 }
 
 function cookieJson(body: unknown, cookies: string[], status = 200): Response {
-  const headers = new Headers({ "Cache-Control": "no-store" });
-  for (const c of cookies) headers.append("Set-Cookie", c);
-  return Response.json(body, { status, headers });
+  // Append Set-Cookie after construction: passing a Headers init into Response.json can drop duplicate names.
+  const res = new Response(JSON.stringify(body), {
+    status,
+    headers: { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" },
+  });
+  for (const c of cookies) res.headers.append("Set-Cookie", c);
+  return res;
 }
 
 /** Display starts a code session and shows the QR. */
