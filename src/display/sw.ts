@@ -129,8 +129,7 @@ async function displayDocument(req: Request, ms: number): Promise<Response> {
     return r;
   } catch {
     return (
-      (await offlineCopy(key)) ??
-      new Response("Offline", { status: 503, headers: { "content-type": "text/plain", "x-offline": "1" } })
+      (await offlineCopy(key)) ?? new Response("Offline", { status: 503, headers: { "content-type": "text/plain", "x-offline": "1" } })
     );
   }
 }
