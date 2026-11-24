@@ -49,9 +49,7 @@ describe("display cookie for image routes", () => {
     const other = await createAccount("Token home", "token.wall@example.com");
     const { token } = await addDevice(other.id, "Wall", null);
     const admin = await cookieFor("admin@example.com");
-    const viewer = await viewerFor(
-      req("/api/display/calendar/", { headers: { cookie: admin, "x-display-token": token } }),
-    );
+    const viewer = await viewerFor(req("/api/display/calendar/", { headers: { cookie: admin, "x-display-token": token } }));
     expect(viewer?.kind).toBe("device");
     expect(accountIdOf(viewer!)).toBe(other.id);
   });
