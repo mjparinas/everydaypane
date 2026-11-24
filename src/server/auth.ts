@@ -1,6 +1,7 @@
 import "server-only";
 
 import { signInEmail } from "@/lib/email";
+import { safeNext } from "@/lib/safeNext";
 
 import { accountsForEmail, canSignIn, createAccount, ensureAccountsSeeded, type MemberRole } from "./accounts";
 import { randomToken, sha256 } from "./crypto";
@@ -29,7 +30,13 @@ export interface Session {
 const SENT = { ok: true, message: "If that address can sign in, a link is on its way. It works once, for 15 minutes." };
 
 /** Emails a sign-in link if the address belongs to a household (or env bootstrap). Always answers the same. */
-export async function startSignIn(req: Request, email: string, origin: string, now = Date.now()): Promise<Response> {
+export async function startSignIn(
+  req: Request,
+  email: string,
+  origin: string,
+  now = Date.now(),
+  next?: string | null,
+): Promise<Response> {
   await ensureAccountsSeeded(now);
   const e = email.trim().toLowerCase();
   if (!(await rateLimit(`sign-in:${clientIp(req)}`, 10, 15 * 60_000, now))) return json({ error: "Too many tries. Wait 15 minutes." }, 429);
@@ -45,7 +52,12 @@ export async function startSignIn(req: Request, email: string, origin: string, n
     accountId,
     now + LINK_MS,
   ]);
-  const link = `${env.siteUrl() || origin}/signin/verify/?token=${encodeURIComponent(token)}`;
+  // Bake `next` into the emailed URL so phone unlock still returns to Approve when the mail app opens a
+  // different browser than the one that stored sessionStorage (Melvin, 2026-11-24).
+  const after = safeNext(next);
+  const link = `${env.siteUrl() || origin}/signin/verify/?token=${encodeURIComponent(token)}${
+    after ? `&next=${encodeURIComponent(after)}` : ""
+  }`;
   const sent = await sendEmail({ to: e, ...signInEmail(link) });
   if (!sent) return json({ error: "The email couldn't be sent. Try again in a minute." }, 502);
   return json(SENT);
@@ -54,15 +66,22 @@ export async function startSignIn(req: Request, email: string, origin: string, n
 /**
  * Starts a Free household for a new address and emails a sign-in link. Existing members get a normal link instead.
  */
-export async function startSignUp(req: Request, email: string, name: string, origin: string, now = Date.now()): Promise<Response> {
+export async function startSignUp(
+  req: Request,
+  email: string,
+  name: string,
+  origin: string,
+  now = Date.now(),
+  next?: string | null,
+): Promise<Response> {
   await ensureAccountsSeeded(now);
   const e = email.trim().toLowerCase();
   if (!(await rateLimit(`sign-up:${clientIp(req)}`, 5, 15 * 60_000, now))) return json({ error: "Too many tries. Wait 15 minutes." }, 429);
   if (!(await rateLimit(`sign-up-email:${e}`, 3, 60 * 60_000, now))) return json(SENT);
   if (!e.includes("@")) return json(SENT);
-  if (await canSignIn(e)) return startSignIn(req, e, origin, now);
+  if (await canSignIn(e)) return startSignIn(req, e, origin, now, next);
   await createAccount(name || "Home", e, now);
-  return startSignIn(req, e, origin, now);
+  return startSignIn(req, e, origin, now, next);
 }
 
 /** Uses up a link (one statement, so two racing requests can't both win) and starts a session. */

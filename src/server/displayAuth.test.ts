@@ -5,7 +5,7 @@ import { createAccount, LEGACY_ACCOUNT_ID } from "@/server/accounts";
 import { cookieFor, req, useTestServer } from "@/test/server";
 
 import { addDevice } from "./devices";
-import { DISPLAY_COOKIE, displayCookieHeader, sealDisplayCookie } from "./displayAuth";
+import { DISPLAY_COOKIE, DISPLAY_COOKIE_MS, displayCookieHeader, sealDisplayCookie } from "./displayAuth";
 import { accountIdOf, viewerFor } from "./viewer";
 
 describe("display cookie for image routes", () => {
@@ -21,7 +21,7 @@ describe("display cookie for image routes", () => {
 
   it("rejects a tampered or expired cookie", async () => {
     const { token } = await addDevice(LEGACY_ACCOUNT_ID, "Kitchen", null);
-    const sealed = sealDisplayCookie(token, Date.now() - 8 * 86_400_000);
+    const sealed = sealDisplayCookie(token, Date.now() - DISPLAY_COOKIE_MS - 86_400_000);
     expect(await viewerFor(req("/api/display/photo/", { headers: { cookie: `${DISPLAY_COOKIE}=${sealed}` } }))).toBeNull();
     expect(await viewerFor(req("/api/display/photo/", { headers: { cookie: `${DISPLAY_COOKIE}=${sealed}x` } }))).toBeNull();
   });
