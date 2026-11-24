@@ -10,14 +10,14 @@ async function addDevice(page, base, viewId = null) {
   return {
     base,
     deviceId: body.device.id,
+    name: body.device.name,
     url: String(body.url).replace(/^https?:\/\/[^/]+/, base),
   };
 }
 
-/** Sets wall cookies on a Playwright context using the admin session (same as phone QR / select). */
+/** Copy the admin session onto a context, then unlock via the signed-in picker (sets ep_wall in the real browser). */
 async function unlockDisplayContext(context, adminPage, device) {
   const session = (await adminPage.context().cookies()).filter((c) => c.name === "ep_session");
-  // Playwright needs url *or* domain — spreading the source cookie can leave neither when we override fields.
   await context.addCookies(
     session.map((c) => ({
       name: c.name,
@@ -26,17 +26,20 @@ async function unlockDisplayContext(context, adminPage, device) {
       httpOnly: c.httpOnly,
       secure: c.secure,
       sameSite: c.sameSite,
-      expires: c.expires,
+      expires: c.expires > 0 ? c.expires : undefined,
     })),
   );
-  const unlocked = await context.request.post(`${device.base}/api/auth/device/select/`, {
-    headers: { origin: device.base },
-    data: { deviceId: device.deviceId },
+  const page = await context.newPage();
+  await page.goto(`${device.base}/display/unlock/`);
+  await page.getByRole("button", { name: device.name, exact: true }).click();
+  await page.waitForURL((u) => {
+    const path = new URL(u).pathname;
+    return path === "/display/" || path === "/display";
   });
-  if (!unlocked.ok()) throw new Error(`unlock display: ${unlocked.status()} ${await unlocked.text()}`);
+  await page.close();
 }
 
-/** Opens the wall gate after unlocking with the admin session. */
+/** Opens the wall after unlocking with the admin session. */
 async function openDisplay(browser, adminPage, device) {
   const context = await browser.newContext({ viewport: VIEWPORT });
   await unlockDisplayContext(context, adminPage, device);
