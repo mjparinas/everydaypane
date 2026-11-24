@@ -61,6 +61,33 @@ describe("magic link sign-in", () => {
     const r = await startSignIn(req("/x", { ip: "9.9.9.9" }), "admin@example.com", "http://localhost");
     expect(r.status).toBe(429);
   });
+
+  it("puts a safe next path on the emailed verify link", async () => {
+    const info = vi.spyOn(console, "info").mockImplementation(() => undefined);
+    await startSignIn(
+      req("/api/auth/start/", { method: "POST", ip: "8.8.8.8" }),
+      "admin@example.com",
+      "http://localhost",
+      Date.now(),
+      "/signin/phone/?code=K7QF-29MD",
+    );
+    const printed = info.mock.calls.map((c) => String(c[0])).join("\n");
+    info.mockRestore();
+    expect(printed).toContain("next=%2Fsignin%2Fphone%2F%3Fcode%3DK7QF-29MD");
+
+    const info2 = vi.spyOn(console, "info").mockImplementation(() => undefined);
+    await startSignIn(
+      req("/api/auth/start/", { method: "POST", ip: "8.8.8.9" }),
+      "admin@example.com",
+      "http://localhost",
+      Date.now(),
+      "https://evil.example/phish",
+    );
+    const printed2 = info2.mock.calls.map((c) => String(c[0])).join("\n");
+    info2.mockRestore();
+    expect(printed2).not.toContain("evil.example");
+    expect(printed2).toMatch(/token=/);
+  });
 });
 
 describe("public Free signup", () => {
