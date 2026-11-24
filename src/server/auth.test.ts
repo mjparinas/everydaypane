@@ -56,6 +56,24 @@ describe("magic link sign-in", () => {
     expect(await sessionFor(done!.sessionToken)).toBeNull();
   });
 
+
+  it("clears wall unlock cookies when the magic link is used", async () => {
+    const { POST: verify } = await import("@/app/api/auth/verify/route");
+    const { DISPLAY_COOKIE, WALL_COOKIE } = await import("./displayAuth");
+    const token = await linkFor("admin@example.com");
+    const r = await verify(
+      req("/api/auth/verify/", {
+        method: "POST",
+        body: JSON.stringify({ token: decodeURIComponent(token!) }),
+      }),
+    );
+    expect(r.status).toBe(200);
+    const cookies = r.headers.getSetCookie?.() ?? [];
+    expect(cookies.some((c) => c.startsWith("ep_session="))).toBe(true);
+    expect(cookies.some((c) => c.startsWith(`${WALL_COOKIE}=`) && c.includes("Max-Age=0"))).toBe(true);
+    expect(cookies.some((c) => c.startsWith(`${DISPLAY_COOKIE}=`) && c.includes("Max-Age=0"))).toBe(true);
+  });
+
   it("limits tries per address", async () => {
     for (let i = 0; i < 10; i++) await startSignIn(req("/x", { ip: "9.9.9.9" }), `p${i}@example.com`, "http://localhost");
     const r = await startSignIn(req("/x", { ip: "9.9.9.9" }), "admin@example.com", "http://localhost");

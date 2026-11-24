@@ -280,15 +280,15 @@ async function list(accountId: string, config: DashboardConfig, source: PhotoSou
   }
 }
 
-// Keyed by the source's settings too, so editing a source lists it again.
-const sourceKey = (s: PhotoSource) => `photos:${s.id}:${hash(JSON.stringify(s))}`;
+// Keyed by household + source settings, so two accounts never share a listed album.
+const sourceKey = (accountId: string, s: PhotoSource) => `photos:${accountId}:${s.id}:${hash(JSON.stringify(s))}`;
 
 const failures = new Map<string, { at: number; error: unknown }>();
 
 async function listed(accountId: string, config: DashboardConfig, source: PhotoSource, now = Date.now()): Promise<Listed[]> {
   // Our own library is a quick database read, and must show a new upload at once: never cached.
   if (source.kind === "library" || source.kind === "weatherAlbums") return list(accountId, config, source);
-  const key = sourceKey(source);
+  const key = sourceKey(accountId, source);
   const ttl =
     source.kind === "urls" || source.kind === "icloudPublished"
       ? LIST_TTL
@@ -401,7 +401,7 @@ export async function photoImage(
   if ([403, 404, 410].includes(r.status) && !direct) {
     // Amazon's temporary links expire: list again and retry once. The old list stays if Amazon refuses, and a recent
     // refusal isn't asked again.
-    const key = sourceKey(source);
+    const key = sourceKey(accountId, source);
     const failed = failures.get(key);
     if (failed && Date.now() - failed.at < RETRY_AFTER_FAILURE) return null;
     const fresh = await cached(key, 0, () => list(accountId, config, source));

@@ -41,7 +41,7 @@ export async function listImmich(accountId: string, sourceId: string, baseUrl: s
   if (!key) throw new Error("Add the Immich API key in Settings › Photos");
   const origin = base(baseUrl);
   const result = await cached(
-    `photos:immich:${sourceId}:${origin}`,
+    `photos:immich:${accountId}:${sourceId}:${origin}`,
     TTL,
     async () => {
       const r = await fetch(`${origin}/api/search/metadata?size=${MAX_PHOTOS}`, {

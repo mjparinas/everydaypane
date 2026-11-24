@@ -1,12 +1,12 @@
 import { describe, expect, it } from "vitest";
 
 import { GET as photoGET } from "@/app/api/display/photo/route";
-import { LEGACY_ACCOUNT_ID } from "@/server/accounts";
+import { createAccount, LEGACY_ACCOUNT_ID } from "@/server/accounts";
 import { cookieFor, req, useTestServer } from "@/test/server";
 
 import { addDevice } from "./devices";
 import { DISPLAY_COOKIE, displayCookieHeader, sealDisplayCookie } from "./displayAuth";
-import { viewerFor } from "./viewer";
+import { accountIdOf, viewerFor } from "./viewer";
 
 describe("display cookie for image routes", () => {
   useTestServer();
@@ -32,5 +32,27 @@ describe("display cookie for image routes", () => {
     expect((await viewerFor(req("/api/display/photo/", { headers: { cookie: admin } })))?.kind).toBe("person");
     expect(await viewerFor(req("/api/display/photo/", { headers: { cookie: family } }))).toBeNull();
     expect((await photoGET(req("/api/display/photo/?s=x&i=y", { headers: { cookie: family } }))).status).toBe(401);
+  });
+
+  it("prefers the signed-in household over a leftover wall cookie from another account", async () => {
+    const other = await createAccount("Other home", "other.wall@example.com");
+    const { token } = await addDevice(other.id, "Their kitchen", null);
+    const wall = displayCookieHeader(token).split(";")[0] ?? "";
+    const admin = await cookieFor("admin@example.com");
+    const viewer = await viewerFor(req("/api/display/calendar/", { headers: { cookie: `${admin}; ${wall}` } }));
+    expect(viewer?.kind).toBe("person");
+    expect(accountIdOf(viewer!)).toBe(LEGACY_ACCOUNT_ID);
+    expect(accountIdOf(viewer!)).not.toBe(other.id);
+  });
+
+  it("still lets a wall token win when the browser is also signed into household", async () => {
+    const other = await createAccount("Token home", "token.wall@example.com");
+    const { token } = await addDevice(other.id, "Wall", null);
+    const admin = await cookieFor("admin@example.com");
+    const viewer = await viewerFor(
+      req("/api/display/calendar/", { headers: { cookie: admin, "x-display-token": token } }),
+    );
+    expect(viewer?.kind).toBe("device");
+    expect(accountIdOf(viewer!)).toBe(other.id);
   });
 });
