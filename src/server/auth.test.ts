@@ -56,7 +56,6 @@ describe("magic link sign-in", () => {
     expect(await sessionFor(done!.sessionToken)).toBeNull();
   });
 
-
   it("clears wall unlock cookies when the magic link is used", async () => {
     const { POST: verify } = await import("@/app/api/auth/verify/route");
     const { DISPLAY_COOKIE, WALL_COOKIE } = await import("./displayAuth");

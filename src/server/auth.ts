@@ -30,13 +30,7 @@ export interface Session {
 const SENT = { ok: true, message: "If that address can sign in, a link is on its way. It works once, for 15 minutes." };
 
 /** Emails a sign-in link if the address belongs to a household (or env bootstrap). Always answers the same. */
-export async function startSignIn(
-  req: Request,
-  email: string,
-  origin: string,
-  now = Date.now(),
-  next?: string | null,
-): Promise<Response> {
+export async function startSignIn(req: Request, email: string, origin: string, now = Date.now(), next?: string | null): Promise<Response> {
   await ensureAccountsSeeded(now);
   const e = email.trim().toLowerCase();
   if (!(await rateLimit(`sign-in:${clientIp(req)}`, 10, 15 * 60_000, now))) return json({ error: "Too many tries. Wait 15 minutes." }, 429);
