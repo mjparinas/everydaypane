@@ -2896,8 +2896,8 @@ html.portrait-view .stage {
   align-items: center;
   gap: 0.55em;
   width: 100%;
-  min-height: 1.8em;
-  padding: 0.12em 0;
+  min-height: 2.2em;
+  padding: 0.2em 0;
 }
 .sh-btn {
   border: 0;
@@ -2910,6 +2910,10 @@ html.portrait-view .stage {
 }
 .sh-btn:active {
   transform: scale(0.98);
+}
+/* Quiet cue that a row is tappable when allowCheck is on (W2, 2026-11-24). */
+.sh-btn .sh-check {
+  border-color: color-mix(in srgb, var(--accent) 55%, var(--muted));
 }
 .sh-check {
   display: grid;

@@ -10,13 +10,15 @@ web
 
 Households who want the home at a glance on an always-on wall or kitchen panel (about 1920×1080 landscape touch, or any screen with a browser), set up and day-to-day edited from a phone. Founding household is Melvin’s family in Langley, BC; the product is now Free + Household for other families. Kids use chore flows on phone and wall; household admins configure views, themes, displays, and integrations.
 
+**Staff operators (platform `/admin/`):** Melvin as Everydaypane admin, plus occasional `SUPPORT_EMAILS` (read-only or limited writes). They triage product health, households, displays, billing, and flags under load — often mid-support call or morning check-in. Confirmed 2026-11-24: day-to-day is Melvin + occasional support, not a large ops team.
+
 ## Product Purpose
 
-Everydaypane is a fast, glanceable wall dashboard for the home, with a household panel that works on a phone. Success means the wall stays readable at a glance without fuss, and the family can change meals, shopping, messages, chores, and layout without fighting the tool.
+Everydaypane is a fast, glanceable wall dashboard for the home, with a household panel that works on a phone. Success means the wall stays readable at a glance without fuss, and the family can change meals, shopping, messages, chores, and layout without fighting the tool. Staff can run the multi-tenant product safely from `/admin/`.
 
 ## Positioning
 
-A castable browser wall dashboard that stays super-lightweight on the display (server-rendered HTML + a small esbuild bundle, not a React app), paired with a capable phone household panel. Local-home depth—Home Assistant, BC alerts/transit/ferries/garbage, family meals/shopping/chores/messages—without a heavy display client. Neighbours in spirit: MagicMirror, DAKboard, homescreens.dev.
+A castable browser wall dashboard that stays super-lightweight on the display (server-rendered HTML + a small esbuild bundle, not a React app), paired with a capable phone household panel. Local-home depth—Home Assistant, BC alerts/transit/ferries/garbage, family meals/shopping/chores/messages—without a heavy display client. Neighbours in spirit: MagicMirror, DAKboard, homescreens.dev. Brand written **Everydaypane** (one word, capital E only).
 
 ## Operating Context
 
@@ -25,6 +27,8 @@ A castable browser wall dashboard that stays super-lightweight on the display (s
 - Time-of-day views (morning, afternoon, evening, overnight), day/night themes, burn-in protection, offline mode, screen saver.
 - Canadian English in everything a person reads (colour, centre, favourite).
 - B.C. permanent daylight time: Vancouver clocks/dates/calendars/schedules stay on fixed UTC−7 after the March 2026 transition even when the display browser has stale zone data.
+- Staff `/admin/`: magic-link + TOTP; tabs grouped Work / Numbers / People / Running; deep links `?tab=&days=&q=&open=`; ops-cockpit refinements (2026-11-24): confirm-to-act mutations, group+strip nav, Overview command centre, clarified copy, debounced search, ⌘K palette, bulk household plan/note, Displays → Open household.
+- Hosting: Vercel + Turso; marketing at everydaypane.com.
 
 ## Capabilities and Constraints
 
@@ -34,6 +38,9 @@ A castable browser wall dashboard that stays super-lightweight on the display (s
 - Marketing site public: `/`, `/pricing/`, `/features/`, `/compare/`, `/blog/`, `/privacy/`, `/terms/`, `/contact/`.
 - Platform ops at `/admin/` (staff); customer path is `/household/`.
 - Domain: everydaypane.com / www (live).
+- **Staff `/admin/` Session 5 (built 2026-11-24):** ⌘K/Ctrl+K command palette (tabs + household search); bulk select on Households (plan + note, admin only); Displays “Open household” cue (no staff wall impersonation); no new top-level admin tabs; deep links preserved. Support may navigate via palette; write bulk stays admin-only.
+- **Household `/household/` (H1–H6 built 2026-11-24, critique 26/40):** phone 5-tab IA + Family hub + thumb Save dock; Settings Home/Everyday/Advanced jump tiers; Views templates collapsed (open on empty); Displays “Get kitchen online” progressive disclosure; quieter Free banner; upgrade closes back to prior hash; family blur-save hint. Free gates and Canadian English stay; no heavy new deps.
+- **Widgets + views (W1–W4 built 2026-11-24):** type-first widget settings + Panel chrome section; Free badge note in drawer; shopping/messages empty-state Add; clearer check affordance; Views Gap/Edge/Tile plain labels; on-photos cue in live editor; marketing behaviours copy synced (catalogue already follows WIDGET_GROUPS). Display stays transform/opacity-cheap.
 
 ## Brand Commitments
 
@@ -41,12 +48,15 @@ A castable browser wall dashboard that stays super-lightweight on the display (s
 - Wordmark: everyday**pane** in Manrope 800 with “pane” in brand blue `#3b5bdb`. Mark: rounded blue square with three panes (clock hands, amber sun, pale). Assets in `public/brand/` (and generated `public/icons/`).
 - Branded outbound email (Resend) reuses `src/lib/email.ts` chrome — same blue, mark, wordmark, soft `#f6f7fb` page / white card. Do not invent a third email template style.
 - Marketing site: Manrope display; template preview screenshots from `public/templates/` — no personal family photos in OG or marketing.
+- Staff UI tone for `/admin/`: sharper denser “ops cockpit” (confirmed 2026-11-24), Everydaypane nouns (Households, Displays, Free vs Household).
 
 ## Evidence on Hand
 
 - Real widget sample PNGs in `public/features/widgets/` and starter template screenshots in `public/templates/` (regenerate with `npm run templates:previews`).
 - Sample feeds/photos for previews in `scripts/template-samples/` and `public/templates/samples/`.
 - Brand SVGs in `public/brand/`.
+- Product decisions and architecture: `AGENTS.md`. Admin UI: `src/app/admin/`, `src/lib/adminTabs.ts`.
+- Critique archive: `.impeccable/critique/` (prior `/admin` and `/household` runs).
 - No customer testimonials or private family photos for public marketing — do not fabricate either.
 
 ## Product Principles
@@ -56,9 +66,11 @@ A castable browser wall dashboard that stays super-lightweight on the display (s
 3. Preserve Free usefulness; Household upgrades should be clear, not nagging.
 4. Local and home integrations earn their place when they reduce another app or tab the household already juggles.
 5. Prefer Canadian English and BC-relevant defaults without locking the product to one town.
+6. High-stakes staff actions need confirmation and clear failure feedback; progressive disclosure beats more top-level tabs.
 
 ## Accessibility & Inclusion
 
 - Wall display (`/d/…`): known intentional exception to WCAG 2.2 **1.4.4** and **1.4.10** (pinch-zoom disabled for a fixed 1920×1080 kitchen layout). Do not “fix” without Melvin.
-- Household panel and `/family/` allow zoom.
+- Household panel, `/family/`, and `/admin/` allow zoom.
 - Timer / pomodoro / alarm flashes honour `prefers-reduced-motion: reduce`.
+- Staff controls should keep visible focus, named buttons, and usable touch targets on phone.

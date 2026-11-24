@@ -79,4 +79,20 @@ describe("shopping widget", () => {
     expect(el.querySelector(".w-empty")?.textContent).toBe("All bought");
     stop();
   });
+
+  it("keeps Add on an empty list when allowAdd is on", async () => {
+    vi.useFakeTimers();
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(() => Promise.resolve(Response.json({ updatedAt: 1, items: [] }))),
+    );
+    const el = document.createElement("div");
+    const w = newWidget("shopping", "s", { x: 0, y: 0 });
+    w.allowAdd = true;
+    const stop = shopping(el, w, ctx);
+    await vi.advanceTimersByTimeAsync(0);
+    expect(el.querySelector(".w-empty")?.textContent).toBe("Nothing on the list");
+    expect(el.querySelector(".sh-add")).toBeTruthy();
+    stop();
+  });
 });

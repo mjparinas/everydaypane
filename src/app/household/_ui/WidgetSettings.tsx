@@ -76,6 +76,7 @@ export function WidgetSettings({
   onChange: (change: (w: Widget) => void) => void;
 }) {
   const info = WIDGETS[widget.type];
+  // Type-specific controls first; shared panel chrome last (W1, 2026-11-24) so the drawer leads with what this widget does.
   return (
     <div className="grid gap-4">
       <p className="text-sm text-soft">
@@ -87,7 +88,7 @@ export function WidgetSettings({
           value={widget.title ?? ""}
           maxLength={60}
           placeholder="None"
-          hint="A small heading above the widget."
+          hint="Optional heading on the wall."
           onChange={(v) =>
             onChange((w) => {
               if (v) w.title = v;
@@ -96,10 +97,13 @@ export function WidgetSettings({
           }
         />
       )}
-      <PanelBackground widget={widget} config={config} onChange={onChange} />
-      {info.supportsFontScale !== false && <FontScale widget={widget} onChange={onChange} />}
-      <VisiblePeriods widget={widget} onChange={onChange} />
       <TypeSettings widget={widget} config={config} onChange={onChange} />
+      <div className="grid gap-4 border-t border-line pt-4">
+        <p className="text-xs font-semibold tracking-wide text-soft uppercase">Panel</p>
+        <PanelBackground widget={widget} config={config} onChange={onChange} />
+        {info.supportsFontScale !== false && <FontScale widget={widget} onChange={onChange} />}
+        <VisiblePeriods widget={widget} onChange={onChange} />
+      </div>
     </div>
   );
 }
@@ -109,7 +113,9 @@ function VisiblePeriods({ widget, onChange }: { widget: Widget; onChange: (chang
   return (
     <fieldset className="grid gap-1">
       <legend className="mb-1 text-sm font-medium">Show during</legend>
-      <p className="text-xs text-soft">Leave all off to show through the whole day.</p>
+      <p className="text-xs text-soft">
+        Leave every period off to show all day. Picking one or more hides it outside those parts of the day.
+      </p>
       <div className="flex flex-wrap gap-1.5">
         {PERIODS.map((p) => {
           const on = picked.includes(p);
@@ -118,7 +124,7 @@ function VisiblePeriods({ widget, onChange }: { widget: Widget; onChange: (chang
               key={p}
               type="button"
               aria-pressed={on}
-              className={`min-h-9 rounded-full border px-3 text-sm ${on ? "border-brand bg-brand text-white" : "border-line"}`}
+              className={`min-h-11 rounded-full border px-3 text-sm ${on ? "border-brand bg-brand text-white" : "border-line"}`}
               onClick={() =>
                 onChange((w) => {
                   const cur = w.visiblePeriods ?? [];
@@ -152,7 +158,7 @@ function PanelBackground({
       <Toggle
         label="Background"
         checked={widget.showBackground}
-        hint="The panel behind this widget. Off is handy over a photos widget."
+        hint="Panel behind the content. Turn off when this tile sits on a photos backdrop."
         onChange={(v) => onChange((w) => void (w.showBackground = v))}
       />
       {widget.showBackground ? (
@@ -163,7 +169,7 @@ function PanelBackground({
           max={1}
           step={0.05}
           format={(v) => `${Math.round(v * 100)}%`}
-          hint={widget.backgroundOpacity == null ? "Using the theme's widget background until you move the slider." : undefined}
+          hint={widget.backgroundOpacity == null ? "Using the colour scheme’s panel opacity until you move the slider." : undefined}
           onChange={(v) => onChange((w) => void (w.backgroundOpacity = v))}
         />
       ) : null}
@@ -174,7 +180,7 @@ function PanelBackground({
         max={48}
         step={1}
         format={(n) => `${n} px`}
-        hint="Space around this panel inside its grid cell. The view's Tile padding is inside the panel."
+        hint="Inset from the grid cell edge. View › Tile is padding inside the panel."
         onChange={(v) =>
           onChange((w) => {
             if (v) w.outerPadding = v;
@@ -900,7 +906,8 @@ function TypeSettings({
             onChange={(v) => e((x) => void (x.allowAdd = v))}
           />
           <p className="text-xs text-soft">
-            The family adds items from their phones at <span className="font-mono">/family/</span> (Shopping tab here).
+            Family adds items from phones (<span className="font-mono">/family/</span>) or the Shopping tab here. Phone-edit QR skips
+            sign-in.
           </p>
         </>
       );

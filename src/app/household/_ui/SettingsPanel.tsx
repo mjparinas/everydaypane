@@ -29,19 +29,26 @@ import { TIME_ZONES } from "./WidgetSettings";
 // without scrolling the whole page (Melvin, 2026-11-22 admin UX revamp). Free users see Household badges and soft
 // locks on paid groups (Melvin, 2026-11-23).
 
+// Jump nav tiers (H1, 2026-11-24): Home → Everyday → Advanced so chores aren’t peer to YNAB in the scan.
 const GROUPS = [
-  { id: "home", label: "Home", sections: ["dashboard", "location", "plan"] },
-  { id: "calendars", label: "Calendars", sections: ["google", "icals"] },
-  { id: "tasks", label: "Tasks", sections: ["tasks"] },
-  { id: "family", label: "Family", sections: ["garbage", "commute", "chores", "sports", "school"] },
-  { id: "photos-music", label: "Photos & music", sections: ["photos", "music"] },
-  { id: "content", label: "Content & finance", sections: ["content", "ynab", "fitbit", "gmail-unread", "slack", "trello"] },
-  { id: "ha", label: "Home & devices", sections: ["ha", "smart-home", "weather-stations", "menus"] },
-  { id: "screen", label: "Screen", sections: ["screen-care", "screen-saver"] },
-  { id: "alerts", label: "Alerts & backup", sections: ["alerts", "backup"] },
+  { id: "home", label: "Home", tier: "Home", sections: ["dashboard", "location", "plan"] },
+  { id: "calendars", label: "Calendars", tier: "Everyday", sections: ["google", "icals"] },
+  { id: "tasks", label: "Tasks", tier: "Everyday", sections: ["tasks"] },
+  { id: "family", label: "Family", tier: "Everyday", sections: ["garbage", "commute", "chores", "sports", "school"] },
+  { id: "photos-music", label: "Photos & music", tier: "Everyday", sections: ["photos", "music"] },
+  { id: "screen", label: "Screen", tier: "Everyday", sections: ["screen-care", "screen-saver"] },
+  { id: "alerts", label: "Alerts & backup", tier: "Everyday", sections: ["alerts", "backup"] },
+  {
+    id: "content",
+    label: "Content & finance",
+    tier: "Advanced",
+    sections: ["content", "ynab", "fitbit", "gmail-unread", "slack", "trello"],
+  },
+  { id: "ha", label: "Home & devices", tier: "Advanced", sections: ["ha", "smart-home", "weather-stations", "menus"] },
 ] as const;
 
 type GroupId = (typeof GROUPS)[number]["id"];
+const TIERS = ["Home", "Everyday", "Advanced"] as const;
 
 const subscribeHash = (cb: () => void) => {
   window.addEventListener("hashchange", cb);
@@ -93,33 +100,31 @@ export function SettingsPanel() {
   return (
     <div className="grid gap-4">
       <nav
-        className="sticky top-[4.5rem] z-10 -mx-1 flex gap-2 overflow-x-auto bg-bg/95 px-1 py-2 backdrop-blur md:top-[6.5rem]"
+        className="sticky top-[4.5rem] z-10 -mx-1 flex flex-col gap-2 bg-bg/95 px-1 py-2 backdrop-blur md:top-[6.5rem]"
         aria-label="Settings sections"
       >
-        {GROUPS.map((g) => {
-          const locked = !isPaid && isHouseholdSettingsGroup(g.id);
-          return (
-            <button
-              key={g.id}
-              type="button"
-              className={`${openGroup === g.id ? "btn-primary shrink-0" : "btn-ghost shrink-0"} ${locked ? "opacity-70" : ""}`}
-              aria-pressed={openGroup === g.id}
-              onClick={() => {
-                if (locked) {
-                  // Still open the group so they can see the soft lock; also offer the upgrade screen.
-                  goSettingsSection(g.sections[0]!);
-                  return;
-                }
-                goSettingsSection(g.sections[0]!);
-              }}
-            >
-              <span className="inline-flex items-center gap-1.5">
-                {g.label}
-                {locked ? <HouseholdBadge /> : null}
-              </span>
-            </button>
-          );
-        })}
+        {TIERS.map((tier) => (
+          <div key={tier} className="flex min-w-0 items-center gap-2 overflow-x-auto">
+            <span className="shrink-0 text-[0.65rem] font-bold tracking-wide text-soft uppercase">{tier}</span>
+            {GROUPS.filter((g) => g.tier === tier).map((g) => {
+              const locked = !isPaid && isHouseholdSettingsGroup(g.id);
+              return (
+                <button
+                  key={g.id}
+                  type="button"
+                  className={`${openGroup === g.id ? "btn-primary shrink-0" : "btn-ghost shrink-0"} ${locked ? "opacity-70" : ""}`}
+                  aria-pressed={openGroup === g.id}
+                  onClick={() => goSettingsSection(g.sections[0]!)}
+                >
+                  <span className="inline-flex items-center gap-1.5">
+                    {g.label}
+                    {locked ? <HouseholdBadge /> : null}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        ))}
       </nav>
 
       {showGroup("home") && (
@@ -407,7 +412,7 @@ export function SettingsPanel() {
                     label="Email admins and family for new red-strip alerts"
                     checked={alerts.notifyEmail}
                     onChange={(v) => edit((c) => void (c.alerts.notifyEmail = v))}
-                    hint="Each alert is emailed once to everyone on ADMIN_EMAILS and FAMILY_EMAILS."
+                    hint="Each alert is emailed once to household admins and family addresses."
                   />
                 ) : (
                   <button
