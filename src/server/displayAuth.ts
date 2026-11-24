@@ -7,15 +7,20 @@ import { safeEqual, sha256 } from "./crypto";
 import { deviceForTokenHash, tokenForTokenHash, type Device } from "./devices";
 import { env } from "./env";
 
-// Short-lived display cookie for image routes (photos, cameras, radar, QR, art). `<img>` can't send
-// `x-display-token`, and putting the long-lived device token in `?t=` lands it in CDN and access logs.
-// The cookie is HttpOnly, SameSite=Strict, Path=/api/display/, and holds only the token's hash plus an expiry.
+// Display cookie for image routes (photos, cameras, radar, QR, art). `<img>` can't send `x-display-token`,
+// and putting the long-lived device token in `?t=` lands it in CDN and access logs. The cookie is HttpOnly,
+// SameSite=Strict, Path=/api/display/, and holds only the token's hash plus an expiry (years; refreshed on
+// each `/display/` load — Melvin, 2026-11-24).
 
 export const DISPLAY_COOKIE = "ep_display";
 /** Wall document session for `/display/` (Melvin, 2026-11-23): bare `/d/<token>/` no longer unlocks the dashboard. */
 export const WALL_COOKIE = "ep_wall";
-/** A week: the kitchen display reloads overnight, which refreshes it. */
-export const DISPLAY_COOKIE_MS = 7 * 86_400_000;
+/**
+ * Unlock lasts until someone rotates the device link or deletes the display (Melvin, 2026-11-24).
+ * Browsers may clamp Max-Age (Chrome ~400 days); `/display/` re-issues cookies on each load so a living
+ * wall stays unlocked. The seal expiry matches so a clamped cookie remains valid until Max-Age drops it.
+ */
+export const DISPLAY_COOKIE_MS = 10 * 365 * 86_400_000;
 
 function signingKey(): Buffer {
   const secret = env.sessionSecret();
@@ -47,6 +52,12 @@ export function wallCookieHeader(token: string, now = Date.now()): string {
 }
 
 export const clearedWallCookie = () => `${WALL_COOKIE}=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0`;
+export const clearedDisplayCookie = () => `${DISPLAY_COOKIE}=; Path=/api/display/; HttpOnly; SameSite=Strict; Max-Age=0`;
+
+/** Clears wall unlock cookies (used when signing into a household so a prior display cannot leak). */
+export function clearedUnlockCookies(): string[] {
+  return [clearedWallCookie(), clearedDisplayCookie()];
+}
 
 /** Set-Cookie headers that unlock the wall for this device token (`ep_wall` + `ep_display`). */
 export function unlockDisplayCookies(token: string, now = Date.now()): string[] {

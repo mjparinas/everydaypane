@@ -124,6 +124,26 @@ describe("phone QR wall unlock", () => {
     expect(await r.json()).toEqual({ status: "expired" });
   });
 
+  it("keeps polling past the old 120/15-min cap so a late approve still reaches ready", async () => {
+    const { device } = await addDevice(LEGACY_ACCOUNT_ID, "Kitchen", null);
+    const started = await start();
+    const ip = "9.8.7.6";
+    for (let i = 0; i < 130; i++) {
+      const r = await pollDeviceSignIn(req("/api/auth/device/poll/", { method: "POST", ip }), started.code, started.pollSecret);
+      expect(r.status).toBe(200);
+      expect(await r.json()).toEqual({ status: "pending" });
+    }
+    const cookie = await cookieFor("admin@example.com");
+    await approveDeviceSignIn(
+      req("/api/auth/device/approve/", { method: "POST", headers: { cookie } }),
+      { email: "admin@example.com", accountId: LEGACY_ACCOUNT_ID, role: "admin" },
+      started.code,
+      device.id,
+    );
+    const ready = await pollDeviceSignIn(req("/api/auth/device/poll/", { method: "POST", ip }), started.code, started.pollSecret);
+    expect((await ready.json()).status).toBe("ready");
+  });
+
   it("expires after ten minutes", async () => {
     const { device } = await addDevice(LEGACY_ACCOUNT_ID, "Kitchen", null);
     const started = await start();

@@ -2,9 +2,10 @@
 
 import { useState } from "react";
 
+import { safeNext } from "@/lib/safeNext";
 import { APP_PATH, FAMILY_PATH } from "@/lib/site";
 
-import { NEXT_KEY, safeNext } from "../SignInForm";
+import { NEXT_KEY } from "../SignInForm";
 
 // The link only signs in when this button is pressed, so mail scanners that open links don't use it up.
 export function VerifyButton({ token }: { token: string }) {
