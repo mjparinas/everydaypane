@@ -59,9 +59,16 @@ export function clearedUnlockCookies(): string[] {
   return [clearedWallCookie(), clearedDisplayCookie()];
 }
 
+export const clearedDisplayCookie = () => `${DISPLAY_COOKIE}=; Path=/api/display/; HttpOnly; SameSite=Strict; Max-Age=0`;
+
 /** Set-Cookie headers that unlock the wall for this device token (`ep_wall` + `ep_display`). */
 export function unlockDisplayCookies(token: string, now = Date.now()): string[] {
   return [wallCookieHeader(token, now), displayCookieHeader(token, now)];
+}
+
+/** Clear both display cookies so `/display/` returns to the unlock gate (soft lock; device token stays). */
+export function lockDisplayCookies(): string[] {
+  return [clearedWallCookie(), clearedDisplayCookie()];
 }
 
 /** The device for a valid, unexpired display cookie, or null. */
