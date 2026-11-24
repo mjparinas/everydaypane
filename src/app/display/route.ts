@@ -24,5 +24,10 @@ export async function GET(req: Request) {
     return new Response(res.body, { status: res.status, headers });
   }
 
-  return NextResponse.redirect(new URL("/display/unlock/", req.url));
+  // Never cache the locked redirect: a cached 307 would bounce a freshly unlocked wall back through
+  // /display/unlock/ (and Next can flash a 404) before the dashboard loads.
+  const locked = NextResponse.redirect(new URL("/display/unlock/", req.url));
+  locked.headers.set("Cache-Control", "no-store");
+  locked.headers.set("Vary", "Cookie");
+  return locked;
 }

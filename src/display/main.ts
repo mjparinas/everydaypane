@@ -520,13 +520,85 @@ function previewModeToggle(): HTMLButtonElement | null {
   return btn;
 }
 
+/** Hold ~0.8s to soft-lock: clears display cookies and returns to the QR unlock gate (device token stays). */
+const LOCK_HOLD_MS = 800;
+
+function lockDisplayControl(): HTMLButtonElement | null {
+  if (PREVIEW || !TOKEN) return null;
+  const fill = h("span", { class: "lock-display-fill", "aria-hidden": "true" });
+  const label = h("span", { class: "lock-display-label" }, "Lock");
+  const btn = h(
+    "button",
+    { type: "button", class: "lock-display", "aria-label": "Hold to lock this display" },
+    fill,
+    label,
+  ) as HTMLButtonElement;
+  let timer: number | undefined;
+  let started = 0;
+  let locking = false;
+
+  const stopHold = () => {
+    window.clearTimeout(timer);
+    timer = undefined;
+    btn.classList.remove("holding");
+    fill.style.transform = "scaleX(0)";
+  };
+
+  const doLock = () => {
+    if (locking) return;
+    locking = true;
+    stopHold();
+    label.textContent = "Locking…";
+    btn.disabled = true;
+    void fetch("/api/auth/device/signout/", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: "{}",
+      credentials: "same-origin",
+    })
+      .then((r) => {
+        if (!r.ok) throw new Error("lock failed");
+        location.replace("/display/unlock/");
+      })
+      .catch(() => {
+        locking = false;
+        btn.disabled = false;
+        label.textContent = "Lock";
+      });
+  };
+
+  const startHold = (ev: PointerEvent) => {
+    if (ev.button !== 0 || locking) return;
+    ev.preventDefault();
+    stopHold();
+    started = Date.now();
+    btn.classList.add("holding");
+    fill.style.transform = "scaleX(0)";
+    const tick = () => {
+      const t = (Date.now() - started) / LOCK_HOLD_MS;
+      fill.style.transform = `scaleX(${Math.min(1, t)})`;
+      if (t >= 1) doLock();
+      else timer = window.setTimeout(tick, 32);
+    };
+    timer = window.setTimeout(tick, 32);
+  };
+
+  btn.addEventListener("pointerdown", startHold);
+  btn.addEventListener("pointerup", stopHold);
+  btn.addEventListener("pointerleave", stopHold);
+  btn.addEventListener("pointercancel", stopHold);
+  btn.addEventListener("click", (ev) => ev.preventDefault());
+  return btn;
+}
+
 async function start() {
   app.className = "app";
   // Preview with no ?mode= still gets a starting mode from the schedule once settings load; default the button to day
   // until then so the control has a label.
   if (PREVIEW && !previewMode) setPreviewMode("day");
   const modeBtn = previewModeToggle();
-  app.replaceChildren(stage, dim, offlineDot, ...(modeBtn ? [modeBtn] : []));
+  const lockBtn = lockDisplayControl();
+  app.replaceChildren(stage, dim, offlineDot, ...(modeBtn ? [modeBtn] : []), ...(lockBtn ? [lockBtn] : []));
   saver = screenSaver(app, () => payload);
   onOfflineChange(() => offlineDot.classList.toggle("show", offline));
   // Timers and pomodoros set before a reload still ring, whichever view is showing.

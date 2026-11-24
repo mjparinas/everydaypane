@@ -150,7 +150,9 @@ export async function approveDeviceSignIn(
 
 /** Display polls with its poll secret until the phone approves. */
 export async function pollDeviceSignIn(req: Request, rawCode: string, pollSecret: string, now = Date.now()): Promise<Response> {
-  if (!(await rateLimit(`device-signin-poll:${clientIp(req)}`, 120, 15 * 60_000, now))) {
+  // Unlock UI polls every 2 s for up to 10 minutes (~300 hits). 120/15 min used to silence the wall after ~4 min
+  // so an approve never reached claim (Melvin, 2026-11-24).
+  if (!(await rateLimit(`device-signin-poll:${clientIp(req)}`, 600, 15 * 60_000, now))) {
     return json({ error: "Too many polls. Wait a bit." }, 429);
   }
   const code = normalizeDeviceCode(rawCode);

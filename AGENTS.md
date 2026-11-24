@@ -627,11 +627,14 @@ panel can be complex if you need it to be."
   sessions are stored only as hashes. The emailed link opens a page whose button uses the link up, so mail scanners
   can't. A link is used up in one statement, so two racing requests can't both sign in.
 - **Wall unlock with your phone** (Melvin, 2026-11-23: QR is for the display, not household `/signin/` — Tuned-style
-  code relay): `/display/unlock/` shows a QR and eight-character code (`device_sign_ins`, 10 minutes). The phone opens
-  `/signin/phone/`, signs in with the usual magic link if needed, **picks which display**, and taps Approve; the wall
-  polls and claims `ep_wall` + `ep_display` for that device. Signed-in browsers on the wall can pick a display without
-  QR (`POST /api/auth/device/select/`). Codes and poll secrets are stored only as hashes; the handoff is encrypted until
-  the wall takes it once. Household `/signin/` stays email magic link only.
+ code relay; indefinite once unlocked Melvin, 2026-11-24): `/display/unlock/` shows a QR and eight-character code
+ (`device_sign_ins`, 10 minutes). The phone opens `/signin/phone/`, signs in with the usual magic link if needed
+ (**`next` is on the emailed verify link** so a mail app that opens another browser still returns to Approve), **picks
+ which display**, and taps Approve; the wall polls and claims `ep_wall` + `ep_display` for that device. Unlock lasts
+ until **New link** or the display is deleted (`DISPLAY_COOKIE_MS` is years; `/display/` re-issues cookies on each load).
+ Signed-in browsers on the wall can pick a display without QR (`POST /api/auth/device/select/`). Codes and poll secrets
+ are stored only as hashes; the handoff is encrypted until the wall takes it once. Household `/signin/` stays email
+ magic link only.
 - Sign-in tries are rate-limited in the database (one atomic upsert), per address and per IP.
 - Requests that change something must come from our own origin (`sameOrigin`).
 - Security headers on every response (`src/lib/securityHeaders.ts`): HSTS, nosniff, `frame-ancestors 'none'` (wall
@@ -646,7 +649,8 @@ panel can be complex if you need it to be."
   settings, or anything beyond those three APIs through that helper — but the same token still unlocks `/api/display/*`
   if someone crafts requests (as the wall already can).
 - **Display image auth:** unlocking `/display/` sets HttpOnly `ep_wall` (`Path=/`) and `ep_display`
-  (`Path=/api/display/`) for about a week; `<img>` uses `ep_display`; the long-lived device token stays in
+  (`Path=/api/display/`) for years (effectively until New link / delete; browsers may clamp Max-Age, and each
+  `/display/` load refreshes both); `<img>` uses `ep_display`; the long-lived device token stays in
   `x-display-token` / `data-token` for fetch, never in image query strings.
 - **Home Assistant URL:** must be public https; changing it (save or backup restore) clears the stored token and
   Cloudflare Access pair so they are never sent to a new host.
