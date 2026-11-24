@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, createElement, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { createContext, createElement, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 
 import { MARKETING_PLANS, usd } from "@/lib/marketingPlans";
 import { FREE_LIMITS, PAID_LIMITS, planLabel, UPGRADE_REASONS, type PlanId, type UpgradeReasonKey } from "@/lib/plans";
@@ -48,8 +48,8 @@ export function PlanProvider({ children, initialPlan = "free" }: { children: Rea
   const [upgradeReason, setUpgradeReason] = useState<UpgradeReasonKey>("default");
   const [billingBusy, setBillingBusy] = useState(false);
   const [billingError, setBillingError] = useState("");
-  /** Hash to restore when closing `#upgrade` so Settings deep links aren’t lost (H5, 2026-11-24). */
-  const upgradeReturnHash = useRef("#views");
+  /** Hash to restore when closing `#upgrade` so Settings deep links aren’t lost (H5, 2026-11-24). State (not ref) keeps the plan context free of render-time ref reads. */
+  const [upgradeReturnHash, setUpgradeReturnHash] = useState("#views");
 
   const apply = useCallback((body: BillingBody | null) => {
     if (!body?.plan) return;
@@ -115,7 +115,7 @@ export function PlanProvider({ children, initialPlan = "free" }: { children: Rea
     setUpgradeOpen(true);
     setBillingError("");
     if (window.location.hash !== "#upgrade") {
-      upgradeReturnHash.current = window.location.hash || "#views";
+      setUpgradeReturnHash(window.location.hash || "#views");
       history.replaceState(null, "", "#upgrade");
       window.dispatchEvent(new HashChangeEvent("hashchange"));
     }
@@ -124,11 +124,10 @@ export function PlanProvider({ children, initialPlan = "free" }: { children: Rea
   const closeUpgrade = useCallback(() => {
     setUpgradeOpen(false);
     if (window.location.hash === "#upgrade") {
-      const back = upgradeReturnHash.current || "#views";
-      history.replaceState(null, "", back);
+      history.replaceState(null, "", upgradeReturnHash || "#views");
       window.dispatchEvent(new HashChangeEvent("hashchange"));
     }
-  }, []);
+  }, [upgradeReturnHash]);
 
   const startCheckout = useCallback(async () => {
     setBillingBusy(true);

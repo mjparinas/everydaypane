@@ -20,19 +20,7 @@ export function AdminBrand({ as: Tag = "h1" }: { as?: "h1" | "div" }) {
   );
 }
 
-function NavItem({
-  tab,
-  on,
-  badge,
-  onClick,
-  dense,
-}: {
-  tab: AdminTab;
-  on: boolean;
-  badge?: number;
-  onClick: () => void;
-  dense?: boolean;
-}) {
+function NavItem({ tab, on, badge, onClick, dense }: { tab: AdminTab; on: boolean; badge?: number; onClick: () => void; dense?: boolean }) {
   const label = adminTabLabel(tab);
   return (
     <li className={dense ? "shrink-0" : "w-full"}>
@@ -55,15 +43,7 @@ function NavItem({
   );
 }
 
-function StaffMeta({
-  staff,
-  onSignOut,
-  compact,
-}: {
-  staff?: { email: string; role: string };
-  onSignOut?: () => void;
-  compact?: boolean;
-}) {
+function StaffMeta({ staff, onSignOut, compact }: { staff?: { email: string; role: string }; onSignOut?: () => void; compact?: boolean }) {
   return (
     <div
       className={

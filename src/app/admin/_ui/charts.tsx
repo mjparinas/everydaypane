@@ -89,17 +89,9 @@ export function Columns({ days }: { days: { day: string; n: number }[] }) {
   const max = Math.max(1, ...days.map((d) => d.n));
   const total = days.reduce((n, d) => n + d.n, 0);
   return (
-    <div
-      className="flex h-32 items-end gap-1"
-      role="img"
-      aria-label={`Daily counts, ${days.length} days, ${total} total`}
-    >
+    <div className="flex h-32 items-end gap-1" role="img" aria-label={`Daily counts, ${days.length} days, ${total} total`}>
       {days.map((d) => (
-        <div
-          key={d.day}
-          className="flex min-w-0 flex-1 flex-col items-center justify-end gap-1"
-          title={`${d.day}: ${d.n}`}
-        >
+        <div key={d.day} className="flex min-w-0 flex-1 flex-col items-center justify-end gap-1" title={`${d.day}: ${d.n}`}>
           <div
             className="w-full rounded-t bg-brand/80"
             style={{ height: `${(d.n / max) * 100}%`, minHeight: d.n ? 4 : 0 }}
@@ -146,8 +138,7 @@ export function ConfirmButton({
     const t = window.setTimeout(() => setArmed(false), 4000);
     return () => window.clearTimeout(t);
   }, [armed]);
-  const tone =
-    variant === "primary" ? "btn-primary" : variant === "ghost" ? "btn-ghost" : "btn-ghost text-bad";
+  const tone = variant === "primary" ? "btn-primary" : variant === "ghost" ? "btn-ghost" : "btn-ghost text-bad";
   return (
     <button
       type="button"

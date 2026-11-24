@@ -42,7 +42,20 @@ export function AdminCommandPalette({
   const [hits, setHits] = useState<Hit[]>([]);
   const [active, setActive] = useState(0);
   const [loading, setLoading] = useState(false);
+  const [wasOpen, setWasOpen] = useState(open);
+  const [activeKey, setActiveKey] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
+
+  // Reset search UI when the palette closes (render-time adjust, not an effect).
+  if (open !== wasOpen) {
+    setWasOpen(open);
+    if (!open) {
+      setQ("");
+      setHits([]);
+      setActive(0);
+      setLoading(false);
+    }
+  }
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
@@ -62,12 +75,7 @@ export function AdminCommandPalette({
   }, [open, onOpenChange]);
 
   useEffect(() => {
-    if (!open) {
-      setQ("");
-      setHits([]);
-      setActive(0);
-      return;
-    }
+    if (!open) return;
     const t = window.setTimeout(() => inputRef.current?.focus(), 20);
     return () => window.clearTimeout(t);
   }, [open]);
@@ -76,13 +84,15 @@ export function AdminCommandPalette({
     if (!open) return;
     const trimmed = q.trim();
     if (trimmed.length < 2) {
-      setHits([]);
-      setLoading(false);
-      return;
+      const t = window.setTimeout(() => {
+        setHits([]);
+        setLoading(false);
+      }, 0);
+      return () => window.clearTimeout(t);
     }
     const ac = new AbortController();
-    setLoading(true);
     const timer = window.setTimeout(() => {
+      setLoading(true);
       void searchHouseholds(trimmed, ac.signal)
         .then((list) => {
           setHits(list);
@@ -133,9 +143,11 @@ export function AdminCommandPalette({
     return [...jumps, ...tabs];
   }, [q, hits]);
 
-  useEffect(() => {
+  const listKey = `${q}:${rows.length}`;
+  if (listKey !== activeKey) {
+    setActiveKey(listKey);
     setActive(0);
-  }, [rows.length, q]);
+  }
 
   function run(row: Row) {
     onOpenChange(false);

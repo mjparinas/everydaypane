@@ -143,21 +143,25 @@ export function AdminApp() {
         }));
         setBadges({ "To Do": todo.items.length, Reports: reports.reports.length });
       } catch (e) {
-        if (!isAbort(e)) undefined;
+        if (isAbort(e)) return;
       }
     })();
     return () => ac.abort();
   }, [gate, badgeTick]);
 
-  const [qDraft, setQDraft] = useState("");
+  const [qDraft, setQDraft] = useState(view.q);
+  const [qSynced, setQSynced] = useState(view.q);
   const searchTabs = view.tab === "Households" || view.tab === "Displays";
-  useEffect(() => {
-    if (searchTabs) setQDraft(view.q);
-  }, [searchTabs, view.q, view.tab]);
+  // Keep the draft field aligned with the URL when the tab or `q` changes (avoid setState-in-effect).
+  if (searchTabs && view.q !== qSynced) {
+    setQSynced(view.q);
+    setQDraft(view.q);
+  }
   const qDebounced = useDebounced(qDraft, 300);
   useEffect(() => {
     if (!searchTabs || qDebounced === view.q) return;
-    navigate({ ...view, q: qDebounced, open: null });
+    const t = window.setTimeout(() => navigate({ ...view, q: qDebounced, open: null }), 0);
+    return () => window.clearTimeout(t);
   }, [qDebounced, searchTabs, view, navigate]);
 
   async function signOut() {
@@ -1227,11 +1231,12 @@ function HouseholdsTab({
   const [selected, setSelected] = useState<Set<string>>(() => new Set());
   const [bulkNote, setBulkNote] = useState("");
   const [bulkBusy, setBulkBusy] = useState<string | null>(null);
-
-  useEffect(() => {
+  const [selectedForQ, setSelectedForQ] = useState(q);
+  if (q !== selectedForQ) {
+    setSelectedForQ(q);
     setSelected(new Set());
     setBulkNote("");
-  }, [q]);
+  }
 
   if (open) {
     const h = detail.data?.household;
