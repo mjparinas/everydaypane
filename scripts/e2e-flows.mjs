@@ -17,7 +17,18 @@ async function addDevice(page, base, viewId = null) {
 /** Sets wall cookies on a Playwright context using the admin session (same as phone QR / select). */
 async function unlockDisplayContext(context, adminPage, device) {
   const session = (await adminPage.context().cookies()).filter((c) => c.name === "ep_session");
-  await context.addCookies(session.map((c) => ({ ...c, url: device.base })));
+  // Playwright needs url *or* domain — spreading the source cookie can leave neither when we override fields.
+  await context.addCookies(
+    session.map((c) => ({
+      name: c.name,
+      value: c.value,
+      url: device.base,
+      httpOnly: c.httpOnly,
+      secure: c.secure,
+      sameSite: c.sameSite,
+      expires: c.expires,
+    })),
+  );
   const unlocked = await context.request.post(`${device.base}/api/auth/device/select/`, {
     headers: { origin: device.base },
     data: { deviceId: device.deviceId },

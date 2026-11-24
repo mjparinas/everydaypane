@@ -5,6 +5,7 @@ import { cookieFor, req, useTestServer } from "@/test/server";
 
 import { LEGACY_ACCOUNT_ID } from "./accounts";
 import { SESSION_COOKIE } from "./auth";
+import { addDevice, deviceForToken } from "./devices";
 import {
   approveDeviceSignIn,
   claimDeviceSignIn,
@@ -14,7 +15,6 @@ import {
   startDeviceSignIn,
 } from "./deviceSignIn";
 import { DISPLAY_COOKIE, WALL_COOKIE } from "./displayAuth";
-import { addDevice, deviceForToken } from "./devices";
 
 describe("device code helpers", () => {
   it("normalises dashed codes and rejects bad ones", () => {
