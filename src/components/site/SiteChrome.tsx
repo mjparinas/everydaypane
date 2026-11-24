@@ -1,5 +1,5 @@
-import Link from "next/link";
 import { cookies } from "next/headers";
+import Link from "next/link";
 import type { ReactNode } from "react";
 
 import { Mark, Wordmark } from "@/components/Wordmark";
@@ -22,9 +22,7 @@ function accountNavLabel(email: string): { name: string; initials: string } {
   const local = (email.split("@")[0] ?? email).trim();
   const parts = local.split(/[._+\-]+/).filter(Boolean);
   const name = parts.map((p) => p.charAt(0).toUpperCase() + p.slice(1).toLowerCase()).join(" ") || email;
-  const initials = (
-    parts.length >= 2 ? `${parts[0]?.charAt(0) ?? ""}${parts[1]?.charAt(0) ?? ""}` : name.slice(0, 2)
-  ).toUpperCase();
+  const initials = (parts.length >= 2 ? `${parts[0]?.charAt(0) ?? ""}${parts[1]?.charAt(0) ?? ""}` : name.slice(0, 2)).toUpperCase();
   return { name, initials: initials || "?" };
 }
 
