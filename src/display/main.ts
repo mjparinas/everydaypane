@@ -534,7 +534,9 @@ async function start() {
   // A kitchen or pomodoro timer going off wakes the screen saver, so its full-screen alarm is seen.
   onAlarm((_key, ringing) => ringing && saver?.wake());
   if (TOKEN && !PREVIEW && "serviceWorker" in navigator) {
-    void navigator.serviceWorker.register(`/display/sw.js?v=${document.body.dataset.v ?? ""}`, { scope: "/d/" }).catch(() => undefined);
+    void navigator.serviceWorker
+      .register(`/display/sw.js?v=${document.body.dataset.v ?? ""}`, { scope: "/display/" })
+      .catch(() => undefined);
   }
   listenForDraft();
   while (!(await loadState())) {

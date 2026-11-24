@@ -8,6 +8,9 @@ export const CONTACT_EMAIL = "hello@everydaypane.com";
 /** Where signed-in families land. */
 export const APP_PATH = "/household/";
 
+/** Wall dashboard gate (QR unlock or signed-in picker). Melvin, 2026-11-23. */
+export const DISPLAY_PATH = "/display/";
+
 /** Public Free signup (magic link creates a household when the email is new). */
 export const SIGNUP_PATH = "/signin/?intent=signup";
 

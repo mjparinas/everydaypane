@@ -90,7 +90,7 @@ export async function sendExplained(path: string, payload: unknown): Promise<str
 }
 
 /**
- * Image URLs for `<img src>`. Auth is the short-lived `ep_display` cookie (set when `/d/<token>/` opens) or an admin
+ * Image URLs for `<img src>`. Auth is the short-lived `ep_display` cookie (set when `/display/` unlocks) or an admin
  * session cookie in preview — never the long-lived device token in the query string (CDN/access logs).
  */
 export function imageUrl(path: string, params: Record<string, string>): string {

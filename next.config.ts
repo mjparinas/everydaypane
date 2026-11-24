@@ -12,7 +12,7 @@ const nextConfig: NextConfig = {
   },
   // The display page is plain HTML plus one small script (public/display/), not a React page: see AGENTS.md "Display".
   // Document CSP with a per-request nonce is set in proxy.ts; APIs and /d/ get a baseline CSP here / in displayHtml.
-  // /household/preview/ may be framed by the Views tab (SAMEORIGIN); wall /d/… stays DENY.
+  // /household/preview/ may be framed by the Views tab (SAMEORIGIN); unlocked `/display/` stays DENY.
   headers: async () => [
     { source: "/:path*", headers: SECURITY_HEADERS },
     { source: "/household/preview/:path*", headers: SECURITY_HEADERS_PREVIEW },
@@ -23,7 +23,7 @@ const nextConfig: NextConfig = {
     {
       source: "/display/sw.js",
       headers: [
-        { key: "Service-Worker-Allowed", value: "/d/" },
+        { key: "Service-Worker-Allowed", value: "/display/" },
         { key: "Cache-Control", value: "no-cache" },
       ],
     },

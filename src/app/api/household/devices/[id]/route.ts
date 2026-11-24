@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 import { editPageUrl } from "@/lib/editPage";
+import { DISPLAY_PATH } from "@/lib/site";
 import { deviceToken, newDeviceToken, removeDevice, updateDevice } from "@/server/devices";
 import { json, notFound, readJson, sameOrigin, unauthorized } from "@/server/http";
 import { adminFor } from "@/server/viewer";
@@ -9,7 +10,7 @@ const patch = z.object({ name: z.string().trim().min(1).max(40).optional(), view
 
 const linksFor = (req: Request, token: string) => {
   const origin = new URL(req.url).origin;
-  return { url: `${origin}/d/${token}/`, editUrl: editPageUrl(origin, token) };
+  return { url: `${origin}${DISPLAY_PATH}`, editUrl: editPageUrl(origin, token) };
 };
 
 /** The display's address, for the signed-in admin to see or copy again. */

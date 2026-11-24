@@ -4,12 +4,11 @@ import { ensureAccountsSeeded } from "./accounts";
 import { decrypt, encrypt, randomAlphanumeric, randomToken, sha256 } from "./crypto";
 import { query, run } from "./db";
 
-// A display (kitchen wall panel, a tablet in the hall). Each one opens its own secret address,
-// /d/<token>/, so it can be signed out alone by deleting it or giving it a new link. Displays are found by the token's
-// hash; the token itself is also kept encrypted (like the other stored secrets) so the Displays tab can always show
-// and copy the address (Melvin, 2026-11-17: the address shouldn't be shown only once; 2026-11-22: always visible with
-// Copy on the row). A device shows its own view, or follows the time-of-day schedule (view_id null). Each device
-// belongs to one household.
+// A display (kitchen wall panel, a tablet in the hall). The wall opens `/display/` and unlocks with a household
+// member's phone QR (or a signed-in picker); the device token stays sealed and is injected as `data-token` after unlock
+// (Melvin, 2026-11-23). Edit/chores still use `/d/<token>/…`. Displays are found by the token's hash; the token itself
+// is also kept encrypted so the Displays tab can show phone-edit addresses. A device shows its own view, or follows the
+// time-of-day schedule (view_id null). Each device belongs to one household.
 
 export interface Device {
   id: string;
@@ -102,6 +101,25 @@ export async function deviceToken(accountId: string, id: string): Promise<string
   const row = (
     await query<{ token_sealed: string | null }>("SELECT token_sealed FROM devices WHERE id = ? AND account_id = ?", [id, accountId])
   )[0];
+  return row?.token_sealed ? decrypt(row.token_sealed) : null;
+}
+
+/** Device row for an account (no token). */
+export async function deviceForAccount(accountId: string, id: string): Promise<Device | null> {
+  await ensureAccountsSeeded();
+  const row = (await query<Row>("SELECT * FROM devices WHERE id = ? AND account_id = ?", [id, accountId]))[0];
+  return row?.account_id ? toDevice(row) : null;
+}
+
+/** Names only for the unlock picker (phone or signed-in wall). */
+export async function listDeviceNames(accountId: string): Promise<{ id: string; name: string }[]> {
+  return (await listDevices(accountId)).map((d) => ({ id: d.id, name: d.name }));
+}
+
+/** Raw token for a known hash (wall cookie → `data-token`). */
+export async function tokenForTokenHash(tokenHash: string): Promise<string | null> {
+  if (!/^[a-f0-9]{64}$/.test(tokenHash)) return null;
+  const row = (await query<{ token_sealed: string | null }>("SELECT token_sealed FROM devices WHERE token_hash = ?", [tokenHash]))[0];
   return row?.token_sealed ? decrypt(row.token_sealed) : null;
 }
 

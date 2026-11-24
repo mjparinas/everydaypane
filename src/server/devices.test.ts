@@ -10,28 +10,34 @@ import { query } from "./db";
 import { addDevice, deviceForToken } from "./devices";
 
 const ctx = (id: string) => ({ params: Promise.resolve({ id }) });
-const tokenOf = (url: string) => /\/d\/([^/]+)\//.exec(url)?.[1] ?? "";
+const tokenOfEdit = (editUrl: string) => /\/d\/([^/]+)\//.exec(editUrl)?.[1] ?? "";
 
 describe("display addresses", () => {
   useTestServer();
 
-  it("lists each display with its address for the Displays tab", async () => {
+  it("lists each display with the wall gate and phone-edit address", async () => {
     const { device, token } = await addDevice(LEGACY_ACCOUNT_ID, "Kitchen", null);
     const admin = await cookieFor("admin@example.com");
     const r = await listDevices(req("/api/household/devices/", { headers: { cookie: admin } }));
     expect(r.status).toBe(200);
-    const body = (await r.json()) as { devices: { id: string; url: string | null }[] };
+    const body = (await r.json()) as { devices: { id: string; url: string | null; editUrl: string | null }[] };
     expect(body.devices).toHaveLength(1);
-    expect(body.devices[0]).toMatchObject({ id: device.id, url: expect.stringContaining(`/d/${token}/`) });
+    expect(body.devices[0]).toMatchObject({
+      id: device.id,
+      url: expect.stringMatching(/\/display\/$/),
+      editUrl: expect.stringContaining(`/d/${token}/edit/`),
+    });
   });
 
-  it("shows an admin a display's address again, and keeps the token encrypted", async () => {
+  it("shows an admin the wall gate and phone-edit link, and keeps the token encrypted", async () => {
     const { device, token } = await addDevice(LEGACY_ACCOUNT_ID, "Kitchen", null);
     expect(token).toMatch(/^[A-Za-z0-9]{8}$/);
     const admin = await cookieFor("admin@example.com");
     const r = await GET(req(`/api/household/devices/${device.id}/`, { headers: { cookie: admin } }), ctx(device.id));
     expect(r.status).toBe(200);
-    expect(tokenOf(((await r.json()) as { url: string }).url)).toBe(token);
+    const body = (await r.json()) as { url: string; editUrl: string };
+    expect(body.url).toMatch(/\/display\/$/);
+    expect(tokenOfEdit(body.editUrl)).toBe(token);
     const [row] = await query<{ token_sealed: string }>("SELECT token_sealed FROM devices WHERE id = ?", [device.id]);
     expect(row?.token_sealed).not.toContain(token);
   });
@@ -47,7 +53,7 @@ describe("display addresses", () => {
     const { device, token } = await addDevice(LEGACY_ACCOUNT_ID, "Kitchen", null);
     const admin = await cookieFor("admin@example.com");
     const r = await POST(req(`/api/household/devices/${device.id}/`, { method: "POST", headers: { cookie: admin } }), ctx(device.id));
-    const fresh = tokenOf(((await r.json()) as { url: string }).url);
+    const fresh = tokenOfEdit(((await r.json()) as { editUrl: string }).editUrl);
     expect(fresh).toMatch(/^[A-Za-z0-9]{8}$/);
     expect(fresh).not.toBe(token);
     expect(await deviceForToken(token)).toBeNull();
@@ -87,13 +93,15 @@ describe("display addresses", () => {
     expect((await deviceForToken(legacy))?.id).toBe(device.id);
   });
 
-  it("has no address to show for a display added before addresses were kept", async () => {
+  it("has no phone-edit address for a display added before tokens were kept", async () => {
     const { device } = await addDevice(LEGACY_ACCOUNT_ID, "Hall", null);
     await query("UPDATE devices SET token_sealed = NULL WHERE id = ?", [device.id]);
     const admin = await cookieFor("admin@example.com");
     expect((await GET(req(`/api/household/devices/${device.id}/`, { headers: { cookie: admin } }), ctx(device.id))).status).toBe(404);
     const listed = await listDevices(req("/api/household/devices/", { headers: { cookie: admin } }));
-    const body = (await listed.json()) as { devices: { id: string; url: string | null }[] };
-    expect(body.devices.find((d) => d.id === device.id)?.url).toBeNull();
+    const body = (await listed.json()) as { devices: { id: string; url: string | null; editUrl: string | null }[] };
+    const row = body.devices.find((d) => d.id === device.id);
+    expect(row?.url).toMatch(/\/display\/$/);
+    expect(row?.editUrl).toBeNull();
   });
 });

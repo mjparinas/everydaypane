@@ -59,7 +59,7 @@ const MIGRATIONS = [
   `CREATE TABLE IF NOT EXISTS chore_redemptions (id TEXT PRIMARY KEY, account_id TEXT NOT NULL, person_id TEXT NOT NULL, reward_id TEXT NOT NULL, stars_cost INTEGER NOT NULL, redeemed_at INTEGER NOT NULL)`,
   `CREATE INDEX IF NOT EXISTS chore_redemptions_by_week ON chore_redemptions (account_id, person_id, redeemed_at)`,
   `CREATE TABLE IF NOT EXISTS account_alert_notified (account_id TEXT NOT NULL, id TEXT NOT NULL, sent_at INTEGER NOT NULL, PRIMARY KEY (account_id, id))`,
-  // Phone QR sign-in for displays without an email app (Melvin, 2026-11-23; Tuned-style code + poll).
+  // Phone QR unlock for a wall display (Melvin, 2026-11-23; Tuned-style code + poll). Approver picks a device_id.
   `CREATE TABLE IF NOT EXISTS device_sign_ins (
     code_hash TEXT PRIMARY KEY,
     poll_secret_hash TEXT NOT NULL,
@@ -67,6 +67,7 @@ const MIGRATIONS = [
     email TEXT,
     account_id TEXT,
     role TEXT,
+    device_id TEXT,
     handoff_hash TEXT,
     handoff_sealed TEXT,
     approved_at INTEGER,
@@ -113,6 +114,8 @@ const COLUMNS = [
   `ALTER TABLE sessions ADD COLUMN account_id TEXT`,
   `ALTER TABLE sign_in_links ADD COLUMN account_id TEXT`,
   `ALTER TABLE devices ADD COLUMN is_test INTEGER NOT NULL DEFAULT 0`,
+  // Wall unlock via phone QR picks which display (Melvin, 2026-11-23).
+  `ALTER TABLE device_sign_ins ADD COLUMN device_id TEXT`,
 ];
 
 async function migrate(c: Client): Promise<void> {

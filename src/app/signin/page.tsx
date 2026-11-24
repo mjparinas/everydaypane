@@ -5,7 +5,6 @@ import { SiteFooter, SiteHeader } from "@/components/site/SiteChrome";
 import { Wordmark } from "@/components/Wordmark";
 import { SIGNUP_PATH } from "@/lib/site";
 
-import { PhoneQrSignIn } from "./PhoneQrSignIn";
 import { SignInForm, type SignInIntent } from "./SignInForm";
 
 export const metadata: Metadata = { title: "Sign in" };
@@ -43,7 +42,6 @@ export default async function SignInPage({ searchParams }: { searchParams: Promi
               </Link>
             </p>
           )}
-          <PhoneQrSignIn />
         </div>
       </main>
       <SiteFooter />
