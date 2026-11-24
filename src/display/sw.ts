@@ -62,7 +62,8 @@ sw.addEventListener("activate", (e) => {
         await Promise.all(
           clients.map(async (client) => {
             const path = new URL(client.url).pathname;
-            if (!path.startsWith("/d/")) return;
+            // Only the unlocked wall document — not `/display/unlock/`.
+            if (path !== "/display/" && path !== "/display") return;
             try {
               await cache.add(new Request(path));
             } catch {
@@ -129,12 +130,13 @@ sw.addEventListener("fetch", (e) => {
   // Radar pictures are one address per six minutes and the browser's cache keeps them a day; offline, the loop
   // simply stops at what it has.
   if (url.pathname.startsWith("/api/display/radar/frame/")) return;
-  if (req.mode === "navigate" && url.pathname.startsWith("/d/")) {
+  if (req.mode === "navigate" && (url.pathname === "/display/" || url.pathname === "/display")) {
     e.respondWith(networkFirst(req, new Request(url.pathname), 6000));
   } else if (url.pathname.startsWith("/api/display/")) {
     // Keyed by URL alone (the token header is the same for every request from this device).
     e.respondWith(networkFirst(req, new Request(url.pathname + url.search), 10000));
-  } else if (url.pathname.startsWith("/display/") || url.pathname.startsWith("/fonts/")) {
+  } else if (/^\/display\/(display\.(js|css)|sw\.js)/.test(url.pathname) || url.pathname.startsWith("/fonts/")) {
+    // Shell assets only — not `/display/unlock/` (Next.js gate page).
     e.respondWith(cacheFirst(req));
   }
 });

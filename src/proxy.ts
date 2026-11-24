@@ -45,8 +45,9 @@ export function proxy(req: NextRequest) {
 
 // HTML documents (not /d/ or /household/preview/, which set their own CSP in displayHtml; not APIs or static assets).
 export const config = {
-  // Bare `/d/<token>/` sets its own CSP in displayHtml; `/d/<token>/edit/` is a Next.js phone page and needs the nonce.
+  // Bare `/d/<token>/` and unlocked `/display/` set their own CSP in displayHtml; static `/display/display.*` stay out;
+  // `/display/unlock/` and `/d/<token>/edit/` are Next.js pages and need the nonce.
   matcher: [
-    "/((?!api/|_next/static|_next/image|d/[^/]+/?$|household/preview/|display/|brand/|fonts/|icons/|favicon.ico|icon.svg|apple-icon.png|apple-touch-icon.png|manifest.webmanifest|.*\\..*).*)",
+    "/((?!api/|_next/static|_next/image|d/[^/]+/?$|household/preview/|display/display\\.(js|css)|display/sw\\.js|brand/|fonts/|icons/|favicon.ico|icon.svg|apple-icon.png|apple-touch-icon.png|manifest.webmanifest|.*\\..*).*)",
   ],
 };

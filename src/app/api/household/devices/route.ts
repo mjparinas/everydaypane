@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 import { editPageUrl } from "@/lib/editPage";
+import { DISPLAY_PATH } from "@/lib/site";
 import { addDevice, listDevices } from "@/server/devices";
 import { json, readJson, sameOrigin, unauthorized } from "@/server/http";
 import { gateNewDisplay } from "@/server/planGates";
@@ -11,10 +12,10 @@ export async function GET(req: Request) {
   if (!session) return unauthorized();
   const accountId = session.accountId;
   const origin = new URL(req.url).origin;
-  // Always include each display's address so the Displays tab can show it with a Copy button (Melvin, 2026-11-22).
+  // Wall opens the shared `/display/` gate (Melvin, 2026-11-23); phone edit keeps the secret `/d/…/edit/` link.
   const devices = (await listDevices(accountId)).map(({ token, ...d }) => ({
     ...d,
-    url: token ? `${origin}/d/${token}/` : null,
+    url: `${origin}${DISPLAY_PATH}`,
     editUrl: token ? editPageUrl(origin, token) : null,
   }));
   return json({ devices });
@@ -34,5 +35,5 @@ export async function POST(req: Request) {
   if (!gate.ok) return json({ error: gate.error }, 402);
   const { device, token } = await addDevice(accountId, parsed.data.name, parsed.data.viewId);
   const origin = new URL(req.url).origin;
-  return json({ device, url: `${origin}/d/${token}/`, editUrl: editPageUrl(origin, token) }, 201);
+  return json({ device, url: `${origin}${DISPLAY_PATH}`, editUrl: editPageUrl(origin, token) }, 201);
 }

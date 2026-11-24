@@ -91,7 +91,7 @@ screen; the red, dismissible alert strip;
 no pinch zoom; settings reach displays by polling every 30 seconds (**Household** also long-polls for instant reload);
 **starter view templates** (~20 layouts with screenshot previews) on the Views tab; themes include Outfit, DM Sans and
 Literata; Displays tab tips for casting
-the `/d/…` URL; Vancouver clocks, dates, calendars and scheduled views stay on UTC−7 after B.C.'s March 2026 change
+`/display/`; Vancouver clocks, dates, calendars and scheduled views stay on UTC−7 after B.C.'s March 2026 change
 even when the display browser has old time-zone data.
 
 **Marketing site** (public pages, Melvin, 2026-11-23): homepage at `/` (no longer redirects to admin), plus `/pricing/`,
@@ -108,9 +108,10 @@ DriveBC road events and weather conditions, Earthquakes Canada, BC Hydro power o
 Optional email to everyone on `ADMIN_EMAILS` and `FAMILY_EMAILS` when a new strip-worthy alert arrives (`config.alerts.notifyEmail`).
 
 **Household and family:** magic-link sign-in (Resend, branded HTML from `src/lib/email.ts`) with marketing header/footer
-on `/signin/`, plus **sign in with your phone** (QR + short code on a display/TV without an email app; phone approves at
-`/signin/phone/`), household panel at `/household/` (views and grid editor, themes, displays with copyable addresses **and a
-phone-edit QR/link**, meals, shopping, settings for every integration, Settings › Chores for the kids and their chores),
+on `/signin/`; wall displays open **`/display/`** and unlock with a **phone QR** (or a signed-in picker) at
+`/display/unlock/` / `/signin/phone/`; household panel at `/household/` (views and grid editor, themes, displays with the
+shared wall address **and a phone-edit QR/link**, meals, shopping, settings for every integration, Settings › Chores for
+the kids and their chores),
 **settings backup and restore** (Settings › Backup, a JSON file), `/family/` for the message board, **family calendar
 events**, meals and the shopping list, **`/d/<token>/edit/`** (same meals, shopping and messages with no login — scan the
 edit QR or open the Displays link), Sentry. Settings is grouped with a sticky jump nav and `#settings/…` deep links;
@@ -225,8 +226,8 @@ npm run templates:previews  # regenerate public/templates/*.png from real widget
   than columns the display letterboxes the stage on a landscape panel (`html.portrait-view`).
 - **More theme fonts** (Melvin, 2026-11-22): Outfit, DM Sans and Literata join Inter, Manrope and Space Grotesk
   (self-hosted under `/fonts/`). Built-in themes spread those fonts so starter template previews look distinct.
-- **Castable display URL** (Melvin, 2026-11-22): Displays tab copy/open tips for Chromecast (cast a browser tab) and
-  TV/kiosk start pages — no custom Cast receiver.
+- **Castable display URL** (Melvin, 2026-11-22; gated 2026-11-23): Displays tab copy/open tips for Chromecast (cast a
+  browser tab opened to `/display/`) and TV/kiosk start pages — unlock once with phone QR; no custom Cast receiver.
 - **Live views editor** (Melvin, 2026-11-22: the view loaded in the UI, changes live; then one surface with right
   settings drawers, not two stacks): the Views tab shows one live editable layout (real widgets under a drag overlay);
   widget settings and view settings (Edit view) each open in a right slide-out. Draft `postMessage` updates patch cells
@@ -299,9 +300,10 @@ npm run templates:previews  # regenerate public/templates/*.png from real widget
 "Emphasize super lightweight front end for the dashboard so it loads quickly and is responsive. The backend or admin
 panel can be complex if you need it to be."
 
-- The display (`/d/<token>/`) is **not a React page**. It is server-rendered HTML plus one small TypeScript module
-  bundled by esbuild (`src/display/` → `public/display/`), with no framework. Widgets update only the DOM nodes that
-  change (the clock rewrites one text node a second).
+- The unlocked display (`/display/` after wall cookies) is **not a React page**. It is server-rendered HTML plus one
+  small TypeScript module bundled by esbuild (`src/display/` → `public/display/`), with no framework. The unlock gate
+  (`/display/unlock/`) is a Next.js page. Widgets update only the DOM nodes that change (the clock rewrites one text
+  node a second).
 - **Budget:** the display's script stays under 40 KB gzipped and its stylesheet under 20 KB (`scripts/bundle-check.mjs`,
   a CI step; CSS raised from 10 KB on 2026-11-23 for more clock styles). A new dependency on the display needs a very good reason.
 - All heavy lifting happens on the server: API calls to Google, weather, Recycle Coach, Amazon and Home Assistant are
@@ -341,12 +343,14 @@ panel can be complex if you need it to be."
 - **Database:** Turso in production (`DATABASE_URL` + `DATABASE_AUTH_TOKEN`, or the `TURSO_*` pair Vercel's
   integration creates), `file:local.db` in development, memory in tests. Tables are created on first use; migrations only
   ever add (`src/server/db.ts`).
-- **Displays** are devices with their own secret address `/d/<token>/`. Requests are matched by the token's hash; the
-  token is also kept encrypted (`token_sealed`, like the other secrets) so the Displays tab always shows the address with
-  a Copy button on the same row (Melvin, 2026-11-17: not shown only once; 2026-11-22: always visible, no "New link").
-  New addresses use a case-sensitive, 8-character alphanumeric token; the database's unique token hash constraint is
-  retried on a collision (Melvin, 2026-11-21). Existing longer addresses remain valid. A device shows one view, or
-  follows the time-of-day schedule. Deleting a device signs that screen out.
+- **Displays** (Melvin, 2026-11-23: wall behind auth): the kitchen dashboard opens at **`/display/`**, not a public
+  `/d/<token>/` capability URL (that path redirects to `/display/`). Unlock with a phone QR (non-touch TVs) or a
+  signed-in household member picking the device on the wall; claim sets `ep_wall` + `ep_display` cookies, not a
+  household session. Device tokens stay sealed (`token_sealed`); after unlock the HTML still gets `data-token`. Phone
+  edit/chores keep `/d/<token>/edit/` and `/d/<token>/chores/`. The Displays tab copies the shared wall gate and the
+  phone-edit link; **New link** rotates the token (signs that screen out once cookies no longer match). New tokens are
+  case-sensitive 8-character alphanumeric; unique hash collisions are retried (Melvin, 2026-11-21). A device shows one
+  view, or follows the time-of-day schedule. Deleting a device signs that screen out.
 - **Household panel** (`src/app/household/_ui/`): one page with tabs (a bottom tab bar on phones). Edits collect in a working
   copy (a Zustand store per page) and go out together with Save. The Views tab embeds `/household/preview/<viewId>/` under a
   transparent drag overlay (`src/app/household/_ui/LiveLayoutEditor.tsx`) and pushes the working copy over `postMessage`
@@ -622,26 +626,28 @@ panel can be complex if you need it to be."
   the environment, so nothing a request writes can make someone an admin; removing an address signs it out. Links and
   sessions are stored only as hashes. The emailed link opens a page whose button uses the link up, so mail scanners
   can't. A link is used up in one statement, so two racing requests can't both sign in.
-- **Sign in with your phone** (Melvin, 2026-11-23: magic link on a display fails when there's no email app — Tuned-style
-  QR): `/signin/` can show a QR and eight-character code (`device_sign_ins`, 10 minutes). The phone opens
-  `/signin/phone/`, signs in with the usual magic link if needed, and taps Approve; the display polls and claims a
-  one-time handoff for its session cookie. Codes and poll secrets are stored only as hashes; the handoff is encrypted
-  until the display takes it once.
+- **Wall unlock with your phone** (Melvin, 2026-11-23: QR is for the display, not household `/signin/` — Tuned-style
+  code relay): `/display/unlock/` shows a QR and eight-character code (`device_sign_ins`, 10 minutes). The phone opens
+  `/signin/phone/`, signs in with the usual magic link if needed, **picks which display**, and taps Approve; the wall
+  polls and claims `ep_wall` + `ep_display` for that device. Signed-in browsers on the wall can pick a display without
+  QR (`POST /api/auth/device/select/`). Codes and poll secrets are stored only as hashes; the handoff is encrypted until
+  the wall takes it once. Household `/signin/` stays email magic link only.
 - Sign-in tries are rate-limited in the database (one atomic upsert), per address and per IP.
 - Requests that change something must come from our own origin (`sameOrigin`).
 - Security headers on every response (`src/lib/securityHeaders.ts`): HSTS, nosniff, `frame-ancestors 'none'` (wall
-  `/d/…` stays unframeable; `/household/preview/` allows `frame-ancestors 'self'` so the Views tab can embed it), a CSP
-  that allows only our own origin (and Sentry's ingest, `'self'` plus earth.nullschool.net in `frame-src`; `script-src`
-  never allows `'unsafe-inline'` — Next.js pages get a per-request nonce from `proxy.ts`, the display loads only
-  `/display/display.js`), and a Permissions-Policy that turns off camera, microphone and location.
+  `/display/` stays unframeable; `/household/preview/` allows `frame-ancestors 'self'` so the Views tab can embed it), a
+  CSP that allows only our own origin (and Sentry's ingest, `'self'` plus earth.nullschool.net in `frame-src`;
+  `script-src` never allows `'unsafe-inline'` — Next.js pages get a per-request nonce from `proxy.ts`, the display loads
+  only `/display/display.js`), and a Permissions-Policy that turns off camera, microphone and location.
 - **Family sessions** (`FAMILY_EMAILS`) use `/family/` and the meals, shopping and messages APIs only. They are not
   accepted as display viewers (`viewerFor`), so they cannot call `/api/display/*` (Home Assistant, cameras, tasks, …).
 - **Display-token family edits:** a valid `x-display-token` may use the meals, shopping and messages APIs the same way
   a family session does (`familyEditorFor`), so `/d/<token>/edit/` works without login. It does not grant admin pin,
   settings, or anything beyond those three APIs through that helper — but the same token still unlocks `/api/display/*`
   if someone crafts requests (as the wall already can).
-- **Display image auth:** `/d/<token>/` sets a short-lived HttpOnly `ep_display` cookie (`Path=/api/display/`) for
-  `<img>` requests; the long-lived device token stays in `x-display-token` for fetch, never in image query strings.
+- **Display image auth:** unlocking `/display/` sets HttpOnly `ep_wall` (`Path=/display`) and `ep_display`
+  (`Path=/api/display/`) for about a week; `<img>` uses `ep_display`; the long-lived device token stays in
+  `x-display-token` / `data-token` for fetch, never in image query strings.
 - **Home Assistant URL:** must be public https; changing it (save or backup restore) clears the stored token and
   Cloudflare Access pair so they are never sent to a new host.
 - Error reports are scrubbed of emails, display tokens (including 8-character `/d/` links) and cookies before they leave (`src/lib/sentryScrub.ts`).

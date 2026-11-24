@@ -4,14 +4,15 @@ import { useEffect, useMemo, useState } from "react";
 
 import type { DashboardConfig } from "@/lib/config/schema";
 import { FREE_LIMITS } from "@/lib/plans";
+import { DISPLAY_PATH } from "@/lib/site";
 
 import { ConfirmButton, Section, Select, Text } from "./fields";
 import { HouseholdBadge, UpgradeLink, usePlan } from "./plan";
 import { useAdmin } from "./store";
 
-// Displays: each screen (kitchen wall panel, an old tablet in the hall) gets its own secret address.
-// The address is always shown on the row with Copy on the far right (Melvin, 2026-11-22); "New link" replaces it if
-// it leaks, and deleting a display signs that screen out.
+// Displays: each screen (kitchen wall panel, an old tablet in the hall) is named here; the wall opens the shared
+// `/display/` gate and unlocks with a phone QR (or a signed-in picker). "New link" rotates the device token so an
+// already-unlocked browser stops working once its cookie no longer matches (Melvin, 2026-11-23).
 
 interface Device {
   id: string;
@@ -137,12 +138,13 @@ export function DisplaysPanel() {
         {added && (
           <div className="grid gap-2 rounded-xl border border-brand p-3" role="status">
             <p className="text-sm">
-              Open this address on <strong>{added.name}</strong>. It stays visible under Displays.
+              On <strong>{added.name}</strong>, open the wall address below, then unlock with your phone (scan the QR) or sign in and pick
+              this display.
             </p>
-            <Address url={added.url} label="Display" />
+            <Address url={added.url} label="Wall address" />
             <Address url={added.editUrl} label="Phone edit" />
             <p className="text-xs text-soft">
-              On a wall panel or tablet, set the display address as the start page in its browser (kiosk) settings.
+              On a wall panel or tablet, set the wall address as the start page in its browser (kiosk) settings.
             </p>
             <CastHints />
           </div>
@@ -168,7 +170,7 @@ export function DisplaysPanel() {
             <ol className="list-decimal space-y-1 pl-5">
               <li>Name it (Kitchen works) and tap Add display.</li>
               <li>
-                Copy the secret <code className="text-xs">/d/…</code> address onto your tablet or wall panel.
+                Open <code className="text-xs">{DISPLAY_PATH}</code> on the tablet or wall panel, then unlock with your phone.
               </li>
               <li>
                 Optional: open{" "}
@@ -197,7 +199,7 @@ export function DisplaysPanel() {
                 />
                 {d.url ? (
                   <>
-                    <Address url={d.url} label="Display" />
+                    <Address url={d.url} label="Wall address" />
                     <CastHints />
                   </>
                 ) : (
@@ -224,7 +226,11 @@ export function DisplaysPanel() {
                   </div>
                 )}
                 <div className="flex flex-wrap gap-2">
-                  <ConfirmButton label="New link" confirm="Tap again: the old address stops working" onConfirm={() => void newLink(d.id)} />
+                  <ConfirmButton
+                    label="New link"
+                    confirm="Tap again: signs this display out and refreshes the phone-edit address"
+                    onConfirm={() => void newLink(d.id)}
+                  />
                   <ConfirmButton
                     label="Delete display"
                     confirm="Tap again: this signs the screen out"
@@ -267,16 +273,17 @@ function Address({ url, label }: { url: string; label?: string }) {
   );
 }
 
-/** How to put the castable /d/… URL on a TV or Chromecast (no custom Cast receiver). */
+/** How to put the wall gate on a TV or Chromecast (no custom Cast receiver). */
 function CastHints() {
   return (
     <div className="grid gap-1 text-xs text-soft">
       <p>
-        <strong className="font-medium text-ink">Chromecast / Google TV:</strong> cast a Chrome tab with this address open, or use the
-        TV&apos;s browser and set the address as the start page.
+        <strong className="font-medium text-ink">Chromecast / Google TV:</strong> cast a Chrome tab with{" "}
+        <code className="text-[0.7rem]">{DISPLAY_PATH}</code> open, or use the TV&apos;s browser and unlock with your phone (QR).
       </p>
       <p>
-        <strong className="font-medium text-ink">Wall panel / tablet:</strong> set this as the start page in the browser (kiosk) settings.
+        <strong className="font-medium text-ink">Wall panel / tablet:</strong> set <code className="text-[0.7rem]">{DISPLAY_PATH}</code> as
+        the start page, then unlock once with your phone.
       </p>
     </div>
   );

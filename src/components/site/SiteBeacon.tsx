@@ -12,7 +12,8 @@ export function SiteBeacon() {
       pathname.startsWith("/admin") ||
       pathname.startsWith("/household") ||
       pathname.startsWith("/family") ||
-      pathname.startsWith("/d/")
+      pathname.startsWith("/d/") ||
+      pathname.startsWith("/display")
     ) {
       return;
     }

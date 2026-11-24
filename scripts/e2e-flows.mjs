@@ -1,16 +1,34 @@
-// Display flows for scripts/e2e.mjs: add a device through the admin API, open its address like a wall screen would,
-// and check it draws, ticks, polls for changes and survives going offline.
+// Display flows for scripts/e2e.mjs: add a device through the admin API, unlock `/display/` like a signed-in wall
+// (or phone QR would), and check it draws, ticks, polls for changes and survives going offline.
 
 const VIEWPORT = { width: 1920, height: 1080 }; // kitchen wall panel size
 
 async function addDevice(page, base, viewId = null) {
   const r = await page.request.post(`${base}/api/household/devices/`, { headers: { origin: base }, data: { name: "Kitchen", viewId } });
   if (r.status() !== 201) throw new Error(`add device: ${r.status()}`);
-  return (await r.json()).url.replace(/^https?:\/\/[^/]+/, base);
+  const body = await r.json();
+  return {
+    base,
+    deviceId: body.device.id,
+    url: String(body.url).replace(/^https?:\/\/[^/]+/, base),
+  };
 }
 
-async function openDisplay(browser, url) {
+/** Sets wall cookies on a Playwright context using the admin session (same as phone QR / select). */
+async function unlockDisplayContext(context, adminPage, device) {
+  const session = (await adminPage.context().cookies()).filter((c) => c.name === "ep_session");
+  await context.addCookies(session.map((c) => ({ ...c, url: device.base })));
+  const unlocked = await context.request.post(`${device.base}/api/auth/device/select/`, {
+    headers: { origin: device.base },
+    data: { deviceId: device.deviceId },
+  });
+  if (!unlocked.ok()) throw new Error(`unlock display: ${unlocked.status()} ${await unlocked.text()}`);
+}
+
+/** Opens the wall gate after unlocking with the admin session. */
+async function openDisplay(browser, adminPage, device) {
   const context = await browser.newContext({ viewport: VIEWPORT });
+  await unlockDisplayContext(context, adminPage, device);
   const page = await context.newPage();
   const errors = [];
   page.on("pageerror", (e) => errors.push(e.message));
@@ -18,7 +36,7 @@ async function openDisplay(browser, url) {
   page.on("response", (r) => {
     if (r.status() >= 400 && !/\/api\/display\/(weather|air)\//.test(r.url())) errors.push(`${r.status()} ${r.url()}`);
   });
-  await page.goto(url);
+  await page.goto(device.url);
   return { context, page, errors };
 }
 
@@ -26,8 +44,8 @@ export const flows = [
   {
     name: "a display draws its view and the clock ticks",
     async run({ browser, page, base, expect }) {
-      const url = await addDevice(page, base, "home");
-      const d = await openDisplay(browser, url);
+      const device = await addDevice(page, base, "home");
+      const d = await openDisplay(browser, page, device);
       await d.page.locator(".cell-clock .c-hm").first().waitFor();
       const cells = await d.page.locator(".cell").count();
       expect(cells === 9, `expected 9 widgets, saw ${cells}`);
@@ -47,8 +65,8 @@ export const flows = [
   {
     name: "a display picks up admin changes by polling",
     async run({ browser, page, base, expect }) {
-      const url = await addDevice(page, base, "home");
-      const d = await openDisplay(browser, url);
+      const device = await addDevice(page, base, "home");
+      const d = await openDisplay(browser, page, device);
       await d.page.locator(".cell").first().waitFor();
       const { config, version } = await (await page.request.get(`${base}/api/household/config/`)).json();
       config.views
@@ -69,8 +87,8 @@ export const flows = [
   {
     name: "a display keeps working offline",
     async run({ browser, page, base }) {
-      const url = await addDevice(page, base, "night");
-      const d = await openDisplay(browser, url);
+      const device = await addDevice(page, base, "night");
+      const d = await openDisplay(browser, page, device);
       await d.page.locator(".cell-clock").waitFor();
       await d.page.evaluate(() => navigator.serviceWorker.ready);
       // Load once more so the service worker controls the page and has copies of everything.
@@ -87,8 +105,12 @@ export const flows = [
   {
     name: "an unknown display address is refused",
     async run({ base, expect }) {
-      const r = await fetch(`${base}/d/not-a-real-token-1234567890/`);
-      expect(r.status === 404, `status ${r.status}`);
+      const r = await fetch(`${base}/d/not-a-real-token-1234567890/`, { redirect: "manual" });
+      expect(r.status === 308, `status ${r.status}`);
+      expect((r.headers.get("location") || "").endsWith("/display/"), `location ${r.headers.get("location")}`);
+      const locked = await fetch(`${base}/display/`, { redirect: "manual" });
+      expect(locked.status === 307 || locked.status === 302, `locked status ${locked.status}`);
+      expect((locked.headers.get("location") || "").includes("/display/unlock"), `locked location ${locked.headers.get("location")}`);
       const api = await fetch(`${base}/api/display/state/`, { headers: { "x-display-token": "not-a-real-token-1234567890" } });
       expect(api.status === 401, `api status ${api.status}`);
     },
@@ -192,8 +214,8 @@ export const flows = [
         data: { baseVersion: version, config },
       });
       expect(saved.ok(), `save: ${saved.status()}`);
-      const url = await addDevice(page, base, "home");
-      const d = await openDisplay(browser, url);
+      const device = await addDevice(page, base, "home");
+      const d = await openDisplay(browser, page, device);
       await d.page.locator(".msg-pink").getByText("Soccer moved to 5").waitFor();
       expect(d.errors.length === 0, d.errors.join("\n"));
       await d.context.close();
@@ -226,8 +248,8 @@ export const flows = [
         data: { baseVersion: version, config },
       });
       expect(put.ok(), `save: ${put.status()}`);
-      const url = await addDevice(page, base, "home");
-      const d = await openDisplay(browser, url);
+      const device = await addDevice(page, base, "home");
+      const d = await openDisplay(browser, page, device);
       await d.page.locator(".w-meals").getByText("Tacos").waitFor();
       expect(d.errors.length === 0, d.errors.join("\n"));
       await d.context.close();
@@ -282,8 +304,9 @@ export const flows = [
         data: { baseVersion: version, config },
       });
       expect(saved.ok(), `save: ${saved.status()}`);
-      const url = await addDevice(page, base, "e2e-frame");
+      const device = await addDevice(page, base, "e2e-frame");
       const context = await browser.newContext({ viewport: VIEWPORT });
+      await unlockDisplayContext(context, page, device);
       // A drawn landscape stands in for an album, so the test needs no photo service.
       const picture = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1080"><defs><linearGradient id="s" x2="0" y2="1"><stop offset="0" stop-color="#f6b26b"/><stop offset=".55" stop-color="#f9e0b0"/></linearGradient></defs><rect width="1920" height="1080" fill="url(#s)"/><circle cx="1350" cy="520" r="120" fill="#fff3d6"/><path d="M0 700 420 380 760 640 1100 300 1500 620 1920 420V1080H0Z" fill="#5a6e8c"/><path d="M0 820 520 600 980 800 1400 640 1920 780V1080H0Z" fill="#2f4058"/><rect y="900" width="1920" height="180" fill="#1d2a3d"/></svg>`;
       await context.route("**/api/display/photos/**", (r) =>
@@ -293,7 +316,7 @@ export const flows = [
       const d = await context.newPage();
       const errors = [];
       d.on("pageerror", (e) => errors.push(e.message));
-      await d.goto(url);
+      await d.goto(device.url);
       await d.locator(".ph-img.on").waitFor();
       await d.locator(".cell-clock .c-hm").waitFor();
       expect(await d.locator(".cell-clock").evaluate((el) => el.classList.contains("on-photo")), "the clock isn't marked as on the photo");
@@ -318,8 +341,9 @@ export const flows = [
   {
     name: "an emergency alert shows as a red strip that a tap dismisses",
     async run({ browser, page, base, expect }) {
-      const url = await addDevice(page, base, "home");
+      const device = await addDevice(page, base, "home");
       const context = await browser.newContext({ viewport: VIEWPORT });
+      await unlockDisplayContext(context, page, device);
       const alert = {
         id: "naad:e2e",
         source: "weather",
@@ -332,7 +356,7 @@ export const flows = [
       };
       await context.route("**/api/display/alerts/**", (r) => r.fulfill({ json: { updatedAt: 1, alerts: [alert] } }));
       const d = await context.newPage();
-      await d.goto(url);
+      await d.goto(device.url);
       const strip = d.locator(".alert-strip.show");
       await strip.getByText("Orange warning - rainfall - in effect").waitFor();
       // The strip pushes the layout down instead of covering it.
@@ -352,8 +376,9 @@ export const flows = [
   {
     name: "a busy day in the month view keeps full-height rows and says how many more",
     async run({ browser, page, base, expect }) {
-      const url = await addDevice(page, base, "calendar");
+      const device = await addDevice(page, base, "calendar");
       const context = await browser.newContext({ viewport: VIEWPORT });
+      await unlockDisplayContext(context, page, device);
       // Twelve timed events on one day: far more than a day's box holds on a 1080p screen.
       const day = new Date().toLocaleDateString("en-CA", { timeZone: "America/Vancouver" });
       const events = Array.from({ length: 12 }, (_, i) => ({
@@ -369,7 +394,7 @@ export const flows = [
         r.fulfill({ json: { updatedAt: 1, from: "2000-01-01", to: "2100-01-01", events, connected: true } }),
       );
       const d = await context.newPage();
-      await d.goto(url);
+      await d.goto(device.url);
       const today = d.locator(".mo-today");
       await today.locator(".mo-more").waitFor();
       const rows = await today.locator(".mo-ev").evaluateAll((els) => els.map((e) => [e.clientHeight, e.scrollHeight]));
@@ -383,8 +408,9 @@ export const flows = [
   {
     name: "the screen saver goes dark when nobody uses the screen, and a tap brings the dashboard back",
     async run({ browser, page, base, expect }) {
-      const url = await addDevice(page, base, "home");
+      const device = await addDevice(page, base, "home");
       const context = await browser.newContext({ viewport: VIEWPORT });
+      await unlockDisplayContext(context, page, device);
       // Switched on for this screen only, by changing the settings it receives, so other flows keep theirs.
       await context.route("**/api/display/state/**", async (r) => {
         try {
@@ -398,7 +424,7 @@ export const flows = [
         }
       });
       const d = await context.newPage();
-      await d.goto(url);
+      await d.goto(device.url);
       // The dark saver immediately hides the dashboard, so wait for the clock to mount rather than become visible.
       await d.locator(".cell-clock .c-hm").first().waitFor({ state: "attached" });
       // The short idle threshold exercises the loaded settings without a simulated clock; the unit tests cover the
@@ -463,7 +489,7 @@ export const flows = [
         data: { baseVersion: version, config },
       });
       expect(put.ok(), `save: ${put.status()}`);
-      const d = await openDisplay(browser, await addDevice(page, base, "e2e-chores"));
+      const d = await openDisplay(browser, page, await addDevice(page, base, "e2e-chores"));
       const ana = d.page.locator(".ch-col").filter({ hasText: "Ana" });
       await ana.getByText("Make the bed").waitFor();
       const saved = d.page.waitForResponse((r) => r.url().includes("/api/display/chores/") && r.request().method() === "POST");
@@ -472,7 +498,7 @@ export const flows = [
       await ana.locator(".ch-stars").getByText("⭐ 2 / 10").waitFor();
       if (process.env.E2E_SHOTS) await d.page.screenshot({ path: `${process.env.E2E_SHOTS}/chore-chart.png` });
       // Another screen sees it.
-      const other = await openDisplay(browser, await addDevice(page, base, "e2e-chores"));
+      const other = await openDisplay(browser, page, await addDevice(page, base, "e2e-chores"));
       await other.page.locator(".ch-col").filter({ hasText: "Ana" }).locator(".ch-done").getByText("Make the bed").waitFor();
       expect(d.errors.length === 0 && other.errors.length === 0, [...d.errors, ...other.errors].join("\n"));
       await d.context.close();

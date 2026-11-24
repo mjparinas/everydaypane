@@ -11,7 +11,7 @@ const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replac
  * the same for every load and can be cached whole for offline mode.
  *
  * Admin preview pages allow same-origin framing so the Views tab can embed a live draft (Melvin, 2026-11-22).
- * Wall /d/… pages stay unframeable.
+ * Wall `/display/` pages stay unframeable.
  */
 function requestIsHttps(reqUrl: string | undefined): boolean {
   if (!reqUrl) return true;
