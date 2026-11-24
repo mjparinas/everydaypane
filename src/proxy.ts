@@ -48,6 +48,6 @@ export const config = {
   // Bare `/d/<token>/` and unlocked `/display/` set their own CSP in displayHtml; static `/display/display.*` stay out;
   // `/display/unlock/` and `/d/<token>/edit/` are Next.js pages and need the nonce.
   matcher: [
-    "/((?!api/|_next/static|_next/image|d/[^/]+/?$|household/preview/|display/display\\.(js|css)|display/sw\\.js|brand/|fonts/|icons/|favicon.ico|icon.svg|apple-icon.png|apple-touch-icon.png|manifest.webmanifest|.*\\..*).*)",
+    "/((?!api/|_next/static|_next/image|d/[^/]+/?$|household/preview/|display/display\\.(?:js|css)|display/sw\\.js|brand/|fonts/|icons/|favicon.ico|icon.svg|apple-icon.png|apple-touch-icon.png|manifest.webmanifest|.*\\..*).*)",
   ],
 };
