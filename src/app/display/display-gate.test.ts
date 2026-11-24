@@ -21,6 +21,7 @@ describe("display gate", () => {
     const r = await displayGET(req("http://localhost/display/"));
     expect(r.status).toBe(307);
     expect(r.headers.get("Location")).toMatch(/\/display\/unlock\/$/);
+    expect(r.headers.get("Cache-Control")).toMatch(/no-store/);
   });
 
   it("serves the dashboard HTML when ep_wall is valid", async () => {
