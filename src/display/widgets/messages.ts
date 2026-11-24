@@ -30,11 +30,16 @@ export const messages: Mount<"messages"> = (el, w) => {
     if (!list) return;
     const shown = list.slice(0, w.count);
     const note = message ? h("div", { class: "msg-flash" }, message) : null;
-    if (!shown.length && !w.allowAdd) {
+    if (!shown.length) {
       fill(
         root,
         w.title ? h("div", { class: "w-label" }, w.title) : null,
-        h("div", { class: "w-empty" }, "No notes yet. Post one from your phone."),
+        h(
+          "div",
+          { class: "w-empty" },
+          w.allowAdd ? "No notes yet — add one below, or from a phone." : "No notes yet. Post one from your phone.",
+        ),
+        w.allowAdd ? buildAdd() : null,
         note,
       );
       return;

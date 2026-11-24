@@ -35,6 +35,8 @@ export function ViewsPanel() {
   const [editingView, setEditingView] = useState(false);
   const [picking, setPicking] = useState(false);
   const [notice, setNotice] = useState("");
+  // Templates stay collapsed so the live wall stays the hero (H2, 2026-11-24). Empty views open them by default.
+  const [templatesOpen, setTemplatesOpen] = useState(() => false);
   const previewRef = useRef<HTMLDivElement>(null);
 
   const found = config.views.find((v) => v.id === viewId) ?? config.views[0];
@@ -158,6 +160,8 @@ export function ViewsPanel() {
   })).filter((g) => g.templates.length > 0);
 
   const usedBySchedule = PERIODS.filter((p) => config.schedule[p].viewId === active.id).map((p) => PERIOD_LABELS[p].toLowerCase());
+  const emptyView = active.widgets.length === 0;
+  const showTemplates = templatesOpen || emptyView;
 
   return (
     <div className="grid content-start gap-4">
@@ -223,6 +227,16 @@ export function ViewsPanel() {
           </svg>
           Edit view
         </button>
+        {!emptyView ? (
+          <button
+            type="button"
+            className={templatesOpen ? "btn-primary" : "btn-ghost"}
+            aria-expanded={templatesOpen}
+            onClick={() => setTemplatesOpen((o) => !o)}
+          >
+            Starter templates
+          </button>
+        ) : null}
       </div>
 
       <div ref={previewRef} className="scroll-mt-28">
@@ -292,57 +306,66 @@ export function ViewsPanel() {
         </p>
       )}
 
-      <Section title="Starter templates">
-        <p className="text-sm text-soft">
-          Add a new view from a ready-made layout.
-          {!isPaid ? (
-            <>
-              {" "}
-              Free layouts apply straight away; ones marked <HouseholdBadge className="align-middle" /> open{" "}
-              <UpgradeLink reason="template">Household</UpgradeLink> instead.
-            </>
-          ) : null}
-        </p>
-        <div className="grid gap-6">
-          {templatesByCategory.map((group) => (
-            <div key={group.category} className="grid gap-2">
-              <h3 className="text-sm font-semibold text-soft">{group.label}</h3>
-              <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-                {group.templates.map((t) => {
-                  const locked = !isPaid && t.tier === "paid";
-                  return (
-                    <button
-                      key={t.id}
-                      type="button"
-                      className={`card grid gap-2 overflow-hidden p-0 text-left ${locked ? "opacity-55 grayscale-[0.35] hover:opacity-80" : "hover:border-brand"}`}
-                      disabled={isPaid && config.views.length >= viewLimit}
-                      onClick={() => applyTemplate(t.id)}
-                    >
-                      {/* eslint-disable-next-line @next/next/no-img-element -- static PNG previews in /public/templates */}
-                      <img
-                        src={t.preview}
-                        alt=""
-                        width={t.orientation === "portrait" ? 540 : 960}
-                        height={t.orientation === "portrait" ? 960 : 540}
-                        className={`w-full bg-bg object-cover ${t.orientation === "portrait" ? "aspect-[9/16] max-h-56 justify-self-center" : "aspect-video"}`}
-                        loading="lazy"
-                      />
-                      <span className="grid gap-1 px-3 pb-3">
-                        <span className="flex flex-wrap items-center gap-2">
-                          <span className="font-semibold">{t.name}</span>
-                          {t.orientation === "portrait" ? <span className="text-xs text-soft">Portrait</span> : null}
-                          {t.tier === "paid" && <HouseholdBadge />}
+      {showTemplates ? (
+        <Section title={emptyView ? "Start from a template" : "Starter templates"}>
+          <p className="text-sm text-soft">
+            {emptyView
+              ? "This view is empty — pick a ready-made layout, or add widgets above."
+              : "Add a new view from a ready-made layout."}
+            {!isPaid ? (
+              <>
+                {" "}
+                Free layouts apply straight away; ones marked <HouseholdBadge className="align-middle" /> open{" "}
+                <UpgradeLink reason="template">Household</UpgradeLink> instead.
+              </>
+            ) : null}
+          </p>
+          <div className="grid gap-6">
+            {templatesByCategory.map((group) => (
+              <div key={group.category} className="grid gap-2">
+                <h3 className="text-sm font-semibold text-soft">{group.label}</h3>
+                <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                  {group.templates.map((t) => {
+                    const locked = !isPaid && t.tier === "paid";
+                    return (
+                      <button
+                        key={t.id}
+                        type="button"
+                        className={`card grid gap-2 overflow-hidden p-0 text-left ${locked ? "opacity-55 grayscale-[0.35] hover:opacity-80" : "hover:border-brand"}`}
+                        disabled={isPaid && config.views.length >= viewLimit}
+                        onClick={() => applyTemplate(t.id)}
+                      >
+                        {/* eslint-disable-next-line @next/next/no-img-element -- static PNG previews in /public/templates */}
+                        <img
+                          src={t.preview}
+                          alt=""
+                          width={t.orientation === "portrait" ? 540 : 960}
+                          height={t.orientation === "portrait" ? 960 : 540}
+                          className={`w-full bg-bg object-cover ${t.orientation === "portrait" ? "aspect-[9/16] max-h-56 justify-self-center" : "aspect-video"}`}
+                          loading="lazy"
+                        />
+                        <span className="grid gap-1 px-3 pb-3">
+                          <span className="flex flex-wrap items-center gap-2">
+                            <span className="font-semibold">{t.name}</span>
+                            {t.orientation === "portrait" ? <span className="text-xs text-soft">Portrait</span> : null}
+                            {t.tier === "paid" && <HouseholdBadge />}
+                          </span>
+                          <span className="text-xs text-soft">{t.description}</span>
                         </span>
-                        <span className="text-xs text-soft">{t.description}</span>
-                      </span>
-                    </button>
-                  );
-                })}
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
-            </div>
-          ))}
-        </div>
-      </Section>
+            ))}
+          </div>
+          {!emptyView ? (
+            <button type="button" className="btn-ghost justify-self-start text-sm" onClick={() => setTemplatesOpen(false)}>
+              Hide templates
+            </button>
+          ) : null}
+        </Section>
+      ) : null}
     </div>
   );
 }

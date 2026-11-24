@@ -4,12 +4,12 @@ import type { ReactNode } from "react";
 
 import { BuildStamp } from "@/components/site/BuildStamp";
 import { Mark } from "@/components/Wordmark";
-import { ADMIN_TAB_GROUPS, type AdminTab } from "@/lib/adminTabs";
+import { ADMIN_TAB_GROUPS, adminGroupFor, adminTabLabel, type AdminTab } from "@/lib/adminTabs";
 
 export function AdminBrand({ as: Tag = "h1" }: { as?: "h1" | "div" }) {
   return (
     <Tag className="flex items-center gap-2.5 text-lg font-extrabold tracking-tight text-ink">
-      <Mark size={32} />
+      <Mark size={28} />
       <span>
         Everydaypane{" "}
         <span className="ml-0.5 rounded-full border border-brand/40 bg-brand/10 px-2 py-0.5 align-middle text-xs font-bold uppercase tracking-[0.12em] text-brand">
@@ -20,18 +20,19 @@ export function AdminBrand({ as: Tag = "h1" }: { as?: "h1" | "div" }) {
   );
 }
 
-function NavItem({ tab, on, badge, onClick }: { tab: string; on: boolean; badge?: number; onClick: () => void }) {
+function NavItem({ tab, on, badge, onClick, dense }: { tab: AdminTab; on: boolean; badge?: number; onClick: () => void; dense?: boolean }) {
+  const label = adminTabLabel(tab);
   return (
-    <li className="lg:w-full">
+    <li className={dense ? "shrink-0" : "w-full"}>
       <button
         type="button"
         aria-current={on ? "page" : undefined}
         onClick={onClick}
-        className={`flex min-h-9 items-center gap-2 rounded-xl px-3 py-1.5 text-sm font-semibold transition-colors lg:min-h-0 lg:w-full lg:py-[0.4rem] lg:text-left ${
-          on ? "bg-brand/10 text-ink" : "text-soft hover:bg-bg hover:text-ink"
-        }`}
+        className={`flex items-center gap-2 rounded-lg px-3 font-semibold transition-colors ${
+          dense ? "min-h-11 text-sm" : "min-h-8 w-full py-1.5 text-left text-[0.8125rem]"
+        } ${on ? "bg-brand/10 text-ink" : "text-soft hover:bg-bg hover:text-ink"}`}
       >
-        <span className="lg:flex-1">{tab}</span>
+        <span className={dense ? "" : "flex-1"}>{label}</span>
         {badge ? (
           <span className="rounded-full bg-brand px-1.5 text-xs font-bold text-brand-ink tabular-nums" aria-label={`${badge} waiting`}>
             {badge}
@@ -40,6 +41,39 @@ function NavItem({ tab, on, badge, onClick }: { tab: string; on: boolean; badge?
       </button>
     </li>
   );
+}
+
+function StaffMeta({ staff, onSignOut, compact }: { staff?: { email: string; role: string }; onSignOut?: () => void; compact?: boolean }) {
+  return (
+    <div
+      className={
+        compact
+          ? "flex max-w-[11rem] flex-col items-end gap-0.5 text-[0.7rem] text-soft"
+          : "flex flex-col items-stretch gap-1.5 border-t border-line px-1.5 pt-3 text-[0.7rem] text-soft"
+      }
+    >
+      {staff && (
+        <span className={`min-w-0 ${compact ? "truncate" : "break-all"}`}>
+          {staff.email} <span className="rounded-full bg-bg px-1.5 py-0.5 text-[0.65rem] font-semibold capitalize">{staff.role}</span>
+        </span>
+      )}
+      <span className={`flex flex-wrap gap-x-2 ${compact ? "justify-end" : ""}`}>
+        <a className="underline hover:text-ink" href="/household/">
+          My household
+        </a>
+        {onSignOut && (
+          <button type="button" className="underline hover:text-ink" onClick={onSignOut}>
+            Sign out
+          </button>
+        )}
+      </span>
+      {!compact && <BuildStamp />}
+    </div>
+  );
+}
+
+function groupWaiting(tabs: readonly AdminTab[], badges: Partial<Record<string, number>>): number {
+  return tabs.reduce((n, t) => n + (badges[t] ?? 0), 0);
 }
 
 export function AdminShell({
@@ -59,35 +93,62 @@ export function AdminShell({
   tools?: ReactNode;
   children: ReactNode;
 }) {
+  const activeGroup = adminGroupFor(tab);
+
   return (
     <div className="min-h-dvh bg-bg">
-      <aside className="flex flex-wrap items-center gap-x-3 gap-y-3 border-b border-line px-4 pt-4 pb-3 lg:fixed lg:inset-y-0 lg:left-0 lg:z-30 lg:w-60 lg:flex-col lg:flex-nowrap lg:items-stretch lg:gap-4 lg:overflow-y-auto lg:border-r lg:border-b-0 lg:bg-panel/95 lg:px-3 lg:py-5">
-        <div className="order-1 lg:px-2">
+      {/*
+        Ops cockpit: mobile = sticky brand + 4 group rails + horizontal tabs in the active group
+        (no 16-chip wrap). Desktop = dense fixed sidebar with group labels; staff meta at the foot.
+      */}
+      <aside className="sticky top-0 z-30 border-b border-line bg-bg px-3 pt-3 pb-2 lg:fixed lg:inset-y-0 lg:left-0 lg:flex lg:w-56 lg:flex-col lg:gap-3 lg:overflow-y-auto lg:border-r lg:border-b-0 lg:bg-panel lg:px-2.5 lg:py-4">
+        <div className="flex items-start justify-between gap-3 lg:block lg:px-1.5">
           <AdminBrand />
+          <div className="lg:hidden">
+            <StaffMeta staff={staff} onSignOut={onSignOut} compact />
+          </div>
         </div>
-        <div className="order-2 ml-auto flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-soft lg:order-3 lg:ml-0 lg:mt-auto lg:flex-col lg:items-stretch lg:gap-2 lg:border-t lg:border-line lg:px-2 lg:pt-4">
-          {staff && (
-            <span className="min-w-0 break-all">
-              {staff.email} <span className="rounded-full bg-bg px-1.5 py-0.5 text-[0.7rem] font-semibold capitalize">{staff.role}</span>
-            </span>
-          )}
-          <a className="underline hover:text-ink" href="/household/">
-            My household
-          </a>
-          {onSignOut && (
-            <button type="button" className="text-left underline hover:text-ink" onClick={onSignOut}>
-              Sign out
-            </button>
-          )}
-          <BuildStamp className="hidden lg:block" />
-        </div>
-        <nav className="order-3 flex w-full flex-wrap gap-1 lg:order-2 lg:block" aria-label="Sections">
+
+        <nav className="mt-3 lg:hidden" aria-label="Sections">
+          <div className="flex rounded-lg border border-line bg-panel p-0.5" role="tablist" aria-label="Section groups">
+            {ADMIN_TAB_GROUPS.map((g) => {
+              const on = g.label === activeGroup.label;
+              const waiting = groupWaiting(g.tabs, badges);
+              return (
+                <button
+                  key={g.label}
+                  type="button"
+                  role="tab"
+                  aria-selected={on}
+                  className={`relative min-h-10 flex-1 rounded-md px-1 text-[0.7rem] font-bold tracking-wide uppercase ${
+                    on ? "bg-brand text-brand-ink" : "text-soft"
+                  }`}
+                  onClick={() => {
+                    if (!g.tabs.includes(tab)) onTab?.(g.tabs[0]!);
+                  }}
+                >
+                  {g.label}
+                  {waiting > 0 ? (
+                    <span className="absolute -top-1 -right-0.5 min-w-[1.1rem] rounded-full bg-ink px-1 text-[0.65rem] font-bold text-bg tabular-nums">
+                      {waiting}
+                    </span>
+                  ) : null}
+                </button>
+              );
+            })}
+          </div>
+          <ul className="-mx-1 mt-2 flex gap-1 overflow-x-auto px-1 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            {activeGroup.tabs.map((t) => (
+              <NavItem key={t} tab={t} on={tab === t} badge={badges[t]} dense onClick={() => onTab?.(t)} />
+            ))}
+          </ul>
+        </nav>
+
+        <nav className="mt-1 hidden min-h-0 flex-1 lg:block" aria-label="Sections">
           {ADMIN_TAB_GROUPS.map((g) => (
-            <div key={g.label} className="contents lg:mb-3 lg:block">
-              <div className="hidden px-3 pb-1.5 text-[0.65rem] font-bold tracking-[0.14em] text-soft uppercase lg:block" aria-hidden>
-                {g.label}
-              </div>
-              <ul className="contents lg:flex lg:flex-col lg:gap-0.5">
+            <div key={g.label} className="mb-2.5">
+              <div className="px-2.5 pb-1 text-[0.65rem] font-bold tracking-[0.14em] text-soft uppercase">{g.label}</div>
+              <ul className="flex flex-col gap-0.5">
                 {g.tabs.map((t) => (
                   <NavItem key={t} tab={t} on={tab === t} badge={badges[t]} onClick={() => onTab?.(t)} />
                 ))}
@@ -95,12 +156,17 @@ export function AdminShell({
             </div>
           ))}
         </nav>
+
+        <div className="mt-auto hidden lg:block">
+          <StaffMeta staff={staff} onSignOut={onSignOut} />
+        </div>
       </aside>
-      <div className="lg:pl-60">
+
+      <div className="lg:pl-56">
         <div className="mx-auto max-w-6xl px-4 pb-16">
-          <header className="z-20 -mx-4 border-b border-line bg-bg/90 px-4 pt-3 pb-3 backdrop-blur-xl md:sticky md:top-0 lg:pt-5">
+          <header className="z-20 -mx-4 border-b border-line bg-bg px-4 pt-3 pb-3 lg:sticky lg:top-0 lg:pt-4">
             <div className="flex flex-wrap items-center gap-3">
-              <h2 className="mr-auto text-xl font-extrabold tracking-tight">{tab}</h2>
+              <h2 className="mr-auto text-xl font-extrabold tracking-tight">{adminTabLabel(tab)}</h2>
               {tools}
             </div>
           </header>
