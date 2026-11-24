@@ -1,9 +1,11 @@
 import Link from "next/link";
+import { cookies } from "next/headers";
 import type { ReactNode } from "react";
 
 import { Mark, Wordmark } from "@/components/Wordmark";
 import { BRAND } from "@/lib/brand";
 import { APP_PATH, CONTACT_EMAIL, FAMILY_PATH, SIGNUP_PATH, SITE_URL } from "@/lib/site";
+import { SESSION_COOKIE, sessionFor } from "@/server/auth";
 
 import { BuildStamp } from "./BuildStamp";
 import { SiteBeacon } from "./SiteBeacon";
@@ -15,11 +17,26 @@ const NAV = [
   { href: "/blog/", label: "Blog" },
 ] as const;
 
+/** Friendly label + initials from an email (no separate profile name stored). */
+function accountNavLabel(email: string): { name: string; initials: string } {
+  const local = (email.split("@")[0] ?? email).trim();
+  const parts = local.split(/[._+\-]+/).filter(Boolean);
+  const name = parts.map((p) => p.charAt(0).toUpperCase() + p.slice(1).toLowerCase()).join(" ") || email;
+  const initials = (
+    parts.length >= 2 ? `${parts[0]?.charAt(0) ?? ""}${parts[1]?.charAt(0) ?? ""}` : name.slice(0, 2)
+  ).toUpperCase();
+  return { name, initials: initials || "?" };
+}
+
 export function JsonLd({ data }: { data: object | object[] }) {
   return <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(data).replace(/</g, "\\u003c") }} />;
 }
 
-export function SiteHeader() {
+export async function SiteHeader() {
+  const session = await sessionFor((await cookies()).get(SESSION_COOKIE)?.value);
+  const account = session ? accountNavLabel(session.email) : null;
+  const home = session?.role === "admin" ? APP_PATH : FAMILY_PATH;
+
   return (
     <header className="site-header sticky top-0 z-30 border-b border-line/70 bg-bg/90 backdrop-blur-lg">
       <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3">
@@ -37,12 +54,30 @@ export function SiteHeader() {
               </li>
             ))}
           </ul>
-          <Link href="/signin/" className="hidden min-[380px]:inline-flex rounded-lg px-3 py-2 text-soft hover:bg-panel hover:text-ink">
-            Sign in
-          </Link>
-          <Link href={SIGNUP_PATH} className="btn-primary ml-1 rounded-xl px-3.5 text-sm sm:px-4" data-cta="nav-start-free">
-            Start free
-          </Link>
+          {account && session ? (
+            <Link
+              href={home}
+              title={session.email}
+              className="ml-1 inline-flex max-w-[min(100%,14rem)] items-center gap-2 rounded-xl py-1 pr-2 pl-1 text-ink hover:bg-panel"
+            >
+              <span
+                className="grid size-8 shrink-0 place-items-center rounded-full bg-brand text-xs font-bold tracking-wide text-white"
+                aria-hidden
+              >
+                {account.initials}
+              </span>
+              <span className="min-w-0 truncate text-sm font-semibold">{account.name}</span>
+            </Link>
+          ) : (
+            <>
+              <Link href="/signin/" className="hidden min-[380px]:inline-flex rounded-lg px-3 py-2 text-soft hover:bg-panel hover:text-ink">
+                Sign in
+              </Link>
+              <Link href={SIGNUP_PATH} className="btn-primary ml-1 rounded-xl px-3.5 text-sm sm:px-4" data-cta="nav-start-free">
+                Start free
+              </Link>
+            </>
+          )}
         </nav>
       </div>
     </header>
