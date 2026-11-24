@@ -52,6 +52,12 @@ export function wallCookieHeader(token: string, now = Date.now()): string {
 }
 
 export const clearedWallCookie = () => `${WALL_COOKIE}=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0`;
+export const clearedDisplayCookie = () => `${DISPLAY_COOKIE}=; Path=/api/display/; HttpOnly; SameSite=Strict; Max-Age=0`;
+
+/** Clears wall unlock cookies (used when signing into a household so a prior display cannot leak). */
+export function clearedUnlockCookies(): string[] {
+  return [clearedWallCookie(), clearedDisplayCookie()];
+}
 
 /** Set-Cookie headers that unlock the wall for this device token (`ep_wall` + `ep_display`). */
 export function unlockDisplayCookies(token: string, now = Date.now()): string[] {
