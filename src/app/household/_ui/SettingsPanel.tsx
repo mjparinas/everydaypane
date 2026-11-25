@@ -79,6 +79,10 @@ function groupForSection(section: string | null): GroupId {
 function goSettingsSection(section: string) {
   history.replaceState(null, "", `#settings/${section}`);
   window.dispatchEvent(new HashChangeEvent("hashchange"));
+  if (section === "dashboard") {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    return;
+  }
   document.getElementById(`settings-${section}`)?.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
@@ -94,6 +98,9 @@ export function SettingsPanel() {
 
   useEffect(() => {
     if (!section) return;
+    // The Home section should open directly below the Settings navigation. Only deep
+    // section links should scroll a card into the sticky navigation area.
+    if (section === "dashboard") return;
     // Wait a tick so the group's sections mount before scrolling.
     const t = window.setTimeout(() => {
       document.getElementById(`settings-${section}`)?.scrollIntoView({ behavior: "smooth", block: "start" });
