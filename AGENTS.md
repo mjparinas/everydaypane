@@ -315,7 +315,7 @@ panel can be complex if you need it to be."
   small TypeScript module bundled by esbuild (`src/display/` → `public/display/`), with no framework. The unlock gate
   (`/display/unlock/`) is a Next.js page. Widgets update only the DOM nodes that change (the clock rewrites one text
   node a second).
-- **Budget:** the display's script stays under 42 KB gzipped (40 KB until the wildfire map, 2026-11-25) and its stylesheet under 20 KB (`scripts/bundle-check.mjs`,
+- **Budget:** the display's script stays under 40 KB gzipped and its stylesheet under 20 KB (`scripts/bundle-check.mjs`,
   a CI step; CSS raised from 10 KB on 2026-11-23 for more clock styles). A new dependency on the display needs a very good reason.
 - All heavy lifting happens on the server: API calls to Google, weather, Recycle Coach, Amazon and Home Assistant are
   made, cached and trimmed by our routes, and the display fetches small JSON. Images are proxied at display size.

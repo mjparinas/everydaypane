@@ -149,8 +149,7 @@ export const flows = [
       expect(html.includes("ok"), "health");
       const js = await fetch(`${base}/display/display.js`);
       const bytes = (await js.arrayBuffer()).byteLength;
-      // 120 → 126 KB with the gzipped budget's 40 → 42 KB (wildfire map, 2026-11-25; scripts/bundle-check.mjs).
-      expect(bytes < 126_000, `display.js is ${bytes} bytes before gzip`);
+      expect(bytes < 120_000, `display.js is ${bytes} bytes before gzip`);
     },
   },
   {
