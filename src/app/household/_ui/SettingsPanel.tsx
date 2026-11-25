@@ -23,6 +23,7 @@ import { SmartHomePanel } from "./SmartHomePanel";
 import { SportsPanel } from "./SportsPanel";
 import { useAdmin } from "./store";
 import { AllTasksPanels } from "./TasksPanel";
+import { UnifiPanel } from "./UnifiPanel";
 import { TIME_ZONES } from "./WidgetSettings";
 
 // Settings is grouped with a sticky jump nav and #settings/<section> deep links so widgets can send people here
@@ -52,7 +53,7 @@ const GROUPS = [
     tier: "Advanced",
     sections: ["content", "ynab", "fitbit", "gmail-unread", "slack", "trello"],
   },
-  { id: "ha", label: "Home & devices", tier: "Advanced", sections: ["ha", "smart-home", "weather-stations", "menus"] },
+  { id: "ha", label: "Home & devices", tier: "Advanced", sections: ["ha", "smart-home", "unifi", "weather-stations", "menus"] },
 ] as const;
 
 type GroupId = (typeof GROUPS)[number]["id"];
@@ -323,6 +324,7 @@ export function SettingsPanel() {
               <HomeAssistantPanel />
             </div>
             <SmartHomePanel />
+            <UnifiPanel />
           </div>
         </HouseholdSoftLock>
       )}

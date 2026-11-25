@@ -14,6 +14,7 @@ import { Range, Segmented, Select, Stepper, Text, TextArea, Toggle } from "./fie
 import { HaEntityList, useHa } from "./haEntities";
 import { useMusic } from "./music";
 import { newId } from "./store";
+import { UnifiSitePicker } from "./UnifiPanel";
 
 // Every widget's own settings (Melvin, 2026-11-17: "settings for every feature"). One form per widget type; each
 // change is applied at once to the working copy and saved with the Save button. Bounded numbers use Range/Stepper
@@ -979,6 +980,35 @@ function TypeSettings({
           <Toggle label="Rain today" checked={w.showRain} onChange={(v) => e((x) => void (x.showRain = v))} />
           <p className="text-sm text-soft">
             Set station id and token under <SettingsLink href="#settings/weather-stations">Settings › Weather stations</SettingsLink>.
+          </p>
+        </>
+      );
+    }
+    case "unifi": {
+      const e = edit<"unifi">();
+      return (
+        <>
+          <UnifiSitePicker value={w.siteId} onChange={(v) => e((x) => void (x.siteId = v))} />
+          <Stepper
+            label="Slow from"
+            value={w.slowMs}
+            min={20}
+            max={1000}
+            step={10}
+            format={(v) => `${v} ms`}
+            hint="Latency at or above this shows the internet as slow."
+            onChange={(v) => e((x) => void (x.slowMs = v))}
+          />
+          <Toggle label="Latency chart (24 h)" checked={w.showChart} onChange={(v) => e((x) => void (x.showChart = v))} />
+          <Toggle label="Devices and clients" checked={w.showCounts} onChange={(v) => e((x) => void (x.showCounts = v))} />
+          <Toggle
+            label="Current usage"
+            checked={w.showUsage}
+            hint="What the home downloaded and uploaded in the last five minutes; not a speed test."
+            onChange={(v) => e((x) => void (x.showUsage = v))}
+          />
+          <p className="text-sm text-soft">
+            Save the Site Manager API key under <SettingsLink href="#settings/unifi">Settings › UniFi network</SettingsLink>.
           </p>
         </>
       );

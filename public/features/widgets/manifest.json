@@ -80,6 +80,11 @@
     "file": "tempest.png"
   },
   {
+    "type": "unifi",
+    "name": "UniFi network",
+    "file": "unifi.png"
+  },
+  {
     "type": "weatherUnderground",
     "name": "Weather Underground",
     "file": "weatherUnderground.png"
