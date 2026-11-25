@@ -77,6 +77,8 @@ export function mountWidget(el: HTMLElement, w: Widget, ctx: WidgetContext): Cle
       return lazyWidget("unifi", el, w, ctx);
     case "weatherUnderground":
       return weatherUnderground(el, w, ctx);
+    case "ecoflow":
+      return lazyWidget("ecoflow", el, w, ctx);
     case "airQuality":
       return airQuality(el, w, ctx);
     case "wifiQr":

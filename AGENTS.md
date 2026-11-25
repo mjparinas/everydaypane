@@ -25,6 +25,7 @@ same change, and moves it out of **In progress** when it merges.
 | Sunrise & sunset (`sunTimes`) | Today's sunrise, sunset and length of daylight; optional emoji and daylight hours | Open-Meteo forecast |
 | Weather (`weather`) | Current conditions, hourly, up to 7 days, with icons, UV index and pollen | Open-Meteo (default) or Environment Canada city page (`config.weather.provider`); UV/pollen/AQ still Open-Meteo |
 | Tempest (`tempest`) | Backyard station: temp, humidity, wind, rain today | WeatherFlow REST (`config.integrations.smartHome.tempest`, token secret) |
+| EcoFlow (`ecoflow`) | Each power station's battery %, power in and out, solar, AC and DC flows, time to full or empty; pick devices or show all | EcoFlow IoT Developer Platform (household access and secret keys, `docs/ecoflow.md`) |
 | Weather Underground (`weatherUnderground`) | PWS current conditions | IBM WU PWS API (`WU_API_KEY` or per-account secret) |
 | School menu (`menus`) | Nutrislice breakfast and lunch for a day or week; not the meal plan | Nutrislice published JSON (`config.integrations.smartHome.menus`) |
 | Air quality (`airQuality`) | AQHI or US AQI | Open-Meteo air quality |
@@ -141,7 +142,7 @@ Revenue, Traffic, Codes, Flags, …). Cookieless marketing beacon. Customer path
 
 **Integrations connected from Settings:** Google Calendar, Microsoft 365 calendars and **To Do** (OAuth, `?todo=1` / `?files=1`), Google Tasks, **Todoist**, Google Photos (Picker), iCal calendar links (with iCloud publish steps in Settings and `docs/icloud-calendar.md`),
 **Govee** (API key, Settings › Smart home), Amazon Photos, **photo sources** (Bing, Reddit, weather albums, Immich API keys, Dropbox/Box/SmugMug OAuth, OneDrive via Microsoft, Flickr API key, iCloud published URLs), the photo library (Vercel Blob), Home Assistant (Cloudflare Tunnel + Access), Spotify, Sonos, garbage
-zone lookup, sports teams to follow, TransLink, commute places (TomTom geocoding), optional **package tracking** key, **UniFi Site Manager** API key (Settings › UniFi network).
+zone lookup, sports teams to follow, TransLink, commute places (TomTom geocoding), optional **package tracking** key, **UniFi Site Manager** API key (Settings › UniFi network), **EcoFlow** access and secret keys.
 
 ## In progress
 
@@ -313,6 +314,9 @@ npm run templates:previews  # regenerate public/templates/*.png from real widget
 - **Screen saver** (Melvin, 2026-11-21): after some minutes with no touch the display shows only photos (full screen,
   optional clock) or goes dark, and during a night window it goes dark; Home Assistant motion sensors keep it awake and
   wake it (see Architecture). Off until switched on in Settings › Screen saver.
+- **EcoFlow power stations** (Melvin, 2026-11-21: "do all 6" of the native integrations; he has five EcoFlow devices):
+  battery, solar and power in and out on the wall from EcoFlow's official developer API, not Home Assistant (see
+  Architecture). Each household brings its own keys, because EcoFlow keys belong to one EcoFlow account.
 - **Internet ping and speed** (Melvin, 2026-11-21: "can we add an internet ping one", "or internet speed"): an
   `internet` widget measured by the wall's own browser, so it shows the home connection (see Architecture). No relay or
   extra software at home.
@@ -335,11 +339,11 @@ panel can be complex if you need it to be."
   `bundle-check.mjs` and the `Lazy` type) and mounted through `lazyWidget` (`src/display/widgets/lazy.ts`), which
   imports it with display.js's own `?v=` only on a screen that shows it. Its `../api` is swapped at build time for
   `src/display/apiShared.ts`, which calls display.js's copy, so feeds, the device token and offline state stay single.
-  The internet widget, the UniFi network widget, the whiteboard, wildfires, the Windy map and the Smart device tile
+  The internet widget, the UniFi network widget, EcoFlow, the whiteboard, wildfires, the Windy map and the Smart device tile
   (`haEntity.ts`; cameras and `HA_EVERY` stay in `ha.ts`) load this way, and `next.config.ts` gives each file the same
   immutable cache header as display.js.
-- **Budget:** the display's script stays under 40 KB gzipped and its stylesheet under 20 KB (`scripts/bundle-check.mjs`,
-  a CI step; CSS raised from 10 KB on 2026-11-23 for more clock styles). A new dependency on the display needs a very good reason.
+- **Budget:** the display's script stays under 80 KB gzipped and its stylesheet under 20 KB (`scripts/bundle-check.mjs`,
+  a CI step; CSS raised from 10 KB on 2026-11-23 for more clock styles; script raised from 40 KB by Melvin on 2026-11-25: "double the size of the limit"). A new dependency on the display needs a very good reason.
 - All heavy lifting happens on the server: API calls to Google, weather, Recycle Coach, Amazon and Home Assistant are
   made, cached and trimmed by our routes, and the display fetches small JSON. Images are proxied at display size.
 - **No zooming** (Melvin, 2026-11-17: "dont allow pinch zoom on the dashboard"; kept after the 2026-11-22 a11y audit):
@@ -719,6 +723,19 @@ panel can be complex if you need it to be."
 - **Tempest, Weather Underground and Nutrislice** (Phase 4, Household): Tempest and WU station settings in
   `config.integrations.smartHome`; Tempest token and optional WU key in secrets. **Menus** widget reads Nutrislice JSON
   only (`src/server/menus.ts`), never the `meals` table.
+
+- **EcoFlow** (`src/server/ecoflow.ts`): EcoFlow's IoT Developer Platform with the household's own access key and
+  secret key (encrypted `ecoflow.accessKey` / `ecoflow.secretKey`, saved from Settings › EcoFlow through
+  `/api/household/ecoflow/`; never in Vercel env, since a key sees one EcoFlow account's devices). Requests are signed:
+  HMAC-SHA256 (hex) with the secret key over the parameters sorted by name, then `accessKey`, `nonce` and `timestamp`,
+  sent as headers with `sign`. Keys work only on their region's host, so `api-a`, `api-e` and `api.ecoflow.com` are
+  tried in turn and the one that answers is cached with the device list (ten minutes). Each device's
+  `/iot-open/sign/device/quota/all` is cached a minute, only for serials on an EcoFlow widget (none picked means all,
+  eight at most); one failing device shows offline without hiding the others. Quota names differ by product line
+  (`pd.*`/`inv.*`/`mppt.*` with solar in tenths of a watt, `pow*`/`cms*` on the 3-series, `20_1.*` PowerStream,
+  `2_1.watts` Smart Plug), so each reading is the first name a device reports; EcoFlow's 5999-minute "unknown" is
+  dropped. Displays poll `/api/display/ecoflow/` every minute and never see keys; the widget loads on its own (`ecoflow.js`). This sandbox can't reach EcoFlow, so
+  tests use shapes from its documentation and open-source clients. Setup: `docs/ecoflow.md`.
 
 ## Security
 

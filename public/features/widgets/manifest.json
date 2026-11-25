@@ -80,6 +80,11 @@
     "file": "tempest.png"
   },
   {
+    "type": "ecoflow",
+    "name": "EcoFlow",
+    "file": "ecoflow.png"
+  },
+  {
     "type": "unifi",
     "name": "UniFi network",
     "file": "unifi.png"

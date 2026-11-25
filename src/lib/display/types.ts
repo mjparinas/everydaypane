@@ -529,6 +529,32 @@ export interface TempestData {
   stale?: boolean;
 }
 
+/** One EcoFlow power station (src/server/ecoflow.ts). Watts are whole watts; minutes to full or to empty. */
+export interface EcoFlowDevice {
+  sn: string;
+  name: string;
+  online: boolean;
+  soc?: number;
+  inW?: number;
+  outW?: number;
+  solarW?: number;
+  acInW?: number;
+  acOutW?: number;
+  dcOutW?: number;
+  charging: boolean;
+  minutes?: number;
+  stale?: boolean;
+}
+
+export interface EcoFlowData {
+  updatedAt: number;
+  /** False until the household saves its EcoFlow keys. */
+  configured: boolean;
+  devices: EcoFlowDevice[];
+  error?: string;
+  stale?: boolean;
+}
+
 /** Weather Underground PWS current observation (src/server/weatherUnderground.ts). */
 export interface WeatherUndergroundData {
   updatedAt: number;

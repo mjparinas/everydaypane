@@ -8,6 +8,7 @@ import type { Cleanup, Mount, WidgetContext } from "./types";
 // through src/display/apiShared.ts.
 
 type Lazy = {
+  ecoflow: Mount<"ecoflow">;
   internet: Mount<"internet">;
   unifi: Mount<"unifi">;
   whiteboard: Mount<"whiteboard">;

@@ -9,6 +9,7 @@ import { CalendarLinksPanel } from "./CalendarLinksPanel";
 import { ChoresPanel } from "./ChoresPanel";
 import { CommutePanel, PlaceFinder } from "./CommutePanel";
 import { ContentPanel } from "./ContentPanel";
+import { EcoFlowPanel } from "./EcoFlowPanel";
 import { NumberInput, Range, Section, Select, Stepper, Text, Toggle } from "./fields";
 import { GarbagePanel } from "./GarbagePanel";
 import { GooglePanel } from "./GooglePanel";
@@ -53,7 +54,7 @@ const GROUPS = [
     tier: "Advanced",
     sections: ["content", "ynab", "fitbit", "gmail-unread", "slack", "trello"],
   },
-  { id: "ha", label: "Home & devices", tier: "Advanced", sections: ["ha", "smart-home", "unifi", "weather-stations", "menus"] },
+  { id: "ha", label: "Home & devices", tier: "Advanced", sections: ["ha", "smart-home", "unifi", "ecoflow", "weather-stations", "menus"] },
 ] as const;
 
 type GroupId = (typeof GROUPS)[number]["id"];
@@ -331,6 +332,7 @@ export function SettingsPanel() {
               <HomeAssistantPanel />
             </div>
             <SmartHomePanel />
+            <EcoFlowPanel />
             <UnifiPanel />
           </div>
         </HouseholdSoftLock>

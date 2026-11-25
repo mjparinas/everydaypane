@@ -11,6 +11,7 @@ import { MEAL_LABELS, MEAL_SLOTS } from "@/lib/meals";
 import { WINDY_OVERLAY_LABELS, WINDY_OVERLAYS, windyPressureAllowed } from "@/lib/windy";
 
 import { PlaceFinder } from "./CommutePanel";
+import { useEcoFlow } from "./EcoFlowPanel";
 import { Range, Segmented, Select, Stepper, Text, TextArea, Toggle } from "./fields";
 import { HaEntityList, useHa } from "./haEntities";
 import { useMusic } from "./music";
@@ -1093,6 +1094,8 @@ function TypeSettings({
         </>
       );
     }
+    case "ecoflow":
+      return <EcoFlowSettings w={w} e={edit<"ecoflow">()} />;
     case "unifi": {
       const e = edit<"unifi">();
       return (
@@ -2130,5 +2133,52 @@ function RoutesField({ routes, onChange }: { routes: string[]; onChange: (routes
         );
       }}
     />
+  );
+}
+
+function EcoFlowSettings({
+  w,
+  e,
+}: {
+  w: Extract<Widget, { type: "ecoflow" }>;
+  e: (fn: (x: Extract<Widget, { type: "ecoflow" }>) => void) => void;
+}) {
+  const status = useEcoFlow();
+  const devices = status?.devices ?? [];
+  // A serial saved earlier that the account no longer lists still shows, so it can be switched off.
+  const extra = w.devices.filter((sn) => !devices.some((d) => d.sn === sn));
+  return (
+    <>
+      <Toggle label="Solar input" checked={w.showSolar} onChange={(v) => e((x) => void (x.showSolar = v))} />
+      <Toggle label="AC and DC in and out" checked={w.showFlows} onChange={(v) => e((x) => void (x.showFlows = v))} />
+      <Toggle label="Time to full or empty" checked={w.showTime} onChange={(v) => e((x) => void (x.showTime = v))} />
+      {!status ? (
+        <p className="text-sm text-soft">Checking EcoFlow…</p>
+      ) : !status.connected ? (
+        <p className="text-sm text-soft">
+          Add your EcoFlow keys under <SettingsLink href="#settings/ecoflow">Settings › EcoFlow</SettingsLink>.
+        </p>
+      ) : (
+        <>
+          <p className="text-xs text-soft">Pick the devices to show (up to eight). None picked shows them all.</p>
+          {[...devices.map((d) => ({ sn: d.sn, name: d.name })), ...extra.map((sn) => ({ sn, name: `${sn} (not on the account)` }))].map(
+            (d) => (
+              <Toggle
+                key={d.sn}
+                label={d.name}
+                checked={w.devices.includes(d.sn)}
+                onChange={(on) =>
+                  e((x) => {
+                    const next = on ? [...x.devices, d.sn] : x.devices.filter((sn) => sn !== d.sn);
+                    if (next.length <= 8) x.devices = next;
+                  })
+                }
+              />
+            ),
+          )}
+          {status.error && <p className="text-sm text-bad">{status.error}</p>}
+        </>
+      )}
+    </>
   );
 }

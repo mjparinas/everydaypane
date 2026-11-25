@@ -221,6 +221,16 @@ export const widgetSchema = z.discriminatedUnion("type", [
     showRain: z.boolean().default(true),
     showHumidity: z.boolean().default(true),
   }),
+  // EcoFlow power stations (Melvin, 2026-11-21: native EcoFlow developer API, not Home Assistant). Keys under
+  // Settings › EcoFlow; `devices` are serial numbers, none picked means every device on the account.
+  z.object({
+    ...base,
+    type: z.literal("ecoflow"),
+    devices: z.array(z.string().trim().min(1).max(40)).max(8).default([]),
+    showSolar: z.boolean().default(true),
+    showFlows: z.boolean().default(true),
+    showTime: z.boolean().default(true),
+  }),
   // UniFi network health from UniFi Site Manager (Melvin, 2026-11-21, Household). API key under Settings › UniFi
   // network; `siteId` empty means the first site the key can see. `slowMs` is when the latency counts as slow.
   z.object({

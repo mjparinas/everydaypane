@@ -64,6 +64,7 @@ const FEATURE_BLURBS: Partial<Record<WidgetType, string>> = {
   packages: "UPS, FedEx, Canada Post and USPS tracking on the wall.",
   tides: "Next highs and lows at a NOAA or Canadian station.",
   tempest: "Backyard WeatherFlow station: temp, wind, rain.",
+  ecoflow: "EcoFlow battery level, solar and power in and out, time to full or empty.",
   weatherUnderground: "Personal weather station current conditions.",
   unifi: "Internet uptime, latency and outages from your UniFi gateway.",
   stocks: "Watchlist quotes with daily change.",

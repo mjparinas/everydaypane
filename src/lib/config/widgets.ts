@@ -155,6 +155,14 @@ export const WIDGETS: { [T in WidgetType]: WidgetInfo<T> } = {
     minSize: { w: 2, h: 1 },
     defaults: () => ({ showWind: true, showRain: true, showHumidity: true }),
   },
+  ecoflow: {
+    label: "EcoFlow",
+    description: "Battery, solar and power in and out",
+    icon: "🔋",
+    size: { w: 4, h: 3 },
+    minSize: { w: 2, h: 2 },
+    defaults: () => ({ devices: [], showSolar: true, showFlows: true, showTime: true }),
+  },
   unifi: {
     label: "UniFi network",
     description: "Internet health from your UniFi gateway",
@@ -633,7 +641,7 @@ export const WIDGET_GROUPS: { id: string; label: string; types: WidgetType[] }[]
   {
     id: "home",
     label: "Home",
-    types: ["haEntity", "camera", "media", "unifi", "wifiQr", "editQr", "garbage", "commute", "transit", "ferries", "internet"],
+    types: ["haEntity", "camera", "media", "unifi", "wifiQr", "editQr", "garbage", "commute", "transit", "ferries", "internet", "ecoflow"],
   },
   { id: "media", label: "Outside", types: ["photos", "sports", "alerts", "note"] },
   {
