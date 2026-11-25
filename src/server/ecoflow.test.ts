@@ -135,7 +135,19 @@ describe("EcoFlow feed", () => {
     const stored = await loadConfig(LEGACY_ACCOUNT_ID);
     const c = structuredClone(stored.config);
     c.views[0]!.widgets = [
-      { id: "power", type: "ecoflow", x: 0, y: 0, w: 4, h: 3, devices, showSolar: true, showFlows: true, showTime: true },
+      {
+        id: "power",
+        type: "ecoflow",
+        x: 0,
+        y: 0,
+        w: 4,
+        h: 3,
+        showBackground: true,
+        devices,
+        showSolar: true,
+        showFlows: true,
+        showTime: true,
+      },
     ];
     await saveConfig(LEGACY_ACCOUNT_ID, c, stored.version);
     return (await loadConfig(LEGACY_ACCOUNT_ID)).config;
