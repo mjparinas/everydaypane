@@ -130,6 +130,9 @@ sw.addEventListener("fetch", (e) => {
   // Radar pictures are one address per six minutes and the browser's cache keeps them a day; offline, the loop
   // simply stops at what it has.
   if (url.pathname.startsWith("/api/display/radar/frame/")) return;
+  // Household long-poll holds up to ~22s; the 10s network-first timeout below would abort it, serve a stale or
+  // offline answer, and make "Refresh displays" / instant save look like a no-op (Melvin, 2026-11-24).
+  if (url.pathname.startsWith("/api/display/config-watch/")) return;
   if (req.mode === "navigate" && (url.pathname === "/display/" || url.pathname === "/display")) {
     e.respondWith(networkFirst(req, new Request(url.pathname), 6000));
   } else if (url.pathname.startsWith("/api/display/")) {
