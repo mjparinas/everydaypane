@@ -81,11 +81,14 @@ export async function get<T>(
   path: string,
   params: Record<string, string> = {},
   etag?: string,
+  opts: { background?: boolean } = {},
 ): Promise<{ data: T | null; etag: string | null; notModified: boolean; live: boolean; releaseVersion: string | null }> {
   const headers: Record<string, string> = {};
   if (TOKEN) headers["x-display-token"] = TOKEN;
   if (etag) headers["if-none-match"] = etag;
-  const endActivity = beginActivity();
+  // A background request (the config-watch long-poll, held open until the settings change) never shows "Updating":
+  // it is open nearly all the time on a Household wall, so the notice would never go away (Melvin, 2026-11-25).
+  const endActivity = opts.background ? () => undefined : beginActivity();
   try {
     const r = await fetch(apiUrl(path, params), { headers, credentials: "same-origin" });
     // The service worker marks answers it served from its offline copy.
