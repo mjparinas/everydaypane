@@ -38,6 +38,7 @@ same change, and moves it out of **In progress** when it merges.
 | Garbage day (`garbage`) | Next pickups, 1 to 8 weeks | Township of Langley (Recycle Coach) |
 | Photos (`photos`) | Slideshow, cover or contain, captions | Amazon shared albums, Amazon people, URL lists, photo library (uploads and Google Photos picks), Bing picture of the day, Reddit, weather-linked albums, Immich, Dropbox, OneDrive, Box, Flickr, SmugMug, iCloud published links (`docs/icloud-photos.md`) |
 | Smart device (`haEntity`) | Toggle, light, sensor, climate, cover, lock (lock only), button; `provider` Home Assistant (default), **Nest**, **ecobee** or **SmartThings** | Shared `/api/display/ha/` feed; OAuth + REST for native providers (`docs/nest.md`, `docs/ecobee.md`, `docs/smartthings.md`) |
+| UniFi network (`unifi`) | Online / slow / down, latest latency and packet loss, minutes down and last outage in 24 h, 24 h latency chart, clients and devices, optional current usage, ISP | UniFi Site Manager API (`api.ui.com`, `unifi.apiKey` secret, `docs/unifi.md`) |
 | Camera (`camera`) | UniFi Protect snapshot on a timer | Home Assistant |
 | Music (`media`) | Now playing, play/pause, skip, volume, sources | Home Assistant, Spotify or Sonos |
 | Note (`note`) | Fixed text from the admin | Settings document |
@@ -138,7 +139,7 @@ Revenue, Traffic, Codes, Flags, …). Cookieless marketing beacon. Customer path
 
 **Integrations connected from Settings:** Google Calendar, Microsoft 365 calendars and **To Do** (OAuth, `?todo=1` / `?files=1`), Google Tasks, **Todoist**, Google Photos (Picker), iCal calendar links (with iCloud publish steps in Settings and `docs/icloud-calendar.md`),
 Amazon Photos, **photo sources** (Bing, Reddit, weather albums, Immich API keys, Dropbox/Box/SmugMug OAuth, OneDrive via Microsoft, Flickr API key, iCloud published URLs), the photo library (Vercel Blob), Home Assistant (Cloudflare Tunnel + Access), Spotify, Sonos, garbage
-zone lookup, sports teams to follow, TransLink, commute places (TomTom geocoding), optional **package tracking** key.
+zone lookup, sports teams to follow, TransLink, commute places (TomTom geocoding), optional **package tracking** key, **UniFi Site Manager** API key (Settings › UniFi network).
 
 ## In progress
 
@@ -307,6 +308,9 @@ npm run templates:previews  # regenerate public/templates/*.png from real widget
 - **Internet ping and speed** (Melvin, 2026-11-21: "can we add an internet ping one", "or internet speed"): an
   `internet` widget measured by the wall's own browser, so it shows the home connection (see Architecture). No relay or
   extra software at home.
+- **UniFi network health** (Melvin, 2026-11-21: "do all 6", from a list of official cloud APIs; native only, not
+  through Home Assistant, nothing running at home): a `unifi` widget with the gateway's own view of the internet from
+  UniFi Site Manager. It sits beside the browser-side internet ping widget rather than replacing it (see Architecture).
 - **Canadian English** in everything a person reads (colour, centre, favourite), as in Liftsmith.
 
 ## Display: super lightweight (rule, Melvin, 2026-11-17)
@@ -323,7 +327,8 @@ panel can be complex if you need it to be."
   `bundle-check.mjs` and the `Lazy` type) and mounted through `lazyWidget` (`src/display/widgets/lazy.ts`), which
   imports it with display.js's own `?v=` only on a screen that shows it. Its `../api` is swapped at build time for
   `src/display/apiShared.ts`, which calls display.js's copy, so feeds, the device token and offline state stay single.
-  The internet widget and the whiteboard load this way (display.js 39.5 KB after the move).
+  The internet widget, the UniFi network widget and the whiteboard load this way (display.js 39.5 KB after the move),
+  and `next.config.ts` gives each file the same immutable cache header as display.js.
 - **Budget:** the display's script stays under 40 KB gzipped and its stylesheet under 20 KB (`scripts/bundle-check.mjs`,
   a CI step; CSS raised from 10 KB on 2026-11-23 for more clock styles). A new dependency on the display needs a very good reason.
 - All heavy lifting happens on the server: API calls to Google, weather, Recycle Coach, Amazon and Home Assistant are
@@ -651,6 +656,19 @@ panel can be complex if you need it to be."
   keyed `nest.*`, `ecobee.*`, `smartthings.*` (`src/server/smartDevices.ts`). Only entities on a widget can be controlled;
   locks are **lock only** on SmartThings. Nest needs Google Device Access (`NEST_PROJECT_ID`, paid subscription).
   Setup: `docs/nest.md`, `docs/ecobee.md`, `docs/smartthings.md`.
+- **UniFi network** (Household): Ubiquiti's official, read-only **Site Manager API** (`https://api.ui.com/v1/…`,
+  header `X-API-Key`) through `src/server/unifi.ts`. The key is made at unifi.ui.com › API and saved from Settings ›
+  UniFi network (`/api/household/unifi/`), which checks it by listing sites before storing it as the encrypted
+  `unifi.apiKey` secret; it never comes back to a browser and never goes in a URL. Two reads per household, shared by
+  every widget and display: `/v1/sites` (+ `/v1/hosts` for console names, since sites are usually "Default") every
+  minute for counts, ISP and gateway offline, and `/v1/isp-metrics/5m?duration=24h` every five minutes for latency,
+  packet loss, uptime, downtime and throughput. Displays poll `/api/display/unifi/` every minute and get names and
+  numbers only (no IP or MAC addresses): per site, status `ok` or `down` (gateway offline to the cloud, or the latest
+  fresh reading under 50 % uptime), the latest reading if under 20 minutes old, 24 h downtime minutes and last outage,
+  and 48 half-hour latency averages for an SVG sparkline. "Slow" is decided on the wall from the widget's `slowMs`
+  (default 100) or 2 % packet loss. Metrics failing never hides the counts; parsing is lenient because Ubiquiti's
+  examples have shifted between the early-access and v1 versions. This sandbox can't reach api.ui.com, so tests use the
+  documented shapes. Setup: `docs/unifi.md`.
 - **Tempest, Weather Underground and Nutrislice** (Phase 4, Household): Tempest and WU station settings in
   `config.integrations.smartHome`; Tempest token and optional WU key in secrets. **Menus** widget reads Nutrislice JSON
   only (`src/server/menus.ts`), never the `meals` table.
