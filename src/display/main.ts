@@ -349,6 +349,10 @@ function applyDraft(next: DisplayPayload) {
 
 async function loadState(): Promise<boolean> {
   const r = await get<DisplayPayload>("state", {}, etag);
+  if (r.unauthorized && !PREVIEW) {
+    location.replace("/display/unlock/");
+    return false;
+  }
   if (r.live && r.releaseVersion && r.releaseVersion !== document.body.dataset.v && reloadForRelease(r.releaseVersion)) return true;
   if (r.notModified) return true;
   // An embedded Views preview keeps showing the admin's draft until they clear it or leave.

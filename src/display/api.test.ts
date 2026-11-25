@@ -40,6 +40,26 @@ describe("display polling", () => {
     expect(connectionStatus).toBe("online");
   });
 
+  it("keeps 400 responses and malformed JSON from crashing or marking the server unavailable", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response("Bad request", { status: 400 })));
+    await expect(get("bad-request")).resolves.toMatchObject({ data: null, live: false, unauthorized: false });
+    expect(connectionStatus).toBe("online");
+
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(new Response("<html>deploying</html>", { status: 200, headers: { "content-type": "text/html" } })),
+    );
+    await expect(get("malformed-json")).resolves.toMatchObject({ data: null, live: false, unauthorized: false });
+  });
+
+  it("reports expired auth separately and accepts no-content responses", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(null, { status: 401 })));
+    await expect(get("expired")).resolves.toMatchObject({ unauthorized: true, live: false });
+
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(null, { status: 204 })));
+    await expect(get("no-content")).resolves.toMatchObject({ data: null, live: true, unauthorized: false });
+  });
+
   it("backs off repeated failures without exceeding the configured cap", () => {
     expect([1, 2, 3, 10].map((failures) => retryDelay(30_000, failures))).toEqual([30_000, 60_000, 120_000, 900_000]);
   });
