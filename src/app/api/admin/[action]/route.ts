@@ -103,7 +103,6 @@ export async function GET(req: Request, ctx: Ctx) {
     case "inbox":
       return json(await inboxSummary());
     case "export": {
-      if (gate.staff.role !== "admin") return notFound();
       const type = url.searchParams.get("type") || "households";
       const households = await listHouseholdsForStaff();
       const lines =

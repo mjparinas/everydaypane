@@ -73,9 +73,9 @@ const MIGRATIONS = [
     approved_at INTEGER,
     claimed_at INTEGER
   )`,
-  // One Free signup household per email (Melvin, 2026-11-23): stops parallel /api/auth/signup/ creating two accounts.
+  // One Free signup household per email (Melvin, 2026-11-23). The webhook still writes here; the old signup route is gone.
   `CREATE TABLE IF NOT EXISTS signup_emails (email TEXT PRIMARY KEY, account_id TEXT NOT NULL, created_at INTEGER NOT NULL)`,
-  // Platform admin (Melvin, 2026-11-23): dedicated staff sessions, 2FA, audit — Tuned/Liftsmith pattern.
+  // Leftover staff magic-link and TOTP tables (Melvin, 2026-11-25: login is Clerk). Kept; migrations only add.
   `CREATE TABLE IF NOT EXISTS admin_links (token_hash TEXT PRIMARY KEY, email TEXT NOT NULL, expires_at INTEGER NOT NULL, used_at INTEGER)`,
   `CREATE TABLE IF NOT EXISTS admin_sessions (token_hash TEXT PRIMARY KEY, email TEXT NOT NULL, created_at INTEGER NOT NULL, expires_at INTEGER NOT NULL)`,
   `CREATE TABLE IF NOT EXISTS admin_two_factor (email TEXT PRIMARY KEY, secret TEXT, pending TEXT, enabled_at INTEGER, last_step INTEGER)`,

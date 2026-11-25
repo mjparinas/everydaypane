@@ -523,7 +523,7 @@ const COMPARES: Post[] = [
         p: "MagicMirror² is free, open source and endlessly hackable. It also means SD cards, `config.js`, community modules and a mirror that does not love fingerprints.",
       },
       {
-        p: "Everydaypane trades that freedom for a **drag-and-drop grid**, encrypted secrets, magic-link family accounts and widgets that are tested together. You will not SSH into the kitchen at dinner.",
+        p: "Everydaypane trades that freedom for a **drag-and-drop grid**, encrypted secrets, Clerk sign-in and widgets that are tested together. You will not SSH into the kitchen at dinner.",
       },
       { p: "Full side-by-side: [compare MagicMirror](/compare/magicmirror/)." },
     ],
@@ -658,7 +658,7 @@ const MORE_GUIDES: Post[] = [
         ],
       },
       {
-        p: "[Start free](/signin/?intent=signup) with an email — we send a magic link and create your household. Then open **Displays**, add a screen and copy the `/d/…` address onto the wall.",
+        p: "[Start free](/signin/?intent=signup) with an email and we create your household. Then open **Displays**, add a screen and copy the wall address onto the panel.",
       },
       { h2: "When to upgrade to Household" },
       {
@@ -862,7 +862,7 @@ const STORIES: Post[] = [
     "No ads, no analytics cookies, scrubbed error reports and encrypted secrets.",
     [
       {
-        p: "Anyone can create a Free household with a magic-link email. Secrets (Google, Amazon, Home Assistant, iCal URLs) are AES-GCM encrypted. Sentry is optional and scrubbed of emails and display tokens. We do not run third-party product analytics — the marketing site uses a cookieless first-party counter; organic traffic also stays in Search Console; paid conversions in Stripe.",
+        p: "Anyone can create a Free household by signing up with Clerk. Secrets (Google, Amazon, Home Assistant, iCal URLs) are AES-GCM encrypted. Sentry is optional and scrubbed of emails and display tokens. We do not run third-party product analytics — the marketing site uses a cookieless first-party counter; organic traffic also stays in Search Console; paid conversions in Stripe.",
       },
       { p: "Read the full [privacy policy](/privacy/)." },
     ],

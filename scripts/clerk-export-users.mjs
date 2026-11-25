@@ -28,7 +28,6 @@ function list(v) {
 const rows = await db.execute("SELECT DISTINCT email FROM account_members ORDER BY email");
 const emails = new Set(rows.rows.map((r) => String(r.email).toLowerCase()));
 for (const e of list(process.env.ADMIN_EMAILS)) emails.add(e);
-for (const e of list(process.env.SUPPORT_EMAILS)) emails.add(e);
 for (const e of list(process.env.FAMILY_EMAILS)) emails.add(e);
 
 const users = [...emails].sort().map((email) => ({

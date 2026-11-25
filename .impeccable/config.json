@@ -43,6 +43,20 @@
         "files": ["src/app/household/_ui/LiveLayoutEditor.tsx"],
         "createdAt": "2026-11-24T23:07:29.753Z",
         "reason": "Resize handle corner marks, not rounded cards (Assessment B FP 2026-11-24)"
+      },
+      {
+        "rule": "overused-font",
+        "value": "arial",
+        "files": ["src/lib/email.ts"],
+        "createdAt": "2026-11-25T07:08:20.151Z",
+        "reason": "Transactional email already uses Arial because mail clients do not load the site fonts."
+      },
+      {
+        "rule": "design-system-font",
+        "value": "arial",
+        "files": ["src/lib/email.ts"],
+        "createdAt": "2026-11-25T07:08:20.166Z",
+        "reason": "Transactional email already uses Arial because mail clients do not load the site fonts."
       }
     ]
   }
