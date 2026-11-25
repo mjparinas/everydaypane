@@ -220,6 +220,9 @@ export const flows = [
       await page.reload();
       const nav = page.getByRole("navigation", { name: "Settings sections" });
       await nav.waitFor();
+      // The reload keeps the earlier flow's scroll position; measure from the top of the page.
+      await page.evaluate(() => window.scrollTo(0, 0));
+      await page.waitForFunction(() => window.scrollY === 0);
       const gap = async () =>
         page.evaluate(() => {
           const header = document.querySelector("header").getBoundingClientRect().bottom;
