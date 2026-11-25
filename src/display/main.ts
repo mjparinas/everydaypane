@@ -426,7 +426,7 @@ async function watchLoop() {
       continue;
     }
     const since = payload.version;
-    const r = await get<{ version: number }>("config-watch", { since: String(since) });
+    const r = await get<{ version: number }>("config-watch", { since: String(since) }, undefined, { background: true });
     // Full reload (not loadState): a version-only bump from "Refresh displays" would remount onto cached feeds
     // and look like nothing happened; reload also picks up a new display.js after a deploy.
     if (r.data && typeof r.data.version === "number" && r.data.version > since) {

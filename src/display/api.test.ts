@@ -20,6 +20,16 @@ describe("display polling", () => {
     expect(isUpdating()).toBe(false);
   });
 
+  it("does not show Updating for a background long-poll held open", async () => {
+    let answer: (r: Response) => void = () => undefined;
+    vi.stubGlobal("fetch", vi.fn().mockReturnValue(new Promise<Response>((resolve) => (answer = resolve))));
+    const pending = get("config-watch", { since: "1" }, undefined, { background: true });
+    expect(isUpdating()).toBe(false);
+    answer(Response.json({ version: 1 }));
+    await pending;
+    expect(isUpdating()).toBe(false);
+  });
+
   it("shows server failure separately and clears it after a successful request", async () => {
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(null, { status: 503 })));
     await get("server-down");
