@@ -3,7 +3,7 @@ import Link from "next/link";
 
 import { SiteFooter, SiteHeader } from "@/components/site/SiteChrome";
 import { Wordmark } from "@/components/Wordmark";
-import { SIGNUP_PATH } from "@/lib/site";
+import { SIGN_IN_PATH, SIGNUP_PATH } from "@/lib/site";
 
 import { SignInForm, type SignInIntent } from "./SignInForm";
 
@@ -32,7 +32,7 @@ export default async function SignInPage({ searchParams }: { searchParams: Promi
           {signup ? (
             <p className="mt-4 text-sm text-soft">
               Already have a household?{" "}
-              <Link href="/signin/" className="font-semibold text-brand hover:underline">
+              <Link href={SIGN_IN_PATH} className="font-semibold text-brand hover:underline">
                 Sign in
               </Link>
             </p>

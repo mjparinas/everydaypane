@@ -107,7 +107,7 @@ The features catalogue lives in `src/lib/marketingFeatures.ts` (grouped like the
 DriveBC road events and weather conditions, Earthquakes Canada, BC Hydro power outages. Each switchable in `config.alerts.sources`.
 Optional email to everyone on `ADMIN_EMAILS` and `FAMILY_EMAILS` when a new strip-worthy alert arrives (`config.alerts.notifyEmail`).
 
-**Household and family:** Clerk email one-time codes on `/signin/` (and `/signin/?intent=signup`); Turso
+**Household and family:** Clerk Account Portal in production (`accounts.everydaypane.com/sign-in` and `/sign-up`, from `NEXT_PUBLIC_CLERK_SIGN_IN_URL` / `SIGN_UP_URL`); local and CI stay on `/signin/`; Turso
 `account_members` stays the source of truth for household roles; `user.created` webhook seeds Free households
 (`docs/clerk.md`). Wall displays open **`/display/`** and unlock with a **phone QR** (or a signed-in picker) at
 `/display/unlock/` / `/signin/phone/` — display auth is **not** Clerk; household panel at `/household/` (views and grid editor, themes, displays with the

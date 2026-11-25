@@ -7,7 +7,7 @@ Everydaypane uses [Clerk](https://clerk.com) for household and platform-staff id
 1. Create an application (or `vercel integration add clerk`).
 2. **User & authentication:** enable email address, verify at sign-up with **Email verification code**, sign-in with email code. Disable passwords unless you want them.
 3. **Staff MFA:** require a second factor for users on `ADMIN_EMAILS` / `SUPPORT_EMAILS` (Authenticator). Set `ADMIN_2FA=optional` only for local staff smoke tests.
-4. **Paths:** sign-in and sign-up URL `/signin` (this app uses one page for both).
+4. **Account Portal:** production sign-in and sign-up buttons use `NEXT_PUBLIC_CLERK_SIGN_IN_URL` (`https://accounts.everydaypane.com/sign-in`) and `NEXT_PUBLIC_CLERK_SIGN_UP_URL` (`https://accounts.everydaypane.com/sign-up`). Leave the Dashboard component paths unset so the portal stays on. `/signin/` remains the local and CI page.
 5. **Webhook:** `user.created` → `https://www.everydaypane.com/api/clerk/webhook/` with `CLERK_WEBHOOK_SIGNING_SECRET`. On create, we call `createAccount` when the email is new (household name from `unsafeMetadata.householdName`).
 6. Brand Clerk emails to match Everydaypane (mark blue `#3b5bdb`); alert mail still goes through Resend (`src/lib/email.ts`).
 

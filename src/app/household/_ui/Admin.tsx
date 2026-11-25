@@ -9,6 +9,7 @@ import { ShoppingList } from "@/components/ShoppingList";
 import { Mark } from "@/components/Wordmark";
 import type { DashboardConfig } from "@/lib/config/schema";
 import type { PlanId } from "@/lib/plans";
+import { signInHref } from "@/lib/site";
 
 import { DisplaysPanel } from "./DisplaysPanel";
 import { HouseholdFeaturePrompt, PlanProvider, SaveNeedsUpgrade, UpgradeDialog, usePlan } from "./plan";
@@ -294,10 +295,10 @@ function AdminPanel({ email, staff }: { email: string; staff: boolean }) {
     // ClerkProvider mounts window.Clerk; revoke the browser session when present.
     const clerk = (window as unknown as { Clerk?: { signOut: (opts?: { redirectUrl?: string }) => Promise<void> } }).Clerk;
     if (clerk?.signOut) {
-      await clerk.signOut({ redirectUrl: "/signin/" });
+      await clerk.signOut({ redirectUrl: signInHref() });
       return;
     }
-    router.replace("/signin/");
+    router.replace(signInHref());
   }
 
   return (

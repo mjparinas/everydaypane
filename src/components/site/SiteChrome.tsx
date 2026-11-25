@@ -4,7 +4,7 @@ import type { ReactNode } from "react";
 
 import { Mark, Wordmark } from "@/components/Wordmark";
 import { BRAND } from "@/lib/brand";
-import { APP_PATH, CONTACT_EMAIL, FAMILY_PATH, SIGNUP_PATH, SITE_URL } from "@/lib/site";
+import { APP_PATH, CONTACT_EMAIL, FAMILY_PATH, SIGN_IN_PATH, SIGNUP_PATH, SITE_URL } from "@/lib/site";
 import { SESSION_COOKIE, sessionFor } from "@/server/auth";
 
 import { BuildStamp } from "./BuildStamp";
@@ -68,7 +68,10 @@ export async function SiteHeader() {
             </Link>
           ) : (
             <>
-              <Link href="/signin/" className="hidden min-[380px]:inline-flex rounded-lg px-3 py-2 text-soft hover:bg-panel hover:text-ink">
+              <Link
+                href={SIGN_IN_PATH}
+                className="hidden min-[380px]:inline-flex rounded-lg px-3 py-2 text-soft hover:bg-panel hover:text-ink"
+              >
                 Sign in
               </Link>
               <Link href={SIGNUP_PATH} className="btn-primary ml-1 rounded-xl px-3.5 text-sm sm:px-4" data-cta="nav-start-free">

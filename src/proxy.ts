@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 
 import { authTestMode, clerkConfigured, TEST_SESSION_COOKIE } from "@/lib/authFlags";
 import { contentSecurityPolicy } from "@/lib/securityHeaders";
+import { signInHref } from "@/lib/site";
 
 // Clerk session attach + CSP nonce. Protects /household, /admin and /family with a fast cookie/session check;
 // every page and API still re-checks membership itself. Wall `/display/` unlock stays outside this gate.
@@ -36,9 +37,12 @@ function hasTestSession(req: NextRequest): boolean {
 }
 
 function redirectToSignIn(req: NextRequest): NextResponse {
+  const target = signInHref(req.nextUrl.pathname);
+  if (target.startsWith("http")) return withCsp(req, () => NextResponse.redirect(target));
   const url = req.nextUrl.clone();
-  url.pathname = "/signin/";
-  url.search = `?next=${encodeURIComponent(req.nextUrl.pathname)}`;
+  const parsed = new URL(target, req.nextUrl.origin);
+  url.pathname = parsed.pathname;
+  url.search = parsed.search;
   return withCsp(req, () => NextResponse.redirect(url));
 }
 
