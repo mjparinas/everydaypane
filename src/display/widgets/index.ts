@@ -139,6 +139,8 @@ export function mountWidget(el: HTMLElement, w: Widget, ctx: WidgetContext): Cle
       return sports(el, w, ctx);
     case "earth":
       return earth(el, w, ctx);
+    case "windy":
+      return lazyWidget("windy", el, w, ctx);
     case "presence":
       return presence(el, w, ctx);
     case "school":

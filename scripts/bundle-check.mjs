@@ -10,6 +10,7 @@ const BUDGET = {
   "public/display/internet.js": 6_000,
   "public/display/unifi.js": 6_000,
   "public/display/whiteboard.js": 6_000,
+  "public/display/windy.js": 6_000,
 };
 let failed = false;
 for (const [file, max] of Object.entries(BUDGET)) {
