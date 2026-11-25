@@ -11,7 +11,7 @@ import { MEAL_LABELS, MEAL_SLOTS } from "@/lib/meals";
 
 import { PlaceFinder } from "./CommutePanel";
 import { Range, Segmented, Select, Stepper, Text, TextArea, Toggle } from "./fields";
-import { HaEntityList } from "./haEntities";
+import { HaEntityList, useHa } from "./haEntities";
 import { useMusic } from "./music";
 import { newId } from "./store";
 
@@ -98,12 +98,12 @@ export function WidgetSettings({
         />
       )}
       <TypeSettings widget={widget} config={config} onChange={onChange} />
-      <div className="grid gap-4 border-t border-line pt-4">
-        <p className="text-xs font-semibold tracking-wide text-soft uppercase">Panel</p>
+      <details className="grid gap-4 border-t border-line pt-4">
+        <summary className="cursor-pointer text-xs font-semibold tracking-wide text-soft uppercase">Looks &amp; schedule</summary>
         <PanelBackground widget={widget} config={config} onChange={onChange} />
         {info.supportsFontScale !== false && <FontScale widget={widget} onChange={onChange} />}
         <VisiblePeriods widget={widget} onChange={onChange} />
-      </div>
+      </details>
     </div>
   );
 }
@@ -215,6 +215,84 @@ function FontScale({ widget, onChange }: { widget: Widget; onChange: (change: (w
 
 /** Edits a widget that the caller has already narrowed to one type. */
 type Edit<T extends Widget["type"]> = (change: (w: Extract<Widget, { type: T }>) => void) => void;
+
+/** Recognition-first smart device setup (critique P1, 2026-11-24): pick a named entity, Control under Advanced. */
+function HaEntitySettings({
+  widget: w,
+  provider,
+  onEdit: e,
+}: {
+  widget: Extract<Widget, { type: "haEntity" }>;
+  provider: NonNullable<Extract<Widget, { type: "haEntity" }>["provider"]> | "homeAssistant";
+  onEdit: Edit<"haEntity">;
+}) {
+  const ha = useHa();
+  const entities = ha?.entities ?? [];
+  const picked = entities.some((ent) => ent.id === w.entityId);
+
+  return (
+    <>
+      <Select
+        label="Provider"
+        value={provider}
+        options={[
+          { value: "homeAssistant", label: "Home Assistant" },
+          { value: "nest", label: "Nest" },
+          { value: "ecobee", label: "ecobee" },
+          { value: "smartthings", label: "SmartThings" },
+        ]}
+        onChange={(v) => e((x) => void (x.provider = v))}
+      />
+      {provider === "homeAssistant" && entities.length > 0 ? (
+        <Select
+          label="Device"
+          value={picked ? w.entityId : ""}
+          options={[
+            { value: "", label: "Choose a device…" },
+            ...entities.map((ent) => ({ value: ent.id, label: ent.name && ent.name !== ent.id ? `${ent.name} (${ent.id})` : ent.id })),
+          ]}
+          onChange={(v) => e((x) => void (x.entityId = v))}
+          hint="Names from your Home Assistant. Pick one instead of typing an entity id."
+        />
+      ) : null}
+      <Text
+        label={provider === "homeAssistant" && entities.length > 0 ? "Or paste entity id" : "Entity"}
+        value={w.entityId}
+        maxLength={255}
+        placeholder={provider === "homeAssistant" ? "light.kitchen" : `${provider}.device_id`}
+        list={provider === "homeAssistant" ? "ha-controls" : undefined}
+        onChange={(v) => e((x) => void (x.entityId = v.trim()))}
+      />
+      {provider === "homeAssistant" ? (
+        <HaEntityList id="ha-controls" />
+      ) : (
+        <p className="text-sm text-soft">
+          Connect {provider} under <SettingsLink href="#settings/smart-home">Settings › Smart home</SettingsLink>, then paste a device id
+          from the list (e.g. {provider}.living_room).
+        </p>
+      )}
+      <details className="grid gap-3 rounded-xl border border-line bg-bg px-3 py-2" open={w.control !== "auto"}>
+        <summary className="cursor-pointer text-sm font-semibold text-ink">Advanced control type</summary>
+        <Select
+          label="Control"
+          value={w.control}
+          options={[
+            { value: "auto", label: "Pick from the entity" },
+            { value: "toggle", label: "On/off switch" },
+            { value: "light", label: "Light with brightness" },
+            { value: "sensor", label: "Reading" },
+            { value: "climate", label: "Thermostat" },
+            { value: "cover", label: "Blinds or garage door" },
+            { value: "lock", label: "Lock" },
+            { value: "button", label: "Button or scene" },
+          ]}
+          onChange={(v) => e((x) => void (x.control = v))}
+          hint="Leave on Auto unless the wall shows the wrong kind of control."
+        />
+      </details>
+    </>
+  );
+}
 
 function TypeSettings({
   widget: w,
@@ -448,21 +526,24 @@ function TypeSettings({
           />
           <Toggle label="Show weekends" checked={w.showWeekends} onChange={(v) => e((x) => void (x.showWeekends = v))} />
           <Toggle label="Show the month title" checked={w.showTitle} onChange={(v) => e((x) => void (x.showTitle = v))} />
-          <Toggle
-            label="Fit event titles"
-            checked={w.fitTitles}
-            onChange={(v) => e((x) => void (x.fitTitles = v))}
-            hint="Wrap titles (and shrink if needed) so they are not cut off with an ellipsis. Busy days still show “+N more”."
-          />
-          <Stepper
-            label="Scroll after"
-            value={w.scrollWeeks}
-            min={1}
-            max={6}
-            format={(n) => `${n} week${n === 1 ? "" : "s"}`}
-            onChange={(v) => e((x) => void (x.scrollWeeks = v))}
-            hint="When the calendar shows more weeks than this, each week keeps that height and you can scroll the rest."
-          />
+          <details className="grid gap-3 rounded-xl border border-line bg-bg px-3 py-2">
+            <summary className="cursor-pointer text-sm font-semibold text-ink">Advanced layout</summary>
+            <Toggle
+              label="Fit event titles"
+              checked={w.fitTitles}
+              onChange={(v) => e((x) => void (x.fitTitles = v))}
+              hint="Wrap titles (and shrink if needed) so they are not cut off with an ellipsis. Busy days still show “+N more”."
+            />
+            <Stepper
+              label="Scroll after"
+              value={w.scrollWeeks}
+              min={1}
+              max={6}
+              format={(n) => `${n} week${n === 1 ? "" : "s"}`}
+              onChange={(v) => e((x) => void (x.scrollWeeks = v))}
+              hint="When the calendar shows more weeks than this, each week keeps that height and you can scroll the rest."
+            />
+          </details>
         </>
       );
     }
@@ -595,12 +676,37 @@ function TypeSettings({
             onChange={(v) => e((x) => void (x.zoom = v))}
             hint="Worked out from the widget's size, so a small widget shows the same area as a big one."
           />
-          <Select
-            label="Colours show"
-            value={w.overlay}
-            options={EARTH_OVERLAYS.map((o) => ({ value: o, label: EARTH_OVERLAY_LABELS[o] }))}
-            onChange={(v) => e((x) => void (x.overlay = v))}
-          />
+          {(() => {
+            const primary = ["wind", "temp", "precip_3hr", "relative_humidity"] as const;
+            const isPrimary = (primary as readonly string[]).includes(w.overlay);
+            return (
+              <>
+                <Select
+                  label="Colours show"
+                  value={isPrimary ? w.overlay : w.overlay}
+                  options={[
+                    ...primary.map((o) => ({ value: o, label: EARTH_OVERLAY_LABELS[o] })),
+                    ...(!isPrimary ? [{ value: w.overlay, label: EARTH_OVERLAY_LABELS[w.overlay] }] : []),
+                  ]}
+                  onChange={(v) => e((x) => void (x.overlay = v))}
+                />
+                <details className="rounded-xl border border-line bg-bg px-3 py-2" open={!isPrimary}>
+                  <summary className="cursor-pointer text-sm font-semibold text-ink">More colour layers</summary>
+                  <div className="mt-3">
+                    <Select
+                      label="Layer"
+                      value={w.overlay}
+                      options={EARTH_OVERLAYS.filter((o) => !(primary as readonly string[]).includes(o)).map((o) => ({
+                        value: o,
+                        label: EARTH_OVERLAY_LABELS[o],
+                      }))}
+                      onChange={(v) => e((x) => void (x.overlay = v))}
+                    />
+                  </div>
+                </details>
+              </>
+            );
+          })()}
           <Toggle
             label="Mark the place"
             checked={w.showPlace}
@@ -715,52 +821,7 @@ function TypeSettings({
     case "haEntity": {
       const e = edit<"haEntity">();
       const provider = w.provider ?? "homeAssistant";
-      return (
-        <>
-          <Select
-            label="Provider"
-            value={provider}
-            options={[
-              { value: "homeAssistant", label: "Home Assistant" },
-              { value: "nest", label: "Nest" },
-              { value: "ecobee", label: "ecobee" },
-              { value: "smartthings", label: "SmartThings" },
-            ]}
-            onChange={(v) => e((x) => void (x.provider = v))}
-          />
-          <Text
-            label="Entity"
-            value={w.entityId}
-            maxLength={255}
-            placeholder={provider === "homeAssistant" ? "light.kitchen" : `${provider}.device_id`}
-            list={provider === "homeAssistant" ? "ha-controls" : undefined}
-            onChange={(v) => e((x) => void (x.entityId = v.trim()))}
-          />
-          {provider === "homeAssistant" ? (
-            <HaEntityList id="ha-controls" />
-          ) : (
-            <p className="text-sm text-soft">
-              Connect {provider} under <SettingsLink href="#settings/smart-home">Settings › Smart home</SettingsLink>, then paste a device
-              id from the list (e.g. {provider}.living_room).
-            </p>
-          )}
-          <Select
-            label="Control"
-            value={w.control}
-            options={[
-              { value: "auto", label: "Pick from the entity" },
-              { value: "toggle", label: "On/off switch" },
-              { value: "light", label: "Light with brightness" },
-              { value: "sensor", label: "Reading" },
-              { value: "climate", label: "Thermostat" },
-              { value: "cover", label: "Blinds or garage door" },
-              { value: "lock", label: "Lock" },
-              { value: "button", label: "Button or scene" },
-            ]}
-            onChange={(v) => e((x) => void (x.control = v))}
-          />
-        </>
-      );
+      return <HaEntitySettings widget={w} provider={provider} onEdit={e} />;
     }
     case "note": {
       const e = edit<"note">();

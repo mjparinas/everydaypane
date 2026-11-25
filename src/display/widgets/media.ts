@@ -39,7 +39,7 @@ export function sourceFor(w: { provider: "homeAssistant" | "spotify" | "sonos"; 
       tap: (action, extra) => ({ entity: w.entityId, action, ...extra }),
       pick: (raw) => {
         const d = raw as HaData;
-        if (!d.configured) return "Set up Home Assistant under Settings in the admin panel.";
+        if (!d.configured) return "Set up Home Assistant under Settings.";
         return d.entities[w.entityId] ?? `${w.entityId} wasn't found`;
       },
     };
@@ -58,7 +58,7 @@ export function sourceFor(w: { provider: "homeAssistant" | "spotify" | "sonos"; 
     pick: (raw) => {
       const d = raw as MusicData;
       const s = d.services[service];
-      if (!s?.connected) return `Connect ${label} under Settings in the admin panel.`;
+      if (!s?.connected) return `Connect ${label} under Settings.`;
       return d.players[key] ?? s.error ?? "Loading…";
     },
   };

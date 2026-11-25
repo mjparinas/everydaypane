@@ -13,7 +13,7 @@ import type { Mount } from "./types";
 const FEED = "calendar";
 const EVERY = 5 * 60_000;
 
-const notConnected = () => h("div", { class: "w-empty" }, "Connect Google Calendar in the admin panel.");
+const notConnected = () => h("div", { class: "w-empty" }, "Connect a calendar under Settings › Calendars.");
 
 function row(e: CalendarEvent, date: string, ctx: { timeZone: string; hour12: boolean }, now: number) {
   const past = !e.allDay && Date.parse(e.end) <= now;
