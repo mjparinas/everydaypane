@@ -211,6 +211,36 @@ export const flows = [
     },
   },
   {
+    // Melvin, 2026-11-25: a scroll container around the Settings navigation pinned it 6.5rem down inside the panel,
+    // leaving a wide empty band under the header and covering the first cards.
+    name: "the Settings navigation sits right under the header and sticks there",
+    async run({ page, base, expect }) {
+      await page.setViewportSize({ width: 1280, height: 720 });
+      await page.goto(`${base}/household/#settings/dashboard`);
+      await page.reload();
+      const nav = page.getByRole("navigation", { name: "Settings sections" });
+      await nav.waitFor();
+      // The reload keeps the earlier flow's scroll position; measure from the top of the page.
+      await page.evaluate(() => window.scrollTo(0, 0));
+      await page.waitForFunction(() => window.scrollY === 0);
+      const gap = async () =>
+        page.evaluate(() => {
+          const header = document.querySelector("header").getBoundingClientRect().bottom;
+          const n = document.querySelector('nav[aria-label="Settings sections"]').getBoundingClientRect();
+          const card = document.getElementById("settings-dashboard").getBoundingClientRect().top;
+          return { above: n.top - header, cardBelow: card - n.bottom };
+        });
+      const top = await gap();
+      expect(top.above >= 0 && top.above <= 32, `navigation ${top.above}px below the header`);
+      expect(top.cardBelow >= 0, `navigation covers the first card by ${-top.cardBelow}px`);
+      await page.mouse.wheel(0, 400);
+      await page.waitForFunction(() => window.scrollY > 200);
+      const scrolled = await gap();
+      expect(scrolled.above >= -8 && scrolled.above <= 8, `sticky navigation ${scrolled.above}px from the header`);
+      await page.evaluate(() => window.scrollTo(0, 0));
+    },
+  },
+  {
     name: "the admin panel works on a phone",
     async run({ browser, page, base, expect }) {
       const phone = await browser.newContext({ viewport: { width: 390, height: 844 }, storageState: await page.context().storageState() });
