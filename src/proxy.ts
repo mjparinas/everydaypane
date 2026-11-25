@@ -57,13 +57,12 @@ let clerkProxy: Middleware | null = null;
 async function loadClerkProxy(): Promise<Middleware> {
   if (clerkProxy) return clerkProxy;
   const { clerkMiddleware } = await import("@clerk/nextjs/server");
-  clerkProxy = clerkMiddleware(
-    async (auth, req) => {
-      const { userId } = await auth();
-      return gate(req, Boolean(userId));
-    },
-    { frontendApiProxy: { enabled: true } },
-  ) as Middleware;
+  // CNAME Frontend API (clerk.everydaypane.com). A same-origin /__clerk proxy without a Dashboard
+  // proxy URL makes Clerk answer host_invalid (Melvin, 2026-11-24).
+  clerkProxy = clerkMiddleware(async (auth, req) => {
+    const { userId } = await auth();
+    return gate(req, Boolean(userId));
+  }) as Middleware;
   return clerkProxy;
 }
 
@@ -79,6 +78,5 @@ export const config = {
   matcher: [
     "/((?!api/|_next/static|_next/image|d/[^/]+/?$|household/preview/|display/?$|display/display\\.(?:js|css)|display/sw\\.js|brand/|fonts/|icons/|favicon.ico|icon.svg|apple-icon.png|apple-touch-icon.png|manifest.webmanifest|.*\\..*).*)",
     "/(api|trpc)(.*)",
-    "/__clerk/(.*)",
   ],
 };
