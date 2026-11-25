@@ -342,8 +342,8 @@ panel can be complex if you need it to be."
   The internet widget, the UniFi network widget, EcoFlow, the whiteboard, wildfires, the Windy map and the Smart device tile
   (`haEntity.ts`; cameras and `HA_EVERY` stay in `ha.ts`) load this way, and `next.config.ts` gives each file the same
   immutable cache header as display.js.
-- **Budget:** the display's script stays under 40 KB gzipped and its stylesheet under 20 KB (`scripts/bundle-check.mjs`,
-  a CI step; CSS raised from 10 KB on 2026-11-23 for more clock styles). A new dependency on the display needs a very good reason.
+- **Budget:** the display's script stays under 80 KB gzipped and its stylesheet under 20 KB (`scripts/bundle-check.mjs`,
+  a CI step; CSS raised from 10 KB on 2026-11-23 for more clock styles; script raised from 40 KB by Melvin on 2026-11-25: "double the size of the limit"). A new dependency on the display needs a very good reason.
 - All heavy lifting happens on the server: API calls to Google, weather, Recycle Coach, Amazon and Home Assistant are
   made, cached and trimmed by our routes, and the display fetches small JSON. Images are proxied at display size.
 - **No zooming** (Melvin, 2026-11-17: "dont allow pinch zoom on the dashboard"; kept after the 2026-11-22 a11y audit):

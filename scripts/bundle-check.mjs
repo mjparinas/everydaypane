@@ -3,8 +3,9 @@ import { readFileSync } from "node:fs";
 import { gzipSync } from "node:zlib";
 
 // Melvin, 2026-11-23: CSS budget 10 → 20 KB so flip/nixie/word clock styles and display polish fit without starving the rest.
+// Melvin, 2026-11-25: script budget 40 → 80 KB ("double the size of the limit").
 const BUDGET = {
-  "public/display/display.js": 40_000,
+  "public/display/display.js": 80_000,
   "public/display/display.css": 20_000,
   "public/display/sw.js": 6_000,
   "public/display/ecoflow.js": 6_000,
