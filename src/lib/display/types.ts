@@ -668,3 +668,43 @@ export interface AirportsData {
   stale?: boolean;
   airports: AirportRow[];
 }
+
+/** One UniFi site's internet health from UniFi Site Manager (src/server/unifi.ts). No IP addresses or MACs. */
+export interface UnifiSite {
+  id: string;
+  name: string;
+  /** "down" when the gateway is offline to UniFi's cloud or the latest reading has the WAN down. "Slow" is the widget's call. */
+  status: "ok" | "down";
+  isp?: string;
+  /** Latest five-minute reading. Milliseconds and percent. */
+  latency?: number;
+  maxLatency?: number;
+  packetLoss?: number;
+  /** What the home was using in the latest five minutes, Mbps (not a speed test). */
+  download?: number;
+  upload?: number;
+  /** Average latency over the last 24 hours, oldest first, at most 48 points (null where there was no reading). */
+  spark: (number | null)[];
+  /** WAN uptime over the last 24 hours, percent. */
+  uptime24h?: number;
+  /** Minutes the internet was down in the last 24 hours. */
+  downMinutes24h: number;
+  /** When the last outage in the last 24 hours ended (epoch ms), or started if it hasn't ended. */
+  lastOutageAt?: number;
+  /** Time of the latest reading (epoch ms). */
+  readingAt?: number;
+  devices?: number;
+  offlineDevices?: number;
+  clients?: number;
+  guests?: number;
+}
+
+export interface UnifiData {
+  updatedAt: number;
+  /** False until a Site Manager API key is saved in Settings › UniFi network. */
+  configured: boolean;
+  sites: UnifiSite[];
+  /** Short reason when UniFi refused or failed, for the empty state. */
+  error?: string;
+  stale?: boolean;
+}

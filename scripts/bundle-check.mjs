@@ -8,6 +8,7 @@ const BUDGET = {
   "public/display/display.css": 20_000,
   "public/display/sw.js": 6_000,
   "public/display/internet.js": 6_000,
+  "public/display/unifi.js": 6_000,
   "public/display/whiteboard.js": 6_000,
   "public/display/haEntity.js": 6_000,
 };

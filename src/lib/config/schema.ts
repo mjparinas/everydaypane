@@ -220,6 +220,17 @@ export const widgetSchema = z.discriminatedUnion("type", [
     showRain: z.boolean().default(true),
     showHumidity: z.boolean().default(true),
   }),
+  // UniFi network health from UniFi Site Manager (Melvin, 2026-11-21, Household). API key under Settings › UniFi
+  // network; `siteId` empty means the first site the key can see. `slowMs` is when the latency counts as slow.
+  z.object({
+    ...base,
+    type: z.literal("unifi"),
+    siteId: z.string().max(64).default(""),
+    slowMs: z.number().int().min(20).max(1000).default(100),
+    showChart: z.boolean().default(true),
+    showCounts: z.boolean().default(true),
+    showUsage: z.boolean().default(false),
+  }),
   // Weather Underground PWS (Phase 4, Household).
   z.object({
     ...base,

@@ -24,6 +24,7 @@ export type SecretKey =
   | "govee.apiKey"
   | "tempest.token"
   | "wu.apiKey"
+  | "unifi.apiKey"
   | "microsoft.refreshToken"
   | "microsoft.scopes"
   | "todoist.refreshToken"
@@ -79,6 +80,7 @@ export async function secretsSet(accountId: string): Promise<Record<SecretKey, b
     "govee.apiKey": set.has("govee.apiKey"),
     "tempest.token": set.has("tempest.token"),
     "wu.apiKey": set.has("wu.apiKey"),
+    "unifi.apiKey": set.has("unifi.apiKey"),
     "microsoft.refreshToken": set.has("microsoft.refreshToken"),
     "microsoft.scopes": set.has("microsoft.scopes"),
     "todoist.refreshToken": set.has("todoist.refreshToken"),
