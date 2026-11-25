@@ -11,7 +11,10 @@ describe("crypto", () => {
     const sealed = encrypt("refresh-token");
     expect(sealed).not.toContain("refresh-token");
     expect(decrypt(sealed)).toBe("refresh-token");
-    expect(decrypt(sealed.slice(0, -2) + "AA")).toBeNull();
+    const [v, iv, tag, body] = sealed.split(".");
+    const tamperedBody = Buffer.from(body ?? "", "base64url");
+    tamperedBody[0] = (tamperedBody[0] ?? 0) ^ 1;
+    expect(decrypt([v, iv, tag, tamperedBody.toString("base64url")].join("."))).toBeNull();
     expect(decrypt("junk")).toBeNull();
   });
 
