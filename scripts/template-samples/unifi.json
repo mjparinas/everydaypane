@@ -1,0 +1,30 @@
+{
+  "updatedAt": 1795473720000,
+  "configured": true,
+  "stale": false,
+  "sites": [
+    {
+      "id": "site-home",
+      "name": "Home",
+      "status": "ok",
+      "isp": "Shaw",
+      "latency": 12,
+      "maxLatency": 28,
+      "packetLoss": 0,
+      "download": 18.4,
+      "upload": 1.6,
+      "spark": [
+        11, 12, 12, 13, 13, 14, 14, 14, 14, 14, 14, 13, 13, 13, 12, 11, 11, 10, 10, 9, 9, 8, 8, 8, 8, 8, 8, 9, 9, 10, 34, 11, 11, 12, 12,
+        19, 19, 20, 14, 14, 14, 14, 14, 13, 13, 12, 12, 11
+      ],
+      "uptime24h": 99.86,
+      "downMinutes24h": 2,
+      "lastOutageAt": 1795450320000,
+      "readingAt": 1795473480000,
+      "devices": 6,
+      "offlineDevices": 0,
+      "clients": 23,
+      "guests": 2
+    }
+  ]
+}

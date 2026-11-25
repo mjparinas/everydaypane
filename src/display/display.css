@@ -3688,3 +3688,57 @@ html.portrait-view .stage {
     animation: none;
   }
 }
+
+.w-unifi {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3em;
+  min-height: 0;
+  font-size: calc(1em * var(--font-scale, 1));
+}
+.un-status {
+  display: flex;
+  align-items: baseline;
+  gap: 0.4em;
+  font-size: 1.5em;
+  font-weight: 600;
+}
+.un-dot {
+  width: 0.55em;
+  height: 0.55em;
+  border-radius: 50%;
+  align-self: center;
+  background: #2f9e44;
+}
+.un-slow .un-dot {
+  background: #f59f00;
+}
+.un-down .un-dot {
+  background: var(--danger);
+}
+.un-down .un-word {
+  color: var(--danger);
+}
+.un-ms {
+  font-size: 0.6em;
+  font-weight: 500;
+  opacity: 0.75;
+}
+.un-row {
+  font-size: 0.9em;
+}
+.un-foot {
+  font-size: 0.75em;
+  opacity: 0.6;
+}
+.un-spark {
+  width: 100%;
+  height: 2.2em;
+  flex: none;
+}
+.un-spark polyline {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 2;
+  stroke-linejoin: round;
+}

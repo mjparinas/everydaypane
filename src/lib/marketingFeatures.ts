@@ -64,6 +64,7 @@ const FEATURE_BLURBS: Partial<Record<WidgetType, string>> = {
   tides: "Next highs and lows at a NOAA or Canadian station.",
   tempest: "Backyard WeatherFlow station: temp, wind, rain.",
   weatherUnderground: "Personal weather station current conditions.",
+  unifi: "Internet uptime, latency and outages from your UniFi gateway.",
   stocks: "Watchlist quotes with daily change.",
   crypto: "Coin prices and 24 h change.",
   fx: "Currency pair rates from the ECB.",
