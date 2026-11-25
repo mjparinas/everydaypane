@@ -117,8 +117,12 @@ export function DisplayUnlock({ signedInAs }: { signedInAs: string | null }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ code, pollSecret: pollSecret.current }),
       });
-      const body = (await r.json().catch(() => ({}))) as PollBody;
+      const body = (await r.json().catch(() => ({}))) as PollBody & { error?: string };
       if (cancelled) return;
+      if (r.status === 429) {
+        setQrError(body.error ?? "Waiting slowed down. Keep this screen open.");
+        return;
+      }
       if (body.status === "ready" && body.handoff) {
         await finish(body.handoff);
         return;

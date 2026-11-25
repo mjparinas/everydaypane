@@ -199,7 +199,7 @@ export async function icalEvents(
   const url = await getIcalUrl(accountId, link.id);
   if (!url) return [];
   const got = await cached(
-    `ical:${link.id}:${from}:${to}:${link.color}:${link.name}`,
+    `ical:${accountId}:${link.id}:${from}:${to}:${link.color}:${link.name}`,
     TTL,
     async () => parseIcal(await download(url), link, from, to, timeZone),
     now,

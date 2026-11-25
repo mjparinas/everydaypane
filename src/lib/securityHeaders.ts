@@ -22,10 +22,12 @@ export function contentSecurityPolicy(opts: {
   upgradeInsecureRequests?: boolean;
 }): string {
   const isDev = process.env.NODE_ENV === "development";
+  // Dev-only allowance so impeccable live mode can load. Never reaches production.
+  const impeccableLiveDev = isDev ? " http://localhost:8400" : "";
   const script =
     opts.script === "nonce" && opts.nonce
-      ? `'self' 'nonce-${opts.nonce}' 'strict-dynamic'${isDev ? " 'unsafe-eval'" : ""}`
-      : `'self'${isDev ? " 'unsafe-eval'" : ""}`;
+      ? `'self' 'nonce-${opts.nonce}' 'strict-dynamic'${isDev ? " 'unsafe-eval'" : ""}${impeccableLiveDev}`
+      : `'self'${isDev ? " 'unsafe-eval'" : ""}${impeccableLiveDev}`;
   // Clerk Frontend API (and Cloudflare Turnstile challenges) when not fully proxied through /__clerk.
   const clerkScript = "https://*.clerk.accounts.dev https://*.clerk.com https://challenges.cloudflare.com";
   const clerkConnect =
@@ -37,7 +39,7 @@ export function contentSecurityPolicy(opts: {
     "style-src 'self' 'unsafe-inline'",
     "img-src 'self' data: blob: https://img.clerk.com",
     "font-src 'self'",
-    `connect-src 'self' https://*.ingest.sentry.io https://*.ingest.us.sentry.io ${clerkConnect}`,
+    `connect-src 'self' https://*.ingest.sentry.io https://*.ingest.us.sentry.io ${clerkConnect}${impeccableLiveDev}`,
     [
       "frame-src 'self'",
       clerkFrame,

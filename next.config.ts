@@ -18,8 +18,9 @@ const nextConfig: NextConfig = {
     { source: "/household/preview/:path*", headers: SECURITY_HEADERS_PREVIEW },
     { source: "/api/:path*", headers: [{ key: "Content-Security-Policy", value: CSP }] },
     { source: "/d/:path*", headers: [{ key: "Content-Security-Policy", value: CSP }] },
-    // Display assets are versioned by ?v=<commit>, so they can be cached for a year.
-    { source: "/display/:file*", headers: [{ key: "Cache-Control", value: "public, max-age=31536000, immutable" }] },
+    // Versioned shell assets only — not `/display/` or `/display/unlock/` (those must stay cookie-sensitive).
+    { source: "/display/display.js", headers: [{ key: "Cache-Control", value: "public, max-age=31536000, immutable" }] },
+    { source: "/display/display.css", headers: [{ key: "Cache-Control", value: "public, max-age=31536000, immutable" }] },
     {
       source: "/display/sw.js",
       headers: [

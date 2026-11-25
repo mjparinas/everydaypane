@@ -123,9 +123,10 @@ copy over `postMessage` before Save); tapping a widget opens its settings in a *
 (on the view tabs row) opens the same kind of drawer for name, grid, gap, edge, tile and theme so the preview stays
 visible. Draft edits patch widgets in place instead of remounting the whole stage. View previews can force day or night
 with `?mode=`, and a quiet Day/Night control on the preview swaps without reloading. **Free upgrade CTAs** (Melvin,
-2026-11-23): Free accounts see a dismissible banner, plan chip, **Household** badges on paid tabs/widgets/settings,
-greyed controls that open an in-app upgrade dialog (`#upgrade`, Stripe Checkout), and Settings › Plan; core Free tools
-(views editor, colours, displays within limit, photos, calendars) stay fully usable.
+  2026-11-23; quieter 2026-11-24 critique): Free accounts see a Plan chip, **Household** badges on blocked controls
+  (Add-widget paid cards, Settings soft-locks), greyed controls that open an in-app upgrade dialog (`#upgrade`, Stripe
+  Checkout), and Settings › Plan; idle nav is not badged. Core Free tools (views editor, colours, displays within limit,
+  photos, calendars) stay fully usable.
 
 **Platform admin** (`/admin/`): Everydaypane ops for `ADMIN_EMAILS` (full) and optional `SUPPORT_EMAILS` (read-only),
 separate from the household panel — same split as Tuned and Liftsmith. Staff use the same Clerk sign-in as households,
@@ -172,10 +173,11 @@ npm run templates:previews  # regenerate public/templates/*.png from real widget
  families can use. Free is DAKboard-like (1 view, 2 calendars, 2 displays, core widgets only). Household unlocks
  everything. Melvin’s existing install is grandfathered on Household (`acct_legacy`). Stripe Checkout + Customer Portal
  + webhooks (`src/server/billing.ts`); signup at `/api/auth/signup/`.
-- **Free upgrade UX in household** (Melvin, 2026-11-23: articulate what Free is missing without being annoying): paid
- features show a **Household** label and are soft-locked (greyed; tap opens the upgrade dialog with why-upgrade copy and
- Checkout). Lots of quiet CTAs (banner, plan chip, Save errors, Displays limit, widget picker, settings groups); Free
- core remains highly usable. Plan state from `/api/household/billing/` via `PlanProvider` (`src/app/household/_ui/plan.tsx`).
+- **Free upgrade UX in household** (Melvin, 2026-11-23: articulate what Free is missing without being annoying; quieter
+  2026-11-24 critique): paid features show a **Household** label only on blocked controls and are soft-locked (greyed;
+  tap opens the upgrade dialog with why-upgrade copy and Checkout). Primary CTA is the Plan chip (plus Save errors,
+  Displays limit, widget picker, settings soft-locks); no banner or idle-nav badge rain. Free core remains highly usable.
+  Plan state from `/api/household/billing/` via `PlanProvider` (`src/app/household/_ui/plan.tsx`).
 - **Household vs platform admin** (Melvin, 2026-11-23: rename `/admin` → `/household`, reserve `/admin` like Tuned and
   Liftsmith; expanded 2026-11-23 to full Tuned-style ops): household settings live at **`/household/`** (API
   `/api/household/`); **`/admin/`** is Everydaypane platform ops with dedicated staff sign-in (`ep_admin` + TOTP),
@@ -355,17 +357,22 @@ panel can be complex if you need it to be."
   phone-edit link; **New link** rotates the token (signs that screen out once cookies no longer match). New tokens are
   case-sensitive 8-character alphanumeric; unique hash collisions are retried (Melvin, 2026-11-21). A device shows one
   view, or follows the time-of-day schedule. Deleting a device signs that screen out.
-- **Household panel** (`src/app/household/_ui/`): one page with tabs (a bottom tab bar on phones). Edits collect in a working
-  copy (a Zustand store per page) and go out together with Save. The Views tab embeds `/household/preview/<viewId>/` under a
-  transparent drag overlay (`src/app/household/_ui/LiveLayoutEditor.tsx`) and pushes the working copy over `postMessage`
+- **Household panel** (`src/app/household/_ui/`): one page with five destinations on phone and desktop — Views, Colours,
+  Displays, Family, Settings (Melvin phone IA 2026-11-24; desktop aligned 2026-11-24 critique). Family holds Schedule /
+  Meals / Shopping / Messages behind a sub-strip. Wall settings collect in a working copy and go out with **Publish to
+  wall**; Family lists save as you go. The Views tab embeds `/household/preview/<viewId>/` under a transparent drag
+  overlay (`src/app/household/_ui/LiveLayoutEditor.tsx`) and pushes the working copy over `postMessage`
   (`src/lib/display/draftMessage.ts`) so layout and widget options update live; wall screens still only reload the saved
   document. The overlay drags with pointer events (mouse and touch), resizes from any of a widget's four corners with
   the opposite corner held still (Melvin, 2026-11-21: "allow any corner of a widget to adjust the size"), and also moves
   and resizes with the keyboard; widgets never leave the grid and never overlap, except that other widgets may sit on
   top of a photos widget (`src/lib/config/grid.ts`). Tapping a widget opens `WidgetSettingsDrawer` from the right; Edit
-  view opens `ViewSettingsDrawer` (shared `SlideDrawer` chrome). Free plan soft-locks (`PlanProvider` in `plan.tsx`) badge
-  and gate Schedule / Meals / Shopping / Messages tabs, paid widgets in Add widget, Household starter templates, and
-  paid Settings groups; `#upgrade` opens the why-upgrade dialog with Stripe Checkout.
+  view opens `ViewSettingsDrawer` (shared `SlideDrawer` chrome).   Add widget leads with four kitchen recommendations, then intent chips (Today / Family / Home / More) before the full
+  catalogue; Free Household widgets stay collapsed behind a count. Starter templates scroll into view with a status note
+  when opened under the live preview. Free plan soft-locks (`PlanProvider` in `plan.tsx`) gate Family destinations, paid
+  widgets, Household starter templates, and paid Settings groups via Plan chip / blocked controls (not badge rain on idle
+  nav); `#upgrade` opens the why-upgrade dialog with Stripe Checkout. Settings jump nav: Home → Everyday (≤4 chips) →
+  Advanced. Wall empty states point at Household Settings (not “admin panel”).
 - **Platform admin** (`src/app/admin/`, `/api/admin/`): staff-only ops (`src/server/adminAuth.ts`, TOTP in
   `twoFactor.ts`); Tuned-style tabs via `/api/admin/[action]/`. Not the household settings UI.
 - **Widgets over photos** (Melvin, 2026-11-21: "allow other widgets to be placed on top of the photos widget"): photos
@@ -630,11 +637,13 @@ panel can be complex if you need it to be."
   Platform `/admin/` uses the same Clerk session, then `ADMIN_EMAILS` / `SUPPORT_EMAILS` plus Clerk MFA. Nothing a
   request writes can add someone to those staff lists. CI uses `AUTH_TEST_MODE=1` and `ep_test_session` instead of Clerk.
 - **Wall unlock with your phone** (Melvin, 2026-11-23: QR is for the display, not household `/signin/` — Tuned-style
-  code relay; kept through the Clerk migration): `/display/unlock/` shows a QR and eight-character code
-  (`device_sign_ins`, 10 minutes). The phone opens `/signin/phone/`, signs in with Clerk (or test mode) if needed,
-  **picks which display**, and taps Approve; the wall polls and claims `ep_wall` + `ep_display` for that device.
-  Signed-in browsers on the wall can pick a display without QR (`POST /api/auth/device/select/`). Codes and poll
-  secrets are stored only as hashes; the handoff is encrypted until the wall takes it once.
+  code relay; kept through the Clerk migration; indefinite once unlocked Melvin, 2026-11-24): `/display/unlock/` shows
+  a QR and eight-character code (`device_sign_ins`, 10 minutes). The phone opens `/signin/phone/`, signs in with Clerk
+  (or test mode) if needed, **picks which display**, and taps Approve; the wall polls and claims `ep_wall` +
+  `ep_display` for that device. Unlock lasts until **New link** or the display is deleted (`DISPLAY_COOKIE_MS` is years;
+  `/display/` re-issues cookies on each load). Signed-in browsers on the wall can pick a display without QR
+  (`POST /api/auth/device/select/`). Codes and poll secrets are stored only as hashes; the handoff is encrypted until
+  the wall takes it once.
 - Sign-in tries are rate-limited in the database (one atomic upsert), per address and per IP.
 - Requests that change something must come from our own origin (`sameOrigin`).
 - Security headers on every response (`src/lib/securityHeaders.ts`): HSTS, nosniff, `frame-ancestors 'none'` (wall
@@ -649,7 +658,8 @@ panel can be complex if you need it to be."
   settings, or anything beyond those three APIs through that helper — but the same token still unlocks `/api/display/*`
   if someone crafts requests (as the wall already can).
 - **Display image auth:** unlocking `/display/` sets HttpOnly `ep_wall` (`Path=/`) and `ep_display`
-  (`Path=/api/display/`) for about a week; `<img>` uses `ep_display`; the long-lived device token stays in
+  (`Path=/api/display/`) for years (effectively until New link / delete; browsers may clamp Max-Age, and each
+  `/display/` load refreshes both); `<img>` uses `ep_display`; the long-lived device token stays in
   `x-display-token` / `data-token` for fetch, never in image query strings.
 - **Home Assistant URL:** must be public https; changing it (save or backup restore) clears the stored token and
   Cloudflare Access pair so they are never sent to a new host.

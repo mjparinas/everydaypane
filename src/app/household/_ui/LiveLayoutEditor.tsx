@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 
-import { cellAt, clampRect, CORNERS, fits, isBackdrop, resizeFrom, type Corner, type Rect } from "@/lib/config/grid";
+import { cellAt, clampRect, CORNERS, fits, isBackdrop, overlaps, resizeFrom, type Corner, type Rect } from "@/lib/config/grid";
 import type { DashboardConfig, View, Widget } from "@/lib/config/schema";
 import { WIDGETS } from "@/lib/config/widgets";
 import { clearDraftMessage, draftMessage, parsePreviewReady } from "@/lib/display/draftMessage";
@@ -264,6 +264,9 @@ export function LiveLayoutEditor({
             const r = dragging ? drag.rect : w;
             const ok = !dragging || fits({ ...drag.rect, type: w.type }, grid, others(w.id));
             const backdrop = isBackdrop(w);
+            const onPhoto =
+              !backdrop &&
+              view.widgets.some((other) => isBackdrop(other) && overlaps(dragging && drag?.id === w.id ? drag.rect : w, other));
             const info = WIDGETS[w.type];
             const selected = selectedId === w.id;
             return (
@@ -271,9 +274,10 @@ export function LiveLayoutEditor({
                 key={w.id}
                 role="button"
                 tabIndex={0}
-                aria-label={`${w.title || info.label}, ${w.w} by ${w.h} at column ${w.x + 1}, row ${w.y + 1}`}
+                aria-label={`${w.title || info.label}, ${w.w} by ${w.h} at column ${w.x + 1}, row ${w.y + 1}${onPhoto ? ", on photos" : ""}`}
                 aria-pressed={selected}
                 data-widget={w.id}
+                data-on-photo={onPhoto ? "1" : undefined}
                 className={`group relative min-w-0 cursor-grab touch-none rounded-lg border-2 outline-none focus-visible:ring-2 focus-visible:ring-brand/50 active:cursor-grabbing ${
                   dragging ? "z-10" : backdrop ? "z-0" : "z-[1]"
                 } ${
@@ -281,7 +285,9 @@ export function LiveLayoutEditor({
                     ? "border-bad bg-bad/25"
                     : selected
                       ? "border-brand bg-brand/10"
-                      : "border-transparent hover:border-brand/50"
+                      : onPhoto
+                        ? "border-brand/40 bg-brand/5"
+                        : "border-transparent hover:border-brand/50"
                 } ${dragging && ok ? "bg-brand/15 shadow-lg" : ""}`}
                 style={{ gridColumn: `${r.x + 1} / span ${r.w}`, gridRow: `${r.y + 1} / span ${r.h}` }}
                 onPointerDown={(e) => start(e, w, "move")}

@@ -206,7 +206,7 @@ export const haEntity: Mount<"haEntity"> = (el, w) => {
   };
 
   const stop = subscribe<HaData>("ha", HA_EVERY, (d) => {
-    if (!d.configured) return fill(root, h("div", { class: "w-empty" }, "Set up Home Assistant under Settings in the admin panel."));
+    if (!d.configured) return fill(root, h("div", { class: "w-empty" }, "Set up Home Assistant under Settings."));
     const e = d.entities[w.entityId];
     if (!e) {
       entity = null;
