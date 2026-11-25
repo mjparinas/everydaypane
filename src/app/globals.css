@@ -109,6 +109,57 @@ body {
   border-radius: 0.65rem;
   background: #111827;
 }
+.pane-gallery {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  border-radius: 0.65rem;
+  background: #111827;
+}
+.pane-gallery-shot {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0;
+  transition: opacity 700ms ease;
+  pointer-events: none;
+}
+.pane-gallery-shot.is-active {
+  opacity: 1;
+}
+.pane-gallery-dots {
+  display: flex;
+  justify-content: center;
+  gap: 0.4rem;
+  margin-top: 0.65rem;
+}
+.pane-gallery-dot {
+  width: 0.45rem;
+  height: 0.45rem;
+  border-radius: 999px;
+  border: 0;
+  padding: 0;
+  background: rgb(148 163 184 / 0.4);
+  cursor: pointer;
+  transition:
+    background 200ms ease,
+    transform 200ms ease;
+}
+.pane-gallery-dot.is-active {
+  background: var(--color-brand);
+  transform: scale(1.25);
+}
+.pane-gallery-dot:focus-visible {
+  outline: 2px solid var(--color-brand);
+  outline-offset: 2px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .pane-gallery-shot {
+    transition: none;
+  }
+}
 
 @keyframes site-rise {
   from {

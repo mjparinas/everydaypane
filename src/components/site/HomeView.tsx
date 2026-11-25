@@ -164,7 +164,7 @@ export function HomeView() {
               </ul>
             </div>
             <div className="site-rise" style={{ animationDelay: "80ms" }}>
-              <PaneMock variant="morning" priority />
+              <PaneMock variant="morning" priority cycle />
             </div>
           </div>
         </section>

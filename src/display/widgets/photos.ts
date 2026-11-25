@@ -91,7 +91,7 @@ export const photos: Mount<"photos"> = (el, w) => {
         h(
           "div",
           { class: "w-empty" },
-          errors[0] ?? (wanted.length ? "No photos in these albums yet" : "Add a photo album in the admin panel."),
+          errors[0] ?? (wanted.length ? "No photos in these albums yet" : "Add a photo album under Settings › Photos."),
         ),
       );
       return;

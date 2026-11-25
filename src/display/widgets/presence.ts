@@ -21,7 +21,7 @@ export const presence: Mount<"presence"> = (el, w) => {
   const root = h("div", { class: "w-presence" }, h("div", { class: "w-empty" }, "Checking who's home…"));
   el.append(root);
   return subscribe<HaData>("ha", HA_EVERY, (d) => {
-    if (!d.configured) return fill(root, h("div", { class: "w-empty" }, "Set up Home Assistant under Settings in the admin panel."));
+    if (!d.configured) return fill(root, h("div", { class: "w-empty" }, "Set up Home Assistant under Settings."));
     if (w.entities.length === 0) return fill(root, h("div", { class: "w-empty" }, "Pick people for this widget."));
     fill(
       root,

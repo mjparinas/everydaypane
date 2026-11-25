@@ -135,20 +135,7 @@ export function DisplaysPanel() {
             Add display
           </button>
         </form>
-        {added && (
-          <div className="grid gap-2 rounded-xl border border-brand p-3" role="status">
-            <p className="text-sm">
-              On <strong>{added.name}</strong>, open the wall address below, then unlock with your phone (scan the QR) or sign in and pick
-              this display.
-            </p>
-            <Address url={added.url} label="Wall address" />
-            <Address url={added.editUrl} label="Phone edit" />
-            <p className="text-xs text-soft">
-              On a wall panel or tablet, set the wall address as the start page in its browser (kiosk) settings.
-            </p>
-            <CastHints />
-          </div>
-        )}
+        {added && <GetKitchenOnline name={added.name} wallUrl={added.url} editUrl={added.editUrl} />}
         {error && (
           <div className="grid gap-2" role="alert">
             <p className="text-sm text-bad">{error}</p>
@@ -198,52 +185,109 @@ export function DisplaysPanel() {
                   onChange={(v) => void patch(d.id, { viewId: v || null })}
                 />
                 {d.url ? (
-                  <>
-                    <Address url={d.url} label="Wall address" />
-                    <CastHints />
-                  </>
-                ) : (
-                  <p className="text-sm text-soft">Address unavailable — give it a new link, or delete and add it again.</p>
-                )}
-                {d.editUrl && (
-                  <div className="grid gap-2 rounded-lg border border-line bg-bg p-3">
-                    <Address url={d.editUrl} label="Phone edit" />
-                    <div className="flex items-start gap-3">
-                      {/* eslint-disable-next-line @next/next/no-img-element -- admin SVG from our own route */}
-                      <img
-                        key={d.editUrl}
-                        src={`/api/household/devices/${encodeURIComponent(d.id)}/edit-qr/?v=${encodeURIComponent(d.editUrl)}`}
-                        alt={`QR code for editing from ${d.name}`}
-                        className="h-28 w-28 rounded-lg bg-white p-1"
-                        width={112}
-                        height={112}
-                      />
-                      <p className="text-xs text-soft">
-                        Scan to edit meals, shopping and messages with no sign-in. Anyone with this link can change those. Also available as
-                        a Phone edit QR widget on the wall.
-                      </p>
-                    </div>
-                  </div>
-                )}
-                <div className="flex flex-wrap gap-2">
-                  <ConfirmButton
-                    label="New link"
-                    confirm="Tap again: signs this display out and refreshes the phone-edit address"
-                    onConfirm={() => void newLink(d.id)}
-                  />
-                  <ConfirmButton
-                    label="Delete display"
-                    confirm="Tap again: this signs the screen out"
-                    onConfirm={() => {
+                  <DisplaySetupDetails
+                    deviceId={d.id}
+                    wallUrl={d.url}
+                    editUrl={d.editUrl}
+                    onNewLink={() => void newLink(d.id)}
+                    onDelete={() => {
                       void call(`/api/household/devices/${d.id}/`, "DELETE").then(() => load());
                     }}
                   />
-                </div>
+                ) : (
+                  <p className="text-sm text-soft">Address unavailable — give it a new link, or delete and add it again.</p>
+                )}
               </li>
             ))}
           </ul>
         )}
       </Section>
+    </div>
+  );
+}
+
+/** First-run path after Add: get the wall online, then optional phone-edit / cast (H3, 2026-11-24). */
+function GetKitchenOnline({ name, wallUrl, editUrl }: { name: string; wallUrl: string; editUrl: string }) {
+  const [more, setMore] = useState(false);
+  return (
+    <div className="grid gap-3 rounded-xl border border-brand p-3" role="status">
+      <p className="text-sm font-semibold text-ink">Get {name} online</p>
+      <ol className="list-decimal space-y-1 pl-5 text-sm">
+        <li>
+          Open this wall address on the kitchen panel (or cast a browser tab to it):
+          <div className="mt-1">
+            <Address url={wallUrl} />
+          </div>
+        </li>
+        <li>Unlock with your phone — scan the QR on the wall, or sign in and pick this display.</li>
+      </ol>
+      <button type="button" className="btn-ghost justify-self-start text-sm" aria-expanded={more} onClick={() => setMore((v) => !v)}>
+        {more ? "Hide phone edit & casting" : "Phone edit & casting tips"}
+      </button>
+      {more ? (
+        <div className="grid gap-2 border-t border-line pt-2">
+          <Address url={editUrl} label="Phone edit (meals, shopping, messages — no sign-in)" />
+          <p className="text-xs text-soft">Anyone with the phone-edit link can change those lists. Keep the QR on the wall, not online.</p>
+          <CastHints />
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+function DisplaySetupDetails({
+  deviceId,
+  wallUrl,
+  editUrl,
+  onNewLink,
+  onDelete,
+}: {
+  deviceId: string;
+  wallUrl: string;
+  editUrl: string | null;
+  onNewLink: () => void;
+  onDelete: () => void;
+}) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="grid gap-2">
+      <Address url={wallUrl} label="Wall address" />
+      <button type="button" className="btn-ghost justify-self-start text-sm" aria-expanded={open} onClick={() => setOpen((v) => !v)}>
+        {open ? "Hide setup extras" : "Phone edit, QR & casting"}
+      </button>
+      {open ? (
+        <div className="grid gap-2 rounded-lg border border-line bg-bg p-3">
+          <CastHints />
+          {editUrl ? (
+            <>
+              <Address url={editUrl} label="Phone edit" />
+              <div className="flex items-start gap-3">
+                {/* eslint-disable-next-line @next/next/no-img-element -- admin SVG from our own route */}
+                <img
+                  key={editUrl}
+                  src={`/api/household/devices/${encodeURIComponent(deviceId)}/edit-qr/?v=${encodeURIComponent(editUrl)}`}
+                  alt="QR code for phone edit"
+                  className="h-28 w-28 rounded-lg bg-white p-1"
+                  width={112}
+                  height={112}
+                />
+                <p className="text-xs text-soft">
+                  Scan to edit meals, shopping and messages with no sign-in. Anyone with this link can change those. Also available as a
+                  Phone edit QR widget on the wall.
+                </p>
+              </div>
+            </>
+          ) : null}
+        </div>
+      ) : null}
+      <div className="flex flex-wrap gap-2">
+        <ConfirmButton
+          label="New link"
+          confirm="Tap again: signs this display out and refreshes the phone-edit address"
+          onConfirm={onNewLink}
+        />
+        <ConfirmButton label="Delete display" confirm="Tap again: this signs the screen out" onConfirm={onDelete} />
+      </div>
     </div>
   );
 }
@@ -279,11 +323,11 @@ function CastHints() {
     <div className="grid gap-1 text-xs text-soft">
       <p>
         <strong className="font-medium text-ink">Chromecast / Google TV:</strong> cast a Chrome tab with{" "}
-        <code className="text-[0.7rem]">{DISPLAY_PATH}</code> open, or use the TV&apos;s browser and unlock with your phone (QR).
+        <code className="text-xs">{DISPLAY_PATH}</code> open, or use the TV&apos;s browser and unlock with your phone (QR).
       </p>
       <p>
-        <strong className="font-medium text-ink">Wall panel / tablet:</strong> set <code className="text-[0.7rem]">{DISPLAY_PATH}</code> as
-        the start page, then unlock once with your phone.
+        <strong className="font-medium text-ink">Wall panel / tablet:</strong> set <code className="text-xs">{DISPLAY_PATH}</code> as the
+        start page, then unlock once with your phone.
       </p>
     </div>
   );

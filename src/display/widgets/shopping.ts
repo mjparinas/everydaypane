@@ -66,7 +66,14 @@ export const shopping: Mount<"shopping"> = (el, w) => {
     const note = message ? h("div", { class: "sh-msg" }, message) : null;
     if (!items.length) {
       const bought = data.items.some((i) => (ticks.get(i.id) ?? i.done) === true);
-      return fill(root, title, h("div", { class: "w-empty" }, bought && !w.showDone ? "All bought" : "Nothing on the list"), note);
+      // Keep Add on empty lists when the wall allows it (W2, 2026-11-24) — otherwise an empty tile looks stuck.
+      return fill(
+        root,
+        title,
+        h("div", { class: "w-empty" }, bought && !w.showDone ? "All bought" : "Nothing on the list"),
+        w.allowAdd ? buildAdd() : null,
+        note,
+      );
     }
     fill(
       root,
@@ -75,8 +82,9 @@ export const shopping: Mount<"shopping"> = (el, w) => {
         "ul",
         { class: "sh-items" },
         ...items.map((item) => {
+          // Circles only when ticking is on — otherwise they look tappable (critique P2, 2026-11-24).
           const parts = [
-            h("span", { class: "sh-check", "aria-hidden": "true" }, item.done ? "✓" : ""),
+            w.allowCheck ? h("span", { class: "sh-check", "aria-hidden": "true" }, item.done ? "✓" : "") : null,
             h("span", { class: "sh-title" }, item.text),
           ];
           const cls = `sh-item${item.done ? " sh-done" : ""}`;

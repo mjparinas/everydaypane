@@ -83,8 +83,9 @@ export const tasks: Mount<"tasks"> = (el, w, ctx) => {
   const row = (listId: string, t: TaskItem, today: string) => {
     const due = w.showDue && t.due ? dueLabel(t.due, today) : null;
     const ticked = pending.has(t.id);
+    // Checkbox mark only when ticking is on (critique P2, 2026-11-24).
     const parts = [
-      h("span", { class: "tk-box", "aria-hidden": "true" }),
+      w.allowCheck ? h("span", { class: "tk-box", "aria-hidden": "true" }) : null,
       h("span", { class: "tk-title" }, t.title),
       due ? h("span", { class: `tk-due${due.overdue ? " tk-overdue" : ""}` }, due.text) : null,
     ];

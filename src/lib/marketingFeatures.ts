@@ -95,10 +95,10 @@ export const FEATURE_WIDGET_GROUPS: FeatureWidgetGroup[] = WIDGET_GROUPS.map((g)
 }));
 
 export const FEATURE_BEHAVIOURS: { name: string; blurb: string }[] = [
-  { name: "Multi-view grid", blurb: "Rows, columns, gap, edge and tile padding." },
-  { name: "Widgets on photos", blurb: "Photos as backdrop; panels stay readable." },
+  { name: "Multi-view grid", blurb: "Rows, columns, gap, edge inset and padding inside tiles." },
+  { name: "Widgets on photos", blurb: "Photos as backdrop; panels stay readable on top." },
   { name: "Time-of-day schedule", blurb: "Morning to overnight views, themes and dimming." },
   { name: "Screen saver", blurb: "Photos or dark; motion, doorbell and alert wake." },
   { name: "Offline + burn-in", blurb: "Service worker cache and pixel shift." },
-  { name: "Live admin editor", blurb: "Real widgets under a drag overlay on your phone." },
+  { name: "Live household editor", blurb: "Real wall widgets under a drag overlay; templates when a view is empty." },
 ];

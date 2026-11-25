@@ -176,8 +176,8 @@ export const flows = [
       await page.mouse.up();
       const grown = await widget.getAttribute("aria-label");
       expect(grown.includes("3 by 3 at column 9, row 6"), `the top-left corner didn't resize: ${grown}`);
-      await page.getByRole("button", { name: "Save", exact: true }).click();
-      await page.getByText(/Saved\. Displays update/).waitFor();
+      await page.getByRole("button", { name: "Publish to wall", exact: true }).click();
+      await page.getByText(/Published\. Displays update/).waitFor();
       const { config } = await (await page.request.get(`${base}/api/household/config/`)).json();
       const saved = config.views.find((v) => v.id === "home").widgets.find((w) => w.id === "home-countdown");
       expect(saved.x === 8 && saved.w === 3 && saved.h === 3, `saved as ${saved.w} by ${saved.h} at ${saved.x}`);

@@ -83,25 +83,27 @@ export function ViewSettingsDrawer({
         </div>
       )}
       <Range
-        label="Gap"
+        label="Gap between tiles"
         value={view.gap}
         min={0}
         max={48}
         step={1}
         format={(n) => `${n} px`}
+        hint="Space between widgets on the wall."
         onChange={(n) => onEdit((x) => void (x.gap = n))}
       />
       <Range
-        label="Edge"
+        label="Edge inset"
         value={view.padding}
         min={0}
         max={96}
         step={1}
         format={(n) => `${n} px`}
+        hint="Padding from the screen edge to the grid."
         onChange={(n) => onEdit((x) => void (x.padding = n))}
       />
       <Range
-        label="Tile"
+        label="Padding inside tiles"
         value={view.tilePadding}
         min={0}
         max={48}
@@ -113,7 +115,7 @@ export function ViewSettingsDrawer({
       <Select
         label="Colour scheme"
         value={view.themeId ?? ""}
-        options={[{ value: "", label: "The dashboard's scheme" }, ...config.themes.map((t) => ({ value: t.id, label: t.name }))]}
+        options={[{ value: "", label: "Use the dashboard default" }, ...config.themes.map((t) => ({ value: t.id, label: t.name }))]}
         onChange={(v) => onEdit((x) => void (x.themeId = v || null))}
       />
       <div className="flex flex-wrap gap-2 border-t border-line pt-4">

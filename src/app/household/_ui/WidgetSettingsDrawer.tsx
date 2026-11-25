@@ -1,9 +1,11 @@
 "use client";
 
 import type { DashboardConfig, Widget } from "@/lib/config/schema";
+import { isFreeWidgetType } from "@/lib/plans";
 
 import { ConfirmButton } from "./fields";
 import { widgetName } from "./LiveLayoutEditor";
+import { HouseholdBadge, usePlan } from "./plan";
 import { SlideDrawer } from "./SlideDrawer";
 import { WidgetSettings } from "./WidgetSettings";
 
@@ -24,6 +26,8 @@ export function WidgetSettingsDrawer({
   onDuplicate: () => void;
   onRemove: () => void;
 }) {
+  const { isPaid } = usePlan();
+  const paidWidget = !isPaid && !isFreeWidgetType(widget.type);
   return (
     <SlideDrawer
       title={widgetName(widget)}
@@ -32,6 +36,11 @@ export function WidgetSettingsDrawer({
       testId="widget-settings-drawer"
       closeLabel="Close widget settings"
     >
+      {paidWidget ? (
+        <p className="text-sm text-soft">
+          This widget needs <HouseholdBadge className="align-middle" /> — Free can’t save it on the wall.
+        </p>
+      ) : null}
       <WidgetSettings widget={widget} config={config} onChange={onChange} />
       <div className="flex flex-wrap gap-2 border-t border-line pt-4">
         <button type="button" className="btn-ghost" onClick={onDuplicate}>
