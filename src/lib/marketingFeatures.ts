@@ -57,6 +57,7 @@ const FEATURE_BLURBS: Partial<Record<WidgetType, string>> = {
   sports: "Live score, last result, next game.",
   timer: "Kitchen timers with flash, full-screen alert and beeps.",
   pomodoro: "Focus and break rounds with an optional chime.",
+  internet: "Ping, dropped checks and speed tests, measured by the screen itself.",
   alerts: "Alert Ready, weather, roads, quakes, BC Hydro.",
   whiteboard: "Finger draw with colours; the same doodle on every display.",
   packages: "UPS, FedEx, Canada Post and USPS tracking on the wall.",

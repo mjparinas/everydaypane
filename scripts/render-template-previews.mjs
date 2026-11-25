@@ -250,6 +250,19 @@ await page.route(/tradingview\.com|youtube\.com|youtu\.be|vimeo\.com|google\.com
   });
 });
 
+// The internet widget measures from the browser: leave Cloudflare unanswered (its pings time out after the shot) and
+// seed the widget's saved readings instead, so the sample shows a steady line and a recent speed test.
+await page.route("**/speed.cloudflare.com/**", () => new Promise(() => undefined));
+await page.addInitScript((now) => {
+  const ms = [14, 13, 15, 12, 14, 18, 13, 12, 14, 16, 13, 12, 22, 14, 13, 12, 15, 14, 13, 12, 14, 13, 17, 13, 12, 14, 13, 15, 12, 13];
+  const history = ms.map((m, i) => ({ at: now - (ms.length - i) * 30_000, ms: i === 12 ? null : m }));
+  const speed = { at: now - 47 * 60_000, down: 312.4, up: 48.6 };
+  try {
+    localStorage.setItem("everydaypane.internet.internet", JSON.stringify({ history, speed }));
+  } catch {
+    // Preview still renders, just empty.
+  }
+}, FIXED_NOW);
 await page.clock.install({ time: FIXED_NOW });
 // Stable photo shuffle / any other Math.random use across CI runs.
 await page.addInitScript(() => {
