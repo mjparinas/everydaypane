@@ -60,9 +60,13 @@ export async function signIn(page, email) {
   await page.goto(`${BASE}/household/`);
   await page.waitForURL(/\/signin\//);
   await page.getByLabel("Email").fill(email);
-  await page.getByRole("button", { name: /Sign in|Create free household|Email me a code/i }).click();
-  // commit: the Views preview iframe can delay the load event past Playwright's default.
-  await page.waitForURL(/\/household\//, { waitUntil: "commit" });
+  const [response] = await Promise.all([
+    page.waitForResponse(
+      (r) => r.url() === `${BASE}/household/` && r.request().isNavigationRequest() && r.request().frame() === page.mainFrame(),
+    ),
+    page.getByRole("button", { name: "Sign in", exact: true }).click(),
+  ]);
+  expect(response.ok(), `household after sign-in: ${response.status()}`);
 }
 
 try {
@@ -94,7 +98,6 @@ try {
 
   await step("admin signs in with AUTH_TEST_MODE", async () => {
     await signIn(page, "admin@example.com");
-    await page.waitForURL(/\/household\//);
     await page.getByText("admin@example.com").waitFor();
   });
 
