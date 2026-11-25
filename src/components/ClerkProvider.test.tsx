@@ -27,4 +27,15 @@ describe("AppClerkProvider", () => {
     expect(props?.nonce).toBe("NmI2NDEwYzMt");
     expect(props?.dynamic).toBe(true);
   });
+
+  it("does not mount Clerk when the publishable key is missing", async () => {
+    process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY = "";
+    const { AppClerkProvider } = await import("./ClerkProvider");
+    render(
+      <AppClerkProvider nonce="NmI2NDEwYzMt">
+        <span>ok</span>
+      </AppClerkProvider>,
+    );
+    expect(clerkRoot).not.toHaveBeenCalled();
+  });
 });

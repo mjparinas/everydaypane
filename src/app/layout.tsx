@@ -44,6 +44,15 @@ export const viewport: Viewport = { width: "device-width", initialScale: 1, view
 export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   // Per-request CSP nonce from proxy.ts (Next applies it to its scripts only on a dynamic render).
   await connection();
+  // Inlined at build: CI has no Clerk key, so this branch (and the Clerk client) drops out of the bundle.
+  const clerkReady = Boolean(process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY?.startsWith("pk_"));
+  if (!clerkReady) {
+    return (
+      <html lang="en-CA">
+        <body className="font-sans antialiased">{children}</body>
+      </html>
+    );
+  }
   const nonce = (await headers()).get("x-nonce") ?? undefined;
   return (
     <html lang="en-CA">
