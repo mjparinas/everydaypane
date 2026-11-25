@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 
-import type { NativeSmartProvider } from "@/lib/smartHome";
+import type { DirectSmartProvider } from "@/lib/smartHome";
 
 export interface SmartServiceStatus {
   configured: boolean;
@@ -11,10 +11,10 @@ export interface SmartServiceStatus {
   error?: string;
 }
 
-export type SmartHomeStatus = Record<NativeSmartProvider, SmartServiceStatus>;
+export type SmartHomeStatus = Record<DirectSmartProvider, SmartServiceStatus>;
 
 export interface SmartProviderDetail extends SmartServiceStatus {
-  devices: { id: string; name: string }[];
+  devices: { id: string; name: string; sku?: string }[];
 }
 
 let pending: Promise<SmartHomeStatus> | null = null;
@@ -24,6 +24,7 @@ const failed: SmartHomeStatus = {
   nest: { configured: false, connected: false, error: "Couldn't ask the server" },
   ecobee: { configured: false, connected: false, error: "Couldn't ask the server" },
   smartthings: { configured: false, connected: false, error: "Couldn't ask the server" },
+  govee: { configured: false, connected: false, error: "Couldn't ask the server" },
 };
 
 export function loadSmartHome(fresh = false): Promise<SmartHomeStatus> {
@@ -53,7 +54,7 @@ export function useSmartHome(): SmartHomeStatus | null {
   return status;
 }
 
-export async function loadSmartProvider(provider: NativeSmartProvider): Promise<SmartProviderDetail> {
+export async function loadSmartProvider(provider: DirectSmartProvider): Promise<SmartProviderDetail> {
   const r = await fetch(`/api/household/smart-home/?provider=${provider}`);
   if (!r.ok) return { configured: false, connected: false, devices: [], error: "Couldn't load devices" };
   return r.json() as Promise<SmartProviderDetail>;

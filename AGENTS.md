@@ -14,7 +14,7 @@ for widgets). Don't suggest anything listed there as new; if an idea extends som
 and what it adds. Every pull request that adds a widget, an integration or a display behaviour updates this list in the
 same change, and moves it out of **In progress** when it merges.
 
-## What already exists (checked against the code, 2026-11-23)
+## What already exists (checked against the code, 2026-11-25)
 
 **Widgets** (`widgetSchema`, drawn by `src/display/widgets/`):
 
@@ -25,6 +25,7 @@ same change, and moves it out of **In progress** when it merges.
 | Sunrise & sunset (`sunTimes`) | Today's sunrise, sunset and length of daylight; optional emoji and daylight hours | Open-Meteo forecast |
 | Weather (`weather`) | Current conditions, hourly, up to 7 days, with icons, UV index and pollen | Open-Meteo (default) or Environment Canada city page (`config.weather.provider`); UV/pollen/AQ still Open-Meteo |
 | Tempest (`tempest`) | Backyard station: temp, humidity, wind, rain today | WeatherFlow REST (`config.integrations.smartHome.tempest`, token secret) |
+| EcoFlow (`ecoflow`) | Each power station's battery %, power in and out, solar, AC and DC flows, time to full or empty; pick devices or show all | EcoFlow IoT Developer Platform (household access and secret keys, `docs/ecoflow.md`) |
 | Weather Underground (`weatherUnderground`) | PWS current conditions | IBM WU PWS API (`WU_API_KEY` or per-account secret) |
 | School menu (`menus`) | Nutrislice breakfast and lunch for a day or week; not the meal plan | Nutrislice published JSON (`config.integrations.smartHome.menus`) |
 | Air quality (`airQuality`) | AQHI or US AQI | Open-Meteo air quality |
@@ -37,7 +38,8 @@ same change, and moves it out of **In progress** when it merges.
 | Up next (`calendarUpNext`) | The next event large, with a short following list | Same calendar feed |
 | Garbage day (`garbage`) | Next pickups, 1 to 8 weeks | Township of Langley (Recycle Coach) |
 | Photos (`photos`) | Slideshow, cover or contain, captions | Amazon shared albums, Amazon people, URL lists, photo library (uploads and Google Photos picks), Bing picture of the day, Reddit, weather-linked albums, Immich, Dropbox, OneDrive, Box, Flickr, SmugMug, iCloud published links (`docs/icloud-photos.md`) |
-| Smart device (`haEntity`) | Toggle, light, sensor, climate, cover, lock (lock only), button; `provider` Home Assistant (default), **Nest**, **ecobee** or **SmartThings** | Shared `/api/display/ha/` feed; OAuth + REST for native providers (`docs/nest.md`, `docs/ecobee.md`, `docs/smartthings.md`) |
+| Smart device (`haEntity`) | Toggle, light, sensor, climate, cover, lock (lock only), button; `provider` Home Assistant (default), **Nest**, **ecobee**, **SmartThings** or **Govee lights** (on/off, brightness, colour swatches, scenes) | Shared `/api/display/ha/` feed; OAuth + REST for native providers, an API key for Govee (`docs/nest.md`, `docs/ecobee.md`, `docs/smartthings.md`, `docs/govee.md`) |
+| UniFi network (`unifi`) | Online / slow / down, latest latency and packet loss, minutes down and last outage in 24 h, 24 h latency chart, clients and devices, optional current usage, ISP | UniFi Site Manager API (`api.ui.com`, `unifi.apiKey` secret, `docs/unifi.md`) |
 | Camera (`camera`) | UniFi Protect snapshot on a timer | Home Assistant |
 | Music (`media`) | Now playing, play/pause, skip, volume, sources | Home Assistant, Spotify or Sonos |
 | Note (`note`) | Fixed text from the admin | Settings document |
@@ -56,10 +58,12 @@ same change, and moves it out of **In progress** when it merges.
 | TransLink departures (`transit`) | Next buses from up to six picked stops, live times, route filter, walk-minutes cutoff | TransLink GTFS-realtime |
 | Commute time (`commute`) | Drive times with live traffic from home to up to six places, "leave by" time | TomTom Routing API |
 | Rain radar (`radar`) | Animated radar over a map around home: the past 30 min to 3 h, then up to 3 h of forecast; rain or snow, five map areas, still or looping | Environment Canada (MSC GeoMet), Esri grey canvas map |
+| Wildfires (`wildfires`) | Active fires around home on the radar's map, coloured by stage of control (fires of note ringed), burned areas, evacuation orders and alerts, the nearest 0 to 5 fires listed; five map areas, fires under control on or off | BC Wildfire Service and EmergencyInfoBC public ArcGIS layers, Esri grey canvas map |
 | Timers (`timer`) | Kitchen timers started from preset buttons on the wall, up to six at once, pause, +1 min; flash, full-screen alert and beeps when done | Device (localStorage) |
 | Pomodoro (`pomodoro`) | Focus and break rounds, long break after the last round, optional auto-start, chime between phases | Device (localStorage) |
 | BC Ferries (`ferries`) | Next sailings on up to four routes, how full each is, cancellations and delays | Community BC Ferries API (bcferriesapi.ca) |
 | Earth wind map (`earth`) | earth.nullschool.net's animated wind globe centred on any place, four zooms, a colour layer (temperature, rain, humidity…), place marker, animation on or off | earth.nullschool.net (framed), Open-Meteo place search |
+| Windy map (`windy`) | Windy's map centred on any place, one layer (radar, rain, wind, gusts, temperature, clouds, new snow, thunderstorms, satellite, PM2.5), zoom 3–11, place marker, pressure lines, touch on or off | embed.windy.com (framed), Open-Meteo place search |
 | Stocks (`stocks`) | Watchlist quotes with daily change | Yahoo Finance (unofficial) or Finnhub with `FINNHUB_API_KEY` |
 | Crypto (`crypto`) | Coin prices and 24 h change | CoinGecko free API |
 | FX (`fx`) | Currency pair rates | Frankfurter / ECB |
@@ -84,7 +88,7 @@ same change, and moves it out of **In progress** when it merges.
 | Internet (`internet`) | Ping every 10 s to 5 min with Online / Slow / Offline, a graph of the last 60 checks and the share that failed; download and upload speed every 1 to 24 h or on a tap | The screen's own browser against Cloudflare's speed test servers |
 
 **Display behaviour:** several views on a drag-and-drop grid (chosen rows and columns, gap, edge padding and **tile padding**; presets include **12×8 landscape** and **8×12 portrait**, with portrait stages letterboxed on a landscape panel), **per-widget visibility by part of day** (`visiblePeriods`), optional **view loop** on schedule followers (`schedule.loopSeconds`), **widgets layered on top of a photos widget**
-(photos as the backdrop), **per-widget background** (on/off and opacity; theme surface opacity is the default; clocks and dates start with no panel), **per-widget font size** (`fontScale`, 70–150 %, text widgets only — not photos, radar, camera, earth, embeds or the whiteboard), **per-widget outer padding** (`outerPadding`, 0–48 px, omitted means none; insets the panel in its grid cell), a time-of-day schedule
+(photos as the backdrop), **per-widget background** (on/off and opacity; theme surface opacity is the default; clocks and dates start with no panel), **per-widget font size** (`fontScale`, 70–150 %, text widgets only — not photos, radar, wildfires, camera, earth, Windy, embeds or the whiteboard), **per-widget outer padding** (`outerPadding`, 0–48 px, omitted means none; insets the panel in its grid cell), a time-of-day schedule
 (morning, afternoon, evening, overnight) choosing the view, theme, day or night mode and dimming — each period can start at a **fixed time, sunrise or sunset** (sunrise/sunset from today's Open-Meteo weather at the dashboard location); themes with colour
 palettes, fonts, corner radius, opacity and optional glass; burn-in protection (pixel shift); offline mode (service
 worker serves the last good data and shows "Offline"); a **screen saver** (photos only or dark after idle minutes, dark
@@ -108,7 +112,7 @@ Manrope display, template preview screenshots from `public/templates/` — no pe
 The features catalogue lives in `src/lib/marketingFeatures.ts` (grouped like the admin widget picker).
 
 **Alerts** (`src/server/alerts.ts`): Alert Ready (NAAD), **Environment Canada weather warnings** (through NAAD),
-DriveBC road events and weather conditions, Earthquakes Canada, BC Hydro power outages. Each switchable in `config.alerts.sources`.
+DriveBC road events and weather conditions, Earthquakes Canada, BC Hydro power outages, **EmergencyInfoBC evacuation orders and alerts** (any hazard, covering the home or within `alerts.evacuationKm`). Each switchable in `config.alerts.sources`.
 Optional email to everyone on `ADMIN_EMAILS` and `FAMILY_EMAILS` when a new strip-worthy alert arrives (`config.alerts.notifyEmail`).
 
 **Household and family:** Clerk Account Portal in production (`accounts.everydaypane.com/sign-in` and `/sign-up`, from `NEXT_PUBLIC_CLERK_SIGN_IN_URL` / `SIGN_UP_URL`); local and CI stay on `/signin/`; Turso
@@ -138,8 +142,8 @@ gated by that allow-list; Overview through Log (Households, Displays,
 Revenue, Traffic, Codes, Flags, …). Cookieless marketing beacon. Customer path is `/household/`.
 
 **Integrations connected from Settings:** Google Calendar, Microsoft 365 calendars and **To Do** (OAuth, `?todo=1` / `?files=1`), Google Tasks, **Todoist**, Google Photos (Picker), iCal calendar links (with iCloud publish steps in Settings and `docs/icloud-calendar.md`),
-Amazon Photos, **photo sources** (Bing, Reddit, weather albums, Immich API keys, Dropbox/Box/SmugMug OAuth, OneDrive via Microsoft, Flickr API key, iCloud published URLs), the photo library (Vercel Blob), Home Assistant (Cloudflare Tunnel + Access), Spotify, Sonos, garbage
-zone lookup, sports teams to follow, TransLink, commute places (TomTom geocoding), optional **package tracking** key, **Oura** (OAuth, Settings › Content & finance).
+**Govee** (API key, Settings › Smart home), Amazon Photos, **photo sources** (Bing, Reddit, weather albums, Immich API keys, Dropbox/Box/SmugMug OAuth, OneDrive via Microsoft, Flickr API key, iCloud published URLs), the photo library (Vercel Blob), Home Assistant (Cloudflare Tunnel + Access), Spotify, Sonos, garbage
+zone lookup, sports teams to follow, TransLink, commute places (TomTom geocoding), optional **package tracking** key, **UniFi Site Manager** API key (Settings › UniFi network), **EcoFlow** access and secret keys, **Oura** (OAuth, Settings › Content & finance).
 
 ## In progress
 
@@ -262,7 +266,7 @@ npm run templates:previews  # regenerate public/templates/*.png from real widget
   "transparent" setting becomes Background off.
 - **Per-widget font size** (Melvin, 2026-11-23: scale fonts on a per component basis): text widgets get a Font size
   slider (`fontScale`, 70–150 %, 100 % when omitted). The display sets `--font-scale` on the cell; stylesheet
-  `font-size` rules multiply by it. Photos, radar, camera, earth, TradingView, YouTube, Vimeo, Instagram, Maps and
+  `font-size` rules multiply by it. Photos, radar, camera, earth, Windy, TradingView, YouTube, Vimeo, Instagram, Maps and
   the whiteboard omit the control.
 - **Per-widget outer padding** (Melvin, 2026-11-23: slider for outer padding on each widget): every widget has Outer
   padding (`outerPadding`, 0–48 px, omitted means none) that insets the panel inside its grid cell; the view's Tile
@@ -285,6 +289,9 @@ npm run templates:previews  # regenerate public/templates/*.png from real widget
   Architecture).
 - **Rain radar** (Melvin, 2026-11-21): an animated radar map for the Lower Mainland, the past hour and a short-term
   forecast, from a free source with no key (see Architecture).
+- **Wildfires** (Melvin, 2026-11-21: "do windy and wildfires"): a wildfire map around home with no key: active fires,
+  their burned areas and evacuation areas, and the nearest fires listed; nearby evacuation orders and alerts also join
+  the alert strip (see Architecture). Windy was the other half of that ask (`windy`, below).
 - **Chore chart** (Melvin, 2026-11-21; periods 2026-11-23 from homescreens.dev): recurring chores for the kids, on chosen
   weekdays and a **time of day** (morning, afternoon, evening, anytime), done by everyone picked or rotated between them
   (each time it's due, or a week each), ticked off with a tap on the wall, with per-kid completion dots (or progress rings),
@@ -297,6 +304,9 @@ npm run templates:previews  # regenerate public/templates/*.png from real widget
 - **Earth wind map** (Melvin, 2026-11-21: "can i add this and specific a location? https://earth.nullschool.net"):
   earth.nullschool.net framed in a widget, centred on a place picked in its settings (Langley by default), with a
   zoom, a colour layer and its own place marker (see Architecture).
+- **Windy map** (Melvin, 2026-11-21: "do windy and wildfires", after asking for a weather map like earth's): Windy's
+  free embed framed in a widget, centred on a place (Langley by default), with a layer, a zoom, a marker, pressure lines
+  and touch off unless switched on (see Architecture). Wildfires are separate work.
 - **TransLink departures** (Melvin, 2026-11-19: "add translink"): a TransLink widget with the next buses from up to six
   picked stops, live from TransLink's GTFS-realtime feed (see Architecture).
 - **Sports scores** (Melvin, 2026-11-21: "allow to customize the sports and the teams"): any teams from several leagues
@@ -309,9 +319,15 @@ npm run templates:previews  # regenerate public/templates/*.png from real widget
   readiness and activity scores on the wall, read directly from Oura's API (not Home Assistant). Scores only unless
   the widget's **Show last night's details** is on, because the kitchen wall is readable by anyone (Claude's default,
   2026-11-25) (see Architecture).
+- **EcoFlow power stations** (Melvin, 2026-11-21: "do all 6" of the native integrations; he has five EcoFlow devices):
+  battery, solar and power in and out on the wall from EcoFlow's official developer API, not Home Assistant (see
+  Architecture). Each household brings its own keys, because EcoFlow keys belong to one EcoFlow account.
 - **Internet ping and speed** (Melvin, 2026-11-21: "can we add an internet ping one", "or internet speed"): an
   `internet` widget measured by the wall's own browser, so it shows the home connection (see Architecture). No relay or
   extra software at home.
+- **UniFi network health** (Melvin, 2026-11-21: "do all 6", from a list of official cloud APIs; native only, not
+  through Home Assistant, nothing running at home): a `unifi` widget with the gateway's own view of the internet from
+  UniFi Site Manager. It sits beside the browser-side internet ping widget rather than replacing it (see Architecture).
 - **Canadian English** in everything a person reads (colour, centre, favourite), as in Liftsmith.
 
 ## Display: super lightweight (rule, Melvin, 2026-11-17)
@@ -328,9 +344,11 @@ panel can be complex if you need it to be."
   `bundle-check.mjs` and the `Lazy` type) and mounted through `lazyWidget` (`src/display/widgets/lazy.ts`), which
   imports it with display.js's own `?v=` only on a screen that shows it. Its `../api` is swapped at build time for
   `src/display/apiShared.ts`, which calls display.js's copy, so feeds, the device token and offline state stay single.
-  The internet widget, the whiteboard and Oura load this way (display.js 39.5 KB after the move).
-- **Budget:** the display's script stays under 40 KB gzipped and its stylesheet under 20 KB (`scripts/bundle-check.mjs`,
-  a CI step; CSS raised from 10 KB on 2026-11-23 for more clock styles). A new dependency on the display needs a very good reason.
+  The internet widget, the UniFi network widget, EcoFlow, the whiteboard, wildfires, the Windy map, the Smart device tile
+  (`haEntity.ts`; cameras and `HA_EVERY` stay in `ha.ts`) and Oura load this way, and `next.config.ts` gives each file the same
+  immutable cache header as display.js.
+- **Budget:** the display's script stays under 80 KB gzipped and its stylesheet under 20 KB (`scripts/bundle-check.mjs`,
+  a CI step; CSS raised from 10 KB on 2026-11-23 for more clock styles; script raised from 40 KB by Melvin on 2026-11-25: "double the size of the limit"). A new dependency on the display needs a very good reason.
 - All heavy lifting happens on the server: API calls to Google, weather, Recycle Coach, Amazon and Home Assistant are
   made, cached and trimmed by our routes, and the display fetches small JSON. Images are proxied at display size.
 - **No zooming** (Melvin, 2026-11-17: "dont allow pinch zoom on the dashboard"; kept after the 2026-11-22 a11y audit):
@@ -549,6 +567,24 @@ panel can be complex if you need it to be."
   the browser, forecast ones five minutes, tiles a week; the service worker leaves radar pictures alone. The widget stacks
   the pictures and switches their opacity (at most 10 observed and 6 forecast), resting two seconds on the latest and the
   last. This sandbox can't reach GeoMet or Esri, so tests use shapes from their documentation.
+- **Wildfires:** BC Wildfire Service's public ArcGIS feature services on ArcGIS Online
+  (`services6.arcgis.com/ubm4tcTYICKBpist/…`, no key, the layers its Wildfire Situation map reads):
+  `BCWS_ActiveFires_PublicView` (points; `FIRE_STATUS` is the stage of control: New, Out of Control, Being Held, Under
+  Control, Out), `BCWS_FirePerimeters_PublicView` (polygons) and EmergencyInfoBC's `Evacuation_Orders_and_Alerts`
+  (polygons for any hazard; `ORDER_ALERT_STATUS` Order, Tactical Evacuation, Alert; the layer itself hides All Clear)
+  (`src/server/wildfires.ts`). Claude's pick (2026-11-21) over CWFIS, which is national and slower to update. Each
+  query asks only for the radar's 5 × 5 tile square around home at the widget's zoom (envelope in EPSG:3857, fires that
+  aren't Out), and polygons come simplified to one map pixel (`maxAllowableOffset`). The server turns everything into
+  pixels on that map (fires as points, outlines as SVG path data), cached five minutes per zoom for every display, so a
+  display never gets coordinates; the tiles are the radar's (`/api/display/radar/tile/`). The fires failing shows
+  "unavailable"; the outlines failing only drops the outlines. The widget loads on its own (`public/display/wildfires.js`, `src/display/widgets/lazy.ts`), so screens without it
+  never fetch it. It is one SVG over the tiles, redrawn when the
+  feed (`/api/display/wildfires/`, every five minutes) or night mode changes; nothing animates. Colours follow BC
+  Wildfire Service's map: red out of control or new, amber held, green under control, a black ring for a fire of note.
+  The alert strip reads the same evacuation layer in EPSG:4326 around home (`parseEvacuations` in
+  `src/server/alerts.ts`): an order covering the home is extreme and an alert severe; within `alerts.evacuationKm`
+  (default 10 km) they are moderate and minor. This sandbox can't reach ArcGIS Online, so tests use shapes from the
+  layers' descriptions and sample features read on 2026-11-21.
 - **BC Ferries:** BC Ferries has no public API, so `src/server/ferries.ts` reads the community BC Ferries API
   (`https://www.bcferriesapi.ca/v2/capacity/`, MIT, no key; it reads BC Ferries' current conditions pages every
   minute). Its one answer covers every route with "how full" (the codes in `src/lib/ferries.ts`, departure terminal then
@@ -574,6 +610,17 @@ panel can be complex if you need it to be."
   (`pointer-events: none`), so a tap neither spins the globe nor goes unheard by the screen saver. The CSP's
   `frame-src` allows `'self'` (admin live preview) and earth.nullschool.net. This sandbox can't reach earth, so tests
   check the address and the frame's life, not earth itself.
+- **Windy map:** Windy's free embed (`https://embed.windy.com/embed.html?…`, no key or sign-up) in an `<iframe>`,
+  built by `windyUrl` in `src/lib/windy.ts` with the parameter names Windy's own configurator
+  (`embed.windy.com/config/map`) writes: `overlay`, `zoom` (3–11), `lat`/`lon` and `detailLat`/`detailLon` (the place,
+  rounded to two decimals), `marker`, `pressure` (never with radar or satellite), `message` left empty to hide Windy's
+  promotional line, `product` (`ecmwf`; `cams` for PM2.5) and units from the dashboard's `units` (°C, km/h, mm or °F,
+  mph, in). The place is stored on the widget and found like the earth map's. The frame uses `mountIframe`
+  (`src/display/widgets/iframeMount.ts`): removed while the screen saver is up or the page is hidden, made again on
+  waking and every 30 minutes for new radar and forecasts; sandboxed (`allow-scripts allow-same-origin`), no referrer,
+  and no touches (`pointer-events: none`) unless `interactive` is on, when touches on the map pan and zoom it but don't
+  count as use for the screen saver. The CSP's `frame-src` allows embed.windy.com. This sandbox can't reach Windy, so
+  tests check the address and the frame's life, and preview screenshots use a stand-in (`public/templates/samples/windy.html`).
 - **Settings backup and restore** (Melvin, 2026-11-21): Settings › Backup downloads the whole settings document as
   `everydaypane-settings-<date>.json` and restores one (`src/server/backup.ts`, `/api/household/backup/`). The file is the
   document itself, walked generically, so new widget types and settings are in it with no change there. It never holds
@@ -667,9 +714,44 @@ panel can be complex if you need it to be."
   parsing is lenient. The night's details come from that day's `long_sleep` period and leave the server only when an
   Oura widget in the household's views has `showDetails` on. A 403 means the ring's membership has lapsed and the
   widget says so. This sandbox can't reach Oura, so tests use shapes from Oura's documentation.
+- **Govee lights** (Melvin, 2026-11-21: "do all 6", Govee one of them; native cloud APIs, not Home Assistant): a Smart
+  device widget with `provider: "govee"` drives a light through Govee's official developer API
+  (`openapi.api.govee.com/router/api/v1`, `src/server/govee.ts`) with the household's own API key from the Govee Home
+  app (encrypted `govee.apiKey`, checked with Govee before it is saved in Settings › Smart home). Lights are `govee.*`
+  rows on the same `/api/display/ha/` feed, with `color` (#rrggbb) and `scenes` (names only; the server keeps what each
+  sends). Actions `color` (RGB number) and `scene` (by name) join `HA_ACTIONS`; only lights on a widget, and only
+  capabilities the device lists, are sent. Govee's rate limits (30 state reads a minute per light, a reported 10,000 a
+  day per key) mean states are kept per light for `stateEveryMs` (a minute, longer with many lights, about 6,000 reads
+  a day at most), the device list 10 minutes and scenes a day; a tap updates the kept state at once. Setup: `docs/govee.md`.
+- **UniFi network** (Household): Ubiquiti's official, read-only **Site Manager API** (`https://api.ui.com/v1/…`,
+  header `X-API-Key`) through `src/server/unifi.ts`. The key is made at unifi.ui.com › API and saved from Settings ›
+  UniFi network (`/api/household/unifi/`), which checks it by listing sites before storing it as the encrypted
+  `unifi.apiKey` secret; it never comes back to a browser and never goes in a URL. Two reads per household, shared by
+  every widget and display: `/v1/sites` (+ `/v1/hosts` for console names, since sites are usually "Default") every
+  minute for counts, ISP and gateway offline, and `/v1/isp-metrics/5m?duration=24h` every five minutes for latency,
+  packet loss, uptime, downtime and throughput. Displays poll `/api/display/unifi/` every minute and get names and
+  numbers only (no IP or MAC addresses): per site, status `ok` or `down` (gateway offline to the cloud, or the latest
+  fresh reading under 50 % uptime), the latest reading if under 20 minutes old, 24 h downtime minutes and last outage,
+  and 48 half-hour latency averages for an SVG sparkline. "Slow" is decided on the wall from the widget's `slowMs`
+  (default 100) or 2 % packet loss. Metrics failing never hides the counts; parsing is lenient because Ubiquiti's
+  examples have shifted between the early-access and v1 versions. This sandbox can't reach api.ui.com, so tests use the
+  documented shapes. Setup: `docs/unifi.md`.
 - **Tempest, Weather Underground and Nutrislice** (Phase 4, Household): Tempest and WU station settings in
   `config.integrations.smartHome`; Tempest token and optional WU key in secrets. **Menus** widget reads Nutrislice JSON
   only (`src/server/menus.ts`), never the `meals` table.
+
+- **EcoFlow** (`src/server/ecoflow.ts`): EcoFlow's IoT Developer Platform with the household's own access key and
+  secret key (encrypted `ecoflow.accessKey` / `ecoflow.secretKey`, saved from Settings › EcoFlow through
+  `/api/household/ecoflow/`; never in Vercel env, since a key sees one EcoFlow account's devices). Requests are signed:
+  HMAC-SHA256 (hex) with the secret key over the parameters sorted by name, then `accessKey`, `nonce` and `timestamp`,
+  sent as headers with `sign`. Keys work only on their region's host, so `api-a`, `api-e` and `api.ecoflow.com` are
+  tried in turn and the one that answers is cached with the device list (ten minutes). Each device's
+  `/iot-open/sign/device/quota/all` is cached a minute, only for serials on an EcoFlow widget (none picked means all,
+  eight at most); one failing device shows offline without hiding the others. Quota names differ by product line
+  (`pd.*`/`inv.*`/`mppt.*` with solar in tenths of a watt, `pow*`/`cms*` on the 3-series, `20_1.*` PowerStream,
+  `2_1.watts` Smart Plug), so each reading is the first name a device reports; EcoFlow's 5999-minute "unknown" is
+  dropped. Displays poll `/api/display/ecoflow/` every minute and never see keys; the widget loads on its own (`ecoflow.js`). This sandbox can't reach EcoFlow, so
+  tests use shapes from its documentation and open-source clients. Setup: `docs/ecoflow.md`.
 
 ## Security
 
@@ -690,7 +772,7 @@ panel can be complex if you need it to be."
 - Requests that change something must come from our own origin (`sameOrigin`).
 - Security headers on every response (`src/lib/securityHeaders.ts`): HSTS, nosniff, `frame-ancestors 'none'` (wall
   `/display/` stays unframeable; `/household/preview/` allows `frame-ancestors 'self'` so the Views tab can embed it), a
-  CSP that allows only our own origin (and Sentry's ingest, Cloudflare's speed test in `connect-src` for the internet widget, `'self'` plus earth.nullschool.net in `frame-src`;
+  CSP that allows only our own origin (and Sentry's ingest, Cloudflare's speed test in `connect-src` for the internet widget, `'self'` plus earth.nullschool.net, embed.windy.com and the video and chart embeds in `frame-src`;
   `script-src` never allows `'unsafe-inline'` — Next.js pages get a per-request nonce from `proxy.ts`, the display loads
   only `/display/display.js`), and a Permissions-Policy that turns off camera, microphone and location.
 - **Family sessions** (`FAMILY_EMAILS`) use `/family/` and the meals, shopping and messages APIs only. They are not

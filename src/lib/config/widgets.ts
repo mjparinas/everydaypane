@@ -155,6 +155,22 @@ export const WIDGETS: { [T in WidgetType]: WidgetInfo<T> } = {
     minSize: { w: 2, h: 1 },
     defaults: () => ({ showWind: true, showRain: true, showHumidity: true }),
   },
+  ecoflow: {
+    label: "EcoFlow",
+    description: "Battery, solar and power in and out",
+    icon: "🔋",
+    size: { w: 4, h: 3 },
+    minSize: { w: 2, h: 2 },
+    defaults: () => ({ devices: [], showSolar: true, showFlows: true, showTime: true }),
+  },
+  unifi: {
+    label: "UniFi network",
+    description: "Internet health from your UniFi gateway",
+    icon: "📶",
+    size: { w: 3, h: 2 },
+    minSize: { w: 2, h: 1 },
+    defaults: () => ({ siteId: "", slowMs: 100, showChart: true, showCounts: true, showUsage: false }),
+  },
   weatherUnderground: {
     label: "Weather Underground",
     description: "A personal weather station (PWS)",
@@ -285,6 +301,16 @@ export const WIDGETS: { [T in WidgetType]: WidgetInfo<T> } = {
     supportsFontScale: false,
     defaults: () => ({ precip: "rain" as const, zoom: 8, pastMinutes: 60, forecastMinutes: 60, animate: true }),
   },
+  wildfires: {
+    label: "Wildfires",
+    description: "BC Wildfire Service fires, burned areas and evacuations near home",
+    icon: "🔥",
+    size: { w: 4, h: 4 },
+    minSize: { w: 2, h: 2 },
+    supportsTitle: false,
+    supportsFontScale: false,
+    defaults: () => ({ zoom: 7, showPerimeters: true, showEvacuations: true, showControlled: true, listCount: 3 }),
+  },
   timer: {
     label: "Timers",
     description: "Kitchen timers you start with a tap, with a flash and a beep when done",
@@ -355,6 +381,26 @@ export const WIDGETS: { [T in WidgetType]: WidgetInfo<T> } = {
       overlay: "wind" as const,
       showPlace: true,
       animate: true,
+    }),
+  },
+  windy: {
+    label: "Windy map",
+    description: "Windy's weather map: radar, rain, wind, temperature, clouds, snow or air quality",
+    icon: "🌬️",
+    size: { w: 6, h: 4 },
+    minSize: { w: 2, h: 2 },
+    supportsTitle: false,
+    supportsFontScale: false,
+    // Langley until another place is picked, as the earth map does.
+    defaults: () => ({
+      place: "Langley",
+      latitude: 49.1,
+      longitude: -122.66,
+      zoom: 8,
+      overlay: "radar" as const,
+      marker: true,
+      pressure: false,
+      interactive: false,
     }),
   },
   shopping: {
@@ -592,7 +638,7 @@ export const WIDGET_GROUPS: { id: string; label: string; types: WidgetType[] }[]
   {
     id: "weather",
     label: "Weather & map",
-    types: ["weather", "tempest", "weatherUnderground", "airQuality", "radar", "earth"],
+    types: ["weather", "tempest", "weatherUnderground", "airQuality", "radar", "wildfires", "earth", "windy"],
   },
   {
     id: "calendar",
@@ -603,7 +649,7 @@ export const WIDGET_GROUPS: { id: string; label: string; types: WidgetType[] }[]
   {
     id: "home",
     label: "Home",
-    types: ["haEntity", "camera", "media", "wifiQr", "editQr", "garbage", "commute", "transit", "ferries", "internet"],
+    types: ["haEntity", "camera", "media", "unifi", "wifiQr", "editQr", "garbage", "commute", "transit", "ferries", "internet", "ecoflow"],
   },
   { id: "media", label: "Outside", types: ["photos", "sports", "alerts", "note"] },
   {

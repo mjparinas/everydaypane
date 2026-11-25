@@ -12,7 +12,7 @@ import { earth } from "./earth";
 import { editQr } from "./editQr";
 import { ferries } from "./ferries";
 import { garbage } from "./garbage";
-import { camera, haEntity } from "./ha";
+import { camera } from "./ha";
 import { lazyWidget } from "./lazy";
 import { meals } from "./meals";
 import { media } from "./media";
@@ -73,8 +73,12 @@ export function mountWidget(el: HTMLElement, w: Widget, ctx: WidgetContext): Cle
       return weather(el, w, ctx);
     case "tempest":
       return tempest(el, w, ctx);
+    case "unifi":
+      return lazyWidget("unifi", el, w, ctx);
     case "weatherUnderground":
       return weatherUnderground(el, w, ctx);
+    case "ecoflow":
+      return lazyWidget("ecoflow", el, w, ctx);
     case "airQuality":
       return airQuality(el, w, ctx);
     case "wifiQr":
@@ -106,7 +110,7 @@ export function mountWidget(el: HTMLElement, w: Widget, ctx: WidgetContext): Cle
     case "photos":
       return photos(el, w, ctx);
     case "haEntity":
-      return haEntity(el, w, ctx);
+      return lazyWidget("haEntity", el, w, ctx);
     case "camera":
       return camera(el, w, ctx);
     case "tasks":
@@ -117,6 +121,8 @@ export function mountWidget(el: HTMLElement, w: Widget, ctx: WidgetContext): Cle
       return commute(el, w, ctx);
     case "radar":
       return radar(el, w, ctx);
+    case "wildfires":
+      return lazyWidget("wildfires", el, w, ctx);
     case "chores":
       return chores(el, w, ctx);
     case "shopping":
@@ -137,6 +143,8 @@ export function mountWidget(el: HTMLElement, w: Widget, ctx: WidgetContext): Cle
       return sports(el, w, ctx);
     case "earth":
       return earth(el, w, ctx);
+    case "windy":
+      return lazyWidget("windy", el, w, ctx);
     case "presence":
       return presence(el, w, ctx);
     case "school":

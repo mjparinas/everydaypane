@@ -7,7 +7,16 @@ import type { Cleanup, Mount, WidgetContext } from "./types";
 // two. The service worker keeps it for offline like the rest of /display/. Those files share this script's feeds
 // through src/display/apiShared.ts.
 
-type Lazy = { internet: Mount<"internet">; whiteboard: Mount<"whiteboard">; oura: Mount<"oura"> };
+type Lazy = {
+  ecoflow: Mount<"ecoflow">;
+  internet: Mount<"internet">;
+  unifi: Mount<"unifi">;
+  whiteboard: Mount<"whiteboard">;
+  wildfires: Mount<"wildfires">;
+  windy: Mount<"windy">;
+  haEntity: Mount<"haEntity">;
+  oura: Mount<"oura">;
+};
 
 (globalThis as { __epApi?: typeof api }).__epApi = api;
 

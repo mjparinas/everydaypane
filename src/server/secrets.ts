@@ -20,8 +20,13 @@ export type SecretKey =
   | "nest.refreshToken"
   | "ecobee.refreshToken"
   | "smartthings.refreshToken"
+  // A Govee developer API key (from the Govee Home app), src/server/govee.ts.
+  | "govee.apiKey"
   | "tempest.token"
   | "wu.apiKey"
+  | "ecoflow.accessKey"
+  | "ecoflow.secretKey"
+  | "unifi.apiKey"
   | "microsoft.refreshToken"
   | "microsoft.scopes"
   | "todoist.refreshToken"
@@ -76,8 +81,12 @@ export async function secretsSet(accountId: string): Promise<Record<SecretKey, b
     "nest.refreshToken": set.has("nest.refreshToken"),
     "ecobee.refreshToken": set.has("ecobee.refreshToken"),
     "smartthings.refreshToken": set.has("smartthings.refreshToken"),
+    "govee.apiKey": set.has("govee.apiKey"),
     "tempest.token": set.has("tempest.token"),
     "wu.apiKey": set.has("wu.apiKey"),
+    "ecoflow.accessKey": set.has("ecoflow.accessKey"),
+    "ecoflow.secretKey": set.has("ecoflow.secretKey"),
+    "unifi.apiKey": set.has("unifi.apiKey"),
     "microsoft.refreshToken": set.has("microsoft.refreshToken"),
     "microsoft.scopes": set.has("microsoft.scopes"),
     "todoist.refreshToken": set.has("todoist.refreshToken"),

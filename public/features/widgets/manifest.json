@@ -80,6 +80,16 @@
     "file": "tempest.png"
   },
   {
+    "type": "ecoflow",
+    "name": "EcoFlow",
+    "file": "ecoflow.png"
+  },
+  {
+    "type": "unifi",
+    "name": "UniFi network",
+    "file": "unifi.png"
+  },
+  {
     "type": "weatherUnderground",
     "name": "Weather Underground",
     "file": "weatherUnderground.png"
@@ -153,6 +163,11 @@
     "type": "radar",
     "name": "Rain radar",
     "file": "radar.png"
+  },
+  {
+    "type": "wildfires",
+    "name": "Wildfires",
+    "file": "wildfires.png"
   },
   {
     "type": "timer",
