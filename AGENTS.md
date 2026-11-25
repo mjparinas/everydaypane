@@ -14,7 +14,7 @@ for widgets). Don't suggest anything listed there as new; if an idea extends som
 and what it adds. Every pull request that adds a widget, an integration or a display behaviour updates this list in the
 same change, and moves it out of **In progress** when it merges.
 
-## What already exists (checked against the code, 2026-11-23)
+## What already exists (checked against the code, 2026-11-25)
 
 **Widgets** (`widgetSchema`, drawn by `src/display/widgets/`):
 
@@ -62,6 +62,7 @@ same change, and moves it out of **In progress** when it merges.
 | Pomodoro (`pomodoro`) | Focus and break rounds, long break after the last round, optional auto-start, chime between phases | Device (localStorage) |
 | BC Ferries (`ferries`) | Next sailings on up to four routes, how full each is, cancellations and delays | Community BC Ferries API (bcferriesapi.ca) |
 | Earth wind map (`earth`) | earth.nullschool.net's animated wind globe centred on any place, four zooms, a colour layer (temperature, rain, humidity…), place marker, animation on or off | earth.nullschool.net (framed), Open-Meteo place search |
+| Windy map (`windy`) | Windy's map centred on any place, one layer (radar, rain, wind, gusts, temperature, clouds, new snow, thunderstorms, satellite, PM2.5), zoom 3–11, place marker, pressure lines, touch on or off | embed.windy.com (framed), Open-Meteo place search |
 | Stocks (`stocks`) | Watchlist quotes with daily change | Yahoo Finance (unofficial) or Finnhub with `FINNHUB_API_KEY` |
 | Crypto (`crypto`) | Coin prices and 24 h change | CoinGecko free API |
 | FX (`fx`) | Currency pair rates | Frankfurter / ECB |
@@ -85,7 +86,7 @@ same change, and moves it out of **In progress** when it merges.
 | Internet (`internet`) | Ping every 10 s to 5 min with Online / Slow / Offline, a graph of the last 60 checks and the share that failed; download and upload speed every 1 to 24 h or on a tap | The screen's own browser against Cloudflare's speed test servers |
 
 **Display behaviour:** several views on a drag-and-drop grid (chosen rows and columns, gap, edge padding and **tile padding**; presets include **12×8 landscape** and **8×12 portrait**, with portrait stages letterboxed on a landscape panel), **per-widget visibility by part of day** (`visiblePeriods`), optional **view loop** on schedule followers (`schedule.loopSeconds`), **widgets layered on top of a photos widget**
-(photos as the backdrop), **per-widget background** (on/off and opacity; theme surface opacity is the default; clocks and dates start with no panel), **per-widget font size** (`fontScale`, 70–150 %, text widgets only — not photos, radar, camera, earth, embeds or the whiteboard), **per-widget outer padding** (`outerPadding`, 0–48 px, omitted means none; insets the panel in its grid cell), a time-of-day schedule
+(photos as the backdrop), **per-widget background** (on/off and opacity; theme surface opacity is the default; clocks and dates start with no panel), **per-widget font size** (`fontScale`, 70–150 %, text widgets only — not photos, radar, camera, earth, Windy, embeds or the whiteboard), **per-widget outer padding** (`outerPadding`, 0–48 px, omitted means none; insets the panel in its grid cell), a time-of-day schedule
 (morning, afternoon, evening, overnight) choosing the view, theme, day or night mode and dimming — each period can start at a **fixed time, sunrise or sunset** (sunrise/sunset from today's Open-Meteo weather at the dashboard location); themes with colour
 palettes, fonts, corner radius, opacity and optional glass; burn-in protection (pixel shift); offline mode (service
 worker serves the last good data and shows "Offline"); a **screen saver** (photos only or dark after idle minutes, dark
@@ -263,7 +264,7 @@ npm run templates:previews  # regenerate public/templates/*.png from real widget
   "transparent" setting becomes Background off.
 - **Per-widget font size** (Melvin, 2026-11-23: scale fonts on a per component basis): text widgets get a Font size
   slider (`fontScale`, 70–150 %, 100 % when omitted). The display sets `--font-scale` on the cell; stylesheet
-  `font-size` rules multiply by it. Photos, radar, camera, earth, TradingView, YouTube, Vimeo, Instagram, Maps and
+  `font-size` rules multiply by it. Photos, radar, camera, earth, Windy, TradingView, YouTube, Vimeo, Instagram, Maps and
   the whiteboard omit the control.
 - **Per-widget outer padding** (Melvin, 2026-11-23: slider for outer padding on each widget): every widget has Outer
   padding (`outerPadding`, 0–48 px, omitted means none) that insets the panel inside its grid cell; the view's Tile
@@ -298,6 +299,9 @@ npm run templates:previews  # regenerate public/templates/*.png from real widget
 - **Earth wind map** (Melvin, 2026-11-21: "can i add this and specific a location? https://earth.nullschool.net"):
   earth.nullschool.net framed in a widget, centred on a place picked in its settings (Langley by default), with a
   zoom, a colour layer and its own place marker (see Architecture).
+- **Windy map** (Melvin, 2026-11-21: "do windy and wildfires", after asking for a weather map like earth's): Windy's
+  free embed framed in a widget, centred on a place (Langley by default), with a layer, a zoom, a marker, pressure lines
+  and touch off unless switched on (see Architecture). Wildfires are separate work.
 - **TransLink departures** (Melvin, 2026-11-19: "add translink"): a TransLink widget with the next buses from up to six
   picked stops, live from TransLink's GTFS-realtime feed (see Architecture).
 - **Sports scores** (Melvin, 2026-11-21: "allow to customize the sports and the teams"): any teams from several leagues
@@ -331,8 +335,8 @@ panel can be complex if you need it to be."
   `bundle-check.mjs` and the `Lazy` type) and mounted through `lazyWidget` (`src/display/widgets/lazy.ts`), which
   imports it with display.js's own `?v=` only on a screen that shows it. Its `../api` is swapped at build time for
   `src/display/apiShared.ts`, which calls display.js's copy, so feeds, the device token and offline state stay single.
-  The internet widget, the UniFi network widget, EcoFlow and the whiteboard load this way (display.js 39.5 KB after the move),
-  and `next.config.ts` gives each file the same immutable cache header as display.js.
+  The internet widget, the UniFi network widget, EcoFlow, the whiteboard and the Windy map load this way (display.js 39.5 KB after
+  the move), and `next.config.ts` gives each file the same immutable cache header as display.js.
 - **Budget:** the display's script stays under 40 KB gzipped and its stylesheet under 20 KB (`scripts/bundle-check.mjs`,
   a CI step; CSS raised from 10 KB on 2026-11-23 for more clock styles). A new dependency on the display needs a very good reason.
 - All heavy lifting happens on the server: API calls to Google, weather, Recycle Coach, Amazon and Home Assistant are
@@ -578,6 +582,17 @@ panel can be complex if you need it to be."
   (`pointer-events: none`), so a tap neither spins the globe nor goes unheard by the screen saver. The CSP's
   `frame-src` allows `'self'` (admin live preview) and earth.nullschool.net. This sandbox can't reach earth, so tests
   check the address and the frame's life, not earth itself.
+- **Windy map:** Windy's free embed (`https://embed.windy.com/embed.html?…`, no key or sign-up) in an `<iframe>`,
+  built by `windyUrl` in `src/lib/windy.ts` with the parameter names Windy's own configurator
+  (`embed.windy.com/config/map`) writes: `overlay`, `zoom` (3–11), `lat`/`lon` and `detailLat`/`detailLon` (the place,
+  rounded to two decimals), `marker`, `pressure` (never with radar or satellite), `message` left empty to hide Windy's
+  promotional line, `product` (`ecmwf`; `cams` for PM2.5) and units from the dashboard's `units` (°C, km/h, mm or °F,
+  mph, in). The place is stored on the widget and found like the earth map's. The frame uses `mountIframe`
+  (`src/display/widgets/iframeMount.ts`): removed while the screen saver is up or the page is hidden, made again on
+  waking and every 30 minutes for new radar and forecasts; sandboxed (`allow-scripts allow-same-origin`), no referrer,
+  and no touches (`pointer-events: none`) unless `interactive` is on, when touches on the map pan and zoom it but don't
+  count as use for the screen saver. The CSP's `frame-src` allows embed.windy.com. This sandbox can't reach Windy, so
+  tests check the address and the frame's life, and preview screenshots use a stand-in (`public/templates/samples/windy.html`).
 - **Settings backup and restore** (Melvin, 2026-11-21): Settings › Backup downloads the whole settings document as
   `everydaypane-settings-<date>.json` and restores one (`src/server/backup.ts`, `/api/household/backup/`). The file is the
   document itself, walked generically, so new widget types and settings are in it with no change there. It never holds
@@ -709,7 +724,7 @@ panel can be complex if you need it to be."
 - Requests that change something must come from our own origin (`sameOrigin`).
 - Security headers on every response (`src/lib/securityHeaders.ts`): HSTS, nosniff, `frame-ancestors 'none'` (wall
   `/display/` stays unframeable; `/household/preview/` allows `frame-ancestors 'self'` so the Views tab can embed it), a
-  CSP that allows only our own origin (and Sentry's ingest, Cloudflare's speed test in `connect-src` for the internet widget, `'self'` plus earth.nullschool.net in `frame-src`;
+  CSP that allows only our own origin (and Sentry's ingest, Cloudflare's speed test in `connect-src` for the internet widget, `'self'` plus earth.nullschool.net, embed.windy.com and the video and chart embeds in `frame-src`;
   `script-src` never allows `'unsafe-inline'` — Next.js pages get a per-request nonce from `proxy.ts`, the display loads
   only `/display/display.js`), and a Permissions-Policy that turns off camera, microphone and location.
 - **Family sessions** (`FAMILY_EMAILS`) use `/family/` and the meals, shopping and messages APIs only. They are not

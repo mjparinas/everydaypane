@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <!-- A stand-in for Windy's embed in preview screenshots: a dark map with rain bands, so CI needs no outbound net. -->
+    <style>
+      html,
+      body {
+        margin: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        font:
+          600 13px system-ui,
+          sans-serif;
+        color: #fff;
+        background:
+          radial-gradient(ellipse 30% 18% at 38% 42%, rgb(250 204 21 / 85%), transparent 70%),
+          radial-gradient(ellipse 45% 26% at 42% 45%, rgb(34 197 94 / 75%), transparent 75%),
+          radial-gradient(ellipse 60% 34% at 48% 50%, rgb(59 130 246 / 70%), transparent 80%),
+          linear-gradient(160deg, #3f5a4a, #2c3e50 55%, #1f3a5f);
+      }
+      .coast {
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(115deg, transparent 0 38%, rgb(15 40 70 / 70%) 38% 100%);
+        clip-path: polygon(0 62%, 22% 58%, 35% 66%, 48% 63%, 60% 72%, 100% 70%, 100% 100%, 0 100%);
+      }
+      .pin {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        width: 12px;
+        height: 12px;
+        margin: -6px;
+        border: 3px solid #fff;
+        border-radius: 50%;
+        background: #e11d48;
+      }
+      .logo {
+        position: absolute;
+        left: 10px;
+        bottom: 8px;
+        opacity: 0.85;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="coast"></div>
+    <div class="pin"></div>
+    <div class="logo">windy.com</div>
+  </body>
+</html>

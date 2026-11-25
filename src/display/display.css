@@ -302,7 +302,7 @@ html.portrait-view .stage {
   position: absolute;
   right: 16px;
   top: 16px;
-  z-index: 40;
+  z-index: 51;
   display: flex;
   align-items: center;
   gap: 7px;
@@ -3085,6 +3085,11 @@ html.portrait-view .stage {
   }
 }
 
+/* Windy map: an interactive one may be panned and zoomed by hand (the other frames take no touches). */
+.wy-live .embed-frame {
+  pointer-events: auto;
+}
+
 /* Earth wind map: earth.nullschool.net's frame fills the cell edge to edge; it is always dark, day or night. */
 .cell-earth {
   padding: 0;
@@ -3110,7 +3115,8 @@ html.portrait-view .stage {
 .cell-vimeo,
 .cell-maps,
 .cell-instagram,
-.cell-earth {
+.cell-earth,
+.cell-windy {
   padding: 0;
 }
 .w-embed {
