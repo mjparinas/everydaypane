@@ -574,6 +574,14 @@ export const WIDGETS: { [T in WidgetType]: WidgetInfo<T> } = {
     supportsFontScale: false,
     defaults: () => ({ query: "Langley, BC", zoom: 12 }),
   },
+  internet: {
+    label: "Internet",
+    description: "Ping, dropped checks and speed tests of the home connection",
+    icon: "📶",
+    size: { w: 3, h: 2 },
+    minSize: { w: 2, h: 1 },
+    defaults: () => ({ pingSeconds: 30, slowMs: 100, speedHours: 6, upload: true, showGraph: true }),
+  },
 };
 
 export const WIDGET_TYPES = Object.keys(WIDGETS) as WidgetType[];
@@ -595,7 +603,7 @@ export const WIDGET_GROUPS: { id: string; label: string; types: WidgetType[] }[]
   {
     id: "home",
     label: "Home",
-    types: ["haEntity", "camera", "media", "wifiQr", "editQr", "garbage", "commute", "transit", "ferries", "ecoflow"],
+    types: ["haEntity", "camera", "media", "wifiQr", "editQr", "garbage", "commute", "transit", "ferries", "internet", "ecoflow"],
   },
   { id: "media", label: "Outside", types: ["photos", "sports", "alerts", "note"] },
   {

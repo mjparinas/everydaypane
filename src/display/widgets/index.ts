@@ -9,11 +9,11 @@ import { commute } from "./commute";
 import { countdown } from "./countdown";
 import { date } from "./date";
 import { earth } from "./earth";
-import { ecoflow } from "./ecoflow";
 import { editQr } from "./editQr";
 import { ferries } from "./ferries";
 import { garbage } from "./garbage";
 import { camera, haEntity } from "./ha";
+import { lazyWidget } from "./lazy";
 import { meals } from "./meals";
 import { media } from "./media";
 import { menus } from "./menus";
@@ -58,7 +58,6 @@ import { transit } from "./transit";
 import type { Cleanup, WidgetContext } from "./types";
 import { weather } from "./weather";
 import { weatherUnderground } from "./weatherUnderground";
-import { whiteboard } from "./whiteboard";
 import { wifiQr } from "./wifi";
 
 /** Mounts a widget into its cell and returns what stops its timers. A widget that throws shows a quiet error, never a blank screen. */
@@ -77,7 +76,7 @@ export function mountWidget(el: HTMLElement, w: Widget, ctx: WidgetContext): Cle
     case "weatherUnderground":
       return weatherUnderground(el, w, ctx);
     case "ecoflow":
-      return ecoflow(el, w, ctx);
+      return lazyWidget("ecoflow", el, w, ctx);
     case "airQuality":
       return airQuality(el, w, ctx);
     case "wifiQr":
@@ -145,7 +144,7 @@ export function mountWidget(el: HTMLElement, w: Widget, ctx: WidgetContext): Cle
     case "school":
       return school(el, w, ctx);
     case "whiteboard":
-      return whiteboard(el, w, ctx);
+      return lazyWidget("whiteboard", el, w, ctx);
     case "stocks":
       return stocks(el, w, ctx);
     case "crypto":
@@ -186,6 +185,8 @@ export function mountWidget(el: HTMLElement, w: Widget, ctx: WidgetContext): Cle
       return airports(el, w, ctx);
     case "maps":
       return maps(el, w, ctx);
+    case "internet":
+      return lazyWidget("internet", el, w, ctx);
     default:
       // A widget type with no screen yet (still being built) leaves an empty cell instead of crashing the dashboard.
       return () => undefined;

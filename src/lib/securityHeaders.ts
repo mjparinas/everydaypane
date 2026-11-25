@@ -10,6 +10,9 @@
 //
 // Wall displays (/d/…) stay unframeable (frame-ancestors 'none'). Admin preview HTML allows frame-ancestors 'self'
 // so the Views tab can show a live draft without opening a new tab.
+//
+// The internet widget measures the home connection from the screen itself, so connect-src allows Cloudflare's speed
+// test servers (src/lib/internet.ts).
 
 export function contentSecurityPolicy(opts: {
   nonce?: string;
@@ -45,7 +48,7 @@ export function contentSecurityPolicy(opts: {
     "style-src 'self' 'unsafe-inline'",
     "img-src 'self' data: blob: https://img.clerk.com",
     "font-src 'self'",
-    `connect-src 'self' https://*.ingest.sentry.io https://*.ingest.us.sentry.io ${clerkConnect}${impeccableLiveDev}`,
+    `connect-src 'self' https://speed.cloudflare.com https://*.ingest.sentry.io https://*.ingest.us.sentry.io ${clerkConnect}${impeccableLiveDev}`,
     [
       "frame-src 'self'",
       clerkFrame,
