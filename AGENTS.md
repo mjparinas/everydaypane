@@ -318,10 +318,12 @@ panel can be complex if you need it to be."
   small TypeScript module bundled by esbuild (`src/display/` → `public/display/`), with no framework. The unlock gate
   (`/display/unlock/`) is a Next.js page. Widgets update only the DOM nodes that change (the clock rewrites one text
   node a second).
-- **Widgets that load on their own** (2026-11-25, when display.js reached 39.9 KB): a widget few screens use can be
-  built as its own file (`public/display/<name>.js`, an entry in `scripts/build-display.mjs` with its own line in
-  `bundle-check.mjs`) and mounted through `lazyWidget` (`src/display/widgets/lazy.ts`), which imports it with
-  display.js's own `?v=` only on a screen that shows it. The internet widget is the first.
+- **Widgets that load on their own** (2026-11-25, when display.js passed 40 KB on main): a widget few screens use can
+  be built as its own file (`public/display/<name>.js`: add it to `LAZY` in `scripts/build-display.mjs`, a line in
+  `bundle-check.mjs` and the `Lazy` type) and mounted through `lazyWidget` (`src/display/widgets/lazy.ts`), which
+  imports it with display.js's own `?v=` only on a screen that shows it. Its `../api` is swapped at build time for
+  `src/display/apiShared.ts`, which calls display.js's copy, so feeds, the device token and offline state stay single.
+  The internet widget and the whiteboard load this way (display.js 39.1 KB after the move).
 - **Budget:** the display's script stays under 40 KB gzipped and its stylesheet under 20 KB (`scripts/bundle-check.mjs`,
   a CI step; CSS raised from 10 KB on 2026-11-23 for more clock styles). A new dependency on the display needs a very good reason.
 - All heavy lifting happens on the server: API calls to Google, weather, Recycle Coach, Amazon and Home Assistant are

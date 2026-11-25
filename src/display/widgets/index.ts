@@ -58,7 +58,6 @@ import { transit } from "./transit";
 import type { Cleanup, WidgetContext } from "./types";
 import { weather } from "./weather";
 import { weatherUnderground } from "./weatherUnderground";
-import { whiteboard } from "./whiteboard";
 import { wifiQr } from "./wifi";
 
 /** Mounts a widget into its cell and returns what stops its timers. A widget that throws shows a quiet error, never a blank screen. */
@@ -143,7 +142,7 @@ export function mountWidget(el: HTMLElement, w: Widget, ctx: WidgetContext): Cle
     case "school":
       return school(el, w, ctx);
     case "whiteboard":
-      return whiteboard(el, w, ctx);
+      return lazyWidget("whiteboard", el, w, ctx);
     case "stocks":
       return stocks(el, w, ctx);
     case "crypto":
