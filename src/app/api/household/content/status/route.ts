@@ -1,5 +1,6 @@
 import { gmailGranted } from "@/server/gmail";
 import { unauthorized } from "@/server/http";
+import { ouraConnected } from "@/server/oura";
 import { getSecret } from "@/server/secrets";
 import { adminFor } from "@/server/viewer";
 
@@ -11,6 +12,7 @@ export async function GET(req: Request) {
     ynab: Boolean(await getSecret(accountId, "ynab.token")),
     trello: Boolean(await getSecret(accountId, "trello.token")),
     fitbit: Boolean(await getSecret(accountId, "fitbit.refreshToken")),
+    oura: await ouraConnected(accountId),
     slack: Boolean(await getSecret(accountId, "slack.token")),
     gmail: await gmailGranted(accountId),
   });

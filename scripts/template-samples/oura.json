@@ -1,0 +1,8 @@
+{
+  "updatedAt": 1763937720000,
+  "connected": true,
+  "today": "2026-11-23",
+  "sleep": { "day": "2026-11-23", "score": 86 },
+  "readiness": { "day": "2026-11-23", "score": 78, "temperatureDeviation": -0.1 },
+  "activity": { "day": "2026-11-23", "score": 64, "steps": 6412 }
+}

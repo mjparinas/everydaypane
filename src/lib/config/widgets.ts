@@ -492,6 +492,14 @@ export const WIDGETS: { [T in WidgetType]: WidgetInfo<T> } = {
     minSize: { w: 2, h: 1 },
     defaults: () => ({ showSteps: true, showSleep: true, showHeart: true }),
   },
+  oura: {
+    label: "Oura",
+    description: "Sleep, readiness and activity scores",
+    icon: "💍",
+    size: { w: 3, h: 2 },
+    minSize: { w: 2, h: 1 },
+    defaults: () => ({ showSleep: true, showReadiness: true, showActivity: true, showDetails: false }),
+  },
   emailCount: {
     label: "Gmail unread",
     description: "Unread messages in your inbox",
@@ -652,7 +660,7 @@ export const WIDGET_GROUPS: { id: string; label: string; types: WidgetType[] }[]
   {
     id: "content",
     label: "News & fun",
-    types: ["rss", "news", "dadJoke", "quotes", "affirmation", "horoscope", "emailCount", "fitbit"],
+    types: ["rss", "news", "dadJoke", "quotes", "affirmation", "horoscope", "emailCount", "fitbit", "oura"],
   },
   {
     id: "social",

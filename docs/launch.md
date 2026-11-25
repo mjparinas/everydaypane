@@ -78,7 +78,7 @@ Melvin-owned ops (code defaults already favour everydaypane.com where set).
 
 1. Point **everydaypane.com** (and www) at the Vercel project; set `NEXT_PUBLIC_SITE_URL` (e.g. `https://www.everydaypane.com`).
 2. Verify Resend for `hello@everydaypane.com`; set `MAIL_FROM`. Keep `CONTACT_EMAIL` in `src/lib/site.ts` aligned.
-3. Update OAuth redirect URIs: Google, Microsoft, Spotify, Sonos, Nest, ecobee, SmartThings, Dropbox, Box, SmugMug, Fitbit, Slack, Trello, YNAB as connected.
+3. Update OAuth redirect URIs: Google, Microsoft, Spotify, Sonos, Nest, ecobee, SmartThings, Dropbox, Box, SmugMug, Fitbit, Oura, Slack, Trello, YNAB as connected.
 4. Add the property in Google Search Console; submit `https://…/sitemap.xml`.
 5. Keep `pane.getliftsmith.com` as a permanent redirect to everydaypane.com so old links and OAuth leftovers heal.
 

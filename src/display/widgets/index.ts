@@ -163,6 +163,8 @@ export function mountWidget(el: HTMLElement, w: Widget, ctx: WidgetContext): Cle
       return tradingView(el, w, ctx);
     case "fitbit":
       return fitbit(el, w, ctx);
+    case "oura":
+      return lazyWidget("oura", el, w, ctx);
     case "emailCount":
       return emailCount(el, w, ctx);
     case "rss":

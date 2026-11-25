@@ -1689,6 +1689,23 @@ function TypeSettings({
         </>
       );
     }
+    case "oura": {
+      const e = edit<"oura">();
+      return (
+        <>
+          <Toggle label="Sleep score" checked={w.showSleep} onChange={(v) => e((x) => void (x.showSleep = v))} />
+          <Toggle label="Readiness score" checked={w.showReadiness} onChange={(v) => e((x) => void (x.showReadiness = v))} />
+          <Toggle label="Activity score and steps" checked={w.showActivity} onChange={(v) => e((x) => void (x.showActivity = v))} />
+          <Toggle
+            label="Show last night's details"
+            checked={w.showDetails}
+            hint="Hours asleep, bedtime, HRV and lowest heart rate. Anyone in the kitchen can read the wall, so this is off unless you turn it on."
+            onChange={(v) => e((x) => void (x.showDetails = v))}
+          />
+          <p className="text-xs text-soft">Connect the ring&apos;s Oura account in Settings › Content &amp; finance.</p>
+        </>
+      );
+    }
     case "rss":
     case "news":
     case "dadJoke":

@@ -70,6 +70,7 @@ same change, and moves it out of **In progress** when it merges.
 | YNAB (`ynab`) | Budget name, on-budget accounts and categories | YNAB API (token or OAuth) |
 | TradingView (`tradingView`) | Chart iframe for a symbol | s.tradingview.com (framed) |
 | Fitbit (`fitbit`) | Steps, sleep and resting heart rate today | Fitbit OAuth |
+| Oura (`oura`) | Last night's sleep score, readiness and activity (with steps); optional night details (hours asleep, bedtime, HRV, lowest heart rate), off by default | Oura API v2 OAuth (`docs/oura.md`) |
 | Gmail unread (`emailCount`) | Inbox unread count | Google `gmail.readonly` add-on scope |
 | RSS (`rss`) | Headlines from chosen feed URLs | Server fetch + trim |
 | News (`news`) | CBC/BBC presets, custom RSS or GNews | RSS or `GNEWS_API_KEY` |
@@ -142,7 +143,7 @@ Revenue, Traffic, Codes, Flags, …). Cookieless marketing beacon. Customer path
 
 **Integrations connected from Settings:** Google Calendar, Microsoft 365 calendars and **To Do** (OAuth, `?todo=1` / `?files=1`), Google Tasks, **Todoist**, Google Photos (Picker), iCal calendar links (with iCloud publish steps in Settings and `docs/icloud-calendar.md`),
 **Govee** (API key, Settings › Smart home), Amazon Photos, **photo sources** (Bing, Reddit, weather albums, Immich API keys, Dropbox/Box/SmugMug OAuth, OneDrive via Microsoft, Flickr API key, iCloud published URLs), the photo library (Vercel Blob), Home Assistant (Cloudflare Tunnel + Access), Spotify, Sonos, garbage
-zone lookup, sports teams to follow, TransLink, commute places (TomTom geocoding), optional **package tracking** key, **UniFi Site Manager** API key (Settings › UniFi network), **EcoFlow** access and secret keys.
+zone lookup, sports teams to follow, TransLink, commute places (TomTom geocoding), optional **package tracking** key, **UniFi Site Manager** API key (Settings › UniFi network), **EcoFlow** access and secret keys, **Oura** (OAuth, Settings › Content & finance).
 
 ## In progress
 
@@ -314,6 +315,10 @@ npm run templates:previews  # regenerate public/templates/*.png from real widget
 - **Screen saver** (Melvin, 2026-11-21): after some minutes with no touch the display shows only photos (full screen,
   optional clock) or goes dark, and during a night window it goes dark; Home Assistant motion sensors keep it awake and
   wake it (see Architecture). Off until switched on in Settings › Screen saver.
+- **Oura ring** (Melvin, 2026-11-21: "do all 6", from the list of devices with official cloud APIs): sleep,
+  readiness and activity scores on the wall, read directly from Oura's API (not Home Assistant). Scores only unless
+  the widget's **Show last night's details** is on, because the kitchen wall is readable by anyone (Claude's default,
+  2026-11-25) (see Architecture).
 - **EcoFlow power stations** (Melvin, 2026-11-21: "do all 6" of the native integrations; he has five EcoFlow devices):
   battery, solar and power in and out on the wall from EcoFlow's official developer API, not Home Assistant (see
   Architecture). Each household brings its own keys, because EcoFlow keys belong to one EcoFlow account.
@@ -339,8 +344,8 @@ panel can be complex if you need it to be."
   `bundle-check.mjs` and the `Lazy` type) and mounted through `lazyWidget` (`src/display/widgets/lazy.ts`), which
   imports it with display.js's own `?v=` only on a screen that shows it. Its `../api` is swapped at build time for
   `src/display/apiShared.ts`, which calls display.js's copy, so feeds, the device token and offline state stay single.
-  The internet widget, the UniFi network widget, EcoFlow, the whiteboard, wildfires, the Windy map and the Smart device tile
-  (`haEntity.ts`; cameras and `HA_EVERY` stay in `ha.ts`) load this way, and `next.config.ts` gives each file the same
+  The internet widget, the UniFi network widget, EcoFlow, the whiteboard, wildfires, the Windy map, the Smart device tile
+  (`haEntity.ts`; cameras and `HA_EVERY` stay in `ha.ts`) and Oura load this way, and `next.config.ts` gives each file the same
   immutable cache header as display.js.
 - **Budget:** the display's script stays under 80 KB gzipped and its stylesheet under 20 KB (`scripts/bundle-check.mjs`,
   a CI step; CSS raised from 10 KB on 2026-11-23 for more clock styles; script raised from 40 KB by Melvin on 2026-11-25: "double the size of the limit"). A new dependency on the display needs a very good reason.
@@ -698,6 +703,17 @@ panel can be complex if you need it to be."
   keyed `nest.*`, `ecobee.*`, `smartthings.*` (`src/server/smartDevices.ts`). Only entities on a widget can be controlled;
   locks are **lock only** on SmartThings. Nest needs Google Device Access (`NEST_PROJECT_ID`, paid subscription).
   Setup: `docs/nest.md`, `docs/ecobee.md`, `docs/smartthings.md`.
+- **Oura** (`src/server/oura.ts`, `/api/display/oura/`, setup `docs/oura.md`): Oura removed personal access tokens in
+  December 2025, so an admin connects through an Oura API application (`OURA_CLIENT_ID` / `OURA_CLIENT_SECRET`,
+  redirect `<site>/api/oura/callback/`, scope `daily` only). Oura's refresh tokens are **single use**, so the access
+  token is stored encrypted next to the refresh token (`oura.accessToken`, `oura.refreshToken`) and shared by every
+  server instance; each instance refreshes at most once at a time, and a refused refresh first checks whether another
+  instance already stored a newer pair before calling the ring disconnected. The feed reads `daily_sleep`,
+  `daily_readiness`, `daily_activity` and `sleep` for the last three days (the ring syncs only when the phone app
+  opens), keeps the newest scored day up to today in the dashboard's time zone, and is cached 15 minutes per household;
+  parsing is lenient. The night's details come from that day's `long_sleep` period and leave the server only when an
+  Oura widget in the household's views has `showDetails` on. A 403 means the ring's membership has lapsed and the
+  widget says so. This sandbox can't reach Oura, so tests use shapes from Oura's documentation.
 - **Govee lights** (Melvin, 2026-11-21: "do all 6", Govee one of them; native cloud APIs, not Home Assistant): a Smart
   device widget with `provider: "govee"` drives a light through Govee's official developer API
   (`openapi.api.govee.com/router/api/v1`, `src/server/govee.ts`) with the household's own API key from the Govee Home
