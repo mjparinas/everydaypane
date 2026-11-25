@@ -25,6 +25,7 @@ import { daylightLength, sunTimes } from "./widgets/sunTimes";
 import { dueLabel, shownLists, tasks, UNDO_MS } from "./widgets/tasks";
 import { delayLabel, minutesLabel, shownDepartures, transit } from "./widgets/transit";
 import { wifiQr } from "./widgets/wifi";
+import { windy } from "./widgets/windy";
 
 const ctx = { payload: {} as DisplayPayload, timeZone: "America/Vancouver", hour12: true };
 
@@ -147,10 +148,12 @@ describe("widgets", () => {
     expect(wifi.querySelector(".w-label")?.textContent).toBe("Guest Wi-Fi");
     stopWifi();
 
-    expect(["clock", "photos", "radar", "earth"].every((t) => WIDGETS[t as keyof typeof WIDGETS].supportsTitle === false)).toBe(true);
+    expect(["clock", "photos", "radar", "earth", "windy"].every((t) => WIDGETS[t as keyof typeof WIDGETS].supportsTitle === false)).toBe(
+      true,
+    );
     expect(WIDGETS.weather.supportsTitle).not.toBe(false);
     expect(
-      ["photos", "radar", "camera", "earth", "tradingView", "youtube", "vimeo", "instagram", "maps", "whiteboard"].every(
+      ["photos", "radar", "camera", "earth", "windy", "tradingView", "youtube", "vimeo", "instagram", "maps", "whiteboard"].every(
         (t) => WIDGETS[t as keyof typeof WIDGETS].supportsFontScale === false,
       ),
     ).toBe(true);
@@ -1140,6 +1143,40 @@ describe("earth", () => {
     vi.advanceTimersByTime(RELOAD_MS);
     expect(el.querySelector("iframe")).not.toBe(first);
     expect(el.querySelectorAll("iframe")).toHaveLength(1);
+    stop();
+  });
+});
+
+describe("windy", () => {
+  const metric = { ...ctx, payload: { units: "metric" } as DisplayPayload };
+  const frame = (el: HTMLElement) => el.querySelector<HTMLIFrameElement>("iframe");
+
+  it("frames Windy's map at the place, takes no touches, and is removed while the screen saver is up", async () => {
+    vi.useFakeTimers();
+    const el = document.createElement("div");
+    document.body.append(el);
+    const stop = windy(el, newWidget("windy", "wy", { x: 0, y: 0 }), metric);
+    await vi.advanceTimersByTimeAsync(20);
+    expect(frame(el)?.src).toContain("https://embed.windy.com/embed.html?");
+    expect(frame(el)?.src).toContain("lat=49.1&lon=-122.66");
+    expect(frame(el)?.getAttribute("sandbox")).toBe("allow-scripts allow-same-origin");
+    expect(el.querySelector(".wy-live")).toBeNull();
+    document.documentElement.classList.add("saving");
+    await vi.advanceTimersByTimeAsync(0);
+    expect(frame(el)).toBeNull();
+    document.documentElement.classList.remove("saving");
+    await vi.advanceTimersByTimeAsync(0);
+    expect(frame(el)).not.toBeNull();
+    stop();
+    expect(frame(el)).toBeNull();
+  });
+
+  it("can be moved by hand when it's interactive", async () => {
+    vi.useFakeTimers();
+    const el = document.createElement("div");
+    const stop = windy(el, { ...newWidget("windy", "wy2", { x: 0, y: 0 }), interactive: true }, metric);
+    await vi.advanceTimersByTimeAsync(20);
+    expect(el.querySelector(".wy-live iframe")).not.toBeNull();
     stop();
   });
 });

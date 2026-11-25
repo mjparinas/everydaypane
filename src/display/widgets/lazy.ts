@@ -11,6 +11,7 @@ type Lazy = {
   internet: Mount<"internet">;
   unifi: Mount<"unifi">;
   whiteboard: Mount<"whiteboard">;
+  windy: Mount<"windy">;
   haEntity: Mount<"haEntity">;
 };
 
