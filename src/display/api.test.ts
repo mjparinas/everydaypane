@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { get, retryDelay, subscribe } from "./api";
+import { beginActivity, connectionStatus, get, isUpdating, retryDelay, subscribe } from "./api";
 
 afterEach(() => {
   vi.useRealTimers();
@@ -10,6 +10,26 @@ afterEach(() => {
 });
 
 describe("display polling", () => {
+  it("tracks active API requests until all finish", () => {
+    const endOne = beginActivity();
+    expect(isUpdating()).toBe(true);
+    const endTwo = beginActivity();
+    endOne();
+    expect(isUpdating()).toBe(true);
+    endTwo();
+    expect(isUpdating()).toBe(false);
+  });
+
+  it("shows server failure separately and clears it after a successful request", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(null, { status: 503 })));
+    await get("server-down");
+    expect(connectionStatus).toBe("server-offline");
+
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(Response.json({ ok: true })));
+    await get("server-back");
+    expect(connectionStatus).toBe("online");
+  });
+
   it("backs off repeated failures without exceeding the configured cap", () => {
     expect([1, 2, 3, 10].map((failures) => retryDelay(30_000, failures))).toEqual([30_000, 60_000, 120_000, 900_000]);
   });
