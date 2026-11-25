@@ -636,6 +636,48 @@ function TypeSettings({
         </>
       );
     }
+    case "wildfires": {
+      const e = edit<"wildfires">();
+      return (
+        <>
+          <Select
+            label="Map area"
+            value={String(w.zoom)}
+            options={[
+              { value: "6", label: "Southern B.C." },
+              { value: "7", label: "South coast" },
+              { value: "8", label: "Lower Mainland" },
+              { value: "9", label: "Fraser Valley" },
+              { value: "10", label: "Close to home" },
+            ]}
+            onChange={(v) => e((x) => void (x.zoom = Number(v)))}
+            hint="The map is centred on the dashboard's location (Settings), on the same map as the rain radar."
+          />
+          <Toggle label="Burned areas" checked={w.showPerimeters} onChange={(v) => e((x) => void (x.showPerimeters = v))} />
+          <Toggle
+            label="Evacuation orders and alerts"
+            checked={w.showEvacuations}
+            onChange={(v) => e((x) => void (x.showEvacuations = v))}
+            hint="Orders in red and alerts in amber, for any hazard. Settings › Emergency alerts can also put nearby ones on the red strip."
+          />
+          <Toggle
+            label="Fires under control"
+            checked={w.showControlled}
+            onChange={(v) => e((x) => void (x.showControlled = v))}
+            hint="Off shows only new, out-of-control and held fires."
+          />
+          <Select
+            label="Nearest fires listed"
+            value={String(w.listCount)}
+            options={[0, 1, 2, 3, 4, 5].map((n) => ({ value: String(n), label: n === 0 ? "None (map only)" : String(n) }))}
+            onChange={(v) => e((x) => void (x.listCount = Number(v)))}
+          />
+          <p className="text-xs text-soft">
+            Fires and evacuation areas from BC Wildfire Service and EmergencyInfoBC, updated every five minutes.
+          </p>
+        </>
+      );
+    }
     case "earth": {
       const e = edit<"earth">();
       const home = config.location;
