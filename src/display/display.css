@@ -802,29 +802,13 @@ html.portrait-view .stage {
 .w-weather[data-dense="1"] {
   gap: 2.5cqh;
 }
-.w-weather[data-dense="1"] .wx-now-icon {
-  height: min(100%, 22cqh, 18cqw);
-}
-.w-weather[data-dense="1"] .wx-temp {
-  font-size: calc(min(14cqh, 8cqw) * var(--font-scale, 1));
-}
-.w-weather[data-dense="1"] .wx-desc {
-  font-size: calc(min(5.2cqh, 3cqw) * var(--font-scale, 1));
-}
-.w-weather[data-dense="1"] .wx-meta,
-.w-weather[data-dense="1"] .wx-extra {
-  font-size: calc(min(4cqh, 2.3cqw) * var(--font-scale, 1));
-}
-.w-weather[data-dense="1"] .wx-hilo {
-  font-size: calc(min(5cqh, 2.6cqw) * var(--font-scale, 1));
-}
 .w-weather[data-dense="1"] .wx-hour,
 .w-weather[data-dense="1"] .wx-day {
   font-size: calc(min(4.5cqh, 2.4cqw) * var(--font-scale, 1));
 }
 .w-weather[data-dense="1"] .wx-hour .icon,
 .w-weather[data-dense="1"] .wx-day .icon {
-  width: min(9cqh, 4.5cqw);
+  width: calc(min(9cqh, 4.5cqw) * var(--wx-icon-scale, 1));
 }
 .wx-hi {
   color: var(--text);
@@ -858,7 +842,7 @@ html.portrait-view .stage {
 }
 .wx-day .icon,
 .wx-hour .icon {
-  width: min(14cqh, 7cqw);
+  width: calc(min(14cqh, 7cqw) * var(--wx-icon-scale, 1));
   aspect-ratio: 1;
 }
 /* A short, wide weather cell (the night view's strip) puts now and the days side by side. */
@@ -897,7 +881,7 @@ html.portrait-view .stage {
   }
   .wx-day .icon,
   .wx-hour .icon {
-    width: min(28cqh, 5.5cqw);
+    width: calc(min(28cqh, 5.5cqw) * var(--wx-icon-scale, 1));
   }
 }
 .wx-dn,
