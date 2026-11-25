@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 
 import { GET, POST } from "@/app/api/household/backup/route";
 import { defaultConfig } from "@/lib/config/defaults";

@@ -1,13 +1,13 @@
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 
 import { useTestServer } from "@/test/server";
 
 import { createAccount } from "./accounts";
 import { decodeTestSession, encodeTestSession, issueTestSession, requestSession, sessionFromEmail, testSessionCookie } from "./auth";
 
-useTestServer();
-
 describe("Clerk-backed household sessions (test cookie)", () => {
+  useTestServer();
+
   it("issues a signed test session for seeded admins", async () => {
     const session = await issueTestSession("admin@example.com");
     expect(session?.role).toBe("admin");

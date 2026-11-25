@@ -4,9 +4,9 @@ import { cookieFor, useTestServer } from "@/test/server";
 
 import { ADMIN_COOKIE, getStaff, getStaffSession, roleOf, staffEnabled, startAdminSignIn } from "./adminAuth";
 
-useTestServer({ ADMIN_2FA: "optional" });
-
 describe("staff auth via Clerk / test session", () => {
+  useTestServer({ ADMIN_2FA: "optional" });
+
   const prevAdmin = process.env.ADMIN_EMAILS;
   const prevSupport = process.env.SUPPORT_EMAILS;
 

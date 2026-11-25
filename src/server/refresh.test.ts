@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 
 import { GET as watchGET } from "@/app/api/display/config-watch/route";
 import { POST as refreshPOST } from "@/app/api/household/refresh/route";
