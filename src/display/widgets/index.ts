@@ -59,6 +59,7 @@ import { weather } from "./weather";
 import { weatherUnderground } from "./weatherUnderground";
 import { whiteboard } from "./whiteboard";
 import { wifiQr } from "./wifi";
+import { windy } from "./windy";
 
 /** Mounts a widget into its cell and returns what stops its timers. A widget that throws shows a quiet error, never a blank screen. */
 export function mountWidget(el: HTMLElement, w: Widget, ctx: WidgetContext): Cleanup {
@@ -137,6 +138,8 @@ export function mountWidget(el: HTMLElement, w: Widget, ctx: WidgetContext): Cle
       return sports(el, w, ctx);
     case "earth":
       return earth(el, w, ctx);
+    case "windy":
+      return windy(el, w, ctx);
     case "presence":
       return presence(el, w, ctx);
     case "school":

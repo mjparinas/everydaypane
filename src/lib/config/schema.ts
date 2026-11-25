@@ -6,6 +6,7 @@ import { MEAL_SLOTS } from "../meals";
 import { NEWS_PRESETS } from "../newsPresets";
 import { SCREEN_SAVER_OFF } from "../screenSaver";
 import { LEAGUE_IDS, MAX_TEAMS } from "../sports";
+import { WINDY_OVERLAYS } from "../windy";
 import { PERIODS } from "./periods";
 
 // The whole dashboard setup, as the admin panel edits it and every display reads it. One JSON document, validated
@@ -404,6 +405,21 @@ export const widgetSchema = z.discriminatedUnion("type", [
     overlay: z.enum(EARTH_OVERLAYS),
     showPlace: z.boolean(),
     animate: z.boolean(),
+  }),
+  // Windy weather map (Melvin, 2026-11-21: "do windy"): Windy's free embed on one layer, centred on a place
+  // (src/lib/windy.ts). Zoom 3 is a continent, 8 the Lower Mainland, 11 the neighbourhood. `place` is only the name
+  // the admin panel shows. `interactive` lets a hand pan and zoom it; off, the map takes no touches.
+  z.object({
+    ...base,
+    type: z.literal("windy"),
+    place: z.string().max(80),
+    latitude: z.number().min(-90).max(90),
+    longitude: z.number().min(-180).max(180),
+    zoom: z.number().int().min(3).max(11),
+    overlay: z.enum(WINDY_OVERLAYS),
+    marker: z.boolean(),
+    pressure: z.boolean(),
+    interactive: z.boolean(),
   }),
   // Shopping list (Melvin, 2026-11-22): items in the shopping table, added from phones, ticked on the wall when
   // allowCheck is on.
