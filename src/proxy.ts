@@ -48,6 +48,8 @@ function redirectToSignIn(req: NextRequest): NextResponse {
 
 function gate(req: NextRequest, signedIn: boolean): NextResponse {
   const path = req.nextUrl.pathname;
+  // Clerk still attaches the session. The preview route checks household membership and sets the display shell CSP.
+  if (/^\/household\/preview\/[^/]+\/?$/.test(path)) return NextResponse.next();
   if (needsAuthPath(path) && !signedIn && !hasTestSession(req)) {
     return redirectToSignIn(req);
   }
@@ -81,6 +83,7 @@ export default async function proxy(req: NextRequest, event: unknown) {
 export const config = {
   matcher: [
     "/((?!api/|_next/static|_next/image|d/[^/]+/?$|household/preview/|display/?$|display/display\\.(?:js|css)|display/sw\\.js|brand/|fonts/|icons/|favicon.ico|icon.svg|apple-icon.png|apple-touch-icon.png|manifest.webmanifest|.*\\..*).*)",
+    "/household/preview/:viewId",
     "/(api|trpc)(.*)",
   ],
 };
