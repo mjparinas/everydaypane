@@ -102,7 +102,10 @@ async function networkFirst(req: Request, key: Request, ms: number): Promise<Res
       const copy = r.clone();
       void caches.open(DATA).then((c) => c.put(key, copy));
     }
-    if (r.status >= 500) return (await offlineCopy(key)) ?? r;
+    // Stale auth, bad/deploying versions and upstream failures all should keep the
+    // wall usable rather than replacing a good dashboard with a browser error page.
+    if (r.status === 401 || r.status === 403) return r;
+    if (r.status >= 400) return (await offlineCopy(key)) ?? r;
     return r;
   } catch {
     return (

@@ -82,7 +82,14 @@ export async function get<T>(
   params: Record<string, string> = {},
   etag?: string,
   opts: { background?: boolean } = {},
-): Promise<{ data: T | null; etag: string | null; notModified: boolean; live: boolean; releaseVersion: string | null }> {
+): Promise<{
+  data: T | null;
+  etag: string | null;
+  notModified: boolean;
+  live: boolean;
+  releaseVersion: string | null;
+  unauthorized: boolean;
+}> {
   const headers: Record<string, string> = {};
   if (TOKEN) headers["x-display-token"] = TOKEN;
   if (etag) headers["if-none-match"] = etag;
@@ -94,13 +101,38 @@ export async function get<T>(
     // The service worker marks answers it served from its offline copy.
     const offlineCopy = r.headers.get("x-offline") === "1";
     const releaseVersion = r.headers.get("x-display-release");
-    setServerOffline(!offlineCopy && r.status < 500 ? false : offlineCopy || r.status >= 500);
-    if (r.status === 304) return { data: null, etag: etag ?? null, notModified: true, live: !offlineCopy, releaseVersion };
-    if (!r.ok) return { data: null, etag: null, notModified: false, live: false, releaseVersion };
-    return { data: (await r.json()) as T, etag: r.headers.get("etag"), notModified: false, live: !offlineCopy, releaseVersion };
+    setServerOffline(offlineCopy || r.status >= 500);
+    if (r.status === 304)
+      return {
+        data: null,
+        etag: etag ?? null,
+        notModified: true,
+        live: !offlineCopy,
+        releaseVersion,
+        unauthorized: false,
+      };
+    if (!r.ok)
+      return {
+        data: null,
+        etag: null,
+        notModified: false,
+        live: false,
+        releaseVersion,
+        unauthorized: r.status === 401 || r.status === 403,
+      };
+    if (r.status === 204)
+      return { data: null, etag: r.headers.get("etag"), notModified: false, live: true, releaseVersion, unauthorized: false };
+    try {
+      const data = (await r.json()) as T;
+      return { data, etag: r.headers.get("etag"), notModified: false, live: !offlineCopy, releaseVersion, unauthorized: false };
+    } catch {
+      // A reverse proxy or stale deployment may return HTML or an empty 200. It is not
+      // safe to treat that as widget data; keep the last good copy and retry with backoff.
+      return { data: null, etag: null, notModified: false, live: false, releaseVersion, unauthorized: false };
+    }
   } catch {
     setServerOffline(true);
-    return { data: null, etag: null, notModified: false, live: false, releaseVersion: null };
+    return { data: null, etag: null, notModified: false, live: false, releaseVersion: null, unauthorized: false };
   } finally {
     endActivity();
   }
