@@ -80,6 +80,7 @@ same change, and moves it out of **In progress** when it merges.
 | Vimeo (`vimeo`) | Video embed | player.vimeo.com iframe |
 | Airports (`airports`) | METAR summary per ICAO code; optional delays | Aviation Weather; Aviationstack with `AIRPORT_API_KEY` |
 | Google Maps (`maps`) | Map for a place query | google.com/maps embed iframe |
+| Internet (`internet`) | Ping every 10 s to 5 min with Online / Slow / Offline, a graph of the last 60 checks and the share that failed; download and upload speed every 1 to 24 h or on a tap | The screen's own browser against Cloudflare's speed test servers |
 
 **Display behaviour:** several views on a drag-and-drop grid (chosen rows and columns, gap, edge padding and **tile padding**; presets include **12×8 landscape** and **8×12 portrait**, with portrait stages letterboxed on a landscape panel), **per-widget visibility by part of day** (`visiblePeriods`), optional **view loop** on schedule followers (`schedule.loopSeconds`), **widgets layered on top of a photos widget**
 (photos as the backdrop), **per-widget background** (on/off and opacity; theme surface opacity is the default; clocks and dates start with no panel), **per-widget font size** (`fontScale`, 70–150 %, text widgets only — not photos, radar, camera, earth, embeds or the whiteboard), **per-widget outer padding** (`outerPadding`, 0–48 px, omitted means none; insets the panel in its grid cell), a time-of-day schedule
@@ -303,6 +304,9 @@ npm run templates:previews  # regenerate public/templates/*.png from real widget
 - **Screen saver** (Melvin, 2026-11-21): after some minutes with no touch the display shows only photos (full screen,
   optional clock) or goes dark, and during a night window it goes dark; Home Assistant motion sensors keep it awake and
   wake it (see Architecture). Off until switched on in Settings › Screen saver.
+- **Internet ping and speed** (Melvin, 2026-11-21: "can we add an internet ping one", "or internet speed"): an
+  `internet` widget measured by the wall's own browser, so it shows the home connection (see Architecture). No relay or
+  extra software at home.
 - **Canadian English** in everything a person reads (colour, centre, favourite), as in Liftsmith.
 
 ## Display: super lightweight (rule, Melvin, 2026-11-17)
@@ -314,6 +318,12 @@ panel can be complex if you need it to be."
   small TypeScript module bundled by esbuild (`src/display/` → `public/display/`), with no framework. The unlock gate
   (`/display/unlock/`) is a Next.js page. Widgets update only the DOM nodes that change (the clock rewrites one text
   node a second).
+- **Widgets that load on their own** (2026-11-25, when display.js passed 40 KB on main): a widget few screens use can
+  be built as its own file (`public/display/<name>.js`: add it to `LAZY` in `scripts/build-display.mjs`, a line in
+  `bundle-check.mjs` and the `Lazy` type) and mounted through `lazyWidget` (`src/display/widgets/lazy.ts`), which
+  imports it with display.js's own `?v=` only on a screen that shows it. Its `../api` is swapped at build time for
+  `src/display/apiShared.ts`, which calls display.js's copy, so feeds, the device token and offline state stay single.
+  The internet widget and the whiteboard load this way (display.js 39.5 KB after the move).
 - **Budget:** the display's script stays under 40 KB gzipped and its stylesheet under 20 KB (`scripts/bundle-check.mjs`,
   a CI step; CSS raised from 10 KB on 2026-11-23 for more clock styles). A new dependency on the display needs a very good reason.
 - All heavy lifting happens on the server: API calls to Google, weather, Recycle Coach, Amazon and Home Assistant are
@@ -567,6 +577,17 @@ panel can be complex if you need it to be."
   switches them on, and a restore without them keeps the dashboard's current ones. A restore is checked first
   (`dryRun`, the panel shows what the file holds), upgraded like a stored document, and saved as an ordinary versioned
   save, so displays reload and a stale restore gets 409.
+- **Internet ping and speed:** run entirely on the display, no server (`src/display/widgets/internet.ts`, arithmetic in
+  `src/lib/internet.ts`), because only the screen at home can see the home connection; our server on Vercel would
+  measure Vercel's. It talks to Cloudflare's speed test servers (`speed.cloudflare.com/__down?bytes=N` and `/__up`,
+  the ones its own speed test page uses; they answer any origin, need no key and have a Vancouver location), so the
+  CSP's `connect-src` allows that host. A check is three pings one after another and keeps the middle one; two failed
+  checks in a row is Offline, one ping above `slowMs` is Slow. A speed test downloads 1, 10 then 50 MB and stops at the
+  first that takes a second (about 11 MB on a slow line, 61 MB on a fast one), timed from the first byte; upload is
+  0.5, 2 then 10 MB, with the ping taken off. Tests run every `speedHours` (6 by default; 0 = only on a tap), never
+  within a minute of the widget starting, half an hour after a failure, and never alongside a ping. Readings live in
+  localStorage (`everydaypane.internet.<id>`), so reloads and settings saves don't empty the graph or start an early
+  test. Each screen with the widget measures for itself. This sandbox can't reach Cloudflare, so tests use a stand-in.
 - **Timers and pomodoro:** run entirely on the display, no server. Each widget keeps its state in localStorage
   (`everydaypane.timer.<id>`, `everydaypane.pomodoro.<id>`), and alarms belong to the screen, not the widget
   (`src/display/alarm.ts`, started by `main.ts`), so a timer still rings after a settings save, a reload, or when the
@@ -653,7 +674,7 @@ panel can be complex if you need it to be."
 - Requests that change something must come from our own origin (`sameOrigin`).
 - Security headers on every response (`src/lib/securityHeaders.ts`): HSTS, nosniff, `frame-ancestors 'none'` (wall
   `/display/` stays unframeable; `/household/preview/` allows `frame-ancestors 'self'` so the Views tab can embed it), a
-  CSP that allows only our own origin (and Sentry's ingest, `'self'` plus earth.nullschool.net in `frame-src`;
+  CSP that allows only our own origin (and Sentry's ingest, Cloudflare's speed test in `connect-src` for the internet widget, `'self'` plus earth.nullschool.net in `frame-src`;
   `script-src` never allows `'unsafe-inline'` — Next.js pages get a per-request nonce from `proxy.ts`, the display loads
   only `/display/display.js`), and a Permissions-Policy that turns off camera, microphone and location.
 - **Family sessions** (`FAMILY_EMAILS`) use `/family/` and the meals, shopping and messages APIs only. They are not
