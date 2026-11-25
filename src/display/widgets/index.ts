@@ -121,6 +121,8 @@ export function mountWidget(el: HTMLElement, w: Widget, ctx: WidgetContext): Cle
       return commute(el, w, ctx);
     case "radar":
       return radar(el, w, ctx);
+    case "wildfires":
+      return lazyWidget("wildfires", el, w, ctx);
     case "chores":
       return chores(el, w, ctx);
     case "shopping":

@@ -385,6 +385,19 @@ export const widgetSchema = z.discriminatedUnion("type", [
     forecastMinutes: z.number().int().min(0).max(180),
     animate: z.boolean(),
   }),
+  // Wildfires (Melvin, 2026-11-21: "do windy and wildfires"): BC Wildfire Service's active fires around home on the
+  // radar's map (src/server/wildfires.ts), with the burned area of each, evacuation orders and alerts, and the nearest
+  // fires listed underneath. Zoom works as on the radar: 6 is most of southern B.C., 10 the Township.
+  z.object({
+    ...base,
+    type: z.literal("wildfires"),
+    zoom: z.number().int().min(6).max(10),
+    showPerimeters: z.boolean(),
+    showEvacuations: z.boolean(),
+    // Fires under control are often many and harmless; off leaves out-of-control, new and held fires only.
+    showControlled: z.boolean(),
+    listCount: z.number().int().min(0).max(5),
+  }),
   // Kitchen timers (Melvin, 2026-11-21): tap a button on the wall to start one; several can run at once.
   z.object({ ...base, type: z.literal("timer"), presets: z.array(timerPresetSchema).max(12), ...alertFields }),
   // A pomodoro (Melvin, 2026-11-21: "a separate pomodoro"): focus rounds and breaks, a long break after the last round.
@@ -811,12 +824,16 @@ export const configSchema = z
         roads: z.boolean(),
         earthquakes: z.boolean(),
         power: z.boolean().default(true),
+        // Evacuation orders and alerts from EmergencyInfoBC (Melvin, 2026-11-21, with the wildfire map).
+        evacuations: z.boolean().default(true),
       }),
       banner: z.enum(["extreme", "severe", "moderate", "minor", "never"]),
       radiusKm: z.number().int().min(10).max(500),
       minMagnitude: z.number().min(2).max(9),
       // Power outages count when their area covers the home or is within this many km of it.
       powerKm: z.number().int().min(0).max(50).default(5),
+      // Evacuation orders and alerts count when they cover the home or come within this many km of it.
+      evacuationKm: z.number().int().min(0).max(100).default(10),
       // Email ADMIN_EMAILS and FAMILY_EMAILS when a new strip-worthy alert arrives (Melvin, 2026-11-22). Off by default.
       notifyEmail: z.boolean().default(false),
     }),
