@@ -1,5 +1,6 @@
 import { loadConfig } from "@/server/config";
 import { displayPayload } from "@/server/display";
+import { DISPLAY_ASSET_VERSION } from "@/server/displayHtml";
 import { json, unauthorized } from "@/server/http";
 import { planForAccount } from "@/server/planGates";
 import { accountIdOf, viewerFor } from "@/server/viewer";
@@ -16,10 +17,14 @@ export async function GET(req: Request) {
   const device = viewer.kind === "device" ? viewer.device : null;
   const etag = `"${version}-${device?.viewId ?? preview ?? "auto"}"`;
   if (req.headers.get("if-none-match") === etag)
-    return new Response(null, { status: 304, headers: { ETag: etag, "Cache-Control": "no-cache" } });
+    return new Response(null, {
+      status: 304,
+      headers: { ETag: etag, "Cache-Control": "no-cache", "X-Display-Release": DISPLAY_ASSET_VERSION },
+    });
   const instantRefresh = (await planForAccount(accountId)) === "paid";
   return json(displayPayload(config, version, device, preview, { instantRefresh }), 200, {
     ETag: etag,
     "Cache-Control": "no-cache",
+    "X-Display-Release": DISPLAY_ASSET_VERSION,
   });
 }
