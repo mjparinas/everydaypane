@@ -48,6 +48,8 @@ export function PlanProvider({ children, initialPlan = "free" }: { children: Rea
   const [upgradeReason, setUpgradeReason] = useState<UpgradeReasonKey>("default");
   const [billingBusy, setBillingBusy] = useState(false);
   const [billingError, setBillingError] = useState("");
+  /** Hash to restore when closing `#upgrade` so Settings deep links aren’t lost (H5, 2026-11-24). State (not ref) keeps the plan context free of render-time ref reads. */
+  const [upgradeReturnHash, setUpgradeReturnHash] = useState("#views");
 
   const apply = useCallback((body: BillingBody | null) => {
     if (!body?.plan) return;
@@ -113,6 +115,7 @@ export function PlanProvider({ children, initialPlan = "free" }: { children: Rea
     setUpgradeOpen(true);
     setBillingError("");
     if (window.location.hash !== "#upgrade") {
+      setUpgradeReturnHash(window.location.hash || "#views");
       history.replaceState(null, "", "#upgrade");
       window.dispatchEvent(new HashChangeEvent("hashchange"));
     }
@@ -121,10 +124,10 @@ export function PlanProvider({ children, initialPlan = "free" }: { children: Rea
   const closeUpgrade = useCallback(() => {
     setUpgradeOpen(false);
     if (window.location.hash === "#upgrade") {
-      history.replaceState(null, "", "#views");
+      history.replaceState(null, "", upgradeReturnHash || "#views");
       window.dispatchEvent(new HashChangeEvent("hashchange"));
     }
-  }, []);
+  }, [upgradeReturnHash]);
 
   const startCheckout = useCallback(async () => {
     setBillingBusy(true);
@@ -238,20 +241,24 @@ export function FreePlanBanner() {
 
   if (loading || isPaid || dismissed) return null;
 
+  // Quieter Free CTA (H5, 2026-11-24): one soft line + text actions; Plan chip and badges still carry upgrade.
   return (
-    <div className="border-b border-brand/20 bg-brand/5" role="region" aria-label="Household plan">
-      <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-3 px-4 py-2.5">
-        <p className="min-w-0 flex-1 text-sm text-ink">
-          You’re on <strong>Free</strong> — clocks, weather, photos and calendars work.{" "}
-          <span className="text-soft">Household adds meals, chores, smart home and every widget.</span>
+    <div className="border-b border-line bg-bg/80" role="region" aria-label="Household plan">
+      <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-2 px-4 py-2">
+        <p className="min-w-0 flex-1 text-sm text-soft">
+          Free plan — core wall tools work.{" "}
+          <button
+            type="button"
+            className="font-semibold text-brand underline-offset-2 hover:underline"
+            onClick={() => openUpgrade("default")}
+          >
+            What’s on Household?
+          </button>
         </p>
-        <button type="button" className="btn-primary shrink-0" onClick={() => openUpgrade("default")}>
-          See Household
-        </button>
         <button
           type="button"
           className="btn-ghost shrink-0 text-soft"
-          aria-label="Dismiss"
+          aria-label="Dismiss plan note"
           onClick={() => {
             try {
               sessionStorage.setItem(BANNER_DISMISS_KEY, "1");
@@ -261,7 +268,7 @@ export function FreePlanBanner() {
             setDismissed(true);
           }}
         >
-          Not now
+          Dismiss
         </button>
       </div>
     </div>
