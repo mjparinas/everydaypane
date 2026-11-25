@@ -1,12 +1,10 @@
 import { NextResponse, type NextRequest } from "next/server";
 
+import { authTestMode, clerkConfigured, TEST_SESSION_COOKIE } from "@/lib/authFlags";
 import { contentSecurityPolicy } from "@/lib/securityHeaders";
 
-// Sends people without a session cookie from /household, /admin or /family to sign-in. Only a fast first check: every
-// page and API route checks the session itself (src/server/viewer.ts, src/server/staff.ts).
-//
-// Also stamps a per-request CSP nonce onto Next.js documents so script-src can drop 'unsafe-inline' (Next applies the
-// nonce to its own scripts when it sees Content-Security-Policy on the request).
+// Clerk session attach + CSP nonce. Protects /household, /admin and /family with a fast cookie/session check;
+// every page and API still re-checks membership itself. Wall `/display/` unlock stays outside this gate.
 
 function requestIsHttps(req: NextRequest): boolean {
   const forwarded = req.headers.get("x-forwarded-proto")?.split(",")[0]?.trim();
@@ -29,25 +27,58 @@ function withCsp(req: NextRequest, build: (headers: Headers) => NextResponse): N
   return response;
 }
 
-export function proxy(req: NextRequest) {
+function needsAuthPath(path: string): boolean {
+  return path.startsWith("/household") || path.startsWith("/admin") || path.startsWith("/family");
+}
+
+function hasTestSession(req: NextRequest): boolean {
+  return authTestMode() && req.cookies.has(TEST_SESSION_COOKIE);
+}
+
+function redirectToSignIn(req: NextRequest): NextResponse {
+  const url = req.nextUrl.clone();
+  url.pathname = "/signin/";
+  url.search = `?next=${encodeURIComponent(req.nextUrl.pathname)}`;
+  return withCsp(req, () => NextResponse.redirect(url));
+}
+
+function gate(req: NextRequest, signedIn: boolean): NextResponse {
   const path = req.nextUrl.pathname;
-  const needsAuth = path.startsWith("/household") || path.startsWith("/admin") || path.startsWith("/family");
-
-  if (needsAuth && !req.cookies.has("ep_session")) {
-    const url = req.nextUrl.clone();
-    url.pathname = "/signin/";
-    url.search = `?next=${encodeURIComponent(req.nextUrl.pathname)}`;
-    return withCsp(req, () => NextResponse.redirect(url));
+  if (needsAuthPath(path) && !signedIn && !hasTestSession(req)) {
+    return redirectToSignIn(req);
   }
-
   return withCsp(req, (requestHeaders) => NextResponse.next({ request: { headers: requestHeaders } }));
 }
 
-// HTML documents (not /d/ or /household/preview/, which set their own CSP in displayHtml; not APIs or static assets).
+type Middleware = (req: NextRequest, event: unknown) => unknown;
+
+let clerkProxy: Middleware | null = null;
+
+async function loadClerkProxy(): Promise<Middleware> {
+  if (clerkProxy) return clerkProxy;
+  const { clerkMiddleware } = await import("@clerk/nextjs/server");
+  clerkProxy = clerkMiddleware(
+    async (auth, req) => {
+      const { userId } = await auth();
+      return gate(req, Boolean(userId));
+    },
+    { frontendApiProxy: { enabled: true } },
+  ) as Middleware;
+  return clerkProxy;
+}
+
+export default async function proxy(req: NextRequest, event: unknown) {
+  if (clerkConfigured()) {
+    const mw = await loadClerkProxy();
+    return mw(req, event);
+  }
+  return gate(req, hasTestSession(req));
+}
+
 export const config = {
-  // Unlocked `/display/` sets its own CSP in displayHtml (must not get the nonce/`strict-dynamic` CSP or display.js
-  // is blocked). `/display/unlock/` is a Next.js page and needs the nonce. Static `/display/display.*` stay out.
   matcher: [
     "/((?!api/|_next/static|_next/image|d/[^/]+/?$|household/preview/|display/?$|display/display\\.(?:js|css)|display/sw\\.js|brand/|fonts/|icons/|favicon.ico|icon.svg|apple-icon.png|apple-touch-icon.png|manifest.webmanifest|.*\\..*).*)",
+    "/(api|trpc)(.*)",
+    "/__clerk/(.*)",
   ],
 };

@@ -26,15 +26,21 @@ export function contentSecurityPolicy(opts: {
     opts.script === "nonce" && opts.nonce
       ? `'self' 'nonce-${opts.nonce}' 'strict-dynamic'${isDev ? " 'unsafe-eval'" : ""}`
       : `'self'${isDev ? " 'unsafe-eval'" : ""}`;
+  // Clerk Frontend API (and Cloudflare Turnstile challenges) when not fully proxied through /__clerk.
+  const clerkScript = "https://*.clerk.accounts.dev https://*.clerk.com https://challenges.cloudflare.com";
+  const clerkConnect =
+    "https://*.clerk.accounts.dev https://*.clerk.com https://api.clerk.com https://clerk-telemetry.com https://challenges.cloudflare.com";
+  const clerkFrame = "https://*.clerk.accounts.dev https://*.clerk.com https://challenges.cloudflare.com";
   const directives = [
     "default-src 'self'",
-    `script-src ${script}`,
+    `script-src ${script} ${clerkScript}`,
     "style-src 'self' 'unsafe-inline'",
-    "img-src 'self' data: blob:",
+    "img-src 'self' data: blob: https://img.clerk.com",
     "font-src 'self'",
-    "connect-src 'self' https://*.ingest.sentry.io https://*.ingest.us.sentry.io",
+    `connect-src 'self' https://*.ingest.sentry.io https://*.ingest.us.sentry.io ${clerkConnect}`,
     [
       "frame-src 'self'",
+      clerkFrame,
       "https://earth.nullschool.net",
       "https://s.tradingview.com",
       "https://www.tradingview-widget.com",
@@ -45,7 +51,7 @@ export function contentSecurityPolicy(opts: {
       "https://maps.google.com",
       "https://www.instagram.com",
     ].join(" "),
-    "worker-src 'self'",
+    "worker-src 'self' blob:",
     "manifest-src 'self'",
     `frame-ancestors ${opts.frameAncestors ?? "'none'"}`,
     "object-src 'none'",

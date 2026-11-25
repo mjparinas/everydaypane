@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 
 import { KidsChores } from "@/components/KidsChores";
 import { Mark } from "@/components/Wordmark";
-import { SESSION_COOKIE, sessionFor } from "@/server/auth";
+import { currentHouseholdSession, SESSION_COOKIE } from "@/server/auth";
 
 import { SignOut } from "../SignOut";
 
@@ -13,7 +13,7 @@ export const metadata: Metadata = { title: "Chores · Family" };
 
 // Signed-in family kids chores page (Melvin, 2026-11-23). Same UI as `/d/<token>/chores/`.
 export default async function FamilyChoresPage() {
-  const session = await sessionFor((await cookies()).get(SESSION_COOKIE)?.value);
+  const session = await currentHouseholdSession((await cookies()).get(SESSION_COOKIE)?.value);
   if (!session) redirect("/signin/?next=/family/chores/");
   return (
     <main className="mx-auto grid max-w-xl gap-4 p-4">

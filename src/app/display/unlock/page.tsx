@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 
 import { Wordmark } from "@/components/Wordmark";
 import { DISPLAY_PATH } from "@/lib/site";
-import { SESSION_COOKIE, sessionFor } from "@/server/auth";
+import { currentHouseholdSession, SESSION_COOKIE } from "@/server/auth";
 import { tokenFromSealedCookie, WALL_COOKIE } from "@/server/displayAuth";
 
 import { DisplayUnlock } from "./DisplayUnlock";
@@ -16,7 +16,7 @@ export default async function DisplayUnlockPage() {
   const wallToken = await tokenFromSealedCookie(jar.get(WALL_COOKIE)?.value);
   if (wallToken) redirect(DISPLAY_PATH);
 
-  const session = await sessionFor(jar.get(SESSION_COOKIE)?.value);
+  const session = await currentHouseholdSession(jar.get(SESSION_COOKIE)?.value);
 
   return (
     <div className="site flex min-h-dvh flex-col bg-bg">

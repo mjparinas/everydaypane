@@ -1,14 +1,35 @@
 "use client";
 
+import { useClerk } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 
 export function SignOut() {
+  const clerkReady = Boolean(process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY?.startsWith("pk_"));
+  return clerkReady ? <ClerkSignOut /> : <TestSignOut />;
+}
+
+function TestSignOut() {
   const router = useRouter();
   return (
     <button
       className="btn-ghost"
       onClick={() => {
         void fetch("/api/auth/signout/", { method: "POST" }).then(() => router.replace("/signin/"));
+      }}
+    >
+      Sign out
+    </button>
+  );
+}
+
+function ClerkSignOut() {
+  const router = useRouter();
+  const { signOut } = useClerk();
+  return (
+    <button
+      className="btn-ghost"
+      onClick={() => {
+        void signOut({ redirectUrl: "/signin/" }).catch(() => router.replace("/signin/"));
       }}
     >
       Sign out

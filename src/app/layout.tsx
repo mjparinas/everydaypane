@@ -4,6 +4,7 @@ import { connection } from "next/server";
 import "@fontsource-variable/manrope/wght.css";
 import "@fontsource-variable/inter/wght.css";
 
+import { AppClerkProvider } from "@/components/ClerkProvider";
 import { SITE_URL } from "@/lib/site";
 
 import "./globals.css";
@@ -44,7 +45,9 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
   await connection();
   return (
     <html lang="en-CA">
-      <body className="font-sans antialiased">{children}</body>
+      <body className="font-sans antialiased">
+        <AppClerkProvider>{children}</AppClerkProvider>
+      </body>
     </html>
   );
 }

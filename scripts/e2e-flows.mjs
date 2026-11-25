@@ -18,7 +18,7 @@ async function addDevice(page, base, viewId = null) {
 }
 
 async function copyAdminSession(context, adminPage, base) {
-  const session = (await adminPage.context().cookies()).filter((c) => c.name === "ep_session");
+  const session = (await adminPage.context().cookies()).filter((c) => c.name === "ep_test_session" || c.name === "ep_session");
   await context.addCookies(
     session.map((c) => ({
       name: c.name,

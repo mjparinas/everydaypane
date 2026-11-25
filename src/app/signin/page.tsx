@@ -24,7 +24,9 @@ export default async function SignInPage({ searchParams }: { searchParams: Promi
             <Wordmark height={36} />
           </h1>
           <p className="mt-3 text-soft">
-            {signup ? "Create a free household. We’ll email you a one-time link — no card needed." : "We’ll email you a link to sign in."}
+            {signup
+              ? "Create a free household. We’ll email you a one-time code — no card needed."
+              : "We’ll email you a one-time code to sign in."}
           </p>
           <SignInForm intent={intent} next={next} />
           {signup ? (

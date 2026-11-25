@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { ADMIN_TABS, isAdminTab, OPEN_TABS, PERIOD_TABS, type AdminTab } from "@/lib/adminTabs";
 
@@ -126,8 +126,8 @@ export function AdminApp() {
       </AdminAuthCard>
     );
   }
-  if (gate === "signin") return <SignIn onSent={() => flash("Check your email for a link.")} />;
-  if (gate === "twofactor" && staff) return <TwoFactorGate email={staff.email} onReady={() => setGate("ok")} />;
+  if (gate === "signin") return <SignIn />;
+  if (gate === "twofactor" && staff) return <TwoFactorGate email={staff.email} />;
 
   const tools = (
     <div className="flex flex-wrap items-center gap-2">
@@ -179,146 +179,31 @@ export function AdminApp() {
   );
 }
 
-function SignIn({ onSent }: { onSent: () => void }) {
-  const [email, setEmail] = useState("");
-  const [msg, setMsg] = useState("");
-  const [devLink, setDevLink] = useState("");
-  const expired = typeof window !== "undefined" && new URLSearchParams(window.location.search).get("link") === "expired";
-
-  async function submit(e: FormEvent) {
-    e.preventDefault();
-    setMsg("");
-    try {
-      const body = await api<{ message?: string; devLink?: string; error?: string }>("/api/admin/login/", {
-        method: "POST",
-        body: JSON.stringify({ email }),
-      });
-      if (body.devLink) setDevLink(body.devLink);
-      setMsg(body.message || "Link sent.");
-      onSent();
-    } catch (err) {
-      setMsg(err instanceof Error ? err.message : "Couldn't send");
-    }
-  }
-
+function SignIn() {
+  useEffect(() => {
+    window.location.replace("/signin/?next=/admin/");
+  }, []);
   return (
-    <AdminAuthCard
-      title="Staff sign-in"
-      sub={expired ? "That link expired or was already used. Request a new one." : "Magic link for ADMIN_EMAILS / SUPPORT_EMAILS."}
-    >
-      <form className="grid gap-3" onSubmit={(e) => void submit(e)}>
-        <label className="grid gap-1 text-sm">
-          <span className="font-semibold">Email</span>
-          <input className="field" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="username" />
-        </label>
-        <button type="submit" className="btn-primary">
-          Email me a link
-        </button>
-      </form>
-      {msg ? <p className="mt-3 text-sm text-soft">{msg}</p> : null}
-      {devLink ? (
-        <p className="mt-2 break-all text-sm">
-          <a className="text-brand underline" href={devLink}>
-            Dev link
-          </a>
-        </p>
-      ) : null}
+    <AdminAuthCard title="Staff sign-in" sub="Redirecting to Everydaypane sign-in. Only ADMIN_EMAILS / SUPPORT_EMAILS can open this panel.">
+      <a className="btn-primary" href="/signin/?next=/admin/">
+        Continue to sign-in
+      </a>
     </AdminAuthCard>
   );
 }
 
-function TwoFactorGate({ email, onReady }: { email: string; onReady: () => void }) {
-  const [mode, setMode] = useState<"verify" | "enrol">("verify");
-  const [code, setCode] = useState("");
-  const [uri, setUri] = useState("");
-  const [secret, setSecret] = useState("");
-  const [backup, setBackup] = useState<string[] | null>(null);
-  const [err, setErr] = useState("");
-
-  useEffect(() => {
-    void api<{ twoFactor: { enabled: boolean }; mode: string }>("/api/admin/2fa/").then((b) => {
-      if (!b.twoFactor.enabled && b.mode === "required") {
-        setMode("enrol");
-        void api<{ uri: string; secret: string }>("/api/admin/2fa/", { method: "POST", body: JSON.stringify({ action: "enrol" }) }).then(
-          (r) => {
-            setUri(r.uri);
-            setSecret(r.secret);
-          },
-        );
-      }
-    });
-  }, []);
-
-  async function verify(e: FormEvent) {
-    e.preventDefault();
-    setErr("");
-    if (mode === "enrol") {
-      const r = await api<{ result: string; codes?: string[] }>("/api/admin/2fa/", {
-        method: "POST",
-        body: JSON.stringify({ action: "confirm", code }),
-      });
-      if (r.result !== "ok") {
-        setErr(r.result === "limited" ? "Too many tries." : "Wrong code.");
-        return;
-      }
-      setBackup(r.codes ?? null);
-      return;
-    }
-    const r = await api<{ result: string }>("/api/admin/2fa/", { method: "POST", body: JSON.stringify({ action: "verify", code }) });
-    if (r.result !== "ok") {
-      setErr(r.result === "limited" ? "Too many tries." : "Wrong code.");
-      return;
-    }
-    onReady();
-  }
-
-  if (backup) {
-    return (
-      <AdminAuthCard title="Save your recovery codes" sub="Each works once. Store them somewhere safe.">
-        <ul className="font-mono text-sm">
-          {backup.map((c) => (
-            <li key={c}>{c}</li>
-          ))}
-        </ul>
-        <button type="button" className="btn-primary mt-4" onClick={onReady}>
-          Continue
-        </button>
-      </AdminAuthCard>
-    );
-  }
-
+function TwoFactorGate({ email }: { email: string }) {
   return (
-    <AdminAuthCard title={mode === "enrol" ? "Set up authenticator" : "Two-step verification"} sub={email}>
-      {mode === "enrol" && secret ? (
-        <div className="mb-4 text-sm text-soft">
-          <p>Add this account in your authenticator app, then enter a code.</p>
-          <p className="mt-2 break-all font-mono text-xs">{secret}</p>
-          {uri ? (
-            <p className="mt-2">
-              <a className="text-brand underline" href={uri}>
-                Open otpauth link
-              </a>
-            </p>
-          ) : null}
-        </div>
-      ) : null}
-      <form className="grid gap-3" onSubmit={(e) => void verify(e)}>
-        <label className="grid gap-1 text-sm">
-          <span className="font-semibold">Code</span>
-          <input
-            className="field"
-            inputMode="numeric"
-            autoComplete="one-time-code"
-            value={code}
-            onChange={(e) => setCode(e.target.value)}
-            required
-          />
-        </label>
-        {err ? <p className="text-sm text-bad">{err}</p> : null}
-        <button type="submit" className="btn-primary">
-          Continue
-        </button>
-      </form>
+    <AdminAuthCard
+      title="Two-step verification required"
+      sub={`${email} — turn on authenticator MFA in your Clerk account, then sign in again.`}
+    >
+      <p className="text-sm text-soft">
+        Platform staff must complete Clerk&rsquo;s second factor when <code>ADMIN_2FA</code> is required (the default).
+      </p>
+      <a className="btn-primary mt-4" href="/signin/?next=/admin/">
+        Sign in again
+      </a>
     </AdminAuthCard>
   );
 }
