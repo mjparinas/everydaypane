@@ -20,15 +20,22 @@ export type SecretKey =
   | "nest.refreshToken"
   | "ecobee.refreshToken"
   | "smartthings.refreshToken"
+  // A Govee developer API key (from the Govee Home app), src/server/govee.ts.
+  | "govee.apiKey"
   | "tempest.token"
   | "wu.apiKey"
   | "airthings.clientId"
   | "airthings.clientSecret"
+  | "ecoflow.accessKey"
+  | "ecoflow.secretKey"
+  | "unifi.apiKey"
   | "microsoft.refreshToken"
   | "microsoft.scopes"
   | "todoist.refreshToken"
   | "ynab.token"
   | "fitbit.refreshToken"
+  | "oura.refreshToken"
+  | "oura.accessToken"
   | "slack.token"
   | "trello.token"
   | "dropbox.refreshToken"
@@ -76,15 +83,21 @@ export async function secretsSet(accountId: string): Promise<Record<SecretKey, b
     "nest.refreshToken": set.has("nest.refreshToken"),
     "ecobee.refreshToken": set.has("ecobee.refreshToken"),
     "smartthings.refreshToken": set.has("smartthings.refreshToken"),
+    "govee.apiKey": set.has("govee.apiKey"),
     "tempest.token": set.has("tempest.token"),
     "wu.apiKey": set.has("wu.apiKey"),
     "airthings.clientId": set.has("airthings.clientId"),
     "airthings.clientSecret": set.has("airthings.clientSecret"),
+    "ecoflow.accessKey": set.has("ecoflow.accessKey"),
+    "ecoflow.secretKey": set.has("ecoflow.secretKey"),
+    "unifi.apiKey": set.has("unifi.apiKey"),
     "microsoft.refreshToken": set.has("microsoft.refreshToken"),
     "microsoft.scopes": set.has("microsoft.scopes"),
     "todoist.refreshToken": set.has("todoist.refreshToken"),
     "ynab.token": set.has("ynab.token"),
     "fitbit.refreshToken": set.has("fitbit.refreshToken"),
+    "oura.refreshToken": set.has("oura.refreshToken"),
+    "oura.accessToken": set.has("oura.accessToken"),
     "slack.token": set.has("slack.token"),
     "trello.token": set.has("trello.token"),
     "dropbox.refreshToken": set.has("dropbox.refreshToken"),

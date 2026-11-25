@@ -6,6 +6,7 @@ import type { AlertData, AlertSeverity, EmergencyAlert } from "@/lib/display/typ
 import { zonedFormatter } from "@/lib/timeZone";
 
 import { cached } from "./cache";
+import { arcgisQuery, envelope, evacuationKind, EVACUATIONS_URL, type ArcFeature } from "./wildfires";
 
 // Emergency alerts (Melvin, 2026-11-17): urgent alerts for Langley, the Lower Mainland, BC and Canada.
 //
@@ -17,6 +18,10 @@ import { cached } from "./cache";
 // - Earthquakes Canada (NRCan's FDSN service): the last 24 hours, at or above the magnitude set, within the radius.
 // - BC Hydro power outages (Melvin, 2026-11-19): the outage map's own JSON, outages whose area covers the home or is
 //   within `powerKm` of it.
+//
+// - Evacuation orders and alerts (Melvin, 2026-11-21, with the wildfire map): EmergencyInfoBC's layer, for any hazard
+//   (wildfire, flood, landslide), read from the same public ArcGIS service as the wildfire widget. One covering the home
+//   is extreme (an order) or severe (an alert); one within `evacuationKm` is moderate or minor.
 //
 // Each source is fetched and cached on its own, so one being down never hides the others.
 
@@ -279,6 +284,63 @@ export function parseHydro(
   return out;
 }
 
+// ---- Evacuation orders and alerts (EmergencyInfoBC) ----
+
+/** Whether a point is inside a polygon with holes: inside an odd number of its rings. Rings are [lon, lat] pairs. */
+function insideRings(lat: number, lon: number, rings: number[][][]): boolean {
+  let n = 0;
+  for (const ring of rings)
+    if (
+      insidePolygon(
+        lat,
+        lon,
+        ring.map(([x = 0, y = 0]) => [y, x] as [number, number]),
+      )
+    )
+      n++;
+  return n % 2 === 1;
+}
+
+/** Orders and alerts covering the home or within `radiusKm` of it (geometry in EPSG:4326). */
+export function parseEvacuations(
+  features: ArcFeature[],
+  at: { lat: number; lon: number },
+  radiusKm: number,
+  now: number,
+): EmergencyAlert[] {
+  const out: EmergencyAlert[] = [];
+  for (const f of features) {
+    const a = f.attributes ?? {};
+    const text = (k: string) => (typeof a[k] === "string" ? (a[k] as string).trim() : "");
+    const kind = evacuationKind(text("ORDER_ALERT_STATUS"));
+    const rings = f.geometry?.rings ?? [];
+    if (!kind || !rings.length) continue;
+    const here = insideRings(at.lat, at.lon, rings);
+    const km = Math.min(Infinity, ...rings.flatMap((r) => r.map(([lon = 0, lat = 0]) => distanceKm(at.lat, at.lon, lat, lon))));
+    if (!here && !(km <= radiusKm)) continue;
+    const name = text("ORDER_ALERT_NAME") || text("EVENT_NAME") || "your area";
+    const homes = Number(a.MULTI_SOURCED_HOMES) || 0;
+    const details = [
+      text("EVENT_TYPE") && `${text("EVENT_TYPE")}.`,
+      homes > 0 ? `${homes.toLocaleString("en-CA")} ${homes === 1 ? "home" : "homes"}.` : "",
+      text("ISSUING_AGENCY") && `Issued by ${text("ISSUING_AGENCY")}.`,
+      here ? "" : `About ${Math.max(1, Math.round(km))} km away.`,
+      kind === "order" ? "Leave the area now." : "Be ready to leave on short notice.",
+    ].filter(Boolean);
+    out.push({
+      id: `evac:${String(a.EMRG_OAA_SYSID ?? a.OBJECTID ?? name)}`,
+      source: "evacuations",
+      severity: here ? (kind === "order" ? "extreme" : "severe") : kind === "order" ? "moderate" : "minor",
+      title: clip(`Evacuation ${kind} ${here ? "here" : "nearby"}: ${name}`, 120),
+      area: clip(text("EVENT_NAME") || "EmergencyInfoBC", 160),
+      description: clip(details.join(" "), 700),
+      sent: Number(a.DATE_MODIFIED) || Number(a.EVENT_START_DATE) || now,
+      expires: null,
+    });
+  }
+  return out;
+}
+
 // ---- Together ----
 
 const sortAlerts = (list: EmergencyAlert[]) => [...list].sort((a, b) => rank(a.severity) - rank(b.severity) || b.sent - a.sent);
@@ -331,6 +393,36 @@ export async function alertsFeed(config: DashboardConfig, now = Date.now()): Pro
         `alerts:power:${loc}:${a.powerKm}`,
         5 * 60_000,
         async () => parseHydro(JSON.parse(await getText(BC_HYDRO)), at, a.powerKm, config.location.timeZone, now),
+        now,
+      ).then((r) => r.value),
+    );
+  }
+
+  if (a.sources.evacuations) {
+    // About 1° of latitude per 111 km, and longitude shrinks with latitude; at least 1 km so 0 still finds the home.
+    const km = Math.max(1, a.evacuationKm);
+    const dLat = km / 111;
+    const dLon = km / (111 * Math.cos((at.lat * Math.PI) / 180));
+    const box = [at.lon - dLon, at.lat - dLat, at.lon + dLon, at.lat + dLat];
+    jobs.push(
+      cached(
+        `alerts:evac:${loc}:${a.evacuationKm}`,
+        5 * 60_000,
+        async () =>
+          parseEvacuations(
+            await arcgisQuery(EVACUATIONS_URL, {
+              ...envelope(box, "4326"),
+              where: "ORDER_ALERT_STATUS <> 'All Clear'",
+              outFields:
+                "EMRG_OAA_SYSID,OBJECTID,EVENT_NAME,EVENT_TYPE,ORDER_ALERT_NAME,ORDER_ALERT_STATUS,ISSUING_AGENCY,MULTI_SOURCED_HOMES,DATE_MODIFIED,EVENT_START_DATE",
+              returnGeometry: "true",
+              maxAllowableOffset: "0.0005",
+              geometryPrecision: "5",
+            }),
+            at,
+            a.evacuationKm,
+            now,
+          ),
         now,
       ).then((r) => r.value),
     );

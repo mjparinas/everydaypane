@@ -1,0 +1,34 @@
+{
+  "updatedAt": 1763937720000,
+  "configured": true,
+  "devices": [
+    {
+      "sn": "R331",
+      "name": "Garage Delta 2",
+      "online": true,
+      "soc": 82,
+      "inW": 412,
+      "outW": 96,
+      "solarW": 412,
+      "acInW": 0,
+      "acOutW": 60,
+      "dcOutW": 36,
+      "charging": true,
+      "minutes": 45
+    },
+    {
+      "sn": "MR51",
+      "name": "Delta Pro 3",
+      "online": true,
+      "soc": 41,
+      "inW": 0,
+      "outW": 350,
+      "solarW": 0,
+      "acOutW": 300,
+      "dcOutW": 50,
+      "charging": false,
+      "minutes": 190
+    },
+    { "sn": "R601", "name": "Cabin River 2", "online": true, "soc": 12, "inW": 0, "outW": 20, "charging": false, "minutes": 35 }
+  ]
+}

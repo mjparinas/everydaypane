@@ -159,11 +159,12 @@ const baseShell = (): Omit<DashboardConfig, "views" | "schedule" | "themeId"> =>
   themes: structuredClone(BUILT_IN_THEMES),
   alerts: {
     enabled: true,
-    sources: { alertReady: true, weather: true, roads: true, earthquakes: true, power: true },
+    sources: { alertReady: true, weather: true, roads: true, earthquakes: true, power: true, evacuations: true },
     banner: "moderate",
     radiusKm: 100,
     minMagnitude: 4,
     powerKm: 5,
+    evacuationKm: 10,
     notifyEmail: false,
   },
   school: { districtName: "Langley School District", statusUrl: "https://www.sd35.bc.ca/" },

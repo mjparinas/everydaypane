@@ -276,7 +276,7 @@ export interface SportsData {
 }
 
 export type AlertSeverity = "extreme" | "severe" | "moderate" | "minor";
-export type AlertSource = "alertReady" | "weather" | "roads" | "earthquakes" | "power" | "indoorAir";
+export type AlertSource = "alertReady" | "weather" | "roads" | "earthquakes" | "power" | "evacuations" | "indoorAir";
 
 /** One emergency alert for the area, from any source (src/server/alerts.ts). */
 export interface EmergencyAlert {
@@ -322,6 +322,10 @@ export interface HaEntity {
   max?: number;
   step?: number;
   action?: string;
+  /** Colour lights (Govee): the colour now as #rrggbb, present only when the light can change colour. */
+  color?: string;
+  /** Scenes the light offers (Govee), by name; the server keeps what each name sends. */
+  scenes?: string[];
   /** Media players (Sonos, Spotify): what's playing and how loud. Only for media_player entities. */
   media?: HaMedia;
 }
@@ -396,6 +400,41 @@ export interface RadarData {
    */
   maps: Record<string, RadarMap>;
   layers: Partial<Record<"rain" | "snow", RadarTimes>>;
+}
+
+/** How far a wildfire is from being contained, from BC Wildfire Service's stage of control. */
+export type FireStage = "new" | "outOfControl" | "held" | "underControl";
+
+/** One active wildfire on the map (src/server/wildfires.ts). */
+export interface WildfireFire {
+  id: string;
+  name: string;
+  stage: FireStage;
+  /** Estimated size in hectares. */
+  ha: number;
+  /** Distance from home in km. */
+  km: number;
+  /** BC Wildfire Service calls it a "wildfire of note" (highly visible or threatening). */
+  ofNote: boolean;
+  /** Pixel on the 5 × 5 tile map around home (src/lib/radar.ts). */
+  x: number;
+  y: number;
+}
+
+/** The wildfire map around home at one zoom: the same tiles as the radar, with everything drawn as map pixels. */
+export interface WildfireMap extends RadarMap {
+  fires: WildfireFire[];
+  /** Burned area outlines of fires that aren't out, as SVG path data in map pixels. */
+  perimeters: string[];
+  /** Evacuation orders and alerts (any hazard), as SVG path data in map pixels. */
+  evacuations: { kind: "order" | "alert"; d: string }[];
+}
+
+export interface WildfireData {
+  updatedAt: number;
+  maps: Record<string, WildfireMap>;
+  /** Why the fires couldn't be read; the widget says so. */
+  error?: string;
 }
 
 /** Today's chore chart (src/server/chores.ts): who does what today, what's done, and each person's stars this week. */
@@ -516,6 +555,32 @@ export interface AirthingsData {
   stale?: boolean;
 }
 
+/** One EcoFlow power station (src/server/ecoflow.ts). Watts are whole watts; minutes to full or to empty. */
+export interface EcoFlowDevice {
+  sn: string;
+  name: string;
+  online: boolean;
+  soc?: number;
+  inW?: number;
+  outW?: number;
+  solarW?: number;
+  acInW?: number;
+  acOutW?: number;
+  dcOutW?: number;
+  charging: boolean;
+  minutes?: number;
+  stale?: boolean;
+}
+
+export interface EcoFlowData {
+  updatedAt: number;
+  /** False until the household saves its EcoFlow keys. */
+  configured: boolean;
+  devices: EcoFlowDevice[];
+  error?: string;
+  stale?: boolean;
+}
+
 /** Weather Underground PWS current observation (src/server/weatherUnderground.ts). */
 export interface WeatherUndergroundData {
   updatedAt: number;
@@ -604,6 +669,41 @@ export interface FitbitData {
   restingHeartRate?: number;
 }
 
+export interface OuraScore {
+  /** The day Oura files the number under (a night under the morning you woke up). */
+  day: string;
+  score: number;
+}
+
+/** Last night's main sleep. Sent to displays only when an Oura widget there has `showDetails` on. */
+export interface OuraNight {
+  day: string;
+  asleepSeconds: number;
+  /** Local times with the wearer's offset, as Oura sends them ("2026-11-24T22:48:00-08:00"). */
+  bedtimeStart?: string;
+  bedtimeEnd?: string;
+  efficiency?: number;
+  averageHrv?: number;
+  lowestHeartRate?: number;
+}
+
+export interface OuraSummary {
+  sleep?: OuraScore;
+  readiness?: OuraScore & { temperatureDeviation?: number };
+  activity?: OuraScore & { steps?: number };
+  night?: OuraNight;
+}
+
+export interface OuraData extends OuraSummary {
+  updatedAt: number;
+  stale?: boolean;
+  connected: boolean;
+  /** The dashboard's date, so the wall can tell a number from an earlier day. */
+  today: string;
+  /** Why there are no numbers when connected (membership lapsed, or Oura is down). */
+  error?: string;
+}
+
 export interface EmailCountData {
   updatedAt: number;
   stale?: boolean;
@@ -689,4 +789,44 @@ export interface AirportsData {
   updatedAt: number;
   stale?: boolean;
   airports: AirportRow[];
+}
+
+/** One UniFi site's internet health from UniFi Site Manager (src/server/unifi.ts). No IP addresses or MACs. */
+export interface UnifiSite {
+  id: string;
+  name: string;
+  /** "down" when the gateway is offline to UniFi's cloud or the latest reading has the WAN down. "Slow" is the widget's call. */
+  status: "ok" | "down";
+  isp?: string;
+  /** Latest five-minute reading. Milliseconds and percent. */
+  latency?: number;
+  maxLatency?: number;
+  packetLoss?: number;
+  /** What the home was using in the latest five minutes, Mbps (not a speed test). */
+  download?: number;
+  upload?: number;
+  /** Average latency over the last 24 hours, oldest first, at most 48 points (null where there was no reading). */
+  spark: (number | null)[];
+  /** WAN uptime over the last 24 hours, percent. */
+  uptime24h?: number;
+  /** Minutes the internet was down in the last 24 hours. */
+  downMinutes24h: number;
+  /** When the last outage in the last 24 hours ended (epoch ms), or started if it hasn't ended. */
+  lastOutageAt?: number;
+  /** Time of the latest reading (epoch ms). */
+  readingAt?: number;
+  devices?: number;
+  offlineDevices?: number;
+  clients?: number;
+  guests?: number;
+}
+
+export interface UnifiData {
+  updatedAt: number;
+  /** False until a Site Manager API key is saved in Settings › UniFi network. */
+  configured: boolean;
+  sites: UnifiSite[];
+  /** Short reason when UniFi refused or failed, for the empty state. */
+  error?: string;
+  stale?: boolean;
 }

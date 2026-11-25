@@ -302,7 +302,7 @@ html.portrait-view .stage {
   position: absolute;
   right: 16px;
   top: 16px;
-  z-index: 40;
+  z-index: 51;
   display: flex;
   align-items: center;
   gap: 7px;
@@ -2232,6 +2232,30 @@ html.portrait-view .stage {
   margin-top: auto;
   accent-color: var(--accent);
 }
+.ha-swatches {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.ha-swatch {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 2px solid rgb(0 0 0 / 0.15);
+}
+.ha-swatch.on {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+}
+.ha-scene {
+  width: 100%;
+  min-height: 40px;
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-size: calc(16px * var(--font-scale, 1));
+}
 .ha-msg {
   color: var(--muted);
   font-size: calc(14px * var(--font-scale, 1));
@@ -2508,7 +2532,8 @@ html.portrait-view .stage {
 }
 
 /* Rain radar: the map fills the cell edge to edge, with the time and the loop's steps along the bottom. */
-.cell-radar {
+.cell-radar,
+.cell-wildfires {
   padding: 0;
 }
 .w-radar {
@@ -2617,6 +2642,96 @@ html.portrait-view .stage {
 [data-mode="night"] .rd-credit {
   color: #bbb;
   text-shadow: 0 0 2px #000;
+}
+
+/* Wildfires (Melvin, 2026-11-21): the radar's map with one SVG of fires, burned areas and evacuation areas on top,
+   and the nearest fires along the bottom. Colours follow BC Wildfire Service's map: red out of control, amber held,
+   green under control. Strokes keep their width however far the map is scaled. */
+.wf-svg {
+  overflow: visible;
+}
+.wf-svg * {
+  vector-effect: non-scaling-stroke;
+}
+.wf-evac {
+  stroke-width: 2;
+  stroke-dasharray: 6 4;
+}
+.wf-order {
+  fill: rgb(200 0 40 / 14%);
+  stroke: #c80028;
+}
+.wf-alert {
+  fill: rgb(230 150 0 / 12%);
+  stroke: #d98a00;
+}
+.wf-perimeter {
+  fill: rgb(214 48 31 / 32%);
+  stroke: #a3220f;
+  stroke-width: 1.5;
+}
+.wf-fire {
+  stroke: #fff;
+  stroke-width: 2;
+}
+.wf-note {
+  stroke: #000;
+  stroke-width: 3;
+}
+.wf-new,
+.wf-outOfControl {
+  fill: #e0301e;
+  background: #e0301e;
+}
+.wf-held {
+  fill: #f2a11f;
+  background: #f2a11f;
+}
+.wf-underControl {
+  fill: #3f9b4a;
+  background: #3f9b4a;
+}
+.wf-list {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15em;
+  padding: 1.2em 0.8em 0.5em;
+  background: linear-gradient(transparent, color-mix(in srgb, var(--surface) 88%, transparent) 35%);
+}
+.wf-list[hidden] {
+  display: none;
+}
+.wf-row {
+  display: flex;
+  min-width: 0;
+  align-items: baseline;
+  gap: 0.5em;
+  white-space: nowrap;
+}
+.wf-dot {
+  width: 0.65em;
+  height: 0.65em;
+  flex: none;
+  align-self: center;
+  border-radius: 50%;
+}
+.wf-name {
+  overflow: hidden;
+  font-weight: 700;
+  text-overflow: ellipsis;
+}
+.wf-meta {
+  margin-left: auto;
+  color: var(--muted);
+  font-size: 0.85em;
+  font-variant-numeric: tabular-nums;
+}
+.wf-none {
+  color: var(--muted);
 }
 
 /* Kitchen timers and the pomodoro (Melvin, 2026-11-21). Big buttons for a wet hand from across the kitchen. A timer
@@ -3085,6 +3200,11 @@ html.portrait-view .stage {
   }
 }
 
+/* Windy map: an interactive one may be panned and zoomed by hand (the other frames take no touches). */
+.wy-live .embed-frame {
+  pointer-events: auto;
+}
+
 /* Earth wind map: earth.nullschool.net's frame fills the cell edge to edge; it is always dark, day or night. */
 .cell-earth {
   padding: 0;
@@ -3110,7 +3230,8 @@ html.portrait-view .stage {
 .cell-vimeo,
 .cell-maps,
 .cell-instagram,
-.cell-earth {
+.cell-earth,
+.cell-windy {
   padding: 0;
 }
 .w-embed {
@@ -3125,6 +3246,57 @@ html.portrait-view .stage {
   height: 100%;
   border: 0;
   pointer-events: none;
+}
+.w-oura {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  height: 100%;
+  justify-content: center;
+}
+.oura-tiles {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  gap: 0.75rem;
+}
+.oura-score {
+  font-size: calc(clamp(22px, 26cqh, 64px) * var(--font-scale, 1));
+  font-weight: 700;
+  line-height: 1.05;
+  font-variant-numeric: tabular-nums;
+}
+.oura-bar {
+  height: 4px;
+  border-radius: 2px;
+  background: color-mix(in srgb, var(--muted) 25%, transparent);
+  overflow: hidden;
+}
+.oura-bar span {
+  display: block;
+  height: 100%;
+  background: var(--oura, var(--accent));
+  transform-origin: left;
+}
+.oura-optimal {
+  --oura: #51cf66;
+}
+.oura-low {
+  --oura: var(--sun);
+}
+.oura-none,
+.oura-extra,
+.oura-night,
+.oura-note {
+  color: var(--muted);
+}
+.oura-extra,
+.oura-night,
+.oura-note {
+  font-size: calc(clamp(11px, 7cqh, 18px) * var(--font-scale, 1));
+}
+.oura-extra {
+  margin-top: 0.3em;
 }
 .p5-list {
   list-style: none;
@@ -3740,4 +3912,119 @@ html.portrait-view .stage {
 .at-old {
   font-size: 0.8em;
   color: var(--muted);
+}
+
+/* EcoFlow power stations */
+.w-ecoflow {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35em;
+  min-height: 0;
+  font-size: calc(1em * var(--font-scale, 1));
+}
+.ef-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.6em;
+  overflow: hidden;
+}
+.ef-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5em;
+  font-weight: 600;
+}
+.ef-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ef-soc {
+  font-variant-numeric: tabular-nums;
+}
+.ef-bar {
+  height: 0.55em;
+  margin: 0.2em 0;
+  overflow: hidden;
+  border-radius: 1em;
+  background: color-mix(in srgb, currentColor 15%, transparent);
+}
+.ef-bar-in {
+  display: block;
+  height: 100%;
+  background: #2f9e44;
+  transform-origin: left;
+}
+.ef-2 .ef-bar-in {
+  background: #f0a020;
+}
+.ef-3 .ef-bar-in {
+  background: var(--danger);
+}
+.ef-main,
+.ef-sub {
+  font-size: 0.85em;
+  font-variant-numeric: tabular-nums;
+}
+.ef-sub {
+  opacity: 0.75;
+}
+.ef-off {
+  opacity: 0.6;
+}
+
+.w-unifi {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3em;
+  min-height: 0;
+  font-size: calc(1em * var(--font-scale, 1));
+}
+.un-status {
+  display: flex;
+  align-items: baseline;
+  gap: 0.4em;
+  font-size: 1.5em;
+  font-weight: 600;
+}
+.un-dot {
+  width: 0.55em;
+  height: 0.55em;
+  border-radius: 50%;
+  align-self: center;
+  background: #2f9e44;
+}
+.un-slow .un-dot {
+  background: #f59f00;
+}
+.un-down .un-dot {
+  background: var(--danger);
+}
+.un-down .un-word {
+  color: var(--danger);
+}
+.un-ms {
+  font-size: 0.6em;
+  font-weight: 500;
+  opacity: 0.75;
+}
+.un-row {
+  font-size: 0.9em;
+}
+.un-foot {
+  font-size: 0.75em;
+  opacity: 0.6;
+}
+.un-spark {
+  width: 100%;
+  height: 2.2em;
+  flex: none;
+}
+.un-spark polyline {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 2;
+  stroke-linejoin: round;
 }

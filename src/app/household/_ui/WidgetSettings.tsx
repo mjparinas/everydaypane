@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 
 import { AIRTHINGS_KINDS, AIRTHINGS_LABELS } from "@/lib/airthings";
 import { PERIOD_LABELS, PERIODS } from "@/lib/config/periods";
@@ -9,13 +9,17 @@ import { WIDGETS } from "@/lib/config/widgets";
 import { EARTH_OVERLAY_LABELS, EARTH_OVERLAYS, EARTH_ZOOM_LABELS, EARTH_ZOOMS } from "@/lib/earth";
 import { FERRY_ROUTES, ferryRouteName } from "@/lib/ferries";
 import { MEAL_LABELS, MEAL_SLOTS } from "@/lib/meals";
+import { WINDY_OVERLAY_LABELS, WINDY_OVERLAYS, windyPressureAllowed } from "@/lib/windy";
 
 import { useAirthings } from "./airthings";
 import { PlaceFinder } from "./CommutePanel";
+import { useEcoFlow } from "./EcoFlowPanel";
 import { Range, Segmented, Select, Stepper, Text, TextArea, Toggle } from "./fields";
 import { HaEntityList, useHa } from "./haEntities";
 import { useMusic } from "./music";
+import { loadSmartProvider, type SmartProviderDetail } from "./smartHome";
 import { newId } from "./store";
+import { UnifiSitePicker } from "./UnifiPanel";
 
 // Every widget's own settings (Melvin, 2026-11-17: "settings for every feature"). One form per widget type; each
 // change is applied at once to the working copy and saved with the Save button. Bounded numbers use Range/Stepper
@@ -231,6 +235,17 @@ function HaEntitySettings({
   const ha = useHa();
   const entities = ha?.entities ?? [];
   const picked = entities.some((ent) => ent.id === w.entityId);
+  // Direct providers list their own devices, so a Govee light (or a Nest thermostat) is picked by name, not typed.
+  const [direct, setDirect] = useState<{ provider: string; detail: SmartProviderDetail } | null>(null);
+  useEffect(() => {
+    if (provider === "homeAssistant") return;
+    let live = true;
+    void loadSmartProvider(provider).then((detail) => live && setDirect({ provider, detail }));
+    return () => {
+      live = false;
+    };
+  }, [provider]);
+  const devices = direct?.provider === provider ? direct.detail.devices : [];
 
   return (
     <>
@@ -242,9 +257,21 @@ function HaEntitySettings({
           { value: "nest", label: "Nest" },
           { value: "ecobee", label: "ecobee" },
           { value: "smartthings", label: "SmartThings" },
+          { value: "govee", label: "Govee lights" },
         ]}
-        onChange={(v) => e((x) => void (x.provider = v))}
+        onChange={(v) => e((x) => void ((x.provider = v), v === "govee" && (x.control = "light")))}
       />
+      {provider !== "homeAssistant" && devices.length > 0 ? (
+        <Select
+          label="Device"
+          value={devices.some((d) => d.id === w.entityId) ? w.entityId : ""}
+          options={[
+            { value: "", label: "Choose a device…" },
+            ...devices.map((d) => ({ value: d.id, label: d.sku ? `${d.name} (${d.sku})` : d.name })),
+          ]}
+          onChange={(v) => e((x) => void (x.entityId = v))}
+        />
+      ) : null}
       {provider === "homeAssistant" && entities.length > 0 ? (
         <Select
           label="Device"
@@ -258,7 +285,7 @@ function HaEntitySettings({
         />
       ) : null}
       <Text
-        label={provider === "homeAssistant" && entities.length > 0 ? "Or paste entity id" : "Entity"}
+        label={(provider === "homeAssistant" ? entities.length : devices.length) > 0 ? "Or paste entity id" : "Entity"}
         value={w.entityId}
         maxLength={255}
         placeholder={provider === "homeAssistant" ? "light.kitchen" : `${provider}.device_id`}
@@ -269,8 +296,11 @@ function HaEntitySettings({
         <HaEntityList id="ha-controls" />
       ) : (
         <p className="text-sm text-soft">
-          Connect {provider} under <SettingsLink href="#settings/smart-home">Settings › Smart home</SettingsLink>, then paste a device id
-          from the list (e.g. {provider}.living_room).
+          {devices.length > 0 ? "Devices from your account. " : null}
+          Connect {provider === "govee" ? "Govee" : provider} under{" "}
+          <SettingsLink href="#settings/smart-home">Settings › Smart home</SettingsLink>
+          {devices.length > 0 ? " to change the account." : ", then pick a device here."}
+          {provider === "govee" ? " Colour and scenes show while the light is on." : null}
         </p>
       )}
       <details className="grid gap-3 rounded-xl border border-line bg-bg px-3 py-2" open={w.control !== "auto"}>
@@ -636,6 +666,48 @@ function TypeSettings({
         </>
       );
     }
+    case "wildfires": {
+      const e = edit<"wildfires">();
+      return (
+        <>
+          <Select
+            label="Map area"
+            value={String(w.zoom)}
+            options={[
+              { value: "6", label: "Southern B.C." },
+              { value: "7", label: "South coast" },
+              { value: "8", label: "Lower Mainland" },
+              { value: "9", label: "Fraser Valley" },
+              { value: "10", label: "Close to home" },
+            ]}
+            onChange={(v) => e((x) => void (x.zoom = Number(v)))}
+            hint="The map is centred on the dashboard's location (Settings), on the same map as the rain radar."
+          />
+          <Toggle label="Burned areas" checked={w.showPerimeters} onChange={(v) => e((x) => void (x.showPerimeters = v))} />
+          <Toggle
+            label="Evacuation orders and alerts"
+            checked={w.showEvacuations}
+            onChange={(v) => e((x) => void (x.showEvacuations = v))}
+            hint="Orders in red and alerts in amber, for any hazard. Settings › Emergency alerts can also put nearby ones on the red strip."
+          />
+          <Toggle
+            label="Fires under control"
+            checked={w.showControlled}
+            onChange={(v) => e((x) => void (x.showControlled = v))}
+            hint="Off shows only new, out-of-control and held fires."
+          />
+          <Select
+            label="Nearest fires listed"
+            value={String(w.listCount)}
+            options={[0, 1, 2, 3, 4, 5].map((n) => ({ value: String(n), label: n === 0 ? "None (map only)" : String(n) }))}
+            onChange={(v) => e((x) => void (x.listCount = Number(v)))}
+          />
+          <p className="text-xs text-soft">
+            Fires and evacuation areas from BC Wildfire Service and EmergencyInfoBC, updated every five minutes.
+          </p>
+        </>
+      );
+    }
     case "earth": {
       const e = edit<"earth">();
       const home = config.location;
@@ -731,6 +803,87 @@ function TypeSettings({
             The map is earth.nullschool.net by Cameron Beccario, shown as it is on that site. It is hidden while the screen saver is on,
             loads again every hour for new weather, and doesn&rsquo;t respond to touch on the wall. The place is sent to
             earth.nullschool.net rounded to about a kilometre.
+          </p>
+        </>
+      );
+    }
+    case "windy": {
+      const e = edit<"windy">();
+      const home = config.location;
+      const atHome = w.latitude === home.latitude && w.longitude === home.longitude;
+      return (
+        <>
+          <div className="grid gap-1">
+            <p className="text-sm font-medium">Centred on</p>
+            <p className="text-sm">
+              {w.place || "A place"} ({w.latitude.toFixed(2)}, {w.longitude.toFixed(2)})
+            </p>
+            {!atHome && (
+              <button
+                type="button"
+                className="btn-ghost justify-start"
+                onClick={() =>
+                  e((x) => {
+                    x.place = home.name.slice(0, 80);
+                    x.latitude = home.latitude;
+                    x.longitude = home.longitude;
+                  })
+                }
+              >
+                Use the dashboard&rsquo;s location{home.name ? ` (${home.name})` : ""}
+              </button>
+            )}
+          </div>
+          <PlaceFinder
+            label="Another place"
+            button="Find"
+            placeholder="Town or city, anywhere"
+            nothing="Nothing matched. Try a town or city name, like \u201cManila\u201d."
+            url={(q) => `/api/household/places/?${new URLSearchParams({ q })}`}
+            onPick={(p) =>
+              e((x) => {
+                x.place = p.label.slice(0, 80);
+                x.latitude = p.latitude;
+                x.longitude = p.longitude;
+              })
+            }
+          />
+          <Select
+            label="Layer"
+            value={w.overlay}
+            options={WINDY_OVERLAYS.map((o) => ({ value: o, label: WINDY_OVERLAY_LABELS[o] }))}
+            onChange={(v) => e((x) => void (x.overlay = v))}
+          />
+          <Select
+            label="Map area"
+            value={String(w.zoom)}
+            options={[
+              { value: "3", label: "North America" },
+              { value: "4", label: "Western Canada and the U.S." },
+              { value: "5", label: "B.C. and Washington" },
+              { value: "6", label: "Southern B.C." },
+              { value: "7", label: "South coast" },
+              { value: "8", label: "Lower Mainland" },
+              { value: "9", label: "Fraser Valley" },
+              { value: "10", label: "Close to home" },
+              { value: "11", label: "The neighbourhood" },
+            ]}
+            onChange={(v) => e((x) => void (x.zoom = Number(v)))}
+          />
+          <Toggle label="Mark the place" checked={w.marker} onChange={(v) => e((x) => void (x.marker = v))} />
+          {windyPressureAllowed(w.overlay) && (
+            <Toggle label="Pressure lines" checked={w.pressure} onChange={(v) => e((x) => void (x.pressure = v))} />
+          )}
+          <Toggle
+            label="Let people move the map"
+            checked={w.interactive}
+            onChange={(v) => e((x) => void (x.interactive = v))}
+            hint="Off, a tap can't pan or zoom it away from the place. On, touches on the map don't count as using the screen for the screen saver."
+          />
+          <p className="text-xs text-soft">
+            The map is Windy&rsquo;s own (windy.com), in {config.units === "metric" ? "°C, km/h and mm" : "°F, mph and inches"} from
+            Settings. It is hidden while the screen saver is on and loads again every half hour. It is heavier than the other widgets, so
+            one per view is plenty. The place is sent to Windy rounded to about a kilometre.
           </p>
         </>
       );
@@ -945,6 +1098,37 @@ function TypeSettings({
     }
     case "airthings":
       return <AirthingsSettings w={w} onChange={edit<"airthings">()} />;
+    case "ecoflow":
+      return <EcoFlowSettings w={w} e={edit<"ecoflow">()} />;
+    case "unifi": {
+      const e = edit<"unifi">();
+      return (
+        <>
+          <UnifiSitePicker value={w.siteId} onChange={(v) => e((x) => void (x.siteId = v))} />
+          <Stepper
+            label="Slow from"
+            value={w.slowMs}
+            min={20}
+            max={1000}
+            step={10}
+            format={(v) => `${v} ms`}
+            hint="Latency at or above this shows the internet as slow."
+            onChange={(v) => e((x) => void (x.slowMs = v))}
+          />
+          <Toggle label="Latency chart (24 h)" checked={w.showChart} onChange={(v) => e((x) => void (x.showChart = v))} />
+          <Toggle label="Devices and clients" checked={w.showCounts} onChange={(v) => e((x) => void (x.showCounts = v))} />
+          <Toggle
+            label="Current usage"
+            checked={w.showUsage}
+            hint="What the home downloaded and uploaded in the last five minutes; not a speed test."
+            onChange={(v) => e((x) => void (x.showUsage = v))}
+          />
+          <p className="text-sm text-soft">
+            Save the Site Manager API key under <SettingsLink href="#settings/unifi">Settings › UniFi network</SettingsLink>.
+          </p>
+        </>
+      );
+    }
     case "weatherUnderground": {
       const e = edit<"weatherUnderground">();
       return (
@@ -1509,6 +1693,23 @@ function TypeSettings({
         </>
       );
     }
+    case "oura": {
+      const e = edit<"oura">();
+      return (
+        <>
+          <Toggle label="Sleep score" checked={w.showSleep} onChange={(v) => e((x) => void (x.showSleep = v))} />
+          <Toggle label="Readiness score" checked={w.showReadiness} onChange={(v) => e((x) => void (x.showReadiness = v))} />
+          <Toggle label="Activity score and steps" checked={w.showActivity} onChange={(v) => e((x) => void (x.showActivity = v))} />
+          <Toggle
+            label="Show last night's details"
+            checked={w.showDetails}
+            hint="Hours asleep, bedtime, HRV and lowest heart rate. Anyone in the kitchen can read the wall, so this is off unless you turn it on."
+            onChange={(v) => e((x) => void (x.showDetails = v))}
+          />
+          <p className="text-xs text-soft">Connect the ring&apos;s Oura account in Settings › Content &amp; finance.</p>
+        </>
+      );
+    }
     case "rss":
     case "news":
     case "dadJoke":
@@ -1991,6 +2192,53 @@ function AirthingsSettings({ w, onChange }: { w: Extract<Widget, { type: "airthi
               onChange={(on) => onChange((x) => void (x.devices = on ? [...x.devices, d.serial] : x.devices.filter((s) => s !== d.serial)))}
             />
           ))}
+        </>
+      )}
+    </>
+  );
+}
+
+function EcoFlowSettings({
+  w,
+  e,
+}: {
+  w: Extract<Widget, { type: "ecoflow" }>;
+  e: (fn: (x: Extract<Widget, { type: "ecoflow" }>) => void) => void;
+}) {
+  const status = useEcoFlow();
+  const devices = status?.devices ?? [];
+  // A serial saved earlier that the account no longer lists still shows, so it can be switched off.
+  const extra = w.devices.filter((sn) => !devices.some((d) => d.sn === sn));
+  return (
+    <>
+      <Toggle label="Solar input" checked={w.showSolar} onChange={(v) => e((x) => void (x.showSolar = v))} />
+      <Toggle label="AC and DC in and out" checked={w.showFlows} onChange={(v) => e((x) => void (x.showFlows = v))} />
+      <Toggle label="Time to full or empty" checked={w.showTime} onChange={(v) => e((x) => void (x.showTime = v))} />
+      {!status ? (
+        <p className="text-sm text-soft">Checking EcoFlow…</p>
+      ) : !status.connected ? (
+        <p className="text-sm text-soft">
+          Add your EcoFlow keys under <SettingsLink href="#settings/ecoflow">Settings › EcoFlow</SettingsLink>.
+        </p>
+      ) : (
+        <>
+          <p className="text-xs text-soft">Pick the devices to show (up to eight). None picked shows them all.</p>
+          {[...devices.map((d) => ({ sn: d.sn, name: d.name })), ...extra.map((sn) => ({ sn, name: `${sn} (not on the account)` }))].map(
+            (d) => (
+              <Toggle
+                key={d.sn}
+                label={d.name}
+                checked={w.devices.includes(d.sn)}
+                onChange={(on) =>
+                  e((x) => {
+                    const next = on ? [...x.devices, d.sn] : x.devices.filter((sn) => sn !== d.sn);
+                    if (next.length <= 8) x.devices = next;
+                  })
+                }
+              />
+            ),
+          )}
+          {status.error && <p className="text-sm text-bad">{status.error}</p>}
         </>
       )}
     </>

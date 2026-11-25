@@ -6,7 +6,9 @@ import { FERRY_ROUTES } from "../ferries";
 import { MEAL_SLOTS } from "../meals";
 import { NEWS_PRESETS } from "../newsPresets";
 import { SCREEN_SAVER_OFF } from "../screenSaver";
+import { SMART_HOME_PROVIDERS } from "../smartHome";
 import { LEAGUE_IDS, MAX_TEAMS } from "../sports";
+import { WINDY_OVERLAYS } from "../windy";
 import { PERIODS } from "./periods";
 
 // The whole dashboard setup, as the admin panel edits it and every display reads it. One JSON document, validated
@@ -207,7 +209,8 @@ export const widgetSchema = z.discriminatedUnion("type", [
   z.object({
     ...base,
     type: z.literal("haEntity"),
-    provider: z.enum(["homeAssistant", "nest", "ecobee", "smartthings"]).default("homeAssistant"),
+    // Govee lights (Melvin, 2026-11-21) join the direct providers: on/off, brightness, colour and scenes.
+    provider: z.enum(SMART_HOME_PROVIDERS).default("homeAssistant"),
     entityId: z.string().max(255),
     control: haControlSchema,
   }),
@@ -231,6 +234,27 @@ export const widgetSchema = z.discriminatedUnion("type", [
       .max(AIRTHINGS_KINDS.length)
       .default([...AIRTHINGS_DEFAULT_KINDS])
       .refine((r) => new Set(r).size === r.length, "Each reading once"),
+  }),
+  // EcoFlow power stations (Melvin, 2026-11-21: native EcoFlow developer API, not Home Assistant). Keys under
+  // Settings › EcoFlow; `devices` are serial numbers, none picked means every device on the account.
+  z.object({
+    ...base,
+    type: z.literal("ecoflow"),
+    devices: z.array(z.string().trim().min(1).max(40)).max(8).default([]),
+    showSolar: z.boolean().default(true),
+    showFlows: z.boolean().default(true),
+    showTime: z.boolean().default(true),
+  }),
+  // UniFi network health from UniFi Site Manager (Melvin, 2026-11-21, Household). API key under Settings › UniFi
+  // network; `siteId` empty means the first site the key can see. `slowMs` is when the latency counts as slow.
+  z.object({
+    ...base,
+    type: z.literal("unifi"),
+    siteId: z.string().max(64).default(""),
+    slowMs: z.number().int().min(20).max(1000).default(100),
+    showChart: z.boolean().default(true),
+    showCounts: z.boolean().default(true),
+    showUsage: z.boolean().default(false),
   }),
   // Weather Underground PWS (Phase 4, Household).
   z.object({
@@ -377,6 +401,19 @@ export const widgetSchema = z.discriminatedUnion("type", [
     forecastMinutes: z.number().int().min(0).max(180),
     animate: z.boolean(),
   }),
+  // Wildfires (Melvin, 2026-11-21: "do windy and wildfires"): BC Wildfire Service's active fires around home on the
+  // radar's map (src/server/wildfires.ts), with the burned area of each, evacuation orders and alerts, and the nearest
+  // fires listed underneath. Zoom works as on the radar: 6 is most of southern B.C., 10 the Township.
+  z.object({
+    ...base,
+    type: z.literal("wildfires"),
+    zoom: z.number().int().min(6).max(10),
+    showPerimeters: z.boolean(),
+    showEvacuations: z.boolean(),
+    // Fires under control are often many and harmless; off leaves out-of-control, new and held fires only.
+    showControlled: z.boolean(),
+    listCount: z.number().int().min(0).max(5),
+  }),
   // Kitchen timers (Melvin, 2026-11-21): tap a button on the wall to start one; several can run at once.
   z.object({ ...base, type: z.literal("timer"), presets: z.array(timerPresetSchema).max(12), ...alertFields }),
   // A pomodoro (Melvin, 2026-11-21: "a separate pomodoro"): focus rounds and breaks, a long break after the last round.
@@ -418,6 +455,21 @@ export const widgetSchema = z.discriminatedUnion("type", [
     overlay: z.enum(EARTH_OVERLAYS),
     showPlace: z.boolean(),
     animate: z.boolean(),
+  }),
+  // Windy weather map (Melvin, 2026-11-21: "do windy"): Windy's free embed on one layer, centred on a place
+  // (src/lib/windy.ts). Zoom 3 is a continent, 8 the Lower Mainland, 11 the neighbourhood. `place` is only the name
+  // the admin panel shows. `interactive` lets a hand pan and zoom it; off, the map takes no touches.
+  z.object({
+    ...base,
+    type: z.literal("windy"),
+    place: z.string().max(80),
+    latitude: z.number().min(-90).max(90),
+    longitude: z.number().min(-180).max(180),
+    zoom: z.number().int().min(3).max(11),
+    overlay: z.enum(WINDY_OVERLAYS),
+    marker: z.boolean(),
+    pressure: z.boolean(),
+    interactive: z.boolean(),
   }),
   // Shopping list (Melvin, 2026-11-22): items in the shopping table, added from phones, ticked on the wall when
   // allowCheck is on.
@@ -494,6 +546,16 @@ export const widgetSchema = z.discriminatedUnion("type", [
     showSteps: z.boolean().default(true),
     showSleep: z.boolean().default(true),
     showHeart: z.boolean().default(true),
+  }),
+  z.object({
+    ...base,
+    // Oura ring (Melvin, 2026-11-21). Scores only by default: bedtimes, HRV and heart rate are health details that
+    // anyone in the kitchen can read, so they show only when the admin switches `showDetails` on.
+    type: z.literal("oura"),
+    showSleep: z.boolean().default(true),
+    showReadiness: z.boolean().default(true),
+    showActivity: z.boolean().default(true),
+    showDetails: z.boolean().default(false),
   }),
   z.object({ ...base, type: z.literal("emailCount"), label: z.string().max(40).default("Gmail") }),
   z.object({
@@ -788,12 +850,16 @@ export const configSchema = z
         roads: z.boolean(),
         earthquakes: z.boolean(),
         power: z.boolean().default(true),
+        // Evacuation orders and alerts from EmergencyInfoBC (Melvin, 2026-11-21, with the wildfire map).
+        evacuations: z.boolean().default(true),
       }),
       banner: z.enum(["extreme", "severe", "moderate", "minor", "never"]),
       radiusKm: z.number().int().min(10).max(500),
       minMagnitude: z.number().min(2).max(9),
       // Power outages count when their area covers the home or is within this many km of it.
       powerKm: z.number().int().min(0).max(50).default(5),
+      // Evacuation orders and alerts count when they cover the home or come within this many km of it.
+      evacuationKm: z.number().int().min(0).max(100).default(10),
       // Email ADMIN_EMAILS and FAMILY_EMAILS when a new strip-worthy alert arrives (Melvin, 2026-11-22). Off by default.
       notifyEmail: z.boolean().default(false),
     }),

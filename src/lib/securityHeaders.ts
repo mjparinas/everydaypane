@@ -53,6 +53,7 @@ export function contentSecurityPolicy(opts: {
       "frame-src 'self'",
       clerkFrame,
       "https://earth.nullschool.net",
+      "https://embed.windy.com",
       "https://s.tradingview.com",
       "https://www.tradingview-widget.com",
       "https://www.youtube.com",

@@ -80,6 +80,16 @@
     "file": "tempest.png"
   },
   {
+    "type": "ecoflow",
+    "name": "EcoFlow",
+    "file": "ecoflow.png"
+  },
+  {
+    "type": "unifi",
+    "name": "UniFi network",
+    "file": "unifi.png"
+  },
+  {
     "type": "weatherUnderground",
     "name": "Weather Underground",
     "file": "weatherUnderground.png"
@@ -153,6 +163,11 @@
     "type": "radar",
     "name": "Rain radar",
     "file": "radar.png"
+  },
+  {
+    "type": "wildfires",
+    "name": "Wildfires",
+    "file": "wildfires.png"
   },
   {
     "type": "timer",
@@ -230,6 +245,11 @@
     "file": "fitbit.png"
   },
   {
+    "type": "oura",
+    "name": "Oura",
+    "file": "oura.png"
+  },
+  {
     "type": "emailCount",
     "name": "Gmail unread",
     "file": "emailCount.png"
@@ -253,6 +273,16 @@
     "type": "quotes",
     "name": "Quotes",
     "file": "quotes.png"
+  },
+  {
+    "type": "affirmation",
+    "name": "Affirmation",
+    "file": "affirmation.png"
+  },
+  {
+    "type": "horoscope",
+    "name": "Horoscope",
+    "file": "horoscope.png"
   },
   {
     "type": "instagram",
