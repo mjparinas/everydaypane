@@ -1,0 +1,22 @@
+{
+  "updatedAt": 1795473720000,
+  "maps": {
+    "7": {
+      "x": 18,
+      "y": 41,
+      "homeX": 611,
+      "homeY": 743,
+      "fires": [
+        { "id": "V10123", "name": "Chilliwack Lake", "stage": "new", "ha": 4.2, "km": 88, "ofNote": false, "x": 721, "y": 746 },
+        { "id": "V20001", "name": "Hope Slide", "stage": "held", "ha": 240, "km": 94, "ofNote": false, "x": 722, "y": 704 },
+        { "id": "K70854", "name": "Kookipi Creek", "stage": "outOfControl", "ha": 3400, "km": 131, "ofNote": true, "x": 710, "y": 584 },
+        { "id": "K50211", "name": "Princeton", "stage": "underControl", "ha": 18, "km": 160, "ofNote": false, "x": 808, "y": 693 }
+      ],
+      "perimeters": ["M698 572L716 568L726 580L720 596L704 598L694 586Z", "M716 698L728 700L726 710L716 708Z"],
+      "evacuations": [
+        { "kind": "order", "d": "M690 560L732 558L740 600L692 606Z" },
+        { "kind": "alert", "d": "M676 544L752 540L762 620L672 626Z" }
+      ]
+    }
+  }
+}

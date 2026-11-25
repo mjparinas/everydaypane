@@ -155,6 +155,11 @@
     "file": "radar.png"
   },
   {
+    "type": "wildfires",
+    "name": "Wildfires",
+    "file": "wildfires.png"
+  },
+  {
     "type": "timer",
     "name": "Timers",
     "file": "timer.png"

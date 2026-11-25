@@ -285,6 +285,16 @@ export const WIDGETS: { [T in WidgetType]: WidgetInfo<T> } = {
     supportsFontScale: false,
     defaults: () => ({ precip: "rain" as const, zoom: 8, pastMinutes: 60, forecastMinutes: 60, animate: true }),
   },
+  wildfires: {
+    label: "Wildfires",
+    description: "BC Wildfire Service fires, burned areas and evacuations near home",
+    icon: "🔥",
+    size: { w: 4, h: 4 },
+    minSize: { w: 2, h: 2 },
+    supportsTitle: false,
+    supportsFontScale: false,
+    defaults: () => ({ zoom: 7, showPerimeters: true, showEvacuations: true, showControlled: true, listCount: 3 }),
+  },
   timer: {
     label: "Timers",
     description: "Kitchen timers you start with a tap, with a flash and a beep when done",
@@ -576,7 +586,7 @@ export const WIDGET_GROUPS: { id: string; label: string; types: WidgetType[] }[]
   {
     id: "weather",
     label: "Weather & map",
-    types: ["weather", "tempest", "weatherUnderground", "airQuality", "radar", "earth"],
+    types: ["weather", "tempest", "weatherUnderground", "airQuality", "radar", "wildfires", "earth"],
   },
   {
     id: "calendar",

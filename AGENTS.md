@@ -56,6 +56,7 @@ same change, and moves it out of **In progress** when it merges.
 | TransLink departures (`transit`) | Next buses from up to six picked stops, live times, route filter, walk-minutes cutoff | TransLink GTFS-realtime |
 | Commute time (`commute`) | Drive times with live traffic from home to up to six places, "leave by" time | TomTom Routing API |
 | Rain radar (`radar`) | Animated radar over a map around home: the past 30 min to 3 h, then up to 3 h of forecast; rain or snow, five map areas, still or looping | Environment Canada (MSC GeoMet), Esri grey canvas map |
+| Wildfires (`wildfires`) | Active fires around home on the radar's map, coloured by stage of control (fires of note ringed), burned areas, evacuation orders and alerts, the nearest 0 to 5 fires listed; five map areas, fires under control on or off | BC Wildfire Service and EmergencyInfoBC public ArcGIS layers, Esri grey canvas map |
 | Timers (`timer`) | Kitchen timers started from preset buttons on the wall, up to six at once, pause, +1 min; flash, full-screen alert and beeps when done | Device (localStorage) |
 | Pomodoro (`pomodoro`) | Focus and break rounds, long break after the last round, optional auto-start, chime between phases | Device (localStorage) |
 | BC Ferries (`ferries`) | Next sailings on up to four routes, how full each is, cancellations and delays | Community BC Ferries API (bcferriesapi.ca) |
@@ -82,7 +83,7 @@ same change, and moves it out of **In progress** when it merges.
 | Google Maps (`maps`) | Map for a place query | google.com/maps embed iframe |
 
 **Display behaviour:** several views on a drag-and-drop grid (chosen rows and columns, gap, edge padding and **tile padding**; presets include **12×8 landscape** and **8×12 portrait**, with portrait stages letterboxed on a landscape panel), **per-widget visibility by part of day** (`visiblePeriods`), optional **view loop** on schedule followers (`schedule.loopSeconds`), **widgets layered on top of a photos widget**
-(photos as the backdrop), **per-widget background** (on/off and opacity; theme surface opacity is the default; clocks and dates start with no panel), **per-widget font size** (`fontScale`, 70–150 %, text widgets only — not photos, radar, camera, earth, embeds or the whiteboard), **per-widget outer padding** (`outerPadding`, 0–48 px, omitted means none; insets the panel in its grid cell), a time-of-day schedule
+(photos as the backdrop), **per-widget background** (on/off and opacity; theme surface opacity is the default; clocks and dates start with no panel), **per-widget font size** (`fontScale`, 70–150 %, text widgets only — not photos, radar, wildfires, camera, earth, embeds or the whiteboard), **per-widget outer padding** (`outerPadding`, 0–48 px, omitted means none; insets the panel in its grid cell), a time-of-day schedule
 (morning, afternoon, evening, overnight) choosing the view, theme, day or night mode and dimming — each period can start at a **fixed time, sunrise or sunset** (sunrise/sunset from today's Open-Meteo weather at the dashboard location); themes with colour
 palettes, fonts, corner radius, opacity and optional glass; burn-in protection (pixel shift); offline mode (service
 worker serves the last good data and shows "Offline"); a **screen saver** (photos only or dark after idle minutes, dark
@@ -104,7 +105,7 @@ Manrope display, template preview screenshots from `public/templates/` — no pe
 The features catalogue lives in `src/lib/marketingFeatures.ts` (grouped like the admin widget picker).
 
 **Alerts** (`src/server/alerts.ts`): Alert Ready (NAAD), **Environment Canada weather warnings** (through NAAD),
-DriveBC road events and weather conditions, Earthquakes Canada, BC Hydro power outages. Each switchable in `config.alerts.sources`.
+DriveBC road events and weather conditions, Earthquakes Canada, BC Hydro power outages, **EmergencyInfoBC evacuation orders and alerts** (any hazard, covering the home or within `alerts.evacuationKm`). Each switchable in `config.alerts.sources`.
 Optional email to everyone on `ADMIN_EMAILS` and `FAMILY_EMAILS` when a new strip-worthy alert arrives (`config.alerts.notifyEmail`).
 
 **Household and family:** Clerk Account Portal in production (`accounts.everydaypane.com/sign-in` and `/sign-up`, from `NEXT_PUBLIC_CLERK_SIGN_IN_URL` / `SIGN_UP_URL`); local and CI stay on `/signin/`; Turso
@@ -279,6 +280,10 @@ npm run templates:previews  # regenerate public/templates/*.png from real widget
   Architecture).
 - **Rain radar** (Melvin, 2026-11-21): an animated radar map for the Lower Mainland, the past hour and a short-term
   forecast, from a free source with no key (see Architecture).
+- **Wildfires** (Melvin, 2026-11-21: "do windy and wildfires"): a wildfire map around home with no key: active fires,
+  their burned areas and evacuation areas, and the nearest fires listed; nearby evacuation orders and alerts also join
+  the alert strip (see Architecture). Windy was the other half of that ask: the earth wind map (`earth`) already covers
+  wind and weather layers over a map.
 - **Chore chart** (Melvin, 2026-11-21; periods 2026-11-23 from homescreens.dev): recurring chores for the kids, on chosen
   weekdays and a **time of day** (morning, afternoon, evening, anytime), done by everyone picked or rotated between them
   (each time it's due, or a week each), ticked off with a tap on the wall, with per-kid completion dots (or progress rings),
@@ -310,7 +315,7 @@ panel can be complex if you need it to be."
   small TypeScript module bundled by esbuild (`src/display/` → `public/display/`), with no framework. The unlock gate
   (`/display/unlock/`) is a Next.js page. Widgets update only the DOM nodes that change (the clock rewrites one text
   node a second).
-- **Budget:** the display's script stays under 40 KB gzipped and its stylesheet under 20 KB (`scripts/bundle-check.mjs`,
+- **Budget:** the display's script stays under 42 KB gzipped (40 KB until the wildfire map, 2026-11-25) and its stylesheet under 20 KB (`scripts/bundle-check.mjs`,
   a CI step; CSS raised from 10 KB on 2026-11-23 for more clock styles). A new dependency on the display needs a very good reason.
 - All heavy lifting happens on the server: API calls to Google, weather, Recycle Coach, Amazon and Home Assistant are
   made, cached and trimmed by our routes, and the display fetches small JSON. Images are proxied at display size.
@@ -530,6 +535,23 @@ panel can be complex if you need it to be."
   the browser, forecast ones five minutes, tiles a week; the service worker leaves radar pictures alone. The widget stacks
   the pictures and switches their opacity (at most 10 observed and 6 forecast), resting two seconds on the latest and the
   last. This sandbox can't reach GeoMet or Esri, so tests use shapes from their documentation.
+- **Wildfires:** BC Wildfire Service's public ArcGIS feature services on ArcGIS Online
+  (`services6.arcgis.com/ubm4tcTYICKBpist/…`, no key, the layers its Wildfire Situation map reads):
+  `BCWS_ActiveFires_PublicView` (points; `FIRE_STATUS` is the stage of control: New, Out of Control, Being Held, Under
+  Control, Out), `BCWS_FirePerimeters_PublicView` (polygons) and EmergencyInfoBC's `Evacuation_Orders_and_Alerts`
+  (polygons for any hazard; `ORDER_ALERT_STATUS` Order, Tactical Evacuation, Alert; the layer itself hides All Clear)
+  (`src/server/wildfires.ts`). Claude's pick (2026-11-21) over CWFIS, which is national and slower to update. Each
+  query asks only for the radar's 5 × 5 tile square around home at the widget's zoom (envelope in EPSG:3857, fires that
+  aren't Out), and polygons come simplified to one map pixel (`maxAllowableOffset`). The server turns everything into
+  pixels on that map (fires as points, outlines as SVG path data), cached five minutes per zoom for every display, so a
+  display never gets coordinates; the tiles are the radar's (`/api/display/radar/tile/`). The fires failing shows
+  "unavailable"; the outlines failing only drops the outlines. The widget is one SVG over the tiles, redrawn when the
+  feed (`/api/display/wildfires/`, every five minutes) or night mode changes; nothing animates. Colours follow BC
+  Wildfire Service's map: red out of control or new, amber held, green under control, a black ring for a fire of note.
+  The alert strip reads the same evacuation layer in EPSG:4326 around home (`parseEvacuations` in
+  `src/server/alerts.ts`): an order covering the home is extreme and an alert severe; within `alerts.evacuationKm`
+  (default 10 km) they are moderate and minor. This sandbox can't reach ArcGIS Online, so tests use shapes from the
+  layers' descriptions and sample features read on 2026-11-21.
 - **BC Ferries:** BC Ferries has no public API, so `src/server/ferries.ts` reads the community BC Ferries API
   (`https://www.bcferriesapi.ca/v2/capacity/`, MIT, no key; it reads BC Ferries' current conditions pages every
   minute). Its one answer covers every route with "how full" (the codes in `src/lib/ferries.ts`, departure terminal then

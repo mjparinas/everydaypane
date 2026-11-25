@@ -2356,7 +2356,8 @@ html.portrait-view .stage {
 }
 
 /* Rain radar: the map fills the cell edge to edge, with the time and the loop's steps along the bottom. */
-.cell-radar {
+.cell-radar,
+.cell-wildfires {
   padding: 0;
 }
 .w-radar {
@@ -2465,6 +2466,96 @@ html.portrait-view .stage {
 [data-mode="night"] .rd-credit {
   color: #bbb;
   text-shadow: 0 0 2px #000;
+}
+
+/* Wildfires (Melvin, 2026-11-21): the radar's map with one SVG of fires, burned areas and evacuation areas on top,
+   and the nearest fires along the bottom. Colours follow BC Wildfire Service's map: red out of control, amber held,
+   green under control. Strokes keep their width however far the map is scaled. */
+.wf-svg {
+  overflow: visible;
+}
+.wf-svg * {
+  vector-effect: non-scaling-stroke;
+}
+.wf-evac {
+  stroke-width: 2;
+  stroke-dasharray: 6 4;
+}
+.wf-order {
+  fill: rgb(200 0 40 / 14%);
+  stroke: #c80028;
+}
+.wf-alert {
+  fill: rgb(230 150 0 / 12%);
+  stroke: #d98a00;
+}
+.wf-perimeter {
+  fill: rgb(214 48 31 / 32%);
+  stroke: #a3220f;
+  stroke-width: 1.5;
+}
+.wf-fire {
+  stroke: #fff;
+  stroke-width: 2;
+}
+.wf-note {
+  stroke: #000;
+  stroke-width: 3;
+}
+.wf-new,
+.wf-outOfControl {
+  fill: #e0301e;
+  background: #e0301e;
+}
+.wf-held {
+  fill: #f2a11f;
+  background: #f2a11f;
+}
+.wf-underControl {
+  fill: #3f9b4a;
+  background: #3f9b4a;
+}
+.wf-list {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15em;
+  padding: 1.2em 0.8em 0.5em;
+  background: linear-gradient(transparent, color-mix(in srgb, var(--surface) 88%, transparent) 35%);
+}
+.wf-list[hidden] {
+  display: none;
+}
+.wf-row {
+  display: flex;
+  min-width: 0;
+  align-items: baseline;
+  gap: 0.5em;
+  white-space: nowrap;
+}
+.wf-dot {
+  width: 0.65em;
+  height: 0.65em;
+  flex: none;
+  align-self: center;
+  border-radius: 50%;
+}
+.wf-name {
+  overflow: hidden;
+  font-weight: 700;
+  text-overflow: ellipsis;
+}
+.wf-meta {
+  margin-left: auto;
+  color: var(--muted);
+  font-size: 0.85em;
+  font-variant-numeric: tabular-nums;
+}
+.wf-none {
+  color: var(--muted);
 }
 
 /* Kitchen timers and the pomodoro (Melvin, 2026-11-21). Big buttons for a wet hand from across the kitchen. A timer

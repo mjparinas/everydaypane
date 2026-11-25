@@ -3,7 +3,16 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import type { Widget } from "@/lib/config/schema";
 import { newWidget, WIDGETS } from "@/lib/config/widgets";
-import type { AirData, ChoresData, DisplayPayload, TasksData, TransitData, TransitDeparture, WeatherData } from "@/lib/display/types";
+import type {
+  AirData,
+  ChoresData,
+  DisplayPayload,
+  TasksData,
+  TransitData,
+  TransitDeparture,
+  WeatherData,
+  WildfireFire,
+} from "@/lib/display/types";
 
 import { fuzzyTime, shortTime } from "./format";
 import { kindOf, label, weatherIcon } from "./icons";
@@ -25,6 +34,7 @@ import { daylightLength, sunTimes } from "./widgets/sunTimes";
 import { dueLabel, shownLists, tasks, UNDO_MS } from "./widgets/tasks";
 import { delayLabel, minutesLabel, shownDepartures, transit } from "./widgets/transit";
 import { wifiQr } from "./widgets/wifi";
+import { hectares, shownFires, wildfires } from "./widgets/wildfires";
 
 const ctx = { payload: {} as DisplayPayload, timeZone: "America/Vancouver", hour12: true };
 
@@ -1140,5 +1150,92 @@ describe("earth", () => {
     expect(el.querySelector("iframe")).not.toBe(first);
     expect(el.querySelectorAll("iframe")).toHaveLength(1);
     stop();
+  });
+});
+
+describe("wildfires", () => {
+  const fire = (id: string, stage: WildfireFire["stage"], km: number, extra: Partial<WildfireFire> = {}): WildfireFire => ({
+    id,
+    name: id,
+    stage,
+    ha: 12,
+    km,
+    ofNote: false,
+    x: 800,
+    y: 700,
+    ...extra,
+  });
+  const map = {
+    x: 38,
+    y: 85,
+    homeX: 710,
+    homeY: 718,
+    fires: [
+      fire("Stave Lake", "underControl", 31, { ha: 0.01 }),
+      fire("Chilliwack Lake", "outOfControl", 88, { ha: 120.4 }),
+      fire("Hope Slide", "held", 94, { ofNote: true, ha: 2400 }),
+    ],
+    perimeters: ["M900 700L912 700L912 712Z"],
+    evacuations: [{ kind: "order" as const, d: "M880 680L920 680L920 720Z" }],
+  };
+
+  it("writes sizes for the wall and can leave out fires under control", () => {
+    expect(hectares(0.01)).toBe("Spot fire");
+    expect(hectares(2)).toBe("2 ha");
+    expect(hectares(2.5)).toBe("2.5 ha");
+    expect(hectares(2400)).toBe("2,400 ha");
+    expect(shownFires(map.fires, false).map((f) => f.id)).toEqual(["Chilliwack Lake", "Hope Slide"]);
+  });
+
+  it("draws fires, burned areas and evacuations over the radar's map, and lists the nearest", async () => {
+    vi.useFakeTimers({ now: new Date("2026-11-21T08:00:00Z") });
+    vi.stubGlobal("fetch", () => Promise.resolve(Response.json({ updatedAt: 1, maps: { "8": map } })));
+    const el = document.createElement("div");
+    document.body.append(el);
+    const stop = wildfires(el, { ...newWidget("wildfires", "wf", { x: 0, y: 0 }), zoom: 8, listCount: 2 }, ctx);
+    await vi.advanceTimersByTimeAsync(0);
+    const tiles = [...el.querySelectorAll<HTMLImageElement>(".rd-tile")].map((i) => new URL(i.src, "http://x").search);
+    expect(tiles).toHaveLength(50);
+    expect(tiles[0]).toBe("?s=light&z=8&x=38&y=85");
+    expect(tiles[49]).toBe("?s=light-labels&z=8&x=42&y=89");
+    expect(el.querySelectorAll(".wf-fire")).toHaveLength(3);
+    expect(el.querySelector(".wf-fire.wf-note")?.getAttribute("r")).toBe("9");
+    expect(el.querySelectorAll(".wf-perimeter")).toHaveLength(1);
+    expect(el.querySelectorAll(".wf-evac.wf-order")).toHaveLength(1);
+    expect([...el.querySelectorAll(".wf-row")].map((r) => r.textContent)).toEqual([
+      "Stave Lake31 km · Spot fire · Under control",
+      "Chilliwack Lake88 km · 120 ha · Out of control",
+    ]);
+    document.documentElement.dataset.mode = "night";
+    await vi.advanceTimersByTimeAsync(60_000);
+    expect(el.querySelector<HTMLImageElement>(".rd-tile")?.src).toContain("s=dark&");
+    delete document.documentElement.dataset.mode;
+    stop();
+    vi.unstubAllGlobals();
+  });
+
+  it("leaves out what the widget turns off, and says when there are no fires", async () => {
+    vi.useFakeTimers({ now: new Date("2026-11-21T08:00:00Z") });
+    const quiet = { ...map, fires: [fire("Stave Lake", "underControl", 31)] };
+    vi.stubGlobal("fetch", () => Promise.resolve(Response.json({ updatedAt: 1, maps: { "7": quiet } })));
+    const el = document.createElement("div");
+    const w = { ...newWidget("wildfires", "wf2", { x: 0, y: 0 }), showControlled: false, showPerimeters: false, showEvacuations: false };
+    const stop = wildfires(el, w, ctx);
+    await vi.advanceTimersByTimeAsync(0);
+    expect(el.querySelectorAll(".wf-fire, .wf-perimeter, .wf-evac")).toHaveLength(0);
+    expect(el.querySelector(".wf-list")?.textContent).toBe("No active wildfires on this map");
+    stop();
+    vi.unstubAllGlobals();
+  });
+
+  it("says when the fires are unavailable", async () => {
+    vi.useFakeTimers({ now: new Date("2026-11-21T08:00:00Z") });
+    vi.stubGlobal("fetch", () => Promise.resolve(Response.json({ updatedAt: 1, maps: {}, error: "down" })));
+    const el = document.createElement("div");
+    const stop = wildfires(el, newWidget("wildfires", "wf3", { x: 0, y: 0 }), ctx);
+    await vi.advanceTimersByTimeAsync(0);
+    expect(el.textContent).toBe("Wildfires are unavailable right now.");
+    stop();
+    vi.unstubAllGlobals();
   });
 });
