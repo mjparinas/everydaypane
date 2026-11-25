@@ -1595,6 +1595,109 @@ html.portrait-view .stage {
   color: var(--danger);
 }
 
+/* Internet: the status in the corner, the ping large, the last 60 checks as a line, the last speed test under it.
+   The whole widget is one button: a tap runs a speed test. */
+.w-internet {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3em;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  font-size: clamp(13px, min(5cqw, 12cqh), 28px);
+  text-align: left;
+}
+.in-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.5em;
+}
+.in-status {
+  font-size: 0.8em;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.in-status::before {
+  display: inline-block;
+  width: 0.6em;
+  height: 0.6em;
+  margin-right: 0.35em;
+  border-radius: 50%;
+  background: var(--muted);
+  content: "";
+}
+[data-status="online"] .in-status::before {
+  background: #3cb371;
+}
+[data-status="slow"] .in-status::before {
+  background: #f0a020;
+}
+[data-status="offline"] .in-status::before {
+  background: var(--danger);
+}
+.in-now {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5em;
+}
+.in-ms {
+  font-size: 2em;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+}
+[data-status="slow"] .in-ms {
+  color: #f0a020;
+}
+[data-status="offline"] .in-ms {
+  color: var(--danger);
+}
+.in-loss {
+  color: var(--muted);
+  font-size: 0.8em;
+}
+.in-graph-box {
+  flex: 1 1 0;
+  min-height: 0;
+}
+.in-graph {
+  display: block;
+  width: 100%;
+  height: 100%;
+  max-height: 4em;
+  fill: none;
+}
+.in-line {
+  stroke: var(--accent);
+  stroke-width: 2;
+  stroke-linejoin: round;
+}
+.in-slow {
+  stroke: var(--muted);
+  stroke-width: 1;
+  stroke-dasharray: 3 3;
+  opacity: 0.5;
+}
+.in-miss {
+  stroke: var(--danger);
+  stroke-width: 2;
+}
+.in-speed {
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 0.85em;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
 /* BC Ferries: each route's name, then its next sailings with a bar for how full each one is. */
 .w-ferries {
   display: flex;

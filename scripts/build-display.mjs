@@ -29,6 +29,8 @@ const common = {
 
 const builds = [
   { ...common, entryPoints: ["src/display/main.ts"], outfile: "public/display/display.js", format: "esm" },
+  // Widgets that load only on a screen that shows them (src/display/widgets/lazy.ts).
+  { ...common, entryPoints: ["src/display/widgets/internet.ts"], outfile: "public/display/internet.js", format: "esm" },
   { ...common, entryPoints: ["src/display/sw.ts"], outfile: "public/display/sw.js", format: "iife" },
   {
     ...common,

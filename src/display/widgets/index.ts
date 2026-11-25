@@ -13,6 +13,7 @@ import { editQr } from "./editQr";
 import { ferries } from "./ferries";
 import { garbage } from "./garbage";
 import { camera, haEntity } from "./ha";
+import { lazyWidget } from "./lazy";
 import { meals } from "./meals";
 import { media } from "./media";
 import { menus } from "./menus";
@@ -183,6 +184,8 @@ export function mountWidget(el: HTMLElement, w: Widget, ctx: WidgetContext): Cle
       return airports(el, w, ctx);
     case "maps":
       return maps(el, w, ctx);
+    case "internet":
+      return lazyWidget("internet", el, w, ctx);
     default:
       // A widget type with no screen yet (still being built) leaves an empty cell instead of crashing the dashboard.
       return () => undefined;
