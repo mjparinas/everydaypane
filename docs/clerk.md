@@ -25,7 +25,7 @@ If you see `ClerkJS: Network error … Failed to fetch` against `clerk.everydayp
 
 1. DNS + SSL for that host (it should answer Clerk’s API, not a parking page).
 2. CSP includes that exact origin (not only `*.clerk.com`).
-3. Or switch to same-origin proxy: enable Dashboard proxy URL + `NEXT_PUBLIC_CLERK_PROXY_URL=https://www.everydaypane.com/__clerk`.
+3. The app does not proxy `/__clerk`. That path returns `host_invalid` unless the Dashboard proxy URL is set. Leave `frontendApiProxy` off while the CNAME is in use.
 
 ## Import existing members
 
