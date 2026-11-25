@@ -59,7 +59,6 @@ import type { Cleanup, WidgetContext } from "./types";
 import { weather } from "./weather";
 import { weatherUnderground } from "./weatherUnderground";
 import { wifiQr } from "./wifi";
-import { wildfires } from "./wildfires";
 
 /** Mounts a widget into its cell and returns what stops its timers. A widget that throws shows a quiet error, never a blank screen. */
 export function mountWidget(el: HTMLElement, w: Widget, ctx: WidgetContext): Cleanup {
@@ -119,7 +118,7 @@ export function mountWidget(el: HTMLElement, w: Widget, ctx: WidgetContext): Cle
     case "radar":
       return radar(el, w, ctx);
     case "wildfires":
-      return wildfires(el, w, ctx);
+      return lazyWidget("wildfires", el, w, ctx);
     case "chores":
       return chores(el, w, ctx);
     case "shopping":

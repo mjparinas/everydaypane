@@ -559,7 +559,8 @@ panel can be complex if you need it to be."
   aren't Out), and polygons come simplified to one map pixel (`maxAllowableOffset`). The server turns everything into
   pixels on that map (fires as points, outlines as SVG path data), cached five minutes per zoom for every display, so a
   display never gets coordinates; the tiles are the radar's (`/api/display/radar/tile/`). The fires failing shows
-  "unavailable"; the outlines failing only drops the outlines. The widget is one SVG over the tiles, redrawn when the
+  "unavailable"; the outlines failing only drops the outlines. The widget loads on its own (`public/display/wildfires.js`, `src/display/widgets/lazy.ts`), so screens without it
+  never fetch it. It is one SVG over the tiles, redrawn when the
   feed (`/api/display/wildfires/`, every five minutes) or night mode changes; nothing animates. Colours follow BC
   Wildfire Service's map: red out of control or new, amber held, green under control, a black ring for a fire of note.
   The alert strip reads the same evacuation layer in EPSG:4326 around home (`parseEvacuations` in
