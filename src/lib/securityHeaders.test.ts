@@ -25,4 +25,22 @@ describe("contentSecurityPolicy", () => {
     expect(contentSecurityPolicy({ script: "self", upgradeInsecureRequests: true })).toContain("upgrade-insecure-requests");
     expect(contentSecurityPolicy({ script: "self", upgradeInsecureRequests: false })).not.toContain("upgrade-insecure-requests");
   });
+
+  it("allows the production Clerk Frontend API host in connect-src", () => {
+    // *.clerk.com does not cover clerk.everydaypane.com — that host must be listed or fetch fails in the browser.
+    const prevSite = process.env.NEXT_PUBLIC_SITE_URL;
+    const prevFapi = process.env.NEXT_PUBLIC_CLERK_FRONTEND_API;
+    process.env.NEXT_PUBLIC_SITE_URL = "https://www.everydaypane.com";
+    delete process.env.NEXT_PUBLIC_CLERK_FRONTEND_API;
+    try {
+      const csp = contentSecurityPolicy({ script: "self" });
+      expect(csp).toContain("https://clerk.everydaypane.com");
+      expect(csp).toMatch(/connect-src[^;]*https:\/\/clerk\.everydaypane\.com/);
+    } finally {
+      if (prevSite === undefined) delete process.env.NEXT_PUBLIC_SITE_URL;
+      else process.env.NEXT_PUBLIC_SITE_URL = prevSite;
+      if (prevFapi === undefined) delete process.env.NEXT_PUBLIC_CLERK_FRONTEND_API;
+      else process.env.NEXT_PUBLIC_CLERK_FRONTEND_API = prevFapi;
+    }
+  });
 });

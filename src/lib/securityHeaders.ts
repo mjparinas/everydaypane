@@ -28,11 +28,16 @@ export function contentSecurityPolicy(opts: {
     opts.script === "nonce" && opts.nonce
       ? `'self' 'nonce-${opts.nonce}' 'strict-dynamic'${isDev ? " 'unsafe-eval'" : ""}${impeccableLiveDev}`
       : `'self'${isDev ? " 'unsafe-eval'" : ""}${impeccableLiveDev}`;
-  // Clerk Frontend API (and Cloudflare Turnstile challenges) when not fully proxied through /__clerk.
-  const clerkScript = "https://*.clerk.accounts.dev https://*.clerk.com https://challenges.cloudflare.com";
-  const clerkConnect =
-    "https://*.clerk.accounts.dev https://*.clerk.com https://api.clerk.com https://clerk-telemetry.com https://challenges.cloudflare.com";
-  const clerkFrame = "https://*.clerk.accounts.dev https://*.clerk.com https://challenges.cloudflare.com";
+  // Clerk Frontend API (and Cloudflare Turnstile challenges). Production uses a DNS Frontend API host
+  // (clerk.everydaypane.com); `*.clerk.com` does not cover that, so list it explicitly. Optional
+  // NEXT_PUBLIC_CLERK_FRONTEND_API overrides for another custom host.
+  const clerkFapi =
+    process.env.NEXT_PUBLIC_CLERK_FRONTEND_API?.replace(/\/$/, "") ||
+    (process.env.NEXT_PUBLIC_SITE_URL?.includes("everydaypane.com") ? "https://clerk.everydaypane.com" : "");
+  const clerkExtra = clerkFapi ? ` ${clerkFapi}` : "";
+  const clerkScript = `https://*.clerk.accounts.dev https://*.clerk.com https://challenges.cloudflare.com${clerkExtra}`;
+  const clerkConnect = `https://*.clerk.accounts.dev https://*.clerk.com https://api.clerk.com https://clerk-telemetry.com https://challenges.cloudflare.com${clerkExtra}`;
+  const clerkFrame = `https://*.clerk.accounts.dev https://*.clerk.com https://challenges.cloudflare.com${clerkExtra}`;
   const directives = [
     "default-src 'self'",
     `script-src ${script} ${clerkScript}`,
