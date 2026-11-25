@@ -15,6 +15,18 @@ Everydaypane uses [Clerk](https://clerk.com) for household and platform-staff id
 
 See `.env.example`: `CLERK_SECRET_KEY`, `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`, `CLERK_WEBHOOK_SIGNING_SECRET`.
 
+### Production DNS (Frontend API)
+
+Clerk production instances usually serve the Frontend API on a subdomain such as `https://clerk.everydaypane.com`
+(CNAME in your DNS → Clerk). The browser calls that host for sign-in/sign-up. Our CSP must allow it in
+`connect-src` / `script-src` / `frame-src` (set `NEXT_PUBLIC_CLERK_FRONTEND_API` if the host isn’t the default).
+
+If you see `ClerkJS: Network error … Failed to fetch` against `clerk.everydaypane.com`, check:
+
+1. DNS + SSL for that host (it should answer Clerk’s API, not a parking page).
+2. CSP includes that exact origin (not only `*.clerk.com`).
+3. Or switch to same-origin proxy: enable Dashboard proxy URL + `NEXT_PUBLIC_CLERK_PROXY_URL=https://www.everydaypane.com/__clerk`.
+
 ## Import existing members
 
 ```bash
