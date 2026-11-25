@@ -103,7 +103,7 @@ Literata; Displays tab tips for casting
 `/display/`; Vancouver clocks, dates, calendars and scheduled views stay on UTC−7 after B.C.'s March 2026 change
 even when the display browser has old time-zone data.
 
-**Marketing site** (public pages, Melvin, 2026-11-23): homepage at `/` (no longer redirects to admin), plus `/pricing/`,
+**Marketing site** (public pages, Melvin, 2026-11-23): homepage at `/` (no longer redirects to admin), with a **Connect a display** link in the header, hero and footer that opens `/display/` (Melvin, 2026-11-25: so a wall screen taps it instead of typing the address), plus `/pricing/`,
 `/features/` (every widget with a real-widget sample PNG from `public/features/widgets/`, regenerated with
 `npm run templates:previews` alongside starter templates), `/compare/` (and per-competitor pages including Home Screens), `/blog/` with RSS,
 `/privacy/`, `/terms/`, `/contact/`, `robots.ts` and `sitemap.ts`. Built like Tuned/Liftsmith (`src/components/site/`,

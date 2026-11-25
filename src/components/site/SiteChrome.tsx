@@ -4,7 +4,7 @@ import type { ReactNode } from "react";
 
 import { Mark, Wordmark } from "@/components/Wordmark";
 import { BRAND } from "@/lib/brand";
-import { APP_PATH, CONTACT_EMAIL, FAMILY_PATH, SIGN_IN_PATH, SIGNUP_PATH, SITE_URL } from "@/lib/site";
+import { APP_PATH, CONTACT_EMAIL, DISPLAY_PATH, FAMILY_PATH, SIGN_IN_PATH, SIGNUP_PATH, SITE_URL } from "@/lib/site";
 import { SESSION_COOKIE, sessionFor } from "@/server/auth";
 
 import { BuildStamp } from "./BuildStamp";
@@ -52,6 +52,19 @@ export async function SiteHeader() {
               </li>
             ))}
           </ul>
+          {/* Melvin, 2026-11-25: a wall screen opens the home page and taps this instead of typing /display/. */}
+          <Link
+            href={DISPLAY_PATH}
+            data-cta="nav-connect-display"
+            className="inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-soft hover:bg-panel hover:text-ink"
+          >
+            <svg viewBox="0 0 20 20" className="size-4" fill="none" stroke="currentColor" strokeWidth="1.7" aria-hidden>
+              <rect x="2.5" y="3.5" width="15" height="10" rx="1.5" />
+              <path d="M7 16.5h6M10 13.5v3" strokeLinecap="round" />
+            </svg>
+            <span className="hidden min-[520px]:inline">Connect a display</span>
+            <span className="min-[520px]:hidden">Display</span>
+          </Link>
           {account && session ? (
             <Link
               href={home}
@@ -103,6 +116,7 @@ export function SiteFooter() {
             { href: "/pricing/", label: "Pricing" },
             { href: "/compare/", label: "Compare" },
             { href: APP_PATH, label: "Open household" },
+            { href: DISPLAY_PATH, label: "Connect a display" },
             { href: FAMILY_PATH, label: "Family board" },
           ]}
         />
