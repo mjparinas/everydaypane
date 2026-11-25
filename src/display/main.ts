@@ -3,7 +3,7 @@ import { PERIODS } from "@/lib/config/periods";
 import type { Palette, Period, Theme, View, Widget } from "@/lib/config/schema";
 import { currentPeriod, msUntilLocalTime, msUntilNextPeriod, scheduleUsesSun, sunMinutesFromIso, type SunMinutes } from "@/lib/config/time";
 import { widgetVisible } from "@/lib/config/visibility";
-import { parseDraftMessage, previewReadyMessage } from "@/lib/display/draftMessage";
+import { parseDraftMessage, previewLayoutMessage, previewReadyMessage } from "@/lib/display/draftMessage";
 import type { DisplayPayload, HaData, WeatherData } from "@/lib/display/types";
 import { diffWidgets, isPortraitView, placeWidgets, sameStageGrid, stageGridStyle, type PlacedWidget } from "@/lib/display/viewDiff";
 
@@ -48,6 +48,24 @@ let periodTimer: number | undefined;
 let statePollTimer: number | undefined;
 let statePollFailures = 0;
 let statePolling = false;
+
+function announcePreviewLayout() {
+  if (!PREVIEW) return;
+  const appRect = app.getBoundingClientRect();
+  const stageRect = stage.getBoundingClientRect();
+  const rect = {
+    left: stageRect.left - appRect.left,
+    top: stageRect.top - appRect.top,
+    width: stageRect.width,
+    height: stageRect.height,
+  };
+  try {
+    if (window.parent !== window) window.parent.postMessage(previewLayoutMessage(rect), location.origin);
+    window.opener?.postMessage(previewLayoutMessage(rect), location.origin);
+  } catch {
+    // Framed preview navigated away or the tab has gone.
+  }
+}
 /** Today's sunrise/sunset in minutes (from the weather feed) when a period starts on the sun. */
 let sun: SunMinutes | null = null;
 let sunStop: Cleanup | null = null;
@@ -282,6 +300,7 @@ function render(force = false) {
   shown = { viewId: view.id, mode, themeId: theme.id, version: p.version, period: periodKey };
   schedulePeriod(p);
   scheduleLoop(p);
+  window.requestAnimationFrame(announcePreviewLayout);
 }
 
 /**
@@ -320,6 +339,7 @@ function applyDraft(next: DisplayPayload) {
 
   shownView = view;
   shown = { viewId: view.id, mode, themeId: theme.id, version: payload.version, period: periodKey };
+  window.requestAnimationFrame(announcePreviewLayout);
   schedulePeriod(payload);
   scheduleLoop(payload);
 }
@@ -424,6 +444,9 @@ async function watchLoop() {
  */
 function listenForDraft() {
   if (!PREVIEW) return;
+  const layoutObserver = new ResizeObserver(() => window.requestAnimationFrame(announcePreviewLayout));
+  layoutObserver.observe(app);
+  layoutObserver.observe(stage);
   window.addEventListener("message", (event) => {
     if (event.origin !== location.origin) return;
     const fromParent = event.source === window.parent && window.parent !== window;
@@ -448,6 +471,7 @@ function listenForDraft() {
   // listener wasn't attached when the first ping fired.
   const announce = () => {
     try {
+      announcePreviewLayout();
       if (window.parent !== window) window.parent.postMessage(previewReadyMessage(), location.origin);
       window.opener?.postMessage(previewReadyMessage(), location.origin);
     } catch {

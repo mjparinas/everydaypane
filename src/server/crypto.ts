@@ -34,9 +34,18 @@ export function decrypt(sealed: string): string | null {
   const [v, iv, tag, body] = sealed.split(".");
   if (v !== "v1" || !iv || !tag || !body) return null;
   try {
-    const decipher = createDecipheriv("aes-256-gcm", key("secrets"), Buffer.from(iv, "base64url"));
-    decipher.setAuthTag(Buffer.from(tag, "base64url"));
-    return Buffer.concat([decipher.update(Buffer.from(body, "base64url")), decipher.final()]).toString("utf8");
+    const decode = (value: string): Buffer | null => {
+      if (!/^[A-Za-z0-9_-]+$/.test(value)) return null;
+      const decoded = Buffer.from(value, "base64url");
+      return decoded.toString("base64url") === value ? decoded : null;
+    };
+    const ivBytes = decode(iv);
+    const tagBytes = decode(tag);
+    const bodyBytes = decode(body);
+    if (!ivBytes || ivBytes.length !== 12 || !tagBytes || tagBytes.length !== 16 || !bodyBytes) return null;
+    const decipher = createDecipheriv("aes-256-gcm", key("secrets"), ivBytes);
+    decipher.setAuthTag(tagBytes);
+    return Buffer.concat([decipher.update(bodyBytes), decipher.final()]).toString("utf8");
   } catch {
     return null;
   }

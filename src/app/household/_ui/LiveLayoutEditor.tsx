@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { cellAt, clampRect, CORNERS, fits, isBackdrop, overlaps, resizeFrom, type Corner, type Rect } from "@/lib/config/grid";
 import type { DashboardConfig, View, Widget } from "@/lib/config/schema";
 import { WIDGETS } from "@/lib/config/widgets";
-import { clearDraftMessage, draftMessage, parsePreviewReady } from "@/lib/display/draftMessage";
+import { clearDraftMessage, draftMessage, parsePreviewLayout, parsePreviewReady } from "@/lib/display/draftMessage";
 import { displayPayload } from "@/lib/display/payload";
 
 // One editable live surface (Melvin, 2026-11-22): the real display in an iframe, with a transparent drag overlay on
@@ -17,7 +17,15 @@ const DESIGN_H = 1080;
 /** Reused by "Open full preview" so switching views navigates the same tab instead of leaving a stale one. */
 const FULL_PREVIEW = "everydaypane-preview";
 
-type Drag = { id: string; mode: "move" | Corner; offset: { x: number; y: number }; pointer: number; moved: boolean; rect: Rect };
+type Drag = {
+  id: string;
+  mode: "move" | Corner;
+  offset: { x: number; y: number };
+  origin: { x: number; y: number };
+  pointer: number;
+  moved: boolean;
+  rect: Rect;
+};
 
 /** Last full-preview tab opened from the Views editor (module-level so remounts keep the handle). */
 let fullPreviewWin: Window | null = null;
@@ -45,12 +53,13 @@ export function LiveLayoutEditor({
   const [scale, setScale] = useState(0.5);
   const [listening, setListening] = useState(false);
   const [drag, setDrag] = useState<Drag | null>(null);
+  const [stageRect, setStageRect] = useState({ left: 0, top: 0, width: DESIGN_W, height: DESIGN_H });
   const draftTimer = useRef<number | undefined>(undefined);
   const latest = useRef({ config, version, viewId });
 
   const src = `/household/preview/${encodeURIComponent(viewId)}/?mode=day`;
   const grid = { cols: view.cols, rows: view.rows };
-  const gapPx = (width: number) => (view.gap * width) / 1920;
+  const gapPx = (width: number) => (view.gap * width) / DESIGN_W;
 
   const others = (id: string) => view.widgets.filter((w) => w.id !== id);
   const minOf = (w: Widget) => WIDGETS[w.type].minSize;
@@ -105,6 +114,11 @@ export function LiveLayoutEditor({
     const iframe = frame.current;
     const onMessage = (event: MessageEvent) => {
       if (event.origin !== window.location.origin) return;
+      const layout = parsePreviewLayout(event.data);
+      if (layout && event.source === iframe?.contentWindow) {
+        setStageRect(layout.rect);
+        return;
+      }
       if (!parsePreviewReady(event.data)) return;
       if (event.source === iframe?.contentWindow) {
         setListening(true);
@@ -145,14 +159,15 @@ export function LiveLayoutEditor({
     const el = overlay.current;
     if (!el) return { x: 0, y: 0 };
     const r = el.getBoundingClientRect();
+    const shellWidth = shell.current?.clientWidth ?? r.width;
     // Padding matches the display stage; cell math uses the padded content box.
-    const pad = (view.padding * r.width) / DESIGN_W;
+    const pad = (view.padding * shellWidth) / DESIGN_W;
     return cellAt(
       e.clientX - r.left - pad,
       e.clientY - r.top - pad,
       { width: r.width - pad * 2, height: r.height - pad * 2 },
       grid,
-      gapPx(r.width),
+      gapPx(shellWidth),
     );
   }
 
@@ -165,6 +180,7 @@ export function LiveLayoutEditor({
       id: w.id,
       mode,
       offset: { x: c.x - w.x, y: c.y - w.y },
+      origin: { x: e.clientX, y: e.clientY },
       pointer: e.pointerId,
       moved: false,
       rect: { x: w.x, y: w.y, w: w.w, h: w.h },
@@ -174,10 +190,26 @@ export function LiveLayoutEditor({
   function move(e: React.PointerEvent, w: Widget) {
     if (!drag || drag.pointer !== e.pointerId || drag.id !== w.id) return;
     const c = cellFromEvent(e);
+    let resizeCell = c;
+    if (drag.mode !== "move") {
+      const el = overlay.current;
+      if (el) {
+        const r = el.getBoundingClientRect();
+        const shellWidth = shell.current?.clientWidth ?? r.width;
+        const pad = (view.padding * shellWidth) / DESIGN_W;
+        const gap = gapPx(shellWidth);
+        const cw = (r.width - pad * 2 - gap * (grid.cols - 1)) / grid.cols;
+        const ch = (r.height - pad * 2 - gap * (grid.rows - 1)) / grid.rows;
+        resizeCell = {
+          x: Math.abs(e.clientX - drag.origin.x) < cw / 2 ? (drag.mode.endsWith("w") ? w.x : w.x + w.w - 1) : c.x,
+          y: Math.abs(e.clientY - drag.origin.y) < ch / 2 ? (drag.mode.startsWith("n") ? w.y : w.y + w.h - 1) : c.y,
+        };
+      }
+    }
     const rect =
       drag.mode === "move"
         ? clampRect({ x: c.x - drag.offset.x, y: c.y - drag.offset.y, w: w.w, h: w.h }, grid)
-        : resizeFrom(w, drag.mode, c, grid, minOf(w));
+        : resizeFrom(w, drag.mode, resizeCell, grid, minOf(w));
     if (rect.x !== drag.rect.x || rect.y !== drag.rect.y || rect.w !== drag.rect.w || rect.h !== drag.rect.h) {
       setDrag({ ...drag, rect, moved: true });
     }
@@ -248,12 +280,16 @@ export function LiveLayoutEditor({
         {/* Transparent hit layer: same padding/gap/cols as the display stage so handles sit on the live widgets. */}
         <div
           ref={overlay}
-          className="absolute inset-0 grid touch-pan-y select-none"
+          className="absolute grid touch-pan-y select-none"
           style={{
             gridTemplateColumns: `repeat(${view.cols}, minmax(0, 1fr))`,
             gridTemplateRows: `repeat(${view.rows}, minmax(0, 1fr))`,
-            gap: `calc(${view.gap} / ${DESIGN_W} * 100%)`,
-            padding: `calc(${view.padding} / ${DESIGN_W} * 100%)`,
+            left: `${(stageRect.left / DESIGN_W) * 100}%`,
+            top: `${(stageRect.top / DESIGN_H) * 100}%`,
+            width: `${(stageRect.width / DESIGN_W) * 100}%`,
+            height: `${(stageRect.height / DESIGN_H) * 100}%`,
+            gap: `${view.gap * scale}px`,
+            padding: `${view.padding * scale}px`,
             containerType: "inline-size",
           }}
           onPointerDown={() => onSelect(null)}

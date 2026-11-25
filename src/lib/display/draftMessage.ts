@@ -10,6 +10,11 @@ export type DraftMessage =
   { source: typeof DRAFT_SOURCE; type: "draft"; payload: DisplayPayload } | { source: typeof DRAFT_SOURCE; type: "clear" };
 
 export type PreviewReadyMessage = { source: typeof PREVIEW_SOURCE; type: "ready" };
+export type PreviewLayoutMessage = {
+  source: typeof PREVIEW_SOURCE;
+  type: "layout";
+  rect: { left: number; top: number; width: number; height: number };
+};
 
 export function draftMessage(payload: DisplayPayload): DraftMessage {
   return { source: DRAFT_SOURCE, type: "draft", payload };
@@ -21,6 +26,10 @@ export function clearDraftMessage(): DraftMessage {
 
 export function previewReadyMessage(): PreviewReadyMessage {
   return { source: PREVIEW_SOURCE, type: "ready" };
+}
+
+export function previewLayoutMessage(rect: PreviewLayoutMessage["rect"]): PreviewLayoutMessage {
+  return { source: PREVIEW_SOURCE, type: "layout", rect };
 }
 
 /** True when this looks like a DisplayPayload the preview can apply (shape check only). */
@@ -46,4 +55,20 @@ export function parsePreviewReady(data: unknown): PreviewReadyMessage | null {
   const m = data as Record<string, unknown>;
   if (m.source !== PREVIEW_SOURCE || m.type !== "ready") return null;
   return { source: PREVIEW_SOURCE, type: "ready" };
+}
+
+/** Parse a preview → admin stage-bounds update (used to align the Views editor's hit layer). */
+export function parsePreviewLayout(data: unknown): PreviewLayoutMessage | null {
+  if (!data || typeof data !== "object") return null;
+  const m = data as Record<string, unknown>;
+  if (m.source !== PREVIEW_SOURCE || m.type !== "layout" || !m.rect || typeof m.rect !== "object") return null;
+  const r = m.rect as Record<string, unknown>;
+  if (typeof r.left !== "number" || typeof r.top !== "number" || typeof r.width !== "number" || typeof r.height !== "number") {
+    return null;
+  }
+  return {
+    source: PREVIEW_SOURCE,
+    type: "layout",
+    rect: { left: r.left, top: r.top, width: r.width, height: r.height },
+  };
 }
