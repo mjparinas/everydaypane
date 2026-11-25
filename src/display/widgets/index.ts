@@ -12,7 +12,7 @@ import { earth } from "./earth";
 import { editQr } from "./editQr";
 import { ferries } from "./ferries";
 import { garbage } from "./garbage";
-import { camera, haEntity } from "./ha";
+import { camera } from "./ha";
 import { lazyWidget } from "./lazy";
 import { meals } from "./meals";
 import { media } from "./media";
@@ -106,7 +106,7 @@ export function mountWidget(el: HTMLElement, w: Widget, ctx: WidgetContext): Cle
     case "photos":
       return photos(el, w, ctx);
     case "haEntity":
-      return haEntity(el, w, ctx);
+      return lazyWidget("haEntity", el, w, ctx);
     case "camera":
       return camera(el, w, ctx);
     case "tasks":

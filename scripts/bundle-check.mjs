@@ -9,6 +9,7 @@ const BUDGET = {
   "public/display/sw.js": 6_000,
   "public/display/internet.js": 6_000,
   "public/display/whiteboard.js": 6_000,
+  "public/display/haEntity.js": 6_000,
 };
 let failed = false;
 for (const [file, max] of Object.entries(BUDGET)) {

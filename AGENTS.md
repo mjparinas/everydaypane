@@ -323,7 +323,8 @@ panel can be complex if you need it to be."
   `bundle-check.mjs` and the `Lazy` type) and mounted through `lazyWidget` (`src/display/widgets/lazy.ts`), which
   imports it with display.js's own `?v=` only on a screen that shows it. Its `../api` is swapped at build time for
   `src/display/apiShared.ts`, which calls display.js's copy, so feeds, the device token and offline state stay single.
-  The internet widget and the whiteboard load this way (display.js 39.5 KB after the move).
+  The internet widget, the whiteboard and the Smart device tile (`haEntity.ts`; cameras and `HA_EVERY` stay in
+  `ha.ts`) load this way (display.js 37.8 KB after the Smart device move with Govee, 2026-11-25).
 - **Budget:** the display's script stays under 40 KB gzipped and its stylesheet under 20 KB (`scripts/bundle-check.mjs`,
   a CI step; CSS raised from 10 KB on 2026-11-23 for more clock styles). A new dependency on the display needs a very good reason.
 - All heavy lifting happens on the server: API calls to Google, weather, Recycle Coach, Amazon and Home Assistant are
