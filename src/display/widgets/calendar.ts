@@ -89,6 +89,7 @@ export const calendarMonth: Mount<"calendarMonth"> = (el, w, ctx) => {
   el.append(root);
   let data: CalendarData | null = null;
   let drawn = "";
+  let closeDetails: (() => void) | null = null;
 
   const draw = (now: number) => {
     if (!data) return;
@@ -97,7 +98,7 @@ export const calendarMonth: Mount<"calendarMonth"> = (el, w, ctx) => {
       return fill(root, notConnected());
     }
     const today = localDate(now, ctx.timeZone);
-    const sig = `${data.updatedAt}|${today}|${el.clientHeight}|${w.fitTitles}|${w.scrollWeeks}`;
+    const sig = `${data.updatedAt}|${today}|${el.clientHeight}|${w.fitTitles}|${w.scrollWeeks}|${w.showDayDetails}`;
     if (sig === drawn) return;
     drawn = sig;
 
@@ -126,11 +127,8 @@ export const calendarMonth: Mount<"calendarMonth"> = (el, w, ctx) => {
         { class: `${cols} mo-days${scrolling ? " mo-scroll" : ""}`, style: `grid-template-rows:${rows}` },
         ...weeks.flat().map((d) => {
           const list = days.get(d) ?? [];
-          return h(
-            "div",
-            {
-              class: `mo-day${!rolling && d.slice(0, 7) !== month ? " mo-out" : ""}${d === today ? " mo-today" : ""}${d < today ? " mo-past" : ""}`,
-            },
+          const dateText = fmt("UTC", { weekday: "long", month: "long", day: "numeric", year: "numeric" }).format(noon(d));
+          const contents = [
             // In rolling weeks the first of a month says which month it starts ("Dec 1").
             h("div", { class: "mo-num" }, rolling && d.endsWith("-01") ? shortDate(d) : String(Number(d.slice(8)))),
             ...list.map((e) =>
@@ -141,7 +139,19 @@ export const calendarMonth: Mount<"calendarMonth"> = (el, w, ctx) => {
                 e.title,
               ),
             ),
+          ];
+          const classes = `mo-day${!rolling && d.slice(0, 7) !== month ? " mo-out" : ""}${d === today ? " mo-today" : ""}${d < today ? " mo-past" : ""}`;
+          if (!w.showDayDetails) return h("div", { class: classes, "data-date": d }, ...contents);
+          const count = list.length ? `${list.length} event${list.length === 1 ? "" : "s"}` : "no events";
+          const cell = h(
+            "button",
+            { type: "button", class: `${classes} mo-day-action`, "data-date": d, "aria-label": `${dateText}, ${count}` },
+            ...contents,
           );
+          cell.addEventListener("click", () => {
+            closeDetails = openDayDetails(d, list, cell, ctx);
+          });
+          return cell;
         }),
       ),
     );
@@ -157,10 +167,80 @@ export const calendarMonth: Mount<"calendarMonth"> = (el, w, ctx) => {
   });
   const stopTick = everyMinute((now) => draw(now.getTime()));
   return () => {
+    closeDetails?.();
     stopFeed();
     stopTick();
   };
 };
+
+function openDayDetails(
+  date: string,
+  events: CalendarEvent[],
+  trigger: HTMLButtonElement,
+  ctx: { timeZone: string; hour12: boolean },
+): () => void {
+  const dateText = fmt("UTC", { weekday: "long", month: "long", day: "numeric", year: "numeric" }).format(noon(date));
+  const closeButton = h("button", { type: "button", class: "mo-modal-close", "aria-label": "Close day details" }, "×");
+  const dialog = h(
+    "section",
+    { class: "mo-modal-card", role: "dialog", "aria-modal": "true", "aria-label": `Events on ${dateText}` },
+    h(
+      "header",
+      { class: "mo-modal-header" },
+      h(
+        "div",
+        {},
+        h("h2", { class: "mo-modal-title" }, dateText),
+        h("p", { class: "mo-modal-count" }, events.length ? `${events.length} event${events.length === 1 ? "" : "s"}` : "A clear day"),
+      ),
+      closeButton,
+    ),
+    events.length
+      ? h(
+          "div",
+          { class: "mo-detail-list" },
+          ...events.map((event) =>
+            h(
+              "article",
+              { class: "mo-detail-event", style: `--c:${event.color}` },
+              h(
+                "div",
+                { class: "mo-detail-meta" },
+                h("span", { class: "mo-detail-time" }, eventTime(event, date, ctx.timeZone, ctx.hour12)),
+                h("span", { class: "mo-detail-source" }, event.calendar),
+              ),
+              h("div", { class: "mo-detail-name" }, event.title),
+              event.location ? h("div", { class: "mo-detail-location" }, event.location) : null,
+            ),
+          ),
+        )
+      : h("p", { class: "mo-detail-empty" }, "Nothing planned for this day."),
+  );
+  const backdrop = h("div", { class: "mo-modal-backdrop", role: "presentation" }, dialog);
+  let open = true;
+  const close = () => {
+    if (!open) return;
+    open = false;
+    backdrop.remove();
+    if (trigger.isConnected) trigger.focus();
+  };
+  closeButton.addEventListener("click", close);
+  backdrop.addEventListener("click", (event) => {
+    if (event.target === backdrop) close();
+  });
+  backdrop.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") {
+      event.preventDefault();
+      close();
+    } else if (event.key === "Tab") {
+      event.preventDefault();
+      closeButton.focus();
+    }
+  });
+  document.body.append(backdrop);
+  closeButton.focus();
+  return close;
+}
 
 const noon = (d: string) => Date.parse(`${d}T12:00:00Z`);
 const shortDate = (d: string) => fmt("UTC", { month: "short", day: "numeric" }).format(noon(d));

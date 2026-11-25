@@ -57,6 +57,30 @@
         "files": ["src/lib/email.ts"],
         "createdAt": "2026-11-25T07:08:20.166Z",
         "reason": "Transactional email already uses Arial because mail clients do not load the site fonts."
+      },
+      {
+        "rule": "design-system-font",
+        "value": "space grotesk",
+        "createdAt": "2026-11-25T18:03:22.072Z",
+        "reason": "Melvin documented Space Grotesk as an approved built-in theme font in AGENTS.md (More theme fonts, 2026-11-22)."
+      },
+      {
+        "rule": "design-system-font",
+        "value": "outfit",
+        "createdAt": "2026-11-25T18:03:22.083Z",
+        "reason": "Melvin documented Outfit as an approved built-in theme font in AGENTS.md (More theme fonts, 2026-11-22)."
+      },
+      {
+        "rule": "design-system-font",
+        "value": "dm sans",
+        "createdAt": "2026-11-25T18:03:22.095Z",
+        "reason": "Melvin documented DM Sans as an approved built-in theme font in AGENTS.md (More theme fonts, 2026-11-22)."
+      },
+      {
+        "rule": "design-system-font",
+        "value": "literata",
+        "createdAt": "2026-11-25T18:03:22.106Z",
+        "reason": "Melvin documented Literata as an approved built-in theme font in AGENTS.md (More theme fonts, 2026-11-22)."
       }
     ]
   }

@@ -526,6 +526,12 @@ function TypeSettings({
           />
           <Toggle label="Show weekends" checked={w.showWeekends} onChange={(v) => e((x) => void (x.showWeekends = v))} />
           <Toggle label="Show the month title" checked={w.showTitle} onChange={(v) => e((x) => void (x.showTitle = v))} />
+          <Toggle
+            label="Open day details when tapped"
+            checked={w.showDayDetails}
+            onChange={(v) => e((x) => void (x.showDayDetails = v))}
+            hint="See every event for that day, including events hidden behind “+N more”."
+          />
           <details className="grid gap-3 rounded-xl border border-line bg-bg px-3 py-2">
             <summary className="cursor-pointer text-sm font-semibold text-ink">Advanced layout</summary>
             <Toggle
