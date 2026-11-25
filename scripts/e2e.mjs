@@ -1,5 +1,5 @@
 // Browser tests against a production build (`npm run build` first). Starts `next start` itself on a fresh database,
-// signs in through the real magic link (printed by the server when RESEND_API_KEY is unset), and checks each flow.
+// signs in through AUTH_TEST_MODE (no Clerk keys required in CI), and checks each flow.
 // Any console error fails the run. Usage: node scripts/e2e.mjs
 import { spawn } from "node:child_process";
 import { rmSync } from "node:fs";
@@ -18,6 +18,10 @@ const server = spawn(process.execPath, ["node_modules/next/dist/bin/next", "star
     ADMIN_EMAILS: "admin@example.com",
     FAMILY_EMAILS: "kid@example.com",
     RESEND_API_KEY: "",
+    AUTH_TEST_MODE: "1",
+    // Leave Clerk unset so proxy uses the test cookie gate.
+    CLERK_SECRET_KEY: "",
+    NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: "",
     // Match CI build: absolute icon/OG URLs must hit this server, not a stale production host.
     NEXT_PUBLIC_SITE_URL: process.env.NEXT_PUBLIC_SITE_URL ?? BASE,
     NODE_ENV: "production",
@@ -52,24 +56,12 @@ async function waitForServer() {
   throw new Error(`Server didn't start:\n${log}`);
 }
 
-async function lastLink(email) {
-  for (let i = 0; i < 20; i++) {
-    const matches = [...log.matchAll(new RegExp(`To ${email.replace(".", "\\.")}:[\\s\\S]*?(http\\S+token=\\S+)`, "g"))];
-    const link = matches.at(-1)?.[1];
-    if (link) return link.replace(/^https?:\/\/[^/]+/, BASE);
-    await new Promise((r) => setTimeout(r, 250));
-  }
-  throw new Error("No sign-in link was printed");
-}
-
 export async function signIn(page, email) {
   await page.goto(`${BASE}/household/`);
   await page.waitForURL(/\/signin\//);
   await page.getByLabel("Email").fill(email);
-  await page.getByRole("button", { name: "Email me a link" }).click();
-  await page.getByRole("status").waitFor();
-  await page.goto(await lastLink(email));
-  await page.getByRole("button", { name: "Sign in" }).click();
+  await page.getByRole("button", { name: /Sign in|Create free household|Email me a code/i }).click();
+  await page.waitForURL(/\/household\//);
 }
 
 try {
@@ -99,19 +91,19 @@ try {
     expect((await r.text()).includes("calendar.readonly"), "missing the Google Calendar section");
   });
 
-  await step("admin signs in with a magic link", async () => {
+  await step("admin signs in with AUTH_TEST_MODE", async () => {
     await signIn(page, "admin@example.com");
     await page.waitForURL(/\/household\//);
     await page.getByText("admin@example.com").waitFor();
   });
 
-  await step("a used link can't sign in again", async () => {
-    const link = await lastLink("admin@example.com");
-    const other = await browser.newPage();
-    await other.goto(link);
-    await other.getByRole("button", { name: "Sign in" }).click();
-    await other.getByText("That link has expired").waitFor();
-    await other.close();
+  await step("test sign-in refuses unknown emails", async () => {
+    const r = await fetch(`${BASE}/api/auth/test-signin/`, {
+      method: "POST",
+      headers: { origin: BASE, "content-type": "application/json" },
+      body: JSON.stringify({ email: "stranger@example.com" }),
+    });
+    expect(r.status === 403, `status ${r.status}`);
   });
 
   await step("admin API refuses people who aren't signed in", async () => {

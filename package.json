@@ -25,6 +25,7 @@
     "templates:previews": "node scripts/render-template-previews.mjs"
   },
   "dependencies": {
+    "@clerk/nextjs": "7.10.9",
     "@fontsource-variable/dm-sans": "5.3.0",
     "@fontsource-variable/literata": "5.3.0",
     "@fontsource-variable/outfit": "5.3.0",

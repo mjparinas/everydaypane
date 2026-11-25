@@ -7,7 +7,7 @@ import { MealPlanner } from "@/components/MealPlanner";
 import { MessageBoard } from "@/components/MessageBoard";
 import { ShoppingList } from "@/components/ShoppingList";
 import { Mark } from "@/components/Wordmark";
-import { SESSION_COOKIE, sessionFor } from "@/server/auth";
+import { currentHouseholdSession, SESSION_COOKIE } from "@/server/auth";
 
 import { SignOut } from "./SignOut";
 
@@ -15,7 +15,7 @@ export const metadata: Metadata = { title: "Family" };
 
 // The family's page (FAMILY_EMAILS): the message board, the meal plan and the shopping list, made for a phone.
 export default async function FamilyPage() {
-  const session = await sessionFor((await cookies()).get(SESSION_COOKIE)?.value);
+  const session = await currentHouseholdSession((await cookies()).get(SESSION_COOKIE)?.value);
   if (!session) redirect("/signin/?next=/family/");
   return (
     <main className="mx-auto grid max-w-5xl gap-4 p-4">

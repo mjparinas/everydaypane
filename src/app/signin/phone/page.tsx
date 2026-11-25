@@ -4,7 +4,7 @@ import { cookies } from "next/headers";
 import { SiteFooter, SiteHeader } from "@/components/site/SiteChrome";
 import { Wordmark } from "@/components/Wordmark";
 import { formatDeviceCode, normalizeDeviceCode } from "@/lib/deviceSignIn";
-import { SESSION_COOKIE, sessionFor } from "@/server/auth";
+import { currentHouseholdSession, SESSION_COOKIE } from "@/server/auth";
 
 import { PhoneApprove } from "./PhoneApprove";
 
@@ -15,7 +15,7 @@ export default async function PhoneSignInPage({ searchParams }: { searchParams: 
   const normalized = normalizeDeviceCode(raw ?? "");
   const initialCode = normalized ? formatDeviceCode(normalized) : raw?.trim() || null;
   const jar = await cookies();
-  const session = await sessionFor(jar.get(SESSION_COOKIE)?.value);
+  const session = await currentHouseholdSession(jar.get(SESSION_COOKIE)?.value);
 
   return (
     <div className="site flex min-h-dvh flex-col">

@@ -1,24 +1,19 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 
 import { GET as watchGET } from "@/app/api/display/config-watch/route";
 import { POST as refreshPOST } from "@/app/api/household/refresh/route";
 import { defaultConfig } from "@/lib/config/defaults";
 import { createAccount, LEGACY_ACCOUNT_ID } from "@/server/accounts";
-import { finishSignIn, sessionCookie, startSignIn } from "@/server/auth";
+import { issueTestSession, testSessionCookie } from "@/server/auth";
 import { configVersion, saveConfig } from "@/server/config";
 import { cookieFor, req, useTestServer } from "@/test/server";
 
 import { addDevice } from "./devices";
 
 async function cookieForMember(email: string): Promise<string> {
-  const info = vi.spyOn(console, "info").mockImplementation(() => undefined);
-  await startSignIn(req("/api/auth/start/", { method: "POST" }), email, "http://localhost");
-  const printed = info.mock.calls.map((c) => String(c[0])).join("\n");
-  info.mockRestore();
-  const token = /token=([A-Za-z0-9_%-]+)/.exec(printed)?.[1];
-  const done = await finishSignIn(decodeURIComponent(token ?? ""));
-  if (!done) throw new Error("Sign-in failed");
-  return sessionCookie(done.sessionToken).split(";")[0] ?? "";
+  const session = await issueTestSession(email);
+  if (!session) throw new Error("Sign-in failed");
+  return testSessionCookie(session).split(";")[0] ?? "";
 }
 
 describe("Refresh displays", () => {

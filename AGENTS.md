@@ -107,9 +107,10 @@ The features catalogue lives in `src/lib/marketingFeatures.ts` (grouped like the
 DriveBC road events and weather conditions, Earthquakes Canada, BC Hydro power outages. Each switchable in `config.alerts.sources`.
 Optional email to everyone on `ADMIN_EMAILS` and `FAMILY_EMAILS` when a new strip-worthy alert arrives (`config.alerts.notifyEmail`).
 
-**Household and family:** magic-link sign-in (Resend, branded HTML from `src/lib/email.ts`) with marketing header/footer
-on `/signin/`; wall displays open **`/display/`** and unlock with a **phone QR** (or a signed-in picker) at
-`/display/unlock/` / `/signin/phone/`; household panel at `/household/` (views and grid editor, themes, displays with the
+**Household and family:** Clerk email one-time codes on `/signin/` (and `/signin/?intent=signup`); Turso
+`account_members` stays the source of truth for household roles; `user.created` webhook seeds Free households
+(`docs/clerk.md`). Wall displays open **`/display/`** and unlock with a **phone QR** (or a signed-in picker) at
+`/display/unlock/` / `/signin/phone/` — display auth is **not** Clerk; household panel at `/household/` (views and grid editor, themes, displays with the
 shared wall address **and a phone-edit QR/link**, meals, shopping, settings for every integration, Settings › Chores for
 the kids and their chores),
 **settings backup and restore** (Settings › Backup, a JSON file), `/family/` for the message board, **family calendar
@@ -128,9 +129,9 @@ with `?mode=`, and a quiet Day/Night control on the preview swaps without reload
   photos, calendars) stay fully usable.
 
 **Platform admin** (`/admin/`): Everydaypane ops for `ADMIN_EMAILS` (full) and optional `SUPPORT_EMAILS` (read-only),
-separate from the household panel — same split as Tuned and Liftsmith. Dedicated staff magic-link (`ep_admin`) plus TOTP
-2FA; Overview through Log (Households, Displays, Revenue, Traffic, Codes, Flags, …). Cookieless marketing beacon. Customer
-path is `/household/`.
+separate from the household panel — same split as Tuned and Liftsmith. Staff use the same Clerk sign-in as households,
+gated by those allow-lists, with Clerk MFA when `ADMIN_2FA` is required; Overview through Log (Households, Displays,
+Revenue, Traffic, Codes, Flags, …). Cookieless marketing beacon. Customer path is `/household/`.
 
 **Integrations connected from Settings:** Google Calendar, Microsoft 365 calendars and **To Do** (OAuth, `?todo=1` / `?files=1`), Google Tasks, **Todoist**, Google Photos (Picker), iCal calendar links (with iCloud publish steps in Settings and `docs/icloud-calendar.md`),
 Amazon Photos, **photo sources** (Bing, Reddit, weather albums, Immich API keys, Dropbox/Box/SmugMug OAuth, OneDrive via Microsoft, Flickr API key, iCloud published URLs), the photo library (Vercel Blob), Home Assistant (Cloudflare Tunnel + Access), Spotify, Sonos, garbage
@@ -161,10 +162,13 @@ npm run templates:previews  # regenerate public/templates/*.png from real widget
   EverydayPane or Everyday Pane). The wordmark keeps everyday**pane** with "pane" in the brand blue; URLs and handles
   stay `everydaypane`. "Everyday Pane" is fine once when saying the name aloud; don't invent a third written form.
   Short form later, once the full name is known: Pane.
-- **Branded outbound email** (Melvin, 2026-11-23): every message we send through Resend (magic-link sign-in and alert
-  notifications) uses the shared chrome in `src/lib/email.ts` — brand blue `#3b5bdb`, the mark, everyday**pane**
-  wordmark, soft `#f6f7fb` page and white card — so mail looks like the site and feels trustworthy. New email kinds
-  reuse that layout; don't invent a third template style.
+- **Branded outbound email** (Melvin, 2026-11-23; Clerk 2026-11-24): alert notifications (and any other Resend mail)
+  use the shared chrome in `src/lib/email.ts` — brand blue `#3b5bdb`, the mark, everyday**pane**
+  wordmark, soft `#f6f7fb` page and white card. Sign-in codes are sent by Clerk; brand those templates in the Clerk
+  Dashboard to match. New Resend email kinds reuse `email.ts`; don't invent a third template style.
+- **Clerk for identity** (Melvin, 2026-11-24): household and staff sign-in move to Clerk; Turso keeps household
+  membership and Stripe/plan data; wall QR unlock stays on `device_sign_ins` / `ep_wall` / `ep_display`. Setup:
+  [`docs/clerk.md`](docs/clerk.md).
 - **Paid multi-tenant product** (Melvin, 2026-11-22): Everydaypane is a **Free + one paid (“Household”)** app other
  families can use. Free is DAKboard-like (1 view, 2 calendars, 2 displays, core widgets only). Household unlocks
  everything. Melvin’s existing install is grandfathered on Household (`acct_legacy`). Stripe Checkout + Customer Portal
@@ -628,20 +632,18 @@ panel can be complex if you need it to be."
 
 ## Security
 
-- **Sign-in by magic link** (Melvin, 2026-11-17), as Liftsmith's admin does it: a one-time link (15 minutes) emailed
-  through Resend to an address on `ADMIN_EMAILS` (full admin) or `FAMILY_EMAILS` (message board only). The lists live in
-  the environment, so nothing a request writes can make someone an admin; removing an address signs it out. Links and
-  sessions are stored only as hashes. The emailed link opens a page whose button uses the link up, so mail scanners
-  can't. A link is used up in one statement, so two racing requests can't both sign in.
+- **Sign-in with Clerk** (Melvin, 2026-11-24; replaced Resend magic links): email one-time codes via `@clerk/nextjs`.
+  After Clerk auth, `requestSession` resolves Turso `account_members` (and env bootstrap lists) to admin|family.
+  Platform `/admin/` uses the same Clerk session, then `ADMIN_EMAILS` / `SUPPORT_EMAILS` plus Clerk MFA. Nothing a
+  request writes can add someone to those staff lists. CI uses `AUTH_TEST_MODE=1` and `ep_test_session` instead of Clerk.
 - **Wall unlock with your phone** (Melvin, 2026-11-23: QR is for the display, not household `/signin/` — Tuned-style
- code relay; indefinite once unlocked Melvin, 2026-11-24): `/display/unlock/` shows a QR and eight-character code
- (`device_sign_ins`, 10 minutes). The phone opens `/signin/phone/`, signs in with the usual magic link if needed
- (**`next` is on the emailed verify link** so a mail app that opens another browser still returns to Approve), **picks
- which display**, and taps Approve; the wall polls and claims `ep_wall` + `ep_display` for that device. Unlock lasts
- until **New link** or the display is deleted (`DISPLAY_COOKIE_MS` is years; `/display/` re-issues cookies on each load).
- Signed-in browsers on the wall can pick a display without QR (`POST /api/auth/device/select/`). Codes and poll secrets
- are stored only as hashes; the handoff is encrypted until the wall takes it once. Household `/signin/` stays email
- magic link only.
+  code relay; kept through the Clerk migration; indefinite once unlocked Melvin, 2026-11-24): `/display/unlock/` shows
+  a QR and eight-character code (`device_sign_ins`, 10 minutes). The phone opens `/signin/phone/`, signs in with Clerk
+  (or test mode) if needed, **picks which display**, and taps Approve; the wall polls and claims `ep_wall` +
+  `ep_display` for that device. Unlock lasts until **New link** or the display is deleted (`DISPLAY_COOKIE_MS` is years;
+  `/display/` re-issues cookies on each load). Signed-in browsers on the wall can pick a display without QR
+  (`POST /api/auth/device/select/`). Codes and poll secrets are stored only as hashes; the handoff is encrypted until
+  the wall takes it once.
 - Sign-in tries are rate-limited in the database (one atomic upsert), per address and per IP.
 - Requests that change something must come from our own origin (`sameOrigin`).
 - Security headers on every response (`src/lib/securityHeaders.ts`): HSTS, nosniff, `frame-ancestors 'none'` (wall
@@ -697,8 +699,9 @@ panel can be complex if you need it to be."
 - **Address:** **www.everydaypane.com** (and apex). `NEXT_PUBLIC_SITE_URL` in Vercel must match (baked into
   `metadataBase` / icon hrefs at build — a stale host makes CI e2e fail with `net::ERR_SSL_PROTOCOL_ERROR`). CI and
   `scripts/e2e.mjs` set it to `http://localhost:3100`.
-- **Sign-in email** is sent from `hello@getliftsmith.com` (verified in Resend, click tracking off so links aren't
-  rewritten) until everydaypane.com mail is verified. `ADMIN_EMAILS` seeds Melvin's grandfather Household admin.
+- **Alert email** is sent from `hello@getliftsmith.com` (verified in Resend, click tracking off so links aren't
+  rewritten) until everydaypane.com mail is verified. Sign-in codes are sent by Clerk. `ADMIN_EMAILS` seeds Melvin's
+  grandfather Household admin and platform staff.
 - **Database:** a Turso database from the Vercel Marketplace integration, connected to the project (its `TURSO_*`
   variables are read by `src/server/db.ts`).
 

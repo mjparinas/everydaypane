@@ -291,6 +291,12 @@ function AdminPanel({ email, staff }: { email: string; staff: boolean }) {
 
   async function signOut() {
     await fetch("/api/auth/signout/", { method: "POST" });
+    // ClerkProvider mounts window.Clerk; revoke the browser session when present.
+    const clerk = (window as unknown as { Clerk?: { signOut: (opts?: { redirectUrl?: string }) => Promise<void> } }).Clerk;
+    if (clerk?.signOut) {
+      await clerk.signOut({ redirectUrl: "/signin/" });
+      return;
+    }
     router.replace("/signin/");
   }
 

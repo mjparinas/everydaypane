@@ -5,8 +5,14 @@ import "server-only";
 export const env = {
   databaseUrl: () => process.env.DATABASE_URL || process.env.TURSO_DATABASE_URL || "",
   databaseToken: () => process.env.DATABASE_AUTH_TOKEN || process.env.TURSO_AUTH_TOKEN || undefined,
-  /** Signs sessions and encrypts stored secrets. 32+ random characters. Changing it signs everyone out and loses stored tokens. */
+  /** Signs test sessions and encrypts stored secrets. 32+ random characters. Changing it loses encrypted tokens. */
   sessionSecret: () => process.env.SESSION_SECRET ?? "",
+  /** Clerk secret (sk_…). Household and staff identity. */
+  clerkSecretKey: () => process.env.CLERK_SECRET_KEY ?? "",
+  /** Clerk publishable key (pk_…). */
+  clerkPublishableKey: () => process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY ?? "",
+  /** Svix signing secret for Clerk webhooks (`user.created` → Free household). */
+  clerkWebhookSecret: () => process.env.CLERK_WEBHOOK_SIGNING_SECRET ?? "",
   /** Platform staff (/admin/) and bootstrap admins for the grandfather household (comma separated). */
   adminEmails: () => list(process.env.ADMIN_EMAILS),
   /** Read-only platform ops (comma separated). Not also on ADMIN_EMAILS. */
@@ -16,10 +22,12 @@ export const env = {
   },
   /** Who may post on the family message board but not change the household dashboard. */
   familyEmails: () => list(process.env.FAMILY_EMAILS),
-  /** Staff 2FA: unset = required; `optional` lets addresses without enrolment in. */
+  /** Staff 2FA via Clerk: unset = require second factor; `optional` allows first factor only. */
   admin2fa: () => (process.env.ADMIN_2FA?.trim().toLowerCase() === "optional" ? "optional" : "required") as "required" | "optional",
-  /** Seals authenticator secrets; prefer a dedicated key, else SESSION_SECRET. */
+  /** @deprecated Custom TOTP retired; Clerk MFA is used. Kept so old env docs still parse. */
   twoFactorKey: () => process.env.TWO_FACTOR_KEY || process.env.SESSION_SECRET || "",
+  /** CI / Playwright: signed test session cookies instead of Clerk. Never set in production. */
+  authTestMode: () => process.env.AUTH_TEST_MODE === "1",
   /** Salt for cookieless visitor hashes on the marketing site. */
   analyticsSecret: () => process.env.ANALYTICS_SECRET ?? "",
   googleServiceAccountKey: () => process.env.GOOGLE_SERVICE_ACCOUNT_KEY ?? "",
