@@ -83,6 +83,16 @@ function groupForSection(section: string | null): GroupId {
   return g?.id ?? "home";
 }
 
+// Scroll a section card to just below the sticky header and Settings navigation, whose height changes with
+// the window width (three rows of chips), so a fixed scroll-margin would land the card under it.
+function scrollToSection(section: string) {
+  const el = document.getElementById(`settings-${section}`);
+  if (!el) return;
+  const nav = document.querySelector('nav[aria-label="Settings sections"]');
+  const offset = (nav?.getBoundingClientRect().height ?? 0) + (document.querySelector("header")?.getBoundingClientRect().height ?? 0) + 16;
+  window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - offset, behavior: "smooth" });
+}
+
 function goSettingsSection(section: string) {
   history.replaceState(null, "", `#settings/${section}`);
   window.dispatchEvent(new HashChangeEvent("hashchange"));
@@ -90,7 +100,7 @@ function goSettingsSection(section: string) {
     window.scrollTo({ top: 0, behavior: "smooth" });
     return;
   }
-  document.getElementById(`settings-${section}`)?.scrollIntoView({ behavior: "smooth", block: "start" });
+  scrollToSection(section);
 }
 
 export function SettingsPanel() {
@@ -110,7 +120,7 @@ export function SettingsPanel() {
     if (section === "dashboard") return;
     // Wait a tick so the group's sections mount before scrolling.
     const t = window.setTimeout(() => {
-      document.getElementById(`settings-${section}`)?.scrollIntoView({ behavior: "smooth", block: "start" });
+      scrollToSection(section);
     }, 50);
     return () => window.clearTimeout(t);
   }, [section]);
@@ -120,9 +130,11 @@ export function SettingsPanel() {
   }
 
   return (
-    <div className="grid max-w-full gap-4 overflow-x-hidden">
+    // overflow-x-clip, not hidden: hidden makes this div a scroll container, so the sticky nav below pinned itself
+    // 6.5rem down inside it, leaving a band under the header and covering the cards (Melvin, 2026-11-25).
+    <div className="grid min-w-0 max-w-full gap-4 overflow-x-clip">
       <nav
-        className="sticky top-[4.5rem] z-10 flex max-w-full flex-col gap-2 bg-bg/95 py-2 backdrop-blur md:top-[6.5rem]"
+        className="sticky top-[3.75rem] z-10 flex min-w-0 max-w-full flex-col gap-2 bg-bg/95 py-2 backdrop-blur md:top-[6rem]"
         aria-label="Settings sections"
       >
         {TIERS.map((tier) => (
