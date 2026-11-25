@@ -18,8 +18,10 @@ See `.env.example`: `CLERK_SECRET_KEY`, `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`, `CL
 ### Production DNS (Frontend API)
 
 Clerk production instances usually serve the Frontend API on a subdomain such as `https://clerk.everydaypane.com`
-(CNAME in your DNS → Clerk). The browser calls that host for sign-in/sign-up. Our CSP must allow it in
+(CNAME in your DNS → Clerk). The browser calls that host for sign-in/sign-up. Our CSP lists it in
 `connect-src` / `script-src` / `frame-src` (set `NEXT_PUBLIC_CLERK_FRONTEND_API` if the host isn’t the default).
+Document CSP also uses `'strict-dynamic'`, so those hosts do not actually authorize scripts — `AppClerkProvider`
+must pass the per-request nonce from `x-nonce` (and `dynamic`) so `clerk.browser.js` can load.
 
 If you see `ClerkJS: Network error … Failed to fetch` against `clerk.everydaypane.com`, check:
 

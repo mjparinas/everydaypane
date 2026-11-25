@@ -4,7 +4,8 @@
 // allowed so the admin Views tab can embed /household/preview/ (Melvin, 2026-11-22: live draft preview).
 //
 // script-src never allows 'unsafe-inline': Next.js pages get a per-request nonce from proxy.ts; the display shell only
-// loads /display/display.js from our origin (src/server/displayHtml.ts). style-src still needs 'unsafe-inline' because
+// loads /display/display.js from our origin (src/server/displayHtml.ts). 'strict-dynamic' ignores host allowlists, so
+// Clerk's clerk.browser.js must carry that nonce (AppClerkProvider). style-src still needs 'unsafe-inline' because
 // both the admin panel and the display set style attributes (theme colours, grid placement).
 //
 // Wall displays (/d/…) stay unframeable (frame-ancestors 'none'). Admin preview HTML allows frame-ancestors 'self'
@@ -35,9 +36,9 @@ export function contentSecurityPolicy(opts: {
     process.env.NEXT_PUBLIC_CLERK_FRONTEND_API?.replace(/\/$/, "") ||
     (process.env.NEXT_PUBLIC_SITE_URL?.includes("everydaypane.com") ? "https://clerk.everydaypane.com" : "");
   const clerkExtra = clerkFapi ? ` ${clerkFapi}` : "";
-  const clerkScript = `https://*.clerk.accounts.dev https://*.clerk.com https://challenges.cloudflare.com${clerkExtra}`;
-  const clerkConnect = `https://*.clerk.accounts.dev https://*.clerk.com https://api.clerk.com https://clerk-telemetry.com https://challenges.cloudflare.com${clerkExtra}`;
-  const clerkFrame = `https://*.clerk.accounts.dev https://*.clerk.com https://challenges.cloudflare.com${clerkExtra}`;
+  const clerkScript = `https://*.clerk.accounts.dev https://*.clerk.com https://challenges.cloudflare.com https://*.protect.clerk.com${clerkExtra}`;
+  const clerkConnect = `https://*.clerk.accounts.dev https://*.clerk.com https://api.clerk.com https://clerk-telemetry.com https://challenges.cloudflare.com https://*.protect.clerk.com:*${clerkExtra}`;
+  const clerkFrame = `https://*.clerk.accounts.dev https://*.clerk.com https://challenges.cloudflare.com https://*.protect.clerk.com${clerkExtra}`;
   const directives = [
     "default-src 'self'",
     `script-src ${script} ${clerkScript}`,

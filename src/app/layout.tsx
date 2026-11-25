@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import { headers } from "next/headers";
 import { connection } from "next/server";
 
 import "@fontsource-variable/manrope/wght.css";
@@ -43,10 +44,11 @@ export const viewport: Viewport = { width: "device-width", initialScale: 1, view
 export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   // Per-request CSP nonce from proxy.ts (Next applies it to its scripts only on a dynamic render).
   await connection();
+  const nonce = (await headers()).get("x-nonce") ?? undefined;
   return (
     <html lang="en-CA">
       <body className="font-sans antialiased">
-        <AppClerkProvider>{children}</AppClerkProvider>
+        <AppClerkProvider nonce={nonce}>{children}</AppClerkProvider>
       </body>
     </html>
   );

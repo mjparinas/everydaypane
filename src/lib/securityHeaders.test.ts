@@ -36,6 +36,8 @@ describe("contentSecurityPolicy", () => {
       const csp = contentSecurityPolicy({ script: "self" });
       expect(csp).toContain("https://clerk.everydaypane.com");
       expect(csp).toMatch(/connect-src[^;]*https:\/\/clerk\.everydaypane\.com/);
+      expect(csp).toContain("https://*.protect.clerk.com");
+      expect(csp).toMatch(/connect-src[^;]*https:\/\/\*\.protect\.clerk\.com:\*/);
     } finally {
       if (prevSite === undefined) delete process.env.NEXT_PUBLIC_SITE_URL;
       else process.env.NEXT_PUBLIC_SITE_URL = prevSite;
