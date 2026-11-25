@@ -32,7 +32,7 @@ same change, and moves it out of **In progress** when it merges.
 | Phone edit QR (`editQr`) | QR to `/d/<token>/edit/` for meals, shopping and messages with no sign-in | This display's address |
 | Countdowns (`countdown`) | Days until holidays, birthdays and events, yearly ones roll over | Settings document |
 | Schedule (`agenda`) | Today, or the next 1 to 14 days | Google Calendar + Microsoft 365 + iCal links, family events |
-| Month calendar (`calendarMonth`) | Month grid or 1 to 6 weeks from this one, Sunday or Monday start, weekends on or off, title toggle, fit titles (wrap/shrink, on by default), scroll after N weeks (default 3) | Google Calendar + Microsoft 365 + iCal links, family events |
+| Month calendar (`calendarMonth`) | Month grid or 1 to 6 weeks from this one, Sunday or Monday start, weekends on or off, title toggle, fit titles (wrap/shrink, on by default), scroll after N weeks (default 3), optional tap-to-open day details with every event and its source colour | Google Calendar + Microsoft 365 + iCal links, family events |
 | Week calendar (`calendarWeek`) | One week in a grid, optional weekends | Same calendar feed |
 | Up next (`calendarUpNext`) | The next event large, with a short following list | Same calendar feed |
 | Garbage day (`garbage`) | Next pickups, 1 to 8 weeks | Township of Langley (Recycle Coach) |

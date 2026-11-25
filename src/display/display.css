@@ -1359,6 +1359,126 @@ html.portrait-view .stage {
   height: 6px;
   border-radius: 50%;
 }
+.mo-day-action {
+  appearance: none;
+  border: 0;
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+}
+.mo-day-action:hover {
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+}
+.mo-day-action:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: -3px;
+}
+.mo-modal-backdrop {
+  position: fixed;
+  z-index: 10000;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  padding: max(1rem, env(safe-area-inset-top)) max(1rem, env(safe-area-inset-right)) max(1rem, env(safe-area-inset-bottom))
+    max(1rem, env(safe-area-inset-left));
+  background: rgb(10 15 30 / 64%);
+  inset: 0;
+}
+.mo-modal-card {
+  width: min(42rem, 100%);
+  max-height: min(84dvh, 48rem);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  touch-action: pan-y;
+  padding: 1.25rem;
+  border: 1px solid color-mix(in srgb, var(--text) 12%, transparent);
+  border-radius: var(--radius);
+  background: var(--surface, #fff);
+  color: var(--text);
+  box-shadow: 0 24px 80px rgb(0 0 0 / 28%);
+}
+.mo-modal-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.1rem;
+}
+.mo-modal-title {
+  margin: 0;
+  font-size: 1.35rem;
+  line-height: 1.2;
+}
+.mo-modal-count {
+  margin: 0.35rem 0 0;
+  color: var(--muted);
+  font-size: 0.9em;
+}
+.mo-modal-close {
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  border: 1px solid color-mix(in srgb, var(--text) 14%, transparent);
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--text) 5%, transparent);
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+  font-size: 1.65rem;
+  line-height: 1;
+}
+.mo-modal-close:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+}
+.mo-detail-list {
+  display: grid;
+  gap: 0.7rem;
+}
+.mo-detail-event {
+  padding: 0.85rem 1rem;
+  border-left: 4px solid var(--c);
+  border-radius: calc(var(--radius) / 2);
+  background: color-mix(in srgb, var(--c) 9%, transparent);
+}
+.mo-detail-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.3rem;
+}
+.mo-detail-time {
+  color: var(--muted);
+  font-size: 0.9em;
+  font-weight: 600;
+}
+.mo-detail-source {
+  padding: 0.15rem 0.55rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--c) 18%, transparent);
+  font-size: 0.78em;
+  font-weight: 600;
+}
+.mo-detail-name {
+  font-size: 1.05em;
+  font-weight: 650;
+  overflow-wrap: anywhere;
+}
+.mo-detail-location {
+  margin-top: 0.25rem;
+  color: var(--muted);
+  font-size: 0.9em;
+  overflow-wrap: anywhere;
+}
+.mo-detail-empty {
+  margin: 1.5rem 0;
+  color: var(--muted);
+  text-align: center;
+}
 
 /* Garbage day */
 .w-garbage {

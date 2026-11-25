@@ -177,6 +177,7 @@ export const widgetSchema = z.discriminatedUnion("type", [
   z.object({
     ...base,
     type: z.literal("calendarMonth"),
+    showDayDetails: z.boolean().default(true),
     weekStartsOn: z.union([z.literal(0), z.literal(1)]),
     // The "November 2026" line above the grid (Melvin, 2026-11-19: a toggle to hide it). Shown unless switched off, so
     // month widgets saved before the toggle existed look the same.
