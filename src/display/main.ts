@@ -27,6 +27,7 @@ import {
 } from "./api";
 import { h } from "./dom";
 import { attachModal } from "./modal";
+import { reloadForRelease } from "./release";
 import { screenSaver, type Saver } from "./saver";
 import { mountWidget } from "./widgets";
 import { cameraLoop, HA_EVERY } from "./widgets/ha";
@@ -348,10 +349,7 @@ function applyDraft(next: DisplayPayload) {
 
 async function loadState(): Promise<boolean> {
   const r = await get<DisplayPayload>("state", {}, etag);
-  if (r.live && r.releaseVersion && r.releaseVersion !== document.body.dataset.v) {
-    location.reload();
-    return true;
-  }
+  if (r.live && r.releaseVersion && r.releaseVersion !== document.body.dataset.v && reloadForRelease(r.releaseVersion)) return true;
   if (r.notModified) return true;
   // An embedded Views preview keeps showing the admin's draft until they clear it or leave.
   if (draftActive && payload) {
