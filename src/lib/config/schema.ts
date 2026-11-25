@@ -576,6 +576,18 @@ export const widgetSchema = z.discriminatedUnion("type", [
     query: z.string().trim().min(1).max(200).default("Langley, BC"),
     zoom: z.number().int().min(1).max(20).default(12),
   }),
+  // Internet (Melvin, 2026-11-21: "can we add an internet ping one", "or internet speed"): ping and speed measured by
+  // the screen's own browser against Cloudflare (src/display/widgets/internet.ts). Speed tests every `speedHours`
+  // (0 = only when someone taps the widget).
+  z.object({
+    ...base,
+    type: z.literal("internet"),
+    pingSeconds: z.number().int().min(10).max(600),
+    slowMs: z.number().int().min(20).max(2000),
+    speedHours: z.number().int().min(0).max(24),
+    upload: z.boolean(),
+    showGraph: z.boolean(),
+  }),
 ]);
 export type Widget = z.infer<typeof widgetSchema>;
 export type WidgetType = Widget["type"];

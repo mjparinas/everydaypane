@@ -1570,6 +1570,59 @@ function TypeSettings({
           Hold Clear to wipe the board.
         </p>
       );
+    case "internet": {
+      const e = edit<"internet">();
+      return (
+        <>
+          <p className="text-xs text-soft">
+            Measured by the screen&rsquo;s own browser against Cloudflare&rsquo;s speed test servers, so it shows the internet where the
+            screen is. Each screen with this widget measures for itself.
+          </p>
+          <Select
+            label="Check the ping every"
+            value={String(w.pingSeconds)}
+            options={[
+              { value: "10", label: "10 seconds" },
+              { value: "30", label: "30 seconds" },
+              { value: "60", label: "Minute" },
+              { value: "300", label: "5 minutes" },
+            ]}
+            onChange={(v) => e((x) => void (x.pingSeconds = Number(v)))}
+          />
+          <Stepper
+            label="Slow above"
+            value={w.slowMs}
+            min={20}
+            max={2000}
+            step={10}
+            format={(n) => `${n} ms`}
+            hint="A ping above this shows as Slow. A good home line is under 30 ms to Cloudflare."
+            onChange={(v) => e((x) => void (x.slowMs = v))}
+          />
+          <Select
+            label="Speed test"
+            value={String(w.speedHours)}
+            options={[
+              { value: "0", label: "Only when someone taps the widget" },
+              { value: "1", label: "Every hour" },
+              { value: "3", label: "Every 3 hours" },
+              { value: "6", label: "Every 6 hours" },
+              { value: "12", label: "Every 12 hours" },
+              { value: "24", label: "Once a day" },
+            ]}
+            hint="A test downloads about 11 MB on a slow line and up to about 60 MB on a fast one. A tap on the widget runs one now."
+            onChange={(v) => e((x) => void (x.speedHours = Number(v)))}
+          />
+          <Toggle
+            label="Upload speed too"
+            checked={w.upload}
+            hint="Sends up to about 12 MB more."
+            onChange={(v) => e((x) => void (x.upload = v))}
+          />
+          <Toggle label="Ping graph" checked={w.showGraph} onChange={(v) => e((x) => void (x.showGraph = v))} />
+        </>
+      );
+    }
     default:
       return null;
   }

@@ -81,6 +81,7 @@ same change, and moves it out of **In progress** when it merges.
 | Vimeo (`vimeo`) | Video embed | player.vimeo.com iframe |
 | Airports (`airports`) | METAR summary per ICAO code; optional delays | Aviation Weather; Aviationstack with `AIRPORT_API_KEY` |
 | Google Maps (`maps`) | Map for a place query | google.com/maps embed iframe |
+| Internet (`internet`) | Ping every 10 s to 5 min with Online / Slow / Offline, a graph of the last 60 checks and the share that failed; download and upload speed every 1 to 24 h or on a tap | The screen's own browser against Cloudflare's speed test servers |
 
 **Display behaviour:** several views on a drag-and-drop grid (chosen rows and columns, gap, edge padding and **tile padding**; presets include **12×8 landscape** and **8×12 portrait**, with portrait stages letterboxed on a landscape panel), **per-widget visibility by part of day** (`visiblePeriods`), optional **view loop** on schedule followers (`schedule.loopSeconds`), **widgets layered on top of a photos widget**
 (photos as the backdrop), **per-widget background** (on/off and opacity; theme surface opacity is the default; clocks and dates start with no panel), **per-widget font size** (`fontScale`, 70–150 %, text widgets only — not photos, radar, wildfires, camera, earth, embeds or the whiteboard), **per-widget outer padding** (`outerPadding`, 0–48 px, omitted means none; insets the panel in its grid cell), a time-of-day schedule
@@ -89,7 +90,9 @@ palettes, fonts, corner radius, opacity and optional glass; burn-in protection (
 worker serves the last good data and shows "Offline"); a **screen saver** (photos only or dark after idle minutes, dark
 in a night window, woken by a tap, Home Assistant motion sensors, the doorbell, a new alert or a timer going off); doorbell pop-up full
 screen; the red, dismissible alert strip;
-no pinch zoom; settings reach displays by polling every 30 seconds (**Household** also long-polls for instant reload);
+no pinch zoom; display and shared-feed polling pauses while hidden or browser-offline, backs off after failures, and
+resumes when visible/online; settings normally poll every 30 seconds (**Household** also long-polls for instant reload),
+and state responses carry a tiny release version header even on `304`s;
 **starter view templates** (~20 layouts with screenshot previews) on the Views tab; themes include Outfit, DM Sans and
 Literata; Displays tab tips for casting
 `/display/`; Vancouver clocks, dates, calendars and scheduled views stay on UTC−7 after B.C.'s March 2026 change
@@ -218,9 +221,11 @@ npm run templates:previews  # regenerate public/templates/*.png from real widget
   outage map join the same alert strip and alerts widget (see Architecture). Weather alerts already existed
   (Environment Canada through NAAD, since 2026-11-17), so that half of the ask needed nothing new.
 - **Admin changes reach displays by polling** (Melvin, 2026-11-17: "we dont need real time push for now, polling is
-  ok"), with **instant refresh on Household** (Melvin, 2026-11-22): every display still asks for the settings version
-  every 30 seconds (304 when nothing changed). Paid households also long-poll `/api/display/config-watch/` and reload
-  as soon as the version moves; admins can tap **Refresh displays**. Free keeps the 30-second poll only. No WebSocket.
+  ok"), with **instant refresh on Household** (Melvin, 2026-11-22): visible, online displays ask for the settings
+  version every 30 seconds (304 when nothing changed); hidden or browser-offline displays pause, and failed checks back
+  off before retrying. Paid households also long-poll `/api/display/config-watch/` and reload as soon as the version
+  moves; admins can tap **Refresh displays**. Free keeps the 30-second poll only. State responses carry the release
+  version even on `304`s, so a deploy is detected without an extra request or downloading display HTML. No WebSocket.
   The Views tab's live preview is the exception: it shows the unsaved working copy over `postMessage` and never pushes
   that draft to wall screens.
 - **Starter view templates** (Melvin, 2026-11-22; expanded 2026-11-23): the Views tab shows ~20 ready-made layouts with
@@ -304,6 +309,9 @@ npm run templates:previews  # regenerate public/templates/*.png from real widget
 - **Screen saver** (Melvin, 2026-11-21): after some minutes with no touch the display shows only photos (full screen,
   optional clock) or goes dark, and during a night window it goes dark; Home Assistant motion sensors keep it awake and
   wake it (see Architecture). Off until switched on in Settings › Screen saver.
+- **Internet ping and speed** (Melvin, 2026-11-21: "can we add an internet ping one", "or internet speed"): an
+  `internet` widget measured by the wall's own browser, so it shows the home connection (see Architecture). No relay or
+  extra software at home.
 - **Canadian English** in everything a person reads (colour, centre, favourite), as in Liftsmith.
 
 ## Display: super lightweight (rule, Melvin, 2026-11-17)
@@ -315,6 +323,12 @@ panel can be complex if you need it to be."
   small TypeScript module bundled by esbuild (`src/display/` → `public/display/`), with no framework. The unlock gate
   (`/display/unlock/`) is a Next.js page. Widgets update only the DOM nodes that change (the clock rewrites one text
   node a second).
+- **Widgets that load on their own** (2026-11-25, when display.js passed 40 KB on main): a widget few screens use can
+  be built as its own file (`public/display/<name>.js`: add it to `LAZY` in `scripts/build-display.mjs`, a line in
+  `bundle-check.mjs` and the `Lazy` type) and mounted through `lazyWidget` (`src/display/widgets/lazy.ts`), which
+  imports it with display.js's own `?v=` only on a screen that shows it. Its `../api` is swapped at build time for
+  `src/display/apiShared.ts`, which calls display.js's copy, so feeds, the device token and offline state stay single.
+  The internet widget and the whiteboard load this way (display.js 39.5 KB after the move).
 - **Budget:** the display's script stays under 40 KB gzipped and its stylesheet under 20 KB (`scripts/bundle-check.mjs`,
   a CI step; CSS raised from 10 KB on 2026-11-23 for more clock styles). A new dependency on the display needs a very good reason.
 - All heavy lifting happens on the server: API calls to Google, weather, Recycle Coach, Amazon and Home Assistant are
@@ -585,6 +599,17 @@ panel can be complex if you need it to be."
   switches them on, and a restore without them keeps the dashboard's current ones. A restore is checked first
   (`dryRun`, the panel shows what the file holds), upgraded like a stored document, and saved as an ordinary versioned
   save, so displays reload and a stale restore gets 409.
+- **Internet ping and speed:** run entirely on the display, no server (`src/display/widgets/internet.ts`, arithmetic in
+  `src/lib/internet.ts`), because only the screen at home can see the home connection; our server on Vercel would
+  measure Vercel's. It talks to Cloudflare's speed test servers (`speed.cloudflare.com/__down?bytes=N` and `/__up`,
+  the ones its own speed test page uses; they answer any origin, need no key and have a Vancouver location), so the
+  CSP's `connect-src` allows that host. A check is three pings one after another and keeps the middle one; two failed
+  checks in a row is Offline, one ping above `slowMs` is Slow. A speed test downloads 1, 10 then 50 MB and stops at the
+  first that takes a second (about 11 MB on a slow line, 61 MB on a fast one), timed from the first byte; upload is
+  0.5, 2 then 10 MB, with the ping taken off. Tests run every `speedHours` (6 by default; 0 = only on a tap), never
+  within a minute of the widget starting, half an hour after a failure, and never alongside a ping. Readings live in
+  localStorage (`everydaypane.internet.<id>`), so reloads and settings saves don't empty the graph or start an early
+  test. Each screen with the widget measures for itself. This sandbox can't reach Cloudflare, so tests use a stand-in.
 - **Timers and pomodoro:** run entirely on the display, no server. Each widget keeps its state in localStorage
   (`everydaypane.timer.<id>`, `everydaypane.pomodoro.<id>`), and alarms belong to the screen, not the widget
   (`src/display/alarm.ts`, started by `main.ts`), so a timer still rings after a settings save, a reload, or when the
@@ -671,7 +696,7 @@ panel can be complex if you need it to be."
 - Requests that change something must come from our own origin (`sameOrigin`).
 - Security headers on every response (`src/lib/securityHeaders.ts`): HSTS, nosniff, `frame-ancestors 'none'` (wall
   `/display/` stays unframeable; `/household/preview/` allows `frame-ancestors 'self'` so the Views tab can embed it), a
-  CSP that allows only our own origin (and Sentry's ingest, `'self'` plus earth.nullschool.net in `frame-src`;
+  CSP that allows only our own origin (and Sentry's ingest, Cloudflare's speed test in `connect-src` for the internet widget, `'self'` plus earth.nullschool.net in `frame-src`;
   `script-src` never allows `'unsafe-inline'` — Next.js pages get a per-request nonce from `proxy.ts`, the display loads
   only `/display/display.js`), and a Permissions-Policy that turns off camera, microphone and location.
 - **Family sessions** (`FAMILY_EMAILS`) use `/family/` and the meals, shopping and messages APIs only. They are not

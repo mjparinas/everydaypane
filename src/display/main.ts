@@ -9,7 +9,22 @@ import { diffWidgets, isPortraitView, placeWidgets, sameStageGrid, stageGridStyl
 
 import { onAlarm, startAlarms } from "./alarm";
 import { alertStrip } from "./alerts";
-import { get, offline, onOfflineChange, post, PREVIEW, previewMode, setPreviewMode, subscribe, TOKEN } from "./api";
+import {
+  beginActivity,
+  connectionStatus,
+  get,
+  isUpdating,
+  offline,
+  onActivityChange,
+  onOfflineChange,
+  post,
+  PREVIEW,
+  previewMode,
+  retryDelay,
+  setPreviewMode,
+  subscribe,
+  TOKEN,
+} from "./api";
 import { h } from "./dom";
 import { attachModal } from "./modal";
 import { screenSaver, type Saver } from "./saver";
@@ -30,6 +45,9 @@ let loopIndex = 0;
 let loopTimer: number | undefined;
 let shownView: View | null = null;
 let periodTimer: number | undefined;
+let statePollTimer: number | undefined;
+let statePollFailures = 0;
+let statePolling = false;
 /** Today's sunrise/sunset in minutes (from the weather feed) when a period starts on the sun. */
 let sun: SunMinutes | null = null;
 let sunStop: Cleanup | null = null;
@@ -39,6 +57,8 @@ let draftActive = false;
 const stage = h("main", { class: "stage" });
 const dim = h("div", { class: "dim", "aria-hidden": "true" });
 const offlineDot = h("div", { class: "offline", role: "status" }, "Offline · showing saved data");
+const activityIndicator = h("div", { class: "updating", role: "status", "aria-label": "Checking for updates" });
+activityIndicator.append(h("span", { class: "spinner", "aria-hidden": "true" }), h("span", {}, "Updating"));
 
 // ---- Errors go to our own server, which passes them to Sentry. ----
 let reported = 0;
@@ -308,6 +328,10 @@ function applyDraft(next: DisplayPayload) {
 
 async function loadState(): Promise<boolean> {
   const r = await get<DisplayPayload>("state", {}, etag);
+  if (r.live && r.releaseVersion && r.releaseVersion !== document.body.dataset.v) {
+    location.reload();
+    return true;
+  }
   if (r.notModified) return true;
   // An embedded Views preview keeps showing the admin's draft until they clear it or leave.
   if (draftActive && payload) {
@@ -327,15 +351,56 @@ async function loadState(): Promise<boolean> {
   return true;
 }
 
+function scheduleStatePoll(delayMs: number) {
+  window.clearTimeout(statePollTimer);
+  statePollTimer = undefined;
+  if (document.hidden || navigator.onLine === false) return;
+  statePollTimer = window.setTimeout(() => void poll(), delayMs);
+}
+
 async function poll() {
-  await loadState();
-  window.setTimeout(() => void poll(), 30_000);
+  if (statePolling || document.hidden || navigator.onLine === false) return;
+  window.clearTimeout(statePollTimer);
+  statePollTimer = undefined;
+  statePolling = true;
+  let live = false;
+  try {
+    live = (await loadState()) && !offline;
+  } finally {
+    statePolling = false;
+    statePollFailures = live ? 0 : statePollFailures + 1;
+    scheduleStatePoll(live ? 30_000 : retryDelay(30_000, statePollFailures, 5 * 60_000));
+  }
+}
+
+function refreshStateWhenActive() {
+  if (document.hidden || navigator.onLine === false) {
+    window.clearTimeout(statePollTimer);
+    statePollTimer = undefined;
+    return;
+  }
+  if (!statePolling) void poll();
+}
+
+function waitUntilActive(): Promise<void> {
+  if (!document.hidden && navigator.onLine !== false) return Promise.resolve();
+  return new Promise((resolve) => {
+    const check = () => {
+      if (document.hidden || navigator.onLine === false) return;
+      document.removeEventListener("visibilitychange", check);
+      window.removeEventListener("online", check);
+      resolve();
+    };
+    document.addEventListener("visibilitychange", check);
+    window.addEventListener("online", check);
+  });
 }
 
 /** Household walls hold config-watch until the version moves, then reload; Free keeps the poll only. */
 async function watchLoop() {
   if (PREVIEW || !TOKEN) return;
   for (;;) {
+    await waitUntilActive();
     if (!payload?.instantRefresh) {
       await new Promise((r) => setTimeout(r, 60_000));
       continue;
@@ -558,6 +623,7 @@ function lockDisplayControl(): HTMLButtonElement | null {
     stopHold();
     label.textContent = "Locking…";
     btn.disabled = true;
+    const endActivity = beginActivity();
     void fetch("/api/auth/device/signout/", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -572,7 +638,8 @@ function lockDisplayControl(): HTMLButtonElement | null {
         locking = false;
         btn.disabled = false;
         label.textContent = "Lock";
-      });
+      })
+      .finally(endActivity);
   };
 
   const startHold = (ev: PointerEvent) => {
@@ -606,9 +673,16 @@ async function start() {
   if (PREVIEW && !previewMode) setPreviewMode("day");
   const modeBtn = previewModeToggle();
   const lockBtn = lockDisplayControl();
-  app.replaceChildren(stage, dim, offlineDot, ...(modeBtn ? [modeBtn] : []), ...(lockBtn ? [lockBtn] : []));
+  app.replaceChildren(stage, dim, offlineDot, activityIndicator, ...(modeBtn ? [modeBtn] : []), ...(lockBtn ? [lockBtn] : []));
   saver = screenSaver(app, () => payload);
-  onOfflineChange(() => offlineDot.classList.toggle("show", offline));
+  const updateConnectionIndicator = () => {
+    offlineDot.classList.toggle("show", offline);
+    offlineDot.textContent =
+      connectionStatus === "browser-offline" ? "Offline · showing saved data" : "Server unavailable · showing saved data";
+  };
+  onOfflineChange(updateConnectionIndicator);
+  onActivityChange(() => activityIndicator.classList.toggle("show", isUpdating()));
+  updateConnectionIndicator();
   // Timers and pomodoros set before a reload still ring, whichever view is showing.
   startAlarms();
   // A kitchen or pomodoro timer going off wakes the screen saver, so its full-screen alarm is seen.
@@ -619,11 +693,17 @@ async function start() {
       .catch(() => undefined);
   }
   listenForDraft();
+  let initialFailures = 0;
   while (!(await loadState())) {
     stage.replaceChildren(h("div", { class: "connecting" }, "Connecting…"));
-    await new Promise((r) => setTimeout(r, 10_000));
+    initialFailures += 1;
+    await waitUntilActive();
+    await new Promise((r) => setTimeout(r, retryDelay(10_000, initialFailures, 60_000)));
   }
-  window.setTimeout(() => void poll(), 30_000);
+  document.addEventListener("visibilitychange", refreshStateWhenActive);
+  window.addEventListener("online", refreshStateWhenActive);
+  window.addEventListener("offline", refreshStateWhenActive);
+  scheduleStatePoll(30_000);
   void watchLoop();
   void wakeLock();
   nightlyReload();

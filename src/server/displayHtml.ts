@@ -2,7 +2,7 @@ import "server-only";
 
 import { displayCsp } from "@/lib/securityHeaders";
 
-const ASSET_VERSION = (process.env.NEXT_PUBLIC_COMMIT_SHA || String(Date.now())).slice(0, 12);
+export const DISPLAY_ASSET_VERSION = (process.env.NEXT_PUBLIC_COMMIT_SHA || String(Date.now())).slice(0, 12);
 
 const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/"/g, "&quot;");
 
@@ -33,7 +33,7 @@ export function displayHtml(opts: {
   /** Extra response headers (e.g. the short-lived display cookie for image routes). */
   headers?: Record<string, string>;
 }): Response {
-  const v = ASSET_VERSION;
+  const v = DISPLAY_ASSET_VERSION;
   const data = [`data-v="${esc(v)}"`];
   if (opts.token) data.push(`data-token="${esc(opts.token)}"`);
   if (opts.previewView) data.push(`data-preview="${esc(opts.previewView)}"`);

@@ -22,14 +22,53 @@ export function setPreviewMode(mode: "day" | "night") {
 
 type Listener = () => void;
 const offlineListeners = new Set<Listener>();
+const activityListeners = new Set<Listener>();
 export let offline = false;
+export let connectionStatus: "online" | "browser-offline" | "server-offline" = navigator.onLine === false ? "browser-offline" : "online";
+let activeRequests = 0;
+let browserOffline = navigator.onLine === false;
+let serverOffline = false;
 
-function setOffline(value: boolean) {
-  if (offline === value) return;
-  offline = value;
+function setConnectionStatus() {
+  const next = browserOffline ? "browser-offline" : serverOffline ? "server-offline" : "online";
+  const nextOffline = next !== "online";
+  if (offline === nextOffline && connectionStatus === next) return;
+  offline = nextOffline;
+  connectionStatus = next;
   for (const l of offlineListeners) l();
 }
 export const onOfflineChange = (l: Listener) => offlineListeners.add(l);
+
+function setServerOffline(value: boolean) {
+  serverOffline = value;
+  setConnectionStatus();
+}
+
+function activityChanged() {
+  for (const l of activityListeners) l();
+}
+
+export function beginActivity(): () => void {
+  activeRequests += 1;
+  activityChanged();
+  let ended = false;
+  return () => {
+    if (ended) return;
+    ended = true;
+    activeRequests = Math.max(0, activeRequests - 1);
+    activityChanged();
+  };
+}
+
+export function isUpdating(): boolean {
+  return activeRequests > 0;
+}
+
+export const onActivityChange = (l: Listener) => activityListeners.add(l);
+
+export function retryDelay(intervalMs: number, failures: number, capMs = 15 * 60_000): number {
+  return Math.min(intervalMs * 2 ** (failures - 1), capMs > intervalMs ? capMs : intervalMs);
+}
 
 export function apiUrl(path: string, params: Record<string, string> = {}): string {
   const q = new URLSearchParams(params);
@@ -42,20 +81,25 @@ export async function get<T>(
   path: string,
   params: Record<string, string> = {},
   etag?: string,
-): Promise<{ data: T | null; etag: string | null; notModified: boolean }> {
+): Promise<{ data: T | null; etag: string | null; notModified: boolean; live: boolean; releaseVersion: string | null }> {
   const headers: Record<string, string> = {};
   if (TOKEN) headers["x-display-token"] = TOKEN;
   if (etag) headers["if-none-match"] = etag;
+  const endActivity = beginActivity();
   try {
     const r = await fetch(apiUrl(path, params), { headers, credentials: "same-origin" });
     // The service worker marks answers it served from its offline copy.
-    setOffline(r.headers.get("x-offline") === "1");
-    if (r.status === 304) return { data: null, etag: etag ?? null, notModified: true };
-    if (!r.ok) return { data: null, etag: null, notModified: false };
-    return { data: (await r.json()) as T, etag: r.headers.get("etag"), notModified: false };
+    const offlineCopy = r.headers.get("x-offline") === "1";
+    const releaseVersion = r.headers.get("x-display-release");
+    setServerOffline(!offlineCopy && r.status < 500 ? false : offlineCopy || r.status >= 500);
+    if (r.status === 304) return { data: null, etag: etag ?? null, notModified: true, live: !offlineCopy, releaseVersion };
+    if (!r.ok) return { data: null, etag: null, notModified: false, live: false, releaseVersion };
+    return { data: (await r.json()) as T, etag: r.headers.get("etag"), notModified: false, live: !offlineCopy, releaseVersion };
   } catch {
-    setOffline(true);
-    return { data: null, etag: null, notModified: false };
+    setServerOffline(true);
+    return { data: null, etag: null, notModified: false, live: false, releaseVersion: null };
+  } finally {
+    endActivity();
   }
 }
 
@@ -67,11 +111,16 @@ export function post(path: string, payload: unknown): void {
 export async function send(path: string, payload: unknown): Promise<boolean> {
   const headers: Record<string, string> = { "content-type": "application/json" };
   if (TOKEN) headers["x-display-token"] = TOKEN;
+  const endActivity = beginActivity();
   try {
     const r = await fetch(apiUrl(path), { method: "POST", headers, body: JSON.stringify(payload), credentials: "same-origin" });
+    setServerOffline(r.status >= 500);
     return r.ok;
   } catch {
+    setServerOffline(true);
     return false;
+  } finally {
+    endActivity();
   }
 }
 
@@ -79,13 +128,18 @@ export async function send(path: string, payload: unknown): Promise<boolean> {
 export async function sendExplained(path: string, payload: unknown): Promise<string | null> {
   const headers: Record<string, string> = { "content-type": "application/json" };
   if (TOKEN) headers["x-display-token"] = TOKEN;
+  const endActivity = beginActivity();
   try {
     const r = await fetch(apiUrl(path), { method: "POST", headers, body: JSON.stringify(payload), credentials: "same-origin" });
+    setServerOffline(r.status >= 500);
     if (r.ok) return null;
     const body = (await r.json().catch(() => ({}))) as { error?: unknown };
     return r.status === 502 && typeof body.error === "string" ? body.error.slice(0, 80) : "";
   } catch {
+    setServerOffline(true);
     return "";
+  } finally {
+    endActivity();
   }
 }
 
@@ -107,8 +161,49 @@ interface Feed<T> {
   /** Bumps when a load is superseded, so a late response doesn't paint or schedule another. */
   generation: number;
   loading: boolean;
+  failures: number;
+  etag: string | undefined;
 }
 const feeds = new Map<string, Feed<unknown>>();
+
+function canPoll(): boolean {
+  return !document.hidden && navigator.onLine !== false;
+}
+
+function schedule<T>(feed: Feed<T>, delayMs: number): void {
+  window.clearTimeout(feed.timer);
+  feed.timer = undefined;
+  if (feed.listeners.size === 0 || !canPoll()) return;
+  feed.timer = window.setTimeout(() => void feed.load(), delayMs);
+}
+
+function pauseFeeds(): void {
+  for (const feed of feeds.values()) {
+    window.clearTimeout(feed.timer);
+    feed.timer = undefined;
+  }
+}
+
+function resumeFeeds(): void {
+  if (!canPoll()) return;
+  let index = 0;
+  for (const feed of feeds.values()) {
+    if (feed.loading || feed.timer !== undefined) continue;
+    schedule(feed, Math.min(index++ * 100, 2000));
+  }
+}
+
+document.addEventListener("visibilitychange", () => (document.hidden ? pauseFeeds() : resumeFeeds()));
+window.addEventListener("offline", () => {
+  browserOffline = true;
+  setConnectionStatus();
+  pauseFeeds();
+});
+window.addEventListener("online", () => {
+  browserOffline = false;
+  setConnectionStatus();
+  resumeFeeds();
+});
 
 export function subscribe<T>(path: string, everyMs: number, listener: (data: T) => void): () => void {
   let feed = feeds.get(path) as Feed<T> | undefined;
@@ -120,38 +215,41 @@ export function subscribe<T>(path: string, everyMs: number, listener: (data: T) 
       load: async () => undefined,
       generation: 0,
       loading: false,
+      failures: 0,
+      etag: undefined,
     };
     feed = f;
     feeds.set(path, f as Feed<unknown>);
     const load = async () => {
+      if (f.loading || !canPoll()) return;
       const gen = ++f.generation;
       f.loading = true;
-      window.clearTimeout(f.timer);
       f.timer = undefined;
-      const { data } = await get<T>(path);
+      const result = await get<T>(path, {}, f.etag);
       // Unsubscribed, or refresh() started a newer load, while this one was in flight.
       if (gen !== f.generation || feeds.get(path) !== f) return;
       f.loading = false;
-      if (data) {
-        f.data = data;
-        for (const l of f.listeners) l(data);
+      if (result.etag) f.etag = result.etag;
+      if (result.data !== null) {
+        f.data = result.data;
+        for (const l of f.listeners) l(result.data);
       }
       if (gen !== f.generation || feeds.get(path) !== f) return;
-      // Back off to at least a minute while offline, so a dead network isn't hammered.
-      f.timer = window.setTimeout(() => void load(), offline ? Math.max(everyMs, 60_000) : everyMs);
+      f.failures = result.live ? 0 : f.failures + 1;
+      schedule(f, result.live ? everyMs : retryDelay(everyMs, f.failures));
     };
     f.load = load;
-    void load();
-  } else if (feed.data) {
-    listener(feed.data);
   }
-  feed.listeners.add(listener);
   const f = feed;
+  f.listeners.add(listener);
+  if (f.data !== null) listener(f.data);
+  else if (f.listeners.size === 1) schedule(f, 0);
   return () => {
     f.listeners.delete(listener);
     if (f.listeners.size === 0) {
       window.clearTimeout(f.timer);
       feeds.delete(path);
+      return;
     }
   };
 }
@@ -160,11 +258,9 @@ export function subscribe<T>(path: string, everyMs: number, listener: (data: T) 
 export function refresh(path: string): void {
   const f = feeds.get(path);
   if (!f) return;
-  window.clearTimeout(f.timer);
-  f.timer = undefined;
   if (f.loading) {
     f.generation += 1;
     f.loading = false;
   }
-  void f.load();
+  schedule(f, 0);
 }
