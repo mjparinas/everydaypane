@@ -13,6 +13,7 @@ type Lazy = {
   whiteboard: Mount<"whiteboard">;
   wildfires: Mount<"wildfires">;
   windy: Mount<"windy">;
+  haEntity: Mount<"haEntity">;
 };
 
 (globalThis as { __epApi?: typeof api }).__epApi = api;

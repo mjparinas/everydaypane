@@ -76,6 +76,68 @@ function ServiceBlock({
   );
 }
 
+/** Govee lights (Melvin, 2026-11-21): an API key from the Govee Home app, checked with Govee before it is kept. */
+function GoveeBlock({ status, onChanged }: { status: SmartServiceStatus | undefined; onChanged: () => void }) {
+  const [key, setKey] = useState("");
+  const [note, setNote] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  async function save() {
+    setBusy(true);
+    setNote("");
+    const r = await fetch("/api/household/smart-home/", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ goveeApiKey: key.trim() }),
+    }).catch(() => null);
+    const body = ((await r?.json().catch(() => ({}))) ?? {}) as { error?: string; devices?: number };
+    setBusy(false);
+    if (!r?.ok) return setNote(body.error ?? "Couldn't save that.");
+    setKey("");
+    setNote(`Saved. Govee lists ${body.devices ?? 0} device${body.devices === 1 ? "" : "s"} on this key.`);
+    onChanged();
+  }
+
+  async function remove() {
+    setNote("");
+    const r = await fetch("/api/household/smart-home/?provider=govee", { method: "DELETE" }).catch(() => null);
+    if (!r?.ok) setNote("Couldn't remove the key.");
+    onChanged();
+  }
+
+  return (
+    <div className="grid gap-2 rounded-xl border border-line p-3">
+      <h3 className="font-semibold">Govee</h3>
+      <p className="text-sm text-soft">
+        {status?.expired
+          ? "Govee stopped accepting the saved key. Paste a new one."
+          : status?.connected
+            ? "Connected. Add a Smart device widget, pick Govee as its provider and choose a light."
+            : "Lights on and off, brightness, colour and scenes. In the Govee Home app: Profile › Settings › Apply for API Key; Govee emails the key. See docs/govee.md."}
+      </p>
+      {note && (
+        <p className="rounded-xl bg-bg p-3 text-sm" role="status">
+          {note}
+        </p>
+      )}
+      <Text
+        label={status?.connected ? "Replace API key" : "Govee API key"}
+        type="password"
+        value={key}
+        maxLength={80}
+        hint="Saved encrypted on the server and never shown again."
+        onChange={setKey}
+      />
+      <div className="flex flex-wrap gap-2">
+        <button type="button" className="btn-primary" disabled={busy || key.trim().length < 8} onClick={() => void save()}>
+          {busy ? "Checking…" : "Save key"}
+        </button>
+        {status?.connected && <ConfirmButton label="Remove key" onConfirm={() => void remove()} />}
+      </div>
+    </div>
+  );
+}
+
 export function SmartHomePanel() {
   const status = useSmartHome();
   const edit = useAdmin((s) => s.edit);
@@ -110,8 +172,8 @@ export function SmartHomePanel() {
     <>
       <Section id="settings-smart-home" title="Smart home (direct)">
         <p className="text-sm text-soft">
-          Control Nest, ecobee and SmartThings on the wall without Home Assistant. Home Assistant tiles keep working; each tile picks where
-          its device comes from. Google Nest needs a paid Device Access subscription — see docs/nest.md.
+          Control Nest, ecobee, SmartThings and Govee lights on the wall without Home Assistant. Home Assistant tiles keep working; each
+          tile picks where its device comes from. Google Nest needs a paid Device Access subscription — see docs/nest.md.
         </p>
         {error && <p className="text-sm text-bad">{error}</p>}
         <ServiceBlock
@@ -141,6 +203,7 @@ export function SmartHomePanel() {
           docs="docs/smartthings.md"
           onDisconnect={() => void disconnect("smartthings")}
         />
+        <GoveeBlock status={status?.govee} onChanged={() => void loadSmartHome(true)} />
       </Section>
 
       <Section id="settings-weather-stations" title="Weather stations">

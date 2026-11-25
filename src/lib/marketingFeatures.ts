@@ -50,7 +50,7 @@ const FEATURE_BLURBS: Partial<Record<WidgetType, string>> = {
   ferries: "Next sailings and how full they are.",
   garbage: "Township of Langley Recycle Coach zones.",
   school: "Open, closed, delayed or late start.",
-  haEntity: "Lights, climate, covers, lock (lock only), Nest, ecobee, SmartThings.",
+  haEntity: "Lights, climate, covers, lock (lock only), Nest, ecobee, SmartThings, Govee colour lights and scenes.",
   camera: "UniFi Protect snapshots on a timer.",
   media: "HA, Spotify or Sonos now-playing controls.",
   presence: "Person and device trackers, read only.",
