@@ -4,7 +4,8 @@ import { useState, useSyncExternalStore } from "react";
 
 import type { NativeSmartProvider } from "@/lib/smartHome";
 
-import { ConfirmButton, NumberInput, Section, Text } from "./fields";
+import { setAirthingsStatus, useAirthings } from "./airthings";
+import { ConfirmButton, NumberInput, Section, Text, Toggle } from "./fields";
 import { loadSmartHome, useSmartHome, type SmartServiceStatus } from "./smartHome";
 import { useAdmin } from "./store";
 
@@ -194,6 +195,8 @@ export function SmartHomePanel() {
         </button>
       </Section>
 
+      <IndoorAirSection />
+
       <Section id="settings-menus" title="School menus">
         <p className="text-sm text-soft">
           Nutrislice district slug and default school name. Example for Langley: slug <code className="text-xs">langleysd35</code>, school
@@ -214,5 +217,93 @@ export function SmartHomePanel() {
         />
       </Section>
     </>
+  );
+}
+
+/** Settings › Indoor air: the household's own Airthings API client, checked against Airthings before it is saved. */
+function IndoorAirSection() {
+  const status = useAirthings();
+  const edit = useAdmin((s) => s.edit);
+  const air = useAdmin((s) => s.config.integrations.smartHome.airthings);
+  const [clientId, setClientId] = useState("");
+  const [secret, setSecret] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+
+  async function send(method: "PUT" | "DELETE") {
+    setBusy(true);
+    setError("");
+    const r = await fetch("/api/household/airthings/", {
+      method,
+      headers: { "Content-Type": "application/json" },
+      ...(method === "PUT" ? { body: JSON.stringify({ clientId: clientId.trim(), clientSecret: secret.trim() }) } : {}),
+    }).catch(() => null);
+    const body = (await r?.json().catch(() => null)) as { error?: string; configured?: boolean; devices?: [] } | null;
+    setBusy(false);
+    if (!r?.ok) return setError(body?.error || "Couldn't save that.");
+    setClientId("");
+    setSecret("");
+    setAirthingsStatus({ configured: body?.configured ?? false, devices: body?.devices ?? [], error: "" });
+  }
+
+  return (
+    <Section id="settings-indoor-air" title="Indoor air (Airthings)">
+      <p className="text-sm text-soft">
+        Radon, CO₂, VOC, particles, humidity and temperature from your Airthings monitors. Make an API client at dashboard.airthings.com ›
+        Integrations › API (read-only is enough) and paste it here; it is checked with Airthings and saved encrypted. A Wave only reaches
+        the cloud through an Airthings hub or the phone app&rsquo;s Bluetooth sync — see docs/airthings.md.
+      </p>
+      {!status ? (
+        <p className="text-sm text-soft">Checking…</p>
+      ) : status.configured ? (
+        <>
+          {status.error ? (
+            <p className="text-sm text-bad">{status.error}</p>
+          ) : (
+            <p className="text-sm" role="status">
+              Connected.{" "}
+              {status.devices.length
+                ? `Devices: ${status.devices.map((d) => d.name).join(", ")}.`
+                : "Airthings lists no devices for this client yet."}
+            </p>
+          )}
+          <div className="justify-self-start">
+            <ConfirmButton label="Disconnect Airthings" onConfirm={() => void send("DELETE")} />
+          </div>
+        </>
+      ) : null}
+      <Text label="Client id" value={clientId} maxLength={100} onChange={setClientId} />
+      <Text label="Client secret" type="password" value={secret} maxLength={200} onChange={setSecret} />
+      {error && <p className="text-sm text-bad">{error}</p>}
+      <button
+        type="button"
+        className="btn-ghost justify-self-start"
+        disabled={busy || !clientId.trim() || !secret.trim()}
+        onClick={() => void send("PUT")}
+      >
+        {busy ? "Checking…" : status?.configured ? "Replace API client" : "Connect Airthings"}
+      </button>
+      <Toggle
+        label="High radon on the alert strip"
+        checked={air.alertRadon}
+        hint="When a device reads 150 Bq/m³ (4 pCi/L) or more, Airthings' red level."
+        onChange={(v) => edit((c) => void (c.integrations.smartHome.airthings.alertRadon = v))}
+      />
+      <Toggle
+        label="High CO₂ on the alert strip"
+        checked={air.alertCo2}
+        onChange={(v) => edit((c) => void (c.integrations.smartHome.airthings.alertCo2 = v))}
+      />
+      {air.alertCo2 && (
+        <NumberInput
+          label="CO₂ alert from (ppm)"
+          value={air.co2Ppm}
+          min={800}
+          max={5000}
+          step={100}
+          onChange={(v) => edit((c) => void (c.integrations.smartHome.airthings.co2Ppm = v))}
+        />
+      )}
+    </Section>
   );
 }

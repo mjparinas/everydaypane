@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+import { AIRTHINGS_DEFAULT_KINDS, AIRTHINGS_KINDS } from "../airthings";
 import { EARTH_OVERLAYS, EARTH_ZOOMS } from "../earth";
 import { FERRY_ROUTES } from "../ferries";
 import { MEAL_SLOTS } from "../meals";
@@ -217,6 +218,19 @@ export const widgetSchema = z.discriminatedUnion("type", [
     showWind: z.boolean().default(true),
     showRain: z.boolean().default(true),
     showHumidity: z.boolean().default(true),
+  }),
+  // Airthings indoor air (Melvin, 2026-11-21): radon, CO₂, VOC, PM, humidity and temperature per device, coloured by
+  // Airthings' own bands. API client under Settings › Indoor air; `devices` empty means every device.
+  z.object({
+    ...base,
+    type: z.literal("airthings"),
+    devices: z.array(z.string().trim().min(1).max(40)).max(8).default([]),
+    readings: z
+      .array(z.enum(AIRTHINGS_KINDS))
+      .min(1)
+      .max(AIRTHINGS_KINDS.length)
+      .default([...AIRTHINGS_DEFAULT_KINDS])
+      .refine((r) => new Set(r).size === r.length, "Each reading once"),
   }),
   // Weather Underground PWS (Phase 4, Household).
   z.object({
@@ -864,13 +878,26 @@ export const configSchema = z
       smartHome: z
         .object({
           tempest: z.object({ stationId: z.number().int().positive().optional() }),
+          // Airthings (2026-11-21): optional radon and CO₂ alerts on the strip; the API client is in secrets.
+          airthings: z
+            .object({
+              alertRadon: z.boolean().default(false),
+              alertCo2: z.boolean().default(false),
+              co2Ppm: z.number().int().min(800).max(5000).default(1500),
+            })
+            .default({ alertRadon: false, alertCo2: false, co2Ppm: 1500 }),
           weatherUnderground: z.object({ stationId: z.string().max(24).default("") }),
           menus: z.object({
             slug: z.string().trim().max(80).default(""),
             schoolName: z.string().trim().max(80).default(""),
           }),
         })
-        .default({ tempest: {}, weatherUnderground: { stationId: "" }, menus: { slug: "", schoolName: "" } }),
+        .default({
+          tempest: {},
+          airthings: { alertRadon: false, alertCo2: false, co2Ppm: 1500 },
+          weatherUnderground: { stationId: "" },
+          menus: { slug: "", schoolName: "" },
+        }),
       // Phase 5 integrations (Household): OAuth tokens live in secrets (src/server/secrets.ts).
       ynab: z
         .object({

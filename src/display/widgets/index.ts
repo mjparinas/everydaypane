@@ -1,6 +1,7 @@
 import type { Widget } from "@/lib/config/schema";
 
 import { airQuality } from "./air";
+import { airthings } from "./airthings";
 import { alerts } from "./alerts";
 import { agenda, calendarMonth, calendarUpNext, calendarWeek } from "./calendar";
 import { chores } from "./chores";
@@ -75,6 +76,8 @@ export function mountWidget(el: HTMLElement, w: Widget, ctx: WidgetContext): Cle
       return tempest(el, w, ctx);
     case "weatherUnderground":
       return weatherUnderground(el, w, ctx);
+    case "airthings":
+      return airthings(el, w, ctx);
     case "airQuality":
       return airQuality(el, w, ctx);
     case "wifiQr":

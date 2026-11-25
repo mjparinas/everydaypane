@@ -1,0 +1,20 @@
+{
+  "updatedAt": 1795473720000,
+  "configured": true,
+  "devices": [
+    {
+      "serial": "2960000001",
+      "name": "Kitchen",
+      "recorded": 1795473600000,
+      "battery": 87,
+      "readings": [
+        { "kind": "radon", "value": 42, "unit": "Bq/m³", "level": "good" },
+        { "kind": "co2", "value": 860, "unit": "ppm", "level": "fair" },
+        { "kind": "voc", "value": 140, "unit": "ppb", "level": "good" },
+        { "kind": "pm25", "value": 3, "unit": "µg/m³", "level": "good" },
+        { "kind": "humidity", "value": 41, "unit": "%", "level": "good" },
+        { "kind": "temp", "value": 21.3, "unit": "°C", "level": "good" }
+      ]
+    }
+  ]
+}

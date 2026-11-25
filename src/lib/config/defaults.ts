@@ -141,6 +141,7 @@ const emptyIntegrations = (): DashboardConfig["integrations"] => ({
   homeAssistant: { url: "", doorbell: { entityId: "", cameraEntityId: "", seconds: 30 } },
   smartHome: {
     tempest: {},
+    airthings: { alertRadon: false, alertCo2: false, co2Ppm: 1500 },
     weatherUnderground: { stationId: "" },
     menus: { slug: "", schoolName: "" },
   },

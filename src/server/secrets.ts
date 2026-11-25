@@ -22,6 +22,8 @@ export type SecretKey =
   | "smartthings.refreshToken"
   | "tempest.token"
   | "wu.apiKey"
+  | "airthings.clientId"
+  | "airthings.clientSecret"
   | "microsoft.refreshToken"
   | "microsoft.scopes"
   | "todoist.refreshToken"
@@ -76,6 +78,8 @@ export async function secretsSet(accountId: string): Promise<Record<SecretKey, b
     "smartthings.refreshToken": set.has("smartthings.refreshToken"),
     "tempest.token": set.has("tempest.token"),
     "wu.apiKey": set.has("wu.apiKey"),
+    "airthings.clientId": set.has("airthings.clientId"),
+    "airthings.clientSecret": set.has("airthings.clientSecret"),
     "microsoft.refreshToken": set.has("microsoft.refreshToken"),
     "microsoft.scopes": set.has("microsoft.scopes"),
     "todoist.refreshToken": set.has("todoist.refreshToken"),

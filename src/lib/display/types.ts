@@ -276,7 +276,7 @@ export interface SportsData {
 }
 
 export type AlertSeverity = "extreme" | "severe" | "moderate" | "minor";
-export type AlertSource = "alertReady" | "weather" | "roads" | "earthquakes" | "power";
+export type AlertSource = "alertReady" | "weather" | "roads" | "earthquakes" | "power" | "indoorAir";
 
 /** One emergency alert for the area, from any source (src/server/alerts.ts). */
 export interface EmergencyAlert {
@@ -487,6 +487,32 @@ export interface TempestData {
   rain?: number;
   pressure?: number;
   units: { temp: string; wind: string; rain: string };
+  stale?: boolean;
+}
+
+/** One Airthings reading as a display gets it (src/server/airthings.ts): already in the dashboard's units. */
+export interface AirthingsReading {
+  kind: "radon" | "co2" | "voc" | "pm25" | "pm1" | "humidity" | "temp";
+  value: number;
+  unit: string;
+  level: "good" | "fair" | "poor";
+}
+
+export interface AirthingsDevice {
+  serial: string;
+  name: string;
+  /** Epoch ms of the device's last upload, or null when Airthings has none. */
+  recorded: number | null;
+  battery?: number;
+  readings: AirthingsReading[];
+}
+
+export interface AirthingsData {
+  updatedAt: number;
+  /** False until the household saves an Airthings API client. */
+  configured: boolean;
+  devices: AirthingsDevice[];
+  error?: string;
   stale?: boolean;
 }
 

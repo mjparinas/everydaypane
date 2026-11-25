@@ -52,7 +52,7 @@ const GROUPS = [
     tier: "Advanced",
     sections: ["content", "ynab", "fitbit", "gmail-unread", "slack", "trello"],
   },
-  { id: "ha", label: "Home & devices", tier: "Advanced", sections: ["ha", "smart-home", "weather-stations", "menus"] },
+  { id: "ha", label: "Home & devices", tier: "Advanced", sections: ["ha", "smart-home", "weather-stations", "indoor-air", "menus"] },
 ] as const;
 
 type GroupId = (typeof GROUPS)[number]["id"];
