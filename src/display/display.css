@@ -298,6 +298,55 @@ html.portrait-view .stage {
   transform: none;
 }
 
+.updating {
+  position: absolute;
+  right: 16px;
+  top: 16px;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  height: 28px;
+  padding: 0 9px 0 7px;
+  border-radius: 999px;
+  background: rgba(20, 24, 32, 0.42);
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 12px;
+  line-height: 1;
+  opacity: 0;
+  transform: translateY(-4px);
+  pointer-events: none;
+  transition:
+    opacity 180ms ease,
+    transform 180ms ease;
+}
+
+.updating.show {
+  opacity: 1;
+  transform: none;
+}
+
+.updating .spinner {
+  width: 13px;
+  height: 13px;
+  border: 1.5px solid rgba(255, 255, 255, 0.28);
+  border-top-color: rgba(255, 255, 255, 0.86);
+  border-radius: 50%;
+  animation: updating-spin 800ms linear infinite;
+}
+
+@keyframes updating-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .updating .spinner {
+    animation-duration: 1600ms;
+  }
+}
+
 /* Admin preview only: quiet day/night swap, kept out of the way of widgets. */
 .preview-mode {
   position: absolute;
