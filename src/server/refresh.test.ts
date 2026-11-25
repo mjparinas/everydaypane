@@ -10,8 +10,6 @@ import { cookieFor, req, useTestServer } from "@/test/server";
 
 import { addDevice } from "./devices";
 
-useTestServer();
-
 async function cookieForMember(email: string): Promise<string> {
   const info = vi.spyOn(console, "info").mockImplementation(() => undefined);
   await startSignIn(req("/api/auth/start/", { method: "POST" }), email, "http://localhost");
@@ -24,6 +22,8 @@ async function cookieForMember(email: string): Promise<string> {
 }
 
 describe("Refresh displays", () => {
+  useTestServer();
+
   beforeEach(async () => {
     await saveConfig(LEGACY_ACCOUNT_ID, defaultConfig(), 0);
   });
