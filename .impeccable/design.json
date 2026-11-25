@@ -1,0 +1,323 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-11-24T19:06:00.000Z",
+  "title": "Design System: Everydaypane",
+  "extensions": {
+    "colorMeta": {
+      "brand": {
+        "role": "primary",
+        "displayName": "Kitchen Indigo",
+        "canonical": "#3b5bdb",
+        "tonalRamp": ["#1a274f", "#24356e", "#2f4490", "#3b5bdb", "#5c78e3", "#8496eb", "#b0bbf4", "#dde2fb"]
+      },
+      "brand-ink": {
+        "role": "primary",
+        "displayName": "Brand Ink",
+        "canonical": "#ffffff",
+        "tonalRamp": ["#526077", "#8490a3", "#b3b9c6", "#d5d8e0", "#e8eaef", "#f2f3f6", "#f8f8fa", "#ffffff"]
+      },
+      "brand-deep": {
+        "role": "primary",
+        "displayName": "Indigo Deep",
+        "canonical": "#2a3796",
+        "tonalRamp": ["#141a48", "#1c2466", "#232e80", "#2a3796", "#4554b0", "#6f7bc4", "#a3aad9", "#d6d9ee"]
+      },
+      "brand-mid": {
+        "role": "primary",
+        "displayName": "Indigo Mid",
+        "canonical": "#4c6ef5",
+        "tonalRamp": ["#1e2c6e", "#2b3f9c", "#3a54c9", "#4c6ef5", "#6f8af7", "#97a9f9", "#c2cdfc", "#e4e9fe"]
+      },
+      "ink": {
+        "role": "neutral",
+        "displayName": "Slate Ink",
+        "canonical": "#0f172a",
+        "tonalRamp": ["#0f172a", "#1e293b", "#334155", "#475569", "#64748b", "#94a3b8", "#cbd5e1", "#f1f5f9"]
+      },
+      "soft": {
+        "role": "neutral",
+        "displayName": "Soft Slate",
+        "canonical": "#526077",
+        "tonalRamp": ["#2a3344", "#3a465c", "#46556a", "#526077", "#6e7c91", "#93a0b3", "#c0c7d3", "#e8ebf0"]
+      },
+      "bg": {
+        "role": "neutral",
+        "displayName": "Cool Paper",
+        "canonical": "#f6f7fb",
+        "tonalRamp": ["#9aa3b8", "#b8bfce", "#d0d5e0", "#e2e5ee", "#eceef5", "#f2f3f8", "#f6f7fb", "#fcfcfe"]
+      },
+      "panel": {
+        "role": "neutral",
+        "displayName": "Panel White",
+        "canonical": "#ffffff",
+        "tonalRamp": ["#c5cad6", "#d8dce5", "#e4e7ef", "#eef0f5", "#f5f6f9", "#fafafc", "#fdfdfe", "#ffffff"]
+      },
+      "line": {
+        "role": "neutral",
+        "displayName": "Hairline",
+        "canonical": "#e4e7ef",
+        "tonalRamp": ["#8b93a8", "#a8afc0", "#c4c9d6", "#d5d9e3", "#e4e7ef", "#eef0f5", "#f5f6f9", "#fbfbfc"]
+      },
+      "sun": {
+        "role": "secondary",
+        "displayName": "Sun Amber",
+        "canonical": "#f59e0b",
+        "tonalRamp": ["#78350f", "#92400e", "#b45309", "#d97706", "#f59e0b", "#fbbf24", "#fcd34d", "#fef3c7"]
+      },
+      "sky": {
+        "role": "secondary",
+        "displayName": "Sky Cyan",
+        "canonical": "#38bdf8",
+        "tonalRamp": ["#0c4a6e", "#075985", "#0369a1", "#0284c7", "#0ea5e9", "#38bdf8", "#7dd3fc", "#e0f2fe"]
+      },
+      "good": {
+        "role": "tertiary",
+        "displayName": "Good Green",
+        "canonical": "#2b8a3e",
+        "tonalRamp": ["#14532d", "#166534", "#15803d", "#16a34a", "#2b8a3e", "#4ade80", "#86efac", "#dcfce7"]
+      },
+      "bad": {
+        "role": "tertiary",
+        "displayName": "Alert Red",
+        "canonical": "#c92a2a",
+        "tonalRamp": ["#7f1d1d", "#991b1b", "#b91c1c", "#c92a2a", "#ef4444", "#f87171", "#fca5a5", "#fee2e2"]
+      },
+      "pane-bezel": {
+        "role": "neutral",
+        "displayName": "Pane Bezel",
+        "canonical": "#0b1220",
+        "tonalRamp": ["#020617", "#0b1220", "#111827", "#1e293b", "#334155", "#64748b", "#94a3b8", "#e2e8f0"]
+      },
+      "pane-shot": {
+        "role": "neutral",
+        "displayName": "Pane Shot",
+        "canonical": "#111827",
+        "tonalRamp": ["#030712", "#0b1220", "#111827", "#1f2937", "#374151", "#6b7280", "#9ca3af", "#e5e7eb"]
+      },
+      "brand-night": {
+        "role": "primary",
+        "displayName": "Night Indigo",
+        "canonical": "#8ea2ff",
+        "tonalRamp": ["#2a3796", "#3b5bdb", "#5c78e3", "#8ea2ff", "#a8b6ff", "#c4ceff", "#dde3ff", "#eef1ff"]
+      },
+      "bg-night": {
+        "role": "neutral",
+        "displayName": "Night Paper",
+        "canonical": "#0a0e17",
+        "tonalRamp": ["#05070c", "#0a0e17", "#121826", "#1a2233", "#232c3f", "#3a465c", "#97a3ba", "#e8edf7"]
+      },
+      "panel-night": {
+        "role": "neutral",
+        "displayName": "Night Panel",
+        "canonical": "#121826",
+        "tonalRamp": ["#0a0e17", "#0e1420", "#121826", "#1a2233", "#232c3f", "#3a465c", "#97a3ba", "#e8edf7"]
+      },
+      "line-night": {
+        "role": "neutral",
+        "displayName": "Night Hairline",
+        "canonical": "#232c3f",
+        "tonalRamp": ["#0a0e17", "#121826", "#1a2233", "#232c3f", "#3a465c", "#526077", "#97a3ba", "#e8edf7"]
+      },
+      "ink-night": {
+        "role": "neutral",
+        "displayName": "Night Ink",
+        "canonical": "#e8edf7",
+        "tonalRamp": ["#526077", "#6e7c91", "#97a3ba", "#b8c0d0", "#d0d6e2", "#e0e5ef", "#e8edf7", "#f5f7fb"]
+      },
+      "soft-night": {
+        "role": "neutral",
+        "displayName": "Night Soft",
+        "canonical": "#97a3ba",
+        "tonalRamp": ["#3a465c", "#526077", "#6e7c91", "#8490a3", "#97a3ba", "#b3b9c6", "#d0d5e0", "#e8ebf0"]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display",
+        "purpose": "Wordmark, heroes, marketing section titles — Manrope extrabold."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Household forms, tables, and reading body — Inter."
+      },
+      "label": {
+        "displayName": "Eyebrow",
+        "purpose": "Sparse uppercase marketing eyebrows only."
+      }
+    },
+    "shadows": [
+      {
+        "name": "card-rest",
+        "value": "0 1px 2px 0 rgb(15 23 42 / 0.05)",
+        "purpose": "Default card lift (shadow-sm)."
+      },
+      {
+        "name": "bezel-lift",
+        "value": "0 24px 60px -28px rgb(15 23 42 / 0.45), 0 0 0 1px rgb(255 255 255 / 0.04) inset",
+        "purpose": "Marketing device mock only."
+      },
+      {
+        "name": "banner",
+        "value": "0 10px 15px -3px rgb(15 23 42 / 0.1), 0 4px 6px -4px rgb(15 23 42 / 0.1)",
+        "purpose": "CTA banner and white chip on banner."
+      }
+    ],
+    "motion": [
+      {
+        "name": "site-rise",
+        "value": "560ms cubic-bezier(0.16, 1, 0.3, 1)",
+        "purpose": "Marketing entrance; disabled under prefers-reduced-motion."
+      },
+      {
+        "name": "press",
+        "value": "transform scale(0.98)",
+        "purpose": "Button active press feedback."
+      }
+    ],
+    "breakpoints": [
+      { "name": "nav-wordmark", "value": "420px" },
+      { "name": "nav-sign-in", "value": "380px" },
+      { "name": "md", "value": "768px" },
+      { "name": "lg", "value": "1024px" },
+      { "name": "site-max", "value": "72rem" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Kitchen Indigo fill CTA for Start free, Save, and primary household actions.",
+      "html": "<button class=\"ds-btn-primary\" type=\"button\">Start free</button>",
+      "css": ".ds-btn-primary { display: inline-flex; min-height: 2.75rem; align-items: center; justify-content: center; gap: 0.5rem; border: none; border-radius: 0.75rem; padding: 0 1rem; font-family: Inter, ui-sans-serif, system-ui, sans-serif; font-weight: 600; background: #3b5bdb; color: #ffffff; cursor: pointer; transition: filter 0.15s ease, transform 0.15s ease; } .ds-btn-primary:hover { filter: brightness(1.1); } .ds-btn-primary:active { transform: scale(0.98); } .ds-btn-primary:focus-visible { outline: none; box-shadow: 0 0 0 2px #ffffff, 0 0 0 4px rgb(59 91 219 / 0.45); } .ds-btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }"
+    },
+    {
+      "name": "Ghost Button",
+      "kind": "button",
+      "refersTo": "button-ghost",
+      "description": "Secondary action with hairline border on panel white.",
+      "html": "<button class=\"ds-btn-ghost\" type=\"button\">Cancel</button>",
+      "css": ".ds-btn-ghost { display: inline-flex; min-height: 2.75rem; align-items: center; justify-content: center; gap: 0.5rem; border-radius: 0.75rem; padding: 0 1rem; font-family: Inter, ui-sans-serif, system-ui, sans-serif; font-weight: 600; background: #ffffff; color: #0f172a; border: 1px solid #e4e7ef; cursor: pointer; transition: background 0.15s ease, transform 0.15s ease; } .ds-btn-ghost:hover { background: #f6f7fb; } .ds-btn-ghost:active { transform: scale(0.98); } .ds-btn-ghost:focus-visible { outline: none; box-shadow: 0 0 0 2px rgb(59 91 219 / 0.3); border-color: #3b5bdb; }"
+    },
+    {
+      "name": "Banner CTA Chip",
+      "kind": "button",
+      "refersTo": "button-cta-on-banner",
+      "description": "White Start free chip on indigo→amber marketing banners.",
+      "html": "<button class=\"ds-btn-banner\" type=\"button\">Start free</button>",
+      "css": ".ds-btn-banner { display: inline-flex; min-height: 3rem; align-items: center; border: none; border-radius: 1rem; padding: 0 1.5rem; font-family: Inter, ui-sans-serif, system-ui, sans-serif; font-weight: 600; background: #ffffff; color: #3b5bdb; box-shadow: 0 4px 6px -1px rgb(15 23 42 / 0.1), 0 2px 4px -2px rgb(15 23 42 / 0.1); cursor: pointer; } .ds-btn-banner:hover { filter: brightness(0.98); } .ds-btn-banner:focus-visible { outline: none; box-shadow: 0 0 0 3px rgb(255 255 255 / 0.7), 0 0 0 5px #3b5bdb; }"
+    },
+    {
+      "name": "Text Field",
+      "kind": "input",
+      "refersTo": "field",
+      "description": "Default household and sign-in text field.",
+      "html": "<input class=\"ds-field\" type=\"email\" placeholder=\"you@example.com\" aria-label=\"Email\" />",
+      "css": ".ds-field { box-sizing: border-box; width: 100%; min-height: 2.75rem; border-radius: 0.75rem; border: 1px solid #e4e7ef; background: #ffffff; color: #0f172a; padding: 0 0.75rem; font-family: Inter, ui-sans-serif, system-ui, sans-serif; font-size: 1rem; outline: none; } .ds-field::placeholder { color: #526077; } .ds-field:focus { border-color: #3b5bdb; box-shadow: 0 0 0 2px rgb(59 91 219 / 0.3); }"
+    },
+    {
+      "name": "Card",
+      "kind": "card",
+      "refersTo": "card",
+      "description": "Default panel card for pricing tiles and household sections.",
+      "html": "<article class=\"ds-card\"><h3 class=\"ds-card-title\">Household</h3><p class=\"ds-card-body\">Everything unlocked for the family kitchen.</p></article>",
+      "css": ".ds-card { border-radius: 1rem; border: 1px solid #e4e7ef; background: #ffffff; padding: 1.25rem; box-shadow: 0 1px 2px 0 rgb(15 23 42 / 0.05); color: #0f172a; font-family: Inter, ui-sans-serif, system-ui, sans-serif; } .ds-card-title { margin: 0 0 0.5rem; font-family: Manrope, ui-sans-serif, system-ui, sans-serif; font-weight: 800; font-size: 1.125rem; letter-spacing: -0.02em; } .ds-card-body { margin: 0; color: #526077; font-size: 0.9375rem; line-height: 1.5; }"
+    },
+    {
+      "name": "Site Nav Link",
+      "kind": "nav",
+      "refersTo": "nav-link",
+      "description": "Idle Soft Slate marketing nav link with panel hover.",
+      "html": "<nav class=\"ds-nav\" aria-label=\"Example\"><a class=\"ds-nav-link\" href=\"#\">Features</a><a class=\"ds-nav-link\" href=\"#\">Pricing</a></nav>",
+      "css": ".ds-nav { display: flex; gap: 0.125rem; font-family: Inter, ui-sans-serif, system-ui, sans-serif; font-size: 0.875rem; font-weight: 600; } .ds-nav-link { border-radius: 0.5rem; padding: 0.5rem 0.75rem; color: #526077; text-decoration: none; } .ds-nav-link:hover { background: #ffffff; color: #0f172a; } .ds-nav-link:focus-visible { outline: none; box-shadow: 0 0 0 2px rgb(59 91 219 / 0.35); }"
+    },
+    {
+      "name": "Eyebrow",
+      "kind": "custom",
+      "refersTo": "label",
+      "description": "Sparse uppercase Manrope marketing eyebrow.",
+      "html": "<p class=\"ds-eyebrow\">Family wall dashboard</p>",
+      "css": ".ds-eyebrow { margin: 0; font-family: Manrope, ui-sans-serif, system-ui, sans-serif; font-size: 0.75rem; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; color: #3b5bdb; }"
+    },
+    {
+      "name": "Wordmark",
+      "kind": "custom",
+      "refersTo": "button-primary",
+      "description": "everydaypane with pane in Kitchen Indigo — brand lockup for light surfaces.",
+      "html": "<span class=\"ds-wordmark\" aria-label=\"Everydaypane\">everyday<span class=\"ds-wordmark-pane\">pane</span></span>",
+      "css": ".ds-wordmark { font-family: Manrope, ui-sans-serif, system-ui, sans-serif; font-size: 1.25rem; font-weight: 800; letter-spacing: -0.02em; color: #0f172a; } .ds-wordmark-pane { color: #3b5bdb; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "Kitchen Glass Pane",
+    "overview": "Everydaypane’s product chrome (marketing site, household panel, family phone flows, sign-in, and outbound email) reads like a calm pane of kitchen glass: soft paper backgrounds, white panels, and a rare indigo accent that names the brand without shouting. Density stays practical — phone-first controls with comfortable tap targets — never gadget-dark neon or brochure-lifestyle cream.\n\nThe wall display is a separate visual layer: households pick themes (Aurora, Mist, Forest, …), fonts, radius, and glass opacity. That layer inherits glanceability and Canadian English, but not the marketing token sheet. New marketing or household UI extends this system; new wall chrome follows the active theme tokens in display.css, not these page tokens.",
+    "keyCharacteristics": [
+      "Soft indigo brand on cool paper (#f6f7fb), not purple SaaS gradients",
+      "Manrope for display/wordmark; Inter for UI body",
+      "Flat panels with hairline borders; lift reserved for device mock and CTA banners",
+      "Refined rounded controls (rounded-xl) and cards (rounded-2xl)",
+      "Wordmark: everydaypane with “pane” in brand blue"
+    ],
+    "rules": [
+      {
+        "name": "The One Pane Rule",
+        "body": "Kitchen Indigo is the single brand voice on a screen; do not introduce a second primary accent for “interest.”",
+        "section": "colors"
+      },
+      {
+        "name": "The Paper Rule",
+        "body": "Page chrome sits on Cool Paper + Panel White with Hairline borders — not pure white full-bleed or cream lifestyle paper.",
+        "section": "colors"
+      },
+      {
+        "name": "The Wall Is Not This Sheet",
+        "body": "Do not apply marketing @theme colours to wall widgets; wall colour comes from the household’s chosen theme.",
+        "section": "colors"
+      },
+      {
+        "name": "The Wordmark Rule",
+        "body": "Product name is Everydaypane; the mark paints everydaypane with “pane” in Kitchen Indigo (or sun-on-indigo in inverted email headers). Do not invent EverydayPane / Everyday Pane in UI chrome.",
+        "section": "typography"
+      },
+      {
+        "name": "The Two-Family Rule",
+        "body": "Marketing/display voice = Manrope; operational UI body = Inter. Wall themes may swap Inter for Outfit, DM Sans, Literata, Space Grotesk — that choice stays on the wall.",
+        "section": "typography"
+      },
+      {
+        "name": "The Phone Reach Rule",
+        "body": "Household and family controls keep ≥44px-class hit areas; do not shrink primary actions for desktop density alone.",
+        "section": "layout"
+      },
+      {
+        "name": "The Flat-By-Default Rule",
+        "body": "Surfaces stay flat at rest. Shadows appear for device theatre or primary persuasion — not under every admin card.",
+        "section": "elevation"
+      },
+      {
+        "name": "The Soft Corner Rule",
+        "body": "Prefer xl/2xl radii from the token scale; avoid sharp rectangles and full-pill primary buttons (pills are for indicators, not CTAs).",
+        "section": "shapes"
+      },
+      {
+        "name": "The Shared Utility Rule",
+        "body": "Prefer btn / btn-primary / btn-ghost / field / card from globals.css over one-off Tailwind stacks for the same jobs.",
+        "section": "components"
+      }
+    ],
+    "dos": [
+      "Do keep Kitchen Indigo as the sole primary accent on product chrome.",
+      "Do set everydaypane with “pane” in brand blue on light surfaces.",
+      "Do use Manrope for marketing/display voice and Inter for operational body UI.",
+      "Do honour prefers-reduced-motion (disable site-rise; solid states for alarms on the wall).",
+      "Do use Canadian English in UI copy (colour, centre, favourite)."
+    ],
+    "donts": [
+      "Don't restyle the wall with marketing @theme tokens — wall themes own that surface.",
+      "Don't invent purple-on-white SaaS gradients, cream/serif lifestyle brochure looks, or dense broadsheet layouts for product chrome.",
+      "Don't put personal family photos in OG, marketing, or template proof — use public/templates/ / feature widget samples.",
+      "Don't “fix” wall pinch-zoom locks; that exception is product policy, not a design bug.",
+      "Don't add a second email template system — reuse src/lib/email.ts chrome."
+    ]
+  }
+}

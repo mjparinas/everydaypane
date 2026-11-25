@@ -91,7 +91,7 @@ export const WIDGETS: { [T in WidgetType]: WidgetInfo<T> } = {
   },
   agenda: {
     label: "Schedule",
-    description: "Today's events from Google Calendar",
+    description: "Today's events from your calendars",
     icon: "🗓️",
     size: { w: 4, h: 5 },
     minSize: { w: 2, h: 2 },

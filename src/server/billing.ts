@@ -29,7 +29,7 @@ export function stripe(): Stripe {
   if (client) return client;
   const key = env.stripeSecretKey();
   if (!key) throw new Error("STRIPE_SECRET_KEY is not set");
-  client = new Stripe(key, { apiVersion: "2026-09-30.endive" });
+  client = new Stripe(key, { apiVersion: "2026-11-18.endive" });
   return client;
 }
 

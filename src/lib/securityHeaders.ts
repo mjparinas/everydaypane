@@ -22,17 +22,19 @@ export function contentSecurityPolicy(opts: {
   upgradeInsecureRequests?: boolean;
 }): string {
   const isDev = process.env.NODE_ENV === "development";
+  // Dev-only allowance so impeccable live mode can load. Never reaches production.
+  const impeccableLiveDev = isDev ? " http://localhost:8400" : "";
   const script =
     opts.script === "nonce" && opts.nonce
-      ? `'self' 'nonce-${opts.nonce}' 'strict-dynamic'${isDev ? " 'unsafe-eval'" : ""}`
-      : `'self'${isDev ? " 'unsafe-eval'" : ""}`;
+      ? `'self' 'nonce-${opts.nonce}' 'strict-dynamic'${isDev ? " 'unsafe-eval'" : ""}${impeccableLiveDev}`
+      : `'self'${isDev ? " 'unsafe-eval'" : ""}${impeccableLiveDev}`;
   const directives = [
     "default-src 'self'",
     `script-src ${script}`,
     "style-src 'self' 'unsafe-inline'",
     "img-src 'self' data: blob:",
     "font-src 'self'",
-    "connect-src 'self' https://*.ingest.sentry.io https://*.ingest.us.sentry.io",
+    `connect-src 'self' https://*.ingest.sentry.io https://*.ingest.us.sentry.io${impeccableLiveDev}`,
     [
       "frame-src 'self'",
       "https://earth.nullschool.net",

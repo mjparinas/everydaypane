@@ -2,13 +2,9 @@
 
 import { useEffect, useState } from "react";
 
-const NEXT_KEY = "ep_signin_next";
+import { safeNext } from "@/lib/safeNext";
 
-/** Same-origin relative path only (open redirect guard). */
-function safeNext(raw: string | null): string | null {
-  if (!raw || !raw.startsWith("/") || raw.startsWith("//") || raw.includes("://")) return null;
-  return raw;
-}
+const NEXT_KEY = "ep_signin_next";
 
 export type SignInIntent = "signin" | "signup";
 
@@ -37,7 +33,8 @@ export function SignInForm({
     e.preventDefault();
     setState({ kind: "sending" });
     const url = signup ? "/api/auth/signup/" : "/api/auth/start/";
-    const body = signup ? { email, name: name.trim() || undefined } : { email };
+    const next = safeNext(forcedNext ?? new URLSearchParams(window.location.search).get("next") ?? sessionStorage.getItem(NEXT_KEY));
+    const body = signup ? { email, name: name.trim() || undefined, next: next ?? undefined } : { email, next: next ?? undefined };
     const r = await fetch(url, {
       method: "POST",
       headers: { "Content-Type": "application/json" },

@@ -65,7 +65,10 @@ sw.addEventListener("activate", (e) => {
             // Only the unlocked wall document — not `/display/unlock/`.
             if (path !== "/display/" && path !== "/display") return;
             try {
-              await cache.add(new Request(path));
+              // redirect:manual so a locked 307 to /display/unlock/ is never stored as /display/.
+              await cache.delete(path);
+              const r = await fetch(path, { redirect: "manual", credentials: "same-origin", cache: "no-store" });
+              if (r.status === 200) await cache.put(path, r);
             } catch {
               // The next visit fills this in.
             }
@@ -88,6 +91,10 @@ async function offlineCopy(req: Request): Promise<Response | undefined> {
   return new Response(hit.body, { status: hit.status, headers });
 }
 
+function isDisplayDocumentPath(pathname: string): boolean {
+  return pathname === "/display/" || pathname === "/display";
+}
+
 async function networkFirst(req: Request, key: Request, ms: number): Promise<Response> {
   try {
     const r = await Promise.race([fetch(req), timeout(ms)]);
@@ -101,6 +108,28 @@ async function networkFirst(req: Request, key: Request, ms: number): Promise<Res
     return (
       (await offlineCopy(key)) ??
       new Response(JSON.stringify({ error: "offline" }), { status: 503, headers: { "content-type": "application/json", "x-offline": "1" } })
+    );
+  }
+}
+
+/** Wall document: do not follow the locked 307 — return it so the browser URL becomes /display/unlock/. */
+async function displayDocument(req: Request, ms: number): Promise<Response> {
+  const key = new Request(new URL(req.url).pathname);
+  try {
+    const r = await Promise.race([fetch(req, { redirect: "manual", cache: "no-store" }), timeout(ms)]);
+    if (r.status >= 300 && r.status < 400) {
+      // Drop any prior mistaken unlock HTML cached under /display/.
+      void caches.open(DATA).then((c) => c.delete(key));
+      return r;
+    }
+    if (r.status === 200) {
+      void caches.open(DATA).then((c) => c.put(key, r.clone()));
+    }
+    if (r.status >= 500) return (await offlineCopy(key)) ?? r;
+    return r;
+  } catch {
+    return (
+      (await offlineCopy(key)) ?? new Response("Offline", { status: 503, headers: { "content-type": "text/plain", "x-offline": "1" } })
     );
   }
 }
@@ -130,8 +159,8 @@ sw.addEventListener("fetch", (e) => {
   // Radar pictures are one address per six minutes and the browser's cache keeps them a day; offline, the loop
   // simply stops at what it has.
   if (url.pathname.startsWith("/api/display/radar/frame/")) return;
-  if (req.mode === "navigate" && (url.pathname === "/display/" || url.pathname === "/display")) {
-    e.respondWith(networkFirst(req, new Request(url.pathname), 6000));
+  if (req.mode === "navigate" && isDisplayDocumentPath(url.pathname)) {
+    e.respondWith(displayDocument(req, 6000));
   } else if (url.pathname.startsWith("/api/display/")) {
     // Keyed by URL alone (the token header is the same for every request from this device).
     e.respondWith(networkFirst(req, new Request(url.pathname + url.search), 10000));

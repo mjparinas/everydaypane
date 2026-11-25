@@ -29,19 +29,34 @@ import { TIME_ZONES } from "./WidgetSettings";
 // without scrolling the whole page (Melvin, 2026-11-22 admin UX revamp). Free users see Household badges and soft
 // locks on paid groups (Melvin, 2026-11-23).
 
+// Jump nav tiers (H1, 2026-11-24; distilled 2026-11-24 critique): Home → Everyday (≤4) → Advanced.
 const GROUPS = [
-  { id: "home", label: "Home", sections: ["dashboard", "location", "plan"] },
-  { id: "calendars", label: "Calendars", sections: ["google", "icals"] },
-  { id: "tasks", label: "Tasks", sections: ["tasks"] },
-  { id: "family", label: "Family", sections: ["garbage", "commute", "chores", "sports", "school"] },
-  { id: "photos-music", label: "Photos & music", sections: ["photos", "music"] },
-  { id: "content", label: "Content & finance", sections: ["content", "ynab", "fitbit", "gmail-unread", "slack", "trello"] },
-  { id: "ha", label: "Home & devices", sections: ["ha", "smart-home", "weather-stations", "menus"] },
-  { id: "screen", label: "Screen", sections: ["screen-care", "screen-saver"] },
-  { id: "alerts", label: "Alerts & backup", sections: ["alerts", "backup"] },
+  { id: "home", label: "Home", tier: "Home", sections: ["dashboard", "location", "plan"] },
+  {
+    id: "calendars",
+    label: "Calendars & tasks",
+    tier: "Everyday",
+    sections: ["google", "microsoft", "icals", "tasks"],
+  },
+  { id: "family", label: "Family tools", tier: "Everyday", sections: ["garbage", "commute", "chores", "sports", "school"] },
+  { id: "photos-music", label: "Photos & music", tier: "Everyday", sections: ["photos", "music"] },
+  {
+    id: "screen",
+    label: "Screen & alerts",
+    tier: "Everyday",
+    sections: ["screen-care", "screen-saver", "alerts", "backup"],
+  },
+  {
+    id: "content",
+    label: "Content & finance",
+    tier: "Advanced",
+    sections: ["content", "ynab", "fitbit", "gmail-unread", "slack", "trello"],
+  },
+  { id: "ha", label: "Home & devices", tier: "Advanced", sections: ["ha", "smart-home", "weather-stations", "menus"] },
 ] as const;
 
 type GroupId = (typeof GROUPS)[number]["id"];
+const TIERS = ["Home", "Everyday", "Advanced"] as const;
 
 const subscribeHash = (cb: () => void) => {
   window.addEventListener("hashchange", cb);
@@ -91,35 +106,33 @@ export function SettingsPanel() {
   }
 
   return (
-    <div className="grid gap-4">
+    <div className="grid max-w-full gap-4 overflow-x-hidden">
       <nav
-        className="sticky top-[4.5rem] z-10 -mx-1 flex gap-2 overflow-x-auto bg-bg/95 px-1 py-2 backdrop-blur md:top-[6.5rem]"
+        className="sticky top-[4.5rem] z-10 flex max-w-full flex-col gap-2 bg-bg/95 py-2 backdrop-blur md:top-[6.5rem]"
         aria-label="Settings sections"
       >
-        {GROUPS.map((g) => {
-          const locked = !isPaid && isHouseholdSettingsGroup(g.id);
-          return (
-            <button
-              key={g.id}
-              type="button"
-              className={`${openGroup === g.id ? "btn-primary shrink-0" : "btn-ghost shrink-0"} ${locked ? "opacity-70" : ""}`}
-              aria-pressed={openGroup === g.id}
-              onClick={() => {
-                if (locked) {
-                  // Still open the group so they can see the soft lock; also offer the upgrade screen.
-                  goSettingsSection(g.sections[0]!);
-                  return;
-                }
-                goSettingsSection(g.sections[0]!);
-              }}
-            >
-              <span className="inline-flex items-center gap-1.5">
-                {g.label}
-                {locked ? <HouseholdBadge /> : null}
-              </span>
-            </button>
-          );
-        })}
+        {TIERS.map((tier) => (
+          <div key={tier} className="flex w-full min-w-0 max-w-full items-center gap-2 overflow-x-auto overscroll-x-contain">
+            <span className="shrink-0 text-xs font-bold tracking-wide text-soft uppercase">{tier}</span>
+            {GROUPS.filter((g) => g.tier === tier).map((g) => {
+              const locked = !isPaid && isHouseholdSettingsGroup(g.id);
+              return (
+                <button
+                  key={g.id}
+                  type="button"
+                  className={`${openGroup === g.id ? "btn-primary shrink-0" : "btn-ghost shrink-0"} ${locked ? "opacity-70" : ""}`}
+                  aria-pressed={openGroup === g.id}
+                  onClick={() => goSettingsSection(g.sections[0]!)}
+                >
+                  <span className="inline-flex items-center gap-1.5">
+                    {g.label}
+                    {locked ? <HouseholdBadge /> : null}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        ))}
       </nav>
 
       {showGroup("home") && (
@@ -236,14 +249,11 @@ export function SettingsPanel() {
               <CalendarLinksPanel />
             </HouseholdSoftLock>
           </div>
-        </div>
-      )}
-
-      {showGroup("tasks") && (
-        <div id="settings-tasks">
-          <HouseholdSoftLock reason="tasks" label="Tasks need Household">
-            <AllTasksPanels />
-          </HouseholdSoftLock>
+          <div id="settings-tasks" className="lg:col-span-2">
+            <HouseholdSoftLock reason="tasks" label="Tasks need Household">
+              <AllTasksPanels />
+            </HouseholdSoftLock>
+          </div>
         </div>
       )}
 
@@ -355,111 +365,113 @@ export function SettingsPanel() {
               <ScreenSaverPanel />
             </HouseholdSoftLock>
           </div>
-        </div>
-      )}
-
-      {showGroup("alerts") && (
-        <div className="grid gap-4 lg:grid-cols-2">
-          <Section id="settings-alerts" title="Emergency alerts">
-            <Toggle label="Show alerts" checked={alerts.enabled} onChange={(v) => edit((c) => void (c.alerts.enabled = v))} />
-            {alerts.enabled && (
-              <>
-                <Select
-                  label="Red strip across the top for"
-                  value={alerts.banner}
-                  options={[
-                    { value: "extreme", label: "Extreme alerts only" },
-                    { value: "severe", label: "Severe and up" },
-                    { value: "moderate", label: "Moderate and up" },
-                    { value: "minor", label: "Every alert" },
-                    { value: "never", label: "Never (alerts widget only)" },
-                  ]}
-                  hint="Anyone can tap the strip to dismiss it."
-                  onChange={(v) => edit((c) => void (c.alerts.banner = v))}
-                />
-                <Toggle
-                  label="Alert Ready (public emergencies)"
-                  checked={alerts.sources.alertReady}
-                  onChange={(v) => edit((c) => void (c.alerts.sources.alertReady = v))}
-                />
-                <Toggle
-                  label="Environment Canada weather warnings"
-                  checked={alerts.sources.weather}
-                  onChange={(v) => edit((c) => void (c.alerts.sources.weather = v))}
-                />
-                <Toggle
-                  label="DriveBC road events"
-                  checked={alerts.sources.roads}
-                  onChange={(v) => edit((c) => void (c.alerts.sources.roads = v))}
-                />
-                <Toggle
-                  label="Earthquakes"
-                  checked={alerts.sources.earthquakes}
-                  onChange={(v) => edit((c) => void (c.alerts.sources.earthquakes = v))}
-                />
-                <Toggle
-                  label="BC Hydro power outages"
-                  checked={alerts.sources.power}
-                  onChange={(v) => edit((c) => void (c.alerts.sources.power = v))}
-                />
-                {isPaid ? (
-                  <Toggle
-                    label="Email admins and family for new red-strip alerts"
-                    checked={alerts.notifyEmail}
-                    onChange={(v) => edit((c) => void (c.alerts.notifyEmail = v))}
-                    hint="Each alert is emailed once to everyone on ADMIN_EMAILS and FAMILY_EMAILS."
+          <div className="lg:col-span-2">
+            <Section id="settings-alerts" title="Emergency alerts">
+              <Toggle label="Show alerts" checked={alerts.enabled} onChange={(v) => edit((c) => void (c.alerts.enabled = v))} />
+              {alerts.enabled && (
+                <>
+                  <Select
+                    label="Red strip across the top for"
+                    value={alerts.banner}
+                    options={[
+                      { value: "extreme", label: "Extreme alerts only" },
+                      { value: "severe", label: "Severe and up" },
+                      { value: "moderate", label: "Moderate and up" },
+                      { value: "minor", label: "Every alert" },
+                      { value: "never", label: "Never (alerts widget only)" },
+                    ]}
+                    hint="Anyone can tap the strip to dismiss it."
+                    onChange={(v) => edit((c) => void (c.alerts.banner = v))}
                   />
-                ) : (
-                  <button
-                    type="button"
-                    className="flex min-h-11 items-center justify-between gap-3 rounded-xl border border-line bg-panel px-3 text-left opacity-70"
-                    onClick={() => openUpgrade("alertEmail")}
-                  >
-                    <span className="text-sm font-medium">Email admins and family for new red-strip alerts</span>
-                    <HouseholdBadge />
-                  </button>
-                )}
-                <Range
-                  label="Within"
-                  value={alerts.radiusKm}
-                  min={10}
-                  max={500}
-                  step={10}
-                  format={(n) => `${n} km`}
-                  onChange={(v) => edit((c) => void (c.alerts.radiusKm = v))}
-                />
-                <Range
-                  label="Earthquakes from magnitude"
-                  value={alerts.minMagnitude}
-                  min={2}
-                  max={9}
-                  step={0.1}
-                  format={(n) => n.toFixed(1)}
-                  onChange={(v) => edit((c) => void (c.alerts.minMagnitude = v))}
-                />
-                <Range
-                  label="Power outages within"
-                  value={alerts.powerKm}
-                  min={0}
-                  max={50}
-                  step={1}
-                  format={(n) => `${n} km`}
-                  onChange={(v) => edit((c) => void (c.alerts.powerKm = v))}
-                />
-                <p className="text-xs text-soft">
-                  Alert Ready and weather warnings count when they cover your location; road events and earthquakes count within the
-                  distance above. A power outage covering your home reaches the red strip at Severe; ones nearby count within their own
-                  distance.
-                </p>
-              </>
-            )}
-          </Section>
+                  <details className="rounded-xl border border-line bg-bg px-3 py-2">
+                    <summary className="cursor-pointer text-sm font-semibold text-ink">Alert sources</summary>
+                    <div className="mt-3 grid gap-3">
+                      <Toggle
+                        label="Alert Ready (public emergencies)"
+                        checked={alerts.sources.alertReady}
+                        onChange={(v) => edit((c) => void (c.alerts.sources.alertReady = v))}
+                      />
+                      <Toggle
+                        label="Environment Canada weather warnings"
+                        checked={alerts.sources.weather}
+                        onChange={(v) => edit((c) => void (c.alerts.sources.weather = v))}
+                      />
+                      <Toggle
+                        label="DriveBC road events"
+                        checked={alerts.sources.roads}
+                        onChange={(v) => edit((c) => void (c.alerts.sources.roads = v))}
+                      />
+                      <Toggle
+                        label="Earthquakes"
+                        checked={alerts.sources.earthquakes}
+                        onChange={(v) => edit((c) => void (c.alerts.sources.earthquakes = v))}
+                      />
+                      <Toggle
+                        label="BC Hydro power outages"
+                        checked={alerts.sources.power}
+                        onChange={(v) => edit((c) => void (c.alerts.sources.power = v))}
+                      />
+                    </div>
+                  </details>
+                  {isPaid ? (
+                    <Toggle
+                      label="Email admins and family for new red-strip alerts"
+                      checked={alerts.notifyEmail}
+                      onChange={(v) => edit((c) => void (c.alerts.notifyEmail = v))}
+                      hint="Each alert is emailed once to household admins and family addresses."
+                    />
+                  ) : (
+                    <button
+                      type="button"
+                      className="flex min-h-11 items-center justify-between gap-3 rounded-xl border border-line bg-panel px-3 text-left opacity-70"
+                      onClick={() => openUpgrade("alertEmail")}
+                    >
+                      <span className="text-sm font-medium">Email admins and family for new red-strip alerts</span>
+                      <HouseholdBadge />
+                    </button>
+                  )}
+                  <Range
+                    label="Within"
+                    value={alerts.radiusKm}
+                    min={10}
+                    max={500}
+                    step={10}
+                    format={(n) => `${n} km`}
+                    onChange={(v) => edit((c) => void (c.alerts.radiusKm = v))}
+                  />
+                  <Range
+                    label="Earthquakes from magnitude"
+                    value={alerts.minMagnitude}
+                    min={2}
+                    max={9}
+                    step={0.1}
+                    format={(n) => n.toFixed(1)}
+                    onChange={(v) => edit((c) => void (c.alerts.minMagnitude = v))}
+                  />
+                  <Range
+                    label="Power outages within"
+                    value={alerts.powerKm}
+                    min={0}
+                    max={50}
+                    step={1}
+                    format={(n) => `${n} km`}
+                    onChange={(v) => edit((c) => void (c.alerts.powerKm = v))}
+                  />
+                  <p className="text-xs text-soft">
+                    Alert Ready and weather warnings count when they cover your location; road events and earthquakes count within the
+                    distance above. A power outage covering your home reaches the red strip at Severe; ones nearby count within their own
+                    distance.
+                  </p>
+                </>
+              )}
+            </Section>
+          </div>
           <div id="settings-backup">
             <HouseholdSoftLock reason="backup" label="Backup needs Household">
               <BackupPanel />
             </HouseholdSoftLock>
           </div>
-          <div id="settings-report">
+          <div id="settings-report" className="lg:col-span-2">
             <ReportProblem />
           </div>
         </div>
