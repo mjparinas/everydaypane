@@ -56,7 +56,7 @@ export const WIDGETS: { [T in WidgetType]: WidgetInfo<T> } = {
     icon: "⛅",
     size: { w: 6, h: 3 },
     minSize: { w: 2, h: 2 },
-    defaults: () => ({ days: 7, showCurrent: true, showHourly: false, showUv: true, showPollen: true }),
+    defaults: () => ({ days: 7, showCurrent: true, showHourly: false, iconScale: 1, showUv: true, showPollen: true }),
   },
   airQuality: {
     label: "Air quality",

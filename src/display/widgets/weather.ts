@@ -37,9 +37,10 @@ export function weatherNotes(d: WeatherData, showUv: boolean, showPollen: boolea
 
 export const weather: Mount<"weather"> = (el, w, ctx) => {
   const root = h("div", { class: "w-weather" }, h("div", { class: "w-empty" }, "Loading the forecast…"));
+  root.style.setProperty("--wx-icon-scale", String(w.iconScale ?? 1));
   el.append(root);
   return subscribe<WeatherData>("weather", 15 * 60_000, (d) => {
-    // Hourly + day rows share a tile: tighten "now" fonts so they don't collide on 1080p.
+    // Hourly + day rows share a tile: tighten the forecast rows while keeping today's weather large.
     root.dataset.dense = w.showHourly && w.days > 0 ? "1" : "";
     const parts: HTMLElement[] = [];
     if (w.title) parts.push(h("div", { class: "w-label" }, w.title));

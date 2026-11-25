@@ -418,6 +418,21 @@ function TypeSettings({
         <>
           <Toggle label="Show current conditions" checked={w.showCurrent} onChange={(v) => e((x) => void (x.showCurrent = v))} />
           <Toggle label="Show the next hours" checked={w.showHourly} onChange={(v) => e((x) => void (x.showHourly = v))} />
+          <Range
+            label="Forecast icon size"
+            value={w.iconScale ?? 1}
+            min={0.5}
+            max={1.5}
+            step={0.05}
+            format={(v) => `${Math.round(v * 100)}%`}
+            hint="Scales the hourly and future-day weather icons. Today's icon stays large."
+            onChange={(v) =>
+              e((x) => {
+                if (v === 1) delete x.iconScale;
+                else x.iconScale = v;
+              })
+            }
+          />
           <Toggle label="Show the UV index" checked={w.showUv} onChange={(v) => e((x) => void (x.showUv = v))} />
           <Toggle
             label="Show pollen"

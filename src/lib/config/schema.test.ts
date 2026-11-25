@@ -128,6 +128,17 @@ describe("config schema", () => {
     expect(configSchema.safeParse(c).success).toBe(false);
   });
 
+  it("accepts weather forecast icon size and rejects values outside 50–150 %", () => {
+    const weather = { ...newWidget("weather", "w", { x: 0, y: 0 }), iconScale: 1.25 };
+    const c = defaultConfig();
+    c.views[0]!.widgets = [weather];
+    expect(configSchema.safeParse(c).success).toBe(true);
+    c.views[0]!.widgets = [{ ...weather, iconScale: 0.4 }];
+    expect(configSchema.safeParse(c).success).toBe(false);
+    c.views[0]!.widgets = [{ ...weather, iconScale: 1.6 }];
+    expect(configSchema.safeParse(c).success).toBe(false);
+  });
+
   it("accepts outer padding on a widget and keeps it optional", () => {
     const weather = { ...newWidget("weather", "w", { x: 0, y: 0 }), outerPadding: 12 };
     const c = defaultConfig();

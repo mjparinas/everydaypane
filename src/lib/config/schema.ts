@@ -139,6 +139,8 @@ export const widgetSchema = z.discriminatedUnion("type", [
     days: z.number().int().min(0).max(7),
     showCurrent: z.boolean(),
     showHourly: z.boolean(),
+    // Forecast icon size (1 = 100%). The current-condition icon stays at its larger layout size.
+    iconScale: z.number().min(0.5).max(1.5).optional(),
     // UV index and pollen from Open-Meteo (Melvin, 2026-11-22). On by default for new widgets; older documents keep
     // the fields via zod defaults so the forecast looks the same until someone switches them on.
     showUv: z.boolean().default(true),
