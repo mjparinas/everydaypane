@@ -76,6 +76,7 @@ function SaveBar({ compact }: { compact?: boolean }) {
   const reload = useAdmin((s) => s.reload);
   const discard = useAdmin((s) => s.discard);
   const clearConflict = useAdmin((s) => s.clearConflict);
+  const adoptVersion = useAdmin((s) => s.adoptVersion);
   const dirty = useDirty();
   const { isPaid, openUpgrade } = usePlan();
   const [refreshNote, setRefreshNote] = useState("");
@@ -103,12 +104,15 @@ function SaveBar({ compact }: { compact?: boolean }) {
   async function refreshDisplays() {
     setRefreshNote("");
     const r = await fetch("/api/household/refresh/", { method: "POST" });
-    const body = (await r.json().catch(() => ({}))) as { error?: string };
+    const body = (await r.json().catch(() => ({}))) as { error?: string; version?: number };
     if (r.status === 402) {
       openUpgrade("refresh");
       setRefreshNote(body.error ?? "Instant refresh needs Household.");
       return;
     }
+    // Refresh bumps the server version without changing the document; keep the working copy aligned so Publish
+    // does not look like someone else saved (Melvin, 2026-11-24).
+    if (r.ok && typeof body.version === "number") adoptVersion(body.version);
     setRefreshNote(r.ok ? "Told displays to reload." : (body.error ?? "Couldn't refresh displays."));
   }
 
@@ -126,7 +130,7 @@ function SaveBar({ compact }: { compact?: boolean }) {
       </p>
       {status.kind === "conflict" ? (
         <>
-          <button className="btn-ghost" onClick={clearConflict}>
+          <button className="btn-ghost" onClick={() => void clearConflict()}>
             Keep editing
           </button>
           <button className="btn-primary" onClick={() => void reload()}>

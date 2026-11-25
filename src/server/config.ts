@@ -102,8 +102,11 @@ export async function saveConfig(accountId: string, input: unknown, baseVersion:
   return { ok: true, version };
 }
 
-/** Bumps the version without changing the document, so displays reload (e.g. after a device is reassigned). */
-export async function touchConfig(accountId: string, now = Date.now()): Promise<void> {
+/**
+ * Bumps the version without changing the document, so displays reload (e.g. Refresh displays). Returns the new
+ * version so the household panel can keep its working copy in sync — otherwise the next Publish looks stale.
+ */
+export async function touchConfig(accountId: string, now = Date.now()): Promise<number> {
   await ensureAccountsSeeded();
   const changed = await run("UPDATE account_config SET version = version + 1, updated_at = ? WHERE account_id = ?", [now, accountId]);
   if (changed === 0) {
@@ -112,7 +115,9 @@ export async function touchConfig(accountId: string, now = Date.now()): Promise<
       JSON.stringify(defaultConfig()),
       now,
     ]);
+    return 1;
   }
+  return await configVersion(accountId);
 }
 
 /** @deprecated Prefer loadConfig(accountId). Tests / health may use the grandfather household. */
