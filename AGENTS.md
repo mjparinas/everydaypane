@@ -97,7 +97,7 @@ in a night window, woken by a tap, Home Assistant motion sensors, the doorbell, 
 screen; the red, dismissible alert strip;
 no pinch zoom; display and shared-feed polling pauses while hidden or browser-offline, backs off after failures, and
 resumes when visible/online; settings normally poll every 30 seconds (**Household** also long-polls for instant reload),
-and state responses carry a tiny release version header even on `304`s;
+and state responses carry a tiny release version header even on `304`s (a new release reloads the wall **once**; if the page still names the old release it keeps running rather than loop, `src/display/release.ts`);
 **starter view templates** (~20 layouts with screenshot previews) on the Views tab; themes include Outfit, DM Sans and
 Literata; Displays tab tips for casting
 `/display/`; Vancouver clocks, dates, calendars and scheduled views stay on UTC−7 after B.C.'s March 2026 change

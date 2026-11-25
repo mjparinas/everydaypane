@@ -115,22 +115,37 @@ async function networkFirst(req: Request, key: Request, ms: number): Promise<Res
 /** Wall document: do not follow the locked 307 — return it so the browser URL becomes /display/unlock/. */
 async function displayDocument(req: Request, ms: number): Promise<Response> {
   const key = new Request(new URL(req.url).pathname);
+  const init: RequestInit = { redirect: "manual", credentials: "same-origin", cache: "no-store" };
+  // Older Chrome refuses to copy a navigation request with options (a TypeError), so fall back to its address.
+  const network = fetchDocument(req, init);
+  // Keep the copy current even when the page is slower than the timeout below. Before 2026-11-25 a slow page was
+  // never stored, so the stale copy (naming an old release) came back every time and the wall reloaded in a loop.
+  void network
+    .then(async (r) => {
+      const copy = r.status === 200 ? r.clone() : null;
+      const cache = await caches.open(DATA);
+      if (copy) await cache.put(key, copy);
+      // A locked wall (the 307 to /display/unlock/, opaque with redirect: "manual"): drop the old dashboard copy.
+      else if (r.type === "opaqueredirect" || (r.status >= 300 && r.status < 400)) await cache.delete(key);
+    })
+    .catch(() => undefined);
   try {
-    const r = await Promise.race([fetch(req, { redirect: "manual", cache: "no-store" }), timeout(ms)]);
-    if (r.status >= 300 && r.status < 400) {
-      // Drop any prior mistaken unlock HTML cached under /display/.
-      void caches.open(DATA).then((c) => c.delete(key));
-      return r;
-    }
-    if (r.status === 200) {
-      void caches.open(DATA).then((c) => c.put(key, r.clone()));
-    }
+    const r = await Promise.race([network, timeout(ms)]);
     if (r.status >= 500) return (await offlineCopy(key)) ?? r;
     return r;
   } catch {
     return (
       (await offlineCopy(key)) ?? new Response("Offline", { status: 503, headers: { "content-type": "text/plain", "x-offline": "1" } })
     );
+  }
+}
+
+async function fetchDocument(req: Request, init: RequestInit): Promise<Response> {
+  try {
+    return await fetch(req, init);
+  } catch (e) {
+    if (!(e instanceof TypeError)) throw e;
+    return fetch(req.url, init);
   }
 }
 
