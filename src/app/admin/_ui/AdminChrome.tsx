@@ -100,9 +100,10 @@ export function AdminShell({
       {/*
         Ops cockpit: mobile = sticky brand + 4 group rails + horizontal tabs in the active group
         (no 16-chip wrap). Desktop = dense fixed sidebar with group labels; staff meta at the foot.
+        Nav scrolls on its own so the account footer is never painted over (Melvin, 2026-11-24).
       */}
-      <aside className="sticky top-0 z-30 border-b border-line bg-bg px-3 pt-3 pb-2 lg:fixed lg:inset-y-0 lg:left-0 lg:flex lg:w-56 lg:flex-col lg:gap-3 lg:overflow-y-auto lg:border-r lg:border-b-0 lg:bg-panel lg:px-2.5 lg:py-4">
-        <div className="flex items-start justify-between gap-3 lg:block lg:px-1.5">
+      <aside className="sticky top-0 z-30 border-b border-line bg-bg px-3 pt-3 pb-2 lg:fixed lg:inset-y-0 lg:left-0 lg:flex lg:w-56 lg:flex-col lg:gap-3 lg:overflow-hidden lg:border-r lg:border-b-0 lg:bg-panel lg:px-2.5 lg:py-4">
+        <div className="flex items-start justify-between gap-3 lg:block lg:shrink-0 lg:px-1.5">
           <AdminBrand />
           <div className="lg:hidden">
             <StaffMeta staff={staff} onSignOut={onSignOut} compact />
@@ -144,7 +145,7 @@ export function AdminShell({
           </ul>
         </nav>
 
-        <nav className="mt-1 hidden min-h-0 flex-1 lg:block" aria-label="Sections">
+        <nav className="mt-1 hidden min-h-0 flex-1 overflow-y-auto lg:block" aria-label="Sections">
           {ADMIN_TAB_GROUPS.map((g) => (
             <div key={g.label} className="mb-2.5">
               <div className="px-2.5 pb-1 text-[0.65rem] font-bold tracking-[0.14em] text-soft uppercase">{g.label}</div>
@@ -157,7 +158,7 @@ export function AdminShell({
           ))}
         </nav>
 
-        <div className="mt-auto hidden lg:block">
+        <div className="mt-auto hidden shrink-0 bg-panel lg:block">
           <StaffMeta staff={staff} onSignOut={onSignOut} />
         </div>
       </aside>
