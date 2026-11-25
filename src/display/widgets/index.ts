@@ -9,6 +9,7 @@ import { commute } from "./commute";
 import { countdown } from "./countdown";
 import { date } from "./date";
 import { earth } from "./earth";
+import { ecoflow } from "./ecoflow";
 import { editQr } from "./editQr";
 import { ferries } from "./ferries";
 import { garbage } from "./garbage";
@@ -75,6 +76,8 @@ export function mountWidget(el: HTMLElement, w: Widget, ctx: WidgetContext): Cle
       return tempest(el, w, ctx);
     case "weatherUnderground":
       return weatherUnderground(el, w, ctx);
+    case "ecoflow":
+      return ecoflow(el, w, ctx);
     case "airQuality":
       return airQuality(el, w, ctx);
     case "wifiQr":

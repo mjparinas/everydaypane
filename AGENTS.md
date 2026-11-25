@@ -25,6 +25,7 @@ same change, and moves it out of **In progress** when it merges.
 | Sunrise & sunset (`sunTimes`) | Today's sunrise, sunset and length of daylight; optional emoji and daylight hours | Open-Meteo forecast |
 | Weather (`weather`) | Current conditions, hourly, up to 7 days, with icons, UV index and pollen | Open-Meteo (default) or Environment Canada city page (`config.weather.provider`); UV/pollen/AQ still Open-Meteo |
 | Tempest (`tempest`) | Backyard station: temp, humidity, wind, rain today | WeatherFlow REST (`config.integrations.smartHome.tempest`, token secret) |
+| EcoFlow (`ecoflow`) | Each power station's battery %, power in and out, solar, AC and DC flows, time to full or empty; pick devices or show all | EcoFlow IoT Developer Platform (household access and secret keys, `docs/ecoflow.md`) |
 | Weather Underground (`weatherUnderground`) | PWS current conditions | IBM WU PWS API (`WU_API_KEY` or per-account secret) |
 | School menu (`menus`) | Nutrislice breakfast and lunch for a day or week; not the meal plan | Nutrislice published JSON (`config.integrations.smartHome.menus`) |
 | Air quality (`airQuality`) | AQHI or US AQI | Open-Meteo air quality |
@@ -137,7 +138,7 @@ Revenue, Traffic, Codes, Flags, …). Cookieless marketing beacon. Customer path
 
 **Integrations connected from Settings:** Google Calendar, Microsoft 365 calendars and **To Do** (OAuth, `?todo=1` / `?files=1`), Google Tasks, **Todoist**, Google Photos (Picker), iCal calendar links (with iCloud publish steps in Settings and `docs/icloud-calendar.md`),
 Amazon Photos, **photo sources** (Bing, Reddit, weather albums, Immich API keys, Dropbox/Box/SmugMug OAuth, OneDrive via Microsoft, Flickr API key, iCloud published URLs), the photo library (Vercel Blob), Home Assistant (Cloudflare Tunnel + Access), Spotify, Sonos, garbage
-zone lookup, sports teams to follow, TransLink, commute places (TomTom geocoding), optional **package tracking** key.
+zone lookup, sports teams to follow, TransLink, commute places (TomTom geocoding), optional **package tracking** key, **EcoFlow** access and secret keys.
 
 ## In progress
 
@@ -303,6 +304,9 @@ npm run templates:previews  # regenerate public/templates/*.png from real widget
 - **Screen saver** (Melvin, 2026-11-21): after some minutes with no touch the display shows only photos (full screen,
   optional clock) or goes dark, and during a night window it goes dark; Home Assistant motion sensors keep it awake and
   wake it (see Architecture). Off until switched on in Settings › Screen saver.
+- **EcoFlow power stations** (Melvin, 2026-11-21: "do all 6" of the native integrations; he has five EcoFlow devices):
+  battery, solar and power in and out on the wall from EcoFlow's official developer API, not Home Assistant (see
+  Architecture). Each household brings its own keys, because EcoFlow keys belong to one EcoFlow account.
 - **Canadian English** in everything a person reads (colour, centre, favourite), as in Liftsmith.
 
 ## Display: super lightweight (rule, Melvin, 2026-11-17)
@@ -633,6 +637,19 @@ panel can be complex if you need it to be."
 - **Tempest, Weather Underground and Nutrislice** (Phase 4, Household): Tempest and WU station settings in
   `config.integrations.smartHome`; Tempest token and optional WU key in secrets. **Menus** widget reads Nutrislice JSON
   only (`src/server/menus.ts`), never the `meals` table.
+
+- **EcoFlow** (`src/server/ecoflow.ts`): EcoFlow's IoT Developer Platform with the household's own access key and
+  secret key (encrypted `ecoflow.accessKey` / `ecoflow.secretKey`, saved from Settings › EcoFlow through
+  `/api/household/ecoflow/`; never in Vercel env, since a key sees one EcoFlow account's devices). Requests are signed:
+  HMAC-SHA256 (hex) with the secret key over the parameters sorted by name, then `accessKey`, `nonce` and `timestamp`,
+  sent as headers with `sign`. Keys work only on their region's host, so `api-a`, `api-e` and `api.ecoflow.com` are
+  tried in turn and the one that answers is cached with the device list (ten minutes). Each device's
+  `/iot-open/sign/device/quota/all` is cached a minute, only for serials on an EcoFlow widget (none picked means all,
+  eight at most); one failing device shows offline without hiding the others. Quota names differ by product line
+  (`pd.*`/`inv.*`/`mppt.*` with solar in tenths of a watt, `pow*`/`cms*` on the 3-series, `20_1.*` PowerStream,
+  `2_1.watts` Smart Plug), so each reading is the first name a device reports; EcoFlow's 5999-minute "unknown" is
+  dropped. Displays poll `/api/display/ecoflow/` every minute and never see keys. This sandbox can't reach EcoFlow, so
+  tests use shapes from its documentation and open-source clients. Setup: `docs/ecoflow.md`.
 
 ## Security
 

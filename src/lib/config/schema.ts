@@ -218,6 +218,16 @@ export const widgetSchema = z.discriminatedUnion("type", [
     showRain: z.boolean().default(true),
     showHumidity: z.boolean().default(true),
   }),
+  // EcoFlow power stations (Melvin, 2026-11-21: native EcoFlow developer API, not Home Assistant). Keys under
+  // Settings › EcoFlow; `devices` are serial numbers, none picked means every device on the account.
+  z.object({
+    ...base,
+    type: z.literal("ecoflow"),
+    devices: z.array(z.string().trim().min(1).max(40)).max(8).default([]),
+    showSolar: z.boolean().default(true),
+    showFlows: z.boolean().default(true),
+    showTime: z.boolean().default(true),
+  }),
   // Weather Underground PWS (Phase 4, Household).
   z.object({
     ...base,

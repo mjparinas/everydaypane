@@ -80,6 +80,11 @@
     "file": "tempest.png"
   },
   {
+    "type": "ecoflow",
+    "name": "EcoFlow",
+    "file": "ecoflow.png"
+  },
+  {
     "type": "weatherUnderground",
     "name": "Weather Underground",
     "file": "weatherUnderground.png"

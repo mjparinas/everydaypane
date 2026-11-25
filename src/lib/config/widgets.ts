@@ -155,6 +155,14 @@ export const WIDGETS: { [T in WidgetType]: WidgetInfo<T> } = {
     minSize: { w: 2, h: 1 },
     defaults: () => ({ showWind: true, showRain: true, showHumidity: true }),
   },
+  ecoflow: {
+    label: "EcoFlow",
+    description: "Battery, solar and power in and out",
+    icon: "🔋",
+    size: { w: 4, h: 3 },
+    minSize: { w: 2, h: 2 },
+    defaults: () => ({ devices: [], showSolar: true, showFlows: true, showTime: true }),
+  },
   weatherUnderground: {
     label: "Weather Underground",
     description: "A personal weather station (PWS)",
@@ -584,7 +592,11 @@ export const WIDGET_GROUPS: { id: string; label: string; types: WidgetType[] }[]
     types: ["agenda", "calendarMonth", "calendarWeek", "calendarUpNext", "countdown", "tasks", "packages", "tides"],
   },
   { id: "family", label: "Family", types: ["meals", "menus", "shopping", "messages", "chores", "whiteboard", "school", "presence"] },
-  { id: "home", label: "Home", types: ["haEntity", "camera", "media", "wifiQr", "editQr", "garbage", "commute", "transit", "ferries"] },
+  {
+    id: "home",
+    label: "Home",
+    types: ["haEntity", "camera", "media", "wifiQr", "editQr", "garbage", "commute", "transit", "ferries", "ecoflow"],
+  },
   { id: "media", label: "Outside", types: ["photos", "sports", "alerts", "note"] },
   {
     id: "finance",

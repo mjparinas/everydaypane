@@ -3530,3 +3530,63 @@ html.portrait-view .stage {
     animation: none;
   }
 }
+
+/* EcoFlow power stations */
+.w-ecoflow {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35em;
+  min-height: 0;
+}
+.ef-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.6em;
+  overflow: hidden;
+}
+.ef-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5em;
+  font-weight: 600;
+}
+.ef-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ef-soc {
+  font-variant-numeric: tabular-nums;
+}
+.ef-bar {
+  height: 0.55em;
+  margin: 0.2em 0;
+  overflow: hidden;
+  border-radius: 1em;
+  background: color-mix(in srgb, currentColor 15%, transparent);
+}
+.ef-bar-in {
+  display: block;
+  height: 100%;
+  background: #2f9e44;
+  transform-origin: left;
+}
+.ef-2 .ef-bar-in {
+  background: #f0a020;
+}
+.ef-3 .ef-bar-in {
+  background: var(--danger);
+}
+.ef-main,
+.ef-sub {
+  font-size: 0.85em;
+  font-variant-numeric: tabular-nums;
+}
+.ef-sub {
+  opacity: 0.75;
+}
+.ef-off {
+  opacity: 0.6;
+}
