@@ -80,6 +80,10 @@ function groupForSection(section: string | null): GroupId {
 function goSettingsSection(section: string) {
   history.replaceState(null, "", `#settings/${section}`);
   window.dispatchEvent(new HashChangeEvent("hashchange"));
+  if (section === "dashboard") {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    return;
+  }
   document.getElementById(`settings-${section}`)?.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
@@ -95,6 +99,9 @@ export function SettingsPanel() {
 
   useEffect(() => {
     if (!section) return;
+    // The Home section should open directly below the Settings navigation. Only deep
+    // section links should scroll a card into the sticky navigation area.
+    if (section === "dashboard") return;
     // Wait a tick so the group's sections mount before scrolling.
     const t = window.setTimeout(() => {
       document.getElementById(`settings-${section}`)?.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -413,6 +420,11 @@ export function SettingsPanel() {
                         checked={alerts.sources.power}
                         onChange={(v) => edit((c) => void (c.alerts.sources.power = v))}
                       />
+                      <Toggle
+                        label="Evacuation orders and alerts (EmergencyInfoBC)"
+                        checked={alerts.sources.evacuations}
+                        onChange={(v) => edit((c) => void (c.alerts.sources.evacuations = v))}
+                      />
                     </div>
                   </details>
                   {isPaid ? (
@@ -459,9 +471,19 @@ export function SettingsPanel() {
                     format={(n) => `${n} km`}
                     onChange={(v) => edit((c) => void (c.alerts.powerKm = v))}
                   />
+                  <Range
+                    label="Evacuation orders within"
+                    value={alerts.evacuationKm}
+                    min={0}
+                    max={100}
+                    step={1}
+                    format={(n) => `${n} km`}
+                    onChange={(v) => edit((c) => void (c.alerts.evacuationKm = v))}
+                  />
                   <p className="text-xs text-soft">
                     Alert Ready and weather warnings count when they cover your location; road events and earthquakes count within the
                     distance above. A power outage covering your home reaches the red strip at Severe; ones nearby count within their own
+                    distance. An evacuation order covering your home is Extreme (an alert is Severe); ones nearby count within their own
                     distance.
                   </p>
                 </>

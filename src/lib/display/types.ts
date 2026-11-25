@@ -276,7 +276,7 @@ export interface SportsData {
 }
 
 export type AlertSeverity = "extreme" | "severe" | "moderate" | "minor";
-export type AlertSource = "alertReady" | "weather" | "roads" | "earthquakes" | "power";
+export type AlertSource = "alertReady" | "weather" | "roads" | "earthquakes" | "power" | "evacuations";
 
 /** One emergency alert for the area, from any source (src/server/alerts.ts). */
 export interface EmergencyAlert {
@@ -400,6 +400,41 @@ export interface RadarData {
    */
   maps: Record<string, RadarMap>;
   layers: Partial<Record<"rain" | "snow", RadarTimes>>;
+}
+
+/** How far a wildfire is from being contained, from BC Wildfire Service's stage of control. */
+export type FireStage = "new" | "outOfControl" | "held" | "underControl";
+
+/** One active wildfire on the map (src/server/wildfires.ts). */
+export interface WildfireFire {
+  id: string;
+  name: string;
+  stage: FireStage;
+  /** Estimated size in hectares. */
+  ha: number;
+  /** Distance from home in km. */
+  km: number;
+  /** BC Wildfire Service calls it a "wildfire of note" (highly visible or threatening). */
+  ofNote: boolean;
+  /** Pixel on the 5 × 5 tile map around home (src/lib/radar.ts). */
+  x: number;
+  y: number;
+}
+
+/** The wildfire map around home at one zoom: the same tiles as the radar, with everything drawn as map pixels. */
+export interface WildfireMap extends RadarMap {
+  fires: WildfireFire[];
+  /** Burned area outlines of fires that aren't out, as SVG path data in map pixels. */
+  perimeters: string[];
+  /** Evacuation orders and alerts (any hazard), as SVG path data in map pixels. */
+  evacuations: { kind: "order" | "alert"; d: string }[];
+}
+
+export interface WildfireData {
+  updatedAt: number;
+  maps: Record<string, WildfireMap>;
+  /** Why the fires couldn't be read; the widget says so. */
+  error?: string;
 }
 
 /** Today's chore chart (src/server/chores.ts): who does what today, what's done, and each person's stars this week. */
