@@ -88,7 +88,9 @@ palettes, fonts, corner radius, opacity and optional glass; burn-in protection (
 worker serves the last good data and shows "Offline"); a **screen saver** (photos only or dark after idle minutes, dark
 in a night window, woken by a tap, Home Assistant motion sensors, the doorbell, a new alert or a timer going off); doorbell pop-up full
 screen; the red, dismissible alert strip;
-no pinch zoom; settings reach displays by polling every 30 seconds (**Household** also long-polls for instant reload);
+no pinch zoom; display and shared-feed polling pauses while hidden or browser-offline, backs off after failures, and
+resumes when visible/online; settings normally poll every 30 seconds (**Household** also long-polls for instant reload),
+and state responses carry a tiny release version header even on `304`s;
 **starter view templates** (~20 layouts with screenshot previews) on the Views tab; themes include Outfit, DM Sans and
 Literata; Displays tab tips for casting
 `/display/`; Vancouver clocks, dates, calendars and scheduled views stay on UTC−7 after B.C.'s March 2026 change
@@ -217,9 +219,11 @@ npm run templates:previews  # regenerate public/templates/*.png from real widget
   outage map join the same alert strip and alerts widget (see Architecture). Weather alerts already existed
   (Environment Canada through NAAD, since 2026-11-17), so that half of the ask needed nothing new.
 - **Admin changes reach displays by polling** (Melvin, 2026-11-17: "we dont need real time push for now, polling is
-  ok"), with **instant refresh on Household** (Melvin, 2026-11-22): every display still asks for the settings version
-  every 30 seconds (304 when nothing changed). Paid households also long-poll `/api/display/config-watch/` and reload
-  as soon as the version moves; admins can tap **Refresh displays**. Free keeps the 30-second poll only. No WebSocket.
+  ok"), with **instant refresh on Household** (Melvin, 2026-11-22): visible, online displays ask for the settings
+  version every 30 seconds (304 when nothing changed); hidden or browser-offline displays pause, and failed checks back
+  off before retrying. Paid households also long-poll `/api/display/config-watch/` and reload as soon as the version
+  moves; admins can tap **Refresh displays**. Free keeps the 30-second poll only. State responses carry the release
+  version even on `304`s, so a deploy is detected without an extra request or downloading display HTML. No WebSocket.
   The Views tab's live preview is the exception: it shows the unsaved working copy over `postMessage` and never pushes
   that draft to wall screens.
 - **Starter view templates** (Melvin, 2026-11-22; expanded 2026-11-23): the Views tab shows ~20 ready-made layouts with
