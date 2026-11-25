@@ -31,7 +31,6 @@ function navigateHome(router: ReturnType<typeof useRouter>) {
 
 /** AUTH_TEST_MODE / builds without Clerk keys — signed test cookie via `/api/auth/test-signin/`. */
 function TestSignInForm({ next: forcedNext, intent = "signin" }: { next?: string; intent?: SignInIntent }) {
-  const router = useRouter();
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
   const [state, setState] = useState<{ kind: "idle" | "sending" | "error"; message?: string }>({ kind: "idle" });
@@ -54,7 +53,8 @@ function TestSignInForm({ next: forcedNext, intent = "signin" }: { next?: string
       setState({ kind: "error", message: res.error ?? "Something went wrong." });
       return;
     }
-    router.replace(safeNext(res.redirect ?? null) ?? destAfterSignIn());
+    // The API sets the session cookie. Request a fresh document with it after sign-in.
+    window.location.replace(safeNext(res.redirect ?? null) ?? destAfterSignIn());
   }
 
   return (
