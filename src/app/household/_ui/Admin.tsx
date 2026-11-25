@@ -11,7 +11,7 @@ import type { DashboardConfig } from "@/lib/config/schema";
 import type { PlanId } from "@/lib/plans";
 
 import { DisplaysPanel } from "./DisplaysPanel";
-import { FreePlanBanner, HouseholdBadge, HouseholdFeaturePrompt, PlanProvider, SaveNeedsUpgrade, UpgradeDialog, usePlan } from "./plan";
+import { HouseholdFeaturePrompt, PlanProvider, SaveNeedsUpgrade, UpgradeDialog, usePlan } from "./plan";
 import { SchedulePanel } from "./SchedulePanel";
 import { SettingsPanel } from "./SettingsPanel";
 import { AdminProvider, useAdmin, useDirty } from "./store";
@@ -19,32 +19,24 @@ import { ThemesPanel } from "./ThemesPanel";
 import { ViewsPanel } from "./ViewsPanel";
 
 // The household panel: one page, with tabs, that works on a phone (Melvin, 2026-11-17; path /household/ 2026-11-23).
-// Changes collect in a working copy and go out together with Save; Household displays long-poll for an instant reload,
-// Free ones within ~30 seconds. Free users see soft Household CTAs (Melvin, 2026-11-23).
+// Changes collect in a working copy and go out together with Publish to wall; Household displays long-poll for an
+// instant reload, Free ones within ~30 seconds. Free users see soft Household CTAs (Melvin, 2026-11-23).
 //
-// Phone IA (H1, 2026-11-24): five bottom destinations — Views, Colours, Displays, Family, Settings. Schedule / Meals /
-// Shopping / Messages share Family with a sub-strip. Desktop keeps the full tab row. Dirty Save docks above the phone bar.
+// Shared IA (critique fix 2026-11-24): five destinations on phone and desktop — Views, Colours, Displays, Family,
+// Settings. Schedule / Meals / Shopping / Messages share Family with a sub-strip. Dirty Publish docks above the phone bar.
 
-const TABS = [
-  { id: "views", label: "Views", icon: "▦" },
-  { id: "themes", label: "Colours", icon: "🎨" },
-  { id: "schedule", label: "Schedule", icon: "🕒", household: true },
-  { id: "displays", label: "Displays", icon: "🖥️" },
-  { id: "messages", label: "Messages", icon: "💬", household: true },
-  { id: "meals", label: "Meals", icon: "🍽️", household: true },
-  { id: "shopping", label: "Shopping", icon: "🛒", household: true },
-  { id: "settings", label: "Settings", icon: "⚙️" },
-] as const;
-type Tab = (typeof TABS)[number]["id"];
+const PANEL_TABS = ["views", "themes", "schedule", "displays", "messages", "meals", "shopping", "settings"] as const;
+type Tab = (typeof PANEL_TABS)[number];
 
 const FAMILY_TABS = ["schedule", "messages", "meals", "shopping"] as const;
 type FamilyTab = (typeof FAMILY_TABS)[number];
 
-const PHONE_NAV = [
+/** Same five destinations on desktop and phone (critique P2 layout). */
+const MAIN_NAV = [
   { id: "views" as const, label: "Views", icon: "▦" },
   { id: "themes" as const, label: "Colours", icon: "🎨" },
   { id: "displays" as const, label: "Displays", icon: "🖥️" },
-  { id: "family" as const, label: "Family", icon: "⌂", household: true },
+  { id: "family" as const, label: "Family", icon: "⌂" },
   { id: "settings" as const, label: "Settings", icon: "⚙️" },
 ];
 
@@ -59,6 +51,10 @@ function isFamilyTab(t: Tab): t is FamilyTab {
   return (FAMILY_TABS as readonly string[]).includes(t);
 }
 
+function isPanelTab(id: string): id is Tab {
+  return (PANEL_TABS as readonly string[]).includes(id);
+}
+
 // The open tab lives in the address (#themes), so a reload or a shared link opens the same tab.
 // Settings sections use #settings/photos (and so on) so widgets can deep-link into the right group.
 const subscribeHash = (cb: () => void) => {
@@ -71,7 +67,7 @@ const hashTab = (): Tab => {
   const tabId = h.split("/")[0] ?? "";
   // #family opens the Family hub on Meals (first everyday job).
   if (tabId === "family") return "meals";
-  return TABS.find((t) => t.id === tabId)?.id ?? "views";
+  return isPanelTab(tabId) ? tabId : "views";
 };
 
 function SaveBar({ compact }: { compact?: boolean }) {
@@ -98,10 +94,10 @@ function SaveBar({ compact }: { compact?: boolean }) {
         ? refreshNote
         : status.kind === "saved" && !dirty
           ? isPaid
-            ? "Saved. Displays update right away."
-            : "Saved. Displays update within 30 seconds."
+            ? "Published. Displays update right away."
+            : "Published. Displays update within 30 seconds."
           : dirty
-            ? "Unsaved changes"
+            ? "Wall settings · Unsaved"
             : "";
 
   async function refreshDisplays() {
@@ -145,19 +141,13 @@ function SaveBar({ compact }: { compact?: boolean }) {
               Refresh displays
             </button>
           )}
-          {!isPaid && !dirty && (
-            <button type="button" className="btn-ghost hidden text-soft lg:inline-flex" onClick={() => openUpgrade("refresh")}>
-              Instant refresh
-              <HouseholdBadge className="ml-1.5" />
-            </button>
-          )}
           {dirty && (
             <button className="btn-ghost" onClick={discard}>
               Undo all
             </button>
           )}
           <button className="btn-primary" disabled={!dirty || status.kind === "saving"} onClick={() => void save()}>
-            {status.kind === "saving" ? "Saving…" : "Save"}
+            {status.kind === "saving" ? "Publishing…" : "Publish to wall"}
           </button>
         </>
       )}
@@ -168,7 +158,7 @@ function SaveBar({ compact }: { compact?: boolean }) {
 function MobileSaveDock() {
   const status = useAdmin((s) => s.status);
   const dirty = useDirty();
-  // Thumb-reach Save when there's something to do (or a conflict) — not for every idle visit.
+  // Thumb-reach Publish when there's something to do (or a conflict) — not for every idle visit.
   if (!dirty && status.kind !== "conflict" && status.kind !== "saving" && status.kind !== "error" && status.kind !== "invalid") {
     return null;
   }
@@ -213,37 +203,30 @@ function PlanChip() {
   return (
     <button
       type="button"
-      className="inline-flex items-center gap-1.5 rounded-full border border-brand/30 bg-brand/5 px-2.5 py-1 text-xs font-semibold text-brand hover:bg-brand/10"
+      className="inline-flex items-center gap-1.5 rounded-full border border-line px-2.5 py-1 text-xs font-semibold text-soft hover:border-brand/40 hover:text-brand"
       onClick={() => openUpgrade("default")}
+      aria-label="Free plan — see Household"
     >
       Free
-      <span className="text-brand/80">· Upgrade</span>
     </button>
   );
 }
 
 function FamilySubNav({ active, onGo }: { active: FamilyTab; onGo: (t: FamilyTab) => void }) {
-  const { isPaid } = usePlan();
   return (
-    <div className="mb-4 flex gap-2 overflow-x-auto md:hidden" role="tablist" aria-label="Family">
-      {FAMILY_SUB.map((s) => {
-        const locked = !isPaid;
-        return (
-          <button
-            key={s.id}
-            type="button"
-            role="tab"
-            aria-selected={active === s.id}
-            className={`shrink-0 ${active === s.id ? "btn-primary" : "btn-ghost"} ${locked ? "opacity-70" : ""}`}
-            onClick={() => onGo(s.id)}
-          >
-            <span className="inline-flex items-center gap-1.5">
-              {s.label}
-              {locked ? <HouseholdBadge /> : null}
-            </span>
-          </button>
-        );
-      })}
+    <div className="mb-4 flex gap-2 overflow-x-auto" role="tablist" aria-label="Family">
+      {FAMILY_SUB.map((s) => (
+        <button
+          key={s.id}
+          type="button"
+          role="tab"
+          aria-selected={active === s.id}
+          className={`shrink-0 ${active === s.id ? "btn-primary" : "btn-ghost"}`}
+          onClick={() => onGo(s.id)}
+        >
+          {s.label}
+        </button>
+      ))}
     </div>
   );
 }
@@ -251,7 +234,8 @@ function FamilySubNav({ active, onGo }: { active: FamilyTab; onGo: (t: FamilyTab
 function FamilyPersistenceHint() {
   return (
     <p className="mb-3 rounded-xl border border-line bg-bg px-3 py-2 text-sm text-soft md:mb-4" role="note">
-      Meals, shopping and messages save as you go — they don’t need the Save button up top. Views, colours and Settings still do.
+      Family lists are live — meals, shopping and messages save as you go. Wall settings (Views, Colours, Settings) need{" "}
+      <span className="font-semibold text-ink">Publish to wall</span>.
     </p>
   );
 }
@@ -322,21 +306,19 @@ function AdminPanel({ email, staff }: { email: string; staff: boolean }) {
             <SaveBar />
           </div>
         </div>
-        <FreePlanBanner />
         <nav className="mx-auto hidden max-w-7xl gap-1 px-4 md:flex" aria-label="Sections">
-          {TABS.map((t) => {
-            const locked = Boolean("household" in t && t.household && !isPaid);
+          {MAIN_NAV.map((t) => {
+            const on = t.id === "family" ? familyActive : tab === t.id;
             return (
               <button
                 key={t.id}
                 className={`inline-flex items-center gap-1.5 border-b-2 px-3 py-2 text-sm font-medium ${
-                  tab === t.id ? "border-brand text-ink" : "border-transparent text-soft hover:text-ink"
-                } ${locked ? "opacity-70" : ""}`}
-                aria-current={tab === t.id ? "page" : undefined}
-                onClick={() => go(t.id)}
+                  on ? "border-brand text-ink" : "border-transparent text-soft hover:text-ink"
+                }`}
+                aria-current={on ? "page" : undefined}
+                onClick={() => go(t.id === "family" ? "family" : t.id)}
               >
                 {t.label}
-                {locked ? <HouseholdBadge /> : null}
               </button>
             );
           })}
@@ -419,30 +401,26 @@ function AdminPanel({ email, staff }: { email: string; staff: boolean }) {
       <UpgradeDialog />
       <MobileSaveDock />
 
-      {/* Five thumb destinations on phones; Family holds meals / shopping / messages / schedule. */}
+      {/* Five thumb destinations; Family holds meals / shopping / messages / schedule. */}
       <nav
         className="fixed inset-x-0 bottom-0 z-20 grid grid-cols-5 border-t border-line bg-panel/95 pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden"
         aria-label="Sections"
       >
-        {PHONE_NAV.map((t) => {
-          const locked = Boolean("household" in t && t.household && !isPaid);
+        {MAIN_NAV.map((t) => {
           const on = t.id === "family" ? familyActive : tab === t.id;
           return (
             <button
               key={t.id}
-              className={`grid min-h-14 min-w-0 place-items-center gap-0.5 px-1 text-[11px] font-medium leading-tight ${
+              className={`grid min-h-14 min-w-0 place-items-center gap-0.5 px-1 text-xs font-medium leading-tight ${
                 on ? "text-brand" : "text-soft"
-              } ${locked ? "opacity-70" : ""}`}
+              }`}
               aria-current={on ? "page" : undefined}
               onClick={() => go(t.id === "family" ? "family" : t.id)}
             >
               <span aria-hidden="true" className="text-lg leading-none">
                 {t.icon}
               </span>
-              <span className="flex items-center gap-0.5 truncate">
-                {t.label}
-                {locked ? <HouseholdBadge className="scale-90" /> : null}
-              </span>
+              <span className="truncate">{t.label}</span>
             </button>
           );
         })}

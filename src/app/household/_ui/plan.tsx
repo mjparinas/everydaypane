@@ -221,7 +221,7 @@ export function usePlanOptional(): PlanContextValue | null {
 export function HouseholdBadge({ className = "" }: { className?: string }) {
   return (
     <span
-      className={`inline-flex items-center rounded-md bg-brand/10 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-brand ${className}`}
+      className={`inline-flex items-center rounded-md bg-brand/10 px-1.5 py-0.5 text-xs font-semibold uppercase tracking-wide text-brand ${className}`}
     >
       Household
     </span>

@@ -323,11 +323,11 @@ function CastHints() {
     <div className="grid gap-1 text-xs text-soft">
       <p>
         <strong className="font-medium text-ink">Chromecast / Google TV:</strong> cast a Chrome tab with{" "}
-        <code className="text-[0.7rem]">{DISPLAY_PATH}</code> open, or use the TV&apos;s browser and unlock with your phone (QR).
+        <code className="text-xs">{DISPLAY_PATH}</code> open, or use the TV&apos;s browser and unlock with your phone (QR).
       </p>
       <p>
-        <strong className="font-medium text-ink">Wall panel / tablet:</strong> set <code className="text-[0.7rem]">{DISPLAY_PATH}</code> as
-        the start page, then unlock once with your phone.
+        <strong className="font-medium text-ink">Wall panel / tablet:</strong> set <code className="text-xs">{DISPLAY_PATH}</code> as the
+        start page, then unlock once with your phone.
       </p>
     </div>
   );

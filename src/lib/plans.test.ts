@@ -24,7 +24,8 @@ describe("plans", () => {
   it("marks Household-only household tabs and settings groups", () => {
     expect(isHouseholdTab("meals")).toBe(true);
     expect(isHouseholdTab("views")).toBe(false);
-    expect(isHouseholdSettingsGroup("tasks")).toBe(true);
+    expect(isHouseholdSettingsGroup("family")).toBe(true);
+    expect(isHouseholdSettingsGroup("calendars")).toBe(false);
     expect(isHouseholdSettingsGroup("home")).toBe(false);
   });
 
