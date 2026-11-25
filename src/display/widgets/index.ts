@@ -73,6 +73,8 @@ export function mountWidget(el: HTMLElement, w: Widget, ctx: WidgetContext): Cle
       return weather(el, w, ctx);
     case "tempest":
       return tempest(el, w, ctx);
+    case "unifi":
+      return lazyWidget("unifi", el, w, ctx);
     case "weatherUnderground":
       return weatherUnderground(el, w, ctx);
     case "ecoflow":

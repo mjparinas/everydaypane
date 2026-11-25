@@ -64,6 +64,7 @@ const FEATURE_BLURBS: Partial<Record<WidgetType, string>> = {
   tempest: "Backyard WeatherFlow station: temp, wind, rain.",
   ecoflow: "EcoFlow battery level, solar and power in and out, time to full or empty.",
   weatherUnderground: "Personal weather station current conditions.",
+  unifi: "Internet uptime, latency and outages from your UniFi gateway.",
   stocks: "Watchlist quotes with daily change.",
   crypto: "Coin prices and 24 h change.",
   fx: "Currency pair rates from the ECB.",

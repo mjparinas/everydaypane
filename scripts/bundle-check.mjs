@@ -9,6 +9,7 @@ const BUDGET = {
   "public/display/sw.js": 6_000,
   "public/display/ecoflow.js": 6_000,
   "public/display/internet.js": 6_000,
+  "public/display/unifi.js": 6_000,
   "public/display/whiteboard.js": 6_000,
 };
 let failed = false;
