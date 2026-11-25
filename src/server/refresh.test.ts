@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it } from "vitest";
 
 import { GET as watchGET } from "@/app/api/display/config-watch/route";
+import { GET as stateGET } from "@/app/api/display/state/route";
 import { POST as refreshPOST } from "@/app/api/household/refresh/route";
 import { defaultConfig } from "@/lib/config/defaults";
 import { createAccount, LEGACY_ACCOUNT_ID } from "@/server/accounts";
@@ -48,5 +49,21 @@ describe("Refresh displays", () => {
     expect((await refreshPOST(req("/api/household/refresh/", { method: "POST", headers: { cookie } }))).status).toBe(200);
     const body = (await (await watching).json()) as { version: number };
     expect(body.version).toBeGreaterThan(since);
+  });
+
+  it("includes the release version on both changed and unchanged state responses", async () => {
+    const { token } = await addDevice(LEGACY_ACCOUNT_ID, "Kitchen", null);
+    const headers = { "x-display-token": token };
+    const response = await stateGET(req("/api/display/state/", { headers }));
+    expect(response.status).toBe(200);
+    const etag = response.headers.get("etag");
+    const release = response.headers.get("x-display-release");
+    expect(etag).toBeTruthy();
+    expect(release).toBeTruthy();
+
+    const unchanged = await stateGET(req("/api/display/state/", { headers: { ...headers, "if-none-match": etag ?? "" } }));
+    expect(unchanged.status).toBe(304);
+    expect(unchanged.headers.get("etag")).toBe(etag);
+    expect(unchanged.headers.get("x-display-release")).toBe(release);
   });
 });
