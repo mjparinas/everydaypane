@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 
 import { PERIOD_LABELS, PERIODS } from "@/lib/config/periods";
 import type { CountdownEvent, DashboardConfig, TimerPreset, Widget } from "@/lib/config/schema";
@@ -15,6 +15,7 @@ import { useEcoFlow } from "./EcoFlowPanel";
 import { Range, Segmented, Select, Stepper, Text, TextArea, Toggle } from "./fields";
 import { HaEntityList, useHa } from "./haEntities";
 import { useMusic } from "./music";
+import { loadSmartProvider, type SmartProviderDetail } from "./smartHome";
 import { newId } from "./store";
 import { UnifiSitePicker } from "./UnifiPanel";
 
@@ -232,6 +233,17 @@ function HaEntitySettings({
   const ha = useHa();
   const entities = ha?.entities ?? [];
   const picked = entities.some((ent) => ent.id === w.entityId);
+  // Direct providers list their own devices, so a Govee light (or a Nest thermostat) is picked by name, not typed.
+  const [direct, setDirect] = useState<{ provider: string; detail: SmartProviderDetail } | null>(null);
+  useEffect(() => {
+    if (provider === "homeAssistant") return;
+    let live = true;
+    void loadSmartProvider(provider).then((detail) => live && setDirect({ provider, detail }));
+    return () => {
+      live = false;
+    };
+  }, [provider]);
+  const devices = direct?.provider === provider ? direct.detail.devices : [];
 
   return (
     <>
@@ -243,9 +255,21 @@ function HaEntitySettings({
           { value: "nest", label: "Nest" },
           { value: "ecobee", label: "ecobee" },
           { value: "smartthings", label: "SmartThings" },
+          { value: "govee", label: "Govee lights" },
         ]}
-        onChange={(v) => e((x) => void (x.provider = v))}
+        onChange={(v) => e((x) => void ((x.provider = v), v === "govee" && (x.control = "light")))}
       />
+      {provider !== "homeAssistant" && devices.length > 0 ? (
+        <Select
+          label="Device"
+          value={devices.some((d) => d.id === w.entityId) ? w.entityId : ""}
+          options={[
+            { value: "", label: "Choose a device…" },
+            ...devices.map((d) => ({ value: d.id, label: d.sku ? `${d.name} (${d.sku})` : d.name })),
+          ]}
+          onChange={(v) => e((x) => void (x.entityId = v))}
+        />
+      ) : null}
       {provider === "homeAssistant" && entities.length > 0 ? (
         <Select
           label="Device"
@@ -259,7 +283,7 @@ function HaEntitySettings({
         />
       ) : null}
       <Text
-        label={provider === "homeAssistant" && entities.length > 0 ? "Or paste entity id" : "Entity"}
+        label={(provider === "homeAssistant" ? entities.length : devices.length) > 0 ? "Or paste entity id" : "Entity"}
         value={w.entityId}
         maxLength={255}
         placeholder={provider === "homeAssistant" ? "light.kitchen" : `${provider}.device_id`}
@@ -270,8 +294,11 @@ function HaEntitySettings({
         <HaEntityList id="ha-controls" />
       ) : (
         <p className="text-sm text-soft">
-          Connect {provider} under <SettingsLink href="#settings/smart-home">Settings › Smart home</SettingsLink>, then paste a device id
-          from the list (e.g. {provider}.living_room).
+          {devices.length > 0 ? "Devices from your account. " : null}
+          Connect {provider === "govee" ? "Govee" : provider} under{" "}
+          <SettingsLink href="#settings/smart-home">Settings › Smart home</SettingsLink>
+          {devices.length > 0 ? " to change the account." : ", then pick a device here."}
+          {provider === "govee" ? " Colour and scenes show while the light is on." : null}
         </p>
       )}
       <details className="grid gap-3 rounded-xl border border-line bg-bg px-3 py-2" open={w.control !== "auto"}>

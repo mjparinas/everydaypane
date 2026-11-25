@@ -25,7 +25,7 @@ import { countdown } from "./widgets/countdown";
 import { date } from "./widgets/date";
 import { earth, RELOAD_MS } from "./widgets/earth";
 import { ferries, fullness, hasLeft } from "./widgets/ferries";
-import { completesLockHold, controlFor, haEntity, stateText } from "./widgets/ha";
+import { completesLockHold, controlFor, haEntity, stateText } from "./widgets/haEntity";
 import { meals } from "./widgets/meals";
 import { F, media, nowPlaying, positionNow } from "./widgets/media";
 import { pickFrames, radar, thin } from "./widgets/radar";
@@ -273,6 +273,7 @@ describe("Home Assistant tiles", () => {
     expect(controlFor("light.kitchen", "auto")).toBe("light");
     expect(controlFor("switch.kettle", "auto")).toBe("toggle");
     expect(controlFor("lock.front", "auto")).toBe("lock");
+    expect(controlFor("govee.h6008_ab_cd", "auto")).toBe("light");
     expect(controlFor("scene.movie", "auto")).toBe("button");
     expect(controlFor("sensor.outside", "auto")).toBe("sensor");
     expect(controlFor("light.kitchen", "sensor")).toBe("sensor");
