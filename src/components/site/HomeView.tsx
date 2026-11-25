@@ -6,7 +6,7 @@ import { BRAND } from "@/lib/brand";
 import { faqJsonLd, HOME_FAQS } from "@/lib/faqs";
 import { MARKETING_PLAN_TABLE, MARKETING_PLANS, usd } from "@/lib/marketingPlans";
 import { pageMeta } from "@/lib/pageMeta";
-import { SIGNUP_PATH, SITE_URL } from "@/lib/site";
+import { DISPLAY_PATH, SIGNUP_PATH, SITE_URL } from "@/lib/site";
 
 import { HouseholdCheckoutButton } from "./CheckoutButtons";
 import { PaneMock } from "./PaneMock";
@@ -154,6 +154,16 @@ export function HomeView() {
                   See the screens
                 </a>
               </div>
+              <p className="mt-4 text-base text-soft">
+                Setting up a wall screen?{" "}
+                <Link
+                  href={DISPLAY_PATH}
+                  data-cta="hero-connect-display"
+                  className="font-semibold text-brand underline-offset-4 hover:underline"
+                >
+                  Connect a display →
+                </Link>
+              </p>
               <ul className="mt-5 flex flex-wrap gap-x-5 gap-y-2 text-sm text-soft">
                 {["Free plan, no ads", "Optimized for speed", "Any browser, any screen"].map((c) => (
                   <li key={c} className="flex gap-1.5">
@@ -194,7 +204,7 @@ export function HomeView() {
               {
                 n: "1",
                 t: "Open the admin on your phone",
-                d: "Magic-link sign-in. Drag widgets onto a 12×8 grid sized for 1920×1080, with live preview as you edit.",
+                d: "Sign in with an email code. Drag widgets onto a 12×8 grid sized for 1920×1080, with live preview as you edit.",
               },
               {
                 n: "2",
@@ -203,8 +213,8 @@ export function HomeView() {
               },
               {
                 n: "3",
-                t: "Hang a display address",
-                d: "Each screen gets a secret /d/ link. It follows morning, afternoon, evening and night views, and polls for changes every 30 seconds.",
+                t: "Connect a display",
+                d: "On the wall screen, open everydaypane.com and tap Connect a display, then approve it from your phone. It follows morning, afternoon, evening and night views.",
               },
             ].map((s) => (
               <li key={s.n} className="card relative overflow-hidden">
