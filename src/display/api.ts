@@ -22,14 +22,49 @@ export function setPreviewMode(mode: "day" | "night") {
 
 type Listener = () => void;
 const offlineListeners = new Set<Listener>();
+const activityListeners = new Set<Listener>();
 export let offline = false;
+export let connectionStatus: "online" | "browser-offline" | "server-offline" = navigator.onLine === false ? "browser-offline" : "online";
+let activeRequests = 0;
+let browserOffline = navigator.onLine === false;
+let serverOffline = false;
 
-function setOffline(value: boolean) {
-  if (offline === value) return;
-  offline = value;
+function setConnectionStatus() {
+  const next = browserOffline ? "browser-offline" : serverOffline ? "server-offline" : "online";
+  const nextOffline = next !== "online";
+  if (offline === nextOffline && connectionStatus === next) return;
+  offline = nextOffline;
+  connectionStatus = next;
   for (const l of offlineListeners) l();
 }
 export const onOfflineChange = (l: Listener) => offlineListeners.add(l);
+
+function setServerOffline(value: boolean) {
+  serverOffline = value;
+  setConnectionStatus();
+}
+
+function activityChanged() {
+  for (const l of activityListeners) l();
+}
+
+export function beginActivity(): () => void {
+  activeRequests += 1;
+  activityChanged();
+  let ended = false;
+  return () => {
+    if (ended) return;
+    ended = true;
+    activeRequests = Math.max(0, activeRequests - 1);
+    activityChanged();
+  };
+}
+
+export function isUpdating(): boolean {
+  return activeRequests > 0;
+}
+
+export const onActivityChange = (l: Listener) => activityListeners.add(l);
 
 export function retryDelay(intervalMs: number, failures: number, capMs = 15 * 60_000): number {
   return Math.min(intervalMs * 2 ** (failures - 1), capMs > intervalMs ? capMs : intervalMs);
@@ -50,18 +85,21 @@ export async function get<T>(
   const headers: Record<string, string> = {};
   if (TOKEN) headers["x-display-token"] = TOKEN;
   if (etag) headers["if-none-match"] = etag;
+  const endActivity = beginActivity();
   try {
     const r = await fetch(apiUrl(path, params), { headers, credentials: "same-origin" });
     // The service worker marks answers it served from its offline copy.
     const offlineCopy = r.headers.get("x-offline") === "1";
     const releaseVersion = r.headers.get("x-display-release");
-    setOffline(offlineCopy || r.status >= 500);
+    setServerOffline(!offlineCopy && r.status < 500 ? false : offlineCopy || r.status >= 500);
     if (r.status === 304) return { data: null, etag: etag ?? null, notModified: true, live: !offlineCopy, releaseVersion };
     if (!r.ok) return { data: null, etag: null, notModified: false, live: false, releaseVersion };
     return { data: (await r.json()) as T, etag: r.headers.get("etag"), notModified: false, live: !offlineCopy, releaseVersion };
   } catch {
-    setOffline(true);
+    setServerOffline(true);
     return { data: null, etag: null, notModified: false, live: false, releaseVersion: null };
+  } finally {
+    endActivity();
   }
 }
 
@@ -73,11 +111,16 @@ export function post(path: string, payload: unknown): void {
 export async function send(path: string, payload: unknown): Promise<boolean> {
   const headers: Record<string, string> = { "content-type": "application/json" };
   if (TOKEN) headers["x-display-token"] = TOKEN;
+  const endActivity = beginActivity();
   try {
     const r = await fetch(apiUrl(path), { method: "POST", headers, body: JSON.stringify(payload), credentials: "same-origin" });
+    setServerOffline(r.status >= 500);
     return r.ok;
   } catch {
+    setServerOffline(true);
     return false;
+  } finally {
+    endActivity();
   }
 }
 
@@ -85,13 +128,18 @@ export async function send(path: string, payload: unknown): Promise<boolean> {
 export async function sendExplained(path: string, payload: unknown): Promise<string | null> {
   const headers: Record<string, string> = { "content-type": "application/json" };
   if (TOKEN) headers["x-display-token"] = TOKEN;
+  const endActivity = beginActivity();
   try {
     const r = await fetch(apiUrl(path), { method: "POST", headers, body: JSON.stringify(payload), credentials: "same-origin" });
+    setServerOffline(r.status >= 500);
     if (r.ok) return null;
     const body = (await r.json().catch(() => ({}))) as { error?: unknown };
     return r.status === 502 && typeof body.error === "string" ? body.error.slice(0, 80) : "";
   } catch {
+    setServerOffline(true);
     return "";
+  } finally {
+    endActivity();
   }
 }
 
@@ -147,10 +195,15 @@ function resumeFeeds(): void {
 
 document.addEventListener("visibilitychange", () => (document.hidden ? pauseFeeds() : resumeFeeds()));
 window.addEventListener("offline", () => {
-  setOffline(true);
+  browserOffline = true;
+  setConnectionStatus();
   pauseFeeds();
 });
-window.addEventListener("online", resumeFeeds);
+window.addEventListener("online", () => {
+  browserOffline = false;
+  setConnectionStatus();
+  resumeFeeds();
+});
 
 export function subscribe<T>(path: string, everyMs: number, listener: (data: T) => void): () => void {
   let feed = feeds.get(path) as Feed<T> | undefined;
