@@ -11,6 +11,10 @@ import type { Mount } from "./types";
 // shared five-second feed, so ten tiles still make one request.
 
 export const HA_EVERY = 5000;
+export const LOCK_HOLD_MS = 700;
+export function completesLockHold(startedAt: number | null, now: number = performance.now()): boolean {
+  return startedAt !== null && now - startedAt >= LOCK_HOLD_MS;
+}
 
 type Kind = Exclude<HaControl, "auto">;
 
@@ -187,15 +191,57 @@ export const haEntity: Mount<"haEntity"> = (el, w) => {
         note,
       );
 
-    if (kind === "lock")
+    if (kind === "lock") {
       // Lock only (Melvin's wall screen is in a shared room): an unlocked door can be locked, never the reverse.
-      return fill(
-        root,
-        name,
-        h("div", { class: "ha-value" }, stateText(e)),
-        e.state === "locked" || dead(e) ? null : btn("Lock", () => void act("lock")),
-        note,
+      if (e.state === "locked" || dead(e)) return fill(root, name, h("div", { class: "ha-value" }, stateText(e)), note);
+      const lockBtn = h(
+        "button",
+        {
+          type: "button",
+          class: "ha-btn ha-lock",
+          "aria-label": "Hold to lock",
+          draggable: "false",
+        },
+        "Hold to lock",
       );
+      let lockHeldAt: number | null = null;
+      const stopLockHold = () => {
+        lockHeldAt = null;
+        lockBtn.classList.remove("holding");
+      };
+      lockBtn.addEventListener("pointerdown", (ev) => {
+        ev.preventDefault();
+        ev.stopPropagation();
+        stopLockHold();
+        lockHeldAt = performance.now();
+        lockBtn.classList.add("holding");
+        try {
+          lockBtn.setPointerCapture(ev.pointerId);
+        } catch {
+          // Pointer capture is optional; leaving or cancelling still cancels the hold.
+        }
+      });
+      lockBtn.addEventListener("pointerup", (ev) => {
+        ev.preventDefault();
+        ev.stopPropagation();
+        if (completesLockHold(lockHeldAt)) {
+          stopLockHold();
+          void act("lock");
+        } else {
+          stopLockHold();
+        }
+      });
+      lockBtn.addEventListener("pointerleave", stopLockHold);
+      lockBtn.addEventListener("pointercancel", stopLockHold);
+      lockBtn.addEventListener("contextmenu", (ev) => ev.preventDefault());
+      lockBtn.addEventListener("click", (ev) => {
+        ev.preventDefault();
+        ev.stopPropagation();
+        // Pointer holds already send lock from the timer; keyboard activation has no pointer detail.
+        if (ev.detail === 0) void act("lock");
+      });
+      return fill(root, name, h("div", { class: "ha-value" }, stateText(e)), lockBtn, note);
+    }
 
     return fill(
       root,
@@ -265,7 +311,7 @@ export const camera: Mount<"camera"> = (el, w) => {
     el.append(h("div", { class: "w-empty" }, "Pick a camera for this widget."));
     return () => undefined;
   }
-  const img = h("img", { class: "cam-img", alt: w.title || "Camera" });
+  const img = h("img", { class: "cam-img", alt: w.title || "Camera", draggable: "false" });
   const status = h("div", { class: "cam-status" });
   const label = w.title ? h("div", { class: "cam-label" }, w.title) : null;
   el.append(h("div", { class: "w-camera" }, img, label, status));

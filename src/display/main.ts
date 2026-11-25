@@ -55,6 +55,9 @@ window.addEventListener("unhandledrejection", (e) => report(String(e.reason), e.
 for (const type of ["gesturestart", "gesturechange", "gestureend"]) document.addEventListener(type, (e) => e.preventDefault());
 document.addEventListener("touchmove", (e) => e.touches.length > 1 && e.preventDefault(), { passive: false });
 document.addEventListener("wheel", (e) => e.ctrlKey && e.preventDefault(), { passive: false });
+// Wall displays must not open the browser's text/image action sheet during a deliberate hold or on camera pictures.
+document.addEventListener("contextmenu", (e) => e.preventDefault());
+document.addEventListener("dragstart", (e) => e.preventDefault());
 
 // ---- What to show now ----
 

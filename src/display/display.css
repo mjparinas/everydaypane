@@ -107,6 +107,14 @@ body {
   user-select: none;
   cursor: none;
 }
+img,
+button,
+a,
+canvas {
+  -webkit-user-drag: none;
+  -webkit-touch-callout: none;
+  user-select: none;
+}
 @media (hover: hover) {
   body {
     cursor: default;
@@ -1861,6 +1869,14 @@ html.portrait-view .stage {
   font-weight: 600;
 }
 .ha-btn:active {
+  transform: scale(0.96);
+}
+.ha-lock {
+  touch-action: none;
+}
+.ha-lock.holding {
+  background: var(--accent);
+  color: var(--bg);
   transform: scale(0.96);
 }
 .ha-btn:disabled {
