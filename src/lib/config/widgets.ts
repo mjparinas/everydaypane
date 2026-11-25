@@ -375,6 +375,26 @@ export const WIDGETS: { [T in WidgetType]: WidgetInfo<T> } = {
       animate: true,
     }),
   },
+  windy: {
+    label: "Windy map",
+    description: "Windy's weather map: radar, rain, wind, temperature, clouds, snow or air quality",
+    icon: "🌬️",
+    size: { w: 6, h: 4 },
+    minSize: { w: 2, h: 2 },
+    supportsTitle: false,
+    supportsFontScale: false,
+    // Langley until another place is picked, as the earth map does.
+    defaults: () => ({
+      place: "Langley",
+      latitude: 49.1,
+      longitude: -122.66,
+      zoom: 8,
+      overlay: "radar" as const,
+      marker: true,
+      pressure: false,
+      interactive: false,
+    }),
+  },
   shopping: {
     label: "Shopping list",
     description: "Groceries the family adds from their phones, ticked off with a tap",
@@ -602,7 +622,7 @@ export const WIDGET_GROUPS: { id: string; label: string; types: WidgetType[] }[]
   {
     id: "weather",
     label: "Weather & map",
-    types: ["weather", "tempest", "weatherUnderground", "airQuality", "radar", "wildfires", "earth"],
+    types: ["weather", "tempest", "weatherUnderground", "airQuality", "radar", "wildfires", "earth", "windy"],
   },
   {
     id: "calendar",

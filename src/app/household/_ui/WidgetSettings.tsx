@@ -8,6 +8,7 @@ import { WIDGETS } from "@/lib/config/widgets";
 import { EARTH_OVERLAY_LABELS, EARTH_OVERLAYS, EARTH_ZOOM_LABELS, EARTH_ZOOMS } from "@/lib/earth";
 import { FERRY_ROUTES, ferryRouteName } from "@/lib/ferries";
 import { MEAL_LABELS, MEAL_SLOTS } from "@/lib/meals";
+import { WINDY_OVERLAY_LABELS, WINDY_OVERLAYS, windyPressureAllowed } from "@/lib/windy";
 
 import { PlaceFinder } from "./CommutePanel";
 import { Range, Segmented, Select, Stepper, Text, TextArea, Toggle } from "./fields";
@@ -772,6 +773,87 @@ function TypeSettings({
             The map is earth.nullschool.net by Cameron Beccario, shown as it is on that site. It is hidden while the screen saver is on,
             loads again every hour for new weather, and doesn&rsquo;t respond to touch on the wall. The place is sent to
             earth.nullschool.net rounded to about a kilometre.
+          </p>
+        </>
+      );
+    }
+    case "windy": {
+      const e = edit<"windy">();
+      const home = config.location;
+      const atHome = w.latitude === home.latitude && w.longitude === home.longitude;
+      return (
+        <>
+          <div className="grid gap-1">
+            <p className="text-sm font-medium">Centred on</p>
+            <p className="text-sm">
+              {w.place || "A place"} ({w.latitude.toFixed(2)}, {w.longitude.toFixed(2)})
+            </p>
+            {!atHome && (
+              <button
+                type="button"
+                className="btn-ghost justify-start"
+                onClick={() =>
+                  e((x) => {
+                    x.place = home.name.slice(0, 80);
+                    x.latitude = home.latitude;
+                    x.longitude = home.longitude;
+                  })
+                }
+              >
+                Use the dashboard&rsquo;s location{home.name ? ` (${home.name})` : ""}
+              </button>
+            )}
+          </div>
+          <PlaceFinder
+            label="Another place"
+            button="Find"
+            placeholder="Town or city, anywhere"
+            nothing="Nothing matched. Try a town or city name, like \u201cManila\u201d."
+            url={(q) => `/api/household/places/?${new URLSearchParams({ q })}`}
+            onPick={(p) =>
+              e((x) => {
+                x.place = p.label.slice(0, 80);
+                x.latitude = p.latitude;
+                x.longitude = p.longitude;
+              })
+            }
+          />
+          <Select
+            label="Layer"
+            value={w.overlay}
+            options={WINDY_OVERLAYS.map((o) => ({ value: o, label: WINDY_OVERLAY_LABELS[o] }))}
+            onChange={(v) => e((x) => void (x.overlay = v))}
+          />
+          <Select
+            label="Map area"
+            value={String(w.zoom)}
+            options={[
+              { value: "3", label: "North America" },
+              { value: "4", label: "Western Canada and the U.S." },
+              { value: "5", label: "B.C. and Washington" },
+              { value: "6", label: "Southern B.C." },
+              { value: "7", label: "South coast" },
+              { value: "8", label: "Lower Mainland" },
+              { value: "9", label: "Fraser Valley" },
+              { value: "10", label: "Close to home" },
+              { value: "11", label: "The neighbourhood" },
+            ]}
+            onChange={(v) => e((x) => void (x.zoom = Number(v)))}
+          />
+          <Toggle label="Mark the place" checked={w.marker} onChange={(v) => e((x) => void (x.marker = v))} />
+          {windyPressureAllowed(w.overlay) && (
+            <Toggle label="Pressure lines" checked={w.pressure} onChange={(v) => e((x) => void (x.pressure = v))} />
+          )}
+          <Toggle
+            label="Let people move the map"
+            checked={w.interactive}
+            onChange={(v) => e((x) => void (x.interactive = v))}
+            hint="Off, a tap can't pan or zoom it away from the place. On, touches on the map don't count as using the screen for the screen saver."
+          />
+          <p className="text-xs text-soft">
+            The map is Windy&rsquo;s own (windy.com), in {config.units === "metric" ? "°C, km/h and mm" : "°F, mph and inches"} from
+            Settings. It is hidden while the screen saver is on and loads again every half hour. It is heavier than the other widgets, so
+            one per view is plenty. The place is sent to Windy rounded to about a kilometre.
           </p>
         </>
       );

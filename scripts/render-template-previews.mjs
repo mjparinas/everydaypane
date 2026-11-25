@@ -235,6 +235,13 @@ await page.route("**/*nullschool.net/**", async (route) => {
     body: readSample("earth.html"),
   });
 });
+await page.route("**/embed.windy.com/**", async (route) => {
+  route.fulfill({
+    status: 200,
+    contentType: "text/html",
+    body: readSample("windy.html"),
+  });
+});
 await page.route(/tradingview\.com|youtube\.com|youtu\.be|vimeo\.com|google\.com\/maps|maps\.google\.|instagram\.com/, async (route) => {
   route.fulfill({
     status: 200,

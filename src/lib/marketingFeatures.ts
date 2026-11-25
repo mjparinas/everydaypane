@@ -30,6 +30,7 @@ const FEATURE_BLURBS: Partial<Record<WidgetType, string>> = {
   radar: "Environment Canada observed + forecast over a map.",
   wildfires: "BC Wildfire Service fires, burned areas and evacuation areas on a map, nearest fires listed.",
   earth: "earth.nullschool.net centred on your place.",
+  windy: "Windy's map on one layer: radar, rain, wind, temperature, clouds, snow or air quality.",
   agenda: "Today or the next 1–14 days from Google, iCal and family events.",
   calendarMonth: "Month or 1–6 weeks, weekends on/off, fit titles, scroll.",
   calendarWeek: "One week in a grid, optional weekends.",
