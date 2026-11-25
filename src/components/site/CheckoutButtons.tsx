@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
-import { APP_PATH } from "@/lib/site";
+import { APP_PATH, signUpHref } from "@/lib/site";
 
 /** Household upgrade via existing Stripe Checkout (`/api/household/billing/`). */
 export function HouseholdCheckoutButton({ className = "", label = "Get Household" }: { className?: string; label?: string }) {
@@ -17,7 +17,7 @@ export function HouseholdCheckoutButton({ className = "", label = "Get Household
     try {
       const r = await fetch("/api/household/billing/?action=checkout", { method: "POST" });
       if (r.status === 401) {
-        router.push(`/signin/?intent=signup&next=${encodeURIComponent("/pricing/")}`);
+        router.push(signUpHref("/pricing/"));
         return;
       }
       const j = (await r.json()) as { url?: string; error?: string };

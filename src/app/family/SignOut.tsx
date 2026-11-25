@@ -3,6 +3,8 @@
 import { useClerk } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 
+import { signInHref } from "@/lib/site";
+
 export function SignOut() {
   const clerkReady = Boolean(process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY?.startsWith("pk_"));
   return clerkReady ? <ClerkSignOut /> : <TestSignOut />;
@@ -29,7 +31,7 @@ function ClerkSignOut() {
     <button
       className="btn-ghost"
       onClick={() => {
-        void signOut({ redirectUrl: "/signin/" }).catch(() => router.replace("/signin/"));
+        void signOut({ redirectUrl: signInHref() }).catch(() => router.replace(signInHref()));
       }}
     >
       Sign out

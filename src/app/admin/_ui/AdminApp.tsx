@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 
 import { OPEN_TABS, PERIOD_TABS, resolveAdminTab, type AdminTab } from "@/lib/adminTabs";
+import { signInHref } from "@/lib/site";
 
 import { AdminAuthCard, AdminShell } from "./AdminChrome";
 import { AdminCommandPalette } from "./AdminCommandPalette";
@@ -281,11 +282,11 @@ export function AdminApp() {
 
 function SignIn() {
   useEffect(() => {
-    window.location.replace("/signin/?next=/admin/");
+    window.location.replace(signInHref("/admin/"));
   }, []);
   return (
     <AdminAuthCard title="Staff sign-in" sub="Redirecting to Everydaypane sign-in. Only ADMIN_EMAILS / SUPPORT_EMAILS can open this panel.">
-      <a className="btn-primary" href="/signin/?next=/admin/">
+      <a className="btn-primary" href={signInHref("/admin/")}>
         Continue to sign-in
       </a>
     </AdminAuthCard>
@@ -301,7 +302,7 @@ function TwoFactorGate({ email }: { email: string }) {
       <p className="text-sm text-soft">
         Platform staff must complete Clerk&rsquo;s second factor when <code>ADMIN_2FA</code> is required (the default).
       </p>
-      <a className="btn-primary mt-4" href="/signin/?next=/admin/">
+      <a className="btn-primary mt-4" href={signInHref("/admin/")}>
         Sign in again
       </a>
     </AdminAuthCard>
