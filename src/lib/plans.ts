@@ -60,10 +60,10 @@ export function isHouseholdTab(tab: string): tab is HouseholdTab {
 }
 
 /**
- * Settings jump-nav groups that are mostly Household. Mixed groups (calendars, photos-music, screen, alerts)
+ * Settings jump-nav groups that are mostly Household. Mixed groups (calendars, photos-music, screen)
  * stay open on Free; individual sections use badges / soft locks in the panel.
  */
-export const HOUSEHOLD_SETTINGS_GROUPS = ["tasks", "family", "content", "ha"] as const;
+export const HOUSEHOLD_SETTINGS_GROUPS = ["family", "content", "ha"] as const;
 
 export function isHouseholdSettingsGroup(id: string): boolean {
   return (HOUSEHOLD_SETTINGS_GROUPS as readonly string[]).includes(id);
