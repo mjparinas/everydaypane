@@ -17,7 +17,15 @@ const DESIGN_H = 1080;
 /** Reused by "Open full preview" so switching views navigates the same tab instead of leaving a stale one. */
 const FULL_PREVIEW = "everydaypane-preview";
 
-type Drag = { id: string; mode: "move" | Corner; offset: { x: number; y: number }; pointer: number; moved: boolean; rect: Rect };
+type Drag = {
+  id: string;
+  mode: "move" | Corner;
+  offset: { x: number; y: number };
+  origin: { x: number; y: number };
+  pointer: number;
+  moved: boolean;
+  rect: Rect;
+};
 
 /** Last full-preview tab opened from the Views editor (module-level so remounts keep the handle). */
 let fullPreviewWin: Window | null = null;
@@ -172,6 +180,7 @@ export function LiveLayoutEditor({
       id: w.id,
       mode,
       offset: { x: c.x - w.x, y: c.y - w.y },
+      origin: { x: e.clientX, y: e.clientY },
       pointer: e.pointerId,
       moved: false,
       rect: { x: w.x, y: w.y, w: w.w, h: w.h },
@@ -181,10 +190,26 @@ export function LiveLayoutEditor({
   function move(e: React.PointerEvent, w: Widget) {
     if (!drag || drag.pointer !== e.pointerId || drag.id !== w.id) return;
     const c = cellFromEvent(e);
+    let resizeCell = c;
+    if (drag.mode !== "move") {
+      const el = overlay.current;
+      if (el) {
+        const r = el.getBoundingClientRect();
+        const shellWidth = shell.current?.clientWidth ?? r.width;
+        const pad = (view.padding * shellWidth) / DESIGN_W;
+        const gap = gapPx(shellWidth);
+        const cw = (r.width - pad * 2 - gap * (grid.cols - 1)) / grid.cols;
+        const ch = (r.height - pad * 2 - gap * (grid.rows - 1)) / grid.rows;
+        resizeCell = {
+          x: Math.abs(e.clientX - drag.origin.x) < cw / 2 ? (drag.mode.endsWith("w") ? w.x : w.x + w.w - 1) : c.x,
+          y: Math.abs(e.clientY - drag.origin.y) < ch / 2 ? (drag.mode.startsWith("n") ? w.y : w.y + w.h - 1) : c.y,
+        };
+      }
+    }
     const rect =
       drag.mode === "move"
         ? clampRect({ x: c.x - drag.offset.x, y: c.y - drag.offset.y, w: w.w, h: w.h }, grid)
-        : resizeFrom(w, drag.mode, c, grid, minOf(w));
+        : resizeFrom(w, drag.mode, resizeCell, grid, minOf(w));
     if (rect.x !== drag.rect.x || rect.y !== drag.rect.y || rect.w !== drag.rect.w || rect.h !== drag.rect.h) {
       setDrag({ ...drag, rect, moved: true });
     }
