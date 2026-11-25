@@ -9,7 +9,22 @@ import { diffWidgets, isPortraitView, placeWidgets, sameStageGrid, stageGridStyl
 
 import { onAlarm, startAlarms } from "./alarm";
 import { alertStrip } from "./alerts";
-import { get, offline, onOfflineChange, post, PREVIEW, previewMode, retryDelay, setPreviewMode, subscribe, TOKEN } from "./api";
+import {
+  beginActivity,
+  connectionStatus,
+  get,
+  isUpdating,
+  offline,
+  onActivityChange,
+  onOfflineChange,
+  post,
+  PREVIEW,
+  previewMode,
+  retryDelay,
+  setPreviewMode,
+  subscribe,
+  TOKEN,
+} from "./api";
 import { h } from "./dom";
 import { attachModal } from "./modal";
 import { screenSaver, type Saver } from "./saver";
@@ -42,6 +57,8 @@ let draftActive = false;
 const stage = h("main", { class: "stage" });
 const dim = h("div", { class: "dim", "aria-hidden": "true" });
 const offlineDot = h("div", { class: "offline", role: "status" }, "Offline · showing saved data");
+const activityIndicator = h("div", { class: "updating", role: "status", "aria-label": "Checking for updates" });
+activityIndicator.append(h("span", { class: "spinner", "aria-hidden": "true" }), h("span", {}, "Updating"));
 
 // ---- Errors go to our own server, which passes them to Sentry. ----
 let reported = 0;
@@ -606,6 +623,7 @@ function lockDisplayControl(): HTMLButtonElement | null {
     stopHold();
     label.textContent = "Locking…";
     btn.disabled = true;
+    const endActivity = beginActivity();
     void fetch("/api/auth/device/signout/", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -620,7 +638,8 @@ function lockDisplayControl(): HTMLButtonElement | null {
         locking = false;
         btn.disabled = false;
         label.textContent = "Lock";
-      });
+      })
+      .finally(endActivity);
   };
 
   const startHold = (ev: PointerEvent) => {
@@ -654,9 +673,16 @@ async function start() {
   if (PREVIEW && !previewMode) setPreviewMode("day");
   const modeBtn = previewModeToggle();
   const lockBtn = lockDisplayControl();
-  app.replaceChildren(stage, dim, offlineDot, ...(modeBtn ? [modeBtn] : []), ...(lockBtn ? [lockBtn] : []));
+  app.replaceChildren(stage, dim, offlineDot, activityIndicator, ...(modeBtn ? [modeBtn] : []), ...(lockBtn ? [lockBtn] : []));
   saver = screenSaver(app, () => payload);
-  onOfflineChange(() => offlineDot.classList.toggle("show", offline));
+  const updateConnectionIndicator = () => {
+    offlineDot.classList.toggle("show", offline);
+    offlineDot.textContent =
+      connectionStatus === "browser-offline" ? "Offline · showing saved data" : "Server unavailable · showing saved data";
+  };
+  onOfflineChange(updateConnectionIndicator);
+  onActivityChange(() => activityIndicator.classList.toggle("show", isUpdating()));
+  updateConnectionIndicator();
   // Timers and pomodoros set before a reload still ring, whichever view is showing.
   startAlarms();
   // A kitchen or pomodoro timer going off wakes the screen saver, so its full-screen alarm is seen.
