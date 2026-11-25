@@ -2080,6 +2080,30 @@ html.portrait-view .stage {
   margin-top: auto;
   accent-color: var(--accent);
 }
+.ha-swatches {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.ha-swatch {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 2px solid rgb(0 0 0 / 0.15);
+}
+.ha-swatch.on {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+}
+.ha-scene {
+  width: 100%;
+  min-height: 40px;
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-size: calc(16px * var(--font-scale, 1));
+}
 .ha-msg {
   color: var(--muted);
   font-size: calc(14px * var(--font-scale, 1));

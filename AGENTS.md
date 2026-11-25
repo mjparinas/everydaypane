@@ -37,7 +37,7 @@ same change, and moves it out of **In progress** when it merges.
 | Up next (`calendarUpNext`) | The next event large, with a short following list | Same calendar feed |
 | Garbage day (`garbage`) | Next pickups, 1 to 8 weeks | Township of Langley (Recycle Coach) |
 | Photos (`photos`) | Slideshow, cover or contain, captions | Amazon shared albums, Amazon people, URL lists, photo library (uploads and Google Photos picks), Bing picture of the day, Reddit, weather-linked albums, Immich, Dropbox, OneDrive, Box, Flickr, SmugMug, iCloud published links (`docs/icloud-photos.md`) |
-| Smart device (`haEntity`) | Toggle, light, sensor, climate, cover, lock (lock only), button; `provider` Home Assistant (default), **Nest**, **ecobee** or **SmartThings** | Shared `/api/display/ha/` feed; OAuth + REST for native providers (`docs/nest.md`, `docs/ecobee.md`, `docs/smartthings.md`) |
+| Smart device (`haEntity`) | Toggle, light, sensor, climate, cover, lock (lock only), button; `provider` Home Assistant (default), **Nest**, **ecobee**, **SmartThings** or **Govee lights** (on/off, brightness, colour swatches, scenes) | Shared `/api/display/ha/` feed; OAuth + REST for native providers, an API key for Govee (`docs/nest.md`, `docs/ecobee.md`, `docs/smartthings.md`, `docs/govee.md`) |
 | Camera (`camera`) | UniFi Protect snapshot on a timer | Home Assistant |
 | Music (`media`) | Now playing, play/pause, skip, volume, sources | Home Assistant, Spotify or Sonos |
 | Note (`note`) | Fixed text from the admin | Settings document |
@@ -136,7 +136,7 @@ gated by that allow-list; Overview through Log (Households, Displays,
 Revenue, Traffic, Codes, Flags, …). Cookieless marketing beacon. Customer path is `/household/`.
 
 **Integrations connected from Settings:** Google Calendar, Microsoft 365 calendars and **To Do** (OAuth, `?todo=1` / `?files=1`), Google Tasks, **Todoist**, Google Photos (Picker), iCal calendar links (with iCloud publish steps in Settings and `docs/icloud-calendar.md`),
-Amazon Photos, **photo sources** (Bing, Reddit, weather albums, Immich API keys, Dropbox/Box/SmugMug OAuth, OneDrive via Microsoft, Flickr API key, iCloud published URLs), the photo library (Vercel Blob), Home Assistant (Cloudflare Tunnel + Access), Spotify, Sonos, garbage
+**Govee** (API key, Settings › Smart home), Amazon Photos, **photo sources** (Bing, Reddit, weather albums, Immich API keys, Dropbox/Box/SmugMug OAuth, OneDrive via Microsoft, Flickr API key, iCloud published URLs), the photo library (Vercel Blob), Home Assistant (Cloudflare Tunnel + Access), Spotify, Sonos, garbage
 zone lookup, sports teams to follow, TransLink, commute places (TomTom geocoding), optional **package tracking** key.
 
 ## In progress
@@ -630,6 +630,15 @@ panel can be complex if you need it to be."
   keyed `nest.*`, `ecobee.*`, `smartthings.*` (`src/server/smartDevices.ts`). Only entities on a widget can be controlled;
   locks are **lock only** on SmartThings. Nest needs Google Device Access (`NEST_PROJECT_ID`, paid subscription).
   Setup: `docs/nest.md`, `docs/ecobee.md`, `docs/smartthings.md`.
+- **Govee lights** (Melvin, 2026-11-21: "do all 6", Govee one of them; native cloud APIs, not Home Assistant): a Smart
+  device widget with `provider: "govee"` drives a light through Govee's official developer API
+  (`openapi.api.govee.com/router/api/v1`, `src/server/govee.ts`) with the household's own API key from the Govee Home
+  app (encrypted `govee.apiKey`, checked with Govee before it is saved in Settings › Smart home). Lights are `govee.*`
+  rows on the same `/api/display/ha/` feed, with `color` (#rrggbb) and `scenes` (names only; the server keeps what each
+  sends). Actions `color` (RGB number) and `scene` (by name) join `HA_ACTIONS`; only lights on a widget, and only
+  capabilities the device lists, are sent. Govee's rate limits (30 state reads a minute per light, a reported 10,000 a
+  day per key) mean states are kept per light for `stateEveryMs` (a minute, longer with many lights, about 6,000 reads
+  a day at most), the device list 10 minutes and scenes a day; a tap updates the kept state at once. Setup: `docs/govee.md`.
 - **Tempest, Weather Underground and Nutrislice** (Phase 4, Household): Tempest and WU station settings in
   `config.integrations.smartHome`; Tempest token and optional WU key in secrets. **Menus** widget reads Nutrislice JSON
   only (`src/server/menus.ts`), never the `meals` table.

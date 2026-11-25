@@ -5,6 +5,7 @@ import { FERRY_ROUTES } from "../ferries";
 import { MEAL_SLOTS } from "../meals";
 import { NEWS_PRESETS } from "../newsPresets";
 import { SCREEN_SAVER_OFF } from "../screenSaver";
+import { SMART_HOME_PROVIDERS } from "../smartHome";
 import { LEAGUE_IDS, MAX_TEAMS } from "../sports";
 import { PERIODS } from "./periods";
 
@@ -206,7 +207,8 @@ export const widgetSchema = z.discriminatedUnion("type", [
   z.object({
     ...base,
     type: z.literal("haEntity"),
-    provider: z.enum(["homeAssistant", "nest", "ecobee", "smartthings"]).default("homeAssistant"),
+    // Govee lights (Melvin, 2026-11-21) join the direct providers: on/off, brightness, colour and scenes.
+    provider: z.enum(SMART_HOME_PROVIDERS).default("homeAssistant"),
     entityId: z.string().max(255),
     control: haControlSchema,
   }),

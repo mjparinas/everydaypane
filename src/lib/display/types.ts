@@ -322,6 +322,10 @@ export interface HaEntity {
   max?: number;
   step?: number;
   action?: string;
+  /** Colour lights (Govee): the colour now as #rrggbb, present only when the light can change colour. */
+  color?: string;
+  /** Scenes the light offers (Govee), by name; the server keeps what each name sends. */
+  scenes?: string[];
   /** Media players (Sonos, Spotify): what's playing and how loud. Only for media_player entities. */
   media?: HaMedia;
 }

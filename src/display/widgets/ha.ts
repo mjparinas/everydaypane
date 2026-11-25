@@ -21,7 +21,9 @@ type Kind = Exclude<HaControl, "auto">;
 /** The control an entity gets when the widget says "auto". */
 export function controlFor(entityId: string, control: HaControl): Kind {
   if (control !== "auto") return control;
-  if (nativeProviderFromEntity(entityId)) {
+  const native = nativeProviderFromEntity(entityId);
+  if (native === "govee") return "light";
+  if (native) {
     if (entityId.startsWith("smartthings.") && entityId.includes("lock")) return "lock";
     return "climate";
   }
@@ -57,6 +59,48 @@ export function stateText(e: HaEntity): string {
 const isOn = (e: HaEntity) => ["on", "open", "opening", "playing", "heat", "cool", "heat_cool", "auto"].includes(e.state);
 const dead = (e: HaEntity) => e.state === "unavailable" || e.state === "unknown";
 
+/** Colours a tap can set on a colour light: warm white first, then a few bright ones. */
+export const LIGHT_COLOURS: readonly [string, string][] = [
+  ["#ffd9a8", "Warm white"],
+  ["#ffffff", "White"],
+  ["#ff3b30", "Red"],
+  ["#ff9500", "Orange"],
+  ["#34c759", "Green"],
+  ["#0a84ff", "Blue"],
+  ["#af52de", "Purple"],
+  ["#ff2d92", "Pink"],
+];
+
+function swatches(current: string, onPick: (rgb: number) => void): HTMLElement {
+  const row = h("div", { class: "ha-swatches", role: "group", "aria-label": "Colour" });
+  for (const [hex, label] of LIGHT_COLOURS) {
+    const b = h("button", {
+      type: "button",
+      class: hex === current.toLowerCase() ? "ha-swatch on" : "ha-swatch",
+      "aria-label": label,
+    });
+    // Through the CSSOM rather than a style attribute, which the display's CSP doesn't allow.
+    b.style.backgroundColor = hex;
+    b.addEventListener("click", (ev) => {
+      ev.stopPropagation();
+      onPick(parseInt(hex.slice(1), 16));
+    });
+    row.append(b);
+  }
+  return row;
+}
+
+function scenePicker(scenes: string[], onPick: (name: string) => void): HTMLElement {
+  const select = h("select", { class: "ha-scene", "aria-label": "Scene" }, h("option", { value: "" }, "Scene…"));
+  for (const name of scenes) select.append(h("option", { value: name }, name));
+  select.addEventListener("click", (ev) => ev.stopPropagation());
+  select.addEventListener("change", () => {
+    if (select.value) onPick(select.value);
+    select.value = "";
+  });
+  return select;
+}
+
 export const haEntity: Mount<"haEntity"> = (el, w) => {
   const kind = controlFor(w.entityId, w.control);
   const root = h("div", { class: `w-ha ha-${kind}` }, h("div", { class: "w-empty" }, "Loading…"));
@@ -68,8 +112,8 @@ export const haEntity: Mount<"haEntity"> = (el, w) => {
   let message = "";
   let messageTimer: number | undefined;
 
-  const act = async (action: string, value?: number) => {
-    const ok = await send("ha", { entity: w.entityId, action, value });
+  const act = async (action: string, value?: number, option?: string) => {
+    const ok = await send("ha", { entity: w.entityId, action, value, option });
     const provider = w.provider ?? "homeAssistant";
     say(ok ? "" : provider === "homeAssistant" ? "Couldn't reach Home Assistant" : "Couldn't reach the device");
     window.setTimeout(() => refresh("ha"), 400);
@@ -93,7 +137,7 @@ export const haEntity: Mount<"haEntity"> = (el, w) => {
   const draw = () => {
     if (!entity) return;
     const e = entity;
-    const key = `${e.state}|${e.brightness}|${e.current}|${e.target}|${pendingTarget}|${message}|${e.name}`;
+    const key = `${e.state}|${e.brightness}|${e.current}|${e.target}|${pendingTarget}|${message}|${e.name}|${e.color}|${e.scenes?.length}`;
     if (key === drawnKey) return;
     drawnKey = key;
     const name = h("div", { class: "w-label" }, w.title || e.name);
@@ -126,7 +170,7 @@ export const haEntity: Mount<"haEntity"> = (el, w) => {
           void act("toggle");
         });
       }
-      const parts = [switchBtn, note];
+      const parts: (HTMLElement | null)[] = [switchBtn, note];
       if (kind === "light" && e.state === "on" && e.brightness !== undefined) {
         const pct = Math.max(1, Math.round((e.brightness / 255) * 100));
         const range = h("input", { type: "range", class: "ha-range", min: 1, max: 100, value: pct, "aria-label": "Brightness" });
@@ -134,6 +178,10 @@ export const haEntity: Mount<"haEntity"> = (el, w) => {
         range.addEventListener("change", () => void act("brightness", Number(range.value)));
         parts.push(range);
       }
+      // Govee colour lights: a row of colours and the light's scenes, only while it is on.
+      if (kind === "light" && e.state === "on" && e.color !== undefined) parts.push(swatches(e.color, (rgb) => void act("color", rgb)));
+      if (kind === "light" && e.state === "on" && e.scenes?.length)
+        parts.push(scenePicker(e.scenes, (name) => void act("scene", undefined, name)));
       return fill(root, ...parts);
     }
 

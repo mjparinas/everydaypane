@@ -233,6 +233,9 @@ export const HA_ACTIONS = [
   "mute",
   "unmute",
   "source",
+  // Colour lights (Govee): an RGB number 0 to 0xffffff, or a scene by name (`option`).
+  "color",
+  "scene",
 ] as const;
 export type HaAction = (typeof HA_ACTIONS)[number];
 
@@ -294,7 +297,7 @@ export async function act(
   if (!usedEntities(config).controls.has(entityId)) return "forbidden";
   if (nativeProviderFromEntity(entityId)) {
     memo = null;
-    return nativeAct(accountId, config, entityId, action, value);
+    return nativeAct(accountId, config, entityId, action, value, option);
   }
   const service = serviceFor(entityId, action, value, option);
   if (!service) return "forbidden";

@@ -260,6 +260,7 @@ describe("Home Assistant tiles", () => {
     expect(controlFor("light.kitchen", "auto")).toBe("light");
     expect(controlFor("switch.kettle", "auto")).toBe("toggle");
     expect(controlFor("lock.front", "auto")).toBe("lock");
+    expect(controlFor("govee.h6008_ab_cd", "auto")).toBe("light");
     expect(controlFor("scene.movie", "auto")).toBe("button");
     expect(controlFor("sensor.outside", "auto")).toBe("sensor");
     expect(controlFor("light.kitchen", "sensor")).toBe("sensor");
