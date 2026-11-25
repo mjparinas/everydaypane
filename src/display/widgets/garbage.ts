@@ -21,7 +21,7 @@ export const garbage: Mount<"garbage"> = (el, w, ctx) => {
 
   const draw = (now: Date) => {
     if (!data) return;
-    if (!data.configured) return fill(root, h("div", { class: "w-empty" }, "Pick your address under Settings in the admin panel."));
+    if (!data.configured) return fill(root, h("div", { class: "w-empty" }, "Pick your address under Settings."));
     const today = localDate(now.getTime(), ctx.timeZone);
     const evening = Number(fmt(ctx.timeZone, { hour: "numeric", hourCycle: "h23" }).format(now)) >= 15;
     const sig = `${data.updatedAt}|${today}|${evening}`;

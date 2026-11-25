@@ -15,7 +15,7 @@ export const countdown: Mount<"countdown"> = (el, w, ctx) => {
     lastDay = today;
     const list = upcoming(w.events, today).slice(0, w.count);
     if (!list.length) {
-      fill(root, h("div", { class: "w-empty" }, "Add holidays and birthdays in the admin panel."));
+      fill(root, h("div", { class: "w-empty" }, "Add holidays and birthdays under Settings."));
       return;
     }
     fill(

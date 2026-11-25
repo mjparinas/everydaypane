@@ -82,8 +82,9 @@ export const shopping: Mount<"shopping"> = (el, w) => {
         "ul",
         { class: "sh-items" },
         ...items.map((item) => {
+          // Circles only when ticking is on — otherwise they look tappable (critique P2, 2026-11-24).
           const parts = [
-            h("span", { class: "sh-check", "aria-hidden": "true" }, item.done ? "✓" : ""),
+            w.allowCheck ? h("span", { class: "sh-check", "aria-hidden": "true" }, item.done ? "✓" : "") : null,
             h("span", { class: "sh-title" }, item.text),
           ];
           const cls = `sh-item${item.done ? " sh-done" : ""}`;

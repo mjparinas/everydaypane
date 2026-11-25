@@ -363,10 +363,12 @@ panel can be complex if you need it to be."
   the opposite corner held still (Melvin, 2026-11-21: "allow any corner of a widget to adjust the size"), and also moves
   and resizes with the keyboard; widgets never leave the grid and never overlap, except that other widgets may sit on
   top of a photos widget (`src/lib/config/grid.ts`). Tapping a widget opens `WidgetSettingsDrawer` from the right; Edit
-  view opens `ViewSettingsDrawer` (shared `SlideDrawer` chrome). Add widget leads with four kitchen recommendations
-  before the full catalogue. Free plan soft-locks (`PlanProvider` in `plan.tsx`) gate Family destinations, paid widgets,
-  Household starter templates, and paid Settings groups via Plan chip / blocked controls (not badge rain on idle nav);
-  `#upgrade` opens the why-upgrade dialog with Stripe Checkout. Settings jump nav: Home → Everyday (≤4 chips) → Advanced.
+  view opens `ViewSettingsDrawer` (shared `SlideDrawer` chrome).   Add widget leads with four kitchen recommendations, then intent chips (Today / Family / Home / More) before the full
+  catalogue; Free Household widgets stay collapsed behind a count. Starter templates scroll into view with a status note
+  when opened under the live preview. Free plan soft-locks (`PlanProvider` in `plan.tsx`) gate Family destinations, paid
+  widgets, Household starter templates, and paid Settings groups via Plan chip / blocked controls (not badge rain on idle
+  nav); `#upgrade` opens the why-upgrade dialog with Stripe Checkout. Settings jump nav: Home → Everyday (≤4 chips) →
+  Advanced. Wall empty states point at Household Settings (not “admin panel”).
 - **Platform admin** (`src/app/admin/`, `/api/admin/`): staff-only ops (`src/server/adminAuth.ts`, TOTP in
   `twoFactor.ts`); Tuned-style tabs via `/api/admin/[action]/`. Not the household settings UI.
 - **Widgets over photos** (Melvin, 2026-11-21: "allow other widgets to be placed on top of the photos widget"): photos

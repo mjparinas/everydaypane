@@ -172,8 +172,9 @@ export const chores: Mount<"chores"> = (el, w, ctx) => {
   };
 
   const itemRow = (p: Person, { key, chore, done }: Item) => {
+    // Circles only when ticking is on — otherwise they look tappable (critique P2, 2026-11-24).
     const parts = [
-      h("span", { class: "ch-check", "aria-hidden": "true" }, done ? "✓" : ""),
+      w.allowCheck ? h("span", { class: "ch-check", "aria-hidden": "true" }, done ? "✓" : "") : null,
       h("span", { class: "ch-title" }, chore.emoji ? `${chore.emoji} ${chore.name}` : chore.name),
       w.showStars ? h("span", { class: "ch-worth" }, "★".repeat(chore.stars)) : null,
     ];
@@ -206,8 +207,7 @@ export const chores: Mount<"chores"> = (el, w, ctx) => {
   function draw() {
     if (!data) return;
     const cols = columns(data, w.personIds, ticks);
-    if (!cols.length)
-      return fill(root, h("div", { class: "w-empty" }, "Add the kids and their chores under Settings › Chores in the admin panel."));
+    if (!cols.length) return fill(root, h("div", { class: "w-empty" }, "Add the kids and their chores under Settings › Chores."));
     const active = activePeriod(hourInZone(new Date(), ctx.timeZone));
     const showBands = w.layout === "byPeriod";
     const showProgress = w.layout === "progress";

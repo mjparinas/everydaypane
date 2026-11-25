@@ -10,13 +10,19 @@ import { Text } from "./fields";
 import { HouseholdBadge, usePlan } from "./plan";
 import { SlideDrawer } from "./SlideDrawer";
 
-// Right slide-out widget picker (Melvin, 2026-11-22): same chrome as Edit view / widget settings so the live
-// layout stays visible while choosing what to add. Free greys Household widgets and opens upgrade (2026-11-23).
-// Critique quieter 2026-11-24: lead with four kitchen recommendations; full catalogue behind disclosure; paid
-// widgets demoted to one Household bucket on Free.
+// Right slide-out widget picker (Melvin, 2026-11-22). Critique quieter/distill 2026-11-24: Recommended four,
+// then intent chips before the full catalogue; Free Household widgets collapse behind one summary row.
 
-/** Kitchen defaults — clock, weather, schedule, photos (critique P1). */
+/** Kitchen defaults — clock, weather, schedule, photos. */
 const RECOMMENDED: WidgetType[] = ["clock", "weather", "agenda", "photos"];
+
+/** Browse-all intents (critique P1) — fewer choices before the full group wall. */
+const INTENTS: { id: string; label: string; groupIds: string[] }[] = [
+  { id: "today", label: "Today", groupIds: ["time", "weather", "calendar"] },
+  { id: "family", label: "Family", groupIds: ["family"] },
+  { id: "home", label: "Home", groupIds: ["home", "media"] },
+  { id: "more", label: "More", groupIds: ["finance", "content", "social"] },
+];
 
 type CatalogueGroup = { id: string; label: string; types: WidgetType[] };
 
@@ -83,6 +89,8 @@ export function AddWidgetDrawer({ onClose, onPick }: { onClose: () => void; onPi
   const { isPaid, openUpgrade } = usePlan();
   const [query, setQuery] = useState("");
   const [browseAll, setBrowseAll] = useState(false);
+  const [intent, setIntent] = useState<(typeof INTENTS)[number]["id"]>("today");
+  const [showHousehold, setShowHousehold] = useState(false);
 
   const filteredTypes = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -93,18 +101,22 @@ export function AddWidgetDrawer({ onClose, onPick }: { onClose: () => void; onPi
     });
   }, [query]);
 
-  const catalogueGroups = useMemo((): CatalogueGroup[] => {
-    if (isPaid) {
-      return WIDGET_GROUPS.map((g) => ({ id: g.id, label: g.label, types: [...g.types] }));
-    }
-    const freeGroups: CatalogueGroup[] = WIDGET_GROUPS.map((g) => ({
-      id: g.id,
-      label: g.label,
-      types: g.types.filter((t) => isFreeWidgetType(t)),
-    })).filter((g) => g.types.length > 0);
-    const householdTypes = WIDGET_TYPES.filter((t) => !isFreeWidgetType(t));
-    return [...freeGroups, { id: "household", label: "Household widgets", types: householdTypes }];
-  }, [isPaid]);
+  const freeGroups = useMemo(
+    (): CatalogueGroup[] =>
+      WIDGET_GROUPS.map((g) => ({
+        id: g.id,
+        label: g.label,
+        types: (isPaid ? [...g.types] : g.types.filter((t) => isFreeWidgetType(t))) as WidgetType[],
+      })).filter((g) => g.types.length > 0),
+    [isPaid],
+  );
+
+  const householdTypes = useMemo(() => (isPaid ? [] : WIDGET_TYPES.filter((t) => !isFreeWidgetType(t))), [isPaid]);
+
+  const intentGroups = useMemo(() => {
+    const chip = INTENTS.find((i) => i.id === intent) ?? INTENTS[0]!;
+    return freeGroups.filter((g) => chip.groupIds.includes(g.id));
+  }, [freeGroups, intent]);
 
   const searching = filteredTypes !== null;
   const showRecommended = !searching && !browseAll;
@@ -115,7 +127,7 @@ export function AddWidgetDrawer({ onClose, onPick }: { onClose: () => void; onPi
       <Text label="Search widgets" value={query} maxLength={40} placeholder="Clock, weather…" onChange={setQuery} />
       {!isPaid && (
         <p className="rounded-xl bg-bg p-3 text-xs text-soft">
-          Core widgets are free. Ones marked <HouseholdBadge className="align-middle" /> open Household details instead of adding.
+          Core widgets are free. Household widgets open upgrade details instead of adding.
         </p>
       )}
 
@@ -133,19 +145,54 @@ export function AddWidgetDrawer({ onClose, onPick }: { onClose: () => void; onPi
         </div>
       )}
 
-      {showCatalogue &&
-        (searching
-          ? [{ id: "search", label: "Matches", types: filteredTypes }].map((group) => (
-              <GroupGrid key={group.id} group={group} isPaid={isPaid} onPick={onPick} openUpgrade={() => openUpgrade("widget")} />
-            ))
-          : catalogueGroups.map((group) => (
-              <GroupGrid key={group.id} group={group} isPaid={isPaid} onPick={onPick} openUpgrade={() => openUpgrade("widget")} />
-            )))}
+      {showCatalogue && searching && (
+        <GroupGrid
+          group={{ id: "search", label: "Matches", types: filteredTypes }}
+          isPaid={isPaid}
+          onPick={onPick}
+          openUpgrade={() => openUpgrade("widget")}
+        />
+      )}
 
-      {browseAll && !searching && (
-        <button type="button" className="btn-ghost justify-self-start text-soft" onClick={() => setBrowseAll(false)}>
-          Show recommended only
-        </button>
+      {showCatalogue && !searching && (
+        <div className="grid gap-3">
+          <div className="flex flex-wrap gap-1.5" role="tablist" aria-label="Widget kinds">
+            {INTENTS.map((chip) => (
+              <button
+                key={chip.id}
+                type="button"
+                role="tab"
+                aria-selected={intent === chip.id}
+                className={intent === chip.id ? "btn-primary" : "btn-ghost"}
+                onClick={() => setIntent(chip.id)}
+              >
+                {chip.label}
+              </button>
+            ))}
+          </div>
+          {intentGroups.map((group) => (
+            <GroupGrid key={group.id} group={group} isPaid={isPaid} onPick={onPick} openUpgrade={() => openUpgrade("widget")} />
+          ))}
+          {!isPaid && householdTypes.length > 0 ? (
+            <div className="grid gap-2 border-t border-line pt-3">
+              <button type="button" className="btn-ghost justify-self-start" onClick={() => setShowHousehold((v) => !v)}>
+                {showHousehold ? "Hide" : "Show"} {householdTypes.length} Household widgets
+                <HouseholdBadge className="ml-1.5" />
+              </button>
+              {showHousehold ? (
+                <GroupGrid
+                  group={{ id: "household", label: "Household widgets", types: householdTypes }}
+                  isPaid={false}
+                  onPick={onPick}
+                  openUpgrade={() => openUpgrade("widget")}
+                />
+              ) : null}
+            </div>
+          ) : null}
+          <button type="button" className="btn-ghost justify-self-start text-soft" onClick={() => setBrowseAll(false)}>
+            Show recommended only
+          </button>
+        </div>
       )}
     </SlideDrawer>
   );
