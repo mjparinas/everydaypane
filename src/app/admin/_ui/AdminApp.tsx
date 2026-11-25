@@ -79,7 +79,7 @@ const when = (t: number) => new Date(t).toLocaleString("en-CA", { dateStyle: "me
 const day = (t: number) => new Date(t).toLocaleDateString("en-CA", { year: "numeric", month: "short", day: "numeric" });
 
 export function AdminApp() {
-  const [gate, setGate] = useState<"loading" | "signin" | "twofactor" | "ok" | "error">("loading");
+  const [gate, setGate] = useState<"loading" | "signin" | "ok" | "error">("loading");
   const [staff, setStaff] = useState<Staff | null>(null);
   const [view, setView] = useState<View>({ tab: "Overview", open: null, q: "", days: 30, status: "open" });
   const [badges, setBadges] = useState<Partial<Record<string, number>>>({});
@@ -119,9 +119,6 @@ export function AdminApp() {
         if (body.state === "ok") {
           setStaff({ email: body.email!, role: body.role! });
           setGate("ok");
-        } else if (body.state === "twofactor") {
-          setStaff({ email: body.email!, role: body.role! });
-          setGate("twofactor");
         } else setGate("signin");
       })
       .catch(() => {
@@ -199,7 +196,6 @@ export function AdminApp() {
     );
   }
   if (gate === "signin") return <SignIn />;
-  if (gate === "twofactor" && staff) return <TwoFactorGate email={staff.email} />;
 
   const tools = (
     <div className="flex flex-wrap items-center gap-2">
@@ -251,11 +247,6 @@ export function AdminApp() {
         }
         tools={tools}
       >
-        {staff?.role === "support" ? (
-          <p className="mt-3 rounded-xl border border-line bg-panel px-3 py-2 text-sm text-soft" role="status">
-            Support role — you can look up households and displays; writes stay with admins.
-          </p>
-        ) : null}
         {toast ? (
           <p
             className={`mt-3 rounded-xl px-3 py-2 text-sm font-semibold ${toast.bad ? "bg-bad/15 text-bad" : "bg-good/15 text-good"}`}
@@ -285,25 +276,9 @@ function SignIn() {
     window.location.replace(signInHref("/admin/"));
   }, []);
   return (
-    <AdminAuthCard title="Staff sign-in" sub="Redirecting to Everydaypane sign-in. Only ADMIN_EMAILS / SUPPORT_EMAILS can open this panel.">
+    <AdminAuthCard title="Staff sign-in" sub="Redirecting to Everydaypane sign-in. Only ADMIN_EMAILS can open this panel.">
       <a className="btn-primary" href={signInHref("/admin/")}>
         Continue to sign-in
-      </a>
-    </AdminAuthCard>
-  );
-}
-
-function TwoFactorGate({ email }: { email: string }) {
-  return (
-    <AdminAuthCard
-      title="Two-step verification required"
-      sub={`${email} — turn on authenticator MFA in your Clerk account, then sign in again.`}
-    >
-      <p className="text-sm text-soft">
-        Platform staff must complete Clerk&rsquo;s second factor when <code>ADMIN_2FA</code> is required (the default).
-      </p>
-      <a className="btn-primary mt-4" href={signInHref("/admin/")}>
-        Sign in again
       </a>
     </AdminAuthCard>
   );

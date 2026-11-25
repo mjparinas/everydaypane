@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { alertEmail, EMAIL, emailHtml, escapeHtml, signInEmail } from "./email";
+import { alertEmail, EMAIL, emailHtml, escapeHtml } from "./email";
 import { BRAND, SITE_URL } from "./site";
 
 describe("email chrome", () => {
@@ -25,16 +25,6 @@ describe("email chrome", () => {
     expect(html).toContain("Continue");
     expect(html).toContain('href="https://example.com/go"');
     expect(html).toContain("Ignore if unexpected.");
-  });
-
-  it("builds a branded sign-in message", () => {
-    const link = "https://www.everydaypane.com/signin/verify/?token=abc&x=1";
-    const mail = signInEmail(link);
-    expect(mail.subject).toBe(`Your ${BRAND.name} sign-in link`);
-    expect(mail.text).toContain(link);
-    expect(mail.html).toContain("Sign in");
-    expect(mail.html).toContain(escapeHtml(link));
-    expect(mail.html).toContain(EMAIL.brand);
   });
 
   it("builds a branded alert message with a severity accent", () => {

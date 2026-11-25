@@ -135,23 +135,6 @@ export function emailHtml(body: EmailBody): string {
 </html>`;
 }
 
-/** Sign-in magic link email (Resend). */
-export function signInEmail(link: string): { subject: string; text: string; html: string } {
-  return {
-    subject: `Your ${BRAND.name} sign-in link`,
-    text: `Open this link to sign in to ${BRAND.name}:\n\n${link}\n\nIt works once, for 15 minutes. If you didn't ask for it, ignore this email.\n\n— ${BRAND.name}\n${SITE_URL}`,
-    html: emailHtml({
-      preheader: "Your one-time sign-in link. It works for 15 minutes.",
-      title: `Sign in to ${BRAND.name}`,
-      bodyHtml: `<p style="margin:0 0 12px">Tap the button below to open the admin panel. The link works once, for 15 minutes.</p>
-<p style="margin:0;color:${EMAIL.soft};font-size:13px">If the button doesn't work, paste this into your browser:<br>
-<a href="${escapeHtml(link)}" style="color:${EMAIL.brand};word-break:break-all">${escapeHtml(link)}</a></p>`,
-      cta: { href: link, label: "Sign in" },
-      footnote: "If you didn't ask for this, you can ignore this email — nothing will change.",
-    }),
-  };
-}
-
 const severityAccent: Record<string, string> = {
   extreme: EMAIL.bad,
   severe: EMAIL.bad,

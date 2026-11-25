@@ -15,17 +15,8 @@ export const env = {
   clerkWebhookSecret: () => process.env.CLERK_WEBHOOK_SIGNING_SECRET ?? "",
   /** Platform staff (/admin/) and bootstrap admins for the grandfather household (comma separated). */
   adminEmails: () => list(process.env.ADMIN_EMAILS),
-  /** Read-only platform ops (comma separated). Not also on ADMIN_EMAILS. */
-  supportEmails: () => {
-    const admins = list(process.env.ADMIN_EMAILS);
-    return new Set([...list(process.env.SUPPORT_EMAILS)].filter((e) => !admins.has(e)));
-  },
   /** Who may post on the family message board but not change the household dashboard. */
   familyEmails: () => list(process.env.FAMILY_EMAILS),
-  /** Staff 2FA via Clerk: unset = require second factor; `optional` allows first factor only. */
-  admin2fa: () => (process.env.ADMIN_2FA?.trim().toLowerCase() === "optional" ? "optional" : "required") as "required" | "optional",
-  /** @deprecated Custom TOTP retired; Clerk MFA is used. Kept so old env docs still parse. */
-  twoFactorKey: () => process.env.TWO_FACTOR_KEY || process.env.SESSION_SECRET || "",
   /** CI / Playwright: signed test session cookies instead of Clerk. Never set in production. */
   authTestMode: () => process.env.AUTH_TEST_MODE === "1",
   /** Salt for cookieless visitor hashes on the marketing site. */

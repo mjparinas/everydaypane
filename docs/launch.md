@@ -10,7 +10,7 @@ Living go-to-market checklist for Melvin and agents. Update this file when a lau
 
 | Criterion | Status | Notes |
 | --- | --- | --- |
-| Public Free signup UI → `POST /api/auth/signup/` | Done in product | `/signin/?intent=signup`; “Start free” CTAs use `SIGNUP_PATH` |
+| Public Free signup | Done in product | Clerk Account Portal (`SIGNUP_PATH`); `user.created` webhook seeds the household |
 | Free / Household copy matches `plans.ts` | Done in product | 2 displays, 1 view, 2 calendars; paid plan named **Household** |
 | Privacy & Terms for public accounts | Done in product | Self-serve Free; Stripe Household; no “env allowlist only” |
 | Household Upgrade + Customer Portal | Done in product | Settings › Plan (`PlanSettingsCard`) + upgrade dialog from soft CTAs |
@@ -28,8 +28,8 @@ Living go-to-market checklist for Melvin and agents. Update this file when a lau
 ## Funnel
 
 ```
-Visit marketing → Start free (/signin/?intent=signup)
-  → magic link → /household/
+Visit marketing → Start free (Clerk Account Portal)
+  → household created by the Clerk webhook → /household/
   → Displays: add display, copy /d/… URL
   → (optional) Settings › Plan → Household Checkout / Portal (or in-app upgrade dialog)
 ```

@@ -25,7 +25,9 @@ export default function PrivacyPage() {
 
       <h2 className="mt-10 text-xl font-bold">Accounts and sign-in</h2>
       <ul className="mt-3 list-disc space-y-1 pl-6 text-soft">
-        <li>Sign-in is by emailed magic link. Sign-in links and sessions are stored only as hashes.</li>
+        <li>
+          Sign-in is through Clerk (an email code, or Apple or Google when those are turned on). Everydaypane does not store passwords.
+        </li>
         <li>Creating a Free household stores the admin email and household name you provide.</li>
         <li>Household admins can invite family members by email for the message board, meals and shopping.</li>
         <li>Notes on the family message board show the name the writer types, never an email address.</li>

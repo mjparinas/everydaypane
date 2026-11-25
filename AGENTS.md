@@ -128,9 +128,9 @@ with `?mode=`, and a quiet Day/Night control on the preview swaps without reload
   Checkout), and Settings › Plan; idle nav is not badged. Core Free tools (views editor, colours, displays within limit,
   photos, calendars) stay fully usable.
 
-**Platform admin** (`/admin/`): Everydaypane ops for `ADMIN_EMAILS` (full) and optional `SUPPORT_EMAILS` (read-only),
+**Platform admin** (`/admin/`): Everydaypane ops for `ADMIN_EMAILS`,
 separate from the household panel — same split as Tuned and Liftsmith. Staff use the same Clerk sign-in as households,
-gated by those allow-lists, with Clerk MFA when `ADMIN_2FA` is required; Overview through Log (Households, Displays,
+gated by that allow-list; Overview through Log (Households, Displays,
 Revenue, Traffic, Codes, Flags, …). Cookieless marketing beacon. Customer path is `/household/`.
 
 **Integrations connected from Settings:** Google Calendar, Microsoft 365 calendars and **To Do** (OAuth, `?todo=1` / `?files=1`), Google Tasks, **Todoist**, Google Photos (Picker), iCal calendar links (with iCloud publish steps in Settings and `docs/icloud-calendar.md`),
@@ -172,7 +172,7 @@ npm run templates:previews  # regenerate public/templates/*.png from real widget
 - **Paid multi-tenant product** (Melvin, 2026-11-22): Everydaypane is a **Free + one paid (“Household”)** app other
  families can use. Free is DAKboard-like (1 view, 2 calendars, 2 displays, core widgets only). Household unlocks
  everything. Melvin’s existing install is grandfathered on Household (`acct_legacy`). Stripe Checkout + Customer Portal
- + webhooks (`src/server/billing.ts`); signup at `/api/auth/signup/`.
+ + webhooks (`src/server/billing.ts`); Free signup is the Clerk Account Portal, and `user.created` seeds the household.
 - **Free upgrade UX in household** (Melvin, 2026-11-23: articulate what Free is missing without being annoying; quieter
   2026-11-24 critique): paid features show a **Household** label only on blocked controls and are soft-locked (greyed;
   tap opens the upgrade dialog with why-upgrade copy and Checkout). Primary CTA is the Plan chip (plus Save errors,
@@ -180,8 +180,8 @@ npm run templates:previews  # regenerate public/templates/*.png from real widget
   Plan state from `/api/household/billing/` via `PlanProvider` (`src/app/household/_ui/plan.tsx`).
 - **Household vs platform admin** (Melvin, 2026-11-23: rename `/admin` → `/household`, reserve `/admin` like Tuned and
   Liftsmith; expanded 2026-11-23 to full Tuned-style ops): household settings live at **`/household/`** (API
-  `/api/household/`); **`/admin/`** is Everydaypane platform ops with dedicated staff sign-in (`ep_admin` + TOTP),
-  `ADMIN_EMAILS` / `SUPPORT_EMAILS`, and tabs for work, numbers, people and running the product. Member role `admin` in
+  `/api/household/`); **`/admin/`** is Everydaypane platform ops. Staff sign in with Clerk (Melvin, 2026-11-25: no in-app 2FA),
+  `ADMIN_EMAILS`, and tabs for work, numbers, people and running the product. Member role `admin` in
   the database still means “household admin”.
 
 - **Marketing homepage** (Melvin, 2026-11-23): public marketing site at `/` with pricing, features, compare, blog, privacy and terms; paid plan marketed as Household (same Stripe `STRIPE_PRICE_ID` as household billing).
@@ -194,7 +194,7 @@ npm run templates:previews  # regenerate public/templates/*.png from real widget
  a drag-and-drop grid with a chosen number of rows and columns.
 - **Schedule sunrise/sunset and overnight** (Melvin, 2026-11-22): each part of the day can start at a fixed time,
  sunrise or sunset; the overnight period was renamed from "night" in the admin (the settings key stays `night`).
-- **Added the same day** (Melvin, 2026-11-17): offline mode, admin sign-in by magic link through Resend, Sentry,
+- **Added the same day** (Melvin, 2026-11-17): offline mode, admin sign-in (Resend magic links then; Clerk since 2026-11-24), Sentry,
   burn-in protection, UniFi Protect video (cameras and doorbell pop-ups), a family message board, and emergency alerts.
 - **Music** (Melvin, 2026-11-17): Spotify and Sonos controls on the wall, through Home Assistant.
 - **Meal planning** (Melvin, 2026-11-17; repeats 2026-11-23): breakfast, lunch and dinner for each day, with optional
@@ -373,8 +373,8 @@ panel can be complex if you need it to be."
   widgets, Household starter templates, and paid Settings groups via Plan chip / blocked controls (not badge rain on idle
   nav); `#upgrade` opens the why-upgrade dialog with Stripe Checkout. Settings jump nav: Home → Everyday (≤4 chips) →
   Advanced. Wall empty states point at Household Settings (not “admin panel”).
-- **Platform admin** (`src/app/admin/`, `/api/admin/`): staff-only ops (`src/server/adminAuth.ts`, TOTP in
-  `twoFactor.ts`); Tuned-style tabs via `/api/admin/[action]/`. Not the household settings UI.
+- **Platform admin** (`src/app/admin/`, `/api/admin/`): staff-only ops (`src/server/adminAuth.ts`: Clerk session plus
+  `ADMIN_EMAILS`); Tuned-style tabs via `/api/admin/[action]/`. Not the household settings UI.
 - **Widgets over photos** (Melvin, 2026-11-21: "allow other widgets to be placed on top of the photos widget"): photos
   widgets are a backdrop layer. Any other widget may cover one; two photos widgets, or two widgets on top, still never
   overlap. A new widget goes in empty cells first and lands on the photos only when nothing else is free. The display
@@ -634,8 +634,9 @@ panel can be complex if you need it to be."
 
 - **Sign-in with Clerk** (Melvin, 2026-11-24; replaced Resend magic links): email one-time codes via `@clerk/nextjs`.
   After Clerk auth, `requestSession` resolves Turso `account_members` (and env bootstrap lists) to admin|family.
-  Platform `/admin/` uses the same Clerk session, then `ADMIN_EMAILS` / `SUPPORT_EMAILS` plus Clerk MFA. Nothing a
-  request writes can add someone to those staff lists. CI uses `AUTH_TEST_MODE=1` and `ep_test_session` instead of Clerk.
+  Platform `/admin/` uses the same Clerk session, then `ADMIN_EMAILS`. A second factor, if wanted,
+  is turned on in Clerk; this app does not gate on it (Melvin, 2026-11-25). Nothing a request writes can add someone
+  to those staff lists. CI uses `AUTH_TEST_MODE=1` and `ep_test_session` instead of Clerk.
 - **Wall unlock with your phone** (Melvin, 2026-11-23: QR is for the display, not household `/signin/` — Tuned-style
   code relay; kept through the Clerk migration; indefinite once unlocked Melvin, 2026-11-24): `/display/unlock/` shows
   a QR and eight-character code (`device_sign_ins`, 10 minutes). The phone opens `/signin/phone/`, signs in with Clerk
@@ -675,7 +676,7 @@ panel can be complex if you need it to be."
 
 - `.github/workflows/ci.yml` runs on every pull request and every push to `main`: types, lint, formatting and
   dependency audit; Vitest with coverage; the production build; and the Playwright browser tests against that build
-  (`scripts/e2e.mjs`, which signs in through a real magic link and fails on any console error). **"CI passed"** is the
+  (`scripts/e2e.mjs`, which signs in with `AUTH_TEST_MODE` and fails on any console error). **"CI passed"** is the
   one check to require. A new push to a pull request cancels its stale run, but runs on `main` are never cancelled:
   each merge commit gets its own full run, because merges land minutes apart and a cancelled run left them unchecked.
   Markdown-only changes still get a green "CI passed" (so branch protection is happy), but types, tests and the build

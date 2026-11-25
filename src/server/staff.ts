@@ -13,7 +13,7 @@ export function isStaffEmail(email: string): boolean {
 
 /** Whether the platform admin panel is configured (at least one staff address). */
 export function staffEnabled(): boolean {
-  return env.adminEmails().size > 0 || env.supportEmails().size > 0;
+  return env.adminEmails().size > 0;
 }
 
 /** Household session whose email is on ADMIN_EMAILS (for the Platform nav link only). */

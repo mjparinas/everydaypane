@@ -10,7 +10,7 @@ web
 
 Households who want the home at a glance on an always-on wall or kitchen panel (about 1920×1080 landscape touch, or any screen with a browser), set up and day-to-day edited from a phone. Founding household is Melvin’s family in Langley, BC; the product is now Free + Household for other families. Kids use chore flows on phone and wall; household admins configure views, themes, displays, and integrations.
 
-**Staff operators (platform `/admin/`):** Melvin as Everydaypane admin, plus occasional `SUPPORT_EMAILS` (read-only or limited writes). They triage product health, households, displays, billing, and flags under load — often mid-support call or morning check-in. Confirmed 2026-11-24: day-to-day is Melvin + occasional support, not a large ops team.
+**Staff operators (platform `/admin/`):** Melvin as Everydaypane admin (`ADMIN_EMAILS`). They triage product health, households, displays, billing, and flags under load — often mid-support call or morning check-in. Confirmed 2026-11-25: day-to-day is Melvin, not a large ops team.
 
 ## Product Purpose
 
@@ -27,7 +27,7 @@ A castable browser wall dashboard that stays super-lightweight on the display (s
 - Time-of-day views (morning, afternoon, evening, overnight), day/night themes, burn-in protection, offline mode, screen saver.
 - Canadian English in everything a person reads (colour, centre, favourite).
 - B.C. permanent daylight time: Vancouver clocks/dates/calendars/schedules stay on fixed UTC−7 after the March 2026 transition even when the display browser has stale zone data.
-- Staff `/admin/`: magic-link + TOTP; tabs grouped Work / Numbers / People / Running; deep links `?tab=&days=&q=&open=`; ops-cockpit refinements (2026-11-24): confirm-to-act mutations, group+strip nav, Overview command centre, clarified copy, debounced search, ⌘K palette, bulk household plan/note, Displays → Open household.
+- Staff `/admin/`: Clerk sign-in, then `ADMIN_EMAILS` (no in-app 2FA); tabs grouped Work / Numbers / People / Running; deep links `?tab=&days=&q=&open=`; ops-cockpit refinements (2026-11-24): confirm-to-act mutations, group+strip nav, Overview command centre, clarified copy, debounced search, ⌘K palette, bulk household plan/note, Displays → Open household.
 - Hosting: Vercel + Turso; marketing at everydaypane.com.
 
 ## Capabilities and Constraints
