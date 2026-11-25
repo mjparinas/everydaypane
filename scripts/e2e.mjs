@@ -61,7 +61,8 @@ export async function signIn(page, email) {
   await page.waitForURL(/\/signin\//);
   await page.getByLabel("Email").fill(email);
   await page.getByRole("button", { name: /Sign in|Create free household|Email me a code/i }).click();
-  await page.waitForURL(/\/household\//);
+  // commit: the Views preview iframe can delay the load event past Playwright's default.
+  await page.waitForURL(/\/household\//, { waitUntil: "commit" });
 }
 
 try {
