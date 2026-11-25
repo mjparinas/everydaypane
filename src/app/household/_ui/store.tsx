@@ -28,8 +28,13 @@ interface AdminState {
   save: () => Promise<void>;
   reload: () => Promise<void>;
   discard: () => void;
-  /** Dismisses a conflict so the draft can be edited and saved again. */
-  clearConflict: () => void;
+  /**
+   * Keeps the draft but takes the server's version (Refresh displays, or "Keep editing" after a conflict) so the next
+   * Publish is not refused as stale.
+   */
+  adoptVersion: (version: number) => void;
+  /** Dismisses a conflict and syncs the version so Publish can overwrite. */
+  clearConflict: () => Promise<void>;
 }
 
 interface Issue {
@@ -84,36 +89,53 @@ const createAdminStore = (initial: DashboardConfig, initialVersion: number) => {
     save: async () => {
       if (get().status.kind === "saving") return;
       const generation = ++saveGeneration;
-      const { config, version } = get();
-      const snapshot = JSON.stringify(config);
-      set({ status: { kind: "saving" } });
-      try {
-        const r = await fetch("/api/household/config/", {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ baseVersion: version, config }),
-        });
-        const body = (await r.json().catch(() => ({}))) as { version?: number; error?: string; issues?: unknown };
-        if (generation !== saveGeneration) return;
-        if (r.ok && typeof body.version === "number") {
-          // The draft may have moved while this request was in flight: keep it, and only mark the copy we sent as saved.
-          const dirty = JSON.stringify(get().config) !== snapshot;
-          set({ version: body.version, saved: snapshot, status: dirty ? { kind: "idle" } : { kind: "saved" } });
-        } else if (r.status === 409) {
-          // A late refusal after our own version already moved (an overlapping save landed) is not a conflict to show.
-          if (get().version !== version) return;
-          set({ status: { kind: "conflict", message: body.error ?? "Someone else changed the dashboard." } });
-        } else if (r.status === 422) {
-          set({ status: { kind: "invalid", message: describeIssue(config, body.issues) } });
-        } else if (r.status === 401) {
-          set({ status: { kind: "error", message: "You've been signed out. Sign in again to save." } });
-        } else {
-          set({ status: { kind: "error", message: body.error ?? "Couldn't save. Try again." } });
+
+      const put = async (retried: boolean): Promise<void> => {
+        const { config, version } = get();
+        const snapshot = JSON.stringify(config);
+        set({ status: { kind: "saving" } });
+        try {
+          const r = await fetch("/api/household/config/", {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ baseVersion: version, config }),
+          });
+          const body = (await r.json().catch(() => ({}))) as { version?: number; error?: string; issues?: unknown };
+          if (generation !== saveGeneration) return;
+          if (r.ok && typeof body.version === "number") {
+            // The draft may have moved while this request was in flight: keep it, and only mark the copy we sent as saved.
+            const dirty = JSON.stringify(get().config) !== snapshot;
+            set({ version: body.version, saved: snapshot, status: dirty ? { kind: "idle" } : { kind: "saved" } });
+          } else if (r.status === 409) {
+            // A late refusal after our own version already moved (an overlapping save landed) is not a conflict to show.
+            if (get().version !== version) return;
+            // Version-only bump (Refresh displays, another tab's touch): server document still matches our last save —
+            // adopt the new version and retry once so a single editor is not blocked (Melvin, 2026-11-24).
+            if (!retried) {
+              const cur = await fetch("/api/household/config/");
+              if (cur.ok) {
+                const latest = (await cur.json()) as { config: DashboardConfig; version: number };
+                if (JSON.stringify(latest.config) === get().saved && latest.version !== version) {
+                  set({ version: latest.version });
+                  return put(true);
+                }
+              }
+            }
+            set({ status: { kind: "conflict", message: body.error ?? "Someone else changed the dashboard." } });
+          } else if (r.status === 422) {
+            set({ status: { kind: "invalid", message: describeIssue(config, body.issues) } });
+          } else if (r.status === 401) {
+            set({ status: { kind: "error", message: "You've been signed out. Sign in again to save." } });
+          } else {
+            set({ status: { kind: "error", message: body.error ?? "Couldn't save. Try again." } });
+          }
+        } catch {
+          if (generation !== saveGeneration) return;
+          set({ status: { kind: "error", message: "No connection. Your changes are still here; try again." } });
         }
-      } catch {
-        if (generation !== saveGeneration) return;
-        set({ status: { kind: "error", message: "No connection. Your changes are still here; try again." } });
-      }
+      };
+
+      await put(false);
     },
     reload: async () => {
       const r = await fetch("/api/household/config/");
@@ -122,8 +144,16 @@ const createAdminStore = (initial: DashboardConfig, initialVersion: number) => {
       get().init(body.config, body.version);
     },
     discard: () => set({ config: JSON.parse(get().saved) as DashboardConfig, status: { kind: "idle" } }),
-    clearConflict: () => {
-      if (get().status.kind === "conflict") set({ status: { kind: "idle" } });
+    adoptVersion: (version) => set({ version }),
+    clearConflict: async () => {
+      if (get().status.kind !== "conflict") return;
+      const r = await fetch("/api/household/config/");
+      if (r.ok) {
+        const body = (await r.json()) as { version: number };
+        set({ version: body.version, status: { kind: "idle" } });
+      } else {
+        set({ status: { kind: "idle" } });
+      }
     },
   }));
 };

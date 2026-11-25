@@ -1,9 +1,10 @@
 import { describe, expect, it } from "vitest";
 
+import { POST as refreshPOST } from "@/app/api/household/refresh/route";
 import { defaultConfig } from "@/lib/config/defaults";
 import { configSchema } from "@/lib/config/schema";
 import { LEGACY_ACCOUNT_ID } from "@/server/accounts";
-import { useTestServer } from "@/test/server";
+import { cookieFor, req, useTestServer } from "@/test/server";
 
 import { configVersion, loadConfig, saveConfig, touchConfig, upgrade } from "./config";
 import { getSecret, setSecret } from "./secrets";
@@ -36,10 +37,29 @@ describe("config store", () => {
   });
 
   it("bumps the version on touch so displays reload", async () => {
-    await touchConfig(LEGACY_ACCOUNT_ID);
+    expect(await touchConfig(LEGACY_ACCOUNT_ID)).toBe(1);
     expect(await configVersion(LEGACY_ACCOUNT_ID)).toBe(1);
-    await touchConfig(LEGACY_ACCOUNT_ID);
+    expect(await touchConfig(LEGACY_ACCOUNT_ID)).toBe(2);
     expect(await configVersion(LEGACY_ACCOUNT_ID)).toBe(2);
+  });
+
+  it("lets Publish succeed after a touch when the client adopts the new version", async () => {
+    const c = defaultConfig();
+    c.name = "Kitchen";
+    expect(await saveConfig(LEGACY_ACCOUNT_ID, c, 0)).toEqual({ ok: true, version: 1 });
+    // Refresh displays bumps the version without changing the document (same as a lone Household panel).
+    expect(await touchConfig(LEGACY_ACCOUNT_ID)).toBe(2);
+    expect(await saveConfig(LEGACY_ACCOUNT_ID, { ...c, name: "Updated" }, 1)).toMatchObject({ ok: false, status: 409 });
+    expect(await saveConfig(LEGACY_ACCOUNT_ID, { ...c, name: "Updated" }, 2)).toEqual({ ok: true, version: 3 });
+  });
+
+  it("Refresh displays returns the new version for the household panel", async () => {
+    const cookie = await cookieFor("admin@example.com");
+    const before = await configVersion(LEGACY_ACCOUNT_ID);
+    const r = await refreshPOST(req("/api/household/refresh/", { method: "POST", headers: { cookie } }));
+    expect(r.status).toBe(200);
+    expect(await r.json()).toEqual({ ok: true, version: before + 1 });
+    expect(await configVersion(LEGACY_ACCOUNT_ID)).toBe(before + 1);
   });
 
   it("maps the old sunTimes transparent flag and keeps clocks without a panel", () => {

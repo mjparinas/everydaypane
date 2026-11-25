@@ -11,6 +11,6 @@ export async function POST(req: Request) {
   if ((await planForAccount(session.accountId)) !== "paid") {
     return json({ error: "Instant refresh needs Household." }, 402);
   }
-  await touchConfig(session.accountId);
-  return json({ ok: true });
+  const version = await touchConfig(session.accountId);
+  return json({ ok: true, version });
 }
