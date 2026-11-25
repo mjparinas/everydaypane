@@ -61,11 +61,25 @@ export function AdminShell({
 }) {
   return (
     <div className="min-h-dvh bg-bg">
-      <aside className="flex flex-wrap items-center gap-x-3 gap-y-3 border-b border-line px-4 pt-4 pb-3 lg:fixed lg:inset-y-0 lg:left-0 lg:z-30 lg:w-60 lg:flex-col lg:flex-nowrap lg:items-stretch lg:gap-4 lg:overflow-y-auto lg:border-r lg:border-b-0 lg:bg-panel/95 lg:px-3 lg:py-5">
-        <div className="order-1 lg:px-2">
+      <aside className="flex flex-wrap items-center gap-x-3 gap-y-3 border-b border-line px-4 pt-4 pb-3 lg:fixed lg:inset-y-0 lg:left-0 lg:z-30 lg:w-60 lg:flex-col lg:flex-nowrap lg:items-stretch lg:gap-4 lg:overflow-hidden lg:border-r lg:border-b-0 lg:bg-panel/95 lg:px-3 lg:py-5">
+        <div className="order-1 lg:shrink-0 lg:px-2">
           <AdminBrand />
         </div>
-        <div className="order-2 ml-auto flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-soft lg:order-3 lg:ml-0 lg:mt-auto lg:flex-col lg:items-stretch lg:gap-2 lg:border-t lg:border-line lg:px-2 lg:pt-4">
+        <nav className="order-3 flex w-full flex-wrap gap-1 lg:order-2 lg:min-h-0 lg:flex-1 lg:block lg:overflow-y-auto" aria-label="Sections">
+          {ADMIN_TAB_GROUPS.map((g) => (
+            <div key={g.label} className="contents lg:mb-3 lg:block">
+              <div className="hidden px-3 pb-1.5 text-[0.65rem] font-bold tracking-[0.14em] text-soft uppercase lg:block" aria-hidden>
+                {g.label}
+              </div>
+              <ul className="contents lg:flex lg:flex-col lg:gap-0.5">
+                {g.tabs.map((t) => (
+                  <NavItem key={t} tab={t} on={tab === t} badge={badges[t]} onClick={() => onTab?.(t)} />
+                ))}
+              </ul>
+            </div>
+          ))}
+        </nav>
+        <div className="order-2 ml-auto flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-soft lg:order-3 lg:ml-0 lg:shrink-0 lg:flex-col lg:items-stretch lg:gap-2 lg:border-t lg:border-line lg:bg-panel lg:px-2 lg:pt-4">
           {staff && (
             <span className="min-w-0 break-all">
               {staff.email} <span className="rounded-full bg-bg px-1.5 py-0.5 text-[0.7rem] font-semibold capitalize">{staff.role}</span>
@@ -81,20 +95,6 @@ export function AdminShell({
           )}
           <BuildStamp className="hidden lg:block" />
         </div>
-        <nav className="order-3 flex w-full flex-wrap gap-1 lg:order-2 lg:block" aria-label="Sections">
-          {ADMIN_TAB_GROUPS.map((g) => (
-            <div key={g.label} className="contents lg:mb-3 lg:block">
-              <div className="hidden px-3 pb-1.5 text-[0.65rem] font-bold tracking-[0.14em] text-soft uppercase lg:block" aria-hidden>
-                {g.label}
-              </div>
-              <ul className="contents lg:flex lg:flex-col lg:gap-0.5">
-                {g.tabs.map((t) => (
-                  <NavItem key={t} tab={t} on={tab === t} badge={badges[t]} onClick={() => onTab?.(t)} />
-                ))}
-              </ul>
-            </div>
-          ))}
-        </nav>
       </aside>
       <div className="lg:pl-60">
         <div className="mx-auto max-w-6xl px-4 pb-16">
