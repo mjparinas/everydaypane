@@ -16,7 +16,7 @@ import { countdown } from "./widgets/countdown";
 import { date } from "./widgets/date";
 import { earth, RELOAD_MS } from "./widgets/earth";
 import { ferries, fullness, hasLeft } from "./widgets/ferries";
-import { controlFor, haEntity, stateText } from "./widgets/ha";
+import { completesLockHold, controlFor, haEntity, stateText } from "./widgets/ha";
 import { meals } from "./widgets/meals";
 import { F, media, nowPlaying, positionNow } from "./widgets/media";
 import { pickFrames, radar, thin } from "./widgets/radar";
@@ -307,6 +307,12 @@ describe("Home Assistant tiles", () => {
     await vi.waitFor(() => expect(posts).toEqual([{ entity: "light.kitchen", action: "toggle" }]));
     stop();
     vi.unstubAllGlobals();
+  });
+
+  it("locks only after a deliberate hold", () => {
+    expect(completesLockHold(100, 800)).toBe(true);
+    expect(completesLockHold(100, 798)).toBe(false);
+    expect(completesLockHold(null, 1000)).toBe(false);
   });
 });
 
