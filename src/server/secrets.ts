@@ -27,6 +27,8 @@ export type SecretKey =
   | "todoist.refreshToken"
   | "ynab.token"
   | "fitbit.refreshToken"
+  | "oura.refreshToken"
+  | "oura.accessToken"
   | "slack.token"
   | "trello.token"
   | "dropbox.refreshToken"
@@ -81,6 +83,8 @@ export async function secretsSet(accountId: string): Promise<Record<SecretKey, b
     "todoist.refreshToken": set.has("todoist.refreshToken"),
     "ynab.token": set.has("ynab.token"),
     "fitbit.refreshToken": set.has("fitbit.refreshToken"),
+    "oura.refreshToken": set.has("oura.refreshToken"),
+    "oura.accessToken": set.has("oura.accessToken"),
     "slack.token": set.has("slack.token"),
     "trello.token": set.has("trello.token"),
     "dropbox.refreshToken": set.has("dropbox.refreshToken"),

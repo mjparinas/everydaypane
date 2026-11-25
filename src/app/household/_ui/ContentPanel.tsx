@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import { Section, Text } from "./fields";
 import { useAdmin } from "./store";
 
-// Phase 5 integrations: YNAB, Fitbit, Slack, Trello and Gmail unread.
+// Phase 5 integrations: YNAB, Fitbit, Oura, Slack, Trello and Gmail unread.
 
 export function ContentPanel() {
   const edit = useAdmin((s) => s.edit);
@@ -66,6 +66,7 @@ export function ContentPanel() {
           Connect Fitbit
         </a>
       </Section>
+      <OuraSection />
       <Section id="settings-gmail-unread" title="Gmail unread">
         <p className="text-xs text-soft">Adds gmail.readonly to your existing Google connection (inbox count only).</p>
         <a className="btn-primary justify-self-start" href="/api/google/connect/?gmail=1">
@@ -103,5 +104,50 @@ export function ContentPanel() {
         </button>
       </Section>
     </div>
+  );
+}
+
+// Oura ring (Melvin, 2026-11-21). Oura removed personal access tokens in December 2025, so this is OAuth only.
+function OuraSection() {
+  const [status, setStatus] = useState<{ configured: boolean; connected: boolean } | null>(null);
+  const [busy, setBusy] = useState(false);
+  const load = () =>
+    void fetch("/api/household/content/oura/")
+      .then((r) => (r.ok ? (r.json() as Promise<{ configured: boolean; connected: boolean }>) : null))
+      .then(setStatus)
+      .catch(() => setStatus(null));
+  useEffect(load, []);
+
+  async function disconnect() {
+    setBusy(true);
+    await fetch("/api/household/content/oura/", { method: "DELETE" }).catch(() => undefined);
+    setBusy(false);
+    load();
+  }
+
+  return (
+    <Section id="settings-oura" title="Oura">
+      <p className="text-xs text-soft">
+        Sleep, readiness and activity scores from one Oura ring, read only. Oura shares data only while the ring has an active membership,
+        and new numbers arrive after the Oura app syncs.
+      </p>
+      {status && !status.configured ? (
+        <p className="text-xs text-soft">Oura isn&apos;t set up on this server yet (OURA_CLIENT_ID and OURA_CLIENT_SECRET).</p>
+      ) : status?.connected ? (
+        <div className="flex flex-wrap items-center gap-3">
+          <span className="text-sm">Connected</span>
+          <a className="btn-ghost" href="/api/oura/connect/">
+            Connect a different ring
+          </a>
+          <button type="button" className="btn-ghost" disabled={busy} onClick={() => void disconnect()}>
+            Disconnect
+          </button>
+        </div>
+      ) : (
+        <a className="btn-primary justify-self-start" href="/api/oura/connect/">
+          Connect Oura
+        </a>
+      )}
+    </Section>
   );
 }

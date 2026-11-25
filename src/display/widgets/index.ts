@@ -18,6 +18,7 @@ import { media } from "./media";
 import { menus } from "./menus";
 import { messages } from "./messages";
 import { note } from "./note";
+import { oura } from "./oura";
 import { packages } from "./packages";
 import {
   affirmation,
@@ -155,6 +156,8 @@ export function mountWidget(el: HTMLElement, w: Widget, ctx: WidgetContext): Cle
       return tradingView(el, w, ctx);
     case "fitbit":
       return fitbit(el, w, ctx);
+    case "oura":
+      return oura(el, w, ctx);
     case "emailCount":
       return emailCount(el, w, ctx);
     case "rss":

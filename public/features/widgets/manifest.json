@@ -230,6 +230,11 @@
     "file": "fitbit.png"
   },
   {
+    "type": "oura",
+    "name": "Oura",
+    "file": "oura.png"
+  },
+  {
     "type": "emailCount",
     "name": "Gmail unread",
     "file": "emailCount.png"
@@ -253,6 +258,16 @@
     "type": "quotes",
     "name": "Quotes",
     "file": "quotes.png"
+  },
+  {
+    "type": "affirmation",
+    "name": "Affirmation",
+    "file": "affirmation.png"
+  },
+  {
+    "type": "horoscope",
+    "name": "Horoscope",
+    "file": "horoscope.png"
   },
   {
     "type": "instagram",

@@ -68,6 +68,7 @@ const FEATURE_BLURBS: Partial<Record<WidgetType, string>> = {
   ynab: "Budget name, accounts and categories.",
   tradingView: "Chart iframe for a symbol.",
   fitbit: "Steps, sleep and resting heart rate today.",
+  oura: "Last night's sleep, readiness and activity scores from an Oura ring.",
   emailCount: "Gmail inbox unread count.",
   rss: "Headlines from chosen feed URLs.",
   news: "CBC/BBC presets, custom RSS or GNews.",

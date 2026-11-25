@@ -66,6 +66,7 @@ same change, and moves it out of **In progress** when it merges.
 | YNAB (`ynab`) | Budget name, on-budget accounts and categories | YNAB API (token or OAuth) |
 | TradingView (`tradingView`) | Chart iframe for a symbol | s.tradingview.com (framed) |
 | Fitbit (`fitbit`) | Steps, sleep and resting heart rate today | Fitbit OAuth |
+| Oura (`oura`) | Last night's sleep score, readiness and activity (with steps); optional night details (hours asleep, bedtime, HRV, lowest heart rate), off by default | Oura API v2 OAuth (`docs/oura.md`) |
 | Gmail unread (`emailCount`) | Inbox unread count | Google `gmail.readonly` add-on scope |
 | RSS (`rss`) | Headlines from chosen feed URLs | Server fetch + trim |
 | News (`news`) | CBC/BBC presets, custom RSS or GNews | RSS or `GNEWS_API_KEY` |
@@ -137,7 +138,7 @@ Revenue, Traffic, Codes, Flags, …). Cookieless marketing beacon. Customer path
 
 **Integrations connected from Settings:** Google Calendar, Microsoft 365 calendars and **To Do** (OAuth, `?todo=1` / `?files=1`), Google Tasks, **Todoist**, Google Photos (Picker), iCal calendar links (with iCloud publish steps in Settings and `docs/icloud-calendar.md`),
 Amazon Photos, **photo sources** (Bing, Reddit, weather albums, Immich API keys, Dropbox/Box/SmugMug OAuth, OneDrive via Microsoft, Flickr API key, iCloud published URLs), the photo library (Vercel Blob), Home Assistant (Cloudflare Tunnel + Access), Spotify, Sonos, garbage
-zone lookup, sports teams to follow, TransLink, commute places (TomTom geocoding), optional **package tracking** key.
+zone lookup, sports teams to follow, TransLink, commute places (TomTom geocoding), optional **package tracking** key, **Oura** (OAuth, Settings › Content & finance).
 
 ## In progress
 
@@ -303,6 +304,10 @@ npm run templates:previews  # regenerate public/templates/*.png from real widget
 - **Screen saver** (Melvin, 2026-11-21): after some minutes with no touch the display shows only photos (full screen,
   optional clock) or goes dark, and during a night window it goes dark; Home Assistant motion sensors keep it awake and
   wake it (see Architecture). Off until switched on in Settings › Screen saver.
+- **Oura ring** (Melvin, 2026-11-21: "do all 6", from the list of devices with official cloud APIs): sleep,
+  readiness and activity scores on the wall, read directly from Oura's API (not Home Assistant). Scores only unless
+  the widget's **Show last night's details** is on, because the kitchen wall is readable by anyone (Claude's default,
+  2026-11-25) (see Architecture).
 - **Canadian English** in everything a person reads (colour, centre, favourite), as in Liftsmith.
 
 ## Display: super lightweight (rule, Melvin, 2026-11-17)
@@ -630,6 +635,17 @@ panel can be complex if you need it to be."
   keyed `nest.*`, `ecobee.*`, `smartthings.*` (`src/server/smartDevices.ts`). Only entities on a widget can be controlled;
   locks are **lock only** on SmartThings. Nest needs Google Device Access (`NEST_PROJECT_ID`, paid subscription).
   Setup: `docs/nest.md`, `docs/ecobee.md`, `docs/smartthings.md`.
+- **Oura** (`src/server/oura.ts`, `/api/display/oura/`, setup `docs/oura.md`): Oura removed personal access tokens in
+  December 2025, so an admin connects through an Oura API application (`OURA_CLIENT_ID` / `OURA_CLIENT_SECRET`,
+  redirect `<site>/api/oura/callback/`, scope `daily` only). Oura's refresh tokens are **single use**, so the access
+  token is stored encrypted next to the refresh token (`oura.accessToken`, `oura.refreshToken`) and shared by every
+  server instance; each instance refreshes at most once at a time, and a refused refresh first checks whether another
+  instance already stored a newer pair before calling the ring disconnected. The feed reads `daily_sleep`,
+  `daily_readiness`, `daily_activity` and `sleep` for the last three days (the ring syncs only when the phone app
+  opens), keeps the newest scored day up to today in the dashboard's time zone, and is cached 15 minutes per household;
+  parsing is lenient. The night's details come from that day's `long_sleep` period and leave the server only when an
+  Oura widget in the household's views has `showDetails` on. A 403 means the ring's membership has lapsed and the
+  widget says so. This sandbox can't reach Oura, so tests use shapes from Oura's documentation.
 - **Tempest, Weather Underground and Nutrislice** (Phase 4, Household): Tempest and WU station settings in
   `config.integrations.smartHome`; Tempest token and optional WU key in secrets. **Menus** widget reads Nutrislice JSON
   only (`src/server/menus.ts`), never the `meals` table.

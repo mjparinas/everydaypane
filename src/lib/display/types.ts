@@ -578,6 +578,41 @@ export interface FitbitData {
   restingHeartRate?: number;
 }
 
+export interface OuraScore {
+  /** The day Oura files the number under (a night under the morning you woke up). */
+  day: string;
+  score: number;
+}
+
+/** Last night's main sleep. Sent to displays only when an Oura widget there has `showDetails` on. */
+export interface OuraNight {
+  day: string;
+  asleepSeconds: number;
+  /** Local times with the wearer's offset, as Oura sends them ("2026-11-24T22:48:00-08:00"). */
+  bedtimeStart?: string;
+  bedtimeEnd?: string;
+  efficiency?: number;
+  averageHrv?: number;
+  lowestHeartRate?: number;
+}
+
+export interface OuraSummary {
+  sleep?: OuraScore;
+  readiness?: OuraScore & { temperatureDeviation?: number };
+  activity?: OuraScore & { steps?: number };
+  night?: OuraNight;
+}
+
+export interface OuraData extends OuraSummary {
+  updatedAt: number;
+  stale?: boolean;
+  connected: boolean;
+  /** The dashboard's date, so the wall can tell a number from an earlier day. */
+  today: string;
+  /** Why there are no numbers when connected (membership lapsed, or Oura is down). */
+  error?: string;
+}
+
 export interface EmailCountData {
   updatedAt: number;
   stale?: boolean;

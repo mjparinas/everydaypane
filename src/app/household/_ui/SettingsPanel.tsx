@@ -50,7 +50,7 @@ const GROUPS = [
     id: "content",
     label: "Content & finance",
     tier: "Advanced",
-    sections: ["content", "ynab", "fitbit", "gmail-unread", "slack", "trello"],
+    sections: ["content", "ynab", "fitbit", "oura", "gmail-unread", "slack", "trello"],
   },
   { id: "ha", label: "Home & devices", tier: "Advanced", sections: ["ha", "smart-home", "weather-stations", "menus"] },
 ] as const;

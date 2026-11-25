@@ -86,7 +86,7 @@ export const UPGRADE_REASONS = {
   ha: "Home Assistant, cameras and smart devices need Household.",
   smartHome: "Nest, ecobee, SmartThings and weather stations need Household.",
   family: "Garbage day, commute, chores, sports and school status need Household.",
-  content: "News, finance, Fitbit, Slack and similar connections need Household.",
+  content: "News, finance, Fitbit, Oura, Slack and similar connections need Household.",
   screenSaver: "The screen saver is on Household.",
   backup: "Settings backup and restore need Household.",
   alertEmail: "Emailing new red-strip alerts needs Household.",

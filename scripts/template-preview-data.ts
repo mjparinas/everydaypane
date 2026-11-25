@@ -52,6 +52,7 @@ export const SAMPLE_FEEDS: Record<string, unknown> = {
   fx: loadJson("fx.json"),
   ynab: loadJson("ynab.json"),
   fitbit: loadJson("fitbit.json"),
+  oura: loadJson("oura.json"),
   "email-count": loadJson("email-count.json"),
   rss: loadJson("rss.json"),
   trello: loadJson("trello.json"),

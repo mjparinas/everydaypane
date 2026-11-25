@@ -481,6 +481,16 @@ export const widgetSchema = z.discriminatedUnion("type", [
     showSleep: z.boolean().default(true),
     showHeart: z.boolean().default(true),
   }),
+  z.object({
+    ...base,
+    // Oura ring (Melvin, 2026-11-21). Scores only by default: bedtimes, HRV and heart rate are health details that
+    // anyone in the kitchen can read, so they show only when the admin switches `showDetails` on.
+    type: z.literal("oura"),
+    showSleep: z.boolean().default(true),
+    showReadiness: z.boolean().default(true),
+    showActivity: z.boolean().default(true),
+    showDetails: z.boolean().default(false),
+  }),
   z.object({ ...base, type: z.literal("emailCount"), label: z.string().max(40).default("Gmail") }),
   z.object({
     ...base,
