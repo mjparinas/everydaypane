@@ -435,9 +435,7 @@ describe("music widget with Spotify or Sonos signed in directly", () => {
     const el = document.createElement("div");
     const base = { ...newWidget("media", "m", { x: 0, y: 0 }), provider: "sonos" as const };
     const stop = media(el, { ...base, playerId: "RINCON_A" }, ctx);
-    await vi.waitFor(() =>
-      expect(el.querySelector(".w-empty:not([hidden])")?.textContent).toBe("Connect Sonos under Settings."),
-    );
+    await vi.waitFor(() => expect(el.querySelector(".w-empty:not([hidden])")?.textContent).toBe("Connect Sonos under Settings."));
     stop();
     const none = document.createElement("div");
     media(none, base, ctx)();
