@@ -28,7 +28,8 @@ same change, and moves it out of **In progress** when it merges.
 | EcoFlow (`ecoflow`) | Each power station's battery %, power in and out, solar, AC and DC flows, time to full or empty; pick devices or show all | EcoFlow IoT Developer Platform (household access and secret keys, `docs/ecoflow.md`) |
 | Weather Underground (`weatherUnderground`) | PWS current conditions | IBM WU PWS API (`WU_API_KEY` or per-account secret) |
 | School menu (`menus`) | Nutrislice breakfast and lunch for a day or week; not the meal plan | Nutrislice published JSON (`config.integrations.smartHome.menus`) |
-| Air quality (`airQuality`) | AQHI or US AQI | Open-Meteo air quality |
+| Air quality (`airQuality`) | AQHI or US AQI (outdoor) | Open-Meteo air quality |
+| Indoor air (`airthings`) | Radon, CO₂, VOC, PM2.5, PM1, humidity and temperature per Airthings monitor, green/amber/red by Airthings' levels; pick readings and devices | Airthings consumer API (household's own API client, `docs/airthings.md`) |
 | WiFi QR (`wifiQr`) | Join code, optionally the password | Settings document |
 | Phone edit QR (`editQr`) | QR to `/d/<token>/edit/` for meals, shopping and messages with no sign-in | This display's address |
 | Countdowns (`countdown`) | Days until holidays, birthdays and events, yearly ones roll over | Settings document |
@@ -113,6 +114,7 @@ The features catalogue lives in `src/lib/marketingFeatures.ts` (grouped like the
 
 **Alerts** (`src/server/alerts.ts`): Alert Ready (NAAD), **Environment Canada weather warnings** (through NAAD),
 DriveBC road events and weather conditions, Earthquakes Canada, BC Hydro power outages, **EmergencyInfoBC evacuation orders and alerts** (any hazard, covering the home or within `alerts.evacuationKm`). Each switchable in `config.alerts.sources`.
+Optional high radon and CO₂ from Airthings (`config.integrations.smartHome.airthings`, off by default).
 Optional email to everyone on `ADMIN_EMAILS` and `FAMILY_EMAILS` when a new strip-worthy alert arrives (`config.alerts.notifyEmail`).
 
 **Household and family:** Clerk Account Portal in production (`accounts.everydaypane.com/sign-in` and `/sign-up`, from `NEXT_PUBLIC_CLERK_SIGN_IN_URL` / `SIGN_UP_URL`); local and CI stay on `/signin/`; Turso
@@ -143,7 +145,7 @@ Revenue, Traffic, Codes, Flags, …). Cookieless marketing beacon. Customer path
 
 **Integrations connected from Settings:** Google Calendar, Microsoft 365 calendars and **To Do** (OAuth, `?todo=1` / `?files=1`), Google Tasks, **Todoist**, Google Photos (Picker), iCal calendar links (with iCloud publish steps in Settings and `docs/icloud-calendar.md`),
 **Govee** (API key, Settings › Smart home), Amazon Photos, **photo sources** (Bing, Reddit, weather albums, Immich API keys, Dropbox/Box/SmugMug OAuth, OneDrive via Microsoft, Flickr API key, iCloud published URLs), the photo library (Vercel Blob), Home Assistant (Cloudflare Tunnel + Access), Spotify, Sonos, garbage
-zone lookup, sports teams to follow, TransLink, commute places (TomTom geocoding), optional **package tracking** key, **UniFi Site Manager** API key (Settings › UniFi network), **EcoFlow** access and secret keys, **Oura** (OAuth, Settings › Content & finance).
+zone lookup, sports teams to follow, TransLink, commute places (TomTom geocoding), optional **package tracking** key, **UniFi Site Manager** API key (Settings › UniFi network), **EcoFlow** access and secret keys, **Oura** (OAuth, Settings › Content & finance), **Airthings** (API client id and secret, Settings › Indoor air).
 
 ## In progress
 
@@ -315,6 +317,9 @@ npm run templates:previews  # regenerate public/templates/*.png from real widget
 - **Screen saver** (Melvin, 2026-11-21): after some minutes with no touch the display shows only photos (full screen,
   optional clock) or goes dark, and during a night window it goes dark; Home Assistant motion sensors keep it awake and
   wake it (see Architecture). Off until switched on in Settings › Screen saver.
+- **Airthings indoor air** (Melvin, 2026-11-21: "do all 6", from a list of native cloud APIs; native only, not Home
+  Assistant): an Indoor air widget for radon, CO₂, VOC, particles, humidity and temperature, with optional high radon
+  and CO₂ on the alert strip (see Architecture). Separate from the outdoor Air quality widget.
 - **Oura ring** (Melvin, 2026-11-21: "do all 6", from the list of devices with official cloud APIs): sleep,
   readiness and activity scores on the wall, read directly from Oura's API (not Home Assistant). Scores only unless
   the widget's **Show last night's details** is on, because the kitchen wall is readable by anyone (Claude's default,
@@ -345,7 +350,7 @@ panel can be complex if you need it to be."
   imports it with display.js's own `?v=` only on a screen that shows it. Its `../api` is swapped at build time for
   `src/display/apiShared.ts`, which calls display.js's copy, so feeds, the device token and offline state stay single.
   The internet widget, the UniFi network widget, EcoFlow, the whiteboard, wildfires, the Windy map, the Smart device tile
-  (`haEntity.ts`; cameras and `HA_EVERY` stay in `ha.ts`) and Oura load this way, and `next.config.ts` gives each file the same
+  (`haEntity.ts`; cameras and `HA_EVERY` stay in `ha.ts`), Oura and Indoor air (Airthings) load this way, and `next.config.ts` gives each file the same
   immutable cache header as display.js.
 - **Budget:** the display's script stays under 80 KB gzipped and its stylesheet under 20 KB (`scripts/bundle-check.mjs`,
   a CI step; CSS raised from 10 KB on 2026-11-23 for more clock styles; script raised from 40 KB by Melvin on 2026-11-25: "double the size of the limit"). A new dependency on the display needs a very good reason.
@@ -736,6 +741,20 @@ panel can be complex if you need it to be."
   (default 100) or 2 % packet loss. Metrics failing never hides the counts; parsing is lenient because Ubiquiti's
   examples have shifted between the early-access and v1 versions. This sandbox can't reach api.ui.com, so tests use the
   documented shapes. Setup: `docs/unifi.md`.
+- **Airthings** (2026-11-21, Household): `src/server/airthings.ts` reads the official consumer API
+  (`accounts-api.airthings.com/v1/token`, client credentials with `read:device:current_values`; then
+  `consumer-api.airthings.com/v1/accounts`, `/accounts/<id>/devices` and `/accounts/<id>/sensors?unit=metric`). Each
+  household makes its own API client on dashboard.airthings.com and pastes it in Settings › Indoor air
+  (`/api/household/airthings/`), which checks it with Airthings before saving the pair as secrets
+  (`airthings.clientId`, `airthings.clientSecret`); no Vercel variable. Access tokens stay in memory, never in the
+  cache table. Sensors are read every 5 minutes per household (the API allows about 120 an hour) and device names
+  hourly, shared by every display through `/api/display/airthings/`. Levels come from Airthings' own bands on the
+  metric value (`src/lib/airthings.ts`: radon red from 150 Bq/m³, CO₂ from 1,000 ppm, VOC from 2,000 ppb, PM from
+  25 µg/m³), then imperial dashboards get °F and pCi/L; the display only paints the level. `recorded` comes without a
+  zone and is UTC. Bluetooth-only Waves upload only through a hub or the phone app, so the widget shows "Last reading …"
+  after three hours. Indoor alerts (`indoorAlerts`, source `indoorAir`, "moderate", id per device, kind and day) are
+  merged into the alerts route only when switched on; readings older than six hours never raise one. This sandbox
+  can't reach Airthings, so tests use the documented shapes. Setup: `docs/airthings.md`.
 - **Tempest, Weather Underground and Nutrislice** (Phase 4, Household): Tempest and WU station settings in
   `config.integrations.smartHome`; Tempest token and optional WU key in secrets. **Menus** widget reads Nutrislice JSON
   only (`src/server/menus.ts`), never the `meals` table.

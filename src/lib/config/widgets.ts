@@ -1,3 +1,4 @@
+import { AIRTHINGS_DEFAULT_KINDS } from "../airthings";
 import type { Widget, WidgetType } from "./schema";
 
 // What the admin panel's widget picker offers, and what a new widget of each type starts with.
@@ -154,6 +155,14 @@ export const WIDGETS: { [T in WidgetType]: WidgetInfo<T> } = {
     size: { w: 3, h: 2 },
     minSize: { w: 2, h: 1 },
     defaults: () => ({ showWind: true, showRain: true, showHumidity: true }),
+  },
+  airthings: {
+    label: "Indoor air",
+    description: "Radon, CO₂ and more from Airthings",
+    icon: "🫁",
+    size: { w: 3, h: 3 },
+    minSize: { w: 2, h: 2 },
+    defaults: () => ({ devices: [], readings: [...AIRTHINGS_DEFAULT_KINDS] }),
   },
   ecoflow: {
     label: "EcoFlow",
@@ -638,7 +647,7 @@ export const WIDGET_GROUPS: { id: string; label: string; types: WidgetType[] }[]
   {
     id: "weather",
     label: "Weather & map",
-    types: ["weather", "tempest", "weatherUnderground", "airQuality", "radar", "wildfires", "earth", "windy"],
+    types: ["weather", "tempest", "weatherUnderground", "airQuality", "airthings", "radar", "wildfires", "earth", "windy"],
   },
   {
     id: "calendar",

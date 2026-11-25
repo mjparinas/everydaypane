@@ -3855,6 +3855,65 @@ html.portrait-view .stage {
   }
 }
 
+/* Airthings indoor air: Airthings' own green, amber and red bands. */
+.w-airthings {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6em;
+  font-size: 1.15em;
+  height: 100%;
+  overflow: hidden;
+}
+.at-name {
+  font-weight: 600;
+  color: var(--muted);
+  margin-bottom: 0.2em;
+}
+.at-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(9.5em, 1fr));
+  gap: 0.35em 1em;
+}
+.at-r {
+  display: flex;
+  align-items: baseline;
+  gap: 0.45em;
+}
+.at-dot {
+  width: 0.65em;
+  height: 0.65em;
+  border-radius: 50%;
+  flex: none;
+  align-self: center;
+  background: #40c057;
+}
+.at-fair .at-dot {
+  background: #fab005;
+}
+.at-poor .at-dot {
+  background: #fa5252;
+}
+.at-k {
+  color: var(--muted);
+}
+.at-v {
+  margin-left: auto;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.at-poor .at-v {
+  color: #fa5252;
+}
+.at-v small {
+  font-weight: 400;
+  font-size: 0.75em;
+  color: var(--muted);
+}
+.at-old {
+  font-size: 0.8em;
+  color: var(--muted);
+}
+
 /* EcoFlow power stations */
 .w-ecoflow {
   display: flex;

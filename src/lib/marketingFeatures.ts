@@ -27,6 +27,7 @@ const FEATURE_BLURBS: Partial<Record<WidgetType, string>> = {
   sunTimes: "Open-Meteo sunrise, sunset and daylight length.",
   weather: "Current, hourly, up to 7 days; Open-Meteo or Environment Canada.",
   airQuality: "AQHI or US AQI.",
+  airthings: "Indoor radon, CO₂, VOC and particles from Airthings.",
   radar: "Environment Canada observed + forecast over a map.",
   wildfires: "BC Wildfire Service fires, burned areas and evacuation areas on a map, nearest fires listed.",
   earth: "earth.nullschool.net centred on your place.",

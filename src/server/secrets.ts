@@ -24,6 +24,8 @@ export type SecretKey =
   | "govee.apiKey"
   | "tempest.token"
   | "wu.apiKey"
+  | "airthings.clientId"
+  | "airthings.clientSecret"
   | "ecoflow.accessKey"
   | "ecoflow.secretKey"
   | "unifi.apiKey"
@@ -84,6 +86,8 @@ export async function secretsSet(accountId: string): Promise<Record<SecretKey, b
     "govee.apiKey": set.has("govee.apiKey"),
     "tempest.token": set.has("tempest.token"),
     "wu.apiKey": set.has("wu.apiKey"),
+    "airthings.clientId": set.has("airthings.clientId"),
+    "airthings.clientSecret": set.has("airthings.clientSecret"),
     "ecoflow.accessKey": set.has("ecoflow.accessKey"),
     "ecoflow.secretKey": set.has("ecoflow.secretKey"),
     "unifi.apiKey": set.has("unifi.apiKey"),

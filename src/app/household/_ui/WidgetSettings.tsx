@@ -2,6 +2,7 @@
 
 import { useEffect, useState, type ReactNode } from "react";
 
+import { AIRTHINGS_KINDS, AIRTHINGS_LABELS } from "@/lib/airthings";
 import { PERIOD_LABELS, PERIODS } from "@/lib/config/periods";
 import type { CountdownEvent, DashboardConfig, TimerPreset, Widget } from "@/lib/config/schema";
 import { WIDGETS } from "@/lib/config/widgets";
@@ -10,6 +11,7 @@ import { FERRY_ROUTES, ferryRouteName } from "@/lib/ferries";
 import { MEAL_LABELS, MEAL_SLOTS } from "@/lib/meals";
 import { WINDY_OVERLAY_LABELS, WINDY_OVERLAYS, windyPressureAllowed } from "@/lib/windy";
 
+import { useAirthings } from "./airthings";
 import { PlaceFinder } from "./CommutePanel";
 import { useEcoFlow } from "./EcoFlowPanel";
 import { Range, Segmented, Select, Stepper, Text, TextArea, Toggle } from "./fields";
@@ -1094,6 +1096,8 @@ function TypeSettings({
         </>
       );
     }
+    case "airthings":
+      return <AirthingsSettings w={w} onChange={edit<"airthings">()} />;
     case "ecoflow":
       return <EcoFlowSettings w={w} e={edit<"ecoflow">()} />;
     case "unifi": {
@@ -2150,6 +2154,47 @@ function RoutesField({ routes, onChange }: { routes: string[]; onChange: (routes
         );
       }}
     />
+  );
+}
+
+function AirthingsSettings({ w, onChange }: { w: Extract<Widget, { type: "airthings" }>; onChange: Edit<"airthings"> }) {
+  const status = useAirthings();
+  return (
+    <>
+      <p className="text-xs text-soft">Readings to show, where the device has them (a Wave Radon has no CO₂).</p>
+      {AIRTHINGS_KINDS.map((k) => (
+        <Toggle
+          key={k}
+          label={AIRTHINGS_LABELS[k]}
+          checked={w.readings.includes(k)}
+          onChange={(on) =>
+            onChange((x) => {
+              const next = on ? AIRTHINGS_KINDS.filter((r) => r === k || x.readings.includes(r)) : x.readings.filter((r) => r !== k);
+              if (next.length) x.readings = next;
+            })
+          }
+        />
+      ))}
+      {!status ? null : !status.configured ? (
+        <p className="text-xs text-soft">
+          Connect Airthings under <SettingsLink href="#settings/indoor-air">Settings › Indoor air</SettingsLink>.
+        </p>
+      ) : status.devices.length === 0 ? (
+        <p className="text-xs text-soft">{status.error || "Airthings lists no devices yet."}</p>
+      ) : (
+        <>
+          <p className="text-xs text-soft">Pick the devices to show. With none picked, it shows them all.</p>
+          {status.devices.map((d) => (
+            <Toggle
+              key={d.serial}
+              label={d.name}
+              checked={w.devices.includes(d.serial)}
+              onChange={(on) => onChange((x) => void (x.devices = on ? [...x.devices, d.serial] : x.devices.filter((s) => s !== d.serial)))}
+            />
+          ))}
+        </>
+      )}
+    </>
   );
 }
 
