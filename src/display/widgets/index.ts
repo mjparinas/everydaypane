@@ -55,6 +55,7 @@ import { tides } from "./tides";
 import { timer } from "./timer";
 import { transit } from "./transit";
 import type { Cleanup, WidgetContext } from "./types";
+import { unifi } from "./unifi";
 import { weather } from "./weather";
 import { weatherUnderground } from "./weatherUnderground";
 import { whiteboard } from "./whiteboard";
@@ -73,6 +74,8 @@ export function mountWidget(el: HTMLElement, w: Widget, ctx: WidgetContext): Cle
       return weather(el, w, ctx);
     case "tempest":
       return tempest(el, w, ctx);
+    case "unifi":
+      return unifi(el, w, ctx);
     case "weatherUnderground":
       return weatherUnderground(el, w, ctx);
     case "airQuality":

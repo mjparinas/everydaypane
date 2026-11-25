@@ -155,6 +155,14 @@ export const WIDGETS: { [T in WidgetType]: WidgetInfo<T> } = {
     minSize: { w: 2, h: 1 },
     defaults: () => ({ showWind: true, showRain: true, showHumidity: true }),
   },
+  unifi: {
+    label: "UniFi network",
+    description: "Internet health from your UniFi gateway",
+    icon: "📶",
+    size: { w: 3, h: 2 },
+    minSize: { w: 2, h: 1 },
+    defaults: () => ({ siteId: "", slowMs: 100, showChart: true, showCounts: true, showUsage: false }),
+  },
   weatherUnderground: {
     label: "Weather Underground",
     description: "A personal weather station (PWS)",
@@ -584,7 +592,11 @@ export const WIDGET_GROUPS: { id: string; label: string; types: WidgetType[] }[]
     types: ["agenda", "calendarMonth", "calendarWeek", "calendarUpNext", "countdown", "tasks", "packages", "tides"],
   },
   { id: "family", label: "Family", types: ["meals", "menus", "shopping", "messages", "chores", "whiteboard", "school", "presence"] },
-  { id: "home", label: "Home", types: ["haEntity", "camera", "media", "wifiQr", "editQr", "garbage", "commute", "transit", "ferries"] },
+  {
+    id: "home",
+    label: "Home",
+    types: ["haEntity", "camera", "media", "unifi", "wifiQr", "editQr", "garbage", "commute", "transit", "ferries"],
+  },
   { id: "media", label: "Outside", types: ["photos", "sports", "alerts", "note"] },
   {
     id: "finance",
