@@ -348,7 +348,13 @@ export function LiveLayoutEditor({
                     aria-hidden="true"
                     data-corner={corner}
                     className={`absolute h-5 w-5 touch-none bg-brand/80 after:absolute after:h-2 after:w-2 after:border-white ${HANDLE[corner]} ${
-                      corner === "se" || selected || dragging ? "" : "hidden group-hover:block group-focus:block"
+                      selected || dragging
+                        ? ""
+                        : corner === "se"
+                          ? // Touch screens have no hover, so an always-on handle on every tile buried a phone-sized
+                            // preview (Melvin, 2026-11-26); there a tap selects the tile and shows its four handles.
+                            "[@media(hover:none)]:hidden"
+                          : "hidden group-hover:block group-focus:block"
                     }`}
                     onPointerDown={(e) => start(e, w, corner)}
                     onPointerMove={(e) => move(e, w)}
