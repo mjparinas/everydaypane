@@ -53,6 +53,7 @@ const LAZY = [
   "aurora",
   "onThisDay",
   "brief",
+  "packages",
   "schoolDays",
 ];
 const sharedApi = {

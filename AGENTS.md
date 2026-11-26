@@ -61,7 +61,7 @@ same change, and moves it out of **In progress** when it merges.
 | Chore chart (`chores`) | Today's chores by **morning/afternoon/evening** (or anytime), **tap to tick off**, completion dots / progress rings, stars this week, optional **star rewards** and **child PIN**; kids phone at `/d/<token>/chores/` and `/family/chores/` | Settings document + `chores_done` + `chore_redemptions` |
 | Sports scores (`sports`) | Live score, last result and next game for followed teams (NHL, NBA, WNBA, NFL, MLB, MLS, Premier League, Champions League) | ESPN public site API |
 | To-dos (`tasks`) | Open tasks from **Google Tasks, Microsoft To Do or Todoist** (`provider`); **tap to tick off** (`allowCheck`, 4 s undo) | Unified `/api/display/tasks/` feed |
-| Packages (`packages`) | UPS, FedEx, Canada Post, USPS tracking numbers on the widget; live status when `PACKAGE_TRACK_API_KEY` is set | Optional 17track-style API (`src/server/packages.ts`) |
+| Packages (`packages`) | Tracking numbers typed on the widget (Canada Post, Purolator, UPS, FedEx, DHL, USPS or worked out from the number) with live status, latest scan and expected day; **today's deliveries** first with a count, optional today only | 17TRACK tracking API with the household's own key (Settings › Packages, `docs/packages.md`) |
 | Snow report (`snow`) | New snow in the last 24 h, snow depth and snowfall today and the next two days, optional mountain temperature, for picked mountains (Cypress, Grouse, Seymour, Whistler by default; Sasquatch, Manning Park, Mt. Baker, Sun Peaks) | Open-Meteo forecast at each mountain's mid-mountain elevation (model estimate, no key) |
 | River levels (`rivers`) | Up to six river and creek gauges (Fraser at Mission and Hope, Salmon and Nicomekl in Langley, or any station by number): level, rising/falling/steady with the 6 h and 24 h change, a day's line, optional flow | Environment Canada real-time hydrometric (MSC GeoMet OGC API, Datamart CSV fallback) |
 | Tides (`tides`) | Next highs and lows at a station, optional height, optional **day curve** with a "now" line (`showCurve`); station search by name in its settings | Canadian IWLS + NOAA (US) (`docs/tides.md`) |
@@ -171,7 +171,7 @@ are no per-household overrides (see Architecture, Feature flags).
 
 **Integrations connected from Settings:** Google Calendar, Microsoft 365 calendars and **To Do** (OAuth, `?todo=1` / `?files=1`), Google Tasks, **Todoist**, Google Photos (Picker), iCal calendar links (with iCloud publish steps in Settings and `docs/icloud-calendar.md`),
 **Govee** (API key, Settings › Smart home), **Philips Hue** (OAuth, Settings › Smart home), **LIFX** (personal token, Settings › Smart home), Amazon Photos, **photo sources** (Bing, Reddit, weather albums, Immich API keys, Dropbox/Box/SmugMug OAuth, OneDrive via Microsoft, Flickr API key, iCloud published URLs), the photo library (Vercel Blob), Home Assistant (Cloudflare Tunnel + Access), Spotify, Sonos, garbage
-zone lookup, sports teams to follow, TransLink (the TTC, Calgary, Edmonton, Halifax and King County Metro feeds need nothing), commute places (TomTom geocoding), optional **package tracking** key, **UniFi Site Manager** API key (Settings › UniFi network), **EcoFlow** access and secret keys, **Oura** (OAuth, Settings › Content & finance), **Airthings** (API client id and secret, Settings › Indoor air), **Rachio** (API key, Settings › Sprinklers), **Blue Riiot** (app email and password, Settings › Pool; unofficial), **LG ThinQ** personal access token (Settings › Laundry).
+zone lookup, sports teams to follow, TransLink (the TTC, Calgary, Edmonton, Halifax and King County Metro feeds need nothing), commute places (TomTom geocoding), optional **package tracking** key, **UniFi Site Manager** API key (Settings › UniFi network), **EcoFlow** access and secret keys, **Oura** (OAuth, Settings › Content & finance), **Airthings** (API client id and secret, Settings › Indoor air), **Rachio** (API key, Settings › Sprinklers), **Blue Riiot** (app email and password, Settings › Pool; unofficial), **LG ThinQ** personal access token (Settings › Laundry), **17TRACK** API key (Settings › Packages).
 
 ## In progress
 
@@ -419,6 +419,10 @@ npm run templates:previews  # regenerate public/templates/*.png from real widget
   native cloud APIs, not Home Assistant): a `laundry` widget with time left and "done" from LG ThinQ and Samsung
   SmartThings, and a blue "done" notice on the alert strip (see Architecture). Claude's defaults: notices on, "done"
   for three hours unless the next cycle starts.
+- **Package tracking** (Melvin, 2026-11-26: "package tracking for today's deliveries"; native cloud APIs, not Home
+  Assistant): the Packages widget that existed since Phase 3 never showed live status, so it now reads 17TRACK with the
+  household's own key and leads with today's deliveries (see Architecture). Claude's pick of 17TRACK over carrier APIs
+  and AfterShip.
 - **Getting-started emails** (Melvin, 2026-11-26: "daily emails for as many days as possible without repeating and
   without having boring or thin content", branded, concise, a graphic or screenshot in each, mostly features everyone
   has but "a good portion" Household, "properly emphasized", and "optimized for speed and performance"): built like
@@ -452,7 +456,7 @@ panel can be complex if you need it to be."
   The internet widget, the UniFi network widget, EcoFlow, the whiteboard, wildfires, the Windy map, the Smart device tile
   (`haEntity.ts`; cameras and `HA_EVERY` stay in `ha.ts`), Oura, Indoor air (Airthings), the snow report, River levels,
   Border wait times, Gas prices, Sprinklers (Rachio), Highway cameras (DriveBC), the Pool (Blue Riiot), tides, moon phase, aurora,
-  On this day, Laundry, School days and the Morning brief load this way, and `next.config.ts` gives each file the same
+  On this day, Laundry, School days, Packages and the Morning brief load this way, and `next.config.ts` gives each file the same
   immutable cache header as display.js.
 - **Budget:** the display's script stays under 80 KB gzipped and its stylesheet under 20 KB (`scripts/bundle-check.mjs`,
   a CI step; CSS raised from 10 KB on 2026-11-23 for more clock styles; script raised from 40 KB by Melvin on 2026-11-25: "double the size of the limit"). A new dependency on the display needs a very good reason.
@@ -1064,6 +1068,15 @@ panel can be complex if you need it to be."
   "pickup today" before noon; ferries and traffic are today only (traffic: 10 min and a quarter over empty roads, read
   in the last 20 min). Strip-worthy alerts lead, household notices never. From 7 PM (`BRIEF_EVENING_HOUR`) it reads
   tomorrow. The display polls every five minutes, paints the text and steps the size down until it fits (`brief.js`).
+- **Packages** (`src/server/packages.ts`, `src/lib/packages.ts`, setup `docs/packages.md`): 17TRACK's tracking API
+  v2.2 (`api.17track.net/track/v2.2`, header `17token`) with the household's key (encrypted `packages.17track`, checked
+  with `getquota` before Settings › Packages saves it through `/api/household/packages/`). A new number costs one of the
+  key's quota when registered, so each is registered once (with the widget's carrier, again without one if refused) and
+  remembered per household in the cache table (`packages:<account>:registered`, cleared when the key changes); status
+  comes from the free `gettrackinfo`, read every 15 minutes per household. Displays poll `/api/display/packages/` every
+  five minutes and get status, the latest scan and place, the expected window and the delivery time. "Today" (out for
+  delivery, ready for pickup, due today, delivered today) is worked out on the wall in the dashboard's time zone; the
+  widget loads on its own (`packages.js`). This sandbox can't reach 17TRACK, so tests use its documented shapes.
 - **Tides** (`src/server/tides.ts`, reworked 2026-11-25): Canadian stations are `iwls:` plus the five-digit number on
   the tide tables (White Rock `iwls:07577`); IWLS's data route wants its own id, looked up once a day via
   `/stations?code=`, and answers a bare list, so highs and lows are told apart by their neighbours. The old default

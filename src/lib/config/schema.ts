@@ -382,7 +382,8 @@ export const widgetSchema = z.discriminatedUnion("type", [
     showDue: z.boolean(),
     allowCheck: z.boolean(),
   }),
-  // Package tracking (Phase 3, Household): UPS, FedEx, Canada Post, USPS and more; status from an optional tracker API.
+  // Package tracking (Phase 3, Household; live status Melvin, 2026-11-26): numbers typed on the widget, status, expected
+  // day and deliveries today from 17TRACK with the household's own key (src/server/packages.ts, docs/packages.md).
   z.object({
     ...base,
     type: z.literal("packages"),
@@ -390,7 +391,8 @@ export const widgetSchema = z.discriminatedUnion("type", [
       .array(
         z.object({
           id,
-          carrier: z.enum(["ups", "fedex", "canadaPost", "usps", "other"]),
+          // "other" lets 17TRACK work out the carrier from the number.
+          carrier: z.enum(["ups", "fedex", "canadaPost", "purolator", "dhl", "usps", "other"]),
           trackingNumber: z.string().trim().min(4).max(64),
           label: z.string().max(40).optional(),
         }),
@@ -398,6 +400,8 @@ export const widgetSchema = z.discriminatedUnion("type", [
       .max(12),
     count: z.number().int().min(1).max(12),
     showDelivered: z.boolean(),
+    /** Only what's out for delivery, due today, ready for pickup or delivered today. */
+    todayOnly: z.boolean().default(false),
   }),
   // Mountain snow report (Melvin, 2026-11-25): new snow, depth and the next days' snowfall for picked mountains, from
   // Open-Meteo at each mountain (src/server/snow.ts, src/lib/snow.ts for the list).

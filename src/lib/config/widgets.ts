@@ -283,11 +283,11 @@ export const WIDGETS: { [T in WidgetType]: WidgetInfo<T> } = {
   },
   packages: {
     label: "Packages",
-    description: "Track UPS, FedEx, Canada Post and USPS",
+    description: "Deliveries today and what's on its way, from 17TRACK",
     icon: "📦",
     size: { w: 4, h: 3 },
     minSize: { w: 2, h: 2 },
-    defaults: () => ({ packages: [], count: 6, showDelivered: false }),
+    defaults: () => ({ packages: [], count: 6, showDelivered: false, todayOnly: false }),
   },
   snow: {
     label: "Snow report",

@@ -36,6 +36,8 @@ export type SecretKey =
   | "ecoflow.secretKey"
   | "unifi.apiKey"
   | "rachio.apiKey"
+  // A 17TRACK API key (17track.net › API › Settings) for the Packages widget, src/server/packages.ts.
+  | "packages.17track"
   // Blue Riiot has no developer API: the app's own email and password (src/server/blueRiiot.ts).
   | "blueRiiot.email"
   | "blueRiiot.password"
@@ -106,6 +108,7 @@ export async function secretsSet(accountId: string): Promise<Record<SecretKey, b
     "ecoflow.secretKey": set.has("ecoflow.secretKey"),
     "unifi.apiKey": set.has("unifi.apiKey"),
     "rachio.apiKey": set.has("rachio.apiKey"),
+    "packages.17track": set.has("packages.17track"),
     "blueRiiot.email": set.has("blueRiiot.email"),
     "blueRiiot.password": set.has("blueRiiot.password"),
     "microsoft.refreshToken": set.has("microsoft.refreshToken"),

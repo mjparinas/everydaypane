@@ -1,5 +1,5 @@
 {
-  "updatedAt": 1763937720000,
+  "updatedAt": 1795448400000,
   "trackingConfigured": true,
   "packages": [
     {
@@ -8,8 +8,8 @@
       "trackingNumber": "1Z999AA10123456784",
       "label": "Lego set",
       "status": "outForDelivery",
-      "summary": "On the truck for delivery",
-      "eta": "2026-11-23"
+      "summary": "With delivery driver",
+      "where": "Langley, BC"
     },
     {
       "id": "pkg-books",
@@ -17,8 +17,9 @@
       "trackingNumber": "1234567890123456",
       "label": "Library holds",
       "status": "inTransit",
-      "summary": "In transit to Langley",
-      "eta": "2026-11-25"
+      "summary": "Item processed",
+      "where": "Richmond, BC",
+      "etaFrom": 1795608000000
     },
     {
       "id": "pkg-shoes",
@@ -26,7 +27,8 @@
       "trackingNumber": "794612345678",
       "label": "Running shoes",
       "status": "delivered",
-      "summary": "Left at front door"
+      "summary": "Left at front door",
+      "deliveredAt": 1795446300000
     }
   ]
 }

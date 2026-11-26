@@ -4072,6 +4072,9 @@ html.portrait-view .stage {
   font-size: 0.92em;
   height: 100%;
 }
+.w-packages {
+  font-size: calc(clamp(13px, 4.6cqh, 24px) * var(--font-scale, 1));
+}
 .td-chart {
   flex: 1 1 30%;
   min-height: 2.5em;
@@ -4300,13 +4303,50 @@ html.portrait-view .stage {
 .td-kind {
   color: var(--muted);
 }
-.pk-title,
 .td-when {
   font-weight: 600;
 }
 .pk-hint {
   font-size: 0.85em;
   opacity: 0.75;
+}
+/* Packages: title and status on one line, the expected day, carrier and latest scan under them. */
+.pk-list {
+  overflow: hidden;
+}
+.pk-row {
+  grid-template-columns: 1fr auto;
+  gap: 0 0.5em;
+}
+.pk-title {
+  font-weight: 600;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.pk-status {
+  color: var(--muted);
+}
+.pk-summary {
+  grid-column: 1 / -1;
+  font-size: 0.85em;
+  color: var(--muted);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.pk-today .pk-status,
+.pk-pickup .pk-status {
+  color: var(--accent);
+  font-weight: 600;
+}
+.pk-exception .pk-status {
+  color: var(--danger);
+}
+.pk-delivered {
+  opacity: 0.7;
 }
 
 /* Mountain snow report (Melvin, 2026-11-25): one grid for the table so the numbers line up in columns. */

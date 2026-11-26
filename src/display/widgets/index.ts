@@ -19,7 +19,6 @@ import { media } from "./media";
 import { menus } from "./menus";
 import { messages } from "./messages";
 import { note } from "./note";
-import { packages } from "./packages";
 import {
   affirmation,
   airports,
@@ -151,7 +150,7 @@ export function mountWidget(el: HTMLElement, w: Widget, ctx: WidgetContext): Cle
     case "ferries":
       return ferries(el, w, ctx);
     case "packages":
-      return packages(el, w, ctx);
+      return lazyWidget("packages", el, w, ctx);
     case "tides":
       return lazyWidget("tides", el, w, ctx);
     case "moon":

@@ -30,6 +30,7 @@ import { HaEntityList, useHa } from "./haEntities";
 import { useLaundry } from "./laundry";
 import { shrink } from "./LibraryAlbum";
 import { useMusic } from "./music";
+import { usePackages } from "./packages";
 import { useRachio } from "./rachio";
 import { loadSmartProvider, type SmartProviderDetail } from "./smartHome";
 import { newId } from "./store";
@@ -1683,18 +1684,25 @@ function TypeSettings({
       return (
         <>
           <Stepper label="Packages shown" value={w.count} min={1} max={12} onChange={(v) => e((x) => void (x.count = v))} />
-          <Toggle label="Show delivered" checked={w.showDelivered} onChange={(v) => e((x) => void (x.showDelivered = v))} />
+          <Toggle label="Only today's deliveries" checked={w.todayOnly} onChange={(v) => e((x) => void (x.todayOnly = v))} />
+          <Toggle
+            label="Show packages delivered before today"
+            checked={w.showDelivered}
+            onChange={(v) => e((x) => void (x.showDelivered = v))}
+          />
           {w.packages.map((p, i) => (
             <div key={p.id} className="grid gap-2 rounded-xl border border-line p-3">
               <Select
                 label="Carrier"
                 value={p.carrier}
                 options={[
+                  { value: "other", label: "Work it out from the number" },
+                  { value: "canadaPost", label: "Canada Post" },
+                  { value: "purolator", label: "Purolator" },
                   { value: "ups", label: "UPS" },
                   { value: "fedex", label: "FedEx" },
-                  { value: "canadaPost", label: "Canada Post" },
+                  { value: "dhl", label: "DHL" },
                   { value: "usps", label: "USPS" },
-                  { value: "other", label: "Other" },
                 ]}
                 onChange={(v) => e((x) => void (x.packages[i]!.carrier = v))}
               />
@@ -1724,14 +1732,12 @@ function TypeSettings({
             <button
               type="button"
               className="btn-ghost justify-self-start"
-              onClick={() => e((x) => void x.packages.push({ id: newId("pkg"), carrier: "ups", trackingNumber: "", label: "" }))}
+              onClick={() => e((x) => void x.packages.push({ id: newId("pkg"), carrier: "other", trackingNumber: "", label: "" }))}
             >
               Add a package
             </button>
           )}
-          <p className="text-xs text-soft">
-            Set <span className="font-mono">PACKAGE_TRACK_API_KEY</span> on the server for live status (optional).
-          </p>
+          <PackagesHint />
         </>
       );
     }
@@ -2854,6 +2860,21 @@ function PoolSettings({ w, onChange }: { w: Extract<Widget, { type: "blueRiiot" 
         </>
       ) : null}
     </>
+  );
+}
+
+function PackagesHint() {
+  const status = usePackages();
+  if (!status) return null;
+  return status.configured && !status.error ? (
+    <p className="text-xs text-soft">Live status from 17TRACK. Each new number uses one of the key&apos;s tracking quota.</p>
+  ) : (
+    <p className="text-xs text-soft">
+      {status.error || "Numbers show without live status until a 17TRACK key is saved."}{" "}
+      <a className="underline" href="#settings/packages">
+        Settings › Packages
+      </a>
+    </p>
   );
 }
 

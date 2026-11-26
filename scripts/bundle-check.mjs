@@ -25,6 +25,7 @@ const BUDGET = {
   "public/display/borderWait.js": 6_000,
   "public/display/gasPrices.js": 6_000,
   "public/display/rachio.js": 6_000,
+  "public/display/packages.js": 6_000,
   "public/display/blueRiiot.js": 6_000,
   "public/display/tides.js": 4_000,
   "public/display/moon.js": 4_000,
