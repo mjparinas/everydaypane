@@ -194,9 +194,13 @@ export const flows = [
       await page.mouse.up();
       await labelled("3 by 3 at column 9, row 6");
       const grown = await widget.getAttribute("aria-label");
+      // Every widget's place in the editor, so a failure shows what the grown widget would have overlapped.
+      const layout = grown.includes("3 by 3 at column 9, row 6")
+        ? ""
+        : (await page.locator("[data-widget]").evaluateAll((els) => els.map((el) => el.getAttribute("aria-label")))).join(" | ");
       expect(
         grown.includes("3 by 3 at column 9, row 6"),
-        `the top-left corner didn't resize: ${grown} (during the drag: ${during}; under the handle: ${under}; grid ${Math.round(grid.width)} px)`,
+        `the top-left corner didn't resize: ${grown} (during the drag: ${during}; under the handle: ${under}; grid ${Math.round(grid.width)} px; layout: ${layout})`,
       );
       await page.getByRole("button", { name: "Publish to wall", exact: true }).click();
       await page.getByText(/Published\. Displays update/).waitFor();
