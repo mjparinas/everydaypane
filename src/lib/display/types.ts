@@ -1,6 +1,7 @@
 import type { BriefSource } from "@/lib/briefSources";
 import type { DashboardConfig, Theme, View } from "@/lib/config/schema";
 import type { SchoolDayOff } from "@/lib/schoolCalendar";
+import type { ShoppingCategory } from "@/lib/shopping";
 
 // What a display receives: the parts of the settings document it needs, nothing secret. Built by
 // src/lib/display/payload.ts, read by src/display/. Types only, so the display bundle carries no schema code.
@@ -491,6 +492,10 @@ export interface ShoppingItem {
   id: string;
   text: string;
   done: boolean;
+  /** The aisle: picked on a phone, or guessed from the words (src/lib/shoppingGuess.ts). */
+  category: ShoppingCategory;
+  /** "Running low": we still have some, pick it up if you're there. An item without it means we're out. */
+  low: boolean;
 }
 
 export interface ShoppingData {

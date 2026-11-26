@@ -52,7 +52,7 @@ same change, and moves it out of **In progress** when it merges.
 | Note (`note`) | Fixed text from the admin | Settings document |
 | Message board (`messages`) | Family notes from phones; optional **post from the wall** (`allowAdd`) | `messages` table |
 | Meals (`meals`) | Breakfast, lunch, dinner for a day or a week; recurring cadences fill future days | `account_meals` + `account_meal_rules` |
-| Shopping list (`shopping`) | Groceries from phones; **tap to tick off** (`allowCheck`); optional **add from the wall** (`allowAdd`); optional bought items | `shopping` table |
+| Shopping list (`shopping`) | Groceries from phones; **aisle headings** (`groupByCategory`: produce, dairy, pantry… guessed from the words, movable on a phone); **running low** tag; **tap to tick off** (`allowCheck`); optional **add from the wall** (`allowAdd`, with a Low chip); optional bought items | `shopping` table |
 | Who's home (`presence`) | Who is home, from person and device tracker entities, read only | Home Assistant |
 | School days (`schoolDays`) | School today or not (weekend, Pro-D day, break with the day school's back, summer), early dismissals, a "Tomorrow: no school" line, the next 0 to 6 days off with "in N days", and the weekly hot-lunch line | Settings › School days: the school year and days off (one-tap **Langley 2026–27 elementary or middle** preset), optional school iCal links read for Pro-D/No school/break events, lunch per weekday |
 | School status (`school`) | Open, closed, delayed or late start; optional school names | District status page (`config.school`) |
@@ -237,6 +237,11 @@ npm run templates:previews  # regenerate public/templates/*.png from real widget
   recurring cadences (every weekday, every N days), planned from a phone and shown on the wall (see Architecture).
 - **Shopping list** (Melvin, 2026-11-22): groceries the family adds from their phones, shown on the wall, ticked off
   with a tap when the widget allows it (see Architecture).
+- **Shopping aisles and running low** (Melvin, 2026-11-26: "add categories and running low"): every item has an aisle
+  from a fixed store-order list (`src/lib/shopping.ts`) and can be marked running low ("still some left, grab it if
+  you're there"; an unmarked item means it's out). Claude's defaults: the aisle is guessed from the words
+  (`src/lib/shoppingGuess.ts`) so nobody has to pick, an aisle picked on a phone sticks for that item next time, new
+  widgets group by aisle and older ones keep their flat list until switched, and "low" is a tag rather than a re-sort.
 - **Whiteboard** (Melvin, 2026-11-22): a simple shared doodle on the wall — a few colours, finger draw, eraser, hold
   Clear to wipe; wider tiles show more colours; the same board on every display (see Architecture). **From phones**
   (Melvin, 2026-11-26: "yes let the whiteboard sync from phones"): `/family/` and the kitchen edit link draw on the
@@ -611,7 +616,14 @@ panel can be complex if you need it to be."
   already open. Displays poll `/api/display/shopping/` every minute with an ETag. A tap on the wall ticks an item off
   at once (a second tap puts it back) only when a shopping widget has `allowCheck`, because anyone in the kitchen can
   reach the screen; a signed-in phone (or the kitchen edit link) can always tick. The widget shows a chosen number of
-  items and can show or hide what's already bought.
+  items and can show or hide what's already bought. **Aisles** are the `category` column; null means "guess from the
+  words when read" (`guessCategory`: whole words, the match that ends last wins, then the longer, "frozen" anywhere is
+  Frozen), so rows saved before aisles get one with no backfill. Picking an aisle on a phone (`PATCH` with `category`)
+  writes it to every row with the same words (case-insensitive), and `addShoppingItem` reuses it from those rows. The
+  word list stays off the wall: the feed carries the category id and the display imports only the labels. **Running
+  low** is the `low` column, set from the phone's Low buttons or the wall's Low chip next to Add; the wall shows an amber
+  "low" tag. With `groupByCategory` the open items are drawn under aisle headings in store order (bought ones last,
+  ungrouped), and `count` is cut after grouping.
 - **Phone edit page** (Melvin, 2026-11-22): `/d/<token>/edit/` reuses the family meal, shopping and message components
   with no magic link (`FamilyAuthProvider` sends `x-display-token`; `familyEditorFor` in `src/server/familyAuth.ts`
   accepts a session or that token). Kitchen posts are keyed `display:<deviceId>` (no admin pin). An `editQr` widget and

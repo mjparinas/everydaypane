@@ -4,15 +4,15 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { newWidget } from "@/lib/config/widgets";
 import type { DisplayPayload, ShoppingData } from "@/lib/display/types";
 
-import { shopping, shownItems } from "./shopping";
+import { orderedItems, shopping, shownItems } from "./shopping";
 
 const ctx = { payload: {} as DisplayPayload, timeZone: "America/Vancouver", hour12: true };
 const data: ShoppingData = {
   updatedAt: 1,
   items: [
-    { id: "a", text: "Milk", done: false },
-    { id: "b", text: "Eggs", done: false },
-    { id: "c", text: "Bread", done: true },
+    { id: "a", text: "Milk", done: false, category: "dairy", low: false },
+    { id: "b", text: "Eggs", done: false, category: "dairy", low: false },
+    { id: "c", text: "Bread", done: true, category: "bakery", low: false },
   ],
 };
 
@@ -71,12 +71,65 @@ describe("shopping widget", () => {
     vi.useFakeTimers();
     vi.stubGlobal(
       "fetch",
-      vi.fn(() => Promise.resolve(Response.json({ updatedAt: 1, items: [{ id: "a", text: "Milk", done: true }] }))),
+      vi.fn(() =>
+        Promise.resolve(Response.json({ updatedAt: 1, items: [{ id: "a", text: "Milk", done: true, category: "dairy", low: false }] })),
+      ),
     );
     const el = document.createElement("div");
     const stop = shopping(el, newWidget("shopping", "s", { x: 0, y: 0 }), ctx);
     await vi.advanceTimersByTimeAsync(0);
     expect(el.querySelector(".w-empty")?.textContent).toBe("All bought");
+    stop();
+  });
+
+  it("groups open items by aisle under headings and tags running-low ones", async () => {
+    vi.useFakeTimers();
+    const aisles: ShoppingData = {
+      updatedAt: 1,
+      items: [
+        { id: "a", text: "Milk", done: false, category: "dairy", low: false },
+        { id: "b", text: "Apples", done: false, category: "produce", low: false },
+        { id: "c", text: "Cheese", done: false, category: "dairy", low: true },
+        { id: "d", text: "Bananas", done: true, category: "produce", low: false },
+      ],
+    };
+    expect(orderedItems(aisles, true, true).map((i) => i.text)).toEqual(["Apples", "Milk", "Cheese", "Bananas"]);
+    expect(orderedItems(aisles, false, false).map((i) => i.text)).toEqual(["Milk", "Apples", "Cheese"]);
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(() => Promise.resolve(Response.json(aisles))),
+    );
+    const el = document.createElement("div");
+    const stop = shopping(el, { ...newWidget("shopping", "s", { x: 0, y: 0 }), showDone: true }, ctx);
+    await vi.advanceTimersByTimeAsync(0);
+    expect(
+      [...el.querySelectorAll(".sh-items > li")].map((n) =>
+        n.classList.contains("sh-cat") ? `# ${n.textContent}` : n.querySelector(".sh-title")?.textContent,
+      ),
+    ).toEqual(["# Produce", "Apples", "# Dairy & eggs", "Milk", "Cheese", "Bananas"]);
+    expect([...el.querySelectorAll(".sh-low")].map((n) => n.closest("li")?.getAttribute("data-id"))).toEqual(["c"]);
+    stop();
+  });
+
+  it("adds a running-low item from the wall", async () => {
+    vi.useFakeTimers();
+    const posts: unknown[] = [];
+    vi.stubGlobal(
+      "fetch",
+      vi.fn((_url: string, init?: RequestInit) => {
+        if (init?.method === "POST") posts.push(JSON.parse(String(init.body)));
+        return Promise.resolve(Response.json(init?.method === "POST" ? { ok: true } : { updatedAt: 1, items: [] }));
+      }),
+    );
+    const el = document.createElement("div");
+    const stop = shopping(el, { ...newWidget("shopping", "s", { x: 0, y: 0 }), allowAdd: true }, ctx);
+    await vi.advanceTimersByTimeAsync(0);
+    const input = el.querySelector<HTMLInputElement>(".sh-add-in");
+    if (input) input.value = "Coffee";
+    el.querySelector<HTMLButtonElement>(".sh-low-btn")?.click();
+    el.querySelector<HTMLButtonElement>(".sh-add-btn")?.click();
+    await vi.advanceTimersByTimeAsync(0);
+    expect(posts).toEqual([{ text: "Coffee", low: true }]);
     stop();
   });
 
