@@ -6,6 +6,7 @@ import { WIDGET_TYPES } from "./config/widgets";
 import {
   applyFlags,
   FEATURE_FLAGS,
+  featureFlag,
   flagsForWidget,
   isFeatureFlag,
   LEGACY_FLAGS,
@@ -174,6 +175,50 @@ describe("applyFlags", () => {
     expect(out.integrations.homeAssistant.doorbell.entityId).toBe("");
     expect(out.screenSaver.motionEntityIds).toEqual([]);
     expect(out.integrations.smartHome.airthings.alertRadon).toBe(false);
+  });
+});
+
+describe("feature flags beyond widgets", () => {
+  it("lists the idle view, smart notices and regional packs", () => {
+    for (const name of ["feature.idleView", "feature.smartNotices", "feature.regionalPacks"]) expect(isFeatureFlag(name), name).toBe(true);
+  });
+
+  it("shows photos instead of the idle view when it is off", () => {
+    const c = defaultConfig();
+    c.screenSaver = { ...c.screenSaver, idle: true, shows: "view", viewId: c.views[0]!.id };
+    const out = applyFlags(c, new Set([featureFlag("idleView")]));
+    expect(out.screenSaver.shows).toBe("photos");
+    expect(out.screenSaver.viewId).toBeUndefined();
+    c.screenSaver.shows = "dark";
+    expect(applyFlags(c, new Set([featureFlag("idleView")])).screenSaver.shows).toBe("dark");
+  });
+
+  it("switches every smart notice off and keeps their thresholds", () => {
+    const c = defaultConfig();
+    c.alerts.rules = { ...c.alerts.rules, sprinklerFrost: true, garbageEve: true, smokyAqhi: 8 };
+    const rules = applyFlags(c, new Set([featureFlag("smartNotices")])).alerts.rules;
+    expect(Object.entries(rules).filter(([, v]) => v === true)).toEqual([]);
+    expect(rules.smokyAqhi).toBe(8);
+    expect(c.alerts.rules.sprinklerFrost).toBe(true);
+  });
+
+  it("goes back to the Lower Mainland and TransLink when regional packs are off", () => {
+    const transit = (id: string, agency: "translink" | "ttc"): Widget => ({
+      ...base,
+      id,
+      type: "transit",
+      agency,
+      stops: [],
+      routes: [],
+      count: 4,
+      walkMinutes: 0,
+    });
+    const c = withWidgets([transit("tl", "translink"), transit("ttc", "ttc")]);
+    c.region = "toronto";
+    const out = applyFlags(c, new Set([featureFlag("regionalPacks")]));
+    expect(out.region).toBe("lowerMainland");
+    expect(out.views[0]!.widgets.map((w) => w.id)).toEqual(["tl"]);
+    expect(applyFlags(c, new Set(["widget.clock"])).region).toBe("toronto");
   });
 });
 

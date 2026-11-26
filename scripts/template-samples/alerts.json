@@ -1,4 +1,36 @@
 {
-  "updatedAt": 1763937720000,
-  "alerts": []
+  "updatedAt": 1795473720000,
+  "alerts": [
+    {
+      "id": "naad-rainfall-fraser-valley",
+      "source": "weather",
+      "severity": "moderate",
+      "title": "Rainfall warning",
+      "area": "Fraser Valley - west including Abbotsford",
+      "description": "Heavy rain beginning this evening. Total rainfall of 50 to 70 mm is expected by Tuesday morning.",
+      "sent": 1795461120000,
+      "expires": 1795543200000
+    },
+    {
+      "id": "bchydro-5124409",
+      "source": "power",
+      "severity": "minor",
+      "title": "Power outage 3 km away",
+      "area": "Walnut Grove · 412 customers",
+      "description": "Tree down on wires. BC Hydro expects power back by 6:30 PM.",
+      "sent": 1795468200000,
+      "expires": null
+    },
+    {
+      "id": "frost:dev-front:1795521600000",
+      "source": "smart",
+      "severity": "minor",
+      "title": "Sprinklers at 5:00 AM in -1°",
+      "area": "Front yard",
+      "description": "Lawn mornings is due to run at 5:00 AM, when it should be -1°. Skip it so paths don't ice over.",
+      "sent": 1795521600000,
+      "expires": null,
+      "notice": true
+    }
+  ]
 }

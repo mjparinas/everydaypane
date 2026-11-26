@@ -17,6 +17,13 @@ describe("marketing features catalogue", () => {
 
   it("keeps display behaviour copy for the features page", () => {
     expect(FEATURE_BEHAVIOURS.length).toBeGreaterThanOrEqual(5);
+    expect(FEATURE_BEHAVIOURS.map((b) => b.name)).toEqual(expect.arrayContaining(["Smart notices", "Regional packs"]));
+  });
+
+  it("has a committed picture for every behaviour that names one", () => {
+    for (const b of FEATURE_BEHAVIOURS.filter((x) => x.image)) {
+      expect(existsSync(join(process.cwd(), "public", b.image!)), `missing ${b.image} — run npm run templates:previews`).toBe(true);
+    }
   });
 
   it("has a committed sample PNG for every widget", () => {
