@@ -37,6 +37,7 @@ export const SAMPLE_FEEDS: Record<string, unknown> = {
   transit: loadJson("transit.json"),
   commute: loadJson("commute.json"),
   ferries: loadJson("ferries.json"),
+  drivebc: loadJson("drivebc.json"),
   border: loadJson("border.json"),
   sports: loadJson("sports.json"),
   garbage: loadJson("garbage.json"),
@@ -91,6 +92,14 @@ export function withDemoBindings(widget: Widget): Widget {
         return { ...widget, entityId: "climate.house", control: "climate", title: widget.title || "Thermostat" };
       }
       return { ...widget, entityId: "light.kitchen", control: "light", title: widget.title || "Kitchen" };
+    case "drivebc":
+      return {
+        ...widget,
+        cameras: [
+          { id: "292", name: "Port Mann Bridge - W" },
+          { id: "904", name: "Hwy 1 at 176 Street - W" },
+        ],
+      };
     case "camera":
       return { ...widget, entityId: "camera.front_door" };
     case "media":

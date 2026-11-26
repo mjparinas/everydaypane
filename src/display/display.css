@@ -4183,6 +4183,94 @@ html.portrait-view .stage {
   stroke-linejoin: round;
 }
 
+/* DriveBC highway cameras (Melvin, 2026-11-25): one to four still pictures, or one at a time in turn. */
+.w-drivebc {
+  position: relative;
+  height: 100%;
+  border-radius: var(--radius);
+  overflow: hidden;
+  background: #000;
+}
+.dbc-grid {
+  display: grid;
+  gap: 2px;
+  height: 100%;
+}
+.dbc-n2 {
+  grid-template-columns: 1fr 1fr;
+}
+.dbc-n3,
+.dbc-n4 {
+  grid-template: 1fr 1fr / 1fr 1fr;
+}
+@container (aspect-ratio < 1) {
+  .dbc-n2 {
+    grid-template: 1fr 1fr / 1fr;
+  }
+}
+.dbc-cam {
+  position: relative;
+  min-width: 0;
+  min-height: 0;
+}
+.dbc-n1 .dbc-cam {
+  grid-area: 1 / 1;
+  opacity: 0;
+  transition: opacity 0.6s;
+}
+.dbc-n1 .dbc-cam.on,
+.dbc-n1 .dbc-cam:only-child {
+  opacity: 1;
+}
+.dbc-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.dbc-bar {
+  position: absolute;
+  inset: auto 0 0;
+  display: flex;
+  justify-content: space-between;
+  gap: 0.6em;
+  padding: 1.4em 0.7em 0.45em;
+  background: linear-gradient(transparent, rgb(0 0 0 / 0.65));
+  color: #fff;
+  font-size: clamp(11px, 2cqw, 16px);
+  line-height: 1.2;
+}
+.dbc-name {
+  overflow: hidden;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.dbc-note {
+  flex: none;
+  opacity: 0.85;
+}
+.dbc-cam.late .dbc-note {
+  color: #fca5a5;
+  opacity: 1;
+}
+.dbc-title {
+  position: absolute;
+  top: 0.5em;
+  left: 0.7em;
+  color: #fff;
+  font-size: clamp(12px, 2.2cqw, 18px);
+  font-weight: 600;
+  text-shadow: 0 1px 6px rgb(0 0 0 / 0.7);
+}
+.dbc-credit {
+  position: absolute;
+  top: 0.3em;
+  right: 0.5em;
+  color: rgb(255 255 255 / 0.75);
+  font-size: 9px;
+  text-shadow: 0 0 3px #000;
+}
+
 /* River levels */
 .w-rivers {
   display: flex;

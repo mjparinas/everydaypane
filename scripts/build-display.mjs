@@ -43,6 +43,7 @@ const LAZY = [
   "snow",
   "rivers",
   "borderWait",
+  "drivebc",
   "rachio",
 ];
 const sharedApi = {
