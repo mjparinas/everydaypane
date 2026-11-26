@@ -15,6 +15,16 @@
     "file": "sunTimes.png"
   },
   {
+    "type": "moon",
+    "name": "Moon phase",
+    "file": "moon.png"
+  },
+  {
+    "type": "aurora",
+    "name": "Aurora tonight",
+    "file": "aurora.png"
+  },
+  {
     "type": "weather",
     "name": "Weather",
     "file": "weather.png"
@@ -318,6 +328,11 @@
     "type": "affirmation",
     "name": "Affirmation",
     "file": "affirmation.png"
+  },
+  {
+    "type": "onThisDay",
+    "name": "On this day",
+    "file": "onThisDay.png"
   },
   {
     "type": "horoscope",

@@ -1,0 +1,52 @@
+{
+  "updatedAt": 1763937720000,
+  "kpNow": 2.67,
+  "kpNowAt": "2026-11-23T21:00:00.000Z",
+  "tonightKp": 6.0,
+  "tonightAt": "2026-11-24T06:00:00.000Z",
+  "chance": "possible",
+  "kpForHorizon": 5.33,
+  "storm": 2,
+  "blocks": [
+    {
+      "start": "2026-11-23T21:00:00Z",
+      "kp": 2.67,
+      "predicted": false
+    },
+    {
+      "start": "2026-11-24T00:00:00Z",
+      "kp": 3.33,
+      "predicted": true
+    },
+    {
+      "start": "2026-11-24T03:00:00Z",
+      "kp": 4.0,
+      "predicted": true
+    },
+    {
+      "start": "2026-11-24T06:00:00Z",
+      "kp": 5.33,
+      "predicted": true
+    },
+    {
+      "start": "2026-11-24T09:00:00Z",
+      "kp": 6.0,
+      "predicted": true
+    },
+    {
+      "start": "2026-11-24T12:00:00Z",
+      "kp": 5.67,
+      "predicted": true
+    },
+    {
+      "start": "2026-11-24T15:00:00Z",
+      "kp": 4.33,
+      "predicted": true
+    },
+    {
+      "start": "2026-11-24T18:00:00Z",
+      "kp": 3.0,
+      "predicted": true
+    }
+  ]
+}
