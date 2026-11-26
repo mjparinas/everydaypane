@@ -28,6 +28,7 @@ same change, and moves it out of **In progress** when it merges.
 | Weather (`weather`) | Current conditions, hourly, up to 7 days, with icons, UV index and pollen | Open-Meteo (default) or Environment Canada city page (`config.weather.provider`); UV/pollen/AQ still Open-Meteo |
 | Tempest (`tempest`) | Backyard station: temp, humidity, wind, rain today | WeatherFlow REST (`config.integrations.smartHome.tempest`, token secret) |
 | EcoFlow (`ecoflow`) | Each power station's battery %, power in and out, solar, AC and DC flows, time to full or empty; pick devices or show all | EcoFlow IoT Developer Platform (household access and secret keys, `docs/ecoflow.md`) |
+| Laundry (`laundry`) | Each washer and dryer: phase, time left, "Done" until the next cycle or `doneMinutes`; optional blue done notice on the alert strip; pick machines, hide idle | LG ThinQ Connect (household's personal access token) + Samsung through the SmartThings connection (`docs/laundry.md`) |
 | Weather Underground (`weatherUnderground`) | PWS current conditions | IBM WU PWS API (`WU_API_KEY` or per-account secret) |
 | School menu (`menus`) | Nutrislice breakfast and lunch for a day or week; not the meal plan | Nutrislice published JSON (`config.integrations.smartHome.menus`) |
 | Air quality (`airQuality`) | AQHI or US AQI (outdoor) | Open-Meteo air quality |
@@ -125,6 +126,7 @@ The features catalogue lives in `src/lib/marketingFeatures.ts` (grouped like the
 DriveBC road events and weather conditions, Earthquakes Canada, BC Hydro power outages, **EmergencyInfoBC evacuation orders and alerts** (any hazard, covering the home or within `alerts.evacuationKm`). Each switchable in `config.alerts.sources`.
 Optional high radon and CO₂ from Airthings (`config.integrations.smartHome.airthings`, off by default).
 Optional pool water past Blue Riiot's warning range (`config.integrations.smartHome.blueRiiot.alerts`, off by default).
+**Washer and dryer done** notices (`config.integrations.smartHome.laundry.alertDone`, on by default, needs a Laundry widget on a view): blue instead of red (`notice`), shown whatever the strip threshold, never emailed and left out of the Alerts widget.
 Optional email to everyone on `ADMIN_EMAILS` and `FAMILY_EMAILS` when a new strip-worthy alert arrives (`config.alerts.notifyEmail`).
 
 **Household and family:** Clerk Account Portal in production (`accounts.everydaypane.com/sign-in` and `/sign-up`, from `NEXT_PUBLIC_CLERK_SIGN_IN_URL` / `SIGN_UP_URL`); local and CI stay on `/signin/`; Turso
@@ -155,7 +157,7 @@ Revenue, Traffic, Codes, Flags, …). Cookieless marketing beacon. Customer path
 
 **Integrations connected from Settings:** Google Calendar, Microsoft 365 calendars and **To Do** (OAuth, `?todo=1` / `?files=1`), Google Tasks, **Todoist**, Google Photos (Picker), iCal calendar links (with iCloud publish steps in Settings and `docs/icloud-calendar.md`),
 **Govee** (API key, Settings › Smart home), **Philips Hue** (OAuth, Settings › Smart home), **LIFX** (personal token, Settings › Smart home), Amazon Photos, **photo sources** (Bing, Reddit, weather albums, Immich API keys, Dropbox/Box/SmugMug OAuth, OneDrive via Microsoft, Flickr API key, iCloud published URLs), the photo library (Vercel Blob), Home Assistant (Cloudflare Tunnel + Access), Spotify, Sonos, garbage
-zone lookup, sports teams to follow, TransLink, commute places (TomTom geocoding), optional **package tracking** key, **UniFi Site Manager** API key (Settings › UniFi network), **EcoFlow** access and secret keys, **Oura** (OAuth, Settings › Content & finance), **Airthings** (API client id and secret, Settings › Indoor air), **Rachio** (API key, Settings › Sprinklers), **Blue Riiot** (app email and password, Settings › Pool; unofficial).
+zone lookup, sports teams to follow, TransLink, commute places (TomTom geocoding), optional **package tracking** key, **UniFi Site Manager** API key (Settings › UniFi network), **EcoFlow** access and secret keys, **Oura** (OAuth, Settings › Content & finance), **Airthings** (API client id and secret, Settings › Indoor air), **Rachio** (API key, Settings › Sprinklers), **Blue Riiot** (app email and password, Settings › Pool; unofficial), **LG ThinQ** personal access token (Settings › Laundry).
 
 ## In progress
 
@@ -367,6 +369,10 @@ npm run templates:previews  # regenerate public/templates/*.png from real widget
   Crescent Beach); the moon is worked out on the device, both as its own widget and as a line on Sunrise & sunset; aurora
   chances come from NOAA's Kp forecast for home's latitude; On this day reads Wikipedia with a family-friendly filter
   (see Architecture).
+- **Washer and dryer** (Melvin, 2026-11-25: "build that all", from a list that included washer and dryer done alerts;
+  native cloud APIs, not Home Assistant): a `laundry` widget with time left and "done" from LG ThinQ and Samsung
+  SmartThings, and a blue "done" notice on the alert strip (see Architecture). Claude's defaults: notices on, "done"
+  for three hours unless the next cycle starts.
 - **Canadian English** in everything a person reads (colour, centre, favourite), as in Liftsmith.
 
 ## Display: super lightweight (rule, Melvin, 2026-11-17)
@@ -385,8 +391,8 @@ panel can be complex if you need it to be."
   `src/display/apiShared.ts`, which calls display.js's copy, so feeds, the device token and offline state stay single.
   The internet widget, the UniFi network widget, EcoFlow, the whiteboard, wildfires, the Windy map, the Smart device tile
   (`haEntity.ts`; cameras and `HA_EVERY` stay in `ha.ts`), Oura, Indoor air (Airthings), the snow report, River levels,
-  Border wait times, Sprinklers (Rachio), Highway cameras (DriveBC), the Pool (Blue Riiot), tides, moon phase, aurora and
-  On this day load this way, and `next.config.ts` gives each file the same
+  Border wait times, Sprinklers (Rachio), Highway cameras (DriveBC), the Pool (Blue Riiot), tides, moon phase, aurora,
+  On this day and Laundry load this way, and `next.config.ts` gives each file the same
   immutable cache header as display.js.
 - **Budget:** the display's script stays under 80 KB gzipped and its stylesheet under 20 KB (`scripts/bundle-check.mjs`,
   a CI step; CSS raised from 10 KB on 2026-11-23 for more clock styles; script raised from 40 KB by Melvin on 2026-11-25: "double the size of the limit"). A new dependency on the display needs a very good reason.
@@ -851,6 +857,18 @@ panel can be complex if you need it to be."
   after three hours. Indoor alerts (`indoorAlerts`, source `indoorAir`, "moderate", id per device, kind and day) are
   merged into the alerts route only when switched on; readings older than six hours never raise one. This sandbox
   can't reach Airthings, so tests use the documented shapes. Setup: `docs/airthings.md`.
+- **Laundry** (`src/server/laundry.ts`, `/api/display/laundry/`, setup `docs/laundry.md`): LG's official ThinQ Connect
+  API with a personal access token from connect-pat.lgthinq.com (encrypted `lg.token`, checked with LG before it is
+  saved from Settings › Laundry, `/api/household/laundry/`), sent with the headers LG's own SDK (pythinqconnect) sends:
+  `x-country`, a fresh `x-message-id`, a stable per-household `x-client-id`, LG's public app `x-api-key` and
+  `x-service-phase: OP`, to `api-{aic|eic|kic}.lgthinq.com` by the account's country (`integrations.smartHome.laundry.country`).
+  Samsung machines come from the existing SmartThings connection (washer/dryer operating-state capabilities, and the
+  `samsungce.*` ones for minutes left and progress). One read a minute per household for every display. Machines rarely
+  say "done" for long, so each cycle is remembered in `laundry_state`: running then stopped is done (at the cycle's due
+  end if that passed, else now) until the next cycle or `doneMinutes`. Done notices ride the alerts route as
+  `source: "laundry"`, `notice: true`, id per machine and `sent` = done time (so each cycle can be dismissed once); the
+  strip shows notices whatever `alerts.banner` is, in blue, and `notifyNewStripAlerts` and the Alerts widget skip them.
+  The widget loads on its own (`laundry.js`). This sandbox can't reach LG or SmartThings, so tests use documented shapes.
 - **Rachio** (`src/server/rachio.ts`, setup `docs/rachio.md`): Rachio's public API (`api.rach.io/1/public`,
   `Authorization: Bearer <key>`) with the household's API key from the Rachio app (encrypted `rachio.apiKey`, checked
   with `person/info` before Settings › Sprinklers saves it through `/api/household/rachio/`). One read of

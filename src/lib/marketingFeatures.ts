@@ -30,6 +30,7 @@ const FEATURE_BLURBS: Partial<Record<WidgetType, string>> = {
   weather: "Current, hourly, up to 7 days; Open-Meteo or Environment Canada.",
   airQuality: "AQHI or US AQI.",
   airthings: "Indoor radon, CO₂, VOC and particles from Airthings.",
+  laundry: "Washer and dryer time left and done, from LG ThinQ or Samsung SmartThings.",
   blueRiiot: "Pool water temperature, pH, ORP and salinity from a Blue Riiot Blue Connect.",
   snow: "New snow, base depth and the next days' snowfall for Cypress, Grouse, Seymour, Whistler and more.",
   radar: "Environment Canada observed + forecast over a map.",

@@ -17,6 +17,7 @@ type Lazy = {
   haEntity: Mount<"haEntity">;
   oura: Mount<"oura">;
   airthings: Mount<"airthings">;
+  laundry: Mount<"laundry">;
   drivebc: Mount<"drivebc">;
   snow: Mount<"snow">;
   rivers: Mount<"rivers">;

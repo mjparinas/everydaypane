@@ -7,6 +7,7 @@ import type { NativeSmartProvider } from "@/lib/smartHome";
 import { setAirthingsStatus, useAirthings } from "./airthings";
 import { setPoolStatus, usePools } from "./blueRiiot";
 import { ConfirmButton, NumberInput, Section, Text, Toggle } from "./fields";
+import { LaundrySection } from "./LaundrySection";
 import { SprinklersSection } from "./rachio";
 import { loadSmartHome, useSmartHome, type SmartServiceStatus } from "./smartHome";
 import { useAdmin } from "./store";
@@ -337,6 +338,8 @@ export function SmartHomePanel() {
       <SprinklersSection />
 
       <PoolSection />
+
+      <LaundrySection />
 
       <Section id="settings-menus" title="School menus">
         <p className="text-sm text-soft">

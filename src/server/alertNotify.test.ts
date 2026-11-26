@@ -57,6 +57,18 @@ describe("alert email notify", () => {
     send.mockRestore();
   });
 
+  it("never emails a household notice such as a washer done", async () => {
+    const send = vi.spyOn(mail, "sendEmail").mockResolvedValue(true);
+    const c = defaultConfig();
+    c.alerts.notifyEmail = true;
+    c.alerts.banner = "minor";
+    await notifyNewStripAlerts(LEGACY_ACCOUNT_ID, c, [
+      { ...alert, id: "laundry:lg.w", source: "laundry", severity: "minor", notice: true },
+    ]);
+    expect(send).not.toHaveBeenCalled();
+    send.mockRestore();
+  });
+
   it("tracks notification ids", async () => {
     await markNotified(LEGACY_ACCOUNT_ID, "x", 100);
     expect(await alreadyNotified(LEGACY_ACCOUNT_ID, "x")).toBe(true);

@@ -23,6 +23,7 @@ import { PlaceFinder } from "./CommutePanel";
 import { useEcoFlow } from "./EcoFlowPanel";
 import { Range, Segmented, Select, Stepper, Text, TextArea, Toggle } from "./fields";
 import { HaEntityList, useHa } from "./haEntities";
+import { useLaundry } from "./laundry";
 import { useMusic } from "./music";
 import { useRachio } from "./rachio";
 import { loadSmartProvider, type SmartProviderDetail } from "./smartHome";
@@ -1169,6 +1170,8 @@ function TypeSettings({
     }
     case "airthings":
       return <AirthingsSettings w={w} onChange={edit<"airthings">()} />;
+    case "laundry":
+      return <LaundrySettings w={w} onChange={edit<"laundry">()} />;
     case "rivers":
       return <RiversSettings w={w} onChange={edit<"rivers">()} />;
     case "rachio":
@@ -2723,6 +2726,41 @@ function EcoFlowSettings({
             ),
           )}
           {status.error && <p className="text-sm text-bad">{status.error}</p>}
+        </>
+      )}
+    </>
+  );
+}
+
+function LaundrySettings({ w, onChange }: { w: Extract<Widget, { type: "laundry" }>; onChange: Edit<"laundry"> }) {
+  const status = useLaundry();
+  return (
+    <>
+      <Toggle
+        label="Show machines that are idle or off"
+        checked={w.showIdle}
+        hint="Off: only running, paused and done machines."
+        onChange={(v) => onChange((x) => void (x.showIdle = v))}
+      />
+      {!status ? null : !status.lg && !status.smartthings ? (
+        <p className="text-xs text-soft">
+          Connect LG ThinQ or SmartThings under <SettingsLink href="#settings/laundry">Settings › Laundry</SettingsLink>.
+        </p>
+      ) : status.machines.length === 0 ? (
+        <p className="text-xs text-soft">{status.error || "No washers or dryers found yet."}</p>
+      ) : (
+        <>
+          <p className="text-xs text-soft">Pick the machines to show. With none picked, it shows them all.</p>
+          {status.machines.map((m) => (
+            <Toggle
+              key={m.id}
+              label={m.name}
+              checked={w.appliances.includes(m.id)}
+              onChange={(on) =>
+                onChange((x) => void (x.appliances = on ? [...x.appliances, m.id] : x.appliances.filter((a) => a !== m.id)))
+              }
+            />
+          ))}
         </>
       )}
     </>

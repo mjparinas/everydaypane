@@ -286,7 +286,7 @@ export interface SportsData {
 }
 
 export type AlertSeverity = "extreme" | "severe" | "moderate" | "minor";
-export type AlertSource = "alertReady" | "weather" | "roads" | "earthquakes" | "power" | "evacuations" | "indoorAir" | "pool";
+export type AlertSource = "alertReady" | "weather" | "roads" | "earthquakes" | "power" | "evacuations" | "indoorAir" | "pool" | "laundry";
 
 /** One emergency alert for the area, from any source (src/server/alerts.ts). */
 export interface EmergencyAlert {
@@ -299,6 +299,11 @@ export interface EmergencyAlert {
   /** Epoch ms. */
   sent: number;
   expires: number | null;
+  /**
+   * A household notice (a washer or dryer done), not an emergency: on the strip whatever `alerts.banner` is, in blue
+   * rather than red, never emailed and left out of the alerts widget.
+   */
+  notice?: boolean;
 }
 
 export interface AlertData {
@@ -1018,4 +1023,28 @@ export interface RiversData {
   updatedAt: number;
   units: "metric" | "imperial";
   stations: RiverStationData[];
+}
+
+/** One washer or dryer as a display gets it (src/server/laundry.ts). */
+export interface LaundryAppliance {
+  id: string;
+  name: string;
+  kind: "washer" | "dryer" | "combo";
+  state: "running" | "paused" | "done" | "idle" | "off" | "error";
+  phase?: string;
+  /** Epoch ms the cycle should end, while running or paused. */
+  endsAt?: number;
+  /** 0–100 through the cycle, when the machine says how long it is. */
+  progress?: number;
+  /** Epoch ms the last cycle ended, while it shows as done. */
+  doneAt?: number;
+}
+
+export interface LaundryData {
+  updatedAt: number;
+  /** False until an LG token is saved or SmartThings is connected. */
+  configured: boolean;
+  appliances: LaundryAppliance[];
+  error?: string;
+  stale?: boolean;
 }

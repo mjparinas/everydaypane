@@ -37,7 +37,8 @@ export async function notifyNewStripAlerts(
 ): Promise<void> {
   const a = config.alerts;
   if (!a.enabled || !a.notifyEmail) return;
-  const worthy = alerts.filter((x) => meetsBanner(x.severity, a.banner));
+  // Household notices (a washer done) are for the wall only, never emailed.
+  const worthy = alerts.filter((x) => !x.notice && meetsBanner(x.severity, a.banner));
   if (!worthy.length) return;
   const to = await recipients(accountId);
   if (!to.length) return;

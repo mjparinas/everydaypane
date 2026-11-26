@@ -97,6 +97,8 @@ const MIGRATIONS = [
   `CREATE INDEX IF NOT EXISTS page_views_by_day ON page_views (day, at)`,
   `CREATE TABLE IF NOT EXISTS admin_events (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, props TEXT, at INTEGER NOT NULL, account_id TEXT, device_id TEXT)`,
   `CREATE INDEX IF NOT EXISTS admin_events_by_name ON admin_events (name, at)`,
+  // Washer and dryer cycles, so a run that stops reads as done until the next one (src/server/laundry.ts).
+  `CREATE TABLE IF NOT EXISTS laundry_state (account_id TEXT NOT NULL, id TEXT NOT NULL, running INTEGER NOT NULL, ends_at INTEGER, done_at INTEGER, updated_at INTEGER NOT NULL, PRIMARY KEY (account_id, id))`,
   `CREATE TABLE IF NOT EXISTS staff_sign_in_failures (id INTEGER PRIMARY KEY AUTOINCREMENT, email TEXT NOT NULL, kind TEXT NOT NULL, at INTEGER NOT NULL)`,
 ];
 

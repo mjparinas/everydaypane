@@ -46,6 +46,7 @@ const LAZY = [
   "drivebc",
   "rachio",
   "blueRiiot",
+  "laundry",
   "tides",
   "moon",
   "aurora",

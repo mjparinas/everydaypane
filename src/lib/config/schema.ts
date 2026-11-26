@@ -6,6 +6,7 @@ import { BORDER_CROSSINGS, BORDER_DIRECTIONS } from "../border";
 import { DRIVEBC_MAX_CAMERAS, DRIVEBC_REFRESH } from "../drivebc";
 import { EARTH_OVERLAYS, EARTH_ZOOMS } from "../earth";
 import { FERRY_ROUTES } from "../ferries";
+import { DONE_MINUTES_DEFAULT } from "../laundry";
 import { MEAL_SLOTS } from "../meals";
 import { NEWS_PRESETS } from "../newsPresets";
 import { RIVER_DEFAULT_STATIONS, RIVER_STATION_RE } from "../rivers";
@@ -303,6 +304,14 @@ export const widgetSchema = z.discriminatedUnion("type", [
     showChart: z.boolean().default(true),
     showCounts: z.boolean().default(true),
     showUsage: z.boolean().default(false),
+  }),
+  // Washer and dryer (Melvin, 2026-11-25): time left and "done" from LG ThinQ and Samsung through SmartThings. Machines
+  // are found under Settings › Laundry; `appliances` empty means every machine.
+  z.object({
+    ...base,
+    type: z.literal("laundry"),
+    appliances: z.array(z.string().trim().min(1).max(130)).max(8).default([]),
+    showIdle: z.boolean().default(true),
   }),
   // Weather Underground PWS (Phase 4, Household).
   z.object({
@@ -1073,6 +1082,18 @@ export const configSchema = z
               co2Ppm: z.number().int().min(800).max(5000).default(1500),
             })
             .default({ alertRadon: false, alertCo2: false, co2Ppm: 1500 }),
+          // Laundry (2026-11-25): LG's country picks its API region; the LG token is in secrets. A finished load is
+          // "done" for doneMinutes, and can put a blue notice on the alert strip.
+          laundry: z
+            .object({
+              country: z
+                .string()
+                .regex(/^[A-Z]{2}$/)
+                .default("CA"),
+              alertDone: z.boolean().default(true),
+              doneMinutes: z.number().int().min(15).max(720).default(DONE_MINUTES_DEFAULT),
+            })
+            .default({ country: "CA", alertDone: true, doneMinutes: DONE_MINUTES_DEFAULT }),
           // Blue Riiot (2026-11-26): readings far outside the ideal range on the strip, off by default; sign-in in secrets.
           blueRiiot: z.object({ alerts: z.boolean().default(false) }).default({ alerts: false }),
           weatherUnderground: z.object({ stationId: z.string().max(24).default("") }),
@@ -1084,6 +1105,7 @@ export const configSchema = z
         .default({
           tempest: {},
           airthings: { alertRadon: false, alertCo2: false, co2Ppm: 1500 },
+          laundry: { country: "CA", alertDone: true, doneMinutes: DONE_MINUTES_DEFAULT },
           blueRiiot: { alerts: false },
           weatherUnderground: { stationId: "" },
           menus: { slug: "", schoolName: "" },
