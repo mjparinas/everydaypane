@@ -50,9 +50,11 @@ const SHARE_LINK = /^https:\/\/(www\.)?amazon\.[a-z.]+\/(photos|clouddrive)\/sha
 export function PhotosPanel() {
   const sources = useAdmin((s) => s.config.integrations.photos.sources);
   const edit = useAdmin((s) => s.edit);
-  const [kind, setKind] = useState<PhotoSource["kind"]>("library");
-  // Photo sources staff switched off (platform feature flags) can't be added.
+  const [picked, setKind] = useState<PhotoSource["kind"]>("library");
+  // Photo sources staff switched off (platform feature flags), or whose Everydaypane key is missing, can't be added.
   const { on } = useFlags();
+  const kinds = KINDS.filter((k) => on(photoFlag(k.value)));
+  const kind = kinds.some((k) => k.value === picked) ? picked : (kinds[0]?.value ?? picked);
   const [name, setName] = useState("");
   const [link, setLink] = useState("");
   const [urls, setUrls] = useState("");
@@ -238,7 +240,7 @@ export function PhotosPanel() {
       ))}
 
       <div className="grid gap-3 border-t border-line pt-4">
-        <Select label="Add" value={kind} options={KINDS.filter((k) => on(photoFlag(k.value)))} onChange={(v) => setKind(v)} />
+        <Select label="Add" value={kind} options={kinds} onChange={(v) => setKind(v)} />
         <Text label="Name" value={name} maxLength={60} placeholder="Family album" onChange={setName} />
         {kind === "amazonShare" && (
           <Text

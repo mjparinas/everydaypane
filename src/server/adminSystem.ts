@@ -1,14 +1,41 @@
 import "server-only";
 
+import { keyState, keyVarNames, PLATFORM_KEYS, unconfiguredFlags, type KeyState } from "@/lib/platformKeys";
+
 import { stripeEnabled } from "./billing";
 import { query } from "./db";
 import { env } from "./env";
 
-export type SettingRow = { name: string; group: string; powers: string; state: "set" | "missing" | "partly" };
+export type SettingRow = { name: string; group: string; powers: string; state: KeyState; label?: string; docs?: string; hides?: boolean };
+
+const hasEnv = (name: string) => Boolean(process.env[name]?.trim());
+
+/** Each integration key's state on this deploy (names only, never values). */
+export function platformKeyRows(): SettingRow[] {
+  return PLATFORM_KEYS.map((k) => ({
+    name: keyVarNames(k).join(" + "),
+    label: k.label,
+    group: k.group,
+    powers: k.powers,
+    docs: k.docs,
+    // Missing, this key hides widgets or providers from the household panel.
+    hides: k.unlocks.length > 0,
+    state: keyState(k, hasEnv),
+  }));
+}
+
+/** Ids of the integration keys that are fully set on this deploy. */
+export function readyPlatformKeys(): Set<string> {
+  return new Set(PLATFORM_KEYS.filter((k) => keyState(k, hasEnv) === "set").map((k) => k.id));
+}
+
+/** Household-panel flag names hidden because their platform key is missing. */
+export function unconfiguredFlagsNow(): string[] {
+  return unconfiguredFlags(readyPlatformKeys());
+}
 
 /** Env checklist for System tab — names only, never values. */
 export function settingsChecklist(): SettingRow[] {
-  const pair = (a: string, b: string) => Boolean(a) && Boolean(b);
   const rows: SettingRow[] = [
     {
       name: "SESSION_SECRET",
@@ -53,16 +80,6 @@ export function settingsChecklist(): SettingRow[] {
       state: stripeEnabled() ? "set" : env.stripeSecretKey() || env.stripePriceId() ? "partly" : "missing",
     },
     { name: "STRIPE_WEBHOOK_SECRET", group: "Billing", powers: "Stripe webhooks", state: env.stripeWebhookSecret() ? "set" : "missing" },
-    {
-      name: "GOOGLE_CLIENT_ID + SECRET",
-      group: "OAuth",
-      powers: "Google Calendar / Tasks / Photos",
-      state: pair(env.googleClientId(), env.googleClientSecret())
-        ? "set"
-        : env.googleClientId() || env.googleClientSecret()
-          ? "partly"
-          : "missing",
-    },
     { name: "CRON_SECRET", group: "Jobs", powers: "Scheduled digests", state: env.cronSecret() ? "set" : "missing" },
     { name: "GITHUB_TOKEN", group: "Monitoring", powers: "CI status (optional)", state: env.githubToken() ? "set" : "missing" },
     { name: "VERCEL_TOKEN", group: "Monitoring", powers: "Deploy history (optional)", state: env.vercelToken() ? "set" : "missing" },
@@ -99,5 +116,6 @@ export async function systemHealth() {
     commit: process.env.NEXT_PUBLIC_COMMIT_SHA?.slice(0, 7) ?? "dev",
     vercelEnv: process.env.VERCEL_ENV ?? "local",
     settings: settingsChecklist(),
+    keys: platformKeyRows(),
   };
 }

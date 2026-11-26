@@ -168,7 +168,7 @@ with `?mode=`, and a quiet Day/Night control on the preview swaps without reload
 **Platform admin** (`/admin/`): Everydaypane ops for `ADMIN_EMAILS`,
 separate from the household panel — same split as Tuned and Liftsmith. Staff use the same Clerk sign-in as households,
 gated by that allow-list; Overview through Log (Households, Displays,
-Revenue, Traffic, Codes, Flags, …). Cookieless marketing beacon. Customer path is `/household/`. **Flags** has an
+Revenue, Traffic, Codes, Flags, …). **System** lists every integration API key Everydaypane itself holds in Vercel (`PLATFORM_KEYS` in `src/lib/platformKeys.ts`) as Set, Partly Set or Missing, names only, with a count on the nav (Melvin, 2026-11-26). Cookieless marketing beacon. Customer path is `/household/`. **Flags** has an
 on/off switch for every widget, smart-home provider, music and to-do service and photo source, plus the **idle view**,
 **smart notices** and **regional packs**, for everyone; there are no per-household overrides (see Architecture, Feature flags).
 
@@ -595,6 +595,16 @@ panel can be complex if you need it to be."
   Advanced. Wall empty states point at Household Settings (not “admin panel”).
 - **Platform admin** (`src/app/admin/`, `/api/admin/`): staff-only ops (`src/server/adminAuth.ts`: Clerk session plus
   `ADMIN_EMAILS`); Tuned-style tabs via `/api/admin/[action]/`. Not the household settings UI.
+- **Platform API keys** (Melvin, 2026-11-26: "add all these api settings to admin system, i want an indication that
+  they're still missing. also if there's a widget that needs keys, don't show it in /household unless it's set"):
+  `PLATFORM_KEYS` (`src/lib/platformKeys.ts`) names each Vercel key, what it powers and the flag names (`widget.*`,
+  `smartHome.*`, `music.*`, `tasks.*`, `photos.*`) it unlocks. `/admin/` › System reads `process.env` and shows each
+  as set or missing (never values). The household page passes `unconfiguredFlagsNow()` to `FlagsProvider` as
+  `unconfigured`: those widgets, providers, photo sources and Settings cards aren't offered (a name unlocked by
+  several keys stays while any is set), but they aren't "off": `useWidgetLive` and `applyFlags` ignore them, so a
+  widget already on a wall keeps drawing and shows its own "not set up" message. Keys households paste themselves
+  (Govee, LIFX, UniFi, Airthings, EcoFlow, Rachio, Blue Riiot, 17TRACK, YNAB token) aren't platform keys. A new
+  integration that needs an Everydaypane key adds an entry there.
 - **Feature flags** (Melvin, 2026-11-26: "feature flags in the admin area for all of these integrations"): one
   registry in `src/lib/featureFlags.ts`, built from `WIDGETS` plus typed records of every smart-home provider, music
   provider, to-do provider and photo source kind, so **a new widget gets a flag automatically** (`widget.<type>`) and a

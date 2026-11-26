@@ -253,6 +253,7 @@ export function Admin({
   staff = false,
   initialPlan = "free",
   flagsOff = [],
+  unconfigured = [],
 }: {
   initial: DashboardConfig;
   version: number;
@@ -261,11 +262,13 @@ export function Admin({
   initialPlan?: PlanId;
   /** Platform feature flags that are off for this household (Melvin, 2026-11-26). */
   flagsOff?: readonly string[];
+  /** Widgets and providers whose Everydaypane API key is missing on this deploy (Melvin, 2026-11-26). */
+  unconfigured?: readonly string[];
 }) {
   return (
     <AdminProvider config={initial} version={version}>
       <PlanProvider initialPlan={initialPlan}>
-        <FlagsProvider off={flagsOff}>
+        <FlagsProvider off={flagsOff} unconfigured={unconfigured}>
           <AdminPanel email={email} staff={staff} />
         </FlagsProvider>
       </PlanProvider>

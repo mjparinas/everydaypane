@@ -139,7 +139,13 @@ export function AdminApp() {
         const reports = await api<{ reports: unknown[] }>("/api/admin/reports/?status=open", { signal: ac.signal }).catch(() => ({
           reports: [],
         }));
-        setBadges({ "To Do": todo.items.length, Reports: reports.reports.length });
+        const system = await api<{ keys: { state: string }[] }>("/api/admin/system/", { signal: ac.signal }).catch(() => ({ keys: [] }));
+        setBadges({
+          "To Do": todo.items.length,
+          Reports: reports.reports.length,
+          // Integration keys still missing on this deploy (Melvin, 2026-11-26).
+          System: system.keys.filter((k) => k.state !== "set").length,
+        });
       } catch (e) {
         if (isAbort(e)) return;
       }
@@ -1667,6 +1673,22 @@ function AutomationsTab({ flash, canWrite }: { flash: Flash; canWrite: boolean }
   );
 }
 
+type SettingState = "set" | "partly" | "missing";
+type SettingRow = { name: string; group: string; powers: string; state: SettingState; label?: string; docs?: string; hides?: boolean };
+
+// Where staff add a missing key (Melvin, 2026-11-26). Values never come back from the server; a new value takes effect
+// on the next deploy, so the page says to redeploy.
+const VERCEL_ENV_URL = "https://vercel.com/melvins-projects-b69f55c3/everydaypane/settings/environment-variables";
+
+function KeyStatus({ state }: { state: SettingState }) {
+  const tone = state === "set" ? "bg-good/15 text-good" : state === "partly" ? "bg-sun/20 text-sun" : "bg-bad/15 text-bad";
+  return (
+    <span className={`inline-block rounded-full px-2 py-0.5 text-xs font-semibold whitespace-nowrap ${tone}`}>
+      {state === "set" ? "Set" : state === "partly" ? "Partly Set" : "Missing"}
+    </span>
+  );
+}
+
 function SystemTab() {
   const { data, error } = useFetch<{
     database: { ok: boolean; ms: number };
@@ -1674,26 +1696,75 @@ function SystemTab() {
     failedSignInsToday: number;
     commit: string;
     vercelEnv: string;
-    settings: { name: string; group: string; powers: string; state: string }[];
+    settings: SettingRow[];
+    keys: SettingRow[];
   }>("/api/admin/system/");
   if (error) return <p className="text-bad">{error}</p>;
   if (!data) return <Bones />;
   const groups = [...new Set(data.settings.map((s) => s.group))];
+  const keyGroups = [...new Set(data.keys.map((s) => s.group))];
+  const missing = data.keys.filter((k) => k.state !== "set");
+  const order = (a: SettingRow, b: SettingRow) => Number(a.state === "set") - Number(b.state === "set");
   return (
     <>
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
         <Tile label="Database" value={data.database.ok ? `${data.database.ms} ms` : "Down"} />
         <Tile label="Households" value={String(data.counts.accounts)} />
         <Tile label="Displays" value={String(data.counts.devices)} />
         <Tile label="Failed Staff Sign-Ins" value={String(data.failedSignInsToday)} hint="24h" />
+        <Tile label="API Keys Missing" value={String(missing.length)} hint={`of ${data.keys.length}`} />
       </div>
       <Card title="This Deployment" sub={`${data.vercelEnv} · ${data.commit}`}>
         <p className="text-sm text-soft">Environment and commit for the build that’s live right now.</p>
       </Card>
+      <Card
+        title="Integration API Keys"
+        sub="Everydaypane’s own keys, shared by every household. Names only; values never leave Vercel."
+        right={
+          <a className="btn-ghost text-sm" href={VERCEL_ENV_URL} target="_blank" rel="noreferrer">
+            Open Vercel Environment Variables
+          </a>
+        }
+      >
+        <p className="mb-3 text-sm text-soft">
+          {missing.length === 0
+            ? "Every integration key is set."
+            : `${missing.length} still missing. Widgets and providers marked “Hidden” aren’t offered in the household panel until their key is set; ones already on a wall stay and say they aren’t set up. Add the key in Vercel for Production, then redeploy.`}
+        </p>
+        <div className="grid gap-4">
+          {keyGroups.map((g) => (
+            <div key={g} className="grid gap-1">
+              <h4 className="text-sm font-semibold text-soft">{g}</h4>
+              <Table
+                headers={["Integration", "Env Name", "What It Enables", "Status"]}
+                rows={data.keys
+                  .filter((k) => k.group === g)
+                  .sort(order)
+                  .map((k) => [
+                    <span key="l" className="font-semibold">
+                      {k.label}
+                    </span>,
+                    <span key="n" className="font-mono text-xs break-all">
+                      {k.name}
+                    </span>,
+                    <span key="p">
+                      {k.powers}
+                      {k.docs ? <span className="block font-mono text-xs text-soft">{k.docs}</span> : null}
+                    </span>,
+                    <span key="s" className="grid justify-items-start gap-1">
+                      <KeyStatus state={k.state} />
+                      {k.state !== "set" && k.hides ? <span className="text-xs text-soft">Hidden in Household</span> : null}
+                    </span>,
+                  ])}
+              />
+            </div>
+          ))}
+        </div>
+      </Card>
       {groups.map((g) => (
         <Card key={g} title={g} sub="Env keys on this deploy — missing ones break that feature">
           <Table
-            headers={["Env name", "What it enables", "Status"]}
+            headers={["Env Name", "What It Enables", "Status"]}
             rows={data.settings
               .filter((s) => s.group === g)
               .map((s) => [
@@ -1701,9 +1772,7 @@ function SystemTab() {
                   {s.name}
                 </span>,
                 s.powers,
-                <span key="s" className={s.state === "set" ? "text-good" : s.state === "partly" ? "text-sun" : "text-bad"}>
-                  {s.state === "set" ? "Set" : s.state === "partly" ? "Partial" : "Missing"}
-                </span>,
+                <KeyStatus key="s" state={s.state} />,
               ])}
           />
         </Card>
