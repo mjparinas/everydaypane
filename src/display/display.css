@@ -851,14 +851,24 @@ html.portrait-view .stage {
   color: var(--rain);
   font-size: max(0.9em, var(--t-meta));
 }
+/* Forecast rows (Melvin, 2026-11-26: the days felt crowded, hi/lo nearly touching the next day). Each day or hour
+   gets at least 4.6em; when the row can't fit them all, the later ones wrap to a zero-height second row and are
+   clipped, so a narrow tile shows fewer days instead of squeezing them together. The font size lives on the row so
+   that em is the day's own size. */
 .wx-hours,
 .wx-days {
   display: grid;
-  grid-auto-flow: column;
-  grid-auto-columns: minmax(0, 1fr);
-  gap: 1cqw;
+  grid-template-columns: repeat(auto-fit, minmax(4.6em, 1fr));
+  grid-template-rows: auto;
+  grid-auto-rows: 0;
+  column-gap: 0.6em;
+  row-gap: 0;
+  overflow: hidden;
   flex: 0 0 auto;
   min-height: 0;
+  font-size: calc(max(var(--t-small), min(5.6cqh, 3cqw)) * var(--font-scale, 1));
+  font-weight: 600;
+  line-height: 1.15;
 }
 .wx-hour,
 .wx-day {
@@ -866,10 +876,12 @@ html.portrait-view .stage {
   justify-items: center;
   align-content: start;
   gap: 0.2em;
+  min-width: 0;
   text-align: center;
-  font-size: calc(max(var(--t-small), min(5.6cqh, 3cqw)) * var(--font-scale, 1));
-  font-weight: 600;
-  line-height: 1.15;
+  white-space: nowrap;
+}
+.wx-day .wx-pop {
+  margin-top: 0.1em;
 }
 .wx-day .icon,
 .wx-hour .icon {
@@ -878,10 +890,13 @@ html.portrait-view .stage {
 }
 /* Beside today's weather the forecast is a quieter strip: smaller than today, but still read from across the kitchen
    (it was 11 to 13 px before the design review, 2026-11-26). */
+.w-weather[data-now="1"] .wx-hours,
+.w-weather[data-now="1"] .wx-days {
+  font-size: calc(max(var(--t-small), min(5.2cqh, 2.6cqw)) * var(--font-scale, 1));
+}
 .w-weather[data-now="1"] .wx-hour,
 .w-weather[data-now="1"] .wx-day {
-  font-size: calc(max(var(--t-small), min(5.2cqh, 2.6cqw)) * var(--font-scale, 1));
-  gap: 0.1em;
+  gap: 0.15em;
 }
 .w-weather[data-now="1"] .wx-day .icon,
 .w-weather[data-now="1"] .wx-hour .icon {
@@ -891,36 +906,40 @@ html.portrait-view .stage {
 .w-weather[data-dense="1"] {
   gap: 2cqh;
 }
-.w-weather[data-dense="1"] .wx-hour,
-.w-weather[data-dense="1"] .wx-day {
+.w-weather[data-dense="1"] .wx-hours,
+.w-weather[data-dense="1"] .wx-days {
   font-size: calc(max(var(--t-meta), min(4.4cqh, 2.3cqw)) * var(--font-scale, 1));
 }
 .w-weather[data-dense="1"] .wx-hour .icon,
 .w-weather[data-dense="1"] .wx-day .icon {
   width: calc(min(6.5cqh, 3.4cqw) * var(--wx-icon-scale, 1));
 }
-/* A short, wide weather cell (the night view's strip) puts now and the days side by side. .wx-now gets an explicit
-   width there: as a size container it has no width of its own, and without one it collapsed to nothing. The query names
-   the cell, because .wx-now is a container too and would otherwise answer it. */
+/* A short, wide weather cell (the night view's strip) puts now and the days side by side. There .wx-now stops being
+   a size container and is only as wide as what it holds (up to 55 % of the cell), so the forecast takes all the
+   width left instead of a fixed half with an empty gap before it (Melvin, 2026-11-26). Its sizes are the same as
+   before, written in the cell's units (it used to be half the cell wide). The query names the cell, because in the
+   other layouts .wx-now is a container too and would otherwise answer it. */
 @container cell (max-height: 300px) and (min-aspect-ratio: 2.5) {
   .w-weather {
     flex-direction: row;
     align-items: center;
-    gap: 3cqw;
+    gap: 2.5cqw;
   }
   .wx-now {
-    flex: 0 0 auto;
-    width: 50cqw;
+    container-type: normal;
+    flex: 0 1 auto;
+    max-width: 55cqw;
     height: 100%;
+    gap: 2cqw;
   }
   .wx-now-icon {
-    height: min(90cqh, 32cqw);
+    height: min(90cqh, 16cqw);
   }
   .wx-temp {
-    font-size: calc(min(66cqh, 26cqw) * var(--font-scale, 1));
+    font-size: calc(min(66cqh, 13cqw) * var(--font-scale, 1));
   }
   .wx-desc {
-    font-size: calc(min(18cqh, 8cqw) * var(--font-scale, 1));
+    font-size: calc(min(18cqh, 4cqw) * var(--font-scale, 1));
   }
   .wx-meta,
   .wx-hilo,
@@ -931,8 +950,8 @@ html.portrait-view .stage {
   .wx-days {
     flex: 1 1 0;
   }
-  .w-weather[data-now] .wx-day,
-  .w-weather[data-now] .wx-hour {
+  .w-weather[data-now] .wx-days,
+  .w-weather[data-now] .wx-hours {
     font-size: calc(max(var(--t-small), min(9cqh, 2.4cqw)) * var(--font-scale, 1));
   }
   .w-weather[data-now] .wx-day .icon,

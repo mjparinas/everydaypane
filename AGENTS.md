@@ -295,7 +295,9 @@ npm run templates:previews  # regenerate public/templates/*.png from real widget
 - **Today's weather leads** (Melvin, 2026-11-26: "the current weather today is supposed to be bigger … and more
   prominent than the other ones"): the current temperature, icon and condition fill the height the forecast rows leave
   and scale with it (`.wx-now` is its own size container); the hourly and day rows are a smaller, quieter strip. A
-  short, wide tile keeps today and the days side by side.
+  short, wide tile keeps today and the days side by side, with today only as wide as it needs so the days get the
+  rest; forecast days and hours keep at least 4.6em each and a narrow tile shows fewer of them rather than crowding
+  (Melvin, 2026-11-26: "too much padding between the rest of the week and today's forecast … a bit crowded").
 - **Calendar titles in title case** (Melvin, 2026-11-26: "on the calendar, can you make all the entries title case
   please"): every event title in the calendar feed (schedule, month, week, up next, morning brief) is shown in title
   case, on by default, switched in Settings › Calendars › Event titles (`calendarTitleCase`). Done on the server in
