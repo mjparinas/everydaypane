@@ -26,6 +26,7 @@ import {
   TOKEN,
 } from "./api";
 import { h } from "./dom";
+import { clockParts } from "./format";
 import { attachModal } from "./modal";
 import { reloadForRelease } from "./release";
 import { screenSaver, type MountIdleView, type Saver } from "./saver";
@@ -751,10 +752,19 @@ async function start() {
   const lockBtn = lockDisplayControl();
   app.replaceChildren(stage, dim, offlineDot, activityIndicator, ...(modeBtn ? [modeBtn] : []), ...(lockBtn ? [lockBtn] : []));
   saver = screenSaver(app, () => payload, undefined, mountIdleView);
+  // Offline has to read from across the kitchen: an amber pill that says since when, and the widgets fed from the
+  // server dim, so saved data never passes for live (design review, 2026-11-26).
+  let offlineSince = 0;
   const updateConnectionIndicator = () => {
+    offlineSince = offline ? offlineSince || Date.now() : 0;
     offlineDot.classList.toggle("show", offline);
+    app.classList.toggle("is-offline", offline);
+    const at = offlineSince
+      ? clockParts(new Date(offlineSince), payload?.location.timeZone ?? "America/Vancouver", payload?.hour12 ?? true)
+      : null;
+    const since = at ? ` since ${at.hm}${at.ampm ? ` ${at.ampm}` : ""}` : "";
     offlineDot.textContent =
-      connectionStatus === "browser-offline" ? "Offline · showing saved data" : "Server unavailable · showing saved data";
+      connectionStatus === "browser-offline" ? `Offline${since} · showing saved data` : `Server unavailable${since} · showing saved data`;
   };
   onOfflineChange(updateConnectionIndicator);
   onActivityChange(() => activityIndicator.classList.toggle("show", isUpdating()));

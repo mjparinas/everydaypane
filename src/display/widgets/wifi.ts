@@ -1,8 +1,9 @@
 import { imageUrl } from "../api";
-import { h } from "../dom";
+import { h, keepFitted, shrinkToFit } from "../dom";
 import type { Mount } from "./types";
 
 export const wifiQr: Mount<"wifiQr"> = (el, w) => {
+  const ssid = h("div", { class: "wifi-ssid" }, w.ssid);
   el.append(
     h(
       "div",
@@ -12,10 +13,10 @@ export const wifiQr: Mount<"wifiQr"> = (el, w) => {
         "div",
         { class: "wifi-text" },
         h("div", { class: "w-label" }, w.title || "Join Wi-Fi"),
-        h("div", { class: "wifi-ssid" }, w.ssid),
+        ssid,
         w.showPassword && w.password ? h("div", { class: "w-sub" }, w.password) : null,
       ),
     ),
   );
-  return () => undefined;
+  return keepFitted(el, () => shrinkToFit(ssid, ssid, 14, () => ssid.scrollWidth > ssid.clientWidth + 1));
 };

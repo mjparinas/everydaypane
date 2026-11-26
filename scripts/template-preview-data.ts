@@ -120,7 +120,7 @@ export function withDemoBindings(widget: Widget): Widget {
         ],
       };
     case "wifiQr":
-      return { ...widget, ssid: "ParinasHome", password: "welcome-friends", showPassword: true, encryption: "WPA" };
+      return { ...widget, ssid: "MapleStreetWiFi", password: "come-on-in-2026", showPassword: true, encryption: "WPA" };
     case "sports":
       return { ...widget, teamIds: widget.teamIds.length ? widget.teamIds : ["canucks", "whitecaps"] };
     case "countdown":

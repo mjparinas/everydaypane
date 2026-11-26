@@ -1038,7 +1038,7 @@ describe("TransLink departures", () => {
     expect(gets[0]).toBe("/api/display/transit/");
     expect(el.querySelector(".tl-name")?.textContent).toBe("Fraser Hwy @ 200 St #55210");
     const rows = [...el.querySelectorAll(".tl-row")].map((r) => r.textContent);
-    expect(rows).toEqual(["502Langley Centre4:10 a.m. · 3 min late4 min", "503Aldergrove4:18 a.m. · Scheduled12 min"]);
+    expect(rows).toEqual(["502Langley Centre4:10 AM · 3 min late4 min", "503Aldergrove4:18 AM · Scheduled12 min"]);
     expect(el.textContent).toContain("TransLink");
     stop();
     vi.unstubAllGlobals();

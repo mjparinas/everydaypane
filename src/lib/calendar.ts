@@ -41,7 +41,10 @@ export function eventDays(e: CalendarEvent, timeZone: string): string[] {
   return days;
 }
 
-/** Events on each local date, in the order the server sent them (all-day first, then by start). */
+/**
+ * Events on each local date: all-day first, then by start time. Sorted here rather than trusted from the feed, because
+ * Google, calendar links and family events are merged and a day read "4 PM" before "3 PM" (design review, 2026-11-26).
+ */
 export function byDay(events: CalendarEvent[], timeZone: string): Map<string, CalendarEvent[]> {
   const map = new Map<string, CalendarEvent[]>();
   for (const e of events) {
@@ -51,7 +54,8 @@ export function byDay(events: CalendarEvent[], timeZone: string): Map<string, Ca
       else map.set(d, [e]);
     }
   }
-  for (const list of map.values()) list.sort((a, b) => Number(b.allDay) - Number(a.allDay));
+  const at = (e: CalendarEvent) => (e.allDay ? 0 : Date.parse(e.start) || 0);
+  for (const list of map.values()) list.sort((a, b) => Number(b.allDay) - Number(a.allDay) || at(a) - at(b));
   return map;
 }
 

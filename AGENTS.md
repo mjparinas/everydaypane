@@ -712,8 +712,9 @@ panel can be complex if you need it to be."
   lists). An outage whose area covers the home is "severe" (on the strip by default), one within `alerts.powerKm`
   (default 5 km) is "moderate" from 1,000 customers out and "minor" below; restored outages drop out. Each
   source is cached on its own and one failing never hides the others. The red strip sits in the layout's flow, so it
-  pushes the widgets down rather than covering them; a tap dismisses it on that screen (localStorage) until a new
-  alert arrives.
+  pushes the widgets down rather than covering them. A tap opens it to list every alert with its details; its
+  Dismiss button hides them on that screen (localStorage) until a new alert arrives, except that severe and extreme
+  ones come back after four hours (design review, 2026-11-26: one stray touch used to clear an evacuation order).
 - **Photos:** sources are in `config.integrations.photos.sources`; a photo widget picks some (none picked means all).
   Amazon has no official API: shared albums use the share page's own endpoints (`/drive/v1/shares/<id>`, then
   `/nodes/<id>/children?tempLink=true`, no sign-in); "photos of people" uses `/drive/v1/search` with

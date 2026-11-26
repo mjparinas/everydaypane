@@ -477,7 +477,11 @@ export const flows = [
       const stripBottom = (await strip.boundingBox()).y + (await strip.boundingBox()).height;
       const firstCell = await d.locator(".cell").first().boundingBox();
       expect(firstCell.y >= stripBottom - 1, "the strip covers the widgets");
+      // A tap only opens the strip (design review, 2026-11-26); Dismiss is its own button.
       await strip.click();
+      await strip.getByText("Rainfall amounts of 80 to 100 mm.").waitFor();
+      expect((await d.locator(".alert-strip.show").count()) === 1, "a tap on the strip dismissed it");
+      await strip.getByRole("button", { name: "Dismiss" }).click();
       await d.locator(".alert-strip.show").waitFor({ state: "detached" });
       // Dismissed stays dismissed on this screen after a reload.
       await d.reload();

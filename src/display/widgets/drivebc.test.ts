@@ -71,7 +71,7 @@ describe("DriveBC highway cameras", () => {
     expect(el.querySelector<HTMLImageElement>(".dbc-img")!.getAttribute("src")).toBe(made[0]!.src);
     await vi.advanceTimersByTimeAsync(0);
     const notes = [...el.querySelectorAll(".dbc-note")].map((n) => n.textContent);
-    expect(notes).toEqual(["4:40 p.m.", "Delayed · 4:10 p.m."]);
+    expect(notes).toEqual(["4:40 PM", "Delayed · 4:10 PM"]);
     expect(el.querySelectorAll(".dbc-cam.late")).toHaveLength(1);
     expect([...el.querySelectorAll(".dbc-name")].map((n) => n.textContent)).toEqual(["Port Mann Bridge - W", "Coquihalla Summit - N"]);
     expect(el.querySelector(".dbc-credit")?.textContent).toContain("DriveBC");

@@ -2,7 +2,7 @@ import { activePeriod, PERIOD_LABELS, periodRank, type ChorePeriod } from "@/lib
 import type { ChoresData } from "@/lib/display/types";
 
 import { refresh, sendExplained, subscribe } from "../api";
-import { fill, h } from "../dom";
+import { fill, h, keepFitted, shrinkToFit } from "../dom";
 import { attachModal } from "../modal";
 import type { Mount } from "./types";
 
@@ -175,7 +175,8 @@ export const chores: Mount<"chores"> = (el, w, ctx) => {
     // Circles only when ticking is on — otherwise they look tappable (critique P2, 2026-11-24).
     const parts = [
       w.allowCheck ? h("span", { class: "ch-check", "aria-hidden": "true" }, done ? "✓" : "") : null,
-      h("span", { class: "ch-title" }, chore.emoji ? `${chore.emoji} ${chore.name}` : chore.name),
+      chore.emoji ? h("span", { class: "ch-emoji", "aria-hidden": "true" }, chore.emoji) : null,
+      h("span", { class: "ch-title" }, chore.name),
       w.showStars ? h("span", { class: "ch-worth" }, "★".repeat(chore.stars)) : null,
     ];
     const cls = `ch-item${done ? " ch-done" : ""}`;
@@ -268,7 +269,7 @@ export const chores: Mount<"chores"> = (el, w, ctx) => {
                     const b = h(
                       "button",
                       { type: "button", class: "ch-redeem", disabled: p.available < r.starsCost ? "true" : undefined },
-                      `${r.name} (${r.starsCost}⭐)`,
+                      `${r.starsCost}⭐ ${r.name}`,
                     );
                     b.addEventListener("click", (ev) => {
                       ev.stopPropagation();
@@ -283,7 +284,14 @@ export const chores: Mount<"chores"> = (el, w, ctx) => {
       ),
       message ? h("div", { class: "tk-msg" }, message) : null,
     );
+    fit();
   }
+
+  // Narrow columns step the whole chart's size down until every chore title fits its two lines without breaking a
+  // word, and every kid's name shows in full ("Homework d" and "Ma…" on the wall, design review 2026-11-26).
+  const clipped = (e: Element) => e.scrollWidth > e.clientWidth + 1 || e.scrollHeight > e.clientHeight + 1;
+  const fit = () => shrinkToFit(root, root, 13, () => [...root.querySelectorAll(".ch-title, .ch-name")].some(clipped));
+  const stopFit = keepFitted(el, fit);
 
   const stopFeed = subscribe<ChoresData>("chores", CHORES_EVERY, (d) => {
     const dayChanged = data?.today !== d.today;
@@ -297,6 +305,7 @@ export const chores: Mount<"chores"> = (el, w, ctx) => {
   });
   return () => {
     stopFeed();
+    stopFit();
     window.clearTimeout(messageTimer);
   };
 };

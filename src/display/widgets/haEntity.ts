@@ -143,6 +143,12 @@ export const haEntity: Mount<"haEntity"> = (el, w) => {
     const name = h("div", { class: "w-label" }, w.title || e.name);
     const note = message ? h("div", { class: "ha-msg" }, message) : null;
     root.classList.toggle("on", isOn(e));
+    // The whole cell lights up when a switch or light is on, in the light's own colour when it has one, so on and off
+    // read from across the room (design review, 2026-11-26).
+    const lit = (kind === "toggle" || kind === "light") && isOn(e);
+    el.classList.toggle("ha-lit", lit);
+    // A light with no colour of its own glows lamp-warm; a switch uses the theme accent.
+    el.style.setProperty("--ha-tint", !lit ? "" : e.color || (kind === "light" ? "#fab005" : ""));
     root.classList.toggle("dead", dead(e));
 
     if (kind === "sensor") return fill(root, name, h("div", { class: "ha-value" }, stateText(e)));
@@ -312,6 +318,8 @@ export const haEntity: Mount<"haEntity"> = (el, w) => {
   });
   return () => {
     stop();
+    el.classList.remove("ha-lit");
+    el.style.removeProperty("--ha-tint");
     window.clearTimeout(sendTimer);
     window.clearTimeout(messageTimer);
     // A temperature still waiting out the 900 ms pause would be lost when the tile unmounts.

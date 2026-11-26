@@ -55,7 +55,7 @@ describe("pool widget", () => {
       ["pl-r pl-none", "Salt3.1 g/L"],
     ]);
     expect(el.querySelector(".pl-name")?.textContent).toBe("Backyard");
-    expect(el.querySelector(".pl-when")?.textContent).toBe("Measured 12:40 p.m.");
+    expect(el.querySelector(".pl-when")?.textContent).toBe("Measured 12:40 PM");
     stop();
   });
 
@@ -64,7 +64,7 @@ describe("pool widget", () => {
     const { el, stop } = await show(data, { ...newWidget("blueRiiot", "p2", { x: 0, y: 0 }), readings: ["ph"] });
     await vi.advanceTimersByTimeAsync(0);
     expect(el.querySelectorAll(".pl-r")).toHaveLength(1);
-    expect(el.querySelector(".pl-stale .pl-when")?.textContent).toBe("Measured Jul 15, 12:40 p.m.");
+    expect(el.querySelector(".pl-stale .pl-when")?.textContent).toBe("Measured Jul 15, 12:40 PM");
     stop();
   });
 
