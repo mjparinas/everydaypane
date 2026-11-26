@@ -4,7 +4,20 @@ import { meetsBanner } from "@/lib/alerts";
 import { defaultConfig } from "@/lib/config/defaults";
 import { useTestServer } from "@/test/server";
 
-import { alertsFeed, decodeXml, parseHydro, parseHydroQuebec, parseNaad, parseNws, parseOpen511, parseQuakes, parseUsgs } from "./alerts";
+import {
+  alertsFeed,
+  decodeXml,
+  parse511,
+  parseEpcor,
+  parseHydro,
+  parseHydroQuebec,
+  parseNaad,
+  parseNws,
+  parseOpen511,
+  parseQuakes,
+  parseUsgs,
+  trim511,
+} from "./alerts";
 import { clearMemoryCache } from "./cache";
 
 const langley = { lat: 49.1044, lon: -122.6604 };
@@ -327,6 +340,97 @@ describe("Hydro-Québec outages", () => {
   });
 });
 
+describe("Ontario 511 and 511 Alberta road events", () => {
+  const toronto = { lat: 43.6532, lon: -79.3832 };
+  const t = Math.floor(now / 1000);
+  const events = trim511([
+    {
+      ID: 1,
+      RoadwayName: "HWY 401",
+      DirectionOfTravel: "Eastbound",
+      Description: "Collision, all  lanes closed",
+      EventType: "accidentsAndIncidents",
+      IsFullClosure: true,
+      Severity: "Unknown",
+      Latitude: 43.7,
+      Longitude: -79.4,
+      LastUpdated: t - 600,
+    },
+    {
+      ID: 2,
+      RoadwayName: "Gardiner Expy",
+      EventType: "roadwork",
+      IsFullClosure: true,
+      Latitude: 43.64,
+      Longitude: -79.39,
+      StartDate: t - 3600,
+    },
+    { ID: 3, RoadwayName: "DVP", EventType: "roadwork", IsFullClosure: true, Latitude: 43.7, Longitude: -79.35, StartDate: t + 3600 },
+    { ID: 4, RoadwayName: "Yonge St", EventType: "roadwork", IsFullClosure: false, Severity: "Minor", Latitude: 43.66, Longitude: -79.38 },
+    {
+      ID: 5,
+      RoadwayName: "HWY 11",
+      EventType: "accidentsAndIncidents",
+      EventSubType: "jackknifed truck",
+      IsFullClosure: false,
+      Severity: "Major",
+      Latitude: 43.65,
+      Longitude: -79.4,
+    },
+    { ID: 6, RoadwayName: "HWY 17", EventType: "closures", IsFullClosure: true, Latitude: 48.4, Longitude: -89.2 },
+    { ID: 7, RoadwayName: "No place" },
+  ]);
+
+  it("keeps closures and major incidents nearby, unplanned closures severe, planned work only once it has started", () => {
+    const list = parse511(events, "ontario511", toronto, 100, now);
+    expect(list.map((a) => [a.id, a.severity, a.title])).toEqual([
+      ["on511:1", "severe", "HWY 401 eastbound: closed"],
+      ["on511:2", "moderate", "Gardiner Expy: closed"],
+      ["on511:5", "moderate", "HWY 11: Jackknifed truck"],
+    ]);
+    expect(list[0]).toMatchObject({ source: "roads", description: "Collision, all lanes closed", sent: (t - 600) * 1000 });
+    expect(list[0]?.area).toMatch(/^Ontario 511, about \d+ km away$/);
+    expect(parse511(events, "alberta511", toronto, 100, now)[0]?.id).toBe("ab511:1");
+    expect(trim511({ error: "bad key" })).toEqual([]);
+  });
+});
+
+describe("EPCOR outages", () => {
+  const edmonton = { lat: 53.5461, lon: -113.4938 };
+  const square = (lat: number, lon: number, d: number) => [
+    [
+      [lon - d, lat - d],
+      [lon + d, lat - d],
+      [lon + d, lat + d],
+      [lon - d, lat + d],
+      [lon - d, lat - d],
+    ],
+  ];
+  const features = [
+    {
+      attributes: { id: "A1", affcusts: "12", cause: "Under review", estresto: "Nov-26 5:30 PM", nbhoods: "Oliver" },
+      geometry: { rings: square(edmonton.lat, edmonton.lon, 0.01) },
+    },
+    { attributes: { id: "A2", affcusts: 1500, cause: "Equipment failure." }, geometry: { rings: square(53.57, -113.49, 0.005) } },
+    { attributes: { id: "A3", affcusts: 3 }, geometry: { rings: square(53.9, -113.49, 0.005) } },
+    { attributes: { id: "A4" } },
+  ];
+
+  it("grades outages covering the home and nearby, and says when power is due back", () => {
+    const list = parseEpcor(features, edmonton, 5, now);
+    expect(list.map((a) => [a.id, a.severity])).toEqual([
+      ["epcor:A1", "severe"],
+      ["epcor:A2", "moderate"],
+    ]);
+    expect(list[0]).toMatchObject({
+      title: "Power outage here: 12 customers",
+      area: "Oliver",
+      description: "Under review. Power back by about Nov-26 5:30 PM.",
+    });
+    expect(list[1]?.description).toBe("Equipment failure. No estimate yet for when power is back.");
+  });
+});
+
 describe("the alerts feed", () => {
   useTestServer();
   afterEach(() => {
@@ -404,6 +508,40 @@ describe("the alerts feed", () => {
     const data = await alertsFeed(config, now);
     expect(data.alerts.map((a) => [a.source, a.severity])).toEqual([["power", "severe"]]);
     expect(seen.some((u) => u.includes("bchydro") || u.includes("open511") || u.includes("arcgis"))).toBe(false);
+  });
+
+  it("reads 511 Alberta and EPCOR for an Edmonton home, and skips 511 quietly without a key", async () => {
+    const seen: string[] = [];
+    vi.stubGlobal(
+      "fetch",
+      vi.fn((input: string | URL | Request) => {
+        const url = String(input);
+        seen.push(url);
+        if (url.startsWith("https://511.alberta.ca/api/v2/get/event?"))
+          return Promise.resolve(
+            Response.json([
+              { ID: 9, RoadwayName: "Anthony Henday Dr", EventType: "closures", IsFullClosure: true, Latitude: 53.55, Longitude: -113.5 },
+            ]),
+          );
+        if (url.includes("/ocps_prod_av/")) return Promise.resolve(Response.json({ features: [] }));
+        if (url.startsWith("https://rss.naad-adna.pelmorex.com/")) return Promise.resolve(new Response("<feed></feed>"));
+        if (url.startsWith("https://earthquakescanada.nrcan.gc.ca/")) return Promise.resolve(new Response(""));
+        return Promise.resolve(new Response("unexpected", { status: 500 }));
+      }),
+    );
+    const config = defaultConfig();
+    config.location = { name: "Edmonton", latitude: 53.5461, longitude: -113.4938, timeZone: "America/Edmonton" };
+    expect((await alertsFeed(config, now)).alerts).toEqual([]);
+    expect(seen.some((u) => u.includes("511.alberta.ca"))).toBe(false);
+    expect(seen.some((u) => u.includes("ocps_prod_av"))).toBe(true);
+
+    clearMemoryCache();
+    vi.stubEnv("ALBERTA_511_KEY", "k1");
+    const data = await alertsFeed(config, now);
+    expect(data.alerts.map((a) => [a.id, a.severity])).toEqual([["ab511:9", "severe"]]);
+    expect(seen.find((u) => u.includes("511.alberta.ca"))).toContain("key=k1");
+    expect(seen.some((u) => u.includes("bchydro") || u.includes("open511"))).toBe(false);
+    vi.unstubAllEnvs();
   });
 
   it("returns nothing when alerts are off", async () => {

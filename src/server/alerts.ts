@@ -7,6 +7,7 @@ import { regionOf } from "@/lib/regions";
 import { zonedFormatter } from "@/lib/timeZone";
 
 import { cached } from "./cache";
+import { env } from "./env";
 import { arcgisQuery, envelope, evacuationKind, EVACUATIONS_URL, type ArcFeature } from "./wildfires";
 
 // Emergency alerts (Melvin, 2026-11-17): urgent alerts for Langley, the Lower Mainland, BC and Canada.
@@ -27,7 +28,9 @@ import { arcgisQuery, envelope, evacuationKind, EVACUATIONS_URL, type ArcFeature
 // Regional packs (Melvin, 2026-11-26): the household's region (src/lib/regions.ts) picks which of these apply. Outside
 // B.C. there is no DriveBC, BC Hydro or EmergencyInfoBC; in the U.S. the National Weather Service replaces NAAD and
 // USGS replaces Earthquakes Canada (USGS is worldwide, so it is the catalogue outside both countries too); in Québec
-// Hydro-Québec's outage map replaces BC Hydro's.
+// Hydro-Québec's outage map replaces BC Hydro's. Ontario and Alberta read their 511 road events (Melvin, 2026-11-26:
+// "Ontario and Alberta 511 road events, Ontario and Alberta power outages"), and Edmonton reads EPCOR's outage map;
+// Hydro One, Toronto Hydro, ENMAX and FortisAlberta publish no outage feed, so the rest of those provinces has none.
 //
 // Each source is fetched and cached on its own, so one being down never hides the others.
 
@@ -38,6 +41,9 @@ const BC_HYDRO = "https://www.bchydro.com/power-outages/app/outages-map-data.jso
 const NWS = "https://api.weather.gov/alerts/active";
 const USGS = "https://earthquake.usgs.gov/fdsnws/event/1/query";
 const HYDRO_QUEBEC = "https://pannes.hydroquebec.com/pannes/donnees/v3_0/";
+/** Ontario 511 and 511 Alberta run the same software: one events call each, with a developer key in the query. */
+const FIVE11 = { ontario511: "https://511on.ca/api/v2/get/event", alberta511: "https://511.alberta.ca/api/v2/get/event" } as const;
+const EPCOR = "https://services6.arcgis.com/Ji2rusuWXDFSqNsP/ArcGIS/rest/services/ocps_prod_av/FeatureServer/0/query";
 /** NWS asks every reader to name itself and a way to reach it in the User-Agent. */
 const NWS_AGENT = "Everydaypane/1.0 (+https://www.everydaypane.com/contact/)";
 
@@ -189,6 +195,131 @@ export function parseOpen511(raw: unknown, at: { lat: number; lon: number }, rad
       area: "DriveBC",
       description: clip((e.description ?? "").replace(/\s+/g, " ").trim(), 700),
       sent: Date.parse(e.updated ?? e.created ?? "") || 0,
+      expires: null,
+    });
+  }
+  return out;
+}
+
+// ---- Ontario 511 and 511 Alberta ----
+
+/** The fields of a 511 event we use (511on.ca/help/endpoint/event, 511.alberta.ca/help/endpoint/event, 2026-11-26). */
+export interface Event511 {
+  ID?: number | string;
+  RoadwayName?: string;
+  DirectionOfTravel?: string;
+  Description?: string;
+  EventType?: string;
+  EventSubType?: string;
+  IsFullClosure?: boolean;
+  Severity?: string;
+  Latitude?: number;
+  Longitude?: number;
+  Reported?: number;
+  LastUpdated?: number;
+  StartDate?: number;
+}
+
+/** A province's whole event list, trimmed to what parse511 reads, so it can be cached once for every household. */
+export function trim511(raw: unknown): Event511[] {
+  if (!Array.isArray(raw)) return [];
+  return (raw as Event511[])
+    .filter((e) => e && typeof e === "object" && typeof e.Latitude === "number" && typeof e.Longitude === "number")
+    .map((e) => ({
+      ID: e.ID,
+      RoadwayName: e.RoadwayName,
+      DirectionOfTravel: e.DirectionOfTravel,
+      Description: typeof e.Description === "string" ? clip(e.Description, 700) : undefined,
+      EventType: e.EventType,
+      EventSubType: e.EventSubType,
+      IsFullClosure: e.IsFullClosure,
+      Severity: e.Severity,
+      Latitude: e.Latitude,
+      Longitude: e.Longitude,
+      Reported: e.Reported,
+      LastUpdated: e.LastUpdated,
+      StartDate: e.StartDate,
+    }));
+}
+
+/**
+ * 511 events worth a wall, within the radius: full closures and major incidents, as DriveBC's. Planned roadwork counts
+ * only when it closes the road, and only once it has started. An unplanned closure (a crash, a washout) is severe, a
+ * planned one or a major incident without a closure moderate. Times are Unix seconds.
+ */
+export function parse511(
+  events: Event511[],
+  province: "ontario511" | "alberta511",
+  at: { lat: number; lon: number },
+  radiusKm: number,
+  now: number,
+): EmergencyAlert[] {
+  const out: EmergencyAlert[] = [];
+  const name = province === "ontario511" ? "Ontario 511" : "511 Alberta";
+  for (const e of events) {
+    if (e.ID === undefined || typeof e.Latitude !== "number" || typeof e.Longitude !== "number") continue;
+    const type = (e.EventType ?? "").toLowerCase();
+    const closed = e.IsFullClosure === true || type === "closures";
+    const major = /major/i.test(e.Severity ?? "");
+    const planned = type === "roadwork" || type === "specialevents";
+    if (!closed && !major) continue;
+    if (typeof e.StartDate === "number" && e.StartDate > 0 && e.StartDate * 1000 > now) continue;
+    const km = distanceKm(at.lat, at.lon, e.Latitude, e.Longitude);
+    if (km > radiusKm) continue;
+    const road = (e.RoadwayName ?? "").trim() || "Road";
+    const dir = (e.DirectionOfTravel ?? "").trim();
+    const way = dir && !/unknown|all directions|both directions/i.test(dir) ? ` ${dir.toLowerCase()}` : "";
+    const what = closed ? "closed" : (e.EventSubType ?? "").trim() || (type === "accidentsandincidents" ? "Incident" : "Major event");
+    const updated = Number(e.LastUpdated) || Number(e.Reported) || 0;
+    out.push({
+      id: `${province === "ontario511" ? "on511" : "ab511"}:${String(e.ID)}`,
+      source: "roads",
+      severity: closed && !planned ? "severe" : "moderate",
+      title: clip(`${road}${way}: ${closed ? what : title(what)}`, 120),
+      area: `${name}, about ${Math.max(1, Math.round(km))} km away`,
+      description: clip((e.Description ?? "").replace(/\s+/g, " ").trim(), 700),
+      sent: updated > 0 ? updated * 1000 : 0,
+      expires: null,
+    });
+  }
+  return out;
+}
+
+// ---- EPCOR (Edmonton) power outages ----
+
+/**
+ * EPCOR's outage map layer (ocps_prod_av, public ArcGIS, read 2026-11-26): polygons with `affcusts` (customers),
+ * `cause`, `estresto` (estimated restoration, text like "Jul-27 5:30 PM"), `faulted` (when it went out) and `nbhoods`.
+ * Graded like BC Hydro's: covering the home is severe, within `radiusKm` moderate from 1,000 customers out, else minor.
+ */
+export function parseEpcor(features: ArcFeature[], at: { lat: number; lon: number }, radiusKm: number, now: number): EmergencyAlert[] {
+  const out: EmergencyAlert[] = [];
+  for (const f of features) {
+    const a = f.attributes ?? {};
+    const text = (k: string) => (typeof a[k] === "string" ? (a[k] as string).trim() : typeof a[k] === "number" ? String(a[k]) : "");
+    const rings = f.geometry?.rings ?? [];
+    if (!rings.length) continue;
+    const here = insideRings(at.lat, at.lon, rings);
+    const km = Math.min(Infinity, ...rings.flatMap((r) => r.map(([lon = 0, lat = 0]) => distanceKm(at.lat, at.lon, lat, lon))));
+    if (!here && !(km <= radiusKm)) continue;
+    const customers = Math.max(0, Math.round(Number(a.affcusts) || 0));
+    const faulted = typeof a.faulted === "number" ? a.faulted : Date.parse(text("faulted"));
+    const back = typeof a.estresto === "number" ? "" : text("estresto");
+    const details = [
+      text("cause") && `${text("cause").replace(/[.!?]$/, "")}.`,
+      back ? `Power back by about ${back}.` : "No estimate yet for when power is back.",
+    ].filter(Boolean);
+    out.push({
+      id: `epcor:${text("id") || text("GlobalID") || text("OBJECTID")}`,
+      source: "power",
+      severity: here ? "severe" : customers >= 1000 ? "moderate" : "minor",
+      title: clip(
+        `${here ? "Power outage here" : "Power outage nearby"}: ${customers.toLocaleString("en-CA")} ${customers === 1 ? "customer" : "customers"}`,
+        120,
+      ),
+      area: clip(text("nbhoods") || (here ? "EPCOR" : `EPCOR, about ${Math.max(1, Math.round(km))} km away`), 160),
+      description: clip(details.join(" "), 700),
+      sent: Number.isFinite(faulted) && faulted > 0 ? faulted : now,
       expires: null,
     });
   }
@@ -532,6 +663,20 @@ export async function alertsFeed(config: DashboardConfig, now = Date.now()): Pro
       ).then((r) => r.value),
     );
   }
+  if (a.sources.roads && (region.roads === "ontario511" || region.roads === "alberta511")) {
+    const province = region.roads;
+    const key = province === "ontario511" ? env.ontario511Key() : env.alberta511Key();
+    // No key yet (Everydaypane registers one per province): nothing to read, and nothing to say on the wall.
+    if (key) {
+      const url = `${FIVE11[province]}?${new URLSearchParams({ key, format: "json", lang: "en" })}`;
+      jobs.push(
+        // One read of the province's list every five minutes for every household: Ontario allows ten calls a minute.
+        cached(`alerts:${province}`, 5 * 60_000, async () => trim511(JSON.parse(await getText(url))), now).then((r) =>
+          parse511(r.value, province, at, a.radiusKm, now),
+        ),
+      );
+    }
+  }
   if (a.sources.earthquakes && region.quakes === "usgs") {
     const since = new Date(now - 24 * 3_600_000).toISOString().slice(0, 19);
     const url = `${USGS}?${new URLSearchParams({
@@ -575,6 +720,37 @@ export async function alertsFeed(config: DashboardConfig, now = Date.now()): Pro
           if (!version) throw new Error("Hydro-Québec sent no version");
           return parseHydroQuebec(JSON.parse(await getText(`${HYDRO_QUEBEC}bismarkers${version}.json`)), at, a.powerKm, config.hour12);
         },
+        now,
+      ).then((r) => r.value),
+    );
+  }
+  if (a.sources.power && region.power === "epcor") {
+    const km = Math.max(1, a.powerKm);
+    const dLat = km / 111;
+    const dLon = km / (111 * Math.cos((at.lat * Math.PI) / 180));
+    const box = [at.lon - dLon, at.lat - dLat, at.lon + dLon, at.lat + dLat];
+    jobs.push(
+      cached(
+        `alerts:epcor:${loc}:${a.powerKm}`,
+        5 * 60_000,
+        async () =>
+          parseEpcor(
+            await arcgisQuery(
+              EPCOR,
+              {
+                ...envelope(box, "4326"),
+                where: "1=1",
+                outFields: "OBJECTID,id,GlobalID,estresto,faulted,affcusts,cause,nbhoods",
+                returnGeometry: "true",
+                maxAllowableOffset: "0.0005",
+                geometryPrecision: "5",
+              },
+              "EPCOR",
+            ),
+            at,
+            a.powerKm,
+            now,
+          ),
         now,
       ).then((r) => r.value),
     );
