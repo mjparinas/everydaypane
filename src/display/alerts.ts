@@ -52,7 +52,7 @@ export function alertStrip(getPayload: () => DisplayPayload | null, onNew?: () =
     );
     fill(
       el,
-      h("span", { class: "as-icon", "aria-hidden": "true" }, top.notice ? "✓" : "⚠"),
+      h("span", { class: "as-icon", "aria-hidden": "true" }, top.notice ? (top.source === "smart" ? "ℹ" : "✓") : "⚠"),
       h(
         "span",
         { class: "as-text" },

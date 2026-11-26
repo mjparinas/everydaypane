@@ -983,6 +983,33 @@ export const configSchema = z
       evacuationKm: z.number().int().min(0).max(100).default(10),
       // Email ADMIN_EMAILS and FAMILY_EMAILS when a new strip-worthy alert arrives (Melvin, 2026-11-22). Off by default.
       notifyEmail: z.boolean().default(false),
+      // Smart notices (Melvin, 2026-11-26): rules across two integrations, each its own switch (src/lib/alertRules.ts).
+      // The ones that would fire often start off. Defaults so older documents still load.
+      rules: z
+        .object({
+          sprinklerFrost: z.boolean().default(true),
+          sprinklerRain: z.boolean().default(false),
+          outageBattery: z.boolean().default(true),
+          smokyAir: z.boolean().default(true),
+          smokyAqhi: z.number().int().min(4).max(10).default(7),
+          poolFreeze: z.boolean().default(false),
+          laundryWaiting: z.boolean().default(false),
+          laundryWaitMinutes: z.number().int().min(15).max(240).default(60),
+          garbageEve: z.boolean().default(false),
+          garbageHour: z.number().int().min(12).max(22).default(18),
+        })
+        .default({
+          sprinklerFrost: true,
+          sprinklerRain: false,
+          outageBattery: true,
+          smokyAir: true,
+          smokyAqhi: 7,
+          poolFreeze: false,
+          laundryWaiting: false,
+          laundryWaitMinutes: 60,
+          garbageEve: false,
+          garbageHour: 18,
+        }),
     }),
     // School status (Melvin, 2026-11-22): which district site to read for snow-day / closure banners.
     school: z

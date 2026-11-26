@@ -286,7 +286,8 @@ export interface SportsData {
 }
 
 export type AlertSeverity = "extreme" | "severe" | "moderate" | "minor";
-export type AlertSource = "alertReady" | "weather" | "roads" | "earthquakes" | "power" | "evacuations" | "indoorAir" | "pool" | "laundry";
+export type AlertSource =
+  "alertReady" | "weather" | "roads" | "earthquakes" | "power" | "evacuations" | "indoorAir" | "pool" | "laundry" | "smart";
 
 /** One emergency alert for the area, from any source (src/server/alerts.ts). */
 export interface EmergencyAlert {
