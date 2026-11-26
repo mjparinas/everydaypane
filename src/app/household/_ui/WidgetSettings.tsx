@@ -13,9 +13,11 @@ import { EARTH_OVERLAY_LABELS, EARTH_OVERLAYS, EARTH_ZOOM_LABELS, EARTH_ZOOMS } 
 import { FERRY_ROUTES, ferryRouteName } from "@/lib/ferries";
 import { GAS_FUEL_LABELS, GAS_FUELS, GAS_RADIUS_MAX, GAS_RADIUS_MIN, GAS_SORT_LABELS, GAS_SORTS } from "@/lib/gas";
 import { MEAL_LABELS, MEAL_SLOTS } from "@/lib/meals";
+import { regionOf } from "@/lib/regions";
 import { RIVER_PRESETS, RIVER_STATION_RE } from "@/lib/rivers";
 import { LIGHT_PROVIDERS, type DirectSmartProvider } from "@/lib/smartHome";
 import { MOUNTAINS } from "@/lib/snow";
+import { agencyOf, TRANSIT_AGENCIES, TRANSIT_AGENCY_IDS, type TransitAgencyId } from "@/lib/transitAgencies";
 import { WINDY_OVERLAY_LABELS, WINDY_OVERLAYS, windyPressureAllowed } from "@/lib/windy";
 
 import { useAirthings } from "./airthings";
@@ -1451,9 +1453,31 @@ function TypeSettings({
     }
     case "transit": {
       const e = edit<"transit">();
+      // The dashboard's region's agencies come first, marked, so a Toronto household sees the TTC on top.
+      const local = regionOf(config).transit;
+      const agencies = [...local, ...TRANSIT_AGENCY_IDS.filter((a) => !local.includes(a))];
       return (
         <>
+          <Select
+            label="Agency"
+            value={w.agency}
+            options={agencies.map((a) => ({
+              value: a,
+              label: `${TRANSIT_AGENCIES[a].name} (${TRANSIT_AGENCIES[a].area})${local.includes(a) ? " · your region" : ""}`,
+            }))}
+            hint="Stops belong to one agency, so changing it clears the stops."
+            onChange={(v) =>
+              e((x) => {
+                if (x.agency === v) return;
+                x.agency = v;
+                x.stops = [];
+                x.routes = [];
+              })
+            }
+          />
           <TransitStops
+            key={w.agency}
+            agency={w.agency}
             stops={w.stops}
             onAdd={(s) => e((x) => void (x.stops = [...x.stops, s]))}
             onRemove={(id) => e((x) => void (x.stops = x.stops.filter((s) => s.id !== id)))}
@@ -1636,6 +1660,19 @@ function TypeSettings({
           <SchoolNames schools={w.schools} onChange={(schools) => e((x) => void (x.schools = schools))} />
           <p className="text-xs text-soft">
             The district page is set under <SettingsLink href="#settings/school">Settings › School status</SettingsLink>.
+          </p>
+        </>
+      );
+    }
+    case "schoolDays": {
+      const e = edit<"schoolDays">();
+      return (
+        <>
+          <Stepper label="Days off listed" value={w.count} min={0} max={6} onChange={(v) => e((x) => void (x.count = v))} />
+          <Toggle label="Show hot lunch" checked={w.showLunch} onChange={(v) => e((x) => void (x.showLunch = v))} />
+          <p className="text-xs text-soft">
+            The school year, days off and lunches are set under{" "}
+            <SettingsLink href="#settings/school-days">Settings › School days</SettingsLink>.
           </p>
         </>
       );
@@ -2504,12 +2541,14 @@ interface StopMatch {
 }
 type TransitStop = { id: string; code: string; name: string };
 
-/** Finds TransLink stops by the number on the stop's sign or by name; with nothing typed, the ones nearest home. */
+/** Finds an agency's stops by the number on the stop's sign or by name; with nothing typed, the ones nearest home. */
 function TransitStops({
+  agency,
   stops,
   onAdd,
   onRemove,
 }: {
+  agency: TransitAgencyId;
   stops: TransitStop[];
   onAdd: (s: TransitStop) => void;
   onRemove: (id: string) => void;
@@ -2523,11 +2562,11 @@ function TransitStops({
     e?.preventDefault();
     setBusy(true);
     setNote("");
-    const r = await fetch(`/api/household/transit/?${new URLSearchParams({ q: q.trim() })}`).catch(() => null);
+    const r = await fetch(`/api/household/transit/?${new URLSearchParams({ q: q.trim(), agency })}`).catch(() => null);
     const body = (await r?.json().catch(() => ({}))) as { stops?: StopMatch[]; keySet?: boolean; error?: string } | undefined;
     setBusy(false);
     setMatches(body?.stops ?? []);
-    if (!r?.ok) setNote(body?.error ?? "Couldn't search TransLink's stops.");
+    if (!r?.ok) setNote(body?.error ?? `Couldn't search ${agencyOf(agency).name}'s stops.`);
     else if (body?.keySet === false) setNote("Departures show once TRANSLINK_API_KEY is set in Vercel (docs/translink.md).");
   }
 
@@ -2573,10 +2612,7 @@ function TransitStops({
             ))}
         </div>
       )}
-      <p className="text-xs text-soft">
-        Route and arrival data used in this product or service is provided by permission of TransLink. TransLink assumes no responsibility
-        for the accuracy or currency of the Data used in this product or service.
-      </p>
+      {agencyOf(agency).notice && <p className="text-xs text-soft">{agencyOf(agency).notice}</p>}
     </div>
   );
 }

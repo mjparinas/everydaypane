@@ -3742,6 +3742,74 @@ html.portrait-view .stage {
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
+/* School days: today's line large, then tomorrow and the next days off */
+.w-schoolDays {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4em;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+.sd-state {
+  font-size: calc(2em * var(--font-scale, 1));
+  font-weight: 800;
+  line-height: 1.05;
+}
+.sd-school {
+  color: var(--accent);
+}
+.sd-early {
+  color: var(--sun);
+}
+.sd-off {
+  color: var(--text);
+}
+.sd-sub,
+.sd-error {
+  color: var(--muted);
+  font-size: calc(0.95em * var(--font-scale, 1));
+}
+.sd-next {
+  font-weight: 600;
+  font-size: calc(1em * var(--font-scale, 1));
+}
+.sd-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3em;
+  margin: 0.3em 0 0;
+  padding: 0.4em 0 0;
+  list-style: none;
+  min-height: 0;
+  overflow: hidden;
+  border-top: 1px solid color-mix(in srgb, var(--text) 15%, transparent);
+  font-size: calc(0.95em * var(--font-scale, 1));
+}
+.sd-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  column-gap: 0.6em;
+}
+.sd-name {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.sd-break .sd-name {
+  font-weight: 700;
+}
+.sd-when {
+  grid-column: 1;
+  color: var(--muted);
+  font-size: 0.85em;
+}
+.sd-away {
+  grid-column: 2;
+  grid-row: 1;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
 .pr-list {
   display: flex;
   flex-direction: column;

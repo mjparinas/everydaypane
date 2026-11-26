@@ -21,6 +21,7 @@ const BUDGET = {
   "public/display/drivebc.js": 6_000,
   "public/display/snow.js": 6_000,
   "public/display/rivers.js": 6_000,
+  "public/display/schoolDays.js": 6_000,
   "public/display/borderWait.js": 6_000,
   "public/display/gasPrices.js": 6_000,
   "public/display/rachio.js": 6_000,

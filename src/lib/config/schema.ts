@@ -10,11 +10,14 @@ import { GAS_FUELS, GAS_RADIUS_MAX, GAS_RADIUS_MIN, GAS_SORTS } from "../gas";
 import { DONE_MINUTES_DEFAULT } from "../laundry";
 import { MEAL_SLOTS } from "../meals";
 import { NEWS_PRESETS } from "../newsPresets";
+import { REGION_IDS } from "../regions";
 import { RIVER_DEFAULT_STATIONS, RIVER_STATION_RE } from "../rivers";
+import { DATE_RE } from "../schoolCalendar";
 import { SCREEN_SAVER_OFF } from "../screenSaver";
 import { SMART_HOME_PROVIDERS } from "../smartHome";
 import { DEFAULT_MOUNTAINS, MOUNTAIN_IDS } from "../snow";
 import { LEAGUE_IDS, MAX_TEAMS } from "../sports";
+import { TRANSIT_AGENCY_IDS } from "../transitAgencies";
 import { WINDY_OVERLAYS } from "../windy";
 import { PERIODS } from "./periods";
 
@@ -436,6 +439,9 @@ export const widgetSchema = z.discriminatedUnion("type", [
   z.object({
     ...base,
     type: z.literal("transit"),
+    // Which agency's feed (regional packs, Melvin, 2026-11-26). Stops belong to one agency; TransLink is the default so
+    // a widget saved before other agencies existed still loads.
+    agency: z.enum(TRANSIT_AGENCY_IDS).default("translink"),
     stops: z
       .array(z.object({ id: z.string().min(1).max(40), code: z.string().max(20), name: z.string().max(120) }))
       .max(6)
@@ -629,6 +635,15 @@ export const widgetSchema = z.discriminatedUnion("type", [
     type: z.literal("school"),
     // School name fragments to match in a closure notice (empty = any district-wide alert).
     schools: z.array(z.string().trim().min(1).max(80)).max(12),
+  }),
+  // School days (Melvin, 2026-11-26): school today or not, Pro-D days, breaks and summer from config.school, the next
+  // days off and the weekly hot-lunch line. Separate from the snow-day status above, which reads the district page.
+  z.object({
+    ...base,
+    type: z.literal("schoolDays"),
+    // Days off listed under today's line (0 hides the list).
+    count: z.number().int().min(0).max(6).default(3),
+    showLunch: z.boolean().default(true),
   }),
   // Kitchen whiteboard (Melvin, 2026-11-22): finger draw with a few colours and an eraser; one shared doodle on
   // every display (src/server/whiteboard.ts). Wider tiles show more colours. Hold Clear to wipe.
@@ -968,6 +983,9 @@ export const configSchema = z
       longitude: z.number().min(-180).max(180),
       timeZone,
     }),
+    // Regional pack (Melvin, 2026-11-26): which local sources apply (src/lib/regions.ts). "auto" works it out from
+    // `location`; a household right on a border picks one by hand.
+    region: z.enum(["auto", ...REGION_IDS]).default("auto"),
     units: z.enum(["metric", "imperial"]),
     hour12: z.boolean(),
     // Forecast source for the weather / sun widgets (Melvin, 2026-11-23). Open-Meteo stays the default; Environment
@@ -1039,8 +1057,39 @@ export const configSchema = z
         districtName: z.string().trim().max(80).default("Langley School District"),
         // Public https page that shows a closure banner when schools are closed or delayed.
         statusUrl: z.string().trim().max(300).default("https://www.sd35.bc.ca/"),
+        // School days (Melvin, 2026-11-26): the school year and its days off for the School days widget, filled from a
+        // preset (src/lib/schoolCalendar.ts) or by hand, plus calendar links whose Pro-D and break events count too.
+        calendarName: z.string().trim().max(60).default(""),
+        firstDay: z.union([z.literal(""), z.string().regex(DATE_RE)]).default(""),
+        lastDay: z.union([z.literal(""), z.string().regex(DATE_RE)]).default(""),
+        daysOff: z
+          .array(
+            z
+              .object({
+                start: z.string().regex(DATE_RE),
+                end: z.string().regex(DATE_RE),
+                name: z.string().trim().min(1).max(60),
+                kind: z.enum(["off", "early"]).default("off"),
+              })
+              .refine((d) => d.end >= d.start, "A day off ends on or after it starts"),
+          )
+          .max(80)
+          .default([]),
+        // Calendar links (integrations.icals ids) whose all-day "Pro-D", "No school" or "break" events are days off.
+        icalIds: z.array(z.string().max(40)).max(6).default([]),
+        // Weekly hot-lunch line for Monday to Friday ("Pizza day"), shown on school days only. Empty for none.
+        lunches: z.array(z.string().trim().max(60)).length(5).default(["", "", "", "", ""]),
       })
-      .default({ districtName: "Langley School District", statusUrl: "https://www.sd35.bc.ca/" }),
+      .default({
+        districtName: "Langley School District",
+        statusUrl: "https://www.sd35.bc.ca/",
+        calendarName: "",
+        firstDay: "",
+        lastDay: "",
+        daysOff: [],
+        icalIds: [],
+        lunches: ["", "", "", "", ""],
+      }),
     // Defaults to none, so a document saved before the chore chart existed still loads.
     chores: z
       .object({

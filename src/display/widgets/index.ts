@@ -172,6 +172,8 @@ export function mountWidget(el: HTMLElement, w: Widget, ctx: WidgetContext): Cle
       return presence(el, w, ctx);
     case "school":
       return school(el, w, ctx);
+    case "schoolDays":
+      return lazyWidget("schoolDays", el, w, ctx);
     case "whiteboard":
       return lazyWidget("whiteboard", el, w, ctx);
     case "stocks":

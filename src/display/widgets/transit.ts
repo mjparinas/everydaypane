@@ -1,5 +1,6 @@
 import type { WidgetOf } from "@/lib/config/schema";
 import type { TransitData, TransitDeparture } from "@/lib/display/types";
+import { agencyOf, stopKey } from "@/lib/transitAgencies";
 
 import { subscribe } from "../api";
 import { fill, h } from "../dom";
@@ -9,7 +10,8 @@ import type { Mount } from "./types";
 
 // TransLink departures (Melvin, 2026-11-19): for each picked stop, the next buses with minutes to go and whether they
 // are running late, from the server's 30-second read of TransLink's live feed. Times are absolute, so the minutes
-// count down between reads without asking again.
+// count down between reads without asking again. Since the regional packs (2026-11-26) the widget can read any agency in
+// src/lib/transitAgencies.ts; only its name and credit line reach this bundle.
 
 export const TRANSIT_EVERY = 30_000;
 
@@ -38,21 +40,23 @@ export function delayLabel(d: TransitDeparture): { text: string; cls: string } {
 }
 
 export const transit: Mount<"transit"> = (el, w, ctx) => {
-  const root = h("div", { class: "w-transit" }, h("div", { class: "w-empty" }, "Checking TransLink…"));
+  const agency = agencyOf(w.agency);
+  const root = h("div", { class: "w-transit" }, h("div", { class: "w-empty" }, `Checking ${agency.name}…`));
   el.append(root);
   let data: TransitData | null = null;
   const clock = fmt(ctx.timeZone, { hour: "numeric", minute: "2-digit", hour12: ctx.hour12 });
 
   const draw = () => {
     if (!data) return;
-    if (!data.configured) return fill(root, h("div", { class: "w-empty" }, "Add a TransLink API key in Vercel to show departures."));
+    if (agency.needsKey && !data.configured)
+      return fill(root, h("div", { class: "w-empty" }, "Add a TransLink API key in Vercel to show departures."));
     if (w.stops.length === 0) return fill(root, h("div", { class: "w-empty" }, "Pick your stops in this widget's settings."));
     const nowS = Math.floor(Date.now() / 1000);
     fill(
       root,
       h("div", { class: "w-label" }, w.title || "Next buses"),
       ...w.stops.map((stop) => {
-        const list = shownDepartures(data?.stops[stop.id] ?? [], w, nowS);
+        const list = shownDepartures(data?.stops[stopKey(w.agency, stop.id)] ?? [], w, nowS);
         return h(
           "section",
           { class: "tl-stop" },
@@ -81,7 +85,7 @@ export const transit: Mount<"transit"> = (el, w, ctx) => {
             : h("div", { class: "tl-none" }, "No departures in the next two hours"),
         );
       }),
-      h("div", { class: "tl-src" }, "Live times from TransLink"),
+      h("div", { class: "tl-src" }, data.failed?.includes(w.agency) ? `${agency.name} isn't answering right now` : agency.credit),
     );
   };
 
