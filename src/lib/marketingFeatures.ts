@@ -57,6 +57,7 @@ const FEATURE_BLURBS: Partial<Record<WidgetType, string>> = {
   ferries: "Next sailings and how full they are.",
   drivebc: "DriveBC highway camera pictures, refreshed on a timer.",
   borderWait: "Car waits at Peace Arch, Pacific Highway, Aldergrove and more, into the U.S. and into Canada.",
+  gasPrices: "The cheapest regular, premium or diesel near home, from Google Maps.",
   garbage: "Township of Langley Recycle Coach zones.",
   school: "Open, closed, delayed or late start.",
   schoolDays: "School today or not, Pro-D days, breaks and summer counted down, with the weekly hot-lunch day. Langley 2026–27 in one tap.",

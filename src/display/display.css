@@ -1975,6 +1975,60 @@ html.portrait-view .stage {
   margin-top: auto;
 }
 
+/* Gas prices: a row per station, the price large on the left, the cheapest one in green. */
+.w-gas {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5em;
+  height: 100%;
+  overflow: hidden;
+  font-size: calc(clamp(12px, min(5cqw, 9cqh), 28px) * var(--font-scale, 1));
+}
+.gas-list {
+  display: grid;
+  gap: 0.5em;
+}
+.gas-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  column-gap: 0.7em;
+  align-items: baseline;
+}
+.gas-price {
+  grid-row: span 2;
+  font-size: 1.35em;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.gas-best .gas-price {
+  color: #40c057;
+}
+.gas-where {
+  display: grid;
+  min-width: 0;
+}
+.gas-name,
+.gas-addr {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.gas-name {
+  font-weight: 600;
+}
+.gas-addr,
+.gas-meta,
+.gas-foot {
+  color: var(--muted);
+  font-size: 0.75em;
+}
+.gas-meta {
+  grid-column: 2;
+}
+.gas-foot {
+  margin-top: auto;
+}
+
 /* TransLink departures */
 .w-transit {
   display: flex;

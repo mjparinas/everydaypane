@@ -40,6 +40,7 @@ export const SAMPLE_FEEDS: Record<string, unknown> = {
   ferries: loadJson("ferries.json"),
   drivebc: loadJson("drivebc.json"),
   border: loadJson("border.json"),
+  gas: loadJson("gas.json"),
   sports: loadJson("sports.json"),
   garbage: loadJson("garbage.json"),
   alerts: loadJson("alerts.json"),

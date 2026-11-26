@@ -442,6 +442,14 @@ export const WIDGETS: { [T in WidgetType]: WidgetInfo<T> } = {
     minSize: { w: 2, h: 2 },
     defaults: () => ({ crossings: [...BORDER_DEFAULT_CROSSINGS], directions: "both" as const, showNexus: false }),
   },
+  gasPrices: {
+    label: "Gas prices",
+    description: "The cheapest gas stations near home",
+    icon: "⛽",
+    size: { w: 3, h: 3 },
+    minSize: { w: 2, h: 2 },
+    defaults: () => ({ fuel: "regular" as const, radiusKm: 5, count: 4, sort: "price" as const, showAddress: false }),
+  },
   sports: {
     label: "Sports scores",
     description: "Live scores and next games for your teams",
@@ -781,6 +789,7 @@ export const WIDGET_GROUPS: { id: string; label: string; types: WidgetType[] }[]
       "ferries",
       "drivebc",
       "borderWait",
+      "gasPrices",
       "internet",
       "ecoflow",
       "rachio",

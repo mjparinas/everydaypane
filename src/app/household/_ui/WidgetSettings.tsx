@@ -11,6 +11,7 @@ import { WIDGETS } from "@/lib/config/widgets";
 import { DRIVEBC_LICENCE, DRIVEBC_MAX_CAMERAS, DRIVEBC_REFRESH } from "@/lib/drivebc";
 import { EARTH_OVERLAY_LABELS, EARTH_OVERLAYS, EARTH_ZOOM_LABELS, EARTH_ZOOMS } from "@/lib/earth";
 import { FERRY_ROUTES, ferryRouteName } from "@/lib/ferries";
+import { GAS_FUEL_LABELS, GAS_FUELS, GAS_RADIUS_MAX, GAS_RADIUS_MIN, GAS_SORT_LABELS, GAS_SORTS } from "@/lib/gas";
 import { MEAL_LABELS, MEAL_SLOTS } from "@/lib/meals";
 import { regionOf } from "@/lib/regions";
 import { RIVER_PRESETS, RIVER_STATION_RE } from "@/lib/rivers";
@@ -984,6 +985,41 @@ function TypeSettings({
               }
             />
           ))}
+        </>
+      );
+    }
+    case "gasPrices": {
+      const e = edit<"gasPrices">();
+      return (
+        <>
+          <Segmented
+            label="Fuel"
+            value={w.fuel}
+            options={GAS_FUELS.map((f) => ({ value: f, label: GAS_FUEL_LABELS[f] }))}
+            onChange={(v) => e((x) => void (x.fuel = v))}
+          />
+          <Range
+            label="How far from home"
+            value={w.radiusKm}
+            min={GAS_RADIUS_MIN}
+            max={GAS_RADIUS_MAX}
+            step={1}
+            format={(v) => `${v} km`}
+            onChange={(v) => e((x) => void (x.radiusKm = v))}
+          />
+          <Stepper label="Stations shown" value={w.count} min={1} max={8} onChange={(v) => e((x) => void (x.count = v))} />
+          <Select
+            label="Order"
+            value={w.sort}
+            options={GAS_SORTS.map((o) => ({ value: o, label: GAS_SORT_LABELS[o] }))}
+            onChange={(v) => e((x) => void (x.sort = v))}
+          />
+          <Toggle label="Show addresses" checked={w.showAddress} onChange={(v) => e((x) => void (x.showAddress = v))} />
+          <p className="text-xs text-soft">
+            Prices from Google Maps, around the home address under{" "}
+            <SettingsLink href="#settings/location">Settings › Location</SettingsLink>. They refresh every two hours, and a price older than
+            three days is left out. Google has prices for most, but not all, stations.
+          </p>
         </>
       );
     }

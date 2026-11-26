@@ -6,6 +6,7 @@ import { BORDER_CROSSINGS, BORDER_DIRECTIONS } from "../border";
 import { DRIVEBC_MAX_CAMERAS, DRIVEBC_REFRESH } from "../drivebc";
 import { EARTH_OVERLAYS, EARTH_ZOOMS } from "../earth";
 import { FERRY_ROUTES } from "../ferries";
+import { GAS_FUELS, GAS_RADIUS_MAX, GAS_RADIUS_MIN, GAS_SORTS } from "../gas";
 import { DONE_MINUTES_DEFAULT } from "../laundry";
 import { MEAL_SLOTS } from "../meals";
 import { NEWS_PRESETS } from "../newsPresets";
@@ -560,6 +561,17 @@ export const widgetSchema = z.discriminatedUnion("type", [
       .refine((c) => new Set(c).size === c.length, "Each crossing once"),
     directions: z.enum(BORDER_DIRECTIONS),
     showNexus: z.boolean(),
+  }),
+  // Local gas prices (Melvin, 2026-11-26): the cheapest (or nearest) stations around home for one fuel, from Google's
+  // Places API (src/server/gas.ts).
+  z.object({
+    ...base,
+    type: z.literal("gasPrices"),
+    fuel: z.enum(GAS_FUELS),
+    radiusKm: z.number().int().min(GAS_RADIUS_MIN).max(GAS_RADIUS_MAX),
+    count: z.number().int().min(1).max(8),
+    sort: z.enum(GAS_SORTS),
+    showAddress: z.boolean(),
   }),
   // Sports scores (Melvin, 2026-11-21): live scores, the last result and the next game of the teams followed under
   // Settings › Sports (none picked means all of them).

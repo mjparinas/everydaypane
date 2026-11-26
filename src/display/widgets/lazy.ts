@@ -22,6 +22,7 @@ type Lazy = {
   snow: Mount<"snow">;
   rivers: Mount<"rivers">;
   borderWait: Mount<"borderWait">;
+  gasPrices: Mount<"gasPrices">;
   rachio: Mount<"rachio">;
   blueRiiot: Mount<"blueRiiot">;
   tides: Mount<"tides">;
