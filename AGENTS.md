@@ -40,7 +40,7 @@ same change, and moves it out of **In progress** when it merges.
 | Up next (`calendarUpNext`) | The next event large, with a short following list | Same calendar feed |
 | Garbage day (`garbage`) | Next pickups, 1 to 8 weeks | Township of Langley (Recycle Coach) |
 | Photos (`photos`) | Slideshow, cover or contain, captions | Amazon shared albums, Amazon people, URL lists, photo library (uploads and Google Photos picks), Bing picture of the day, Reddit, weather-linked albums, Immich, Dropbox, OneDrive, Box, Flickr, SmugMug, iCloud published links (`docs/icloud-photos.md`) |
-| Smart device (`haEntity`) | Toggle, light, sensor, climate, cover, lock (lock only), button; `provider` Home Assistant (default), **Nest**, **ecobee**, **SmartThings** or **Govee lights** (on/off, brightness, colour swatches, scenes) | Shared `/api/display/ha/` feed; OAuth + REST for native providers, an API key for Govee (`docs/nest.md`, `docs/ecobee.md`, `docs/smartthings.md`, `docs/govee.md`) |
+| Smart device (`haEntity`) | Toggle, light, sensor, climate, cover, lock (lock only), button; `provider` Home Assistant (default), **Nest**, **ecobee**, **SmartThings**, **Govee lights** (on/off, brightness, colour swatches, scenes), **Philips Hue lights** or **LIFX lights** (on/off, brightness, colour swatches) | Shared `/api/display/ha/` feed; OAuth + REST for native providers and Hue, an API key for Govee, a personal token for LIFX (`docs/nest.md`, `docs/ecobee.md`, `docs/smartthings.md`, `docs/govee.md`, `docs/hue.md`, `docs/lifx.md`) |
 | UniFi network (`unifi`) | Online / slow / down, latest latency and packet loss, minutes down and last outage in 24 h, 24 h latency chart, clients and devices, optional current usage, ISP | UniFi Site Manager API (`api.ui.com`, `unifi.apiKey` secret, `docs/unifi.md`) |
 | Camera (`camera`) | UniFi Protect snapshot on a timer | Home Assistant |
 | Music (`media`) | Now playing, play/pause, skip, volume, sources | Home Assistant, Spotify or Sonos |
@@ -56,6 +56,7 @@ same change, and moves it out of **In progress** when it merges.
 | Sports scores (`sports`) | Live score, last result and next game for followed teams (NHL, NBA, WNBA, NFL, MLB, MLS, Premier League, Champions League) | ESPN public site API |
 | To-dos (`tasks`) | Open tasks from **Google Tasks, Microsoft To Do or Todoist** (`provider`); **tap to tick off** (`allowCheck`, 4 s undo) | Unified `/api/display/tasks/` feed |
 | Packages (`packages`) | UPS, FedEx, Canada Post, USPS tracking numbers on the widget; live status when `PACKAGE_TRACK_API_KEY` is set | Optional 17track-style API (`src/server/packages.ts`) |
+| River levels (`rivers`) | Up to six river and creek gauges (Fraser at Mission and Hope, Salmon and Nicomekl in Langley, or any station by number): level, rising/falling/steady with the 6 h and 24 h change, a day's line, optional flow | Environment Canada real-time hydrometric (MSC GeoMet OGC API, Datamart CSV fallback) |
 | Tides (`tides`) | Next highs and lows at a station; optional height | NOAA (US) + Canadian IWLS (`docs/tides.md`) |
 | TransLink departures (`transit`) | Next buses from up to six picked stops, live times, route filter, walk-minutes cutoff | TransLink GTFS-realtime |
 | Commute time (`commute`) | Drive times with live traffic from home to up to six places, "leave by" time | TomTom Routing API |
@@ -64,6 +65,7 @@ same change, and moves it out of **In progress** when it merges.
 | Timers (`timer`) | Kitchen timers started from preset buttons on the wall, up to six at once, pause, +1 min; flash, full-screen alert and beeps when done | Device (localStorage) |
 | Pomodoro (`pomodoro`) | Focus and break rounds, long break after the last round, optional auto-start, chime between phases | Device (localStorage) |
 | BC Ferries (`ferries`) | Next sailings on up to four routes, how full each is, cancellations and delays | Community BC Ferries API (bcferriesapi.ca) |
+| Border wait times (`borderWait`) | Car waits at Point Roberts, Peace Arch, Pacific Highway, Aldergrove and Abbotsford–Sumas, into the U.S. and into Canada (or one way), coloured green/amber/red, fastest marked, optional NEXUS; old readings greyed | CBSA open data (`bwt-eng.csv`) and U.S. CBP (`bwt.cbp.gov/api/bwtnew`), no key |
 | Earth wind map (`earth`) | earth.nullschool.net's animated wind globe centred on any place, four zooms, a colour layer (temperature, rain, humidity…), place marker, animation on or off | earth.nullschool.net (framed), Open-Meteo place search |
 | Windy map (`windy`) | Windy's map centred on any place, one layer (radar, rain, wind, gusts, temperature, clouds, new snow, thunderstorms, satellite, PM2.5), zoom 3–11, place marker, pressure lines, touch on or off | embed.windy.com (framed), Open-Meteo place search |
 | Stocks (`stocks`) | Watchlist quotes with daily change | Yahoo Finance (unofficial) or Finnhub with `FINNHUB_API_KEY` |
@@ -145,7 +147,7 @@ gated by that allow-list; Overview through Log (Households, Displays,
 Revenue, Traffic, Codes, Flags, …). Cookieless marketing beacon. Customer path is `/household/`.
 
 **Integrations connected from Settings:** Google Calendar, Microsoft 365 calendars and **To Do** (OAuth, `?todo=1` / `?files=1`), Google Tasks, **Todoist**, Google Photos (Picker), iCal calendar links (with iCloud publish steps in Settings and `docs/icloud-calendar.md`),
-**Govee** (API key, Settings › Smart home), Amazon Photos, **photo sources** (Bing, Reddit, weather albums, Immich API keys, Dropbox/Box/SmugMug OAuth, OneDrive via Microsoft, Flickr API key, iCloud published URLs), the photo library (Vercel Blob), Home Assistant (Cloudflare Tunnel + Access), Spotify, Sonos, garbage
+**Govee** (API key, Settings › Smart home), **Philips Hue** (OAuth, Settings › Smart home), **LIFX** (personal token, Settings › Smart home), Amazon Photos, **photo sources** (Bing, Reddit, weather albums, Immich API keys, Dropbox/Box/SmugMug OAuth, OneDrive via Microsoft, Flickr API key, iCloud published URLs), the photo library (Vercel Blob), Home Assistant (Cloudflare Tunnel + Access), Spotify, Sonos, garbage
 zone lookup, sports teams to follow, TransLink, commute places (TomTom geocoding), optional **package tracking** key, **UniFi Site Manager** API key (Settings › UniFi network), **EcoFlow** access and secret keys, **Oura** (OAuth, Settings › Content & finance), **Airthings** (API client id and secret, Settings › Indoor air), **Rachio** (API key, Settings › Sprinklers).
 
 ## In progress
@@ -300,10 +302,16 @@ npm run templates:previews  # regenerate public/templates/*.png from real widget
   (each time it's due, or a week each), ticked off with a tap on the wall, with per-kid completion dots (or progress rings),
   stars per chore counted per kid for the week and an optional weekly goal. Widget layout: columns, by period, or progress.
   Separate from Google Tasks (see Architecture).
+- **River levels** (Melvin, 2026-11-25: "build that all", from a list that included river and creek levels): a
+  `rivers` widget with Environment Canada's real-time gauges, rising or falling at a glance. It complements the NAAD
+  flood warnings on the alert strip instead of repeating them: the strip says when officials warn, the widget shows how
+  high the water is and which way it's going (see Architecture).
 - **Kitchen timers and pomodoro** (Melvin, 2026-11-21: "1 with visual and sound alerts", then "i want a regular
   timer, and a separate pomodoro"): two widgets, `timer` and `pomodoro` (see Architecture).
 - **BC Ferries** (Melvin, 2026-11-21): the next sailings for routes chosen in the widget's settings, with how full
   each one is (see Architecture).
+- **Border wait times** (Melvin, 2026-11-25: "build that all", from a list naming border waits): a widget with the
+  Lower Mainland crossings in both directions from the two agencies' public feeds, no key (see Architecture).
 - **Earth wind map** (Melvin, 2026-11-21: "can i add this and specific a location? https://earth.nullschool.net"):
   earth.nullschool.net framed in a widget, centred on a place picked in its settings (Langley by default), with a
   zoom, a colour layer and its own place marker (see Architecture).
@@ -354,7 +362,7 @@ panel can be complex if you need it to be."
   imports it with display.js's own `?v=` only on a screen that shows it. Its `../api` is swapped at build time for
   `src/display/apiShared.ts`, which calls display.js's copy, so feeds, the device token and offline state stay single.
   The internet widget, the UniFi network widget, EcoFlow, the whiteboard, wildfires, the Windy map, the Smart device tile
-  (`haEntity.ts`; cameras and `HA_EVERY` stay in `ha.ts`), Oura, Indoor air (Airthings) and Sprinklers (Rachio) load this way, and `next.config.ts` gives each file the same
+  (`haEntity.ts`; cameras and `HA_EVERY` stay in `ha.ts`), Oura, Indoor air (Airthings), River levels, Border wait times and Sprinklers (Rachio) load this way, and `next.config.ts` gives each file the same
   immutable cache header as display.js.
 - **Budget:** the display's script stays under 80 KB gzipped and its stylesheet under 20 KB (`scripts/bundle-check.mjs`,
   a CI step; CSS raised from 10 KB on 2026-11-23 for more clock styles; script raised from 40 KB by Melvin on 2026-11-25: "double the size of the limit"). A new dependency on the display needs a very good reason.
@@ -594,6 +602,18 @@ panel can be complex if you need it to be."
   `src/server/alerts.ts`): an order covering the home is extreme and an alert severe; within `alerts.evacuationKm`
   (default 10 km) they are moderate and minor. This sandbox can't reach ArcGIS Online, so tests use shapes from the
   layers' descriptions and sample features read on 2026-11-21.
+- **River levels:** `src/server/rivers.ts` reads Environment Canada's real-time hydrometric data, no key: MSC GeoMet's
+  OGC API (`api.weather.gc.ca/collections/hydrometric-realtime/items?STATION_NUMBER=…&datetime=<30 h ago>/..`,
+  properties `STATION_NAME`, `DATETIME`, `LEVEL`, `DISCHARGE`), and when that fails the Datamart's hourly CSV for the
+  station (`dd.weather.gc.ca/today/hydrometric/csv/BC/hourly/BC_<id>_hourly_hydrometric.csv`, then the older path
+  without `today/`; columns found by header). Claude's pick of source, 2026-11-25. Each station is cached ten minutes
+  and shared by every household. The maths is in `src/lib/rivers.ts`: the change over 6 and 24 hours against the
+  reading nearest that time, under 1.5 cm in 6 h is steady, and 24 hourly levels for the line. Displays poll
+  `/api/display/rivers/` every five minutes and get names and numbers in metres and m³/s; the wall converts for
+  imperial and draws a near-flat day flat. A widget keeps up to six stations (`id` like `08MH024`, optional `label`);
+  Settings offers presets and checks a typed number through `/api/household/river-stations/`. Levels are above each
+  gauge's own zero, so they compare a river with itself only. The widget loads on its own (`rivers.js`). This sandbox
+  can't reach either host, so tests use the shapes in MSC's documentation.
 - **BC Ferries:** BC Ferries has no public API, so `src/server/ferries.ts` reads the community BC Ferries API
   (`https://www.bcferriesapi.ca/v2/capacity/`, MIT, no key; it reads BC Ferries' current conditions pages every
   minute). Its one answer covers every route with "how full" (the codes in `src/lib/ferries.ts`, departure terminal then
@@ -604,6 +624,18 @@ panel can be complex if you need it to be."
   after its time on the wall's own clock and labels conditions older than 15 minutes with their time. Its field names
   come from the project's published JSON schema (`schemas/bc-ferries-api-v2-capacity-schema.json`); this sandbox can't
   reach it, so tests use that shape.
+- **Border wait times:** `src/server/border.ts` reads CBSA's "Current Border Wait Times" open data
+  (`www.cbsa-asfc.gc.ca/bwt-taf/bwt-eng.csv`, semicolon-separated, columns found by header; "Travellers Flow - Canada
+  bound" is the Canada-bound car wait, written "No Delay", "N minutes", "Not Applicable" or "--", with times like
+  "2026-11-25 14:48 PDT") and U.S. CBP's JSON (`bwt.cbp.gov/api/bwtnew`, every port; `passenger_vehicle_lanes`
+  `standard_lanes` and `NEXUS_SENTRI_lanes`, `operational_status` "delay", "no delay", "Lanes Closed", "Update
+  Pending" or "N/A", times like "At 3:00 pm PST" on the port's `date`). Crossings and their ids are in
+  `src/lib/border.ts`: CBSA calls Peace Arch "Douglas"; CBP's 300401 is Pacific Highway, 300402 Peace Arch, 302301
+  Lynden (Aldergrove), 300901 Sumas, 300403 Point Roberts. Each agency is read at most every five minutes for every
+  household, trimmed to those crossings before caching; one failing never hides the other and the last good copy is
+  served. Displays poll `/api/display/border/` every five minutes; the widget loads on its own (`borderWait.js`) and
+  greys out readings older than two hours, since both agencies update about hourly. This sandbox can't reach either,
+  so tests use the shapes read on 2026-11-26.
 - **Earth wind map:** earth.nullschool.net (Cameron Beccario's site) in an `<iframe>`; checked 2026-11-21: it sends no
   `X-Frame-Options` or `frame-ancestors`, and its script handles being framed itself (it blocks only a few named
   sites, hides its app banner and uses its lighter 1° data in a frame). Everything it shows is set by the address's
@@ -732,6 +764,18 @@ panel can be complex if you need it to be."
   capabilities the device lists, are sent. Govee's rate limits (30 state reads a minute per light, a reported 10,000 a
   day per key) mean states are kept per light for `stateEveryMs` (a minute, longer with many lights, about 6,000 reads
   a day at most), the device list 10 minutes and scenes a day; a tap updates the kept state at once. Setup: `docs/govee.md`.
+- **Philips Hue and LIFX lights** (Melvin, 2026-11-25: "build that all", Hue and LIFX beside Govee; native cloud APIs,
+  not Home Assistant): Smart device providers `hue` and `lifx`, as `hue.*` / `lifx.*` rows on the same `/api/display/ha/`
+  feed with on/off, brightness and `color` (no scenes). **Hue** (`src/server/hue.ts`) uses the Remote API: OAuth through
+  `smartHomeAuth.ts` with Everydaypane's developers.meethue.com app (`HUE_CLIENT_ID` / `HUE_CLIENT_SECRET`, callback
+  `<site>/api/smart-home/hue/callback/`), then CLIP v2 through `api.meethue.com/route/clip/v2/` with a bridge application
+  key the server makes once through the cloud (remote link button, then `POST /route/api`; encrypted `hue.appKey`,
+  remade if the bridge refuses it). **LIFX** (`src/server/lifx.ts`) uses `api.lifx.com/v1` with the household's personal
+  access token (encrypted `lifx.token`, checked with LIFX before it is saved in Settings › Smart home). Each reads every
+  light in one call, kept 15 seconds per household and shared by every display (LIFX allows 120 a minute); a tap updates
+  the kept state at once. Colour conversions (RGB ↔ Hue's CIE xy, LIFX hue/saturation → RGB) are in
+  `src/lib/lightColour.ts`. The display needed no new code beyond treating both as lights (`LIGHT_PROVIDERS`), so the
+  lazy `haEntity.js` tile draws them. Setup: `docs/hue.md`, `docs/lifx.md`.
 - **UniFi network** (Household): Ubiquiti's official, read-only **Site Manager API** (`https://api.ui.com/v1/…`,
   header `X-API-Key`) through `src/server/unifi.ts`. The key is made at unifi.ui.com › API and saved from Settings ›
   UniFi network (`/api/household/unifi/`), which checks it by listing sites before storing it as the encrypted

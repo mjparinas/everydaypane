@@ -17,6 +17,8 @@ const BUDGET = {
   "public/display/haEntity.js": 6_000,
   "public/display/oura.js": 6_000,
   "public/display/airthings.js": 6_000,
+  "public/display/rivers.js": 6_000,
+  "public/display/borderWait.js": 6_000,
   "public/display/rachio.js": 6_000,
 };
 let failed = false;
