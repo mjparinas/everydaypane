@@ -56,7 +56,7 @@ const SD35_SOURCE = "Langley School District 2026–27 calendar, approved April 
 export const SCHOOL_PRESETS: SchoolPreset[] = [
   {
     id: "sd35-elementary-2026-27",
-    label: "Langley elementary, 2026–27",
+    label: "Langley Elementary, 2026–27",
     calendarName: "Langley Elementary",
     firstDay: "2026-09-08",
     lastDay: "2027-06-29",
@@ -69,7 +69,7 @@ export const SCHOOL_PRESETS: SchoolPreset[] = [
   },
   {
     id: "sd35-middle-2026-27",
-    label: "Langley middle school, 2026–27",
+    label: "Langley Middle School, 2026–27",
     calendarName: "Langley Middle School",
     firstDay: "2026-09-08",
     lastDay: "2027-06-29",

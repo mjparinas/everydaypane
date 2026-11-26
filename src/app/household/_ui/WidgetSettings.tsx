@@ -51,10 +51,10 @@ function SettingsLink({ href, children }: { href: string; children: ReactNode })
 }
 
 const PHOTO_INTERVALS = [
-  { value: "10", label: "10 s" },
-  { value: "30", label: "30 s" },
-  { value: "60", label: "1 min" },
-  { value: "300", label: "5 min" },
+  { value: "10", label: "10 S" },
+  { value: "30", label: "30 S" },
+  { value: "60", label: "1 Min" },
+  { value: "300", label: "5 Min" },
   { value: "custom", label: "Custom" },
 ] as const;
 
@@ -1245,7 +1245,7 @@ function TypeSettings({
             hint="Latency at or above this shows the internet as slow."
             onChange={(v) => e((x) => void (x.slowMs = v))}
           />
-          <Toggle label="Latency Chart (24 h)" checked={w.showChart} onChange={(v) => e((x) => void (x.showChart = v))} />
+          <Toggle label="Latency Chart (24 H)" checked={w.showChart} onChange={(v) => e((x) => void (x.showChart = v))} />
           <Toggle label="Devices and Clients" checked={w.showCounts} onChange={(v) => e((x) => void (x.showCounts = v))} />
           <Toggle
             label="Current Usage"
@@ -2216,10 +2216,10 @@ function AlertSettings<T extends Alerting>({ w, onChange }: { w: T; onChange: (c
 }
 
 const QUICK_TIMERS = [
-  { label: "1 min", seconds: 60 },
-  { label: "3 min", seconds: 180 },
-  { label: "5 min", seconds: 300 },
-  { label: "10 min", seconds: 600 },
+  { label: "1 Min", seconds: 60 },
+  { label: "3 Min", seconds: 180 },
+  { label: "5 Min", seconds: 300 },
+  { label: "10 Min", seconds: 600 },
 ] as const;
 
 function TimerPresets({ presets, onChange }: { presets: TimerPreset[]; onChange: Edit<"timer"> }) {

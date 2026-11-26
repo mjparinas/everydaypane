@@ -1,6 +1,9 @@
 "use client";
 
+import { featureFlag } from "@/lib/featureFlags";
+
 import { Range, Section, Select, Text, Toggle } from "./fields";
+import { useFlags } from "./flags";
 import { HaEntityList } from "./haEntities";
 import { HouseholdBadge, usePlan } from "./plan";
 import { useAdmin } from "./store";
@@ -71,6 +74,8 @@ export function ScreenSaverPanel() {
   const haUrl = useAdmin((st) => st.config.integrations.homeAssistant.url);
   const views = useAdmin((st) => st.config.views);
   const edit = useAdmin((st) => st.edit);
+  // Staff can switch the idle view off platform-wide; a saved "view" choice stays listed so the select isn't blank.
+  const idleViewOn = useFlags().on(featureFlag("idleView")) || s.shows === "view";
   const motion = s.motionEntityIds.length < MAX_MOTION ? [...s.motionEntityIds, ""] : s.motionEntityIds;
 
   return (
@@ -94,7 +99,7 @@ export function ScreenSaverPanel() {
           value={s.shows}
           options={[
             { value: "photos", label: "Photos, Full Screen" },
-            { value: "view", label: "A View (Like a Photo Frame)" },
+            ...(idleViewOn ? [{ value: "view" as const, label: "A View (Like a Photo Frame)" }] : []),
             { value: "dark", label: "Nothing (Dark Screen)" },
           ]}
           onChange={(v) =>

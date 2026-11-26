@@ -54,9 +54,29 @@ export default function FeaturesPage() {
           <h2 className="font-display text-2xl font-extrabold tracking-tight">Display Behaviour</h2>
           <ul className="mt-4 grid gap-3 sm:grid-cols-2">
             {FEATURE_BEHAVIOURS.map((item) => (
-              <li key={item.name} className="card">
-                <h3 className="font-bold">{item.name}</h3>
-                <p className="mt-1 text-sm text-soft">{item.blurb}</p>
+              <li key={item.name} className={item.image ? "card overflow-hidden p-0 sm:col-span-2" : "card"}>
+                {item.image ? (
+                  <>
+                    <div className="relative aspect-[2/1] border-b border-line bg-[#0b1220]">
+                      <Image
+                        src={item.image}
+                        alt={`${item.name} on the wall`}
+                        fill
+                        className="object-contain object-center"
+                        sizes="(max-width: 640px) 100vw, 66vw"
+                      />
+                    </div>
+                    <div className="p-4">
+                      <h3 className="font-bold">{item.name}</h3>
+                      <p className="mt-1 text-sm text-soft">{item.blurb}</p>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <h3 className="font-bold">{item.name}</h3>
+                    <p className="mt-1 text-sm text-soft">{item.blurb}</p>
+                  </>
+                )}
               </li>
             ))}
           </ul>

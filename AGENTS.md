@@ -117,8 +117,10 @@ Literata; Displays tab tips for casting
 even when the display browser has old time-zone data.
 
 **Marketing site** (public pages, Melvin, 2026-11-23): homepage at `/` (no longer redirects to admin), with a **Connect a display** link in the header, hero and footer that opens `/display/` (Melvin, 2026-11-25: so a wall screen taps it instead of typing the address), plus `/pricing/`,
-`/features/` (every widget with a real-widget sample PNG from `public/features/widgets/`, regenerated with
-`npm run templates:previews` alongside starter templates), `/compare/` (and per-competitor pages including Home Screens), `/blog/` with RSS,
+`/features/` (every widget with a real-widget sample PNG from `public/features/widgets/`, and display behaviour cards,
+smart notices and regional packs among them, some with a wall picture from `public/features/<name>.png`
+(`FEATURE_PREVIEWS`), all regenerated with `npm run templates:previews` alongside starter templates; `PREVIEW_ONLY=a,b`
+renders just those), `/compare/` (and per-competitor pages including Home Screens), `/blog/` with RSS,
 `/privacy/`, `/terms/`, `/contact/`, `robots.ts` and `sitemap.ts`. Built like Tuned/Liftsmith (`src/components/site/`,
 Manrope display, template preview screenshots from `public/templates/` — no personal photos in OG). Free vs
 **Household** pricing copy in `src/lib/marketingPlans.ts`; checkout uses the existing Stripe Household flow
@@ -166,8 +168,8 @@ with `?mode=`, and a quiet Day/Night control on the preview swaps without reload
 separate from the household panel — same split as Tuned and Liftsmith. Staff use the same Clerk sign-in as households,
 gated by that allow-list; Overview through Log (Households, Displays,
 Revenue, Traffic, Codes, Flags, …). Cookieless marketing beacon. Customer path is `/household/`. **Flags** has an
-on/off switch for every widget, smart-home provider, music and to-do service and photo source, for everyone; there
-are no per-household overrides (see Architecture, Feature flags).
+on/off switch for every widget, smart-home provider, music and to-do service and photo source, plus the **idle view**,
+**smart notices** and **regional packs**, for everyone; there are no per-household overrides (see Architecture, Feature flags).
 
 **Integrations connected from Settings:** Google Calendar, Microsoft 365 calendars and **To Do** (OAuth, `?todo=1` / `?files=1`), Google Tasks, **Todoist**, Google Photos (Picker), iCal calendar links (with iCloud publish steps in Settings and `docs/icloud-calendar.md`),
 **Govee** (API key, Settings › Smart home), **Philips Hue** (OAuth, Settings › Smart home), **LIFX** (personal token, Settings › Smart home), Amazon Photos, **photo sources** (Bing, Reddit, weather albums, Immich API keys, Dropbox/Box/SmugMug OAuth, OneDrive via Microsoft, Flickr API key, iCloud published URLs), the photo library (Vercel Blob), Home Assistant (Cloudflare Tunnel + Access), Spotify, Sonos, garbage
@@ -573,7 +575,12 @@ panel can be complex if you need it to be."
   new provider or photo source doesn't compile until it has a label there. Staff switch them in `/admin/` › Flags
   (`feature_flags`), platform-wide only: **no per-household overrides** (Melvin, 2026-11-26: widgets still under
   development must not be switched on for one household; the first version's `account_feature_flags` rows are
-  ignored). Everything is on by default. Off means: gone from the widget picker, its Settings card hidden (`SETTINGS_FLAGS`, keyed by
+  ignored). Three flags aren't a widget, provider or source (`feature.*`, Melvin, 2026-11-26: "add the 3 missing
+  flags"), and `applyFlags` decides what off means for each: **idle view** off shows photos instead (as when the idle
+  view is gone), **smart notices** off switches every rule off (thresholds kept), **regional packs** off reads the
+  Lower Mainland's sources as before packs and drops transit widgets of agencies other than TransLink. The household
+  panel hides the "A view" choice, Edit view's idle toggle, the Smart notices block and the region picker to match.
+  Everything is on by default. Off means: gone from the widget picker, its Settings card hidden (`SETTINGS_FLAGS`, keyed by
   `#settings/<id>`; a new Settings card for an integration adds a line there), and dropped from the display's copy
   of the settings by `applyFlags`. Every `/api/display/*` route reads settings through `loadDisplayConfig`
   (`src/server/featureFlags.ts`), never `loadConfig`, so a switched-off widget isn't drawn, its feed isn't polled

@@ -172,10 +172,10 @@ export async function funnelStats(days: number) {
     )[0]?.n ?? 0,
   );
   const steps = [
-    { label: "Visited site", n: visited },
-    { label: "Signed up (Free)", n: signups },
-    { label: "Added a display", n: withDisplay },
-    { label: "Household (paid)", n: Math.max(paid, upgraded) },
+    { label: "Visited Site", n: visited },
+    { label: "Signed Up (Free)", n: signups },
+    { label: "Added a Display", n: withDisplay },
+    { label: "Household (Paid)", n: Math.max(paid, upgraded) },
   ];
   let biggest: { from: string; to: string; drop: number } | null = null;
   for (let i = 1; i < steps.length; i++) {

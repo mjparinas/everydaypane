@@ -71,7 +71,7 @@ const FEATURE_BLURBS: Partial<Record<WidgetType, string>> = {
   timer: "Kitchen timers with flash, full-screen alert and beeps.",
   pomodoro: "Focus and break rounds with an optional chime.",
   internet: "Ping, dropped checks and speed tests, measured by the screen itself.",
-  alerts: "Alert Ready, weather, roads, quakes, BC Hydro.",
+  alerts: "Weather warnings, roads, quakes, power outages and evacuations for your region.",
   whiteboard: "Finger draw with colours; the same doodle on every display.",
   packages: "Today's deliveries and what's on its way, from Canada Post, Purolator, UPS, FedEx and more.",
   tides: "Next highs and lows and the day's tide curve at a Canadian or NOAA station.",
@@ -115,7 +115,22 @@ export const FEATURE_WIDGET_GROUPS: FeatureWidgetGroup[] = WIDGET_GROUPS.map((g)
   })),
 }));
 
-export const FEATURE_BEHAVIOURS: { name: string; blurb: string }[] = [
+/** A display behaviour card on /features/; `image` is a real wall screenshot from `npm run templates:previews`. */
+export type FeatureBehaviour = { name: string; blurb: string; image?: string };
+
+export const FEATURE_BEHAVIOURS: FeatureBehaviour[] = [
+  // Smart notices and regional packs (Melvin, 2026-11-26: "add smart notices and regional packs").
+  {
+    name: "Smart notices",
+    blurb:
+      "Blue notes that put two things together: sprinklers due in frost or rain, the backup battery left in a power cut, smoky air outside with the reading indoors, a pool freeze, laundry left in the machine, bins out tonight.",
+    image: "/features/smart-notices.png",
+  },
+  {
+    name: "Regional packs",
+    blurb:
+      "Your location picks the sources: Alert Ready, BC Hydro and DriveBC in B.C., Hydro-Québec in Québec, the National Weather Service and USGS in the U.S., and live transit from TransLink, the TTC, Calgary, Edmonton, Halifax or King County Metro.",
+  },
   { name: "Multi-view grid", blurb: "Rows, columns, gap, edge inset and padding inside tiles." },
   { name: "Widgets on photos", blurb: "Photos as backdrop; panels stay readable on top." },
   { name: "Time-of-day schedule", blurb: "Morning to overnight views, themes and dimming." },

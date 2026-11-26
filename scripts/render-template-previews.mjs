@@ -43,7 +43,9 @@ await esbuild.build({
   logLevel: "silent",
 });
 
-const { FIXED_NOW, SAMPLE_FEEDS, TEMPLATE_PREVIEWS, WIDGET_PREVIEWS, displayShell } = await import(pathToFileURL(bundled).href);
+const { FIXED_NOW, FEATURE_PREVIEWS, SAMPLE_FEEDS, TEMPLATE_PREVIEWS, WIDGET_PREVIEWS, displayShell } = await import(
+  pathToFileURL(bundled).href
+);
 
 const MIME = {
   ".html": "text/html; charset=utf-8",
@@ -99,7 +101,7 @@ function serveStatic(urlPath, res) {
   res.end(readFileSync(file));
 }
 
-const previews = new Map([...TEMPLATE_PREVIEWS, ...WIDGET_PREVIEWS].map((t) => [t.id, t]));
+const previews = new Map([...TEMPLATE_PREVIEWS, ...WIDGET_PREVIEWS, ...FEATURE_PREVIEWS].map((t) => [t.id, t]));
 
 const server = createServer((req, res) => {
   const url = new URL(req.url ?? "/", "http://127.0.0.1");
@@ -145,6 +147,19 @@ const server = createServer((req, res) => {
   if (/^\/api\/display\/photo\/?$/.test(pathname)) {
     const id = searchParams.get("i") ?? "";
     const file = join(samplesDir, `${id}.jpg`);
+    if (!existsSync(file)) {
+      res.writeHead(404);
+      res.end("missing photo");
+      return;
+    }
+    res.writeHead(200, { "Content-Type": "image/jpeg", "Cache-Control": "no-store" });
+    res.end(readFileSync(file));
+    return;
+  }
+
+  // Countdown photos (birthdays and anniversaries) are the same sample JPEGs, by id.
+  if (pathname.startsWith("/api/display/countdown-photo")) {
+    const file = join(samplesDir, `${searchParams.get("i") ?? ""}.jpg`);
     if (!existsSync(file)) {
       res.writeHead(404);
       res.end("missing photo");
@@ -298,7 +313,12 @@ async function settlePreview(payload) {
   }
 }
 
+// PREVIEW_ONLY=countdown,smart-notices renders just those (handy while tuning one sample); manifests are left alone.
+const only = process.env.PREVIEW_ONLY?.split(",").filter(Boolean);
+const wanted = (...names) => !only || names.some((n) => only.includes(n));
+
 for (const t of TEMPLATE_PREVIEWS) {
+  if (!wanted(t.id)) continue;
   await page.setViewportSize({ width: WIDTH, height: HEIGHT });
   await page.goto(`${base}/preview/${t.id}/`, { waitUntil: "networkidle" });
   await settlePreview(t.payload);
@@ -308,6 +328,7 @@ for (const t of TEMPLATE_PREVIEWS) {
 }
 
 for (const t of WIDGET_PREVIEWS) {
+  if (!wanted(t.type)) continue;
   const width = Math.max(CELL * t.cols, 280);
   const height = Math.max(CELL * t.rows, 200);
   await page.setViewportSize({ width, height });
@@ -318,23 +339,39 @@ for (const t of WIDGET_PREVIEWS) {
   console.log(`wrote public/features/widgets/${t.type}.png`);
 }
 
-writeFileSync(
-  join(outDir, "manifest.json"),
-  JSON.stringify(
-    TEMPLATE_PREVIEWS.map((t) => ({ id: t.id, name: t.name, file: `${t.id}.png` })),
-    null,
-    2,
-  ) + "\n",
-);
+// Display behaviours on /features/ (smart notices…): a small view each, with its own sample feeds for the shot.
+const featureOutDir = join(root, "public", "features");
+for (const t of FEATURE_PREVIEWS) {
+  if (!wanted(t.file)) continue;
+  const saved = Object.fromEntries(Object.keys(t.feeds).map((k) => [k, SAMPLE_FEEDS[k]]));
+  Object.assign(SAMPLE_FEEDS, t.feeds);
+  await page.setViewportSize({ width: CELL * t.cols, height: CELL * t.rows });
+  await page.goto(`${base}/preview/${t.id}/`, { waitUntil: "networkidle" });
+  await settlePreview(t.payload);
+  await page.screenshot({ path: join(featureOutDir, `${t.file}.png`), type: "png" });
+  Object.assign(SAMPLE_FEEDS, saved);
+  console.log(`wrote public/features/${t.file}.png`);
+}
 
-writeFileSync(
-  join(widgetOutDir, "manifest.json"),
-  JSON.stringify(
-    WIDGET_PREVIEWS.map((t) => ({ type: t.type, name: t.name, file: `${t.type}.png` })),
-    null,
-    2,
-  ) + "\n",
-);
+if (!only)
+  writeFileSync(
+    join(outDir, "manifest.json"),
+    JSON.stringify(
+      TEMPLATE_PREVIEWS.map((t) => ({ id: t.id, name: t.name, file: `${t.id}.png` })),
+      null,
+      2,
+    ) + "\n",
+  );
+
+if (!only)
+  writeFileSync(
+    join(widgetOutDir, "manifest.json"),
+    JSON.stringify(
+      WIDGET_PREVIEWS.map((t) => ({ type: t.type, name: t.name, file: `${t.type}.png` })),
+      null,
+      2,
+    ) + "\n",
+  );
 
 await browser.close();
 server.close();

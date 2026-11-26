@@ -3,8 +3,10 @@
 import { useState } from "react";
 
 import type { DashboardConfig, View } from "@/lib/config/schema";
+import { featureFlag } from "@/lib/featureFlags";
 
 import { ConfirmButton, Range, Segmented, Select, Stepper, Text, Toggle } from "./fields";
+import { useFlags } from "./flags";
 import { HouseholdBadge, usePlan } from "./plan";
 import { SlideDrawer } from "./SlideDrawer";
 import { useAdmin } from "./store";
@@ -150,6 +152,9 @@ function IdleViewToggle({ viewId }: { viewId: string }) {
   const edit = useAdmin((st) => st.edit);
   const { isPaid, openUpgrade } = usePlan();
   const isIdle = saver.idle && saver.shows === "view" && saver.viewId === viewId;
+  const idleViewOn = useFlags().on(featureFlag("idleView"));
+
+  if (!idleViewOn) return null;
 
   if (!isPaid) {
     return (

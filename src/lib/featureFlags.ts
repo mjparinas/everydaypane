@@ -11,7 +11,7 @@ import type { SmartHomeProvider } from "./smartHome";
 // polled and the server never calls the service for that household. Kept free of zod and React: the household panel,
 // the server and the tests all import it.
 
-export type FlagKind = "widget" | "smartHome" | "music" | "tasks" | "photos";
+export type FlagKind = "widget" | "smartHome" | "music" | "tasks" | "photos" | "feature";
 
 export interface FeatureFlag {
   name: string;
@@ -35,9 +35,9 @@ const SMART_HOME: { [P in SmartHomeProvider]: { label: string; description: stri
   nest: { label: "Nest", description: "Google Nest thermostats and cameras through Device Access." },
   ecobee: { label: "ecobee", description: "ecobee thermostats signed in directly." },
   smartthings: { label: "SmartThings", description: "Samsung SmartThings devices signed in directly." },
-  govee: { label: "Govee lights", description: "Govee lights with the household's API key." },
-  hue: { label: "Philips Hue lights", description: "Hue lights through the Hue Remote API." },
-  lifx: { label: "LIFX lights", description: "LIFX lights with the household's personal token." },
+  govee: { label: "Govee Lights", description: "Govee lights with the household's API key." },
+  hue: { label: "Philips Hue Lights", description: "Hue lights through the Hue Remote API." },
+  lifx: { label: "LIFX Lights", description: "LIFX lights with the household's personal token." },
 };
 
 const MUSIC: { [P in Exclude<MediaProvider, "homeAssistant">]: { label: string; description: string } } = {
@@ -52,13 +52,13 @@ const TASKS: { [P in TasksProvider]: { label: string; description: string } } = 
 };
 
 const PHOTOS: { [K in PhotoKind]: { label: string; description: string } } = {
-  amazonShare: { label: "Amazon shared albums", description: "Amazon Photos shared album links." },
-  amazonPeople: { label: "Amazon people", description: "Amazon Photos people, with the household's cookies." },
-  urls: { label: "Photo URL lists", description: "Lists of picture addresses pasted in Settings." },
-  library: { label: "Photo library", description: "Uploads and Google Photos picks kept in Everydaypane." },
-  bingPotd: { label: "Bing picture of the day", description: "Bing's daily picture." },
+  amazonShare: { label: "Amazon Shared Albums", description: "Amazon Photos shared album links." },
+  amazonPeople: { label: "Amazon People", description: "Amazon Photos people, with the household's cookies." },
+  urls: { label: "Photo URL Lists", description: "Lists of picture addresses pasted in Settings." },
+  library: { label: "Photo Library", description: "Uploads and Google Photos picks kept in Everydaypane." },
+  bingPotd: { label: "Bing Picture of the Day", description: "Bing's daily picture." },
   reddit: { label: "Reddit", description: "Pictures from subreddits." },
-  weatherAlbums: { label: "Weather-linked albums", description: "Albums picked by today's weather." },
+  weatherAlbums: { label: "Weather-Linked Albums", description: "Albums picked by today's weather." },
   immich: { label: "Immich", description: "A household's own Immich server." },
   dropbox: { label: "Dropbox", description: "A Dropbox folder." },
   onedrive: { label: "OneDrive", description: "A OneDrive folder." },
@@ -68,7 +68,28 @@ const PHOTOS: { [K in PhotoKind]: { label: string; description: string } } = {
   icloudPublished: { label: "iCloud shared albums", description: "iCloud published album links." },
 };
 
+// Features that aren't a widget, provider or photo source (Melvin, 2026-11-26: "add the 3 missing flags"). Each one's
+// "off" is worked out in `applyFlags`, so the display and its feeds need no flag code of their own.
+const FEATURES = {
+  idleView: {
+    label: "Idle View",
+    description: "The screen saver showing a view of the household's choosing. Off, those screens show photos instead.",
+  },
+  smartNotices: {
+    label: "Smart Notices",
+    description: "Blue notes that combine two integrations (sprinklers in frost, battery in an outage…). Off, none are made.",
+  },
+  regionalPacks: {
+    label: "Regional Packs",
+    description:
+      "Local alert and transit sources picked by region (NWS, USGS, Hydro-Québec, TTC, Calgary…). Off, every household reads the Lower Mainland sources and TransLink only.",
+  },
+} as const;
+
+export type FeatureName = keyof typeof FEATURES;
+
 export const widgetFlag = (type: WidgetType) => `widget.${type}`;
+export const featureFlag = (name: FeatureName) => `feature.${name}`;
 export const smartHomeFlag = (provider: SmartHomeProvider) => `smartHome.${provider}`;
 export const musicFlag = (provider: Exclude<MediaProvider, "homeAssistant">) => `music.${provider}`;
 export const tasksFlag = (provider: TasksProvider) => `tasks.${provider}`;
@@ -104,6 +125,13 @@ export const FEATURE_FLAGS: FeatureFlag[] = [
   ...entries(MUSIC).map(([p, d]): FeatureFlag => ({ name: musicFlag(p), ...d, group: "Music", kind: "music", default: true })),
   ...entries(TASKS).map(([p, d]): FeatureFlag => ({ name: tasksFlag(p), ...d, group: "To-dos", kind: "tasks", default: true })),
   ...entries(PHOTOS).map(([k, d]): FeatureFlag => ({ name: photoFlag(k), ...d, group: "Photo sources", kind: "photos", default: true })),
+  ...entries<FeatureName>(FEATURES).map(([k, d]): FeatureFlag => ({
+    name: featureFlag(k),
+    ...d,
+    group: "Features",
+    kind: "feature",
+    default: true,
+  })),
 ];
 
 const NAMES = new Set(FEATURE_FLAGS.map((f) => f.name));
@@ -151,6 +179,7 @@ export function flagsForWidget(w: Widget): string[] {
 }
 
 export function widgetAllowed(w: Widget, off: FlagsOff): boolean {
+  if (w.type === "transit" && w.agency !== "translink" && off.has(featureFlag("regionalPacks"))) return false;
   return flagsForWidget(w).every((f) => !off.has(f));
 }
 
@@ -181,6 +210,10 @@ export function applyFlags(config: DashboardConfig, off: FlagsOff): DashboardCon
   const sources = config.integrations.photos.sources.filter((s) => !off.has(photoFlag(s.kind)));
   const kept = new Set(sources.map((s) => s.id));
   const haOff = off.has(HA);
+  const idleOff = off.has(featureFlag("idleView")) && config.screenSaver.shows === "view";
+  const rulesOff = off.has(featureFlag("smartNotices"));
+  const regionsOff = off.has(featureFlag("regionalPacks"));
+  const rules = config.alerts.rules;
   const next: DashboardConfig = {
     ...config,
     views: config.views.map((v) => ({
@@ -193,8 +226,27 @@ export function applyFlags(config: DashboardConfig, off: FlagsOff): DashboardCon
         return ids.length > 0 ? [{ ...w, sourceIds: ids }] : [];
       }),
     })),
+    // Before regional packs every household read the Lower Mainland's sources, so that is what "off" goes back to.
+    region: regionsOff ? "lowerMainland" : config.region,
+    alerts: rulesOff
+      ? {
+          ...config.alerts,
+          rules: {
+            ...rules,
+            sprinklerFrost: false,
+            sprinklerRain: false,
+            outageBattery: false,
+            smokyAir: false,
+            poolFreeze: false,
+            laundryWaiting: false,
+            garbageEve: false,
+          },
+        }
+      : config.alerts,
     screenSaver: {
       ...config.screenSaver,
+      // A display whose idle view is gone already falls back to photos, so switching the idle view off does the same.
+      ...(idleOff ? { shows: "photos" as const, viewId: undefined } : {}),
       photoSourceIds: config.screenSaver.photoSourceIds.filter((id) => kept.has(id)),
       motionEntityIds: haOff ? [] : config.screenSaver.motionEntityIds,
     },

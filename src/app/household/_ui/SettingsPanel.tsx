@@ -4,6 +4,7 @@ import { useEffect, useState, useSyncExternalStore } from "react";
 
 import type { DashboardConfig } from "@/lib/config/schema";
 import { WIDGETS } from "@/lib/config/widgets";
+import { featureFlag } from "@/lib/featureFlags";
 import { isHouseholdSettingsGroup } from "@/lib/plans";
 import { alertSourceLabels, REGION_IDS, regionAt, regionOf, REGIONS, type RegionId } from "@/lib/regions";
 import { TRANSIT_AGENCIES } from "@/lib/transitAgencies";
@@ -15,7 +16,7 @@ import { CommutePanel, PlaceFinder } from "./CommutePanel";
 import { ContentPanel } from "./ContentPanel";
 import { EcoFlowPanel } from "./EcoFlowPanel";
 import { NumberInput, Range, Section, Select, Stepper, Text, Toggle } from "./fields";
-import { FlaggedSettings } from "./flags";
+import { Flagged, FlaggedSettings } from "./flags";
 import { GarbagePanel } from "./GarbagePanel";
 import { GooglePanel } from "./GooglePanel";
 import { HomeAssistantPanel } from "./HomeAssistantPanel";
@@ -261,7 +262,9 @@ export function SettingsPanel() {
                 />
               </div>
             )}
-            <RegionPicker config={config} onChange={(v) => edit((c) => void (c.region = v))} />
+            <Flagged name={featureFlag("regionalPacks")}>
+              <RegionPicker config={config} onChange={(v) => edit((c) => void (c.region = v))} />
+            </Flagged>
           </Section>
         </div>
       )}
@@ -479,90 +482,92 @@ export function SettingsPanel() {
                       </p>
                     </div>
                   </details>
-                  <details className="rounded-xl border border-line bg-bg px-3 py-2" id="settings-smart-notices">
-                    <summary className="cursor-pointer text-sm font-semibold text-ink">Smart Notices</summary>
-                    <div className="mt-3 grid gap-3">
-                      <p className="text-xs text-soft">
-                        Blue notes on the strip that put two things together, like the sprinklers and the forecast. Each needs the
-                        integrations it names; they are never emailed.
-                      </p>
-                      <Toggle
-                        label="Sprinklers Due in Frost"
-                        checked={rules.sprinklerFrost}
-                        onChange={(v) => edit((c) => void (c.alerts.rules.sprinklerFrost = v))}
-                        hint="Rachio + the forecast: a watering in the next day when it will be near freezing."
-                      />
-                      <Toggle
-                        label="Sprinklers Due When Rain Is Likely"
-                        checked={rules.sprinklerRain}
-                        onChange={(v) => edit((c) => void (c.alerts.rules.sprinklerRain = v))}
-                        hint="Rachio + the forecast: 70% chance of rain or more within three hours of a watering."
-                      />
-                      <Toggle
-                        label="Backup Battery During a Power Outage"
-                        checked={rules.outageBattery}
-                        onChange={(v) => edit((c) => void (c.alerts.rules.outageBattery = v))}
-                        hint="BC Hydro + EcoFlow: when an outage covers your home, how much each power station has left."
-                      />
-                      <Toggle
-                        label="Poor Air Outside"
-                        checked={rules.smokyAir}
-                        onChange={(v) => edit((c) => void (c.alerts.rules.smokyAir = v))}
-                        hint="Air quality, plus indoor PM2.5 from Airthings when you have it: keep the windows shut."
-                      />
-                      {rules.smokyAir && (
-                        <Range
-                          label="From AQHI"
-                          value={rules.smokyAqhi}
-                          min={4}
-                          max={10}
-                          step={1}
-                          format={(n) => String(n)}
-                          onChange={(v) => edit((c) => void (c.alerts.rules.smokyAqhi = v))}
+                  <Flagged name={featureFlag("smartNotices")}>
+                    <details className="rounded-xl border border-line bg-bg px-3 py-2" id="settings-smart-notices">
+                      <summary className="cursor-pointer text-sm font-semibold text-ink">Smart Notices</summary>
+                      <div className="mt-3 grid gap-3">
+                        <p className="text-xs text-soft">
+                          Blue notes on the strip that put two things together, like the sprinklers and the forecast. Each needs the
+                          integrations it names; they are never emailed.
+                        </p>
+                        <Toggle
+                          label="Sprinklers Due in Frost"
+                          checked={rules.sprinklerFrost}
+                          onChange={(v) => edit((c) => void (c.alerts.rules.sprinklerFrost = v))}
+                          hint="Rachio + the forecast: a watering in the next day when it will be near freezing."
                         />
-                      )}
-                      <Toggle
-                        label="Pool Freeze Warning"
-                        checked={rules.poolFreeze}
-                        onChange={(v) => edit((c) => void (c.alerts.rules.poolFreeze = v))}
-                        hint="Blue Riiot + the forecast: a hard freeze in the next day while the pool is still reporting."
-                      />
-                      <Toggle
-                        label="Laundry Left in the Machine"
-                        checked={rules.laundryWaiting}
-                        onChange={(v) => edit((c) => void (c.alerts.rules.laundryWaiting = v))}
-                        hint="Laundry: a reminder once a finished load has sat a while, even after the done note is dismissed."
-                      />
-                      {rules.laundryWaiting && (
-                        <Range
-                          label="After"
-                          value={rules.laundryWaitMinutes}
-                          min={15}
-                          max={240}
-                          step={15}
-                          format={(n) => `${n} min`}
-                          onChange={(v) => edit((c) => void (c.alerts.rules.laundryWaitMinutes = v))}
+                        <Toggle
+                          label="Sprinklers Due When Rain Is Likely"
+                          checked={rules.sprinklerRain}
+                          onChange={(v) => edit((c) => void (c.alerts.rules.sprinklerRain = v))}
+                          hint="Rachio + the forecast: 70% chance of rain or more within three hours of a watering."
                         />
-                      )}
-                      <Toggle
-                        label="Bins Out the Night Before"
-                        checked={rules.garbageEve}
-                        onChange={(v) => edit((c) => void (c.alerts.rules.garbageEve = v))}
-                        hint="Garbage day: which carts go out, the evening before pickup."
-                      />
-                      {rules.garbageEve && (
-                        <Range
-                          label="From"
-                          value={rules.garbageHour}
-                          min={12}
-                          max={22}
-                          step={1}
-                          format={(n) => `${n % 12 || 12} ${n < 12 ? "AM" : "PM"}`}
-                          onChange={(v) => edit((c) => void (c.alerts.rules.garbageHour = v))}
+                        <Toggle
+                          label="Backup Battery During a Power Outage"
+                          checked={rules.outageBattery}
+                          onChange={(v) => edit((c) => void (c.alerts.rules.outageBattery = v))}
+                          hint="BC Hydro + EcoFlow: when an outage covers your home, how much each power station has left."
                         />
-                      )}
-                    </div>
-                  </details>
+                        <Toggle
+                          label="Poor Air Outside"
+                          checked={rules.smokyAir}
+                          onChange={(v) => edit((c) => void (c.alerts.rules.smokyAir = v))}
+                          hint="Air quality, plus indoor PM2.5 from Airthings when you have it: keep the windows shut."
+                        />
+                        {rules.smokyAir && (
+                          <Range
+                            label="From AQHI"
+                            value={rules.smokyAqhi}
+                            min={4}
+                            max={10}
+                            step={1}
+                            format={(n) => String(n)}
+                            onChange={(v) => edit((c) => void (c.alerts.rules.smokyAqhi = v))}
+                          />
+                        )}
+                        <Toggle
+                          label="Pool Freeze Warning"
+                          checked={rules.poolFreeze}
+                          onChange={(v) => edit((c) => void (c.alerts.rules.poolFreeze = v))}
+                          hint="Blue Riiot + the forecast: a hard freeze in the next day while the pool is still reporting."
+                        />
+                        <Toggle
+                          label="Laundry Left in the Machine"
+                          checked={rules.laundryWaiting}
+                          onChange={(v) => edit((c) => void (c.alerts.rules.laundryWaiting = v))}
+                          hint="Laundry: a reminder once a finished load has sat a while, even after the done note is dismissed."
+                        />
+                        {rules.laundryWaiting && (
+                          <Range
+                            label="After"
+                            value={rules.laundryWaitMinutes}
+                            min={15}
+                            max={240}
+                            step={15}
+                            format={(n) => `${n} min`}
+                            onChange={(v) => edit((c) => void (c.alerts.rules.laundryWaitMinutes = v))}
+                          />
+                        )}
+                        <Toggle
+                          label="Bins Out the Night Before"
+                          checked={rules.garbageEve}
+                          onChange={(v) => edit((c) => void (c.alerts.rules.garbageEve = v))}
+                          hint="Garbage day: which carts go out, the evening before pickup."
+                        />
+                        {rules.garbageEve && (
+                          <Range
+                            label="From"
+                            value={rules.garbageHour}
+                            min={12}
+                            max={22}
+                            step={1}
+                            format={(n) => `${n % 12 || 12} ${n < 12 ? "AM" : "PM"}`}
+                            onChange={(v) => edit((c) => void (c.alerts.rules.garbageHour = v))}
+                          />
+                        )}
+                      </div>
+                    </details>
+                  </Flagged>
                   {isPaid ? (
                     <Toggle
                       label="Email Admins and Family for New Red-Strip Alerts"

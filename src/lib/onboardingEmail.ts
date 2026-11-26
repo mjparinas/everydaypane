@@ -38,7 +38,7 @@ export function onboardingMail(m: OnboardingMailInput): OnboardingMail {
   const upsell = paidStep && plan !== "paid";
   const kicker = `Getting started · ${m.n} of ${m.total}`;
   const cta = upsell
-    ? { label: "See what Household adds", href: `${siteUrl}/household/#upgrade` }
+    ? { label: "See What Household Adds", href: `${siteUrl}/household/#upgrade` }
     : { label: step.cta.label, href: `${siteUrl}${step.cta.path}` };
   const planLine = !paidStep
     ? ""
@@ -94,7 +94,7 @@ export function onboardingMail(m: OnboardingMailInput): OnboardingMail {
       pill: paidStep
         ? upsell
           ? { label: "Household", bg: "#fff1cc", ink: "#8a5a00" }
-          : { label: "In your plan", bg: "#ebf6ee", ink: EMAIL.good }
+          : { label: "In Your Plan", bg: "#ebf6ee", ink: EMAIL.good }
         : { label: "Free", bg: "#e8edfc", ink: EMAIL.brand },
     },
     legalHtml: `${escapeHtml(why)}<br><a href="${unsub}" style="color:${EMAIL.soft}">Unsubscribe from these tips</a> · ${escapeHtml(BRAND.name)}, ${escapeHtml(m.postalAddress)}`,
