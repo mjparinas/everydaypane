@@ -3,6 +3,7 @@
 import { useEffect, useState, type ReactNode } from "react";
 
 import { AIRTHINGS_KINDS, AIRTHINGS_LABELS } from "@/lib/airthings";
+import { BORDER_CROSSINGS, BORDER_DIRECTION_LABELS, BORDER_DIRECTIONS, BORDER_INFO } from "@/lib/border";
 import { PERIOD_LABELS, PERIODS } from "@/lib/config/periods";
 import type { CountdownEvent, DashboardConfig, TimerPreset, Widget } from "@/lib/config/schema";
 import { WIDGETS } from "@/lib/config/widgets";
@@ -10,6 +11,8 @@ import { DRIVEBC_LICENCE, DRIVEBC_MAX_CAMERAS, DRIVEBC_REFRESH } from "@/lib/dri
 import { EARTH_OVERLAY_LABELS, EARTH_OVERLAYS, EARTH_ZOOM_LABELS, EARTH_ZOOMS } from "@/lib/earth";
 import { FERRY_ROUTES, ferryRouteName } from "@/lib/ferries";
 import { MEAL_LABELS, MEAL_SLOTS } from "@/lib/meals";
+import { RIVER_PRESETS, RIVER_STATION_RE } from "@/lib/rivers";
+import { LIGHT_PROVIDERS, type DirectSmartProvider } from "@/lib/smartHome";
 import { WINDY_OVERLAY_LABELS, WINDY_OVERLAYS, windyPressureAllowed } from "@/lib/windy";
 
 import { useAirthings } from "./airthings";
@@ -21,6 +24,8 @@ import { useMusic } from "./music";
 import { loadSmartProvider, type SmartProviderDetail } from "./smartHome";
 import { newId } from "./store";
 import { UnifiSitePicker } from "./UnifiPanel";
+
+const PROVIDER_NAMES: Partial<Record<string, string>> = { govee: "Govee", hue: "Philips Hue", lifx: "LIFX" };
 
 // Every widget's own settings (Melvin, 2026-11-17: "settings for every feature"). One form per widget type; each
 // change is applied at once to the working copy and saved with the Save button. Bounded numbers use Range/Stepper
@@ -259,8 +264,10 @@ function HaEntitySettings({
           { value: "ecobee", label: "ecobee" },
           { value: "smartthings", label: "SmartThings" },
           { value: "govee", label: "Govee lights" },
+          { value: "hue", label: "Philips Hue lights" },
+          { value: "lifx", label: "LIFX lights" },
         ]}
-        onChange={(v) => e((x) => void ((x.provider = v), v === "govee" && (x.control = "light")))}
+        onChange={(v) => e((x) => void ((x.provider = v), LIGHT_PROVIDERS.includes(v as DirectSmartProvider) && (x.control = "light")))}
       />
       {provider !== "homeAssistant" && devices.length > 0 ? (
         <Select
@@ -298,10 +305,11 @@ function HaEntitySettings({
       ) : (
         <p className="text-sm text-soft">
           {devices.length > 0 ? "Devices from your account. " : null}
-          Connect {provider === "govee" ? "Govee" : provider} under{" "}
+          Connect {PROVIDER_NAMES[provider] ?? provider} under{" "}
           <SettingsLink href="#settings/smart-home">Settings › Smart home</SettingsLink>
           {devices.length > 0 ? " to change the account." : ", then pick a device here."}
           {provider === "govee" ? " Colour and scenes show while the light is on." : null}
+          {provider === "hue" || provider === "lifx" ? " Colour shows for colour lights while they are on." : null}
         </p>
       )}
       <details className="grid gap-3 rounded-xl border border-line bg-bg px-3 py-2" open={w.control !== "auto"}>
@@ -928,6 +936,43 @@ function TypeSettings({
         </>
       );
     }
+    case "borderWait": {
+      const e = edit<"borderWait">();
+      return (
+        <>
+          <Select
+            label="Directions"
+            value={w.directions}
+            options={BORDER_DIRECTIONS.map((d) => ({ value: d, label: BORDER_DIRECTION_LABELS[d] }))}
+            onChange={(v) => e((x) => void (x.directions = v))}
+          />
+          <Toggle
+            label="NEXUS lane waits"
+            checked={w.showNexus}
+            hint="Under the regular wait, where the agency reports one."
+            onChange={(v) => e((x) => void (x.showNexus = v))}
+          />
+          <p className="text-xs text-soft">
+            Car waits from CBSA (into Canada) and U.S. CBP (into the U.S.), which update about hourly. Pick at least one crossing.
+          </p>
+          {BORDER_CROSSINGS.map((id) => (
+            <Toggle
+              key={id}
+              label={BORDER_INFO[id].name}
+              hint={BORDER_INFO[id].detail}
+              checked={w.crossings.includes(id)}
+              onChange={(on) =>
+                e((x) => {
+                  // Kept in the list's own order (west to east), and never empty.
+                  const next = BORDER_CROSSINGS.filter((c) => (c === id ? on : x.crossings.includes(c)));
+                  if (next.length) x.crossings = next;
+                })
+              }
+            />
+          ))}
+        </>
+      );
+    }
     case "sports": {
       const e = edit<"sports">();
       const teams = config.integrations.sports.teams;
@@ -1114,6 +1159,8 @@ function TypeSettings({
     }
     case "airthings":
       return <AirthingsSettings w={w} onChange={edit<"airthings">()} />;
+    case "rivers":
+      return <RiversSettings w={w} onChange={edit<"rivers">()} />;
     case "ecoflow":
       return <EcoFlowSettings w={w} e={edit<"ecoflow">()} />;
     case "unifi": {
@@ -2303,6 +2350,90 @@ function RoutesField({ routes, onChange }: { routes: string[]; onChange: (routes
         );
       }}
     />
+  );
+}
+
+function RiversSettings({ w, onChange }: { w: Extract<Widget, { type: "rivers" }>; onChange: Edit<"rivers"> }) {
+  const [number, setNumber] = useState("");
+  const [checking, setChecking] = useState(false);
+  const [note, setNote] = useState("");
+  const full = w.stations.length >= 6;
+  const presetName = (id: string) => RIVER_PRESETS.find((p) => p.id === id)?.name;
+  const add = async () => {
+    const id = number.trim().toUpperCase();
+    if (!RIVER_STATION_RE.test(id)) return setNote("A station number looks like 08MH024: two digits, two letters, three digits.");
+    if (w.stations.some((s) => s.id === id)) return setNote("That station is already on the widget.");
+    setChecking(true);
+    setNote("");
+    try {
+      const r = await fetch(`/api/household/river-stations/?id=${encodeURIComponent(id)}`);
+      const body = (await r.json()) as { station: { name: string } | null; error?: string };
+      if (!body.station) return setNote(body.error ?? "No real-time readings at that station number.");
+      onChange((x) => void x.stations.push({ id, label: "" }));
+      setNumber("");
+      setNote(`Added ${body.station.name}.`);
+    } catch {
+      setNote("Couldn't check that station just now.");
+    } finally {
+      setChecking(false);
+    }
+  };
+  return (
+    <>
+      <p className="text-xs text-soft">
+        Live gauges from Environment Canada, up to six. Levels are metres above each gauge&apos;s own zero, so compare a river with itself,
+        not with another river. Flood warnings still come through the alert strip.
+      </p>
+      {RIVER_PRESETS.map((p) => (
+        <Toggle
+          key={p.id}
+          label={p.name}
+          checked={w.stations.some((s) => s.id === p.id)}
+          onChange={(on) =>
+            onChange((x) => {
+              if (!on) x.stations = x.stations.filter((s) => s.id !== p.id);
+              else if (x.stations.length < 6 && !x.stations.some((s) => s.id === p.id)) x.stations.push({ id: p.id, label: "" });
+            })
+          }
+        />
+      ))}
+      {w.stations.map((s, i) => (
+        <div key={s.id} className="grid gap-2">
+          <Text
+            label={`${presetName(s.id) ?? "Station"} (${s.id})`}
+            value={s.label}
+            maxLength={60}
+            placeholder="Name on the wall (optional)"
+            onChange={(v) => onChange((x) => void (x.stations[i]!.label = v))}
+          />
+          <button
+            type="button"
+            className="btn-ghost justify-self-start text-bad"
+            onClick={() => onChange((x) => void x.stations.splice(i, 1))}
+          >
+            Remove
+          </button>
+        </div>
+      ))}
+      {!full && (
+        <>
+          <Text
+            label="Add another station by number"
+            value={number}
+            maxLength={7}
+            placeholder="08MH024"
+            hint="Find numbers on Environment Canada's real-time hydrometric map (wateroffice.ec.gc.ca)."
+            onChange={setNumber}
+          />
+          <button type="button" className="btn-ghost justify-self-start" disabled={checking || !number.trim()} onClick={() => void add()}>
+            {checking ? "Checking…" : "Add station"}
+          </button>
+        </>
+      )}
+      {note && <p className="text-xs text-soft">{note}</p>}
+      <Toggle label="Show the day's line" checked={w.showChart} onChange={(v) => onChange((x) => void (x.showChart = v))} />
+      <Toggle label="Show flow (where measured)" checked={w.showDischarge} onChange={(v) => onChange((x) => void (x.showDischarge = v))} />
+    </>
   );
 }
 

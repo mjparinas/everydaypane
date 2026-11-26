@@ -18,6 +18,8 @@ const BUDGET = {
   "public/display/oura.js": 6_000,
   "public/display/airthings.js": 6_000,
   "public/display/drivebc.js": 6_000,
+  "public/display/rivers.js": 6_000,
+  "public/display/borderWait.js": 6_000,
 };
 let failed = false;
 for (const [file, max] of Object.entries(BUDGET)) {
