@@ -9,6 +9,7 @@ import { NEWS_PRESETS } from "../newsPresets";
 import { RIVER_DEFAULT_STATIONS, RIVER_STATION_RE } from "../rivers";
 import { SCREEN_SAVER_OFF } from "../screenSaver";
 import { SMART_HOME_PROVIDERS } from "../smartHome";
+import { DEFAULT_MOUNTAINS, MOUNTAIN_IDS } from "../snow";
 import { LEAGUE_IDS, MAX_TEAMS } from "../sports";
 import { WINDY_OVERLAYS } from "../windy";
 import { PERIODS } from "./periods";
@@ -348,6 +349,16 @@ export const widgetSchema = z.discriminatedUnion("type", [
       .max(12),
     count: z.number().int().min(1).max(12),
     showDelivered: z.boolean(),
+  }),
+  // Mountain snow report (Melvin, 2026-11-25): new snow, depth and the next days' snowfall for picked mountains, from
+  // Open-Meteo at each mountain (src/server/snow.ts, src/lib/snow.ts for the list).
+  z.object({
+    ...base,
+    type: z.literal("snow"),
+    mountains: z.array(z.enum(MOUNTAIN_IDS)).min(1).max(8).default(DEFAULT_MOUNTAINS),
+    showDepth: z.boolean().default(true),
+    showForecast: z.boolean().default(true),
+    showTemperature: z.boolean().default(false),
   }),
   // River levels (Melvin, 2026-11-25): Environment Canada real-time hydrometric gauges (src/server/rivers.ts), up to
   // six stations by Water Survey number with an optional label, each with its level, trend and a day's chart.

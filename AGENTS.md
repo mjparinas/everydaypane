@@ -57,6 +57,7 @@ same change, and moves it out of **In progress** when it merges.
 | Sports scores (`sports`) | Live score, last result and next game for followed teams (NHL, NBA, WNBA, NFL, MLB, MLS, Premier League, Champions League) | ESPN public site API |
 | To-dos (`tasks`) | Open tasks from **Google Tasks, Microsoft To Do or Todoist** (`provider`); **tap to tick off** (`allowCheck`, 4 s undo) | Unified `/api/display/tasks/` feed |
 | Packages (`packages`) | UPS, FedEx, Canada Post, USPS tracking numbers on the widget; live status when `PACKAGE_TRACK_API_KEY` is set | Optional 17track-style API (`src/server/packages.ts`) |
+| Snow report (`snow`) | New snow in the last 24 h, snow depth and snowfall today and the next two days, optional mountain temperature, for picked mountains (Cypress, Grouse, Seymour, Whistler by default; Sasquatch, Manning Park, Mt. Baker, Sun Peaks) | Open-Meteo forecast at each mountain's mid-mountain elevation (model estimate, no key) |
 | River levels (`rivers`) | Up to six river and creek gauges (Fraser at Mission and Hope, Salmon and Nicomekl in Langley, or any station by number): level, rising/falling/steady with the 6 h and 24 h change, a day's line, optional flow | Environment Canada real-time hydrometric (MSC GeoMet OGC API, Datamart CSV fallback) |
 | Tides (`tides`) | Next highs and lows at a station, optional height, optional **day curve** with a "now" line (`showCurve`); station search by name in its settings | Canadian IWLS + NOAA (US) (`docs/tides.md`) |
 | TransLink departures (`transit`) | Next buses from up to six picked stops, live times, route filter, walk-minutes cutoff | TransLink GTFS-realtime |
@@ -344,6 +345,9 @@ npm run templates:previews  # regenerate public/templates/*.png from real widget
 - **UniFi network health** (Melvin, 2026-11-21: "do all 6", from a list of official cloud APIs; native only, not
   through Home Assistant, nothing running at home): a `unifi` widget with the gateway's own view of the internet from
   UniFi Site Manager. It sits beside the browser-side internet ping widget rather than replacing it (see Architecture).
+- **Mountain snow report** (Melvin, 2026-11-25: "build that all", from a list of widget ideas): new snow, depth and
+  the next days' snowfall on the local mountains, picked in the widget's settings, from Open-Meteo with no key (see
+  Architecture).
 - **Tides, moon, aurora and On this day** (Melvin, 2026-11-25: "build that all, and tides, moon phases", from a list of
   keyless widgets): the existing tides widget gained a day curve and a working Canadian station search (White Rock,
   Crescent Beach); the moon is worked out on the device, both as its own widget and as a line on Sunrise & sunset; aurora
@@ -366,8 +370,8 @@ panel can be complex if you need it to be."
   imports it with display.js's own `?v=` only on a screen that shows it. Its `../api` is swapped at build time for
   `src/display/apiShared.ts`, which calls display.js's copy, so feeds, the device token and offline state stay single.
   The internet widget, the UniFi network widget, EcoFlow, the whiteboard, wildfires, the Windy map, the Smart device tile
-  (`haEntity.ts`; cameras and `HA_EVERY` stay in `ha.ts`), Oura, Indoor air (Airthings), River levels, Border wait times,
-  tides, moon phase, aurora and On this day load this way, and `next.config.ts` gives each file the same
+  (`haEntity.ts`; cameras and `HA_EVERY` stay in `ha.ts`), Oura, Indoor air (Airthings), the snow report, River levels,
+  Border wait times, tides, moon phase, aurora and On this day load this way, and `next.config.ts` gives each file the same
   immutable cache header as display.js.
 - **Budget:** the display's script stays under 80 KB gzipped and its stylesheet under 20 KB (`scripts/bundle-check.mjs`,
   a CI step; CSS raised from 10 KB on 2026-11-23 for more clock styles; script raised from 40 KB by Melvin on 2026-11-25: "double the size of the limit"). A new dependency on the display needs a very good reason.
@@ -607,6 +611,15 @@ panel can be complex if you need it to be."
   `src/server/alerts.ts`): an order covering the home is extreme and an alert severe; within `alerts.evacuationKm`
   (default 10 km) they are moderate and minor. This sandbox can't reach ArcGIS Online, so tests use shapes from the
   layers' descriptions and sample features read on 2026-11-21.
+- **Mountain snow report:** `src/server/snow.ts` asks Open-Meteo's forecast API once for every mountain on any snow
+  widget (comma-separated `latitude`/`longitude`/`elevation`, answered as an array), with `hourly=snowfall,snow_depth`,
+  `daily=snowfall_sum`, the current temperature, `past_days=1` and the dashboard's time zone. The mountains, their
+  coordinates and a mid-mountain elevation (so snowfall isn't the model's smoothed valley height) are in
+  `src/lib/snow.ts`. New snow is the last 24 hourly stamps up to now, depth the latest past `snow_depth`, and the
+  forecast today and the next two local days. Cached 30 minutes, keyed by time zone and mountains only (public data, so
+  households share it); amounts travel in centimetres and the wall converts to inches, the server converts the
+  temperature. These are model numbers, not the resorts' reports (resorts publish only web pages), so the widget says
+  "Model estimate". Displays poll `/api/display/snow/` every 15 minutes; the widget loads on its own (`snow.js`).
 - **River levels:** `src/server/rivers.ts` reads Environment Canada's real-time hydrometric data, no key: MSC GeoMet's
   OGC API (`api.weather.gc.ca/collections/hydrometric-realtime/items?STATION_NUMBER=…&datetime=<30 h ago>/..`,
   properties `STATION_NAME`, `DATETIME`, `LEVEL`, `DISCHARGE`), and when that fails the Datamart's hourly CSV for the
