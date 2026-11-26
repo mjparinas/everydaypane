@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 import { AIRTHINGS_DEFAULT_KINDS, AIRTHINGS_KINDS } from "../airthings";
+import { BORDER_CROSSINGS, BORDER_DIRECTIONS } from "../border";
 import { EARTH_OVERLAYS, EARTH_ZOOMS } from "../earth";
 import { FERRY_ROUTES } from "../ferries";
 import { MEAL_SLOTS } from "../meals";
@@ -436,6 +437,19 @@ export const widgetSchema = z.discriminatedUnion("type", [
     routes: z.array(z.enum(FERRY_ROUTES)).min(1).max(4),
     count: z.number().int().min(1).max(8),
     showVessel: z.boolean(),
+  }),
+  // Border wait times (Melvin, 2026-11-25): Lower Mainland crossings, into the U.S. from CBP and into Canada from CBSA
+  // (src/server/border.ts).
+  z.object({
+    ...base,
+    type: z.literal("borderWait"),
+    crossings: z
+      .array(z.enum(BORDER_CROSSINGS))
+      .min(1)
+      .max(BORDER_CROSSINGS.length)
+      .refine((c) => new Set(c).size === c.length, "Each crossing once"),
+    directions: z.enum(BORDER_DIRECTIONS),
+    showNexus: z.boolean(),
   }),
   // Sports scores (Melvin, 2026-11-21): live scores, the last result and the next game of the teams followed under
   // Settings › Sports (none picked means all of them).
