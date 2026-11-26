@@ -165,9 +165,15 @@ export function ViewsPanel() {
   const showTemplates = templatesOpen || emptyView;
 
   return (
-    <div className="grid content-start gap-4">
+    <div className="grid min-w-0 grid-cols-[minmax(0,1fr)] content-start gap-4">
+      {/* The tab list's basis is its content (not 0), so on a phone it takes its own row and scrolls sideways instead of
+          squeezing to one chip per line under the action buttons (Melvin's Android screenshot, 2026-11-26). */}
       <div className="flex flex-wrap items-center gap-2">
-        <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2" role="tablist" aria-label="Views">
+        <div
+          className="-mx-1 flex min-w-0 flex-[1_1_auto] items-center gap-2 overflow-x-auto px-1 py-0.5 max-sm:[scrollbar-width:none] sm:flex-wrap sm:overflow-visible [&>button]:shrink-0 max-sm:[&>button]:min-h-10 max-sm:[&>button]:px-3.5 max-sm:[&>button]:text-sm"
+          role="tablist"
+          aria-label="Views"
+        >
           {config.views.map((v) => (
             <button
               key={v.id}
@@ -193,66 +199,68 @@ export function ViewsPanel() {
             {!isPaid && config.views.length >= viewLimit ? <HouseholdBadge className="ml-1.5" /> : null}
           </button>
         </div>
-        <button
-          type="button"
-          className={picking ? "btn-primary" : "btn-ghost"}
-          aria-expanded={picking}
-          aria-controls={picking ? "add-widget-drawer" : undefined}
-          onClick={() => {
-            setPicking((open) => !open);
-            setEditingView(false);
-            setSelected(null);
-          }}
-        >
-          + Add a widget
-        </button>
-        <button
-          type="button"
-          className={editingView ? "btn-primary" : "btn-ghost"}
-          aria-expanded={editingView}
-          aria-controls={editingView ? "view-settings-drawer" : undefined}
-          onClick={() => {
-            setEditingView((open) => !open);
-            setPicking(false);
-            setSelected(null);
-          }}
-        >
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-            <path
-              d="M11.5 1.5a1.4 1.4 0 0 1 2 2L4.8 12.2 2 13l.8-2.8L11.5 1.5Z"
-              stroke="currentColor"
-              strokeWidth="1.5"
-              strokeLinejoin="round"
-            />
-            <path d="M10.2 2.8 13.2 5.8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-          </svg>
-          Edit view
-        </button>
-        {!emptyView ? (
+        <div className="flex flex-wrap items-center gap-2 max-sm:[&>button]:min-h-10 max-sm:[&>button]:px-3.5 max-sm:[&>button]:text-sm">
           <button
             type="button"
-            className={templatesOpen ? "btn-primary" : "btn-ghost"}
-            aria-expanded={templatesOpen}
-            aria-controls="starter-templates"
+            className={picking ? "btn-primary" : "btn-ghost"}
+            aria-expanded={picking}
+            aria-controls={picking ? "add-widget-drawer" : undefined}
             onClick={() => {
-              setTemplatesOpen((o) => {
-                const next = !o;
-                if (next) {
-                  // Gallery sits under the tall live preview — scroll + status so opening isn't a silent no-op.
-                  setNotice("Starter templates are below the preview.");
-                  requestAnimationFrame(() => {
-                    templatesRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-                  });
-                } else {
-                  setNotice("");
-                }
-                return next;
-              });
+              setPicking((open) => !open);
+              setEditingView(false);
+              setSelected(null);
             }}
           >
-            Starter templates
+            + Add a widget
           </button>
-        ) : null}
+          <button
+            type="button"
+            className={editingView ? "btn-primary" : "btn-ghost"}
+            aria-expanded={editingView}
+            aria-controls={editingView ? "view-settings-drawer" : undefined}
+            onClick={() => {
+              setEditingView((open) => !open);
+              setPicking(false);
+              setSelected(null);
+            }}
+          >
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+              <path
+                d="M11.5 1.5a1.4 1.4 0 0 1 2 2L4.8 12.2 2 13l.8-2.8L11.5 1.5Z"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinejoin="round"
+              />
+              <path d="M10.2 2.8 13.2 5.8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+            </svg>
+            Edit view
+          </button>
+          {!emptyView ? (
+            <button
+              type="button"
+              className={templatesOpen ? "btn-primary" : "btn-ghost"}
+              aria-expanded={templatesOpen}
+              aria-controls="starter-templates"
+              onClick={() => {
+                setTemplatesOpen((o) => {
+                  const next = !o;
+                  if (next) {
+                    // Gallery sits under the tall live preview — scroll + status so opening isn't a silent no-op.
+                    setNotice("Starter templates are below the preview.");
+                    requestAnimationFrame(() => {
+                      templatesRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+                    });
+                  } else {
+                    setNotice("");
+                  }
+                  return next;
+                });
+              }}
+            >
+              Starter templates
+            </button>
+          ) : null}
+        </div>
       </div>
 
       <div ref={previewRef} className="scroll-mt-28">
