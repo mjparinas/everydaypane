@@ -36,14 +36,14 @@ same change, and moves it out of **In progress** when it merges.
 | Pool (`blueRiiot`) | Water temperature, pH, ORP, salinity and (after a test strip) free chlorine per pool, green/amber/red by Blue Riiot's own ranges, when last measured; pick readings and pools | Blue Riiot's **unofficial** app cloud API (household's app email and password, `docs/blue-riiot.md`) |
 | Indoor air (`airthings`) | Radon, CO₂, VOC, PM2.5, PM1, humidity and temperature per Airthings monitor, green/amber/red by Airthings' levels; pick readings and devices | Airthings consumer API (household's own API client, `docs/airthings.md`) |
 | WiFi QR (`wifiQr`) | Join code, optionally the password | Settings document |
-| Phone edit QR (`editQr`) | QR to `/d/<token>/edit/` for meals, shopping and messages with no sign-in | This display's address |
+| Phone edit QR (`editQr`) | QR to `/d/<token>/edit/` for meals, shopping, messages and family photos with no sign-in | This display's address |
 | Countdowns (`countdown`) | Days until holidays, birthdays, **anniversaries** and events, yearly ones roll over; the age a birthday turns or an anniversary's years; an optional **photo per date**; on the day it leads the tile with the photo large ("Happy birthday, Sam!", `celebrate`, on by default) | Settings document; photos in the private photo library store (`src/server/countdownPhotos.ts`) |
 | Schedule (`agenda`) | Today, or the next 1 to 14 days | Google Calendar + Microsoft 365 + iCal links, family events |
 | Month calendar (`calendarMonth`) | Month grid or 1 to 6 weeks from this one, Sunday or Monday start, weekends on or off, title toggle, fit titles (wrap/shrink, on by default), scroll after N weeks (default 3), optional tap-to-open day details with every event and its source colour | Google Calendar + Microsoft 365 + iCal links, family events |
 | Week calendar (`calendarWeek`) | One week in a grid, optional weekends | Same calendar feed |
 | Up next (`calendarUpNext`) | The next event large, with a short following list | Same calendar feed |
 | Garbage day (`garbage`) | Next pickups, 1 to 8 weeks | Township of Langley (Recycle Coach) |
-| Photos (`photos`) | Slideshow, cover or contain, captions | Amazon shared albums, Amazon people, URL lists, photo library (uploads and Google Photos picks), Bing picture of the day, Reddit, weather-linked albums, Immich, Dropbox, OneDrive, Box, Flickr, SmugMug, iCloud published links (`docs/icloud-photos.md`) |
+| Photos (`photos`) | Photo frame: smart fit (whole photo over a soft copy of itself when filling would crop a lot), cover or contain, **portrait pairs** side by side, slow **drift**, captions with the date and how long ago, **On this day** photos first, new photos (family uploads) shown next | Amazon shared albums, Amazon people, URL lists, photo library (uploads and Google Photos picks), Bing picture of the day, Reddit, weather-linked albums, Immich, Dropbox, OneDrive, Box, Flickr, SmugMug, iCloud published links (`docs/icloud-photos.md`) |
 | Smart device (`haEntity`) | Toggle, light, sensor, climate, cover, lock (lock only), button; `provider` Home Assistant (default), **Nest**, **ecobee**, **SmartThings**, **Govee lights** (on/off, brightness, colour swatches, scenes), **Philips Hue lights** or **LIFX lights** (on/off, brightness, colour swatches) | Shared `/api/display/ha/` feed; OAuth + REST for native providers and Hue, an API key for Govee, a personal token for LIFX (`docs/nest.md`, `docs/ecobee.md`, `docs/smartthings.md`, `docs/govee.md`, `docs/hue.md`, `docs/lifx.md`) |
 | UniFi network (`unifi`) | Online / slow / down, latest latency and packet loss, minutes down and last outage in 24 h, 24 h latency chart, clients and devices, optional current usage, ISP | UniFi Site Manager API (`api.ui.com`, `unifi.apiKey` secret, `docs/unifi.md`) |
 | Camera (`camera`) | UniFi Protect snapshot on a timer | Home Assistant |
@@ -376,6 +376,17 @@ npm run templates:previews  # regenerate public/templates/*.png from real widget
   and a jump link; the group chip is **Screen saver & alerts** with the screen saver first; Edit view has **Show when
   nobody's using the screen** to make that view the idle view; the homepage has a `#photo-frame` section (in use ↔
   photo frame on one pane); the guide is `/blog/photo-frame-screen-saver/`, linked from Settings as "How it works".
+- **Photo frame polish** (Melvin, 2026-11-26: "polish the photo frame until it rivals Skylight"): the photos widget
+  gained `fit: "auto"` (fill unless the photo's shape is more than a third off the frame's, then the whole photo over a
+  32-pixel blurred copy of itself instead of black bars), `pairPortraits` (two portraits side by side in a landscape
+  frame, two landscapes stacked in a portrait one), `drift` (slow zoom, transform only, off under reduced motion),
+  `memories` (photos taken on this day in earlier years first, captioned "On this day · 2019") and captions that read
+  "November 14, 2023 · 3 years ago". New widgets and the photo screen saver have all of them on; older widgets keep
+  what they had. Photos that appear in the feed after the frame loaded (a family upload) come up next, captioned
+  "Just added". **Family photos from phones**: a library album with **Family can add photos** (`familyUploads`, on for
+  new library albums) takes pictures from `/family/` and the kitchen edit link (`FamilyPhotos`,
+  `/api/family/photos/`), each taken back with Undo by whoever added it (`photos.added_by`). Claude's picks for the
+  first round; favourites and per-photo hiding from the wall were left for later.
 - **Airthings indoor air** (Melvin, 2026-11-21: "do all 6", from a list of native cloud APIs; native only, not Home
   Assistant): an Indoor air widget for radon, CO₂, VOC, particles, humidity and temperature, with optional high radon
   and CO₂ on the alert strip (see Architecture). Separate from the outdoor Air quality widget.
@@ -589,7 +600,7 @@ panel can be complex if you need it to be."
   accepts a session or that token). Kitchen posts are keyed `display:<deviceId>` (no admin pin). An `editQr` widget and
   the Displays tab (copyable `editUrl` plus `/api/household/devices/<id>/edit-qr/`) both encode that URL. Knowing the
   display link is the capability — keep the QR on the wall, not shared online. Family calendar events stay on `/family/`
-  only.
+  only. Family photos (2026-11-26) are on both pages, only for library albums with `familyUploads` on.
 - **Kids chores phone** (Melvin, 2026-11-23): `/d/<token>/chores/` and `/family/chores/` (`KidsChores`, `/api/family/chores/`)
   let a kid pick their name, tick today's chores by period, and redeem star rewards. Same display-token or family session
   auth as the edit page; ticks skip the wall's `allowCheck` gate. Parents still edit people and chores in Settings › Chores;
@@ -717,7 +728,18 @@ panel can be complex if you need it to be."
   picks a page at a time (`=w2048-h2048`, with our token; Google's links last an hour, so photos are copied, not
   linked). Videos are skipped and a Google photo is never copied twice into one album. Blobs are never public; displays
   get them only through `/api/display/photo/`. Removing a library album deletes its photos when the settings are saved
-  (Undo before Save keeps them). Setup: `docs/google-photos.md`.
+  (Undo before Save keeps them). Setup: `docs/google-photos.md`. Uploads (admin and family) send the EXIF
+  DateTimeOriginal day read on the phone (`src/lib/photoUpload.ts`) so captions and "On this day" know it.
+  **Family uploads** go through `/api/family/photos/` (family session or display token, `familyEditorFor`): only to an
+  album with `familyUploads` (read through `loadDisplayConfig`, so a switched-off library source takes nothing), 100 an
+  hour per person, `added_by` = `familyEditorKey`; DELETE takes back one's own photo (admins any). The phone shows what
+  it just sent from its own copy, so there is no family thumbnail route.
+- **Photo frame on the wall** (`src/display/widgets/photos.ts`, choices in `src/lib/photoFrame.ts`): each turn fills
+  the hidden slide, waits for its pictures, then cross-fades (opacity) and lets the old slide's images go after the
+  fade. Pairing looks 12 photos ahead in the shuffled pass for a partner. The soft backdrop is a 32-pixel canvas of the
+  photo, stretched and CSS-blurred once per slide. One pass shows every photo once: new ones, then this day in earlier
+  years, then the rest shuffled; the pass is rebuilt at midnight in the dashboard's zone. `/api/display/photos/` has an
+  ETag over the lists and displays poll it every five minutes (it was 30), so a family photo shows within minutes.
 - **Chore chart:** the kids and chores are in the settings document (`config.chores`, edited in Settings › Chores and
   saved with Save); ticks are rows in `chores_done` (one per day, chore and person, with the stars the chore was worth
   then, so changing a chore later doesn't rewrite the week; kept 60 days), `src/server/chores.ts`. Who has a chore on a

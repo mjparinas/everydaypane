@@ -40,7 +40,7 @@ export async function addPhoto(
   accountId: string,
   sourceId: string,
   bytes: Uint8Array,
-  meta: { w: number; h: number; taken?: string | null; origin: "upload" | "google"; originId?: string },
+  meta: { w: number; h: number; taken?: string | null; origin: "upload" | "google"; originId?: string; addedBy?: string },
   now = Date.now(),
 ): Promise<AddResult> {
   const type = storedType(bytes);
@@ -73,8 +73,8 @@ export async function addPhoto(
     origin: meta.origin,
   };
   await run(
-    "INSERT INTO photos (id, account_id, source_id, pathname, w, h, taken, origin, origin_id, added_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-    [id, accountId, sourceId, pathname, photo.w, photo.h, photo.taken, photo.origin, meta.originId ?? null, now],
+    "INSERT INTO photos (id, account_id, source_id, pathname, w, h, taken, origin, origin_id, added_at, added_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+    [id, accountId, sourceId, pathname, photo.w, photo.h, photo.taken, photo.origin, meta.originId ?? null, now, meta.addedBy ?? null],
   );
   return { ok: true, photo };
 }
@@ -124,4 +124,14 @@ export async function removePhotos(accountId: string, sourceId: string, photoId?
     photoId ? [accountId, sourceId, photoId] : [accountId, sourceId],
   );
   return rows.length;
+}
+
+/** Who added a photo from a phone (`familyEditorKey`), or null for the admin's uploads and Google picks. */
+export async function photoAddedBy(accountId: string, sourceId: string, photoId: string): Promise<string | null | undefined> {
+  const [row] = await query<{ added_by: string | null }>("SELECT added_by FROM photos WHERE account_id = ? AND source_id = ? AND id = ?", [
+    accountId,
+    sourceId,
+    photoId,
+  ]);
+  return row ? row.added_by : undefined;
 }

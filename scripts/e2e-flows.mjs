@@ -149,7 +149,9 @@ export const flows = [
       expect(html.includes("ok"), "health");
       const js = await fetch(`${base}/display/display.js`);
       const bytes = (await js.arrayBuffer()).byteLength;
-      expect(bytes < 120_000, `display.js is ${bytes} bytes before gzip`);
+      // Doubled with the gzipped budget (Melvin, 2026-11-25: "double the size of the limit"); bundle-check.mjs holds
+      // the real 80 KB gzipped line, this only catches a bundle that stopped minifying.
+      expect(bytes < 240_000, `display.js is ${bytes} bytes before gzip`);
     },
   },
   {
@@ -429,7 +431,7 @@ export const flows = [
       const errors = [];
       d.on("pageerror", (e) => errors.push(e.message));
       await d.goto(device.url);
-      await d.locator(".ph-img.on").waitFor();
+      await d.locator(".ph-slide.on .ph-img").waitFor();
       await d.locator(".cell-clock .c-hm").waitFor();
       expect(await d.locator(".cell-clock").evaluate((el) => el.classList.contains("on-photo")), "the clock isn't marked as on the photo");
       expect(!(await d.locator(".cell-photos").evaluate((el) => el.classList.contains("on-photo"))), "the photo is marked as on itself");

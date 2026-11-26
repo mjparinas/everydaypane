@@ -1065,12 +1065,21 @@ function TypeSettings({
             label="Fit"
             value={w.fit}
             options={[
+              { value: "auto", label: "Smart: fill unless it would crop a lot" },
               { value: "cover", label: "Fill the space (crops edges)" },
               { value: "contain", label: "Show the whole photo" },
             ]}
             onChange={(v) => e((x) => void (x.fit = v))}
           />
-          <Toggle label="Show captions" checked={w.showCaption} onChange={(v) => e((x) => void (x.showCaption = v))} />
+          <Toggle
+            label="Pair portrait photos side by side"
+            checked={w.pairPortraits}
+            onChange={(v) => e((x) => void (x.pairPortraits = v))}
+          />
+          <Toggle label="Slow zoom across each photo" checked={w.drift} onChange={(v) => e((x) => void (x.drift = v))} />
+          <Toggle label="Show “On this day” photos first" checked={w.memories} onChange={(v) => e((x) => void (x.memories = v))} />
+          <Toggle label="Show when each photo was taken" checked={w.showCaption} onChange={(v) => e((x) => void (x.showCaption = v))} />
+          <p className="text-xs text-soft">Photos added since the screen last looked always come up next.</p>
           {sources.length === 0 ? (
             <p className="text-xs text-soft">
               Add photo albums under <SettingsLink href="#settings/photos">Settings › Photos</SettingsLink>.

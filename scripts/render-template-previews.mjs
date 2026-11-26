@@ -287,7 +287,7 @@ async function settlePreview(payload) {
   await page.waitForTimeout(1800);
   if (payload.views[0]?.widgets.some((w) => w.type === "photos")) {
     await page
-      .waitForFunction(() => [...document.querySelectorAll(".ph-img.on")].some((img) => img.naturalWidth > 0), null, {
+      .waitForFunction(() => [...document.querySelectorAll(".ph-slide.on .ph-img")].some((img) => img.naturalWidth > 0), null, {
         timeout: 8_000,
       })
       .catch(() => undefined);

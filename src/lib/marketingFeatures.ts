@@ -66,7 +66,7 @@ const FEATURE_BLURBS: Partial<Record<WidgetType, string>> = {
   camera: "UniFi Protect snapshots on a timer.",
   media: "HA, Spotify or Sonos now-playing controls.",
   presence: "Person and device trackers, read only.",
-  photos: "Amazon, Google Photos picks, library uploads and more.",
+  photos: "A photo frame: portrait pairs, On this day, and photos the family adds from their phones.",
   sports: "Live score, last result, next game.",
   timer: "Kitchen timers with flash, full-screen alert and beeps.",
   pomodoro: "Focus and break rounds with an optional chime.",
