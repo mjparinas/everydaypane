@@ -202,16 +202,22 @@ export function MessageBoard() {
           <p className="text-sm text-soft">The board is empty.</p>
         ) : (
           notes.map((n) => (
-            <article key={n.id} className="grid gap-2 rounded-2xl p-4 text-[#1d1d1f] shadow-sm" style={{ background: bgOf(n.colour) }}>
+            <article
+              key={n.id}
+              className="flex flex-col gap-2 rounded-2xl p-4 text-[#1d1d1f] shadow-sm"
+              style={{ background: bgOf(n.colour) }}
+            >
               <p className="font-semibold break-words whitespace-pre-wrap">{n.text}</p>
-              <p className="text-xs opacity-70">
+              {/* Grid rows stretch a short note to its neighbour's height; the meta line and buttons sit at the bottom
+                  at their own height instead of the buttons growing to fill it. */}
+              <p className="mt-auto text-xs opacity-70">
                 {n.pinned ? "📌 " : ""}
                 {n.author} · {new Date(n.createdAt).toLocaleString("en-CA", { dateStyle: "medium", timeStyle: "short" })}
                 {n.expiresAt
                   ? ` · until ${new Date(n.expiresAt).toLocaleString("en-CA", { weekday: "short", hour: "numeric", minute: "2-digit" })}`
                   : ""}
               </p>
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap items-start gap-2">
                 {admin && (
                   <button className="min-h-9 rounded-lg bg-black/10 px-3 text-sm font-medium" onClick={() => void pin(n.id, !n.pinned)}>
                     {n.pinned ? "Unpin" : "Pin"}
