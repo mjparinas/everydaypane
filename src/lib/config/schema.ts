@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 import { AIRTHINGS_DEFAULT_KINDS, AIRTHINGS_KINDS } from "../airthings";
+import { DRIVEBC_MAX_CAMERAS, DRIVEBC_REFRESH } from "../drivebc";
 import { EARTH_OVERLAYS, EARTH_ZOOMS } from "../earth";
 import { FERRY_ROUTES } from "../ferries";
 import { MEAL_SLOTS } from "../meals";
@@ -352,6 +353,21 @@ export const widgetSchema = z.discriminatedUnion("type", [
     routes: z.array(z.string().trim().min(1).max(12)).max(30),
     count: z.number().int().min(1).max(12),
     walkMinutes: z.number().int().min(0).max(60),
+  }),
+  // DriveBC highway cameras (Melvin, 2026-11-25): still pictures from public highway cameras (Hwy 1, Port Mann,
+  // Coquihalla…), refreshed on a timer like the Camera widget (src/server/drivebc.ts). Each camera keeps its DriveBC id
+  // and name, so the wall can label it without asking DriveBC. `layout` shows them side by side or one at a time.
+  z.object({
+    ...base,
+    type: z.literal("drivebc"),
+    cameras: z
+      .array(z.object({ id: z.string().regex(/^\d{1,6}$/), name: z.string().max(120) }))
+      .max(DRIVEBC_MAX_CAMERAS)
+      .refine((c) => new Set(c.map((x) => x.id)).size === c.length, "Each camera once"),
+    refreshSeconds: z.number().int().min(DRIVEBC_REFRESH.min).max(DRIVEBC_REFRESH.max).default(DRIVEBC_REFRESH.default),
+    layout: z.enum(["grid", "cycle"]).default("grid"),
+    cycleSeconds: z.number().int().min(5).max(120).default(15),
+    showName: z.boolean().default(true),
   }),
   // A UniFi Protect camera, through Home Assistant's UniFi Protect integration (camera.* entity).
   z.object({ ...base, type: z.literal("camera"), entityId: z.string().max(255), refreshSeconds: z.number().int().min(2).max(600) }),

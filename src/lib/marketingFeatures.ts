@@ -49,6 +49,7 @@ const FEATURE_BLURBS: Partial<Record<WidgetType, string>> = {
   transit: "Live departures from up to six TransLink stops.",
   commute: "Drive times with traffic and leave-by.",
   ferries: "Next sailings and how full they are.",
+  drivebc: "DriveBC highway camera pictures, refreshed on a timer.",
   garbage: "Township of Langley Recycle Coach zones.",
   school: "Open, closed, delayed or late start.",
   haEntity: "Lights, climate, covers, lock (lock only), Nest, ecobee, SmartThings, Govee colour lights and scenes.",

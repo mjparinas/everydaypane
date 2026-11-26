@@ -62,6 +62,7 @@ same change, and moves it out of **In progress** when it merges.
 | Wildfires (`wildfires`) | Active fires around home on the radar's map, coloured by stage of control (fires of note ringed), burned areas, evacuation orders and alerts, the nearest 0 to 5 fires listed; five map areas, fires under control on or off | BC Wildfire Service and EmergencyInfoBC public ArcGIS layers, Esri grey canvas map |
 | Timers (`timer`) | Kitchen timers started from preset buttons on the wall, up to six at once, pause, +1 min; flash, full-screen alert and beeps when done | Device (localStorage) |
 | Pomodoro (`pomodoro`) | Focus and break rounds, long break after the last round, optional auto-start, chime between phases | Device (localStorage) |
+| Highway cameras (`drivebc`) | Still pictures from up to four DriveBC highway cameras (Hwy 1, Port Mann, Coquihalla…), side by side or one at a time, refreshed every 1–15 min, paused under the screen saver; delayed or switched-off cameras say so | DriveBC site feed + `www.drivebc.ca/images/<id>.jpg`, OGL-BC (`docs/drivebc.md`) |
 | BC Ferries (`ferries`) | Next sailings on up to four routes, how full each is, cancellations and delays | Community BC Ferries API (bcferriesapi.ca) |
 | Earth wind map (`earth`) | earth.nullschool.net's animated wind globe centred on any place, four zooms, a colour layer (temperature, rain, humidity…), place marker, animation on or off | earth.nullschool.net (framed), Open-Meteo place search |
 | Windy map (`windy`) | Windy's map centred on any place, one layer (radar, rain, wind, gusts, temperature, clouds, new snow, thunderstorms, satellite, PM2.5), zoom 3–11, place marker, pressure lines, touch on or off | embed.windy.com (framed), Open-Meteo place search |
@@ -301,6 +302,9 @@ npm run templates:previews  # regenerate public/templates/*.png from real widget
   Separate from Google Tasks (see Architecture).
 - **Kitchen timers and pomodoro** (Melvin, 2026-11-21: "1 with visual and sound alerts", then "i want a regular
   timer, and a separate pomodoro"): two widgets, `timer` and `pomodoro` (see Architecture).
+- **DriveBC highway cameras** (Melvin, 2026-11-25: "build that all", from a batch of widget ideas): still pictures
+  from DriveBC's public highway cameras, picked by name or highway in the widget's settings, refreshed on a timer like
+  the Camera widget and paused under the screen saver; no key (see Architecture).
 - **BC Ferries** (Melvin, 2026-11-21): the next sailings for routes chosen in the widget's settings, with how full
   each one is (see Architecture).
 - **Earth wind map** (Melvin, 2026-11-21: "can i add this and specific a location? https://earth.nullschool.net"):
@@ -350,7 +354,7 @@ panel can be complex if you need it to be."
   imports it with display.js's own `?v=` only on a screen that shows it. Its `../api` is swapped at build time for
   `src/display/apiShared.ts`, which calls display.js's copy, so feeds, the device token and offline state stay single.
   The internet widget, the UniFi network widget, EcoFlow, the whiteboard, wildfires, the Windy map, the Smart device tile
-  (`haEntity.ts`; cameras and `HA_EVERY` stay in `ha.ts`), Oura and Indoor air (Airthings) load this way, and `next.config.ts` gives each file the same
+  (`haEntity.ts`; cameras and `HA_EVERY` stay in `ha.ts`), Oura, Indoor air (Airthings) and Highway cameras (DriveBC) load this way, and `next.config.ts` gives each file the same
   immutable cache header as display.js.
 - **Budget:** the display's script stays under 80 KB gzipped and its stylesheet under 20 KB (`scripts/bundle-check.mjs`,
   a CI step; CSS raised from 10 KB on 2026-11-23 for more clock styles; script raised from 40 KB by Melvin on 2026-11-25: "double the size of the limit"). A new dependency on the display needs a very good reason.
@@ -600,6 +604,21 @@ panel can be complex if you need it to be."
   after its time on the wall's own clock and labels conditions older than 15 minutes with their time. Its field names
   come from the project's published JSON schema (`schemas/bc-ferries-api-v2-capacity-schema.json`); this sandbox can't
   reach it, so tests use that shape.
+- **DriveBC highway cameras** (`src/server/drivebc.ts`, setup `docs/drivebc.md`): the Ministry of Transportation's
+  public cameras under the Open Government Licence – British Columbia, no key. The camera list and status come from
+  DriveBC's own site feed (`www.drivebc.ca/api/webcams/`, cached ten minutes, parsed leniently since it has no
+  published schema: `is_on`, `marked_stale`/`marked_delayed`, `last_update_modified`, GeoJSON `location`); the older
+  `images.drivebc.ca/webcam/api/v1` is abandoned (months-old readings) and isn't used. The widget settings' search
+  (`/api/household/drivebc/`, name, place, "hwy 1" or id, nearest home first) falls back to the BC Data Catalogue's
+  monthly `webcams.csv` when the site feed fails. A widget keeps up to four cameras as `{ id, name }`. Pictures are
+  `www.drivebc.ca/images/<id>.jpg` (the old `bchighwaycam/pub/cameras/` addresses broke when DriveBC moved them),
+  served through `/api/display/drivebc/image/?c=<id>` only for cameras on the household's widgets, checked to be a
+  JPEG and kept a minute in memory for every display; the service worker leaves them alone. Displays poll
+  `/api/display/drivebc/` every five minutes for each camera's last new picture and state (`ok`, `late` when DriveBC
+  marks it or it hasn't changed in 20 minutes, `off`). The widget loads on its own (`drivebc.js`), swaps each picture
+  in only once it has loaded, fetches nothing while the screen saver is up or the page is hidden, and in "one at a
+  time" loads only the camera on screen. The wall credits "DriveBC · OGL-BC"; the settings carry the licence line.
+  This sandbox can't reach drivebc.ca, so tests use the catalogue CSV's published header and DriveBC's field names.
 - **Earth wind map:** earth.nullschool.net (Cameron Beccario's site) in an `<iframe>`; checked 2026-11-21: it sends no
   `X-Frame-Options` or `frame-ancestors`, and its script handles being framed itself (it blocks only a few named
   sites, hides its app banner and uses its lighter 1° data in a frame). Everything it shows is set by the address's

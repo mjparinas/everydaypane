@@ -161,6 +161,12 @@ const server = createServer((req, res) => {
     return;
   }
 
+  if (pathname.startsWith("/api/display/drivebc/image")) {
+    res.writeHead(200, { "Content-Type": "image/svg+xml", "Cache-Control": "no-store" });
+    res.end(readSample("highway-cam.svg"));
+    return;
+  }
+
   if (pathname.startsWith("/api/display/art")) {
     res.writeHead(200, { "Content-Type": "image/svg+xml", "Cache-Control": "no-store" });
     res.end(readSample("album-art.svg"));

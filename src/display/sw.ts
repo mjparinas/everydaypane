@@ -171,6 +171,8 @@ sw.addEventListener("fetch", (e) => {
   // Camera frames are live (every one has its own URL): an old frame offline would mislead, and keeping each one
   // would fill the cache.
   if (url.pathname.startsWith("/api/display/camera/")) return;
+  // DriveBC highway pictures are the same: one address per refresh, and an old road picture offline would mislead.
+  if (url.pathname.startsWith("/api/display/drivebc/image/")) return;
   // Album art is one address per track and the browser's own cache keeps it (Cache-Control), so the offline copy
   // doesn't collect one picture per song.
   if (url.pathname.startsWith("/api/display/art/")) return;

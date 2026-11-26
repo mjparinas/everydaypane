@@ -357,6 +357,15 @@ export const WIDGETS: { [T in WidgetType]: WidgetInfo<T> } = {
       ringSeconds: 10,
     }),
   },
+  drivebc: {
+    label: "Highway cameras",
+    description: "DriveBC pictures of the highways you drive",
+    icon: "🛣️",
+    size: { w: 4, h: 3 },
+    minSize: { w: 2, h: 2 },
+    supportsFontScale: false,
+    defaults: () => ({ cameras: [], refreshSeconds: 120, layout: "grid" as const, cycleSeconds: 15, showName: true }),
+  },
   ferries: {
     label: "BC Ferries",
     description: "Next sailings and how full they are",
@@ -658,7 +667,21 @@ export const WIDGET_GROUPS: { id: string; label: string; types: WidgetType[] }[]
   {
     id: "home",
     label: "Home",
-    types: ["haEntity", "camera", "media", "unifi", "wifiQr", "editQr", "garbage", "commute", "transit", "ferries", "internet", "ecoflow"],
+    types: [
+      "haEntity",
+      "camera",
+      "media",
+      "unifi",
+      "wifiQr",
+      "editQr",
+      "garbage",
+      "commute",
+      "transit",
+      "ferries",
+      "drivebc",
+      "internet",
+      "ecoflow",
+    ],
   },
   { id: "media", label: "Outside", types: ["photos", "sports", "alerts", "note"] },
   {

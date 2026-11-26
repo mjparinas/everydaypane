@@ -529,6 +529,25 @@ export interface TempestData {
   stale?: boolean;
 }
 
+/** One DriveBC highway camera as a display gets it (src/server/drivebc.ts). */
+export interface DriveBcCamera {
+  id: string;
+  name: string;
+  caption: string;
+  /** Epoch ms of the camera's last new picture, or null when DriveBC didn't say. */
+  updated: number | null;
+  /** DriveBC has switched the camera off, or marked its picture delayed or stale. */
+  state: "ok" | "late" | "off";
+}
+
+export interface DriveBcData {
+  updatedAt: number;
+  /** Cameras on this household's widgets that DriveBC's list knows; a camera missing here still shows its picture. */
+  cameras: DriveBcCamera[];
+  /** DriveBC's camera list didn't answer, so there is no status this time. */
+  down: boolean;
+}
+
 /** One Airthings reading as a display gets it (src/server/airthings.ts): already in the dashboard's units. */
 export interface AirthingsReading {
   kind: "radon" | "co2" | "voc" | "pm25" | "pm1" | "humidity" | "temp";
