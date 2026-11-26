@@ -1155,7 +1155,6 @@ function HouseholdsTab({
                 />
               </div>
             )}
-            <HouseholdFlags accountId={h.id} flash={flash} canWrite={canWrite} />
             <div>
               <h4 className="font-bold">Notes</h4>
               <ul className="mb-2 grid gap-2 text-sm">
@@ -1500,11 +1499,9 @@ type FlagRow = {
   group: string;
   value: boolean;
   fromDefault: boolean;
-  override?: boolean | null;
-  effective?: boolean;
 };
 
-/** Search and "changed only" filtering shared by the platform tab and a household's overrides. */
+/** Search and "changed only" filtering for the Flags tab. */
 function useFlagFilter(flags: FlagRow[] | undefined, changed: (f: FlagRow) => boolean) {
   const [q, setQ] = useState("");
   const [onlyChanged, setOnlyChanged] = useState(false);
@@ -1533,7 +1530,8 @@ function useFlagFilter(flags: FlagRow[] | undefined, changed: (f: FlagRow) => bo
 
 // Feature flags (Melvin, 2026-11-26): one switch per widget, smart-home provider, music service, to-do service and
 // photo source, from the registry in src/lib/featureFlags.ts. Off hides it from every household's picker and
-// Settings and drops it from their walls; a household's own override (on its page under Households) wins.
+// Settings and drops it from their walls. Platform-wide only, with no per-household override (Melvin, 2026-11-26:
+// widgets still under development must not be switched on for one household).
 function FlagsTab({ flash, canWrite }: { flash: Flash; canWrite: boolean }) {
   const { data, reload, error } = useFetch<{ flags: FlagRow[] }>("/api/admin/flags/");
   const [busy, setBusy] = useState<string | null>(null);
@@ -1550,10 +1548,7 @@ function FlagsTab({ flash, canWrite }: { flash: Flash; canWrite: boolean }) {
   };
   return (
     <>
-      <Card
-        title="Feature flags"
-        sub={`${data.flags.length} widgets and integrations · ${off} off for everyone. A household's own override wins (Households › open one).`}
-      >
+      <Card title="Feature flags" sub={`${data.flags.length} widgets and integrations · ${off} off for everyone.`}>
         {controls}
         {shown.length === 0 && <p className="mt-3 text-sm text-soft">Nothing matches.</p>}
       </Card>
@@ -1602,86 +1597,6 @@ function FlagsTab({ flash, canWrite }: { flash: Flash; canWrite: boolean }) {
         </Card>
       ))}
     </>
-  );
-}
-
-/** One household's overrides of the platform flags, on its page under Households. */
-function HouseholdFlags({ accountId, flash, canWrite }: { accountId: string; flash: Flash; canWrite: boolean }) {
-  const { data, reload, error } = useFetch<{ flags: FlagRow[] }>(`/api/admin/flags/?account=${encodeURIComponent(accountId)}`, [accountId]);
-  const [busy, setBusy] = useState<string | null>(null);
-  const [open, setOpen] = useState(false);
-  const { shown, groups, controls } = useFlagFilter(data?.flags, (f) => f.override != null || !f.value);
-  if (error) return <p className="text-bad">{error}</p>;
-  if (!data) return <Bones />;
-  const overrides = data.flags.filter((f) => f.override != null).length;
-  const off = data.flags.filter((f) => f.effective === false).length;
-  const set = (f: FlagRow, value: boolean | null) => {
-    setBusy(f.name);
-    const ok = value === null ? `${f.label} follows the platform` : `${f.label} ${value ? "on" : "off"} for this household`;
-    void mutate(
-      () =>
-        api("/api/admin/flags/", { method: "POST", body: JSON.stringify({ op: "household", account: accountId, name: f.name, value }) }),
-      flash,
-      ok,
-      { ms: 4000 },
-    ).then((done) => {
-      setBusy(null);
-      if (done) reload();
-    });
-  };
-  return (
-    <div className="grid gap-2">
-      <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <h4 className="font-bold">Feature flags</h4>
-        <button type="button" className="btn-ghost text-sm" aria-expanded={open} onClick={() => setOpen((o) => !o)}>
-          {open ? "Hide" : "Show"} ({overrides} overridden · {off} off)
-        </button>
-      </div>
-      {open && (
-        <>
-          <p className="text-sm text-soft">
-            Override a platform switch for this household only. Their walls reload with the change; settings are kept.
-          </p>
-          {controls}
-          {groups.map((g) => (
-            <div key={g} className="grid gap-1">
-              <p className="text-xs font-bold tracking-wide text-soft uppercase">{g}</p>
-              <ul className="grid gap-1">
-                {shown
-                  .filter((f) => f.group === g)
-                  .map((f) => (
-                    <li key={f.name} className="flex flex-wrap items-center justify-between gap-2 text-sm">
-                      <span>
-                        {f.label}
-                        {f.override == null ? (
-                          <span className="text-xs text-soft"> · platform {f.value ? "on" : "off"}</span>
-                        ) : (
-                          <span className="text-xs font-semibold"> · overridden</span>
-                        )}
-                      </span>
-                      {canWrite ? (
-                        <select
-                          className="field w-auto"
-                          aria-label={`${f.label} for this household`}
-                          disabled={busy === f.name}
-                          value={f.override == null ? "platform" : f.override ? "on" : "off"}
-                          onChange={(e) => set(f, e.target.value === "platform" ? null : e.target.value === "on")}
-                        >
-                          <option value="platform">Platform ({f.value ? "on" : "off"})</option>
-                          <option value="on">On</option>
-                          <option value="off">Off</option>
-                        </select>
-                      ) : (
-                        <span className="font-semibold">{f.effective ? "On" : "Off"}</span>
-                      )}
-                    </li>
-                  ))}
-              </ul>
-            </div>
-          ))}
-        </>
-      )}
-    </div>
   );
 }
 

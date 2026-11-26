@@ -336,7 +336,7 @@ export function LiveLayoutEditor({
                         : "border-transparent hover:border-brand/50"
                 } ${dragging && ok ? "bg-brand/15 shadow-lg" : ""}`}
                 style={{ gridColumn: `${r.x + 1} / span ${r.w}`, gridRow: `${r.y + 1} / span ${r.h}` }}
-                onPointerDown={(e) => start(e, w, "move")}
+                onPointerDown={(e) => start(e, w, cornerUnder(e) ?? "move")}
                 onPointerMove={(e) => move(e, w)}
                 onPointerUp={(e) => end(e, w)}
                 onPointerCancel={() => setDrag(null)}
@@ -368,6 +368,29 @@ export function LiveLayoutEditor({
       </div>
     </div>
   );
+}
+
+/** The handles are 20 px squares (`h-5 w-5`). */
+const HANDLE_PX = 20;
+
+/**
+ * A mouse press in a corner's handle square resizes from that corner even when the handle isn't drawn at that
+ * moment. Handles show on hover or focus, and a press that lands just as the widget loses focus (or before the
+ * browser has applied hover) used to hit the tile and move it instead (seen in CI, 2026-11-26). Touch keeps
+ * moving the tile, since a phone shows no handles until a tap selects it.
+ */
+function cornerUnder(e: React.PointerEvent<HTMLElement>): Corner | null {
+  if (e.pointerType === "touch") return null;
+  const r = e.currentTarget.getBoundingClientRect();
+  const left = e.clientX - r.left < HANDLE_PX;
+  const right = r.right - e.clientX < HANDLE_PX;
+  const top = e.clientY - r.top < HANDLE_PX;
+  const bottom = r.bottom - e.clientY < HANDLE_PX;
+  if (top && left) return "nw";
+  if (top && right) return "ne";
+  if (bottom && left) return "sw";
+  if (bottom && right) return "se";
+  return null;
 }
 
 const HANDLE: Record<Corner, string> = {

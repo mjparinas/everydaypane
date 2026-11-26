@@ -11,7 +11,7 @@ import { createReport, listReports, updateReport } from "@/server/adminReports";
 import { revenueSummary, saveRunningCosts, type RunningCost } from "@/server/adminRevenue";
 import { systemHealth } from "@/server/adminSystem";
 import { addTask, completeTask, derivedTodo, hideTodo, listManualTasks } from "@/server/adminTodo";
-import { clearFlag, listFlags, listHouseholdFlags, setFlag, setHouseholdFlag } from "@/server/featureFlags";
+import { clearFlag, listFlags, setFlag } from "@/server/featureFlags";
 import { json, notFound, readJson } from "@/server/http";
 import { listHouseholdsForStaff } from "@/server/staffAccounts";
 
@@ -86,11 +86,8 @@ export async function GET(req: Request, ctx: Ctx) {
         })),
       });
     }
-    case "flags": {
-      const account = url.searchParams.get("account");
-      if (account) return json({ flags: await listHouseholdFlags(account) });
+    case "flags":
       return json({ flags: await listFlags() });
-    }
     case "automations":
       return json({ automations: await getAutomations(), adminCount: [...(await import("@/server/env")).env.adminEmails()].length });
     case "system":
@@ -211,15 +208,6 @@ export async function POST(req: Request, ctx: Ctx) {
     case "flags": {
       const name = String(body.name || "");
       try {
-        if (body.op === "household") {
-          // One household's override: true / false, or null to follow the platform again.
-          const account = String(body.account || "");
-          if (!account) return json({ error: "Pick a household" }, 400);
-          const value = body.value === null || body.value === undefined ? null : Boolean(body.value);
-          await setHouseholdFlag(account, name, value);
-          await audit(gate.staff.email, "flags.household", account, { name, value });
-          return json({ ok: true });
-        }
         if (body.op === "clear") {
           await clearFlag(name);
           await audit(gate.staff.email, "flags.clear", name);

@@ -6,6 +6,6 @@ import { accountIdOf, viewerFor } from "@/server/viewer";
 export async function GET(req: Request) {
   const viewer = await viewerFor(req);
   if (!viewer) return unauthorized();
-  if (!(await featureOn(accountIdOf(viewer), "widget.unifi"))) return notFound();
+  if (!(await featureOn("widget.unifi"))) return notFound();
   return json(await unifiFeed(accountIdOf(viewer)));
 }
