@@ -1,7 +1,7 @@
 import type { BoardMessage } from "@/lib/display/types";
 
 import { refresh, send, subscribe } from "../api";
-import { fill, h } from "../dom";
+import { dropOverflow, fill, h, keepFitted } from "../dom";
 import { everyMinute } from "../ticker";
 import type { Mount } from "./types";
 
@@ -26,6 +26,7 @@ export const messages: Mount<"messages"> = (el, w) => {
   let message = "";
   let colour: (typeof COLOURS)[number] = "yellow";
 
+  const fit = () => dropOverflow(root, ".msg");
   const draw = (now: number) => {
     if (!list) return;
     const shown = list.slice(0, w.count);
@@ -58,6 +59,7 @@ export const messages: Mount<"messages"> = (el, w) => {
       w.allowAdd ? buildAdd() : null,
       note,
     );
+    fit();
   };
 
   const buildAdd = () => {
@@ -110,8 +112,10 @@ export const messages: Mount<"messages"> = (el, w) => {
     draw(Date.now());
   });
   const stopTick = everyMinute((now) => draw(now.getTime()));
+  const stopFit = keepFitted(el, fit);
   return () => {
     stopFeed();
     stopTick();
+    stopFit();
   };
 };

@@ -157,6 +157,7 @@ Dark marketing/admin tokens flip paper to night navy (`{colors.bg-night}` … `{
 ### Named Rules
 **The Wordmark Rule.** Product name is Everydaypane; the mark paints everyday**pane** with “pane” in Kitchen Indigo (or sun-on-indigo in inverted email headers). Do not invent EverydayPane / Everyday Pane in UI chrome.
 **The Two-Family Rule.** Marketing/display voice = Manrope; operational UI body = Inter. Wall themes may swap Inter for Outfit, DM Sans, Literata, Space Grotesk — that choice stays on the wall.
+**The Wall Floor Rule** (design review, Melvin, 2026-11-26). The wall is read from two to three metres, so no text on `/display/` goes under **16 px** (`--t-meta`: labels, times, places, captions) and secondary lines stay at least **18 px** (`--t-small`); primary rows aim for 28 px and up. Floors are `max(… , var(--t-meta))` or a `clamp()` minimum, never a bare small `em`. Lists and short texts are sized for the **whole tile** and step down only when they overflow (`fillTile` in `src/display/dom.ts`); when a list still doesn't fit at the floor, the last rows are **hidden whole** (`dropOverflow`) rather than shrunk or cut in half. Tall, narrow tiles stack (agenda, countdowns) instead of squeezing a row. Exceptions: the dense month grid and map credits.
 
 ## Layout
 

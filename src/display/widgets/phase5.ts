@@ -17,7 +17,7 @@ import type {
 import { instagramEmbedUrl, mapsEmbedUrl, tradingViewUrl, vimeoEmbedUrl, youtubeEmbedUrl } from "@/lib/embeds";
 
 import { subscribe } from "../api";
-import { fill, h } from "../dom";
+import { fill, fillTile, h } from "../dom";
 import { mountIframe } from "./iframeMount";
 import type { Mount } from "./types";
 
@@ -171,16 +171,22 @@ export const news = feedListMount("news");
 export const dadJoke: Mount<"dadJoke"> = (el, w) => {
   const root = h("div", { class: "w-joke" }, h("div", { class: "w-empty" }, "Loading…"));
   el.append(root);
-  return subscribe<DadJokeData>(`dad-joke?safe=${w.familyFriendly ? "1" : "0"}`, 10 * 60_000, (d) =>
-    fill(root, h("p", { class: "p5-quote" }, d.joke || "No joke right now.")),
+  return fitted(el, root, (fit) =>
+    subscribe<DadJokeData>(`dad-joke?safe=${w.familyFriendly ? "1" : "0"}`, 10 * 60_000, (d) => {
+      fill(root, h("p", { class: "p5-quote" }, d.joke || "No joke right now."));
+      fit();
+    }),
   );
 };
 
 export const quotes: Mount<"quotes"> = (el, w) => {
   const root = h("div", { class: "w-quotes" }, h("div", { class: "w-empty" }, "Loading…"));
   el.append(root);
-  return subscribe<QuotesData>(`quotes?count=${w.count}&tags=${encodeURIComponent(w.tags.join(","))}`, 15 * 60_000, (d) =>
-    fill(root, ...d.quotes.map((q) => h("blockquote", { class: "p5-quote" }, q.text, h("cite", {}, `— ${q.author}`)))),
+  return fitted(el, root, (fit) =>
+    subscribe<QuotesData>(`quotes?count=${w.count}&tags=${encodeURIComponent(w.tags.join(","))}`, 15 * 60_000, (d) => {
+      fill(root, ...d.quotes.map((q) => h("blockquote", { class: "p5-quote" }, q.text, h("cite", {}, `— ${q.author}`))));
+      fit();
+    }),
   );
 };
 
@@ -188,10 +194,23 @@ export const affirmation: Mount<"affirmation"> = (el, w) => {
   const root = h("div", { class: "w-affirm" }, h("div", { class: "w-empty" }, "Loading…"));
   el.append(root);
   const custom = encodeURIComponent(w.custom.join("\n"));
-  return subscribe<AffirmationData>(`affirmation?category=${encodeURIComponent(w.category)}&custom=${custom}`, 60 * 60_000, (d) =>
-    fill(root, h("p", { class: "p5-quote" }, d.text)),
+  return fitted(el, root, (fit) =>
+    subscribe<AffirmationData>(`affirmation?category=${encodeURIComponent(w.category)}&custom=${custom}`, 60 * 60_000, (d) => {
+      fill(root, h("p", { class: "p5-quote" }, d.text));
+      fit();
+    }),
   );
 };
+
+// A joke, quote or affirmation is sized for the whole tile and steps down only when it's long (design review, 2026-11-26).
+function fitted(el: HTMLElement, root: HTMLElement, start: (fit: () => void) => () => void): () => void {
+  const tile = fillTile(el, root, 18);
+  const stop = start(tile.fit);
+  return () => {
+    stop();
+    tile.stop();
+  };
+}
 
 export const horoscope: Mount<"horoscope"> = (el, w) => {
   const root = h("div", { class: "w-horoscope" }, h("div", { class: "w-empty" }, "Loading…"));
