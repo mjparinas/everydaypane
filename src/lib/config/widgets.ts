@@ -105,11 +105,11 @@ export const WIDGETS: { [T in WidgetType]: WidgetInfo<T> } = {
   },
   countdown: {
     label: "Countdown",
-    description: "Days until holidays and birthdays",
+    description: "Days until holidays, birthdays and anniversaries, with photos",
     icon: "🎉",
     size: { w: 3, h: 3 },
     minSize: { w: 2, h: 1 },
-    defaults: () => ({ events: [], count: 4 }),
+    defaults: () => ({ events: [], count: 4, celebrate: true }),
   },
   agenda: {
     label: "Schedule",
@@ -314,12 +314,12 @@ export const WIDGETS: { [T in WidgetType]: WidgetInfo<T> } = {
     defaults: () => ({ stationId: "iwls:07577", stationName: "White Rock", count: 4, showHeight: true, showCurve: true }),
   },
   transit: {
-    label: "TransLink",
-    description: "Next buses from your stops, live",
+    label: "Transit departures",
+    description: "Next buses and trains from your stops, live (TransLink, TTC, Calgary, Edmonton, Halifax, King County Metro)",
     icon: "🚌",
     size: { w: 5, h: 3 },
     minSize: { w: 2, h: 2 },
-    defaults: () => ({ stops: [], routes: [], count: 4, walkMinutes: 0 }),
+    defaults: () => ({ agency: "translink", stops: [], routes: [], count: 4, walkMinutes: 0 }),
   },
   camera: {
     label: "Camera",
@@ -443,6 +443,14 @@ export const WIDGETS: { [T in WidgetType]: WidgetInfo<T> } = {
     minSize: { w: 2, h: 2 },
     defaults: () => ({ crossings: [...BORDER_DEFAULT_CROSSINGS], directions: "both" as const, showNexus: false }),
   },
+  gasPrices: {
+    label: "Gas prices",
+    description: "The cheapest gas stations near home",
+    icon: "⛽",
+    size: { w: 3, h: 3 },
+    minSize: { w: 2, h: 2 },
+    defaults: () => ({ fuel: "regular" as const, radiusKm: 5, count: 4, sort: "price" as const, showAddress: false }),
+  },
   sports: {
     label: "Sports scores",
     description: "Live scores and next games for your teams",
@@ -513,6 +521,14 @@ export const WIDGETS: { [T in WidgetType]: WidgetInfo<T> } = {
     size: { w: 3, h: 2 },
     minSize: { w: 2, h: 1 },
     defaults: () => ({ schools: [] }),
+  },
+  schoolDays: {
+    label: "School days",
+    description: "School today or not, Pro-D days, breaks and hot lunch",
+    icon: "🎒",
+    size: { w: 3, h: 3 },
+    minSize: { w: 2, h: 2 },
+    defaults: () => ({ count: 3, showLunch: true }),
   },
   whiteboard: {
     label: "Whiteboard",
@@ -761,7 +777,11 @@ export const WIDGET_GROUPS: { id: string; label: string; types: WidgetType[] }[]
     label: "Calendar",
     types: ["agenda", "calendarMonth", "calendarWeek", "calendarUpNext", "countdown", "tasks", "packages", "tides"],
   },
-  { id: "family", label: "Family", types: ["meals", "menus", "shopping", "messages", "chores", "whiteboard", "school", "presence"] },
+  {
+    id: "family",
+    label: "Family",
+    types: ["meals", "menus", "shopping", "messages", "chores", "whiteboard", "school", "schoolDays", "presence"],
+  },
   {
     id: "home",
     label: "Home",
@@ -778,6 +798,7 @@ export const WIDGET_GROUPS: { id: string; label: string; types: WidgetType[] }[]
       "ferries",
       "drivebc",
       "borderWait",
+      "gasPrices",
       "internet",
       "ecoflow",
       "rachio",

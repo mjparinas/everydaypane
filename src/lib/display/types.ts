@@ -1,5 +1,6 @@
 import type { BriefSource } from "@/lib/briefSources";
 import type { DashboardConfig, Theme, View } from "@/lib/config/schema";
+import type { SchoolDayOff } from "@/lib/schoolCalendar";
 
 // What a display receives: the parts of the settings document it needs, nothing secret. Built by
 // src/lib/display/payload.ts, read by src/display/. Types only, so the display bundle carries no schema code.
@@ -287,7 +288,8 @@ export interface SportsData {
 }
 
 export type AlertSeverity = "extreme" | "severe" | "moderate" | "minor";
-export type AlertSource = "alertReady" | "weather" | "roads" | "earthquakes" | "power" | "evacuations" | "indoorAir" | "pool" | "laundry";
+export type AlertSource =
+  "alertReady" | "weather" | "roads" | "earthquakes" | "power" | "evacuations" | "indoorAir" | "pool" | "laundry" | "smart";
 
 /** One emergency alert for the area, from any source (src/server/alerts.ts). */
 export interface EmergencyAlert {
@@ -501,6 +503,19 @@ export interface SchoolData {
   districtName: string;
 }
 
+/** The school year for the School days widget (src/server/schoolDays.ts); the wall works out today itself. */
+export interface SchoolDaysData {
+  updatedAt: number;
+  calendarName: string;
+  firstDay: string;
+  lastDay: string;
+  daysOff: SchoolDayOff[];
+  /** Monday to Friday. */
+  lunches: string[];
+  /** A school calendar link that couldn't be read (its days are missing). */
+  error?: string;
+}
+
 /** One person on the who's-home strip (drawn from the shared HA feed). */
 export interface PresencePerson {
   entityId: string;
@@ -526,10 +541,12 @@ export interface TransitDeparture {
 
 export interface TransitData {
   updatedAt: number;
-  /** False until TRANSLINK_API_KEY is set in Vercel. */
+  /** False until TRANSLINK_API_KEY is set in Vercel. Only TransLink widgets look at it: the other agencies need no key. */
   configured: boolean;
-  /** Stop id → its next departures, soonest first. */
+  /** stopKey(agency, stop id) → its next departures, soonest first (TransLink's stops keep their bare id). */
   stops: Record<string, TransitDeparture[]>;
+  /** Agencies whose feed couldn't be read on the last try; the others still show. */
+  failed?: string[];
 }
 
 /** WeatherFlow Tempest / AIR observation (src/server/tempest.ts). */

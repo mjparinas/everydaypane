@@ -3,6 +3,7 @@ import "server-only";
 import { distanceKm, insidePolygon, rank } from "@/lib/alerts";
 import type { DashboardConfig } from "@/lib/config/schema";
 import type { AlertData, AlertSeverity, EmergencyAlert } from "@/lib/display/types";
+import { regionOf } from "@/lib/regions";
 import { zonedFormatter } from "@/lib/timeZone";
 
 import { cached } from "./cache";
@@ -23,15 +24,25 @@ import { arcgisQuery, envelope, evacuationKind, EVACUATIONS_URL, type ArcFeature
 //   (wildfire, flood, landslide), read from the same public ArcGIS service as the wildfire widget. One covering the home
 //   is extreme (an order) or severe (an alert); one within `evacuationKm` is moderate or minor.
 //
+// Regional packs (Melvin, 2026-11-26): the household's region (src/lib/regions.ts) picks which of these apply. Outside
+// B.C. there is no DriveBC, BC Hydro or EmergencyInfoBC; in the U.S. the National Weather Service replaces NAAD and
+// USGS replaces Earthquakes Canada (USGS is worldwide, so it is the catalogue outside both countries too); in Québec
+// Hydro-Québec's outage map replaces BC Hydro's.
+//
 // Each source is fetched and cached on its own, so one being down never hides the others.
 
 const NAAD_FEED = "https://rss.naad-adna.pelmorex.com/";
 const OPEN511 = "https://api.open511.gov.bc.ca/events";
 const QUAKES = "https://earthquakescanada.nrcan.gc.ca/fdsnws/event/1/query";
 const BC_HYDRO = "https://www.bchydro.com/power-outages/app/outages-map-data.json";
+const NWS = "https://api.weather.gov/alerts/active";
+const USGS = "https://earthquake.usgs.gov/fdsnws/event/1/query";
+const HYDRO_QUEBEC = "https://pannes.hydroquebec.com/pannes/donnees/v3_0/";
+/** NWS asks every reader to name itself and a way to reach it in the User-Agent. */
+const NWS_AGENT = "Everydaypane/1.0 (+https://www.everydaypane.com/contact/)";
 
-async function getText(url: string): Promise<string> {
-  const r = await fetch(url, { headers: { "User-Agent": "Everydaypane/1.0" }, signal: AbortSignal.timeout(10_000) });
+async function getText(url: string, headers: Record<string, string> = {}): Promise<string> {
+  const r = await fetch(url, { headers: { "User-Agent": "Everydaypane/1.0", ...headers }, signal: AbortSignal.timeout(10_000) });
   if (!r.ok) throw new Error(`${new URL(url).host} answered ${r.status}`);
   return r.text();
 }
@@ -341,6 +352,141 @@ export function parseEvacuations(
   return out;
 }
 
+// ---- National Weather Service (U.S.) ----
+
+interface NwsFeature {
+  id?: string;
+  properties?: {
+    id?: string;
+    areaDesc?: string;
+    sent?: string;
+    effective?: string;
+    expires?: string;
+    ends?: string | null;
+    status?: string;
+    messageType?: string;
+    severity?: string;
+    event?: string;
+    headline?: string | null;
+    description?: string | null;
+    instruction?: string | null;
+  };
+}
+
+/**
+ * Active NWS alerts for the home's point (api.weather.gov answers only alerts whose zones cover it, so no geometry is
+ * checked here). Tests, cancellations and ended alerts are left out; NWS's "Unknown" severity counts as minor.
+ */
+export function parseNws(raw: unknown, now: number): EmergencyAlert[] {
+  const features = (raw as { features?: NwsFeature[] } | null)?.features ?? [];
+  const out: EmergencyAlert[] = [];
+  for (const f of features) {
+    const p = f.properties ?? {};
+    const id = p.id ?? f.id;
+    if (!id || (p.status && p.status !== "Actual") || p.messageType === "Cancel") continue;
+    const ends = Date.parse(p.ends ?? p.expires ?? "");
+    if (Number.isFinite(ends) && ends <= now) continue;
+    const sent = Date.parse(p.sent ?? p.effective ?? "");
+    out.push({
+      id: `nws:${id}`,
+      source: "weather",
+      severity: CAP_SEVERITY[(p.severity ?? "").toLowerCase()] ?? "minor",
+      title: clip(p.event || p.headline || "Weather alert", 120),
+      area: clip(p.areaDesc ?? "", 160),
+      description: clip([p.headline, p.description, p.instruction].filter(Boolean).join(" ").replace(/\s+/g, " ").trim(), 700),
+      sent: Number.isFinite(sent) ? sent : now,
+      expires: Number.isFinite(ends) ? ends : null,
+    });
+  }
+  return out;
+}
+
+// ---- USGS earthquakes ----
+
+interface UsgsFeature {
+  id?: string;
+  properties?: { mag?: number | null; place?: string | null; time?: number };
+  geometry?: { coordinates?: number[] };
+}
+
+/** USGS's GeoJSON (coordinates are lon, lat, depth in km; times epoch ms), graded like Earthquakes Canada's. */
+export function parseUsgs(raw: unknown, at: { lat: number; lon: number }, radiusKm: number, minMagnitude: number): EmergencyAlert[] {
+  const features = (raw as { features?: UsgsFeature[] } | null)?.features ?? [];
+  const out: EmergencyAlert[] = [];
+  for (const f of features) {
+    const m = Number(f.properties?.mag);
+    const [lo, la, depth] = f.geometry?.coordinates ?? [];
+    if (!f.id || !Number.isFinite(m) || m < minMagnitude || typeof la !== "number" || typeof lo !== "number") continue;
+    const km = distanceKm(at.lat, at.lon, la, lo);
+    if (km > radiusKm) continue;
+    out.push({
+      id: `usgs:${f.id}`,
+      source: "earthquakes",
+      severity: m >= 6.5 ? "extreme" : m >= 5.5 ? "severe" : m >= 4.5 ? "moderate" : "minor",
+      title: `Magnitude ${m.toFixed(1)} earthquake`,
+      area: clip((f.properties?.place ?? "").trim() || "Near you", 120),
+      description: `${Math.round(km)} km away, ${Math.round(Number(depth) || 0)} km deep.`,
+      sent: Number(f.properties?.time) || 0,
+      expires: null,
+    });
+  }
+  return out;
+}
+
+// ---- Hydro-Québec ----
+
+/** "2026-11-25 16:15:00" in Québec's local time → a clock time, read as written (no zone maths needed to show it). */
+function localClock(s: string, hour12: boolean): string {
+  const m = /^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2})/.exec(s);
+  if (!m) return "";
+  const at = Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3]), Number(m[4]), Number(m[5]));
+  return zonedFormatter("UTC", { hour: "numeric", minute: "2-digit", weekday: "short", hour12 }).format(at);
+}
+
+/**
+ * Hydro-Québec's outage map (bismarkers<version>.json, checked 2026-11-26): `pannes` is a list of rows, by position:
+ * customers out, start, estimated end ("" when unknown), "I" (outage) or "P" (planned work), "[lon, lat]" as a string,
+ * then status and cause codes. There is no outline, only a point, so an outage within 1 km of home is "severe" and one
+ * within `radiusKm` is moderate from 1,000 customers out and minor below, like BC Hydro's.
+ */
+export function parseHydroQuebec(raw: unknown, at: { lat: number; lon: number }, radiusKm: number, hour12: boolean): EmergencyAlert[] {
+  const rows = (raw as { pannes?: unknown[] } | null)?.pannes;
+  if (!Array.isArray(rows)) return [];
+  const out: EmergencyAlert[] = [];
+  for (const row of rows) {
+    if (!Array.isArray(row)) continue;
+    const [count, start, end, kind, where] = row as unknown[];
+    let point: unknown;
+    try {
+      point = typeof where === "string" ? JSON.parse(where) : where;
+    } catch {
+      continue;
+    }
+    const [lon, lat] = Array.isArray(point) ? (point as unknown[]) : [];
+    if (typeof lat !== "number" || typeof lon !== "number") continue;
+    const km = distanceKm(at.lat, at.lon, lat, lon);
+    if (km > Math.max(1, radiusKm)) continue;
+    const customers = Math.max(0, Math.round(Number(count) || 0));
+    const planned = kind === "P";
+    const close = km <= 1;
+    const back = typeof end === "string" && end ? localClock(end, hour12) : "";
+    out.push({
+      id: `hydroquebec:${String(start)}:${lat.toFixed(4)},${lon.toFixed(4)}`,
+      source: "power",
+      severity: close ? "severe" : customers >= 1000 ? "moderate" : "minor",
+      title: clip(
+        `${planned ? "Planned power interruption" : close ? "Power outage here" : "Power outage nearby"}: ${customers.toLocaleString("en-CA")} ${customers === 1 ? "customer" : "customers"}`,
+        120,
+      ),
+      area: close ? "Hydro-Québec" : `Hydro-Québec, about ${Math.max(1, Math.round(km))} km away`,
+      description: back ? `Power back by about ${back}.` : "No estimate yet for when power is back.",
+      sent: Date.parse(typeof start === "string" ? start.replace(" ", "T") : "") || 0,
+      expires: null,
+    });
+  }
+  return out;
+}
+
 // ---- Together ----
 
 const sortAlerts = (list: EmergencyAlert[]) => [...list].sort((a, b) => rank(a.severity) - rank(b.severity) || b.sent - a.sent);
@@ -350,16 +496,28 @@ export async function alertsFeed(config: DashboardConfig, now = Date.now()): Pro
   if (!a.enabled) return { updatedAt: now, alerts: [] };
   const at = { lat: config.location.latitude, lon: config.location.longitude };
   const loc = `${at.lat.toFixed(2)},${at.lon.toFixed(2)}`;
+  const region = regionOf(config);
   const jobs: Promise<EmergencyAlert[]>[] = [];
 
-  if (a.sources.alertReady || a.sources.weather) {
+  if (region.alerts === "nws" && a.sources.weather) {
+    const url = `${NWS}?${new URLSearchParams({ point: `${at.lat.toFixed(4)},${at.lon.toFixed(4)}` })}`;
+    jobs.push(
+      cached(
+        `alerts:nws:${loc}`,
+        2 * 60_000,
+        async () => parseNws(JSON.parse(await getText(url, { "User-Agent": NWS_AGENT, Accept: "application/geo+json" })), now),
+        now,
+      ).then((r) => r.value),
+    );
+  }
+  if (region.alerts === "naad" && (a.sources.alertReady || a.sources.weather)) {
     jobs.push(
       cached(`alerts:naad:${loc}`, 2 * 60_000, async () => parseNaad(await getText(NAAD_FEED), at, now), now).then((r) =>
         r.value.filter((x) => (x.source === "weather" ? a.sources.weather : a.sources.alertReady)),
       ),
     );
   }
-  if (a.sources.roads) {
+  if (region.roads === "driveBC" && a.sources.roads) {
     // Open511's bbox is in degrees: about 1° of latitude per 111 km, and longitude shrinks with latitude.
     const dLat = a.radiusKm / 111;
     const dLon = a.radiusKm / (111 * Math.cos((at.lat * Math.PI) / 180));
@@ -374,7 +532,26 @@ export async function alertsFeed(config: DashboardConfig, now = Date.now()): Pro
       ).then((r) => r.value),
     );
   }
-  if (a.sources.earthquakes) {
+  if (a.sources.earthquakes && region.quakes === "usgs") {
+    const since = new Date(now - 24 * 3_600_000).toISOString().slice(0, 19);
+    const url = `${USGS}?${new URLSearchParams({
+      format: "geojson",
+      starttime: since,
+      minmagnitude: String(a.minMagnitude),
+      latitude: at.lat.toFixed(3),
+      longitude: at.lon.toFixed(3),
+      maxradiuskm: String(a.radiusKm),
+    })}`;
+    jobs.push(
+      cached(
+        `alerts:usgs:${loc}:${a.radiusKm}:${a.minMagnitude}`,
+        5 * 60_000,
+        async () => parseUsgs(JSON.parse(await getText(url)), at, a.radiusKm, a.minMagnitude),
+        now,
+      ).then((r) => r.value),
+    );
+  }
+  if (a.sources.earthquakes && region.quakes === "nrcan") {
     const since = new Date(now - 24 * 3_600_000).toISOString().slice(0, 19);
     const url = `${QUAKES}?${new URLSearchParams({ format: "text", starttime: since, minmagnitude: String(a.minMagnitude) })}`;
     jobs.push(
@@ -387,7 +564,22 @@ export async function alertsFeed(config: DashboardConfig, now = Date.now()): Pro
     );
   }
 
-  if (a.sources.power) {
+  if (a.sources.power && region.power === "hydroQuebec") {
+    jobs.push(
+      cached(
+        `alerts:hydroquebec:${loc}:${a.powerKm}`,
+        5 * 60_000,
+        async () => {
+          // The data file's name carries a version that changes with each update; bisversion.json names the current one.
+          const version = String(JSON.parse(await getText(`${HYDRO_QUEBEC}bisversion.json`))).replace(/[^0-9]/g, "");
+          if (!version) throw new Error("Hydro-Québec sent no version");
+          return parseHydroQuebec(JSON.parse(await getText(`${HYDRO_QUEBEC}bismarkers${version}.json`)), at, a.powerKm, config.hour12);
+        },
+        now,
+      ).then((r) => r.value),
+    );
+  }
+  if (a.sources.power && region.power === "bcHydro") {
     jobs.push(
       cached(
         `alerts:power:${loc}:${a.powerKm}`,
@@ -398,7 +590,7 @@ export async function alertsFeed(config: DashboardConfig, now = Date.now()): Pro
     );
   }
 
-  if (a.sources.evacuations) {
+  if (a.sources.evacuations && region.evacuations === "emergencyInfoBC") {
     // About 1° of latitude per 111 km, and longitude shrinks with latitude; at least 1 km so 0 still finds the home.
     const km = Math.max(1, a.evacuationKm);
     const dLat = km / 111;

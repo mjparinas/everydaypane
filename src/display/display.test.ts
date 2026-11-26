@@ -220,6 +220,36 @@ describe("widgets", () => {
     expect(rows).toEqual(["🎂Sam turns 11Tomorrow", "🎄Christmas38 days"]);
     stop();
   });
+
+  it("leads with a birthday or anniversary on the day, with its photo", () => {
+    vi.useFakeTimers({ now: new Date("2026-11-17T20:00:00Z") });
+    const el = document.createElement("div");
+    const w = {
+      ...newWidget("countdown", "cd", { x: 0, y: 0 }),
+      count: 3,
+      events: [
+        { id: "a", name: "Mom & Dad", date: "2011-11-17", emoji: "", kind: "anniversary" as const, yearly: true, photo: "photo12345" },
+        { id: "b", name: "Christmas", date: "2026-12-25", emoji: "🎄", kind: "holiday" as const, yearly: true },
+        { id: "c", name: "Sam", date: "2015-12-02", emoji: "", kind: "birthday" as const, yearly: true, photo: "photo67890" },
+      ],
+    };
+    const stop = countdown(el, w, ctx);
+    expect(el.querySelector(".cd-hero-title")?.textContent).toBe("Happy anniversary, Mom & Dad!");
+    expect(el.querySelector(".cd-hero-sub")?.textContent).toBe("15 years today");
+    expect(el.querySelector<HTMLImageElement>(".cd-hero-img")?.getAttribute("src")).toContain("countdown-photo");
+    expect(el.querySelector<HTMLImageElement>(".cd-hero-img")?.getAttribute("src")).toContain("i=photo12345");
+    // The rest are ordinary rows, Sam with a small round photo; none is styled as the lead row under a celebration.
+    expect([...el.querySelectorAll(".cd-row")].map((r) => r.textContent)).toEqual(["Sam turns 1115 days", "🎄Christmas38 days"]);
+    expect(el.querySelector(".cd-row .cd-photo")).not.toBeNull();
+    expect(el.querySelector(".cd-first")).toBeNull();
+    stop();
+
+    const plain = document.createElement("div");
+    const stop2 = countdown(plain, { ...w, celebrate: false }, ctx);
+    expect(plain.querySelector(".cd-hero")).toBeNull();
+    expect(plain.querySelector(".cd-first")?.textContent).toBe("Mom & Dad 15 yearsToday!");
+    stop2();
+  });
 });
 
 describe("meals", () => {

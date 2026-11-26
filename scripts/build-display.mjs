@@ -43,6 +43,7 @@ const LAZY = [
   "snow",
   "rivers",
   "borderWait",
+  "gasPrices",
   "drivebc",
   "rachio",
   "blueRiiot",
@@ -52,6 +53,7 @@ const LAZY = [
   "aurora",
   "onThisDay",
   "brief",
+  "schoolDays",
 ];
 const sharedApi = {
   name: "shared-api",

@@ -1,0 +1,128 @@
+{
+  "updatedAt": 1795472520000,
+  "missing": "",
+  "radiusKm": 5,
+  "stations": [
+    {
+      "id": "s1",
+      "name": "Costco Gas",
+      "address": "20499 64 Ave, Langley",
+      "km": 2.1,
+      "currency": "CAD",
+      "prices": {
+        "regular": {
+          "price": 1.549,
+          "at": 1795470120000
+        },
+        "premium": {
+          "price": 1.799,
+          "at": 1795470120000
+        },
+        "diesel": {
+          "price": 1.699,
+          "at": 1795470120000
+        }
+      }
+    },
+    {
+      "id": "s2",
+      "name": "Chevron",
+      "address": "19651 Fraser Hwy, Langley",
+      "km": 1.2,
+      "currency": "CAD",
+      "prices": {
+        "regular": {
+          "price": 1.619,
+          "at": 1795462920000
+        },
+        "midgrade": {
+          "price": 1.779,
+          "at": 1795462920000
+        },
+        "premium": {
+          "price": 1.919,
+          "at": 1795462920000
+        },
+        "diesel": {
+          "price": 1.739,
+          "at": 1795462920000
+        }
+      }
+    },
+    {
+      "id": "s3",
+      "name": "Esso",
+      "address": "20180 Langley Bypass, Langley",
+      "km": 1.8,
+      "currency": "CAD",
+      "prices": {
+        "regular": {
+          "price": 1.629,
+          "at": 1795455720000
+        },
+        "midgrade": {
+          "price": 1.789,
+          "at": 1795455720000
+        },
+        "premium": {
+          "price": 1.929,
+          "at": 1795455720000
+        },
+        "diesel": {
+          "price": 1.749,
+          "at": 1795455720000
+        }
+      }
+    },
+    {
+      "id": "s4",
+      "name": "Petro-Canada",
+      "address": "5501 204 St, Langley",
+      "km": 0.9,
+      "currency": "CAD",
+      "prices": {
+        "regular": {
+          "price": 1.639,
+          "at": 1795466520000
+        },
+        "midgrade": {
+          "price": 1.799,
+          "at": 1795466520000
+        },
+        "premium": {
+          "price": 1.939,
+          "at": 1795466520000
+        },
+        "diesel": {
+          "price": 1.759,
+          "at": 1795466520000
+        }
+      }
+    },
+    {
+      "id": "s5",
+      "name": "Shell",
+      "address": "20135 Fraser Hwy, Langley",
+      "km": 1.5,
+      "currency": "CAD",
+      "prices": {
+        "regular": {
+          "price": 1.659,
+          "at": 1795452120000
+        },
+        "midgrade": {
+          "price": 1.819,
+          "at": 1795452120000
+        },
+        "premium": {
+          "price": 1.959,
+          "at": 1795452120000
+        },
+        "diesel": {
+          "price": 1.779,
+          "at": 1795452120000
+        }
+      }
+    }
+  ]
+}

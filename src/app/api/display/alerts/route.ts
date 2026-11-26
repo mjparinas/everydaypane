@@ -1,6 +1,7 @@
 import { rank } from "@/lib/alerts";
 import { indoorAlertsFor } from "@/server/airthings";
 import { notifyNewStripAlerts } from "@/server/alertNotify";
+import { ruleAlertsFor } from "@/server/alertRules";
 import { alertsFeed } from "@/server/alerts";
 import { poolAlertsFor } from "@/server/blueRiiot";
 import { loadDisplayConfig } from "@/server/featureFlags";
@@ -22,7 +23,9 @@ export async function GET(req: Request) {
     poolAlertsFor(accountId, config).catch(() => []),
     laundryAlertsFor(accountId, config).catch(() => []),
   ]);
-  const home = [...indoor, ...pool, ...laundry];
+  // Smart notices read two feeds at once (the outage rule also reads the area's alerts), so they run after.
+  const smart = await ruleAlertsFor(accountId, config, area.alerts).catch(() => []);
+  const home = [...indoor, ...pool, ...laundry, ...smart];
   const data = home.length
     ? { ...area, alerts: [...area.alerts, ...home].sort((a, b) => rank(a.severity) - rank(b.severity) || b.sent - a.sent) }
     : area;
