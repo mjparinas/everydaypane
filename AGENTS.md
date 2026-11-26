@@ -497,7 +497,9 @@ npm run templates:previews  # regenerate public/templates/*.png from real widget
   widget, switched on in Settings › Screen Saver & Alerts › Message Pop-Ups (`config.messagePopups.enabled`, Household,
   off by default, flag `feature.messagePopups`; the `widget.messages` flag switches it off too). The notes are the
   message board's, so the sender's name and the colour they picked (the board's five) come with them. Claude's calls:
-  Dismiss is per screen (localStorage, like the alert strip) and leaves the note on the board; only notes posted after
+  Dismiss is per screen and leaves the note on the board (durable across reloads, stored per display device on the
+  server, Melvin, 2026-11-26: "if i refresh the page they should not go away … dismissed message on one screen,
+  shouldnt impact the other"); only notes posted after
   a screen first read the board pop up; four at most, the rest behind "+N More"; newest by the corner; a new note wakes
   the screen saver; an admin's preview shows none (see Architecture).
 - **Canadian English** in everything a person reads (colour, centre, favourite), as in Liftsmith.
@@ -632,9 +634,13 @@ panel can be complex if you need it to be."
   typed, never the email, because the wall is readable by anyone in the kitchen. Notes can expire; admins pin. Displays
   poll the board every 30 seconds with an ETag. The kitchen edit page (`/d/<token>/edit/`) can post too (no pin).
 - **Message pop-ups** (`src/display/popups.ts`, started by `main.ts` when `payload.messagePopups.enabled` and not a
-  preview): shares the message board's 30-second `messages` feed. The first read stores the newest `createdAt` on the
-  board (server time) as `ep-popups-since`; a note pops up when it's newer and its id isn't in `ep-popups-dismissed`.
-  Turning the mode off clears both. The stack is absolutely placed bottom right (`z-index` 14: over widgets, under the
+  preview): shares the message board's 30-second `messages` feed. Each display device's state is on the server
+  (`src/server/popups.ts`, `/api/display/popups/`): `display_popups.since` is the newest `createdAt` on the board the
+  first time that device read it, and `display_popup_dismissed` holds what was dismissed on it (kept 30 days); a note
+  pops up when it's newer and not dismissed there. The wall reads it once on start and posts each dismissal, so a
+  reload, even one that lost localStorage, shows the same notes, and screens never share dismissals. localStorage
+  (`ep-popups-since`, `ep-popups-dismissed`) is only the screen's copy until the server answers or when it can't (an
+  admin's wall page, offline). Saving the settings with the mode switched off deletes every device's rows. The stack is absolutely placed bottom right (`z-index` 14: over widgets, under the
   saver, night dimming, doorbell and alert strip; lifted above the offline pill). Dismiss fades the note (opacity and
   scale), then removes it and FLIP-slides the rest down with `transform`; reduced motion skips both.
 - **Family calendar events** (Melvin, 2026-11-22): dentists, concerts and the like posted from `/family/` live in

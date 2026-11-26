@@ -8,6 +8,7 @@ import { pruneCountdownPhotos } from "./countdownPhotos";
 import { query, run } from "./db";
 import { publicHaUrl, sameHaUrl } from "./haUrl";
 import { removePhotos } from "./library";
+import { resetPopups } from "./popups";
 import { setSecret } from "./secrets";
 
 export interface StoredConfig {
@@ -100,6 +101,8 @@ export async function saveConfig(accountId: string, input: unknown, baseVersion:
   for (const source of previous.config.integrations.photos.sources) {
     if (source.kind === "library" && !kept.has(source.id)) await removePhotos(accountId, source.id);
   }
+  // Message pop-ups switched off: every screen forgets its place, so switching them on again pops nothing old.
+  if (previous.config.messagePopups.enabled && !parsed.data.messagePopups.enabled) await resetPopups(accountId);
   // Birthday and anniversary photos no countdown date uses any more; a storage hiccup never fails the save.
   await pruneCountdownPhotos(accountId, parsed.data, now).catch(() => 0);
   return { ok: true, version };

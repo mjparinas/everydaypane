@@ -61,6 +61,10 @@ const MIGRATIONS = [
   // Star rewards redeemed on the wall (src/server/chores.ts); stars_cost is kept in case the reward changes later.
   `CREATE TABLE IF NOT EXISTS chore_redemptions (id TEXT PRIMARY KEY, account_id TEXT NOT NULL, person_id TEXT NOT NULL, reward_id TEXT NOT NULL, stars_cost INTEGER NOT NULL, redeemed_at INTEGER NOT NULL)`,
   `CREATE INDEX IF NOT EXISTS chore_redemptions_by_week ON chore_redemptions (account_id, person_id, redeemed_at)`,
+  // Message pop-ups per screen (Melvin, 2026-11-26: "if i refresh the page they should not go away … dismissed message
+  // on one screen, shouldnt impact the other"): where each display started reading the board, and what it dismissed.
+  `CREATE TABLE IF NOT EXISTS display_popups (account_id TEXT NOT NULL, device_id TEXT NOT NULL, since INTEGER NOT NULL, PRIMARY KEY (account_id, device_id))`,
+  `CREATE TABLE IF NOT EXISTS display_popup_dismissed (account_id TEXT NOT NULL, device_id TEXT NOT NULL, message_id TEXT NOT NULL, at INTEGER NOT NULL, PRIMARY KEY (account_id, device_id, message_id))`,
   `CREATE TABLE IF NOT EXISTS account_alert_notified (account_id TEXT NOT NULL, id TEXT NOT NULL, sent_at INTEGER NOT NULL, PRIMARY KEY (account_id, id))`,
   // Phone QR unlock for a wall display (Melvin, 2026-11-23; Tuned-style code + poll). Approver picks a device_id.
   `CREATE TABLE IF NOT EXISTS device_sign_ins (
