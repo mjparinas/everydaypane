@@ -1,4 +1,4 @@
-import { loadConfig } from "@/server/config";
+import { loadDisplayConfig } from "@/server/featureFlags";
 import { notFound, unauthorized } from "@/server/http";
 import { isPrecip, radarFrame } from "@/server/radar";
 import { accountIdOf, viewerFor } from "@/server/viewer";
@@ -15,7 +15,7 @@ export async function GET(req: Request) {
   const time = Number(url.searchParams.get("time"));
   if (!isPrecip(precip) || !Number.isFinite(time)) return notFound();
   try {
-    return (await radarFrame((await loadConfig(accountId)).config, precip, zoom, time)) ?? notFound();
+    return (await radarFrame((await loadDisplayConfig(accountId)).config, precip, zoom, time)) ?? notFound();
   } catch {
     return new Response(null, { status: 502 });
   }

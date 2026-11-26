@@ -90,6 +90,8 @@ const MIGRATIONS = [
   `CREATE TABLE IF NOT EXISTS problem_reports (id TEXT PRIMARY KEY, account_id TEXT, email TEXT, text TEXT NOT NULL, status TEXT NOT NULL, note TEXT, created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL)`,
   `CREATE INDEX IF NOT EXISTS problem_reports_by_status ON problem_reports (status, created_at)`,
   `CREATE TABLE IF NOT EXISTS feature_flags (name TEXT PRIMARY KEY, value TEXT NOT NULL, share INTEGER NOT NULL DEFAULT 100, updated_at INTEGER NOT NULL)`,
+  // Per-household overrides of the platform feature flags (Melvin, 2026-11-26); they win over feature_flags.
+  `CREATE TABLE IF NOT EXISTS account_feature_flags (account_id TEXT NOT NULL, name TEXT NOT NULL, value INTEGER NOT NULL, updated_at INTEGER NOT NULL, PRIMARY KEY (account_id, name))`,
   `CREATE TABLE IF NOT EXISTS promo_codes (code TEXT PRIMARY KEY, kind TEXT NOT NULL, max_uses INTEGER NOT NULL, used INTEGER NOT NULL DEFAULT 0, expires_at INTEGER, note TEXT, enabled INTEGER NOT NULL DEFAULT 1, created_at INTEGER NOT NULL)`,
   `CREATE TABLE IF NOT EXISTS promo_redemptions (id TEXT PRIMARY KEY, code TEXT NOT NULL, account_id TEXT NOT NULL, redeemed_at INTEGER NOT NULL)`,
   `CREATE INDEX IF NOT EXISTS promo_redemptions_by_code ON promo_redemptions (code)`,

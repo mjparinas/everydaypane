@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { loadConfig } from "@/server/config";
+import { loadDisplayConfig } from "@/server/featureFlags";
 import { json, notFound, readJson, sameOrigin, unauthorized } from "@/server/http";
 import { addShoppingFromWall, listShopping, setShoppingDone, shoppingTag } from "@/server/shopping";
 import { accountIdOf, viewerFor } from "@/server/viewer";
@@ -29,7 +29,7 @@ export async function POST(req: Request) {
   if (!viewer) return unauthorized();
   const accountId = accountIdOf(viewer);
   const raw = await readJson(req, 1_000).catch(() => null);
-  const config = (await loadConfig(accountId)).config;
+  const config = (await loadDisplayConfig(accountId)).config;
   const add = addBody.safeParse(raw);
   if (add.success) {
     const by = viewer.kind === "device" ? `display:${viewer.device.id}` : "wall";

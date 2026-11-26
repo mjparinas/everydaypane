@@ -1,4 +1,4 @@
-import { loadConfig } from "@/server/config";
+import { loadDisplayConfig } from "@/server/featureFlags";
 import { notFound, unauthorized } from "@/server/http";
 import { isMapStyle, mapTile } from "@/server/radar";
 import { accountIdOf, viewerFor } from "@/server/viewer";
@@ -13,7 +13,7 @@ export async function GET(req: Request) {
   const [z, x, y] = ["z", "x", "y"].map((k) => Number(url.searchParams.get(k)));
   if (!isMapStyle(style) || z === undefined || x === undefined || y === undefined) return notFound();
   try {
-    return (await mapTile((await loadConfig(accountId)).config, style, z, x, y)) ?? notFound();
+    return (await mapTile((await loadDisplayConfig(accountId)).config, style, z, x, y)) ?? notFound();
   } catch {
     return new Response(null, { status: 502 });
   }

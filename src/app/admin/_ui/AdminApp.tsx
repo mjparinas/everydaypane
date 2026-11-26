@@ -1155,6 +1155,7 @@ function HouseholdsTab({
                 />
               </div>
             )}
+            <HouseholdFlags accountId={h.id} flash={flash} canWrite={canWrite} />
             <div>
               <h4 className="font-bold">Notes</h4>
               <ul className="mb-2 grid gap-2 text-sm">
@@ -1492,72 +1493,108 @@ function DisplaysTab({
   );
 }
 
+type FlagRow = {
+  name: string;
+  label: string;
+  description: string;
+  group: string;
+  value: boolean;
+  fromDefault: boolean;
+  override?: boolean | null;
+  effective?: boolean;
+};
+
+/** Search and "changed only" filtering shared by the platform tab and a household's overrides. */
+function useFlagFilter(flags: FlagRow[] | undefined, changed: (f: FlagRow) => boolean) {
+  const [q, setQ] = useState("");
+  const [onlyChanged, setOnlyChanged] = useState(false);
+  const needle = q.trim().toLowerCase();
+  const shown = (flags ?? []).filter(
+    (f) => (!onlyChanged || changed(f)) && (!needle || `${f.label} ${f.description} ${f.group} ${f.name}`.toLowerCase().includes(needle)),
+  );
+  const groups = [...new Set(shown.map((f) => f.group))];
+  const controls = (
+    <div className="flex flex-wrap items-center gap-2">
+      <input
+        className="field min-w-0 flex-1"
+        value={q}
+        onChange={(e) => setQ(e.target.value)}
+        placeholder="Find a widget or integration"
+        aria-label="Find a flag"
+      />
+      <label className="flex items-center gap-2 text-sm">
+        <input type="checkbox" checked={onlyChanged} onChange={(e) => setOnlyChanged(e.target.checked)} />
+        Changed only
+      </label>
+    </div>
+  );
+  return { shown, groups, controls };
+}
+
+// Feature flags (Melvin, 2026-11-26): one switch per widget, smart-home provider, music service, to-do service and
+// photo source, from the registry in src/lib/featureFlags.ts. Off hides it from every household's picker and
+// Settings and drops it from their walls; a household's own override (on its page under Households) wins.
 function FlagsTab({ flash, canWrite }: { flash: Flash; canWrite: boolean }) {
-  const { data, reload, error } = useFetch<{
-    flags: { name: string; label: string; description: string; value: boolean; share: number; fromDefault: boolean; group: string }[];
-  }>("/api/admin/flags/");
+  const { data, reload, error } = useFetch<{ flags: FlagRow[] }>("/api/admin/flags/");
   const [busy, setBusy] = useState<string | null>(null);
+  const { shown, groups, controls } = useFlagFilter(data?.flags, (f) => !f.fromDefault);
   if (error) return <p className="text-bad">{error}</p>;
   if (!data) return <Bones />;
-  const groups = [...new Set(data.flags.map((f) => f.group))];
+  const off = data.flags.filter((f) => !f.value).length;
+  const save = (f: FlagRow, body: Record<string, unknown>, ok: string) => {
+    setBusy(f.name);
+    void mutate(() => api("/api/admin/flags/", { method: "POST", body: JSON.stringify(body) }), flash, ok, { ms: 4000 }).then((done) => {
+      setBusy(null);
+      if (done) reload();
+    });
+  };
   return (
     <>
+      <Card
+        title="Feature flags"
+        sub={`${data.flags.length} widgets and integrations · ${off} off for everyone. A household's own override wins (Households › open one).`}
+      >
+        {controls}
+        {shown.length === 0 && <p className="mt-3 text-sm text-soft">Nothing matches.</p>}
+      </Card>
       {groups.map((g) => (
         <Card key={g} title={g}>
           <ul className="grid gap-3">
-            {data.flags
+            {shown
               .filter((f) => f.group === g)
               .map((f) => (
                 <li key={f.name} className="flex flex-wrap items-center justify-between gap-2 border-b border-line/60 pb-3 last:border-0">
                   <div className="min-w-0">
                     <p className="font-semibold">
-                      {f.label} {!f.fromDefault ? <span className="text-xs text-soft">(overridden)</span> : null}
+                      {f.label} {!f.fromDefault ? <span className="text-xs text-soft">(changed)</span> : null}
                     </p>
                     <p className="text-sm text-soft">{f.description}</p>
-                    <p className="mt-1 text-xs text-soft">Applies to every household when live.</p>
+                    <p className="mt-1 font-mono text-xs text-soft">{f.name}</p>
                   </div>
-                  {canWrite && (
+                  {canWrite ? (
                     <div className="flex gap-2">
                       <ConfirmButton
-                        label={f.value ? "Live" : "Off"}
-                        confirm={f.value ? "Tap again: off for everyone" : "Tap again: live for everyone"}
+                        label={f.value ? "On" : "Off"}
+                        confirm={f.value ? "Tap again: off for everyone" : "Tap again: on for everyone"}
                         variant="ghost"
                         busy={busy === f.name}
                         pressed={f.value}
-                        onConfirm={() => {
-                          setBusy(f.name);
-                          void mutate(
-                            () => api("/api/admin/flags/", { method: "POST", body: JSON.stringify({ name: f.name, value: !f.value }) }),
-                            flash,
-                            f.value ? `${f.label} off for everyone` : `${f.label} live for everyone`,
-                            { ms: 4000 },
-                          ).then((ok) => {
-                            setBusy(null);
-                            if (ok) reload();
-                          });
-                        }}
+                        onConfirm={() =>
+                          save(f, { name: f.name, value: !f.value }, f.value ? `${f.label} off for everyone` : `${f.label} on for everyone`)
+                        }
                       />
                       {!f.fromDefault && (
                         <ConfirmButton
                           label="Reset"
-                          confirm="Tap again: use product default"
+                          confirm="Tap again: back to on"
                           variant="danger"
                           busy={busy === f.name}
-                          onConfirm={() => {
-                            setBusy(f.name);
-                            void mutate(
-                              () => api("/api/admin/flags/", { method: "POST", body: JSON.stringify({ op: "clear", name: f.name }) }),
-                              flash,
-                              `${f.label} back to product default`,
-                              { ms: 4000 },
-                            ).then((ok) => {
-                              setBusy(null);
-                              if (ok) reload();
-                            });
-                          }}
+                          onConfirm={() => save(f, { op: "clear", name: f.name }, `${f.label} back to the default`)}
                         />
                       )}
                     </div>
+                  ) : (
+                    <span className="text-sm font-semibold">{f.value ? "On" : "Off"}</span>
                   )}
                 </li>
               ))}
@@ -1565,6 +1602,86 @@ function FlagsTab({ flash, canWrite }: { flash: Flash; canWrite: boolean }) {
         </Card>
       ))}
     </>
+  );
+}
+
+/** One household's overrides of the platform flags, on its page under Households. */
+function HouseholdFlags({ accountId, flash, canWrite }: { accountId: string; flash: Flash; canWrite: boolean }) {
+  const { data, reload, error } = useFetch<{ flags: FlagRow[] }>(`/api/admin/flags/?account=${encodeURIComponent(accountId)}`, [accountId]);
+  const [busy, setBusy] = useState<string | null>(null);
+  const [open, setOpen] = useState(false);
+  const { shown, groups, controls } = useFlagFilter(data?.flags, (f) => f.override != null || !f.value);
+  if (error) return <p className="text-bad">{error}</p>;
+  if (!data) return <Bones />;
+  const overrides = data.flags.filter((f) => f.override != null).length;
+  const off = data.flags.filter((f) => f.effective === false).length;
+  const set = (f: FlagRow, value: boolean | null) => {
+    setBusy(f.name);
+    const ok = value === null ? `${f.label} follows the platform` : `${f.label} ${value ? "on" : "off"} for this household`;
+    void mutate(
+      () =>
+        api("/api/admin/flags/", { method: "POST", body: JSON.stringify({ op: "household", account: accountId, name: f.name, value }) }),
+      flash,
+      ok,
+      { ms: 4000 },
+    ).then((done) => {
+      setBusy(null);
+      if (done) reload();
+    });
+  };
+  return (
+    <div className="grid gap-2">
+      <div className="flex flex-wrap items-baseline justify-between gap-2">
+        <h4 className="font-bold">Feature flags</h4>
+        <button type="button" className="btn-ghost text-sm" aria-expanded={open} onClick={() => setOpen((o) => !o)}>
+          {open ? "Hide" : "Show"} ({overrides} overridden · {off} off)
+        </button>
+      </div>
+      {open && (
+        <>
+          <p className="text-sm text-soft">
+            Override a platform switch for this household only. Their walls reload with the change; settings are kept.
+          </p>
+          {controls}
+          {groups.map((g) => (
+            <div key={g} className="grid gap-1">
+              <p className="text-xs font-bold tracking-wide text-soft uppercase">{g}</p>
+              <ul className="grid gap-1">
+                {shown
+                  .filter((f) => f.group === g)
+                  .map((f) => (
+                    <li key={f.name} className="flex flex-wrap items-center justify-between gap-2 text-sm">
+                      <span>
+                        {f.label}
+                        {f.override == null ? (
+                          <span className="text-xs text-soft"> · platform {f.value ? "on" : "off"}</span>
+                        ) : (
+                          <span className="text-xs font-semibold"> · overridden</span>
+                        )}
+                      </span>
+                      {canWrite ? (
+                        <select
+                          className="field w-auto"
+                          aria-label={`${f.label} for this household`}
+                          disabled={busy === f.name}
+                          value={f.override == null ? "platform" : f.override ? "on" : "off"}
+                          onChange={(e) => set(f, e.target.value === "platform" ? null : e.target.value === "on")}
+                        >
+                          <option value="platform">Platform ({f.value ? "on" : "off"})</option>
+                          <option value="on">On</option>
+                          <option value="off">Off</option>
+                        </select>
+                      ) : (
+                        <span className="font-semibold">{f.effective ? "On" : "Off"}</span>
+                      )}
+                    </li>
+                  ))}
+              </ul>
+            </div>
+          ))}
+        </>
+      )}
+    </div>
   );
 }
 

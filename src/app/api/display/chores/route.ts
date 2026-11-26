@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 import { choreBoard, choresTag, redeemChoreReward, setChoreDone } from "@/server/chores";
-import { loadConfig } from "@/server/config";
+import { loadDisplayConfig } from "@/server/featureFlags";
 import { json, readJson, sameOrigin, unauthorized } from "@/server/http";
 import { accountIdOf, viewerFor } from "@/server/viewer";
 
@@ -11,7 +11,7 @@ export async function GET(req: Request) {
   const viewer = await viewerFor(req);
   if (!viewer) return unauthorized();
   const accountId = accountIdOf(viewer);
-  const body = await choreBoard(accountId, (await loadConfig(accountId)).config);
+  const body = await choreBoard(accountId, (await loadDisplayConfig(accountId)).config);
   const tag = choresTag(body);
   if (req.headers.get("if-none-match") === tag)
     return new Response(null, { status: 304, headers: { etag: tag, "Cache-Control": "no-store" } });
@@ -42,7 +42,7 @@ export async function POST(req: Request) {
   const viewer = await viewerFor(req);
   if (!viewer) return unauthorized();
   const accountId = accountIdOf(viewer);
-  const config = (await loadConfig(accountId)).config;
+  const config = (await loadDisplayConfig(accountId)).config;
   const raw = await readJson(req, 1000).catch(() => null);
   const redeem = redeemBody.safeParse(raw);
   if (redeem.success) {

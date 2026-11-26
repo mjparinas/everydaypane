@@ -146,7 +146,9 @@ with `?mode=`, and a quiet Day/Night control on the preview swaps without reload
 **Platform admin** (`/admin/`): Everydaypane ops for `ADMIN_EMAILS`,
 separate from the household panel — same split as Tuned and Liftsmith. Staff use the same Clerk sign-in as households,
 gated by that allow-list; Overview through Log (Households, Displays,
-Revenue, Traffic, Codes, Flags, …). Cookieless marketing beacon. Customer path is `/household/`.
+Revenue, Traffic, Codes, Flags, …). Cookieless marketing beacon. Customer path is `/household/`. **Flags** has an
+on/off switch for every widget, smart-home provider, music and to-do service and photo source, for everyone, and each
+household's page can override any of them (see Architecture, Feature flags).
 
 **Integrations connected from Settings:** Google Calendar, Microsoft 365 calendars and **To Do** (OAuth, `?todo=1` / `?files=1`), Google Tasks, **Todoist**, Google Photos (Picker), iCal calendar links (with iCloud publish steps in Settings and `docs/icloud-calendar.md`),
 **Govee** (API key, Settings › Smart home), **Philips Hue** (OAuth, Settings › Smart home), **LIFX** (personal token, Settings › Smart home), Amazon Photos, **photo sources** (Bing, Reddit, weather albums, Immich API keys, Dropbox/Box/SmugMug OAuth, OneDrive via Microsoft, Flickr API key, iCloud published URLs), the photo library (Vercel Blob), Home Assistant (Cloudflare Tunnel + Access), Spotify, Sonos, garbage
@@ -437,6 +439,19 @@ panel can be complex if you need it to be."
   Advanced. Wall empty states point at Household Settings (not “admin panel”).
 - **Platform admin** (`src/app/admin/`, `/api/admin/`): staff-only ops (`src/server/adminAuth.ts`: Clerk session plus
   `ADMIN_EMAILS`); Tuned-style tabs via `/api/admin/[action]/`. Not the household settings UI.
+- **Feature flags** (Melvin, 2026-11-26: "feature flags in the admin area for all of these integrations"): one
+  registry in `src/lib/featureFlags.ts`, built from `WIDGETS` plus typed records of every smart-home provider, music
+  provider, to-do provider and photo source kind, so **a new widget gets a flag automatically** (`widget.<type>`) and a
+  new provider or photo source doesn't compile until it has a label there. Staff switch them in `/admin/` › Flags
+  (`feature_flags`) or per household on its page (`account_feature_flags`, wins over the platform). Everything is on
+  by default. Off means: gone from the widget picker, its Settings card hidden (`SETTINGS_FLAGS`, keyed by
+  `#settings/<id>`; a new Settings card for an integration adds a line there), and dropped from the display's copy
+  of the settings by `applyFlags`. Every `/api/display/*` route reads settings through `loadDisplayConfig`
+  (`src/server/featureFlags.ts`), never `loadConfig`, so a switched-off widget isn't drawn, its feed isn't polled
+  and the server never calls the service; routes that don't read settings check `featureOn`. The household's saved
+  document is never changed, so turning a flag back on restores it. A switch bumps the settings version of the
+  households whose settings mention that widget, provider or source, so their walls reload. The display bundle has
+  no flag code.
 - **Widgets over photos** (Melvin, 2026-11-21: "allow other widgets to be placed on top of the photos widget"): photos
   widgets are a backdrop layer. Any other widget may cover one; two photos widgets, or two widgets on top, still never
   overlap. A new widget goes in empty cells first and lands on the photos only when nothing else is free. The display

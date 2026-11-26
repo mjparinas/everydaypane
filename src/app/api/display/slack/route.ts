@@ -1,4 +1,4 @@
-import { loadConfig } from "@/server/config";
+import { loadDisplayConfig } from "@/server/featureFlags";
 import { json, unauthorized } from "@/server/http";
 import { slackFeed } from "@/server/slack";
 import { accountIdOf, viewerFor } from "@/server/viewer";
@@ -10,7 +10,7 @@ export async function GET(req: Request) {
   const accountId = accountIdOf(viewer);
   const count = Math.min(15, Math.max(1, Number(url.searchParams.get("count") ?? "8")));
   try {
-    return json(await slackFeed(accountId, (await loadConfig(accountId)).config, count));
+    return json(await slackFeed(accountId, (await loadDisplayConfig(accountId)).config, count));
   } catch {
     return json({ updatedAt: Date.now(), connected: false, unreadMentions: 0, lines: [] });
   }

@@ -3,8 +3,10 @@
 import { useEffect, useState } from "react";
 
 import type { PhotoSource } from "@/lib/config/schema";
+import { photoFlag } from "@/lib/featureFlags";
 
 import { ConfirmButton, Section, Select, Text, TextArea, Toggle } from "./fields";
+import { useFlags } from "./flags";
 import { LibraryAlbum } from "./LibraryAlbum";
 import { newId, useAdmin } from "./store";
 
@@ -49,6 +51,8 @@ export function PhotosPanel() {
   const sources = useAdmin((s) => s.config.integrations.photos.sources);
   const edit = useAdmin((s) => s.edit);
   const [kind, setKind] = useState<PhotoSource["kind"]>("library");
+  // Photo sources staff switched off (platform feature flags) can't be added.
+  const { on } = useFlags();
   const [name, setName] = useState("");
   const [link, setLink] = useState("");
   const [urls, setUrls] = useState("");
@@ -222,7 +226,7 @@ export function PhotosPanel() {
       ))}
 
       <div className="grid gap-3 border-t border-line pt-4">
-        <Select label="Add" value={kind} options={[...KINDS]} onChange={(v) => setKind(v)} />
+        <Select label="Add" value={kind} options={KINDS.filter((k) => on(photoFlag(k.value)))} onChange={(v) => setKind(v)} />
         <Text label="Name" value={name} maxLength={60} placeholder="Family album" onChange={setName} />
         {kind === "amazonShare" && (
           <Text

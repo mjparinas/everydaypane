@@ -1,4 +1,4 @@
-import { loadConfig } from "@/server/config";
+import { loadDisplayConfig } from "@/server/featureFlags";
 import { json, unauthorized } from "@/server/http";
 import { transitFeed } from "@/server/translink";
 import { accountIdOf, viewerFor } from "@/server/viewer";
@@ -12,7 +12,7 @@ export async function GET(req: Request) {
   if (!viewer) return unauthorized();
   const accountId = accountIdOf(viewer);
   try {
-    const data = await transitFeed((await loadConfig(accountId)).config);
+    const data = await transitFeed((await loadDisplayConfig(accountId)).config);
     return json({ ...data.value, stale: data.stale });
   } catch {
     return json({ error: "TransLink's live departures are unavailable right now" }, 502);

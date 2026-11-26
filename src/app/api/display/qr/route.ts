@@ -1,7 +1,7 @@
 import { editPageUrl } from "@/lib/editPage";
-import { loadConfig } from "@/server/config";
 import { deviceToken } from "@/server/devices";
 import { env } from "@/server/env";
+import { loadDisplayConfig } from "@/server/featureFlags";
 import { notFound, unauthorized } from "@/server/http";
 import { accountIdOf, viewerFor } from "@/server/viewer";
 import { qrSvg, wifiString } from "@/server/wifi";
@@ -11,7 +11,7 @@ export async function GET(req: Request) {
   if (!viewer) return unauthorized();
   const accountId = accountIdOf(viewer);
   const id = new URL(req.url).searchParams.get("w");
-  const { config } = await loadConfig(accountId);
+  const { config } = await loadDisplayConfig(accountId);
   const widget = config.views.flatMap((v) => v.widgets).find((w) => w.id === id);
   if (!widget) return notFound();
 

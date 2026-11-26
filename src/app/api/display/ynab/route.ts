@@ -1,4 +1,4 @@
-import { loadConfig } from "@/server/config";
+import { loadDisplayConfig } from "@/server/featureFlags";
 import { json, unauthorized } from "@/server/http";
 import { accountIdOf, viewerFor } from "@/server/viewer";
 import { ynabFeed } from "@/server/ynab";
@@ -8,7 +8,7 @@ export async function GET(req: Request) {
   if (!viewer) return unauthorized();
   const accountId = accountIdOf(viewer);
   try {
-    return json(await ynabFeed(accountId, (await loadConfig(accountId)).config));
+    return json(await ynabFeed(accountId, (await loadDisplayConfig(accountId)).config));
   } catch {
     return json({ updatedAt: Date.now(), connected: false, budgetName: "", accounts: [], categories: [] });
   }

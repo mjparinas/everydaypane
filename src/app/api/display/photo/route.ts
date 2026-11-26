@@ -1,4 +1,4 @@
-import { loadConfig } from "@/server/config";
+import { loadDisplayConfig } from "@/server/featureFlags";
 import { notFound, unauthorized } from "@/server/http";
 import { photoImage } from "@/server/photos";
 import { accountIdOf, viewerFor } from "@/server/viewer";
@@ -15,7 +15,7 @@ export async function GET(req: Request) {
   const width = Number(url.searchParams.get("w")) || 1920;
   if (!source || !id || id.length > 200) return notFound();
   try {
-    return (await photoImage(accountId, (await loadConfig(accountId)).config, source, id, width)) ?? notFound();
+    return (await photoImage(accountId, (await loadDisplayConfig(accountId)).config, source, id, width)) ?? notFound();
   } catch {
     return new Response(null, { status: 502 });
   }

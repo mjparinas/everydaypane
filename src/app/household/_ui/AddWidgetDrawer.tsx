@@ -7,6 +7,7 @@ import { WIDGET_GROUPS, WIDGET_TYPES, WIDGETS } from "@/lib/config/widgets";
 import { isFreeWidgetType } from "@/lib/plans";
 
 import { Text } from "./fields";
+import { useFlags } from "./flags";
 import { HouseholdBadge, usePlan } from "./plan";
 import { SlideDrawer } from "./SlideDrawer";
 
@@ -87,6 +88,8 @@ function GroupGrid({
 
 export function AddWidgetDrawer({ onClose, onPick }: { onClose: () => void; onPick: (type: WidgetType) => void }) {
   const { isPaid, openUpgrade } = usePlan();
+  // Widgets staff have switched off (platform feature flags) aren't offered at all.
+  const { widgetOn } = useFlags();
   const [query, setQuery] = useState("");
   const [browseAll, setBrowseAll] = useState(false);
   const [intent, setIntent] = useState<(typeof INTENTS)[number]["id"]>("today");
@@ -95,23 +98,23 @@ export function AddWidgetDrawer({ onClose, onPick }: { onClose: () => void; onPi
   const filteredTypes = useMemo(() => {
     const q = query.trim().toLowerCase();
     if (!q) return null;
-    return WIDGET_TYPES.filter((t) => {
+    return WIDGET_TYPES.filter(widgetOn).filter((t) => {
       const info = WIDGETS[t];
       return info.label.toLowerCase().includes(q) || info.description.toLowerCase().includes(q);
     });
-  }, [query]);
+  }, [query, widgetOn]);
 
   const freeGroups = useMemo(
     (): CatalogueGroup[] =>
       WIDGET_GROUPS.map((g) => ({
         id: g.id,
         label: g.label,
-        types: (isPaid ? [...g.types] : g.types.filter((t) => isFreeWidgetType(t))) as WidgetType[],
+        types: (isPaid ? g.types.filter(widgetOn) : g.types.filter((t) => widgetOn(t) && isFreeWidgetType(t))) as WidgetType[],
       })).filter((g) => g.types.length > 0),
-    [isPaid],
+    [isPaid, widgetOn],
   );
 
-  const householdTypes = useMemo(() => (isPaid ? [] : WIDGET_TYPES.filter((t) => !isFreeWidgetType(t))), [isPaid]);
+  const householdTypes = useMemo(() => (isPaid ? [] : WIDGET_TYPES.filter((t) => widgetOn(t) && !isFreeWidgetType(t))), [isPaid, widgetOn]);
 
   const intentGroups = useMemo(() => {
     const chip = INTENTS.find((i) => i.id === intent) ?? INTENTS[0]!;
@@ -135,7 +138,7 @@ export function AddWidgetDrawer({ onClose, onPick }: { onClose: () => void; onPi
         <div className="grid gap-2">
           <h3 className="text-sm font-semibold text-soft">Recommended for this view</h3>
           <div className="grid grid-cols-2 gap-2">
-            {RECOMMENDED.map((t) => (
+            {RECOMMENDED.filter(widgetOn).map((t) => (
               <WidgetCard key={t} type={t} locked={false} onPick={onPick} onUpgrade={() => openUpgrade("widget")} />
             ))}
           </div>

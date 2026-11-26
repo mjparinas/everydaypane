@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { loadConfig } from "@/server/config";
+import { loadDisplayConfig } from "@/server/featureFlags";
 import { json, readJson, sameOrigin, unauthorized } from "@/server/http";
 import { boardTag, forDisplay, listMessages, MESSAGE_COLOURS, postMessageFromWall } from "@/server/messages";
 import { accountIdOf, viewerFor } from "@/server/viewer";
@@ -31,7 +31,7 @@ export async function POST(req: Request) {
   const accountId = accountIdOf(viewer);
   const parsed = postBody.safeParse(await readJson(req, 4_000).catch(() => null));
   if (!parsed.success) return json({ error: "Bad request" }, 400);
-  const config = (await loadConfig(accountId)).config;
+  const config = (await loadDisplayConfig(accountId)).config;
   const by = viewer.kind === "device" ? `display:${viewer.device.id}` : "wall";
   const result = await postMessageFromWall(accountId, config, { ...parsed.data, postedBy: by });
   if (result === "forbidden") return json({ error: "Not allowed" }, 403);

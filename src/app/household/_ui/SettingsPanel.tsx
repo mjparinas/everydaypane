@@ -11,6 +11,7 @@ import { CommutePanel, PlaceFinder } from "./CommutePanel";
 import { ContentPanel } from "./ContentPanel";
 import { EcoFlowPanel } from "./EcoFlowPanel";
 import { NumberInput, Range, Section, Select, Stepper, Text, Toggle } from "./fields";
+import { FlaggedSettings } from "./flags";
 import { GarbagePanel } from "./GarbagePanel";
 import { GooglePanel } from "./GooglePanel";
 import { HomeAssistantPanel } from "./HomeAssistantPanel";
@@ -275,29 +276,39 @@ export function SettingsPanel() {
               <CalendarLinksPanel />
             </HouseholdSoftLock>
           </div>
-          <div id="settings-tasks" className="lg:col-span-2">
-            <HouseholdSoftLock reason="tasks" label="Tasks need Household">
-              <AllTasksPanels />
-            </HouseholdSoftLock>
-          </div>
+          <FlaggedSettings section="tasks">
+            <div id="settings-tasks" className="lg:col-span-2">
+              <HouseholdSoftLock reason="tasks" label="Tasks need Household">
+                <AllTasksPanels />
+              </HouseholdSoftLock>
+            </div>
+          </FlaggedSettings>
         </div>
       )}
 
       {showGroup("family") && (
         <HouseholdSoftLock reason="family" label="Family tools need Household">
           <div className="grid gap-4 lg:grid-cols-2">
-            <div id="settings-garbage">
-              <GarbagePanel />
-            </div>
-            <div id="settings-commute">
-              <CommutePanel />
-            </div>
-            <div id="settings-chores" className="lg:col-span-2">
-              <ChoresPanel />
-            </div>
-            <div id="settings-sports">
-              <SportsPanel />
-            </div>
+            <FlaggedSettings section="garbage">
+              <div id="settings-garbage">
+                <GarbagePanel />
+              </div>
+            </FlaggedSettings>
+            <FlaggedSettings section="commute">
+              <div id="settings-commute">
+                <CommutePanel />
+              </div>
+            </FlaggedSettings>
+            <FlaggedSettings section="chores">
+              <div id="settings-chores" className="lg:col-span-2">
+                <ChoresPanel />
+              </div>
+            </FlaggedSettings>
+            <FlaggedSettings section="sports">
+              <div id="settings-sports">
+                <SportsPanel />
+              </div>
+            </FlaggedSettings>
             <Section id="settings-school" title="School status">
               <p className="text-xs text-soft">
                 The school widget reads this page for a closure, delay or late start. With nothing like that on the page, it says open.
@@ -326,11 +337,13 @@ export function SettingsPanel() {
           <div id="settings-photos" className="lg:col-span-2">
             <PhotosPanel />
           </div>
-          <div id="settings-music" className="lg:col-span-2">
-            <HouseholdSoftLock reason="music" label="Music needs Household">
-              <MusicPanel />
-            </HouseholdSoftLock>
-          </div>
+          <FlaggedSettings section="music">
+            <div id="settings-music" className="lg:col-span-2">
+              <HouseholdSoftLock reason="music" label="Music needs Household">
+                <MusicPanel />
+              </HouseholdSoftLock>
+            </div>
+          </FlaggedSettings>
         </div>
       )}
 
@@ -345,9 +358,11 @@ export function SettingsPanel() {
       {showGroup("ha") && (
         <HouseholdSoftLock reason="ha" label="Smart home needs Household">
           <div className="grid gap-4">
-            <div id="settings-ha">
-              <HomeAssistantPanel />
-            </div>
+            <FlaggedSettings section="ha">
+              <div id="settings-ha">
+                <HomeAssistantPanel />
+              </div>
+            </FlaggedSettings>
             <SmartHomePanel />
             <EcoFlowPanel />
             <UnifiPanel />

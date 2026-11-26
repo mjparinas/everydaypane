@@ -3,6 +3,10 @@
 import { useEffect, useId, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 
+import { settingsSectionOn } from "@/lib/featureFlags";
+
+import { useFlags } from "./flags";
+
 // Small form controls for the admin panel. Every control is at least 44 px tall so it works with a thumb.
 // Bounded numbers use Range or Stepper (min/max always visible); NumberInput is only for rare free-form values.
 
@@ -513,6 +517,9 @@ export function Section({
   /** Anchor id for Settings jump links (#settings/…). */
   id?: string;
 }) {
+  // A Settings card for an integration staff switched off (platform feature flags) isn't shown.
+  const { on } = useFlags();
+  if (id?.startsWith("settings-") && !settingsSectionOn(id.slice("settings-".length), on)) return null;
   return (
     <section id={id} className="card grid scroll-mt-28 content-start gap-4">
       <div className="flex items-center justify-between gap-2">

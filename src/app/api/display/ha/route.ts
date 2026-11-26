@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 import { SMART_ENTITY_RE } from "@/lib/smartHome";
-import { loadConfig } from "@/server/config";
+import { loadDisplayConfig } from "@/server/featureFlags";
 import { act, HA_ACTIONS, haFeed } from "@/server/homeassistant";
 import { json, readJson, sameOrigin, unauthorized } from "@/server/http";
 import { accountIdOf, viewerFor } from "@/server/viewer";
@@ -12,7 +12,7 @@ export async function GET(req: Request) {
   if (!viewer) return unauthorized();
   const accountId = accountIdOf(viewer);
   try {
-    return json(await haFeed(accountId, (await loadConfig(accountId)).config));
+    return json(await haFeed(accountId, (await loadDisplayConfig(accountId)).config));
   } catch (error) {
     return json({ error: error instanceof Error ? error.message : "Home Assistant didn't answer" }, 502);
   }
@@ -37,7 +37,7 @@ export async function POST(req: Request) {
   try {
     const result = await act(
       accountId,
-      (await loadConfig(accountId)).config,
+      (await loadDisplayConfig(accountId)).config,
       parsed.data.entity,
       parsed.data.action,
       parsed.data.value,

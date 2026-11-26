@@ -1,6 +1,6 @@
 import { localDate } from "@/lib/calendar";
 import type { OuraData } from "@/lib/display/types";
-import { loadConfig } from "@/server/config";
+import { loadDisplayConfig } from "@/server/featureFlags";
 import { json, unauthorized } from "@/server/http";
 import { OuraDisconnected, ouraFeed, OuraMembershipNeeded } from "@/server/oura";
 import { accountIdOf, viewerFor } from "@/server/viewer";
@@ -11,7 +11,7 @@ export async function GET(req: Request) {
   const viewer = await viewerFor(req);
   if (!viewer) return unauthorized();
   const accountId = accountIdOf(viewer);
-  const config = (await loadConfig(accountId)).config;
+  const config = (await loadDisplayConfig(accountId)).config;
   const today = localDate(Date.now(), config.location.timeZone);
   const details = config.views.some((v) => v.widgets.some((w) => w.type === "oura" && w.showDetails));
   let body: OuraData;
