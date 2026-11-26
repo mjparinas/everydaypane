@@ -29,6 +29,7 @@ same change, and moves it out of **In progress** when it merges.
 | Weather Underground (`weatherUnderground`) | PWS current conditions | IBM WU PWS API (`WU_API_KEY` or per-account secret) |
 | School menu (`menus`) | Nutrislice breakfast and lunch for a day or week; not the meal plan | Nutrislice published JSON (`config.integrations.smartHome.menus`) |
 | Air quality (`airQuality`) | AQHI or US AQI (outdoor) | Open-Meteo air quality |
+| Sprinklers (`rachio`) | Each Rachio controller's next watering (when, schedule, minutes, zones), rain delay, offline; optional **Skip** with a second tap (`allowSkip`) | Rachio public API (household API key, `docs/rachio.md`) |
 | Indoor air (`airthings`) | Radon, CO₂, VOC, PM2.5, PM1, humidity and temperature per Airthings monitor, green/amber/red by Airthings' levels; pick readings and devices | Airthings consumer API (household's own API client, `docs/airthings.md`) |
 | WiFi QR (`wifiQr`) | Join code, optionally the password | Settings document |
 | Phone edit QR (`editQr`) | QR to `/d/<token>/edit/` for meals, shopping and messages with no sign-in | This display's address |
@@ -149,7 +150,7 @@ Revenue, Traffic, Codes, Flags, …). Cookieless marketing beacon. Customer path
 
 **Integrations connected from Settings:** Google Calendar, Microsoft 365 calendars and **To Do** (OAuth, `?todo=1` / `?files=1`), Google Tasks, **Todoist**, Google Photos (Picker), iCal calendar links (with iCloud publish steps in Settings and `docs/icloud-calendar.md`),
 **Govee** (API key, Settings › Smart home), **Philips Hue** (OAuth, Settings › Smart home), **LIFX** (personal token, Settings › Smart home), Amazon Photos, **photo sources** (Bing, Reddit, weather albums, Immich API keys, Dropbox/Box/SmugMug OAuth, OneDrive via Microsoft, Flickr API key, iCloud published URLs), the photo library (Vercel Blob), Home Assistant (Cloudflare Tunnel + Access), Spotify, Sonos, garbage
-zone lookup, sports teams to follow, TransLink, commute places (TomTom geocoding), optional **package tracking** key, **UniFi Site Manager** API key (Settings › UniFi network), **EcoFlow** access and secret keys, **Oura** (OAuth, Settings › Content & finance), **Airthings** (API client id and secret, Settings › Indoor air).
+zone lookup, sports teams to follow, TransLink, commute places (TomTom geocoding), optional **package tracking** key, **UniFi Site Manager** API key (Settings › UniFi network), **EcoFlow** access and secret keys, **Oura** (OAuth, Settings › Content & finance), **Airthings** (API client id and secret, Settings › Indoor air), **Rachio** (API key, Settings › Sprinklers).
 
 ## In progress
 
@@ -349,6 +350,9 @@ npm run templates:previews  # regenerate public/templates/*.png from real widget
 - **Mountain snow report** (Melvin, 2026-11-25: "build that all", from a list of widget ideas): new snow, depth and
   the next days' snowfall on the local mountains, picked in the widget's settings, from Open-Meteo with no key (see
   Architecture).
+- **Rachio sprinklers** (Melvin, 2026-11-25: "build that all", a batch of native integrations): the next watering
+  on the wall with a Skip button, from Rachio's official public API with the household's own API key, not Home
+  Assistant (see Architecture). Skip is on for a new widget but needs a second tap (Claude's default, 2026-11-25).
 - **Canadian English** in everything a person reads (colour, centre, favourite), as in Liftsmith.
 
 ## Display: super lightweight (rule, Melvin, 2026-11-17)
@@ -366,7 +370,7 @@ panel can be complex if you need it to be."
   imports it with display.js's own `?v=` only on a screen that shows it. Its `../api` is swapped at build time for
   `src/display/apiShared.ts`, which calls display.js's copy, so feeds, the device token and offline state stay single.
   The internet widget, the UniFi network widget, EcoFlow, the whiteboard, wildfires, the Windy map, the Smart device tile
-  (`haEntity.ts`; cameras and `HA_EVERY` stay in `ha.ts`), Oura, Indoor air (Airthings), the snow report, River levels, Border wait times and Highway cameras (DriveBC) load this way, and `next.config.ts` gives each file the same
+  (`haEntity.ts`; cameras and `HA_EVERY` stay in `ha.ts`), Oura, Indoor air (Airthings), the snow report, River levels, Border wait times, Sprinklers (Rachio) and Highway cameras (DriveBC) load this way, and `next.config.ts` gives each file the same
   immutable cache header as display.js.
 - **Budget:** the display's script stays under 80 KB gzipped and its stylesheet under 20 KB (`scripts/bundle-check.mjs`,
   a CI step; CSS raised from 10 KB on 2026-11-23 for more clock styles; script raised from 40 KB by Melvin on 2026-11-25: "double the size of the limit"). A new dependency on the display needs a very good reason.
@@ -831,6 +835,17 @@ panel can be complex if you need it to be."
   after three hours. Indoor alerts (`indoorAlerts`, source `indoorAir`, "moderate", id per device, kind and day) are
   merged into the alerts route only when switched on; readings older than six hours never raise one. This sandbox
   can't reach Airthings, so tests use the documented shapes. Setup: `docs/airthings.md`.
+- **Rachio** (`src/server/rachio.ts`, setup `docs/rachio.md`): Rachio's public API (`api.rach.io/1/public`,
+  `Authorization: Bearer <key>`) with the household's API key from the Rachio app (encrypted `rachio.apiKey`, checked
+  with `person/info` before Settings › Sprinklers saves it through `/api/household/rachio/`). One read of
+  `person/<id>` (controllers, zones, schedule rules, rain delay) and each controller's `device/<id>/scheduleitem` (the
+  next two weeks, fields read leniently because Rachio doesn't document them) every 10 minutes per household, inside
+  Rachio's 1,700 calls a day. Displays poll `/api/display/rachio/` every five minutes and get names, times, minutes and
+  zone names only (never rule ids or the key). A wall skip (`POST`, controller and start) is accepted only for the
+  watering the feed currently calls next and only when a Sprinklers widget with `allowSkip` shows that controller:
+  `schedulerule/skip` for a fixed schedule, else (Flex, or Rachio's "not supported for 3.0 API") a rain delay ending a
+  minute after that watering. Skips are remembered in the cache table so the wall moves on even if Rachio still lists
+  the run. The widget loads on its own (`rachio.js`). This sandbox can't reach Rachio, so tests use community shapes.
 - **Tempest, Weather Underground and Nutrislice** (Phase 4, Household): Tempest and WU station settings in
   `config.integrations.smartHome`; Tempest token and optional WU key in secrets. **Menus** widget reads Nutrislice JSON
   only (`src/server/menus.ts`), never the `meals` table.

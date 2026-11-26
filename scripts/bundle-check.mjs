@@ -21,6 +21,7 @@ const BUDGET = {
   "public/display/snow.js": 6_000,
   "public/display/rivers.js": 6_000,
   "public/display/borderWait.js": 6_000,
+  "public/display/rachio.js": 6_000,
 };
 let failed = false;
 for (const [file, max] of Object.entries(BUDGET)) {

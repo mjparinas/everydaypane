@@ -242,6 +242,16 @@ export const widgetSchema = z.discriminatedUnion("type", [
       .default([...AIRTHINGS_DEFAULT_KINDS])
       .refine((r) => new Set(r).size === r.length, "Each reading once"),
   }),
+  // Rachio sprinklers (Melvin, 2026-11-25: native Rachio cloud API, not Home Assistant). API key under Settings ›
+  // Sprinklers; `devices` are controller ids, none picked means every controller. `allowSkip` lets a tap on the wall
+  // skip the next watering, because anyone in the kitchen can reach the screen.
+  z.object({
+    ...base,
+    type: z.literal("rachio"),
+    devices: z.array(z.string().trim().min(1).max(64)).max(8).default([]),
+    allowSkip: z.boolean().default(true),
+    showZones: z.boolean().default(true),
+  }),
   // EcoFlow power stations (Melvin, 2026-11-21: native EcoFlow developer API, not Home Assistant). Keys under
   // Settings › EcoFlow; `devices` are serial numbers, none picked means every device on the account.
   z.object({

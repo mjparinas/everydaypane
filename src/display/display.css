@@ -3960,6 +3960,55 @@ html.portrait-view .stage {
   }
 }
 
+/* Rachio sprinklers: the next watering large, Skip on the right (a second tap confirms). */
+.w-rachio {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7em;
+  height: 100%;
+  overflow: hidden;
+}
+.rc-name {
+  font-weight: 600;
+  color: var(--muted);
+}
+.rc-row {
+  display: flex;
+  align-items: center;
+  gap: 0.8em;
+}
+.rc-main {
+  flex: 1;
+  min-width: 0;
+}
+.rc-when {
+  font-size: 1.6em;
+  font-weight: 600;
+  line-height: 1.2;
+}
+.rc-sub,
+.rc-zones {
+  color: var(--muted);
+}
+.rc-warn {
+  color: var(--danger);
+}
+.rc-skip {
+  flex: none;
+  font: inherit;
+  font-weight: 600;
+  padding: 0.55em 1.1em;
+  border: 2px solid var(--accent);
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--accent);
+  touch-action: manipulation;
+}
+.rc-armed {
+  background: var(--accent);
+  color: var(--bg);
+}
+
 /* Airthings indoor air: Airthings' own green, amber and red bands. */
 .w-airthings {
   display: flex;

@@ -574,6 +574,36 @@ export interface AirthingsData {
   stale?: boolean;
 }
 
+/** The next watering on one Rachio controller (src/server/rachio.ts). */
+export interface RachioWatering {
+  /** Epoch ms it starts. */
+  start: number;
+  /** The schedule's name in the Rachio app ("Lawn mornings"). */
+  name: string;
+  minutes: number;
+  zones: string[];
+}
+
+export interface RachioController {
+  id: string;
+  name: string;
+  online: boolean;
+  /** Epoch ms a rain delay ends, when one is on. */
+  rainDelayUntil: number | null;
+  next: RachioWatering | null;
+  /** Rachio doesn't list upcoming waterings for this controller (no schedules, or the read failed). */
+  noSchedule?: boolean;
+}
+
+export interface RachioData {
+  updatedAt: number;
+  /** False until the household saves a Rachio API key. */
+  configured: boolean;
+  controllers: RachioController[];
+  error?: string;
+  stale?: boolean;
+}
+
 /** One EcoFlow power station (src/server/ecoflow.ts). Watts are whole watts; minutes to full or to empty. */
 export interface EcoFlowDevice {
   sn: string;

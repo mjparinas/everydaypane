@@ -167,6 +167,14 @@ export const WIDGETS: { [T in WidgetType]: WidgetInfo<T> } = {
     minSize: { w: 2, h: 2 },
     defaults: () => ({ devices: [], readings: [...AIRTHINGS_DEFAULT_KINDS] }),
   },
+  rachio: {
+    label: "Sprinklers",
+    description: "Next Rachio watering, skip it with a tap",
+    icon: "💧",
+    size: { w: 3, h: 2 },
+    minSize: { w: 2, h: 2 },
+    defaults: () => ({ devices: [], allowSkip: true, showZones: true }),
+  },
   ecoflow: {
     label: "EcoFlow",
     description: "Battery, solar and power in and out",
@@ -721,6 +729,7 @@ export const WIDGET_GROUPS: { id: string; label: string; types: WidgetType[] }[]
       "borderWait",
       "internet",
       "ecoflow",
+      "rachio",
     ],
   },
   { id: "media", label: "Outside", types: ["photos", "sports", "alerts", "note"] },

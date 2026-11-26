@@ -44,6 +44,7 @@ const LAZY = [
   "rivers",
   "borderWait",
   "drivebc",
+  "rachio",
 ];
 const sharedApi = {
   name: "shared-api",

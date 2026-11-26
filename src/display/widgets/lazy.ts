@@ -21,6 +21,7 @@ type Lazy = {
   snow: Mount<"snow">;
   rivers: Mount<"rivers">;
   borderWait: Mount<"borderWait">;
+  rachio: Mount<"rachio">;
 };
 
 (globalThis as { __epApi?: typeof api }).__epApi = api;
