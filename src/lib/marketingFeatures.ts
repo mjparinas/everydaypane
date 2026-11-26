@@ -92,6 +92,7 @@ const FEATURE_BLURBS: Partial<Record<WidgetType, string>> = {
   quotes: "Short quotations with authors.",
   affirmation: "A calm daily line; kids, calm or courage categories.",
   onThisDay: "A family-friendly moment from history, from Wikipedia.",
+  brief: "The day in one sentence: rain at 3, ferry delays, garbage out tonight, the dentist at 4.",
   horoscope: "Playful daily blurb for a zodiac sign.",
   instagram: "Public post embed (not profiles).",
   trello: "Lists and open cards on a board.",

@@ -28,6 +28,7 @@ type Lazy = {
   moon: Mount<"moon">;
   aurora: Mount<"aurora">;
   onThisDay: Mount<"onThisDay">;
+  brief: Mount<"brief">;
 };
 
 (globalThis as { __epApi?: typeof api }).__epApi = api;

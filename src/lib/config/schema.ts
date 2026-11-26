@@ -3,6 +3,7 @@ import { z } from "zod";
 import { AIRTHINGS_DEFAULT_KINDS, AIRTHINGS_KINDS } from "../airthings";
 import { POOL_DEFAULT_KINDS, POOL_KINDS } from "../blueRiiot";
 import { BORDER_CROSSINGS, BORDER_DIRECTIONS } from "../border";
+import { BRIEF_SOURCES } from "../briefSources";
 import { DRIVEBC_MAX_CAMERAS, DRIVEBC_REFRESH } from "../drivebc";
 import { EARTH_OVERLAYS, EARTH_ZOOMS } from "../earth";
 import { FERRY_ROUTES } from "../ferries";
@@ -704,6 +705,19 @@ export const widgetSchema = z.discriminatedUnion("type", [
     kind: z.enum(["events", "births"]).default("events"),
     count: z.number().int().min(1).max(5).default(1),
     familyFriendly: z.boolean().default(true),
+  }),
+  // Morning brief (Melvin, 2026-11-26): the day in one sentence from feeds the household already has (src/lib/brief.ts).
+  // From 7 PM it reads tomorrow unless `eveningTomorrow` is off.
+  z.object({
+    ...base,
+    type: z.literal("brief"),
+    layout: z.enum(["sentence", "list"]).default("sentence"),
+    sources: z
+      .array(z.enum(BRIEF_SOURCES))
+      .max(BRIEF_SOURCES.length)
+      .default([...BRIEF_SOURCES]),
+    events: z.number().int().min(1).max(5).default(3),
+    eveningTomorrow: z.boolean().default(true),
   }),
   // Playful horoscope (Melvin, 2026-11-23): curated kitchen blurbs by sign, not a live astrology feed.
   z.object({

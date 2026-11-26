@@ -22,6 +22,7 @@ same change, and moves it out of **In progress** when it merges.
 | --- | --- | --- |
 | Clock (`clock`) | Digital, analogue, flip, nixie, word, minimal or neon; any time zone, label, seconds (Vancouver and Toronto clocks) | Device clock |
 | Date (`date`) | Today's date in a time zone | Device clock |
+| Morning brief (`brief`) | The day in one sentence or a short list: emergency alerts, school closures, rain or snow and when, calendar events still ahead with birthdays and holidays from countdowns, bins out tonight, ferry delays, heavy traffic, dinner; reads **tomorrow from 7 PM** (`eveningTomorrow`); pick sources | Feeds the household already has, phrased on the server (`src/lib/brief.ts`, `src/server/brief.ts`) |
 | Sunrise & sunset (`sunTimes`) | Today's sunrise, sunset and length of daylight; optional emoji, daylight hours and **tonight's moon phase** (`showMoon`) | Open-Meteo forecast; moon worked out on the device |
 | Moon phase (`moon`) | Drawn moon disc, phase name, % lit, next full and new moon, traditional full moon names (Cold Moon, Harvest Moon) | Worked out on the device (`src/lib/moon.ts`, Meeus) |
 | Aurora tonight (`aurora`) | Tonight's peak Kp, chance of seeing it from home (good / possible / slim / unlikely), Kp needed here, G storm level, a bar per three-hour block for the next day | NOAA SWPC planetary Kp forecast (`src/server/aurora.ts`) |
@@ -397,6 +398,10 @@ npm run templates:previews  # regenerate public/templates/*.png from real widget
   has but "a good portion" Household, "properly emphasized", and "optimized for speed and performance"): built like
   Liftsmith's getting-started tour. Rules in Architecture. A new feature worth an email gets one appended to
   `ONBOARDING` with its picture in `scripts/email-images.mjs`; nothing in the series repeats another email.
+- **Morning brief** (Melvin, 2026-11-26: "a morning brief that reads the day for you: Rain at 3, ferry delays, garbage
+  tonight, Sam's dentist at 4"): a `brief` widget that sums up the day from feeds Everydaypane already reads, with no
+  new service (see Architecture). Claude's defaults: Household only (not in `FREE_WIDGET_TYPES`), a sentence by default
+  with a list layout, and from 7 PM it reads tomorrow.
 - **Canadian English** in everything a person reads (colour, centre, favourite), as in Liftsmith.
 
 ## Display: super lightweight (rule, Melvin, 2026-11-17)
@@ -416,7 +421,7 @@ panel can be complex if you need it to be."
   The internet widget, the UniFi network widget, EcoFlow, the whiteboard, wildfires, the Windy map, the Smart device tile
   (`haEntity.ts`; cameras and `HA_EVERY` stay in `ha.ts`), Oura, Indoor air (Airthings), the snow report, River levels,
   Border wait times, Sprinklers (Rachio), Highway cameras (DriveBC), the Pool (Blue Riiot), tides, moon phase, aurora,
-  On this day and Laundry load this way, and `next.config.ts` gives each file the same
+  On this day, Laundry and the Morning brief load this way, and `next.config.ts` gives each file the same
   immutable cache header as display.js.
 - **Budget:** the display's script stays under 80 KB gzipped and its stylesheet under 20 KB (`scripts/bundle-check.mjs`,
   a CI step; CSS raised from 10 KB on 2026-11-23 for more clock styles; script raised from 40 KB by Melvin on 2026-11-25: "double the size of the limit"). A new dependency on the display needs a very good reason.
@@ -956,6 +961,17 @@ panel can be complex if you need it to be."
   `config.integrations.smartHome`; Tempest token and optional WU key in secrets. **Menus** widget reads Nutrislice JSON
   only (`src/server/menus.ts`), never the `meals` table.
 
+- **Morning brief** (`src/server/brief.ts`, phrases in `src/lib/brief.ts`): `/api/display/brief/?w=<widget id>`
+  takes the widget's sources and options from the saved settings, never the request, and reads the same cached feeds
+  the other widgets use (weather, alerts, calendar, garbage, ferries, commute, meals, school), each failing quietly.
+  A source speaks only when it has something to say and only when the household set it up: school only with a School
+  status widget (its page defaults to Langley's), ferries only for routes on a Ferries widget, garbage once a zone is
+  picked, commute once home is set, and garbage, commute and meals not while their platform flag is off. Rain or snow is
+  the first wet hour today (code says so with a 30 % chance, or any 60 %), or "until" when it's already wet; events are
+  those still ahead, all-day first, `events` named and the rest counted; bins are "out tonight" the day before and
+  "pickup today" before noon; ferries and traffic are today only (traffic: 10 min and a quarter over empty roads, read
+  in the last 20 min). Strip-worthy alerts lead, household notices never. From 7 PM (`BRIEF_EVENING_HOUR`) it reads
+  tomorrow. The display polls every five minutes, paints the text and steps the size down until it fits (`brief.js`).
 - **Tides** (`src/server/tides.ts`, reworked 2026-11-25): Canadian stations are `iwls:` plus the five-digit number on
   the tide tables (White Rock `iwls:07577`); IWLS's data route wants its own id, looked up once a day via
   `/stations?code=`, and answers a bare list, so highs and lows are told apart by their neighbours. The old default

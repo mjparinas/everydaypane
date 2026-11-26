@@ -1,3 +1,4 @@
+import type { BriefSource } from "@/lib/briefSources";
 import type { DashboardConfig, Theme, View } from "@/lib/config/schema";
 
 // What a display receives: the parts of the settings document it needs, nothing secret. Built by
@@ -1047,4 +1048,31 @@ export interface LaundryData {
   appliances: LaundryAppliance[];
   error?: string;
   stale?: boolean;
+}
+
+/** How a brief phrase is coloured on the wall: alerts red, delays and closures amber. */
+export type BriefTone = "alert" | "warn" | "";
+
+export interface BriefItem {
+  source: BriefSource;
+  icon: string;
+  /** The phrase as it reads in the sentence: "Rain at 3 PM", "Dentist at 4 PM". */
+  text: string;
+  /** Extra words for the list layout only: "High of 9°". */
+  detail?: string;
+  tone: BriefTone;
+}
+
+/** The morning brief for one widget (src/server/brief.ts, phrased by src/lib/brief.ts). */
+export interface BriefData {
+  updatedAt: number;
+  /** "Good morning" / "Good afternoon" / "Good evening", by the dashboard's clock. */
+  greeting: string;
+  /** Which day the brief reads: today, or tomorrow from BRIEF_EVENING_HOUR. */
+  day: "today" | "tomorrow";
+  /** YYYY-MM-DD of that day. */
+  date: string;
+  /** Every phrase as one sentence: "Rain at 3 PM, ferry delays, garbage out tonight, Sam's dentist at 4 PM." */
+  summary: string;
+  items: BriefItem[];
 }

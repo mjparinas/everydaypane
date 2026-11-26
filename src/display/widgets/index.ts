@@ -158,6 +158,8 @@ export function mountWidget(el: HTMLElement, w: Widget, ctx: WidgetContext): Cle
       return lazyWidget("aurora", el, w, ctx);
     case "onThisDay":
       return lazyWidget("onThisDay", el, w, ctx);
+    case "brief":
+      return lazyWidget("brief", el, w, ctx);
     case "transit":
       return transit(el, w, ctx);
     case "sports":

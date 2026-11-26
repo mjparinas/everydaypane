@@ -1,0 +1,14 @@
+{
+  "updatedAt": 1763937720000,
+  "greeting": "Good afternoon",
+  "day": "today",
+  "date": "2026-11-23",
+  "summary": "Rain at 6 PM, Swim lessons at 5 PM, Grandma for dinner at 6:30 PM, recycling and organics out tonight, Tacos + rice for dinner.",
+  "items": [
+    { "source": "weather", "icon": "🌧️", "text": "Rain at 6 PM", "detail": "High of 11°", "tone": "" },
+    { "source": "calendar", "icon": "📅", "text": "Swim lessons at 5 PM", "tone": "" },
+    { "source": "calendar", "icon": "📅", "text": "Grandma for dinner at 6:30 PM", "tone": "" },
+    { "source": "garbage", "icon": "🗑️", "text": "Recycling and organics out tonight", "detail": "Pickup tomorrow", "tone": "" },
+    { "source": "meals", "icon": "🍽️", "text": "Tacos + rice for dinner", "tone": "" }
+  ]
+}
