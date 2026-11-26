@@ -2,10 +2,65 @@
 
 import { Range, Section, Select, Text, Toggle } from "./fields";
 import { HaEntityList } from "./haEntities";
+import { HouseholdBadge, usePlan } from "./plan";
 import { useAdmin } from "./store";
-import { TimePicker } from "./TimePicker";
+import { formatDisplay, TimePicker } from "./TimePicker";
 
 const MAX_MOTION = 5;
+
+/** Blog guide linked from Settings (Melvin, 2026-11-26: a post on what the screen saver is and how it works). */
+export const SCREEN_SAVER_GUIDE = "/blog/photo-frame-screen-saver/";
+
+// Settings › Home card (Melvin, 2026-11-26: the screen saver "needs to be more prominent in the settings"): says what
+// the screen saver does now, or what it could do, and jumps to the full panel under Screen saver & alerts.
+export function ScreenSaverSummary({ onOpen }: { onOpen: () => void }) {
+  const s = useAdmin((st) => st.config.screenSaver);
+  const views = useAdmin((st) => st.config.views);
+  const hour12 = useAdmin((st) => st.config.hour12);
+  const { isPaid, openUpgrade } = usePlan();
+  const idleView = views.find((v) => v.id === s.viewId);
+  const after = `after ${s.minutes} ${s.minutes === 1 ? "minute" : "minutes"} without a touch`;
+  const status = !s.idle
+    ? null
+    : s.shows === "view"
+      ? `Shows the ${idleView?.name ? `“${idleView.name}”` : "idle"} view ${after}.`
+      : s.shows === "photos"
+        ? `Shows photos full screen ${after}.`
+        : `Goes dark ${after}.`;
+  const on = s.idle || s.night;
+
+  return (
+    <Section id="settings-screen-saver-summary" title="Screen saver" actions={isPaid ? undefined : <HouseholdBadge />}>
+      {on ? (
+        <p className="text-sm text-soft">
+          <strong className="text-ink">On.</strong> {status}
+          {s.night
+            ? `${status ? " " : ""}Dark at night from ${formatDisplay(s.nightStart, hour12)} to ${formatDisplay(s.nightEnd, hour12)}.`
+            : ""}
+        </p>
+      ) : (
+        <p className="text-sm text-soft">
+          Turn the wall into a <strong className="text-ink">photo frame</strong> when nobody&rsquo;s using it. After a few minutes with no
+          touch it shows a view you design, like the Photo frame starter, and a tap brings the dashboard straight back.
+        </p>
+      )}
+      <div className="flex flex-wrap items-center gap-3">
+        {isPaid ? (
+          <button type="button" className={on ? "btn-ghost" : "btn-primary"} onClick={onOpen}>
+            {on ? "Change screen saver" : "Set up the screen saver"}
+          </button>
+        ) : (
+          <button type="button" className="btn-primary" onClick={() => openUpgrade("screenSaver")}>
+            See why Household
+          </button>
+        )}
+        <a href={SCREEN_SAVER_GUIDE} target="_blank" rel="noopener" className="text-sm font-semibold text-brand hover:underline">
+          How it works
+        </a>
+      </div>
+    </Section>
+  );
+}
 
 // Settings › Screen saver (Melvin, 2026-11-21): photos only or dark after some idle minutes, dark at night, and Home
 // Assistant motion sensors that wake the screen. The display side is src/display/saver.ts.
@@ -19,7 +74,14 @@ export function ScreenSaverPanel() {
   const motion = s.motionEntityIds.length < MAX_MOTION ? [...s.motionEntityIds, ""] : s.motionEntityIds;
 
   return (
-    <Section title="Screen saver">
+    <Section
+      title="Screen saver"
+      actions={
+        <a href={SCREEN_SAVER_GUIDE} target="_blank" rel="noopener" className="text-sm font-semibold text-brand hover:underline">
+          How it works
+        </a>
+      }
+    >
       <Toggle
         label="When nobody's using it"
         checked={s.idle}
