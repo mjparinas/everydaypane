@@ -1,10 +1,12 @@
 import { z } from "zod";
 
 import { AIRTHINGS_DEFAULT_KINDS, AIRTHINGS_KINDS } from "../airthings";
+import { BORDER_CROSSINGS, BORDER_DIRECTIONS } from "../border";
 import { EARTH_OVERLAYS, EARTH_ZOOMS } from "../earth";
 import { FERRY_ROUTES } from "../ferries";
 import { MEAL_SLOTS } from "../meals";
 import { NEWS_PRESETS } from "../newsPresets";
+import { RIVER_DEFAULT_STATIONS, RIVER_STATION_RE } from "../rivers";
 import { SCREEN_SAVER_OFF } from "../screenSaver";
 import { SMART_HOME_PROVIDERS } from "../smartHome";
 import { LEAGUE_IDS, MAX_TEAMS } from "../sports";
@@ -228,7 +230,8 @@ export const widgetSchema = z.discriminatedUnion("type", [
   z.object({
     ...base,
     type: z.literal("haEntity"),
-    // Govee lights (Melvin, 2026-11-21) join the direct providers: on/off, brightness, colour and scenes.
+    // Govee lights (Melvin, 2026-11-21) join the direct providers: on/off, brightness, colour and scenes; Philips Hue
+    // and LIFX lights (Melvin, 2026-11-25) with on/off, brightness and colour.
     provider: z.enum(SMART_HOME_PROVIDERS).default("homeAssistant"),
     entityId: z.string().max(255),
     control: haControlSchema,
@@ -346,6 +349,19 @@ export const widgetSchema = z.discriminatedUnion("type", [
     count: z.number().int().min(1).max(12),
     showDelivered: z.boolean(),
   }),
+  // River levels (Melvin, 2026-11-25): Environment Canada real-time hydrometric gauges (src/server/rivers.ts), up to
+  // six stations by Water Survey number with an optional label, each with its level, trend and a day's chart.
+  z.object({
+    ...base,
+    type: z.literal("rivers"),
+    stations: z
+      .array(z.object({ id: z.string().regex(RIVER_STATION_RE), label: z.string().trim().max(60).default("") }))
+      .max(6)
+      .default(RIVER_DEFAULT_STATIONS.map((id) => ({ id, label: "" })))
+      .refine((r) => new Set(r.map((x) => x.id)).size === r.length, "Each station once"),
+    showDischarge: z.boolean().default(false),
+    showChart: z.boolean().default(true),
+  }),
   // Tides (Phase 3, Household): next highs and lows at a tide station (NOAA US, Canadian IWLS for B.C.).
   z.object({
     ...base,
@@ -455,6 +471,19 @@ export const widgetSchema = z.discriminatedUnion("type", [
     routes: z.array(z.enum(FERRY_ROUTES)).min(1).max(4),
     count: z.number().int().min(1).max(8),
     showVessel: z.boolean(),
+  }),
+  // Border wait times (Melvin, 2026-11-25): Lower Mainland crossings, into the U.S. from CBP and into Canada from CBSA
+  // (src/server/border.ts).
+  z.object({
+    ...base,
+    type: z.literal("borderWait"),
+    crossings: z
+      .array(z.enum(BORDER_CROSSINGS))
+      .min(1)
+      .max(BORDER_CROSSINGS.length)
+      .refine((c) => new Set(c).size === c.length, "Each crossing once"),
+    directions: z.enum(BORDER_DIRECTIONS),
+    showNexus: z.boolean(),
   }),
   // Sports scores (Melvin, 2026-11-21): live scores, the last result and the next game of the teams followed under
   // Settings › Sports (none picked means all of them).

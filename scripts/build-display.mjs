@@ -40,6 +40,8 @@ const LAZY = [
   "haEntity",
   "oura",
   "airthings",
+  "rivers",
+  "borderWait",
   "tides",
   "moon",
   "aurora",

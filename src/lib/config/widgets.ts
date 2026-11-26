@@ -1,4 +1,6 @@
 import { AIRTHINGS_DEFAULT_KINDS } from "../airthings";
+import { BORDER_DEFAULT_CROSSINGS } from "../border";
+import { RIVER_DEFAULT_STATIONS } from "../rivers";
 import type { Widget, WidgetType } from "./schema";
 
 // What the admin panel's widget picker offers, and what a new widget of each type starts with.
@@ -260,6 +262,14 @@ export const WIDGETS: { [T in WidgetType]: WidgetInfo<T> } = {
     minSize: { w: 2, h: 2 },
     defaults: () => ({ packages: [], count: 6, showDelivered: false }),
   },
+  rivers: {
+    label: "River levels",
+    description: "Fraser and creek gauges, rising or falling",
+    icon: "🏞️",
+    size: { w: 3, h: 3 },
+    minSize: { w: 2, h: 2 },
+    defaults: () => ({ stations: RIVER_DEFAULT_STATIONS.map((id) => ({ id, label: "" })), showDischarge: false, showChart: true }),
+  },
   tides: {
     label: "Tides",
     description: "Next highs and lows and the day's tide curve",
@@ -380,6 +390,14 @@ export const WIDGETS: { [T in WidgetType]: WidgetInfo<T> } = {
     size: { w: 4, h: 3 },
     minSize: { w: 2, h: 2 },
     defaults: () => ({ routes: ["TSASWB" as const], count: 3, showVessel: false }),
+  },
+  borderWait: {
+    label: "Border wait times",
+    description: "Peace Arch, Pacific Highway and Aldergrove, both ways",
+    icon: "🛂",
+    size: { w: 4, h: 3 },
+    minSize: { w: 2, h: 2 },
+    defaults: () => ({ crossings: [...BORDER_DEFAULT_CROSSINGS], directions: "both" as const, showNexus: false }),
   },
   sports: {
     label: "Sports scores",
@@ -671,7 +689,19 @@ export const WIDGET_GROUPS: { id: string; label: string; types: WidgetType[] }[]
   {
     id: "weather",
     label: "Weather & map",
-    types: ["weather", "tempest", "weatherUnderground", "airQuality", "airthings", "radar", "wildfires", "aurora", "earth", "windy"],
+    types: [
+      "weather",
+      "tempest",
+      "weatherUnderground",
+      "airQuality",
+      "airthings",
+      "radar",
+      "wildfires",
+      "rivers",
+      "aurora",
+      "earth",
+      "windy",
+    ],
   },
   {
     id: "calendar",
@@ -682,7 +712,21 @@ export const WIDGET_GROUPS: { id: string; label: string; types: WidgetType[] }[]
   {
     id: "home",
     label: "Home",
-    types: ["haEntity", "camera", "media", "unifi", "wifiQr", "editQr", "garbage", "commute", "transit", "ferries", "internet", "ecoflow"],
+    types: [
+      "haEntity",
+      "camera",
+      "media",
+      "unifi",
+      "wifiQr",
+      "editQr",
+      "garbage",
+      "commute",
+      "transit",
+      "ferries",
+      "borderWait",
+      "internet",
+      "ecoflow",
+    ],
   },
   { id: "media", label: "Outside", types: ["photos", "sports", "alerts", "note"] },
   {

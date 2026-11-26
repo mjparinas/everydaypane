@@ -1,0 +1,67 @@
+{
+  "updatedAt": 1795473720000,
+  "down": {
+    "cbsa": false,
+    "cbp": false
+  },
+  "crossings": [
+    {
+      "id": "peaceArch",
+      "name": "Peace Arch",
+      "toUS": {
+        "minutes": 30,
+        "nexus": 0,
+        "closed": false,
+        "at": 1795471200000
+      },
+      "toCanada": {
+        "minutes": 5,
+        "closed": false,
+        "at": 1795471200000
+      }
+    },
+    {
+      "id": "pacificHighway",
+      "name": "Pacific Highway",
+      "toUS": {
+        "minutes": 20,
+        "nexus": 0,
+        "closed": false,
+        "at": 1795471200000
+      },
+      "toCanada": {
+        "minutes": 5,
+        "closed": false,
+        "at": 1795471200000
+      }
+    },
+    {
+      "id": "aldergrove",
+      "name": "Aldergrove",
+      "toUS": {
+        "minutes": 10,
+        "closed": false,
+        "at": 1795471200000
+      },
+      "toCanada": {
+        "minutes": 0,
+        "closed": false,
+        "at": 1795470480000
+      }
+    },
+    {
+      "id": "huntingdon",
+      "name": "Abbotsford",
+      "toUS": {
+        "minutes": 50,
+        "closed": false,
+        "at": 1795471200000
+      },
+      "toCanada": {
+        "minutes": 15,
+        "closed": false,
+        "at": 1795470480000
+      }
+    }
+  ]
+}
