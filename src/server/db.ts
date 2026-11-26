@@ -125,6 +125,9 @@ const COLUMNS = [
   `ALTER TABLE device_sign_ins ADD COLUMN device_id TEXT`,
   // Who added a library photo from a phone (photo frame polish, 2026-11-26), so they can take back their own.
   `ALTER TABLE photos ADD COLUMN added_by TEXT`,
+  // Shopping aisles and "running low" (Melvin, 2026-11-26). A null category is guessed from the words when read.
+  `ALTER TABLE shopping ADD COLUMN category TEXT`,
+  `ALTER TABLE shopping ADD COLUMN low INTEGER NOT NULL DEFAULT 0`,
 ];
 
 async function migrate(c: Client): Promise<void> {

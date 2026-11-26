@@ -5233,3 +5233,39 @@ html.portrait-view .stage {
 .ld-paused .ld-bar span {
   opacity: 0.5;
 }
+
+/* Shopping aisles and "running low" (Melvin, 2026-11-26). */
+.sh-cat {
+  padding: 0.5em 0 0.1em;
+  color: var(--muted);
+  font-size: 0.62em;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.sh-cat:first-child {
+  padding-top: 0;
+}
+.sh-low {
+  flex: none;
+  padding: 0.05em 0.45em;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--sun) 22%, transparent);
+  color: color-mix(in srgb, var(--sun) 75%, var(--text));
+  font-size: 0.62em;
+  font-weight: 700;
+}
+.sh-low-btn {
+  font: inherit;
+  padding: 0.35em 0.6em;
+  border: 1px solid color-mix(in srgb, var(--text) 25%, transparent);
+  border-radius: calc(var(--radius) * 0.5);
+  background: none;
+  color: var(--muted);
+  font-weight: 600;
+}
+.sh-low-btn[aria-pressed="true"] {
+  border-color: var(--sun);
+  background: color-mix(in srgb, var(--sun) 22%, transparent);
+  color: var(--text);
+}

@@ -1277,6 +1277,12 @@ function TypeSettings({
       return (
         <>
           <Stepper label="Items shown" value={w.count} min={1} max={40} onChange={(v) => e((x) => void (x.count = v))} />
+          <Toggle
+            label="Group by aisle"
+            hint="Produce, dairy, pantry and so on, in store order. Phones can move an item to another aisle."
+            checked={w.groupByCategory}
+            onChange={(v) => e((x) => void (x.groupByCategory = v))}
+          />
           <Toggle label="Show bought items" checked={w.showDone} onChange={(v) => e((x) => void (x.showDone = v))} />
           <Toggle
             label="Tap to tick off"

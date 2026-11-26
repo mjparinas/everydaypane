@@ -632,6 +632,8 @@ export const widgetSchema = z.discriminatedUnion("type", [
     // Off by default: anyone at the kitchen screen can add when it is on (Melvin, 2026-11-23).
     allowAdd: z.boolean().default(false),
     showDone: z.boolean(),
+    // Aisle headings (Melvin, 2026-11-26). Off for widgets saved before categories, on for new ones.
+    groupByCategory: z.boolean().default(false),
   }),
   // Who's home (Melvin, 2026-11-22): Home Assistant person / device_tracker / presence entities, read-only.
   z.object({
