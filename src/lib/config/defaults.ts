@@ -155,6 +155,7 @@ const emptyIntegrations = (): DashboardConfig["integrations"] => ({
 const baseShell = (): Omit<DashboardConfig, "views" | "schedule" | "themeId"> => ({
   name: "Everydaypane",
   location: { name: "Langley, BC", latitude: 49.1044, longitude: -122.6604, timeZone: VAN },
+  region: "auto",
   units: "metric",
   hour12: true,
   weather: { provider: "openMeteo" },

@@ -4,7 +4,7 @@ import { meetsBanner } from "@/lib/alerts";
 import { defaultConfig } from "@/lib/config/defaults";
 import { useTestServer } from "@/test/server";
 
-import { alertsFeed, decodeXml, parseHydro, parseNaad, parseOpen511, parseQuakes } from "./alerts";
+import { alertsFeed, decodeXml, parseHydro, parseHydroQuebec, parseNaad, parseNws, parseOpen511, parseQuakes, parseUsgs } from "./alerts";
 import { clearMemoryCache } from "./cache";
 
 const langley = { lat: 49.1044, lon: -122.6604 };
@@ -238,6 +238,95 @@ describe("BC Hydro outages", () => {
   });
 });
 
+const seattle = { lat: 47.6062, lon: -122.3321 };
+const montreal = { lat: 45.5019, lon: -73.5674 };
+
+// Shapes from api.weather.gov's documentation (GeoJSON, properties per CAP) and USGS's GeoJSON summary format.
+const nws = {
+  features: [
+    {
+      id: "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.a",
+      properties: {
+        id: "urn:oid:2.49.0.1.840.0.a",
+        areaDesc: "City of Seattle",
+        sent: "2026-11-17T04:00:00-08:00",
+        expires: "2026-11-17T12:00:00-08:00",
+        ends: "2026-11-18T04:00:00-08:00",
+        status: "Actual",
+        messageType: "Alert",
+        severity: "Severe",
+        event: "Wind Warning",
+        headline: "Wind Warning issued November 17",
+        description: "South winds 30 to 40 mph.",
+        instruction: "Secure loose objects.",
+      },
+    },
+    { properties: { id: "t", status: "Test", event: "Test Message", severity: "Minor" } },
+    { properties: { id: "c", status: "Actual", messageType: "Cancel", event: "Flood Watch", severity: "Moderate" } },
+    { properties: { id: "old", status: "Actual", event: "Frost Advisory", severity: "Minor", ends: "2026-11-16T08:00:00-08:00" } },
+    { properties: { id: "u", status: "Actual", event: "Special Weather Statement", severity: "Unknown" } },
+  ],
+};
+
+describe("National Weather Service alerts", () => {
+  it("keeps actual alerts, drops tests, cancellations and ended ones, and counts Unknown as minor", () => {
+    const list = parseNws(nws, now);
+    expect(list.map((a) => [a.id, a.source, a.severity, a.title])).toEqual([
+      ["nws:urn:oid:2.49.0.1.840.0.a", "weather", "severe", "Wind Warning"],
+      ["nws:u", "weather", "minor", "Special Weather Statement"],
+    ]);
+    expect(list[0]?.description).toBe("Wind Warning issued November 17 South winds 30 to 40 mph. Secure loose objects.");
+    expect(list[0]?.expires).toBe(Date.parse("2026-11-18T12:00:00Z"));
+    expect(parseNws(null, now)).toEqual([]);
+  });
+});
+
+describe("USGS earthquakes", () => {
+  it("keeps earthquakes within the radius and above the magnitude", () => {
+    const raw = {
+      features: [
+        {
+          id: "uw1",
+          properties: { mag: 4.6, place: "10 km N of Seattle, WA", time: now - 3_600_000 },
+          geometry: { coordinates: [-122.33, 47.7, 22] },
+        },
+        { id: "uw2", properties: { mag: 2.1, place: "Small", time: now }, geometry: { coordinates: [-122.3, 47.6, 5] } },
+        { id: "ak1", properties: { mag: 6.0, place: "Alaska", time: now }, geometry: { coordinates: [-151.9, 62.0, 100] } },
+        { id: "bad", properties: { mag: null }, geometry: { coordinates: [] } },
+      ],
+    };
+    const list = parseUsgs(raw, seattle, 100, 3);
+    expect(list.map((a) => [a.id, a.severity, a.area])).toEqual([["usgs:uw1", "moderate", "10 km N of Seattle, WA"]]);
+    expect(list[0]?.description).toBe("10 km away, 22 km deep.");
+  });
+});
+
+describe("Hydro-Québec outages", () => {
+  // Rows as the outage map sends them (checked 2026-11-26): customers, start, estimated end, I or P, "[lon, lat]", codes.
+  const raw = {
+    messages: {},
+    pannes: [
+      [1200, "2026-11-25 13:14:20", "2026-11-25 16:15:00", "I", "[-73.57, 45.505]", "L", "6", "61", "5290", ""],
+      [13, "2026-11-25 14:00:00", "", "P", "[-73.6, 45.52]", "A", "", "", "7011", ""],
+      [400, "2026-11-25 14:00:00", "", "I", "[-71.589, 46.697]", "A", "", "", "1000", ""],
+      [5, "2026-11-25 14:00:00", "", "I", "not json", "A", "", "", "", ""],
+      "junk",
+    ],
+  };
+
+  it("keeps outages near home, very close ones severe, and says when power is due back", () => {
+    const list = parseHydroQuebec(raw, montreal, 5, false);
+    expect(list.map((a) => [a.severity, a.title])).toEqual([
+      ["severe", "Power outage here: 1,200 customers"],
+      ["minor", "Planned power interruption: 13 customers"],
+    ]);
+    expect(list[0]?.description).toBe("Power back by about Wed 16:15.");
+    expect(list[1]?.area).toBe("Hydro-Québec, about 3 km away");
+    expect(list[1]?.description).toBe("No estimate yet for when power is back.");
+    expect(parseHydroQuebec({}, montreal, 5, false)).toEqual([]);
+  });
+});
+
 describe("the alerts feed", () => {
   useTestServer();
   afterEach(() => {
@@ -269,6 +358,52 @@ describe("the alerts feed", () => {
       ["earthquakes", "severe"],
       ["power", "minor"],
     ]);
+  });
+
+  it("reads the National Weather Service and USGS for a U.S. home, and nothing from B.C. or NAAD", async () => {
+    const seen: string[] = [];
+    vi.stubGlobal(
+      "fetch",
+      vi.fn((input: string | URL | Request, init?: RequestInit) => {
+        const url = String(input);
+        seen.push(url);
+        if (url.startsWith("https://api.weather.gov/alerts/active?")) {
+          // NWS turns away readers that don't name themselves.
+          expect(new Headers(init?.headers).get("user-agent")).toContain("everydaypane.com");
+          return Promise.resolve(Response.json(nws));
+        }
+        if (url.startsWith("https://earthquake.usgs.gov/")) return Promise.resolve(Response.json({ features: [] }));
+        return Promise.resolve(new Response("unexpected", { status: 500 }));
+      }),
+    );
+    const config = defaultConfig();
+    config.location = { name: "Seattle", latitude: seattle.lat, longitude: seattle.lon, timeZone: "America/Los_Angeles" };
+    const data = await alertsFeed(config, now);
+    expect(data.alerts.map((a) => a.id)).toEqual(["nws:urn:oid:2.49.0.1.840.0.a", "nws:u"]);
+    expect(seen.map((u) => new URL(u).host).sort()).toEqual(["api.weather.gov", "earthquake.usgs.gov"]);
+    expect(seen.find((u) => u.includes("usgs"))).toContain("maxradiuskm=100");
+  });
+
+  it("reads Hydro-Québec's current file for a Québec home, by the version it names", async () => {
+    const seen: string[] = [];
+    vi.stubGlobal(
+      "fetch",
+      vi.fn((input: string | URL | Request) => {
+        const url = String(input);
+        seen.push(url);
+        if (url.endsWith("/bisversion.json")) return Promise.resolve(Response.json("20261125155020"));
+        if (url.endsWith("/bismarkers20261125155020.json"))
+          return Promise.resolve(Response.json({ pannes: [[40, "2026-11-25 13:00:00", "", "I", "[-73.57, 45.503]"]] }));
+        if (url.startsWith("https://rss.naad-adna.pelmorex.com/")) return Promise.resolve(new Response("<feed></feed>"));
+        if (url.startsWith("https://earthquakescanada.nrcan.gc.ca/")) return Promise.resolve(new Response(""));
+        return Promise.resolve(new Response("unexpected", { status: 500 }));
+      }),
+    );
+    const config = defaultConfig();
+    config.location = { name: "Montréal", latitude: montreal.lat, longitude: montreal.lon, timeZone: "America/Toronto" };
+    const data = await alertsFeed(config, now);
+    expect(data.alerts.map((a) => [a.source, a.severity])).toEqual([["power", "severe"]]);
+    expect(seen.some((u) => u.includes("bchydro") || u.includes("open511") || u.includes("arcgis"))).toBe(false);
   });
 
   it("returns nothing when alerts are off", async () => {

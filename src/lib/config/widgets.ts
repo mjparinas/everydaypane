@@ -313,12 +313,12 @@ export const WIDGETS: { [T in WidgetType]: WidgetInfo<T> } = {
     defaults: () => ({ stationId: "iwls:07577", stationName: "White Rock", count: 4, showHeight: true, showCurve: true }),
   },
   transit: {
-    label: "TransLink",
-    description: "Next buses from your stops, live",
+    label: "Transit departures",
+    description: "Next buses and trains from your stops, live (TransLink, TTC, Calgary, Edmonton, Halifax, King County Metro)",
     icon: "🚌",
     size: { w: 5, h: 3 },
     minSize: { w: 2, h: 2 },
-    defaults: () => ({ stops: [], routes: [], count: 4, walkMinutes: 0 }),
+    defaults: () => ({ agency: "translink", stops: [], routes: [], count: 4, walkMinutes: 0 }),
   },
   camera: {
     label: "Camera",
