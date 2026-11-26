@@ -1987,6 +1987,9 @@ html.portrait-view .stage {
   box-shadow: 0 4px 24px rgb(0 0 0 / 0.35);
   cursor: pointer;
 }
+.alert-strip.notice {
+  background: #3b5bdb;
+}
 .alert-strip.show {
   display: flex;
   animation: strip-in 0.4s ease-out;
@@ -4011,4 +4014,73 @@ html.portrait-view .stage {
   stroke: var(--accent);
   stroke-width: 2;
   stroke-linejoin: round;
+}
+
+/* Laundry (2026-11-25): one row per washer or dryer; a finished load turns green until the next cycle. */
+.w-laundry {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5em;
+  height: 100%;
+  overflow: hidden;
+  font-size: calc(clamp(13px, 4.2cqw, 26px) * var(--font-scale, 1));
+}
+.ld-list {
+  display: grid;
+  gap: 0.7em;
+}
+.ld-m {
+  display: flex;
+  align-items: center;
+  gap: 0.7em;
+}
+.ld-icon {
+  flex: none;
+  font-size: 1.6em;
+}
+.ld-body {
+  flex: 1;
+  min-width: 0;
+}
+.ld-name {
+  color: var(--muted);
+  font-size: 0.85em;
+}
+.ld-status {
+  font-size: 1.25em;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.ld-detail,
+.ld-old {
+  color: var(--muted);
+  font-size: 0.8em;
+}
+.ld-idle .ld-status,
+.ld-off .ld-status {
+  color: var(--muted);
+  font-weight: 400;
+}
+.ld-done .ld-status {
+  color: #40c057;
+  font-size: 1.5em;
+}
+.ld-error .ld-status {
+  color: #fa5252;
+}
+.ld-bar {
+  height: 0.3em;
+  margin-top: 0.3em;
+  border-radius: 1em;
+  background: rgb(127 127 127 / 0.25);
+  overflow: hidden;
+}
+.ld-bar span {
+  display: block;
+  height: 100%;
+  background: var(--accent);
+  transform-origin: left;
+}
+.ld-paused .ld-bar span {
+  opacity: 0.5;
 }

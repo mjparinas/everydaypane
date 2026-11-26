@@ -180,6 +180,14 @@ export const WIDGETS: { [T in WidgetType]: WidgetInfo<T> } = {
     minSize: { w: 2, h: 1 },
     defaults: () => ({ siteId: "", slowMs: 100, showChart: true, showCounts: true, showUsage: false }),
   },
+  laundry: {
+    label: "Laundry",
+    description: "Washer and dryer time left, and done",
+    icon: "🧺",
+    size: { w: 3, h: 2 },
+    minSize: { w: 2, h: 1 },
+    defaults: () => ({ appliances: [], showIdle: true }),
+  },
   weatherUnderground: {
     label: "Weather Underground",
     description: "A personal weather station (PWS)",
@@ -658,7 +666,21 @@ export const WIDGET_GROUPS: { id: string; label: string; types: WidgetType[] }[]
   {
     id: "home",
     label: "Home",
-    types: ["haEntity", "camera", "media", "unifi", "wifiQr", "editQr", "garbage", "commute", "transit", "ferries", "internet", "ecoflow"],
+    types: [
+      "haEntity",
+      "camera",
+      "media",
+      "unifi",
+      "wifiQr",
+      "editQr",
+      "garbage",
+      "commute",
+      "transit",
+      "ferries",
+      "internet",
+      "ecoflow",
+      "laundry",
+    ],
   },
   { id: "media", label: "Outside", types: ["photos", "sports", "alerts", "note"] },
   {

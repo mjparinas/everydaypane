@@ -6,6 +6,7 @@ import type { NativeSmartProvider } from "@/lib/smartHome";
 
 import { setAirthingsStatus, useAirthings } from "./airthings";
 import { ConfirmButton, NumberInput, Section, Text, Toggle } from "./fields";
+import { LaundrySection } from "./LaundrySection";
 import { loadSmartHome, useSmartHome, type SmartServiceStatus } from "./smartHome";
 import { useAdmin } from "./store";
 
@@ -259,6 +260,8 @@ export function SmartHomePanel() {
       </Section>
 
       <IndoorAirSection />
+
+      <LaundrySection />
 
       <Section id="settings-menus" title="School menus">
         <p className="text-sm text-soft">
