@@ -52,6 +52,7 @@ const LAZY = [
   "moon",
   "aurora",
   "onThisDay",
+  "brief",
   "packages",
   "schoolDays",
 ];

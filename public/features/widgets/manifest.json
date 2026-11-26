@@ -115,6 +115,11 @@
     "file": "unifi.png"
   },
   {
+    "type": "laundry",
+    "name": "Laundry",
+    "file": "laundry.png"
+  },
+  {
     "type": "weatherUnderground",
     "name": "Weather Underground",
     "file": "weatherUnderground.png"
@@ -328,6 +333,11 @@
     "type": "affirmation",
     "name": "Affirmation",
     "file": "affirmation.png"
+  },
+  {
+    "type": "brief",
+    "name": "Morning brief",
+    "file": "brief.png"
   },
   {
     "type": "onThisDay",

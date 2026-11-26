@@ -5,6 +5,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import { AIRTHINGS_KINDS, AIRTHINGS_LABELS } from "@/lib/airthings";
 import { POOL_KINDS, POOL_LABELS } from "@/lib/blueRiiot";
 import { BORDER_CROSSINGS, BORDER_DIRECTION_LABELS, BORDER_DIRECTIONS, BORDER_INFO } from "@/lib/border";
+import { BRIEF_SOURCE_LABELS, BRIEF_SOURCES } from "@/lib/briefSources";
 import { PERIOD_LABELS, PERIODS } from "@/lib/config/periods";
 import type { CountdownEvent, DashboardConfig, TimerPreset, Widget } from "@/lib/config/schema";
 import { WIDGETS } from "@/lib/config/widgets";
@@ -2004,6 +2005,47 @@ function TypeSettings({
             The chance is worked out for {config.location.name || "the dashboard's location"} from NOAA&apos;s Kp forecast. It still needs a
             clear, dark sky to the north.
           </p>
+        </>
+      );
+    }
+    case "brief": {
+      const e = edit<"brief">();
+      return (
+        <>
+          <Segmented
+            label="Show it as"
+            value={w.layout}
+            options={[
+              { value: "sentence", label: "A sentence" },
+              { value: "list", label: "A list" },
+            ]}
+            onChange={(v) => e((x) => void (x.layout = v))}
+          />
+          <p className="text-xs text-soft">
+            What to mention. Each one only speaks up when there&apos;s something to say, and only from what the dashboard already reads:
+            ferries from a Ferries widget, school closures from a School status widget, garbage day once your zone is set.
+          </p>
+          {BRIEF_SOURCES.map((k) => (
+            <Toggle
+              key={k}
+              label={BRIEF_SOURCE_LABELS[k]}
+              checked={w.sources.includes(k)}
+              onChange={(on) =>
+                e((x) => {
+                  const next = on ? BRIEF_SOURCES.filter((r) => r === k || x.sources.includes(r)) : x.sources.filter((r) => r !== k);
+                  if (next.length) x.sources = next;
+                })
+              }
+            />
+          ))}
+          <Stepper label="Calendar events to name" value={w.events} min={1} max={5} onChange={(v) => e((x) => void (x.events = v))} />
+          <Toggle
+            label="Read tomorrow in the evening"
+            checked={w.eveningTomorrow}
+            hint="From 7 PM it reads tomorrow's weather, plans and bins instead of what's left of today."
+            onChange={(v) => e((x) => void (x.eveningTomorrow = v))}
+          />
+          <p className="text-xs text-soft">Changes to what it mentions show on the wall after you publish.</p>
         </>
       );
     }
