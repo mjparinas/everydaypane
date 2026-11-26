@@ -29,6 +29,7 @@ const FEATURE_BLURBS: Partial<Record<WidgetType, string>> = {
   airQuality: "AQHI or US AQI.",
   airthings: "Indoor radon, CO₂, VOC and particles from Airthings.",
   radar: "Environment Canada observed + forecast over a map.",
+  rivers: "Fraser River and creek levels from Environment Canada gauges, rising or falling, with a day's line.",
   wildfires: "BC Wildfire Service fires, burned areas and evacuation areas on a map, nearest fires listed.",
   earth: "earth.nullschool.net centred on your place.",
   windy: "Windy's map on one layer: radar, rain, wind, temperature, clouds, snow or air quality.",

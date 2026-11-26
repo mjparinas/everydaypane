@@ -857,3 +857,23 @@ export interface BorderData {
   /** Which agency's feed couldn't be read (and had no last good copy). */
   down: { cbsa: boolean; cbp: boolean };
 }
+
+/** One river gauge as a display gets it (src/server/rivers.ts): metres and m³/s; the wall converts for imperial. */
+export interface RiverStationData {
+  id: string;
+  name: string;
+  level: number | null;
+  discharge: number | null;
+  at: number | null;
+  change6h: number | null;
+  change24h: number | null;
+  trend: "rising" | "falling" | "steady" | null;
+  spark: (number | null)[];
+  error?: string;
+}
+
+export interface RiversData {
+  updatedAt: number;
+  units: "metric" | "imperial";
+  stations: RiverStationData[];
+}
