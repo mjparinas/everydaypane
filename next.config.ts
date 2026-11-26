@@ -21,7 +21,8 @@ const nextConfig: NextConfig = {
     // Versioned shell assets only — not `/display/` or `/display/unlock/` (those must stay cookie-sensitive).
     { source: "/display/display.js", headers: [{ key: "Cache-Control", value: "public, max-age=31536000, immutable" }] },
     {
-      source: "/display/:widget(ecoflow|internet|unifi|whiteboard|wildfires|windy|haEntity|oura|airthings|rivers|borderWait|drivebc).js",
+      source:
+        "/display/:widget(ecoflow|internet|unifi|whiteboard|wildfires|windy|haEntity|oura|airthings|snow|rivers|borderWait|drivebc).js",
       headers: [{ key: "Cache-Control", value: "public, max-age=31536000, immutable" }],
     },
     { source: "/display/display.css", headers: [{ key: "Cache-Control", value: "public, max-age=31536000, immutable" }] },

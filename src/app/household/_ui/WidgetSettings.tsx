@@ -13,6 +13,7 @@ import { FERRY_ROUTES, ferryRouteName } from "@/lib/ferries";
 import { MEAL_LABELS, MEAL_SLOTS } from "@/lib/meals";
 import { RIVER_PRESETS, RIVER_STATION_RE } from "@/lib/rivers";
 import { LIGHT_PROVIDERS, type DirectSmartProvider } from "@/lib/smartHome";
+import { MOUNTAINS } from "@/lib/snow";
 import { WINDY_OVERLAY_LABELS, WINDY_OVERLAYS, windyPressureAllowed } from "@/lib/windy";
 
 import { useAirthings } from "./airthings";
@@ -1639,6 +1640,43 @@ function TypeSettings({
           )}
           <p className="text-xs text-soft">
             Set <span className="font-mono">PACKAGE_TRACK_API_KEY</span> on the server for live status (optional).
+          </p>
+        </>
+      );
+    }
+    case "snow": {
+      const e = edit<"snow">();
+      return (
+        <>
+          <p className="text-xs text-soft">Mountains to show, in this order. Keep at least one.</p>
+          {MOUNTAINS.map((m) => (
+            <Toggle
+              key={m.id}
+              label={m.name}
+              checked={w.mountains.includes(m.id)}
+              onChange={(on) =>
+                e((x) => {
+                  const next = on
+                    ? MOUNTAINS.map((r) => r.id).filter((id) => id === m.id || x.mountains.includes(id))
+                    : x.mountains.filter((id) => id !== m.id);
+                  if (next.length) x.mountains = next;
+                })
+              }
+            />
+          ))}
+          <Toggle label="Snow depth" checked={w.showDepth} onChange={(v) => e((x) => void (x.showDepth = v))} />
+          <Toggle
+            label="Snowfall today and the next two days"
+            checked={w.showForecast}
+            onChange={(v) => e((x) => void (x.showForecast = v))}
+          />
+          <Toggle
+            label="Temperature on the mountain"
+            checked={w.showTemperature}
+            onChange={(v) => e((x) => void (x.showTemperature = v))}
+          />
+          <p className="text-xs text-soft">
+            From Open-Meteo&apos;s weather model at each mountain&apos;s mid-mountain height, not the resorts&apos; own snow reports.
           </p>
         </>
       );

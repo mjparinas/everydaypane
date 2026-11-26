@@ -18,6 +18,7 @@ type Lazy = {
   oura: Mount<"oura">;
   airthings: Mount<"airthings">;
   drivebc: Mount<"drivebc">;
+  snow: Mount<"snow">;
   rivers: Mount<"rivers">;
   borderWait: Mount<"borderWait">;
 };
