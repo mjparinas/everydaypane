@@ -29,6 +29,7 @@ export type SecretKey =
   | "ecoflow.accessKey"
   | "ecoflow.secretKey"
   | "unifi.apiKey"
+  | "rachio.apiKey"
   | "microsoft.refreshToken"
   | "microsoft.scopes"
   | "todoist.refreshToken"
@@ -91,6 +92,7 @@ export async function secretsSet(accountId: string): Promise<Record<SecretKey, b
     "ecoflow.accessKey": set.has("ecoflow.accessKey"),
     "ecoflow.secretKey": set.has("ecoflow.secretKey"),
     "unifi.apiKey": set.has("unifi.apiKey"),
+    "rachio.apiKey": set.has("rachio.apiKey"),
     "microsoft.refreshToken": set.has("microsoft.refreshToken"),
     "microsoft.scopes": set.has("microsoft.scopes"),
     "todoist.refreshToken": set.has("todoist.refreshToken"),
