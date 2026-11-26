@@ -212,7 +212,8 @@ export const widgetSchema = z.discriminatedUnion("type", [
   z.object({
     ...base,
     type: z.literal("haEntity"),
-    // Govee lights (Melvin, 2026-11-21) join the direct providers: on/off, brightness, colour and scenes.
+    // Govee lights (Melvin, 2026-11-21) join the direct providers: on/off, brightness, colour and scenes; Philips Hue
+    // and LIFX lights (Melvin, 2026-11-25) with on/off, brightness and colour.
     provider: z.enum(SMART_HOME_PROVIDERS).default("homeAssistant"),
     entityId: z.string().max(255),
     control: haControlSchema,
