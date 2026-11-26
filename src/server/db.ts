@@ -32,6 +32,9 @@ const MIGRATIONS = [
   `CREATE TABLE IF NOT EXISTS alert_notified (id TEXT PRIMARY KEY, sent_at INTEGER NOT NULL)`,
   // Shared kitchen whiteboard doodle (src/server/whiteboard.ts): one board for every display.
   `CREATE TABLE IF NOT EXISTS whiteboard (id INTEGER PRIMARY KEY CHECK (id = 1), revision INTEGER NOT NULL, json TEXT NOT NULL, updated_at INTEGER NOT NULL)`,
+  // One whiteboard per household (2026-11-26, when phones started drawing on it). The single-row table above was
+  // shared by every household; its doodle is carried over to the grandfather household on first read.
+  `CREATE TABLE IF NOT EXISTS account_whiteboard (account_id TEXT PRIMARY KEY, revision INTEGER NOT NULL, json TEXT NOT NULL, updated_at INTEGER NOT NULL)`,
   // Multi-tenant households (Melvin, 2026-11-22). Existing rows are backfilled into acct_legacy on first open.
   `CREATE TABLE IF NOT EXISTS accounts (id TEXT PRIMARY KEY, name TEXT NOT NULL, plan TEXT NOT NULL, stripe_customer_id TEXT, stripe_subscription_id TEXT, created_at INTEGER NOT NULL)`,
   `CREATE TABLE IF NOT EXISTS account_members (account_id TEXT NOT NULL, email TEXT NOT NULL, role TEXT NOT NULL, created_at INTEGER NOT NULL, PRIMARY KEY (account_id, email))`,
