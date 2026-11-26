@@ -2,6 +2,7 @@ import "server-only";
 
 import type { DashboardConfig } from "@/lib/config/schema";
 import type { CalendarData } from "@/lib/display/types";
+import { titleCase } from "@/lib/titleCase";
 
 import { eventsInRange as familyEvents } from "./familyEvents";
 import { calendarFeed, feedRange, GoogleDisconnected, sortEvents } from "./google";
@@ -61,7 +62,9 @@ export async function combinedFeed(accountId: string, config: DashboardConfig, n
       updatedAt: Math.max(google?.value.updatedAt ?? 0, m365?.value.updatedAt ?? 0, now),
       from,
       to,
-      events: sortEvents([...(google?.value.events ?? []), ...(m365?.value.events ?? []), ...linked, ...family]).slice(0, 800),
+      events: sortEvents([...(google?.value.events ?? []), ...(m365?.value.events ?? []), ...linked, ...family])
+        .slice(0, 800)
+        .map((e) => (config.calendarTitleCase ? { ...e, title: titleCase(e.title) } : e)),
     },
     connected: true,
     stale: (google?.stale ?? false) || (m365?.stale ?? false),

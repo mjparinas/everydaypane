@@ -1015,6 +1015,9 @@ export const configSchema = z
     region: z.enum(["auto", ...REGION_IDS]).default("auto"),
     units: z.enum(["metric", "imperial"]),
     hour12: z.boolean(),
+    // Calendar event titles in title case on the wall (Melvin, 2026-11-26), on by default. Applied to the calendar feed
+    // on the server (src/server/calendars.ts, src/lib/titleCase.ts); the calendars themselves never change.
+    calendarTitleCase: z.boolean().default(true),
     // Forecast source for the weather / sun widgets (Melvin, 2026-11-23). Open-Meteo stays the default; Environment
     // Canada uses the official city-page feed near home (no key). Air quality stays on Open-Meteo either way.
     weather: z

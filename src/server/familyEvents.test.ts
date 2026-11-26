@@ -44,6 +44,14 @@ describe("family events", () => {
     expect(feed.connected).toBe(true);
   });
 
+  it("shows titles in title case unless switched off", async () => {
+    await createFamilyEvent(LEGACY_ACCOUNT_ID, { ...event, title: "pick up sam from BC place", createdBy: "kid@example.com" });
+    const on = await combinedFeed(LEGACY_ACCOUNT_ID, defaultConfig());
+    expect(on.data.events.map((e) => e.title)).toContain("Pick Up Sam from BC Place");
+    const off = await combinedFeed(LEGACY_ACCOUNT_ID, { ...defaultConfig(), calendarTitleCase: false });
+    expect(off.data.events.map((e) => e.title)).toContain("pick up sam from BC place");
+  });
+
   it("limits delete to the author or an admin", async () => {
     const kid = await cookieFor("kid@example.com");
     const admin = await cookieFor("admin@example.com");

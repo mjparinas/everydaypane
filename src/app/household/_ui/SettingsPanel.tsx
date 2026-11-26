@@ -286,6 +286,16 @@ export function SettingsPanel() {
           <div id="settings-microsoft">
             <MicrosoftPanel />
           </div>
+          <div className="lg:col-span-2">
+            <Section id="settings-calendar-titles" title="Event titles">
+              <Toggle
+                label="Title case"
+                hint="Shows “dentist with sam” as “Dentist with Sam” on the wall. Acronyms like BC and PRO-D stay as typed, and your calendars aren't changed."
+                checked={config.calendarTitleCase}
+                onChange={(v) => edit((c) => void (c.calendarTitleCase = v))}
+              />
+            </Section>
+          </div>
           <div id="settings-icals" className="lg:col-span-2">
             <HouseholdSoftLock reason="icals" label="iCal links need Household">
               <CalendarLinksPanel />

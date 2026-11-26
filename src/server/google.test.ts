@@ -167,7 +167,7 @@ describe("connecting Google Calendar", () => {
     const r = await displayGET(req("/api/display/calendar/", { headers: { "x-display-token": token } }));
     const data = (await r.json()) as CalendarData;
     expect(data.connected).toBe(true);
-    expect(data.events.map((e) => e.title)).toEqual(["Pro-D day", "Dinner at Lola's"]);
+    expect(data.events.map((e) => e.title)).toEqual(["Pro-D Day", "Dinner at Lola's"]);
     expect(data.events[1]?.color).toBe("#4986e7");
     // Only the enabled calendar was asked, with the access token.
     const eventCalls = calls.filter((c) => c.url.includes("/events"));

@@ -101,7 +101,7 @@ same change, and moves it out of **In progress** when it merges.
 | Google Maps (`maps`) | Map for a place query | google.com/maps embed iframe |
 | Internet (`internet`) | Ping every 10 s to 5 min with Online / Slow / Offline, a graph of the last 60 checks and the share that failed; download and upload speed every 1 to 24 h or on a tap | The screen's own browser against Cloudflare's speed test servers |
 
-**Display behaviour:** several views on a drag-and-drop grid (chosen rows and columns, gap, edge padding and **tile padding**; presets include **12×8 landscape** and **8×12 portrait**, with portrait stages letterboxed on a landscape panel), **per-widget visibility by part of day** (`visiblePeriods`), optional **view loop** on schedule followers (`schedule.loopSeconds`), **widgets layered on top of a photos widget**
+**Display behaviour:** calendar event titles in **title case** (`calendarTitleCase`, on by default; acronyms kept); several views on a drag-and-drop grid (chosen rows and columns, gap, edge padding and **tile padding**; presets include **12×8 landscape** and **8×12 portrait**, with portrait stages letterboxed on a landscape panel), **per-widget visibility by part of day** (`visiblePeriods`), optional **view loop** on schedule followers (`schedule.loopSeconds`), **widgets layered on top of a photos widget**
 (photos as the backdrop), **per-widget background** (on/off and opacity; theme surface opacity is the default; clocks and dates start with no panel), **per-widget font size** (`fontScale`, 70–150 %, text widgets only — not photos, radar, wildfires, camera, earth, Windy, embeds or the whiteboard), **per-widget outer padding** (`outerPadding`, 0–48 px, omitted means none; insets the panel in its grid cell), a time-of-day schedule
 (morning, afternoon, evening, overnight) choosing the view, theme, day or night mode and dimming — each period can start at a **fixed time, sunrise or sunset** (sunrise/sunset from today's Open-Meteo weather at the dashboard location); themes with colour
 palettes, fonts, corner radius, opacity and optional glass; burn-in protection (pixel shift); offline mode (service
@@ -287,6 +287,12 @@ npm run templates:previews  # regenerate public/templates/*.png from real widget
   prominent than the other ones"): the current temperature, icon and condition fill the height the forecast rows leave
   and scale with it (`.wx-now` is its own size container); the hourly and day rows are a smaller, quieter strip. A
   short, wide tile keeps today and the days side by side.
+- **Calendar titles in title case** (Melvin, 2026-11-26: "on the calendar, can you make all the entries title case
+  please"): every event title in the calendar feed (schedule, month, week, up next, morning brief) is shown in title
+  case, on by default, switched in Settings › Calendars › Event titles (`calendarTitleCase`). Done on the server in
+  `combinedFeed` with `titleCase` (`src/lib/titleCase.ts`), so the display bundle doesn't grow and the calendars
+  themselves never change. Words with a capital after the first letter (BC, PRO-D, iPhone, an all-caps title) are left
+  as typed, and short joining words (a, of, the…) stay lower case mid-title (Claude's rules, 2026-11-26).
 - **Month calendar title** (Melvin, 2026-11-19: "add a toggle to show/hide month title"): the month widget's
   "November 2026" line can be switched off in its settings (`showTitle`, on by default); the grid takes the space.
 - **Tile padding** (Melvin, 2026-11-22: "is it possible to adjust the inner padding of the tiles"): each view has a

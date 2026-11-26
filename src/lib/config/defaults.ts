@@ -159,6 +159,7 @@ const baseShell = (): Omit<DashboardConfig, "views" | "schedule" | "themeId"> =>
   region: "auto",
   units: "metric",
   hour12: true,
+  calendarTitleCase: true,
   weather: { provider: "openMeteo" },
   themes: structuredClone(BUILT_IN_THEMES),
   alerts: {
