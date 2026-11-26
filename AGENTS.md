@@ -22,7 +22,9 @@ same change, and moves it out of **In progress** when it merges.
 | --- | --- | --- |
 | Clock (`clock`) | Digital, analogue, flip, nixie, word, minimal or neon; any time zone, label, seconds (Vancouver and Toronto clocks) | Device clock |
 | Date (`date`) | Today's date in a time zone | Device clock |
-| Sunrise & sunset (`sunTimes`) | Today's sunrise, sunset and length of daylight; optional emoji and daylight hours | Open-Meteo forecast |
+| Sunrise & sunset (`sunTimes`) | Today's sunrise, sunset and length of daylight; optional emoji, daylight hours and **tonight's moon phase** (`showMoon`) | Open-Meteo forecast; moon worked out on the device |
+| Moon phase (`moon`) | Drawn moon disc, phase name, % lit, next full and new moon, traditional full moon names (Cold Moon, Harvest Moon) | Worked out on the device (`src/lib/moon.ts`, Meeus) |
+| Aurora tonight (`aurora`) | Tonight's peak Kp, chance of seeing it from home (good / possible / slim / unlikely), Kp needed here, G storm level, a bar per three-hour block for the next day | NOAA SWPC planetary Kp forecast (`src/server/aurora.ts`) |
 | Weather (`weather`) | Current conditions, hourly, up to 7 days, with icons, UV index and pollen | Open-Meteo (default) or Environment Canada city page (`config.weather.provider`); UV/pollen/AQ still Open-Meteo |
 | Tempest (`tempest`) | Backyard station: temp, humidity, wind, rain today | WeatherFlow REST (`config.integrations.smartHome.tempest`, token secret) |
 | EcoFlow (`ecoflow`) | Each power station's battery %, power in and out, solar, AC and DC flows, time to full or empty; pick devices or show all | EcoFlow IoT Developer Platform (household access and secret keys, `docs/ecoflow.md`) |
@@ -60,7 +62,7 @@ same change, and moves it out of **In progress** when it merges.
 | Packages (`packages`) | UPS, FedEx, Canada Post, USPS tracking numbers on the widget; live status when `PACKAGE_TRACK_API_KEY` is set | Optional 17track-style API (`src/server/packages.ts`) |
 | Snow report (`snow`) | New snow in the last 24 h, snow depth and snowfall today and the next two days, optional mountain temperature, for picked mountains (Cypress, Grouse, Seymour, Whistler by default; Sasquatch, Manning Park, Mt. Baker, Sun Peaks) | Open-Meteo forecast at each mountain's mid-mountain elevation (model estimate, no key) |
 | River levels (`rivers`) | Up to six river and creek gauges (Fraser at Mission and Hope, Salmon and Nicomekl in Langley, or any station by number): level, rising/falling/steady with the 6 h and 24 h change, a day's line, optional flow | Environment Canada real-time hydrometric (MSC GeoMet OGC API, Datamart CSV fallback) |
-| Tides (`tides`) | Next highs and lows at a station; optional height | NOAA (US) + Canadian IWLS (`docs/tides.md`) |
+| Tides (`tides`) | Next highs and lows at a station, optional height, optional **day curve** with a "now" line (`showCurve`); station search by name in its settings | Canadian IWLS + NOAA (US) (`docs/tides.md`) |
 | TransLink departures (`transit`) | Next buses from up to six picked stops, live times, route filter, walk-minutes cutoff | TransLink GTFS-realtime |
 | Commute time (`commute`) | Drive times with live traffic from home to up to six places, "leave by" time | TomTom Routing API |
 | Rain radar (`radar`) | Animated radar over a map around home: the past 30 min to 3 h, then up to 3 h of forecast; rain or snow, five map areas, still or looping | Environment Canada (MSC GeoMet), Esri grey canvas map |
@@ -82,6 +84,7 @@ same change, and moves it out of **In progress** when it merges.
 | Gmail unread (`emailCount`) | Inbox unread count | Google `gmail.readonly` add-on scope |
 | RSS (`rss`) | Headlines from chosen feed URLs | Server fetch + trim |
 | News (`news`) | CBC/BBC presets, custom RSS or GNews | RSS or `GNEWS_API_KEY` |
+| On this day (`onThisDay`) | 1 to 5 moments from history or birthdays for today, family-friendly filter on by default, same picks all day | Wikipedia's featured "On this day" feed |
 | Dad joke (`dadJoke`) | One joke, family-friendly option | icanhazdadjoke.com |
 | Quotes (`quotes`) | Short quotations with authors | quotable.io |
 | Affirmation (`affirmation`) | One calm daily line; categories and optional custom lines | Curated bank (`src/lib/affirmations.ts`) |
@@ -361,6 +364,11 @@ npm run templates:previews  # regenerate public/templates/*.png from real widget
   route): the Blue Connect's readings on the wall from the cloud the Blue Riiot app uses, signed in with the app's
   email and password stored encrypted, because Blue Riiot has no developer API. Unofficial, so it can break; the docs
   say so. Out-of-range alerts are off by default (see Architecture).
+- **Tides, moon, aurora and On this day** (Melvin, 2026-11-25: "build that all, and tides, moon phases", from a list of
+  keyless widgets): the existing tides widget gained a day curve and a working Canadian station search (White Rock,
+  Crescent Beach); the moon is worked out on the device, both as its own widget and as a line on Sunrise & sunset; aurora
+  chances come from NOAA's Kp forecast for home's latitude; On this day reads Wikipedia with a family-friendly filter
+  (see Architecture).
 - **Washer and dryer** (Melvin, 2026-11-25: "build that all", from a list that included washer and dryer done alerts;
   native cloud APIs, not Home Assistant): a `laundry` widget with time left and "done" from LG ThinQ and Samsung
   SmartThings, and a blue "done" notice on the alert strip (see Architecture). Claude's defaults: notices on, "done"
@@ -382,7 +390,9 @@ panel can be complex if you need it to be."
   imports it with display.js's own `?v=` only on a screen that shows it. Its `../api` is swapped at build time for
   `src/display/apiShared.ts`, which calls display.js's copy, so feeds, the device token and offline state stay single.
   The internet widget, the UniFi network widget, EcoFlow, the whiteboard, wildfires, the Windy map, the Smart device tile
-  (`haEntity.ts`; cameras and `HA_EVERY` stay in `ha.ts`), Oura, Indoor air (Airthings), the snow report, River levels, Border wait times, Sprinklers (Rachio), Highway cameras (DriveBC), the Pool (Blue Riiot) and Laundry load this way, and `next.config.ts` gives each file the same
+  (`haEntity.ts`; cameras and `HA_EVERY` stay in `ha.ts`), Oura, Indoor air (Airthings), the snow report, River levels,
+  Border wait times, Sprinklers (Rachio), Highway cameras (DriveBC), the Pool (Blue Riiot), tides, moon phase, aurora,
+  On this day and Laundry load this way, and `next.config.ts` gives each file the same
   immutable cache header as display.js.
 - **Budget:** the display's script stays under 80 KB gzipped and its stylesheet under 20 KB (`scripts/bundle-check.mjs`,
   a CI step; CSS raised from 10 KB on 2026-11-23 for more clock styles; script raised from 40 KB by Melvin on 2026-11-25: "double the size of the limit"). A new dependency on the display needs a very good reason.
@@ -886,6 +896,27 @@ panel can be complex if you need it to be."
   `config.integrations.smartHome`; Tempest token and optional WU key in secrets. **Menus** widget reads Nutrislice JSON
   only (`src/server/menus.ts`), never the `meals` table.
 
+- **Tides** (`src/server/tides.ts`, reworked 2026-11-25): Canadian stations are `iwls:` plus the five-digit number on
+  the tide tables (White Rock `iwls:07577`); IWLS's data route wants its own id, looked up once a day via
+  `/stations?code=`, and answers a bare list, so highs and lows are told apart by their neighbours. The old default
+  `iwls:8320` (not a real number) is read as Point Atkinson `07795`. The day curve (`showCurve`) is NOAA's 30-minute or
+  IWLS's `wlp` predictions resampled to 49 half-hour points from two hours ago, fetched only for stations on a widget
+  with it on; the wall draws one SVG path and moves only the "now" line. Settings search both countries through
+  `/api/household/tide-stations/` (IWLS's full list kept a day). Times on the wall are formatted in the dashboard's zone.
+- **Moon phase** (`src/lib/moon.ts`): new and full moons from Meeus ch. 49 (to a minute or two), phase as the fraction
+  between them, illumination from the phase; no feed and no coordinates, drawn for the northern hemisphere. Full moon
+  names follow the Old Farmer's Almanac list, with the Harvest Moon the one nearest the September equinox and the
+  Hunter's Moon after it.
+- **Aurora** (`src/server/aurora.ts`, `src/lib/aurora.ts`): NOAA SWPC's `noaa-planetary-k-index-forecast.json` (no
+  key; header-row and object shapes both read), cached 30 minutes for every household. "Tonight" is the next run of
+  three-hour blocks whose middle is between 6 PM and 6 AM local. The chance uses home's magnetic latitude (dipole pole
+  80.8° N, 72.7° W) and the rule of thumb that the oval's edge is at 68° − 2 × Kp: at it or north is good, within 3° is
+  possible (low on the horizon), within 5° slim (a phone camera). For Langley that is Kp 7, 5.3 and 4.3 (Claude's pick,
+  2026-11-25). Displays get only Kp numbers and the chance, never coordinates.
+- **On this day** (`src/server/onThisDay.ts`): `en.wikipedia.org/api/rest_v1/feed/onthisday/<selected|births>/MM/DD`
+  with a User-Agent naming the site, cached 12 hours per date and kind for everyone. The family-friendly filter is a
+  word list (wars, disasters, crimes…) that errs on dropping; if it drops every event the births are shown instead. The
+  day's order is a shuffle seeded by the date, so every screen shows the same items until midnight.
 - **EcoFlow** (`src/server/ecoflow.ts`): EcoFlow's IoT Developer Platform with the household's own access key and
   secret key (encrypted `ecoflow.accessKey` / `ecoflow.secretKey`, saved from Settings › EcoFlow through
   `/api/household/ecoflow/`; never in Vercel env, since a key sees one EcoFlow account's devices). Requests are signed:

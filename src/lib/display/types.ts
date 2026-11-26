@@ -162,6 +162,16 @@ export interface TidesData {
   events: TideEvent[];
   units: "m" | "ft";
   byStation?: Record<string, TideEvent[]>;
+  /** Predicted water level every `stepMinutes` from `start`, for stations on a widget with the day curve on. */
+  curves?: Record<string, TideCurve>;
+}
+
+export interface TideCurve {
+  /** ISO time of the first point. */
+  start: string;
+  stepMinutes: number;
+  /** Metres; the widget converts to feet. */
+  heights: number[];
 }
 
 export type BinKind = "garbage" | "recycling" | "organics" | "glass" | "other";
@@ -803,6 +813,40 @@ export interface RssData {
   updatedAt: number;
   stale?: boolean;
   items: RssItem[];
+}
+
+/** Tonight's aurora outlook at home (src/server/aurora.ts); no coordinates, only the answer. */
+export interface AuroraData {
+  updatedAt: number;
+  stale?: boolean;
+  error?: string;
+  /** The latest observed or estimated Kp, and the start of its three-hour block. */
+  kpNow?: number;
+  kpNowAt?: string;
+  /** The highest Kp forecast for tonight's dark hours, and when that block starts. */
+  tonightKp?: number;
+  tonightAt?: string;
+  chance: "good" | "possible" | "slim" | "unlikely";
+  /** Kp that would bring it low into home's northern sky. */
+  kpForHorizon: number;
+  /** NOAA G scale for tonight's peak, 0 when no storm. */
+  storm: number;
+  /** Three-hour blocks from the current one, about a day ahead. */
+  blocks: { start: string; kp: number; predicted: boolean }[];
+}
+
+export interface OnThisDayItem {
+  year: number;
+  text: string;
+}
+
+export interface OnThisDayData {
+  updatedAt: number;
+  stale?: boolean;
+  error?: string;
+  /** Today in the dashboard's time zone, YYYY-MM-DD. */
+  date: string;
+  items: OnThisDayItem[];
 }
 
 export interface DadJokeData {

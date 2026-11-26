@@ -47,6 +47,10 @@ const LAZY = [
   "rachio",
   "blueRiiot",
   "laundry",
+  "tides",
+  "moon",
+  "aurora",
+  "onThisDay",
 ];
 const sharedApi = {
   name: "shared-api",

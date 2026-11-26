@@ -10,6 +10,8 @@ import { TimePicker } from "./TimePicker";
 // TomTom. Only the coordinates and a label are kept; drive times are read by the server (src/server/commute.ts).
 
 export interface Place {
+  /** Set by finders that pick something with its own id, such as a tide station. */
+  id?: string;
   label: string;
   latitude: number;
   longitude: number;

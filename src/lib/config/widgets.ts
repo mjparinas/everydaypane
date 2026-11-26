@@ -48,11 +48,27 @@ export const WIDGETS: { [T in WidgetType]: WidgetInfo<T> } = {
   },
   sunTimes: {
     label: "Sunrise & sunset",
-    description: "Today's sunrise, sunset and daylight",
+    description: "Today's sunrise, sunset, daylight and moon",
     icon: "🌅",
     size: { w: 3, h: 2 },
     minSize: { w: 2, h: 1 },
-    defaults: () => ({ showEmoji: true, showDaylight: true }),
+    defaults: () => ({ showEmoji: true, showDaylight: true, showMoon: true }),
+  },
+  moon: {
+    label: "Moon phase",
+    description: "Tonight's moon and the next full moon",
+    icon: "🌔",
+    size: { w: 3, h: 2 },
+    minSize: { w: 2, h: 1 },
+    defaults: () => ({ showNext: true, showName: true }),
+  },
+  aurora: {
+    label: "Aurora tonight",
+    description: "Northern lights forecast and your chance",
+    icon: "🌌",
+    size: { w: 3, h: 2 },
+    minSize: { w: 2, h: 2 },
+    defaults: () => ({ showBlocks: true }),
   },
   weather: {
     label: "Weather",
@@ -290,11 +306,11 @@ export const WIDGETS: { [T in WidgetType]: WidgetInfo<T> } = {
   },
   tides: {
     label: "Tides",
-    description: "Next high and low tides at a station",
+    description: "Next highs and lows and the day's tide curve",
     icon: "🌊",
     size: { w: 3, h: 3 },
     minSize: { w: 2, h: 2 },
-    defaults: () => ({ stationId: "iwls:8320", stationName: "Point Atkinson", count: 4, showHeight: true }),
+    defaults: () => ({ stationId: "iwls:07577", stationName: "White Rock", count: 4, showHeight: true, showCurve: true }),
   },
   transit: {
     label: "TransLink",
@@ -618,6 +634,14 @@ export const WIDGETS: { [T in WidgetType]: WidgetInfo<T> } = {
     minSize: { w: 2, h: 1 },
     defaults: () => ({ category: "general" as const, custom: [] as string[] }),
   },
+  onThisDay: {
+    label: "On this day",
+    description: "A moment from history, from Wikipedia",
+    icon: "📜",
+    size: { w: 4, h: 2 },
+    minSize: { w: 2, h: 1 },
+    defaults: () => ({ kind: "events" as const, count: 1, familyFriendly: true }),
+  },
   horoscope: {
     label: "Horoscope",
     description: "A playful daily blurb for a zodiac sign",
@@ -704,7 +728,7 @@ export const WIDGET_TYPES = Object.keys(WIDGETS) as WidgetType[];
 
 /** Groups for the admin widget picker (Views › Add a widget). */
 export const WIDGET_GROUPS: { id: string; label: string; types: WidgetType[] }[] = [
-  { id: "time", label: "Time", types: ["clock", "date", "sunTimes", "timer", "pomodoro"] },
+  { id: "time", label: "Time", types: ["clock", "date", "sunTimes", "moon", "timer", "pomodoro"] },
   {
     id: "weather",
     label: "Weather & map",
@@ -718,6 +742,7 @@ export const WIDGET_GROUPS: { id: string; label: string; types: WidgetType[] }[]
       "radar",
       "wildfires",
       "rivers",
+      "aurora",
       "earth",
       "windy",
     ],
@@ -760,7 +785,7 @@ export const WIDGET_GROUPS: { id: string; label: string; types: WidgetType[] }[]
   {
     id: "content",
     label: "News & fun",
-    types: ["rss", "news", "dadJoke", "quotes", "affirmation", "horoscope", "emailCount", "fitbit", "oura"],
+    types: ["rss", "news", "onThisDay", "dadJoke", "quotes", "affirmation", "horoscope", "emailCount", "fitbit", "oura"],
   },
   {
     id: "social",

@@ -24,6 +24,10 @@ type Lazy = {
   borderWait: Mount<"borderWait">;
   rachio: Mount<"rachio">;
   blueRiiot: Mount<"blueRiiot">;
+  tides: Mount<"tides">;
+  moon: Mount<"moon">;
+  aurora: Mount<"aurora">;
+  onThisDay: Mount<"onThisDay">;
 };
 
 (globalThis as { __epApi?: typeof api }).__epApi = api;
