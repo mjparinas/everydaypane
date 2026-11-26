@@ -17,6 +17,7 @@ import {
 } from "@/lib/whiteboard";
 
 import { LEGACY_ACCOUNT_ID } from "./accounts";
+import { markChanged } from "./changes";
 import { query, run } from "./db";
 
 // One shared doodle for every display in a household (Melvin, 2026-11-22), drawn on from the wall or from phones
@@ -81,6 +82,7 @@ async function write(accountId: string, data: WhiteboardData): Promise<void> {
     "INSERT INTO account_whiteboard (account_id, revision, json, updated_at) VALUES (?, ?, ?, ?) ON CONFLICT(account_id) DO UPDATE SET revision = excluded.revision, json = excluded.json, updated_at = excluded.updated_at",
     [accountId, data.revision, JSON.stringify(data.strokes), data.updatedAt],
   );
+  await markChanged(accountId, "whiteboard");
 }
 
 export async function getWhiteboard(accountId: string, now = Date.now()): Promise<WhiteboardData> {

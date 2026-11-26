@@ -16,6 +16,7 @@ import {
   type MealSlot,
 } from "@/lib/meals";
 
+import { markChanged } from "./changes";
 import { randomToken } from "./crypto";
 import { query, run } from "./db";
 
@@ -154,6 +155,7 @@ export async function upsertMealRule(
   );
   // A matching one-off for this day is redundant once the rule covers it.
   await run("DELETE FROM account_meals WHERE account_id = ? AND date = ? AND slot = ?", [accountId, input.start, input.slot]);
+  await markChanged(accountId, "meals");
   return { id, slot: input.slot, text, repeat, start };
 }
 
@@ -179,11 +181,14 @@ export async function updateMealRuleText(
     accountId,
     id,
   ]);
+  await markChanged(accountId, "meals");
   return parseRule({ ...row, text: trimmed, updated_at: now });
 }
 
 export async function deleteMealRule(accountId: string, id: string): Promise<boolean> {
-  return (await run("DELETE FROM account_meal_rules WHERE account_id = ? AND id = ?", [accountId, id])) > 0;
+  const removed = (await run("DELETE FROM account_meal_rules WHERE account_id = ? AND id = ?", [accountId, id])) > 0;
+  if (removed) await markChanged(accountId, "meals");
+  return removed;
 }
 
 /**
@@ -208,6 +213,7 @@ export async function setMeal(
     } else {
       await run("DELETE FROM account_meals WHERE account_id = ? AND date = ? AND slot = ?", [accountId, input.date, input.slot]);
     }
+    await markChanged(accountId, "meals");
     return;
   }
   await run(
@@ -216,6 +222,7 @@ export async function setMeal(
     [accountId, input.date, input.slot, text, now, input.by],
   );
   await run("DELETE FROM account_meals WHERE account_id = ? AND date < ?", [accountId, addDays(input.date, -KEEP_DAYS)]);
+  await markChanged(accountId, "meals");
 }
 
 /** Meals planned lately, most recent first, for the planner's suggestions ("Tacos" again on Tuesday). */

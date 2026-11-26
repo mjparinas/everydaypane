@@ -20,6 +20,7 @@ import {
   post,
   PREVIEW,
   previewMode,
+  refresh,
   retryDelay,
   setPreviewMode,
   subscribe,
@@ -471,9 +472,14 @@ function waitUntilActive(): Promise<void> {
   });
 }
 
-/** Household walls hold config-watch until the version moves, then reload; Free keeps the poll only. */
+/**
+ * Household walls hold config-watch until the settings version moves (reload) or a family list's counter does (fetch
+ * just that list now), so a note from a phone shows in a second or two (Melvin, 2026-11-26). Free keeps the timers.
+ */
 async function watchLoop() {
   if (PREVIEW || !TOKEN) return;
+  // Counters as "messages:3,shopping:5"; empty until the first answer, which comes back at once.
+  let seen: Record<string, number> | null = null;
   for (;;) {
     await waitUntilActive();
     if (!payload?.instantRefresh) {
@@ -481,12 +487,23 @@ async function watchLoop() {
       continue;
     }
     const since = payload.version;
-    const r = await get<{ version: number }>("config-watch", { since: String(since) }, undefined, { background: true });
+    const params: Record<string, string> = { since: String(since) };
+    if (seen)
+      params.seen = Object.keys(seen)
+        .map((k) => `${k}:${seen?.[k] ?? 0}`)
+        .join(",");
+    else params.feeds = "1";
+    const r = await get<{ version: number; feeds?: Record<string, number> }>("config-watch", params, undefined, { background: true });
     // Full reload (not loadState): a version-only bump from "Refresh displays" would remount onto cached feeds
     // and look like nothing happened; reload also picks up a new display.js after a deploy.
     if (r.data && typeof r.data.version === "number" && r.data.version > since) {
       location.reload();
       return;
+    }
+    if (r.data?.feeds) {
+      const next = r.data.feeds;
+      if (seen) for (const k of new Set([...Object.keys(seen), ...Object.keys(next)])) if ((seen[k] ?? 0) !== (next[k] ?? 0)) refresh(k);
+      seen = { ...next };
     }
     if (!r.data) await new Promise((wait) => setTimeout(wait, 60_000));
     else await new Promise((wait) => setTimeout(wait, 200));

@@ -2,6 +2,7 @@ import "server-only";
 
 import { del, get, put } from "@vercel/blob";
 
+import { markChanged } from "./changes";
 import { randomToken } from "./crypto";
 import { query, run } from "./db";
 
@@ -76,6 +77,7 @@ export async function addPhoto(
     "INSERT INTO photos (id, account_id, source_id, pathname, w, h, taken, origin, origin_id, added_at, added_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
     [id, accountId, sourceId, pathname, photo.w, photo.h, photo.taken, photo.origin, meta.originId ?? null, now, meta.addedBy ?? null],
   );
+  await markChanged(accountId, "photos");
   return { ok: true, photo };
 }
 
@@ -123,6 +125,7 @@ export async function removePhotos(accountId: string, sourceId: string, photoId?
       : "DELETE FROM photos WHERE account_id = ? AND source_id = ?",
     photoId ? [accountId, sourceId, photoId] : [accountId, sourceId],
   );
+  await markChanged(accountId, "photos");
   return rows.length;
 }
 

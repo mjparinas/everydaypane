@@ -101,7 +101,7 @@ same change, and moves it out of **In progress** when it merges.
 | Google Maps (`maps`) | Map for a place query | google.com/maps embed iframe |
 | Internet (`internet`) | Ping every 10 s to 5 min with Online / Slow / Offline, a graph of the last 60 checks and the share that failed; download and upload speed every 1 to 24 h or on a tap | The screen's own browser against Cloudflare's speed test servers |
 
-**Display behaviour:** calendar event titles in **title case** (`calendarTitleCase`, on by default; acronyms kept); several views on a drag-and-drop grid (chosen rows and columns, gap, edge padding and **tile padding**; presets include **12×8 landscape** and **8×12 portrait**, with portrait stages letterboxed on a landscape panel), **per-widget visibility by part of day** (`visiblePeriods`), optional **view loop** on schedule followers (`schedule.loopSeconds`), **widgets layered on top of a photos widget**
+**Display behaviour:** Household walls show family changes (messages and pop-ups, shopping, meals, chores, whiteboard, family events, uploaded photos) within a second or two over the settings long-poll; calendar event titles in **title case** (`calendarTitleCase`, on by default; acronyms kept); several views on a drag-and-drop grid (chosen rows and columns, gap, edge padding and **tile padding**; presets include **12×8 landscape** and **8×12 portrait**, with portrait stages letterboxed on a landscape panel), **per-widget visibility by part of day** (`visiblePeriods`), optional **view loop** on schedule followers (`schedule.loopSeconds`), **widgets layered on top of a photos widget**
 (photos as the backdrop), **per-widget background** (on/off and opacity; theme surface opacity is the default; clocks and dates start with no panel), **per-widget font size** (`fontScale`, 70–150 %, text widgets only — not photos, radar, wildfires, camera, earth, Windy, embeds or the whiteboard), **per-widget outer padding** (`outerPadding`, 0–48 px, omitted means none; insets the panel in its grid cell), a time-of-day schedule
 (morning, afternoon, evening, overnight) choosing the view, theme, day or night mode and dimming — each period can start at a **fixed time, sunrise or sunset** (sunrise/sunset from today's Open-Meteo weather at the dashboard location); themes with colour
 palettes, fonts, corner radius, opacity and optional glass; burn-in protection (pixel shift); offline mode (service
@@ -266,7 +266,14 @@ npm run templates:previews  # regenerate public/templates/*.png from real widget
   ok"), with **instant refresh on Household** (Melvin, 2026-11-22): visible, online displays ask for the settings
   version every 30 seconds (304 when nothing changed); hidden or browser-offline displays pause, and failed checks back
   off before retrying. Paid households also long-poll `/api/display/config-watch/` and reload as soon as the version
-  moves; admins can tap **Refresh displays**. Free keeps the 30-second poll only. State responses carry the release
+  moves; admins can tap **Refresh displays**. **Family lists on the same long-poll** (Melvin, 2026-11-26: "why do
+  messages or other updates take 30 seconds to load"): every write to messages, shopping, meals, chores, the
+  whiteboard, family calendar events or library photos bumps a per-household counter (`account_changes`,
+  `markChanged` in `src/server/changes.ts`); config-watch reads it with the settings version in one query a second
+  and answers when one moves, and the wall refetches only that feed (`refresh(path)`), so a phone's note shows in
+  a second or two. No new connection, no SSE or WebSocket (on Vercel they hold a function the same way). A new
+  family-editable feed adds its name to `LIVE_FEEDS` and a `markChanged` after each write. Free keeps each feed's own
+  timer (30 s messages, 60 s shopping, meals and chores). State responses carry the release
   version even on `304`s, so a deploy is detected without an extra request or downloading display HTML. No WebSocket.
   The Views tab's live preview is the exception: it shows the unsaved working copy over `postMessage` and never pushes
   that draft to wall screens.

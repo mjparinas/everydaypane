@@ -2,6 +2,7 @@ import "server-only";
 
 import type { CalendarEvent } from "@/lib/display/types";
 
+import { markChanged } from "./changes";
 import { randomToken } from "./crypto";
 import { query, run } from "./db";
 
@@ -114,6 +115,7 @@ export async function createFamilyEvent(
     ]);
     for (const r of drop) await run("DELETE FROM family_events WHERE account_id = ? AND id = ?", [accountId, r.id]);
   }
+  await markChanged(accountId, "calendar");
   return { id, title: input.title, start: input.start, end: input.end, allDay: input.allDay, createdAt: now, createdBy: input.createdBy };
 }
 
@@ -136,6 +138,7 @@ export async function updateFamilyEvent(
     accountId,
     id,
   ]);
+  await markChanged(accountId, "calendar");
   return "ok";
 }
 
@@ -149,5 +152,6 @@ export async function removeFamilyEvent(
   if (!row) return "not-found";
   if (!by.admin && row.created_by !== by.email) return "forbidden";
   await run("DELETE FROM family_events WHERE account_id = ? AND id = ?", [accountId, id]);
+  await markChanged(accountId, "calendar");
   return "ok";
 }

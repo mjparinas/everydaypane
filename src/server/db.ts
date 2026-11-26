@@ -108,6 +108,9 @@ const MIGRATIONS = [
   // Addresses that unsubscribed from a kind of email from its link (`onboarding` for now).
   `CREATE TABLE IF NOT EXISTS email_optouts (email TEXT NOT NULL, kind TEXT NOT NULL, at INTEGER NOT NULL, PRIMARY KEY (email, kind))`,
   `CREATE INDEX IF NOT EXISTS accounts_by_created ON accounts (created_at)`,
+  // A counter per household and family list, bumped on every write, so a wall's open config-watch request can say
+  // which list changed and the wall fetches only that one (Melvin, 2026-11-26: updates in seconds, not 30). src/server/changes.ts.
+  `CREATE TABLE IF NOT EXISTS account_changes (account_id TEXT NOT NULL, feed TEXT NOT NULL, version INTEGER NOT NULL, PRIMARY KEY (account_id, feed))`,
 ];
 
 // Columns added after a table was first created. SQLite has no ADD COLUMN IF NOT EXISTS, so each one runs on its own
