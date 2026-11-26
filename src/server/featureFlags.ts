@@ -83,6 +83,9 @@ function needle(name: string): string | null {
   const [kind, key] = name.split(".", 2) as [string, string];
   if (kind === "widget") return `%"type":"${key}"%`;
   if (kind === "photos") return `%"kind":"${key}"%`;
+  if (kind === "feature" && key === "idleView") return `%"shows":"view"%`;
+  // Smart notices and regional packs reach every household (every document has rules and a region).
+  if (kind === "feature") return null;
   // Home Assistant also covers cameras, who's home, the doorbell and motion sensors, so every household reloads.
   if (kind === "smartHome" && key === "homeAssistant") return null;
   return `%"provider":"${key}"%`;

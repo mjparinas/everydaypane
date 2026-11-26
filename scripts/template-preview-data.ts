@@ -80,6 +80,26 @@ export const SAMPLE_FEEDS: Record<string, unknown> = {
 const christmas = { id: "christmas", name: "Christmas", date: "2026-12-25", emoji: "🎄", kind: "holiday" as const, yearly: true };
 const newYear = { id: "new-year", name: "New Year's Day", date: "2027-01-01", emoji: "🎆", kind: "holiday" as const, yearly: true };
 const halloween = { id: "halloween", name: "Halloween", date: "2027-10-31", emoji: "🎃", kind: "holiday" as const, yearly: true };
+// Birthdays and anniversaries with a photo each (2026-11-26), so the features sample shows the photo circles and the
+// age or years, and Sam's birthday is the sample's day so the tile leads with it. The photos are the template samples, served by the preview server's countdown-photo route.
+const samBirthday = {
+  id: "sam-bday",
+  name: "Sam",
+  date: "2018-11-23",
+  emoji: "🎂",
+  kind: "birthday" as const,
+  yearly: true,
+  photo: "kids-soccer",
+};
+const anniversary = {
+  id: "anniversary",
+  name: "Mom & Dad",
+  date: "2011-12-04",
+  emoji: "💍",
+  kind: "anniversary" as const,
+  yearly: true,
+  photo: "family-kitchen",
+};
 
 /** Widgets that need demo entity / stop wiring so empty settings don't blank the screenshot. */
 export function withDemoBindings(widget: Widget): Widget {
@@ -126,8 +146,8 @@ export function withDemoBindings(widget: Widget): Widget {
     case "countdown":
       return {
         ...widget,
-        events: widget.events.length ? widget.events : [christmas, newYear, halloween],
-        count: widget.count || 3,
+        events: widget.events.length ? widget.events : [samBirthday, anniversary, christmas, newYear, halloween],
+        count: widget.events.length ? widget.count : 3,
       };
     case "packages":
       return {
@@ -293,3 +313,61 @@ export function displayShell(opts: { templateId: string; mode: "day" | "night"; 
 </body>
 </html>`;
 }
+
+export type FeaturePreview = {
+  id: string;
+  /** Written to public/features/<file>.png for the "Display behaviour" cards on /features/. */
+  file: string;
+  cols: number;
+  rows: number;
+  mode: "day" | "night";
+  payload: DisplayPayload;
+  /** Sample feeds swapped in for this shot only (the preview server reads SAMPLE_FEEDS by path). */
+  feeds: Record<string, unknown>;
+};
+
+const fixed = (w: Partial<Widget> & { type: WidgetType; x: number; y: number; w: number; h: number }): Widget => {
+  const info = WIDGETS[w.type];
+  return withDemoBindings({
+    ...newWidget(w.type, `${w.type}-${w.x}-${w.y}`, { x: w.x, y: w.y }),
+    ...(info.supportsTitle === false ? {} : { title: info.label }),
+    ...w,
+  } as Widget);
+};
+
+function featureConfig(viewId: string, widgets: Widget[]) {
+  const config = defaultConfig();
+  const cols = Math.max(...widgets.map((w) => w.x + w.w));
+  const rows = Math.max(...widgets.map((w) => w.y + w.h));
+  config.name = "Everydaypane";
+  config.themeId = "aurora";
+  config.themes = structuredClone(BUILT_IN_THEMES);
+  config.views = [{ id: viewId, name: viewId, themeId: "aurora", cols, rows, gap: 16, padding: 14, tilePadding: 16, widgets }];
+  config.schedule.enabled = false;
+  config.screenSaver.idle = false;
+  config.screenSaver.night = false;
+  config.burnIn.shift = false;
+  return config;
+}
+
+// Smart notices (2026-11-26): the blue strip with a notice that puts the sprinklers and the forecast together.
+const smartNoticeView = featureConfig("feature-smart-notices", [
+  fixed({ type: "clock", x: 0, y: 0, w: 3, h: 2 }),
+  fixed({ type: "rachio", x: 0, y: 2, w: 3, h: 2 }),
+  fixed({ type: "weather", x: 3, y: 0, w: 5, h: 4 }),
+]);
+smartNoticeView.alerts.enabled = true;
+
+const alertsSample = SAMPLE_FEEDS.alerts as { updatedAt: number; alerts: { notice?: boolean }[] };
+
+export const FEATURE_PREVIEWS: FeaturePreview[] = [
+  {
+    id: "feature-smart-notices",
+    file: "smart-notices",
+    cols: 8,
+    rows: 4,
+    mode: "day",
+    payload: displayPayload(smartNoticeView, 1, null, "feature-smart-notices", { instantRefresh: false }),
+    feeds: { alerts: { ...alertsSample, alerts: alertsSample.alerts.filter((a) => a.notice) } },
+  },
+];
