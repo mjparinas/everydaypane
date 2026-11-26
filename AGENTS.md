@@ -1028,6 +1028,10 @@ panel can be complex if you need it to be."
 
 ## Code conventions
 
+- **Design work** uses the Impeccable skill (Paul Bakaus, Apache 2.0), vendored at `.claude/skills/impeccable` with its
+  agents in `.claude/agents/` (v4.11.1, Melvin, 2026-11-26). It reads `PRODUCT.md` (who it's for, constraints) and
+  `DESIGN.md` (the visual system); keep both current when a decision here changes. Its edit hooks are not switched on
+  for Claude sessions. To update it, copy `.claude/skills/impeccable` from a newer release of `pbakaus/impeccable`.
 - Prettier formats every code file; run `npm run format` before committing.
 - Server-only modules start with `import "server-only"`. The display never imports zod or React.
 - Comments explain why, and name who decided and when for product rules.
