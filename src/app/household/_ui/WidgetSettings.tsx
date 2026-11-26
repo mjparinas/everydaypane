@@ -21,6 +21,7 @@ import { useEcoFlow } from "./EcoFlowPanel";
 import { Range, Segmented, Select, Stepper, Text, TextArea, Toggle } from "./fields";
 import { HaEntityList, useHa } from "./haEntities";
 import { useMusic } from "./music";
+import { useRachio } from "./rachio";
 import { loadSmartProvider, type SmartProviderDetail } from "./smartHome";
 import { newId } from "./store";
 import { UnifiSitePicker } from "./UnifiPanel";
@@ -1161,6 +1162,8 @@ function TypeSettings({
       return <AirthingsSettings w={w} onChange={edit<"airthings">()} />;
     case "rivers":
       return <RiversSettings w={w} onChange={edit<"rivers">()} />;
+    case "rachio":
+      return <RachioSettings w={w} onChange={edit<"rachio">()} />;
     case "ecoflow":
       return <EcoFlowSettings w={w} e={edit<"ecoflow">()} />;
     case "unifi": {
@@ -2378,6 +2381,43 @@ function AirthingsSettings({ w, onChange }: { w: Extract<Widget, { type: "airthi
           ))}
         </>
       )}
+    </>
+  );
+}
+
+function RachioSettings({ w, onChange }: { w: Extract<Widget, { type: "rachio" }>; onChange: Edit<"rachio"> }) {
+  const status = useRachio();
+  // A controller saved earlier that the account no longer lists still shows, so it can be switched off.
+  const listed = status?.controllers ?? [];
+  const controllers = [...listed, ...w.devices.filter((id) => !listed.some((c) => c.id === id)).map((id) => ({ id, name: id }))];
+  return (
+    <>
+      <Toggle
+        label="Skip from the wall"
+        checked={w.allowSkip}
+        hint="A Skip button on the next watering. Anyone in the kitchen can tap it."
+        onChange={(v) => onChange((x) => void (x.allowSkip = v))}
+      />
+      <Toggle label="Show zones" checked={w.showZones} onChange={(v) => onChange((x) => void (x.showZones = v))} />
+      {!status ? null : !status.configured ? (
+        <p className="text-xs text-soft">
+          Connect Rachio under <SettingsLink href="#settings/sprinklers">Settings › Sprinklers</SettingsLink>.
+        </p>
+      ) : controllers.length === 0 ? (
+        <p className="text-xs text-soft">{status.error || "Rachio lists no controllers yet."}</p>
+      ) : controllers.length > 1 ? (
+        <>
+          <p className="text-xs text-soft">Pick the controllers to show. With none picked, it shows them all.</p>
+          {controllers.map((c) => (
+            <Toggle
+              key={c.id}
+              label={c.name}
+              checked={w.devices.includes(c.id)}
+              onChange={(on) => onChange((x) => void (x.devices = on ? [...x.devices, c.id] : x.devices.filter((s) => s !== c.id)))}
+            />
+          ))}
+        </>
+      ) : null}
     </>
   );
 }
