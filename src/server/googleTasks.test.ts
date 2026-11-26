@@ -10,14 +10,16 @@ import { cookieFor, req, useTestServer } from "@/test/server";
 import { clearMemoryCache } from "./cache";
 import { loadConfig, saveConfig } from "./config";
 import { addDevice } from "./devices";
-import { consentUrl, resetGoogleForTests, SCOPE, TASKS_SCOPE } from "./google";
+import { consentUrl, PROFILE_SCOPE, resetGoogleForTests, SCOPE, TASKS_SCOPE } from "./google";
 import { mayComplete, trimTasks } from "./googleTasks";
 import { setSecret } from "./secrets";
 
 describe("Google Tasks data", () => {
   it("asks Google for Tasks only when connecting Google Tasks", () => {
     expect(consentUrl("s", "https://x/cb")).not.toContain("auth%2Ftasks");
-    expect(new URL(consentUrl("s", "https://x/cb", false, true)).searchParams.get("scope")).toBe(`${SCOPE} ${TASKS_SCOPE}`);
+    expect(new URL(consentUrl("s", "https://x/cb", false, true)).searchParams.get("scope")).toBe(
+      `${SCOPE} ${PROFILE_SCOPE} ${TASKS_SCOPE}`,
+    );
   });
 
   it("keeps open tasks in Google's order, each followed by its subtasks", () => {
