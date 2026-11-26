@@ -107,7 +107,8 @@ same change, and moves it out of **In progress** when it merges.
 palettes, fonts, corner radius, opacity and optional glass; burn-in protection (pixel shift); offline mode (service
 worker serves the last good data and shows "Offline"); a **screen saver** (photos only, **an idle view** of the household's choosing such as a photo frame, or dark after idle minutes, dark
 in a night window, woken by a tap, Home Assistant motion sensors, the doorbell, a new alert or a timer going off); doorbell pop-up full
-screen; the red, dismissible alert strip;
+screen; the red, dismissible alert strip; **message pop-ups** (`messagePopups`, Household, off by default: new message
+board notes in the bottom-right corner in the sender's colour, stacked, until someone taps Dismiss);
 no pinch zoom; display and shared-feed polling pauses while hidden or browser-offline, backs off after failures, and
 resumes when visible/online; settings normally poll every 30 seconds (**Household** also long-polls for instant reload),
 and state responses carry a tiny release version header even on `304`s (a new release reloads the wall **once**; if the page still names the old release it keeps running rather than loop, `src/display/release.ts`);
@@ -483,6 +484,15 @@ npm run templates:previews  # regenerate public/templates/*.png from real widget
   tonight, Sam's dentist at 4"): a `brief` widget that sums up the day from feeds Everydaypane already reads, with no
   new service (see Architecture). Claude's defaults: Household only (not in `FREE_WIDGET_TYPES`), a sentence by default
   with a list layout, and from 7 PM it reads tomorrow.
+- **Message pop-ups** (Melvin, 2026-11-26: "a toast message on the bottom right of the screen that stays up until
+  somebody clicks the dismiss button … who sent it … customize the background colour … if a bunch of messages come in
+  they stack up. dismissing one message causes it to fade and the remaining messages move down"): a mode, not a new
+  widget, switched on in Settings › Screen Saver & Alerts › Message Pop-Ups (`config.messagePopups.enabled`, Household,
+  off by default, flag `feature.messagePopups`; the `widget.messages` flag switches it off too). The notes are the
+  message board's, so the sender's name and the colour they picked (the board's five) come with them. Claude's calls:
+  Dismiss is per screen (localStorage, like the alert strip) and leaves the note on the board; only notes posted after
+  a screen first read the board pop up; four at most, the rest behind "+N More"; newest by the corner; a new note wakes
+  the screen saver; an admin's preview shows none (see Architecture).
 - **Canadian English** in everything a person reads (colour, centre, favourite), as in Liftsmith.
 
 ## Display: super lightweight (rule, Melvin, 2026-11-17)
@@ -614,6 +624,12 @@ panel can be complex if you need it to be."
 - **Family message board:** anyone on `ADMIN_EMAILS` or `FAMILY_EMAILS` posts notes from `/family/`; the author name is
   typed, never the email, because the wall is readable by anyone in the kitchen. Notes can expire; admins pin. Displays
   poll the board every 30 seconds with an ETag. The kitchen edit page (`/d/<token>/edit/`) can post too (no pin).
+- **Message pop-ups** (`src/display/popups.ts`, started by `main.ts` when `payload.messagePopups.enabled` and not a
+  preview): shares the message board's 30-second `messages` feed. The first read stores the newest `createdAt` on the
+  board (server time) as `ep-popups-since`; a note pops up when it's newer and its id isn't in `ep-popups-dismissed`.
+  Turning the mode off clears both. The stack is absolutely placed bottom right (`z-index` 14: over widgets, under the
+  saver, night dimming, doorbell and alert strip; lifted above the offline pill). Dismiss fades the note (opacity and
+  scale), then removes it and FLIP-slides the rest down with `transform`; reduced motion skips both.
 - **Family calendar events** (Melvin, 2026-11-22): dentists, concerts and the like posted from `/family/` live in
   `family_events` (`src/server/familyEvents.ts`) and merge into the same five-minute calendar feed as Google and iCal
   links (colour `#5b8def`, calendar "Family"). `/api/family-events/` serves the phone UI; authors and admins can delete.

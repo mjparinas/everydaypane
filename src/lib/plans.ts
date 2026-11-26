@@ -88,6 +88,7 @@ export const UPGRADE_REASONS = {
   family: "Garbage day, commute, chores, sports and school status need Household.",
   content: "News, finance, Fitbit, Oura, Slack and similar connections need Household.",
   screenSaver: "The screen saver is on Household.",
+  messagePopups: "Message pop-ups on the wall are on Household.",
   backup: "Settings backup and restore need Household.",
   alertEmail: "Emailing new red-strip alerts needs Household.",
   refresh: "Instant display refresh is on Household.",

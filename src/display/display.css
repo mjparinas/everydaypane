@@ -2263,6 +2263,136 @@ html.portrait-view .stage {
   }
 }
 
+/* Message pop-ups (Melvin, 2026-11-26): new message board notes stacked in the bottom-right corner, in the sender's
+   colour, until someone taps Dismiss. Above the widgets, under the screen saver, night dimming, doorbell and alert
+   strip. Oldest at the top, newest by the corner; a dismissed note fades and the ones above slide down (popups.ts). */
+.popups {
+  position: absolute;
+  z-index: 14;
+  right: 28px;
+  bottom: 28px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 14px;
+  width: min(460px, 32vw);
+  max-height: calc(100% - 56px);
+  pointer-events: none;
+}
+.app.is-offline .popups {
+  bottom: 64px;
+}
+.pop {
+  box-sizing: border-box;
+  width: 100%;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas:
+    "head act"
+    "text text";
+  align-items: center;
+  column-gap: 16px;
+  row-gap: 6px;
+  padding: 14px 14px 20px 22px;
+  border-radius: calc(var(--radius) * 0.75);
+  color: #1d1d1f;
+  font-family: var(--font);
+  box-shadow:
+    0 18px 40px -18px rgb(0 0 0 / 0.55),
+    0 2px 6px rgb(0 0 0 / 0.18);
+  pointer-events: auto;
+  transition:
+    opacity 240ms ease-out,
+    scale 240ms ease-out;
+}
+.pop.entering {
+  animation: pop-in 420ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+.pop.leaving {
+  opacity: 0;
+  scale: 0.96;
+  pointer-events: none;
+}
+@keyframes pop-in {
+  from {
+    opacity: 0;
+    transform: translateX(32px);
+  }
+}
+.pop-head {
+  grid-area: head;
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  min-width: 0;
+}
+.pop-from {
+  min-width: 0;
+  overflow: hidden;
+  font-size: 22px;
+  font-weight: 800;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.pop-time {
+  flex: none;
+  font-size: var(--t-meta);
+  font-weight: 500;
+  color: rgb(29 29 31 / 0.68);
+}
+.pop-text {
+  grid-area: text;
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 4;
+  padding-right: 8px;
+  font-size: 26px;
+  font-weight: 600;
+  line-height: 1.22;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+.pop-dismiss {
+  grid-area: act;
+  min-height: 52px;
+  padding: 0 22px;
+  border: 0;
+  border-radius: calc(var(--radius) * 0.55);
+  background: rgb(29 29 31 / 0.1);
+  color: #1d1d1f;
+  font: inherit;
+  font-size: 20px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.pop-dismiss:active {
+  background: rgb(29 29 31 / 0.2);
+}
+.pop-dismiss:focus-visible {
+  outline: 3px solid #1d1d1f;
+  outline-offset: 2px;
+}
+.pop-more {
+  display: none;
+  order: -1;
+  padding: 6px 14px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--surface) 88%, transparent);
+  color: var(--text);
+  font-size: var(--t-meta);
+  font-weight: 700;
+  box-shadow: 0 6px 18px -8px rgb(0 0 0 / 0.5);
+}
+.pop-more.show {
+  display: block;
+}
+@media (prefers-reduced-motion: reduce) {
+  .pop {
+    transition: none;
+  }
+}
+
 /* Emergency strip: across the top, pushing the layout down rather than covering it or the whole screen. */
 .alert-strip {
   position: relative;

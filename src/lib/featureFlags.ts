@@ -79,6 +79,10 @@ const FEATURES = {
     label: "Smart Notices",
     description: "Blue notes that combine two integrations (sprinklers in frost, battery in an outage…). Off, none are made.",
   },
+  messagePopups: {
+    label: "Message Pop-Ups",
+    description: "New message board notes in the bottom-right corner of the wall until someone dismisses them. Off, none pop up.",
+  },
   regionalPacks: {
     label: "Regional Packs",
     description:
@@ -213,6 +217,8 @@ export function applyFlags(config: DashboardConfig, off: FlagsOff): DashboardCon
   const idleOff = off.has(featureFlag("idleView")) && config.screenSaver.shows === "view";
   const rulesOff = off.has(featureFlag("smartNotices"));
   const regionsOff = off.has(featureFlag("regionalPacks"));
+  // Pop-ups are message board notes, so the board's own flag switches them off too.
+  const popupsOff = off.has(featureFlag("messagePopups")) || off.has(widgetFlag("messages"));
   const rules = config.alerts.rules;
   const next: DashboardConfig = {
     ...config,
@@ -228,6 +234,7 @@ export function applyFlags(config: DashboardConfig, off: FlagsOff): DashboardCon
     })),
     // Before regional packs every household read the Lower Mainland's sources, so that is what "off" goes back to.
     region: regionsOff ? "lowerMainland" : config.region,
+    messagePopups: popupsOff ? { enabled: false } : config.messagePopups,
     alerts: rulesOff
       ? {
           ...config.alerts,
@@ -271,6 +278,7 @@ export function applyFlags(config: DashboardConfig, off: FlagsOff): DashboardCon
  */
 export const SETTINGS_FLAGS: Record<string, string[]> = {
   garbage: [widgetFlag("garbage")],
+  "message-popups": [featureFlag("messagePopups")],
   commute: [widgetFlag("commute")],
   chores: [widgetFlag("chores")],
   sports: [widgetFlag("sports")],

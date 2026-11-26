@@ -60,7 +60,7 @@ const GROUPS = [
     // Screen saver leads this group and its chip (Melvin, 2026-11-26: "needs to be more prominent in the settings").
     label: "Screen Saver & Alerts",
     tier: "Everyday",
-    sections: ["screen-saver", "screen-care", "alerts", "backup"],
+    sections: ["screen-saver", "message-popups", "screen-care", "alerts", "backup"],
   },
   {
     id: "content",
@@ -409,6 +409,18 @@ export function SettingsPanel() {
               <ScreenSaverPanel />
             </HouseholdSoftLock>
           </div>
+          <FlaggedSettings section="message-popups">
+            <HouseholdSoftLock reason="messagePopups" label="Message Pop-Ups Need Household">
+              <Section id="settings-message-popups" title="Message Pop-Ups">
+                <Toggle
+                  label="Pop Up New Notes on the Wall"
+                  checked={config.messagePopups.enabled}
+                  hint="A note posted to the message board shows in the bottom-right corner of every display, in the colour its sender picked, until someone taps Dismiss. Each screen keeps its own. The note stays on the board."
+                  onChange={(v) => edit((c) => void (c.messagePopups.enabled = v))}
+                />
+              </Section>
+            </HouseholdSoftLock>
+          </FlaggedSettings>
           <Section id="settings-screen-care" title="Screen Care">
             <Toggle
               label="Burn-In Protection"

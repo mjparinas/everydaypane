@@ -185,6 +185,7 @@ const baseShell = (): Omit<DashboardConfig, "views" | "schedule" | "themeId"> =>
   },
   chores: { people: [], items: [], rewards: [], pinSet: false },
   burnIn: { shift: true, maxPixels: 6, minutes: 3 },
+  messagePopups: { enabled: false },
   screenSaver: { ...SCREEN_SAVER_OFF, photoSourceIds: [], motionEntityIds: [] },
   integrations: emptyIntegrations(),
 });
@@ -236,6 +237,7 @@ export function isFreeSafeConfig(config: DashboardConfig): boolean {
   if (config.schedule.enabled) return false;
   if (config.screenSaver.idle || config.screenSaver.night) return false;
   if (config.alerts.notifyEmail) return false;
+  if (config.messagePopups.enabled) return false;
   if (config.integrations.icals.some((c) => c.enabled)) return false;
   for (const view of config.views) {
     for (const widget of view.widgets) {
