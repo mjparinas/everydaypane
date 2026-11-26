@@ -1,0 +1,54 @@
+{
+  "updatedAt": 1763937720000,
+  "unit": "cm",
+  "mountains": [
+    {
+      "id": "cypress",
+      "name": "Cypress",
+      "newSnow": 14,
+      "depth": 92,
+      "temperature": -2,
+      "forecast": [
+        { "day": "2026-11-23", "snow": 6 },
+        { "day": "2026-11-24", "snow": 11 },
+        { "day": "2026-11-25", "snow": 2 }
+      ]
+    },
+    {
+      "id": "grouse",
+      "name": "Grouse",
+      "newSnow": 11,
+      "depth": 74,
+      "temperature": -1,
+      "forecast": [
+        { "day": "2026-11-23", "snow": 5 },
+        { "day": "2026-11-24", "snow": 9 },
+        { "day": "2026-11-25", "snow": 1 }
+      ]
+    },
+    {
+      "id": "seymour",
+      "name": "Seymour",
+      "newSnow": 12,
+      "depth": 85,
+      "temperature": -2,
+      "forecast": [
+        { "day": "2026-11-23", "snow": 5 },
+        { "day": "2026-11-24", "snow": 10 },
+        { "day": "2026-11-25", "snow": 1 }
+      ]
+    },
+    {
+      "id": "whistler",
+      "name": "Whistler",
+      "newSnow": 23,
+      "depth": 168,
+      "temperature": -7,
+      "forecast": [
+        { "day": "2026-11-23", "snow": 9 },
+        { "day": "2026-11-24", "snow": 18 },
+        { "day": "2026-11-25", "snow": 4 }
+      ]
+    }
+  ]
+}
