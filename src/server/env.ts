@@ -55,8 +55,6 @@ export const env = {
   tomtomKey: () => process.env.TOMTOM_API_KEY ?? "",
   // TransLink's open API (docs/translink.md): one key for the realtime departures feed.
   translinkKey: () => process.env.TRANSLINK_API_KEY ?? "",
-  /** Optional package tracking (docs/packages.md): 17track, AfterShip-style aggregator. */
-  packageTrackKey: () => process.env.PACKAGE_TRACK_API_KEY ?? "",
   todoistClientId: () => process.env.TODOIST_CLIENT_ID ?? "",
   todoistClientSecret: () => process.env.TODOIST_CLIENT_SECRET ?? "",
   dropboxClientId: () => process.env.DROPBOX_CLIENT_ID ?? "",

@@ -17,6 +17,7 @@ import { GooglePanel } from "./GooglePanel";
 import { HomeAssistantPanel } from "./HomeAssistantPanel";
 import { MicrosoftPanel } from "./MicrosoftPanel";
 import { MusicPanel } from "./MusicPanel";
+import { PackagesSection } from "./packages";
 import { PhotosPanel } from "./PhotosPanel";
 import { HouseholdBadge, HouseholdSoftLock, PlanSettingsCard, usePlan } from "./plan";
 import { ReportProblem } from "./ReportProblem";
@@ -41,7 +42,7 @@ const GROUPS = [
     tier: "Everyday",
     sections: ["google", "microsoft", "icals", "tasks"],
   },
-  { id: "family", label: "Family tools", tier: "Everyday", sections: ["garbage", "commute", "chores", "sports", "school"] },
+  { id: "family", label: "Family tools", tier: "Everyday", sections: ["garbage", "commute", "chores", "sports", "packages", "school"] },
   { id: "photos-music", label: "Photos & music", tier: "Everyday", sections: ["photos", "music"] },
   {
     id: "screen",
@@ -310,6 +311,9 @@ export function SettingsPanel() {
               <div id="settings-sports">
                 <SportsPanel />
               </div>
+            </FlaggedSettings>
+            <FlaggedSettings section="packages">
+              <PackagesSection />
             </FlaggedSettings>
             <Section id="settings-school" title="School status">
               <p className="text-xs text-soft">
