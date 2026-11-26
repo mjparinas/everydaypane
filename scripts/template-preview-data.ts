@@ -48,6 +48,7 @@ export const SAMPLE_FEEDS: Record<string, unknown> = {
   snow: loadJson("snow.json"),
   aurora: loadJson("aurora.json"),
   "on-this-day": loadJson("on-this-day.json"),
+  brief: loadJson("brief.json"),
   quotes: loadJson("quotes.json"),
   radar: loadJson("radar.json"),
   wildfires: loadJson("wildfires.json"),
@@ -136,6 +137,7 @@ export function withDemoBindings(widget: Widget): Widget {
           : [
               { id: "pkg-lego", carrier: "ups" as const, trackingNumber: "1Z999AA10123456784", label: "Lego set" },
               { id: "pkg-books", carrier: "canadaPost" as const, trackingNumber: "1234567890123456", label: "Library holds" },
+              { id: "pkg-shoes", carrier: "fedex" as const, trackingNumber: "794612345678", label: "Running shoes" },
             ],
         showDelivered: false,
       };

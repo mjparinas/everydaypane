@@ -335,6 +335,11 @@
     "file": "affirmation.png"
   },
   {
+    "type": "brief",
+    "name": "Morning brief",
+    "file": "brief.png"
+  },
+  {
     "type": "onThisDay",
     "name": "On this day",
     "file": "onThisDay.png"

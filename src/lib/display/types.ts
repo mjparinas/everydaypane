@@ -1,3 +1,4 @@
+import type { BriefSource } from "@/lib/briefSources";
 import type { DashboardConfig, Theme, View } from "@/lib/config/schema";
 import type { SchoolDayOff } from "@/lib/schoolCalendar";
 
@@ -128,9 +129,9 @@ export interface TasksData {
   todoist: { connected: boolean; lists: { id: string; name: string; tasks: TaskItem[] }[] };
 }
 
-export type PackageCarrier = "ups" | "fedex" | "canadaPost" | "usps" | "other";
+export type PackageCarrier = "ups" | "fedex" | "canadaPost" | "purolator" | "dhl" | "usps" | "other";
 
-export type PackageStatus = "unknown" | "preTransit" | "inTransit" | "outForDelivery" | "delivered" | "exception";
+export type PackageStatus = "unknown" | "preTransit" | "inTransit" | "outForDelivery" | "pickup" | "delivered" | "exception";
 
 export interface PackageTrack {
   id: string;
@@ -138,15 +139,26 @@ export interface PackageTrack {
   trackingNumber: string;
   label?: string;
   status: PackageStatus;
+  /** The latest scan, as the carrier words it ("Out for delivery"). */
   summary: string;
-  eta?: string;
+  /** Where that scan was, when the carrier says. */
+  where?: string;
+  /** When that scan was (ms). */
+  eventAt?: number;
+  /** The carrier's expected delivery window (ms); `etaTo` only when it gives a range. */
+  etaFrom?: number;
+  etaTo?: number;
+  /** When it was delivered (ms), for "Delivered 2:14 PM". */
+  deliveredAt?: number;
   updatedAt?: number;
 }
 
 export interface PackagesData {
   updatedAt: number;
-  /** False when PACKAGE_TRACK_API_KEY is not set; numbers still show. */
+  /** False until the household saves a 17TRACK API key in Settings › Packages; numbers still show. */
   trackingConfigured: boolean;
+  /** Set when 17TRACK refused the saved key or couldn't be reached. */
+  error?: string;
   packages: PackageTrack[];
 }
 
@@ -1064,4 +1076,31 @@ export interface LaundryData {
   appliances: LaundryAppliance[];
   error?: string;
   stale?: boolean;
+}
+
+/** How a brief phrase is coloured on the wall: alerts red, delays and closures amber. */
+export type BriefTone = "alert" | "warn" | "";
+
+export interface BriefItem {
+  source: BriefSource;
+  icon: string;
+  /** The phrase as it reads in the sentence: "Rain at 3 PM", "Dentist at 4 PM". */
+  text: string;
+  /** Extra words for the list layout only: "High of 9°". */
+  detail?: string;
+  tone: BriefTone;
+}
+
+/** The morning brief for one widget (src/server/brief.ts, phrased by src/lib/brief.ts). */
+export interface BriefData {
+  updatedAt: number;
+  /** "Good morning" / "Good afternoon" / "Good evening", by the dashboard's clock. */
+  greeting: string;
+  /** Which day the brief reads: today, or tomorrow from BRIEF_EVENING_HOUR. */
+  day: "today" | "tomorrow";
+  /** YYYY-MM-DD of that day. */
+  date: string;
+  /** Every phrase as one sentence: "Rain at 3 PM, ferry delays, garbage out tonight, Sam's dentist at 4 PM." */
+  summary: string;
+  items: BriefItem[];
 }

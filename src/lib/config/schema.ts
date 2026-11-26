@@ -3,6 +3,7 @@ import { z } from "zod";
 import { AIRTHINGS_DEFAULT_KINDS, AIRTHINGS_KINDS } from "../airthings";
 import { POOL_DEFAULT_KINDS, POOL_KINDS } from "../blueRiiot";
 import { BORDER_CROSSINGS, BORDER_DIRECTIONS } from "../border";
+import { BRIEF_SOURCES } from "../briefSources";
 import { DRIVEBC_MAX_CAMERAS, DRIVEBC_REFRESH } from "../drivebc";
 import { EARTH_OVERLAYS, EARTH_ZOOMS } from "../earth";
 import { FERRY_ROUTES } from "../ferries";
@@ -241,8 +242,16 @@ export const widgetSchema = z.discriminatedUnion("type", [
     type: z.literal("photos"),
     sourceIds: z.array(id).max(20),
     intervalSeconds: z.number().int().min(5).max(3600),
-    fit: z.enum(["cover", "contain"]),
+    // "auto" (Melvin, 2026-11-26, photo frame polish) fills the frame unless that would crop a lot, then shows the
+    // whole photo over a soft copy of itself (src/lib/photoFrame.ts).
+    fit: z.enum(["cover", "contain", "auto"]),
     showCaption: z.boolean(),
+    // Two portraits side by side in a landscape frame (two landscapes stacked in a portrait one), instead of cropping.
+    pairPortraits: z.boolean().default(false),
+    // A slow zoom and drift across each photo (transform only; off under prefers-reduced-motion).
+    drift: z.boolean().default(false),
+    // Photos taken on this day in earlier years come up first, labelled "On this day".
+    memories: z.boolean().default(false),
   }),
   // Home Assistant or native Nest / ecobee / SmartThings (Phase 4, Household). `provider` defaults so older tiles stay on HA.
   z.object({
@@ -381,7 +390,8 @@ export const widgetSchema = z.discriminatedUnion("type", [
     showDue: z.boolean(),
     allowCheck: z.boolean(),
   }),
-  // Package tracking (Phase 3, Household): UPS, FedEx, Canada Post, USPS and more; status from an optional tracker API.
+  // Package tracking (Phase 3, Household; live status Melvin, 2026-11-26): numbers typed on the widget, status, expected
+  // day and deliveries today from 17TRACK with the household's own key (src/server/packages.ts, docs/packages.md).
   z.object({
     ...base,
     type: z.literal("packages"),
@@ -389,7 +399,8 @@ export const widgetSchema = z.discriminatedUnion("type", [
       .array(
         z.object({
           id,
-          carrier: z.enum(["ups", "fedex", "canadaPost", "usps", "other"]),
+          // "other" lets 17TRACK work out the carrier from the number.
+          carrier: z.enum(["ups", "fedex", "canadaPost", "purolator", "dhl", "usps", "other"]),
           trackingNumber: z.string().trim().min(4).max(64),
           label: z.string().max(40).optional(),
         }),
@@ -397,6 +408,8 @@ export const widgetSchema = z.discriminatedUnion("type", [
       .max(12),
     count: z.number().int().min(1).max(12),
     showDelivered: z.boolean(),
+    /** Only what's out for delivery, due today, ready for pickup or delivered today. */
+    todayOnly: z.boolean().default(false),
   }),
   // Mountain snow report (Melvin, 2026-11-25): new snow, depth and the next days' snowfall for picked mountains, from
   // Open-Meteo at each mountain (src/server/snow.ts, src/lib/snow.ts for the list).
@@ -742,6 +755,19 @@ export const widgetSchema = z.discriminatedUnion("type", [
     count: z.number().int().min(1).max(5).default(1),
     familyFriendly: z.boolean().default(true),
   }),
+  // Morning brief (Melvin, 2026-11-26): the day in one sentence from feeds the household already has (src/lib/brief.ts).
+  // From 7 PM it reads tomorrow unless `eveningTomorrow` is off.
+  z.object({
+    ...base,
+    type: z.literal("brief"),
+    layout: z.enum(["sentence", "list"]).default("sentence"),
+    sources: z
+      .array(z.enum(BRIEF_SOURCES))
+      .max(BRIEF_SOURCES.length)
+      .default([...BRIEF_SOURCES]),
+    events: z.number().int().min(1).max(5).default(3),
+    eveningTomorrow: z.boolean().default(true),
+  }),
   // Playful horoscope (Melvin, 2026-11-23): curated kitchen blurbs by sign, not a live astrology feed.
   z.object({
     ...base,
@@ -853,7 +879,8 @@ export const photoSourceSchema = z.discriminatedUnion("kind", [
   z.object({ id, kind: z.literal("amazonPeople"), name: z.string().max(60), personIds: z.array(z.string().max(128)).max(20) }),
   z.object({ id, kind: z.literal("urls"), name: z.string().max(60), urls: z.array(z.url()).max(500) }),
   // Photos kept by Everydaypane itself: uploaded from the admin panel or picked in Google Photos (src/server/library.ts).
-  z.object({ id, kind: z.literal("library"), name: z.string().max(60) }),
+  // `familyUploads` (Melvin, 2026-11-26): the family can add photos to this album from /family/ and the kitchen edit link.
+  z.object({ id, kind: z.literal("library"), name: z.string().max(60), familyUploads: z.boolean().default(false) }),
   // Phase 3 photo sources (src/server/photos/).
   z.object({ id, kind: z.literal("bingPotd"), name: z.string().max(60) }),
   z.object({

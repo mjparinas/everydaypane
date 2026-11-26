@@ -5,6 +5,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import { AIRTHINGS_KINDS, AIRTHINGS_LABELS } from "@/lib/airthings";
 import { POOL_KINDS, POOL_LABELS } from "@/lib/blueRiiot";
 import { BORDER_CROSSINGS, BORDER_DIRECTION_LABELS, BORDER_DIRECTIONS, BORDER_INFO } from "@/lib/border";
+import { BRIEF_SOURCE_LABELS, BRIEF_SOURCES } from "@/lib/briefSources";
 import { PERIOD_LABELS, PERIODS } from "@/lib/config/periods";
 import type { CountdownEvent, DashboardConfig, TimerPreset, Widget } from "@/lib/config/schema";
 import { WIDGETS } from "@/lib/config/widgets";
@@ -29,6 +30,7 @@ import { HaEntityList, useHa } from "./haEntities";
 import { useLaundry } from "./laundry";
 import { shrink } from "./LibraryAlbum";
 import { useMusic } from "./music";
+import { usePackages } from "./packages";
 import { useRachio } from "./rachio";
 import { loadSmartProvider, type SmartProviderDetail } from "./smartHome";
 import { newId } from "./store";
@@ -1064,12 +1066,21 @@ function TypeSettings({
             label="Fit"
             value={w.fit}
             options={[
+              { value: "auto", label: "Smart: fill unless it would crop a lot" },
               { value: "cover", label: "Fill the space (crops edges)" },
               { value: "contain", label: "Show the whole photo" },
             ]}
             onChange={(v) => e((x) => void (x.fit = v))}
           />
-          <Toggle label="Show captions" checked={w.showCaption} onChange={(v) => e((x) => void (x.showCaption = v))} />
+          <Toggle
+            label="Pair portrait photos side by side"
+            checked={w.pairPortraits}
+            onChange={(v) => e((x) => void (x.pairPortraits = v))}
+          />
+          <Toggle label="Slow zoom across each photo" checked={w.drift} onChange={(v) => e((x) => void (x.drift = v))} />
+          <Toggle label="Show “On this day” photos first" checked={w.memories} onChange={(v) => e((x) => void (x.memories = v))} />
+          <Toggle label="Show when each photo was taken" checked={w.showCaption} onChange={(v) => e((x) => void (x.showCaption = v))} />
+          <p className="text-xs text-soft">Photos added since the screen last looked always come up next.</p>
           {sources.length === 0 ? (
             <p className="text-xs text-soft">
               Add photo albums under <SettingsLink href="#settings/photos">Settings › Photos</SettingsLink>.
@@ -1682,18 +1693,25 @@ function TypeSettings({
       return (
         <>
           <Stepper label="Packages shown" value={w.count} min={1} max={12} onChange={(v) => e((x) => void (x.count = v))} />
-          <Toggle label="Show delivered" checked={w.showDelivered} onChange={(v) => e((x) => void (x.showDelivered = v))} />
+          <Toggle label="Only today's deliveries" checked={w.todayOnly} onChange={(v) => e((x) => void (x.todayOnly = v))} />
+          <Toggle
+            label="Show packages delivered before today"
+            checked={w.showDelivered}
+            onChange={(v) => e((x) => void (x.showDelivered = v))}
+          />
           {w.packages.map((p, i) => (
             <div key={p.id} className="grid gap-2 rounded-xl border border-line p-3">
               <Select
                 label="Carrier"
                 value={p.carrier}
                 options={[
+                  { value: "other", label: "Work it out from the number" },
+                  { value: "canadaPost", label: "Canada Post" },
+                  { value: "purolator", label: "Purolator" },
                   { value: "ups", label: "UPS" },
                   { value: "fedex", label: "FedEx" },
-                  { value: "canadaPost", label: "Canada Post" },
+                  { value: "dhl", label: "DHL" },
                   { value: "usps", label: "USPS" },
-                  { value: "other", label: "Other" },
                 ]}
                 onChange={(v) => e((x) => void (x.packages[i]!.carrier = v))}
               />
@@ -1723,14 +1741,12 @@ function TypeSettings({
             <button
               type="button"
               className="btn-ghost justify-self-start"
-              onClick={() => e((x) => void x.packages.push({ id: newId("pkg"), carrier: "ups", trackingNumber: "", label: "" }))}
+              onClick={() => e((x) => void x.packages.push({ id: newId("pkg"), carrier: "other", trackingNumber: "", label: "" }))}
             >
               Add a package
             </button>
           )}
-          <p className="text-xs text-soft">
-            Set <span className="font-mono">PACKAGE_TRACK_API_KEY</span> on the server for live status (optional).
-          </p>
+          <PackagesHint />
         </>
       );
     }
@@ -1989,6 +2005,47 @@ function TypeSettings({
             The chance is worked out for {config.location.name || "the dashboard's location"} from NOAA&apos;s Kp forecast. It still needs a
             clear, dark sky to the north.
           </p>
+        </>
+      );
+    }
+    case "brief": {
+      const e = edit<"brief">();
+      return (
+        <>
+          <Segmented
+            label="Show it as"
+            value={w.layout}
+            options={[
+              { value: "sentence", label: "A sentence" },
+              { value: "list", label: "A list" },
+            ]}
+            onChange={(v) => e((x) => void (x.layout = v))}
+          />
+          <p className="text-xs text-soft">
+            What to mention. Each one only speaks up when there&apos;s something to say, and only from what the dashboard already reads:
+            ferries from a Ferries widget, school closures from a School status widget, garbage day once your zone is set.
+          </p>
+          {BRIEF_SOURCES.map((k) => (
+            <Toggle
+              key={k}
+              label={BRIEF_SOURCE_LABELS[k]}
+              checked={w.sources.includes(k)}
+              onChange={(on) =>
+                e((x) => {
+                  const next = on ? BRIEF_SOURCES.filter((r) => r === k || x.sources.includes(r)) : x.sources.filter((r) => r !== k);
+                  if (next.length) x.sources = next;
+                })
+              }
+            />
+          ))}
+          <Stepper label="Calendar events to name" value={w.events} min={1} max={5} onChange={(v) => e((x) => void (x.events = v))} />
+          <Toggle
+            label="Read tomorrow in the evening"
+            checked={w.eveningTomorrow}
+            hint="From 7 PM it reads tomorrow's weather, plans and bins instead of what's left of today."
+            onChange={(v) => e((x) => void (x.eveningTomorrow = v))}
+          />
+          <p className="text-xs text-soft">Changes to what it mentions show on the wall after you publish.</p>
         </>
       );
     }
@@ -2812,6 +2869,21 @@ function PoolSettings({ w, onChange }: { w: Extract<Widget, { type: "blueRiiot" 
         </>
       ) : null}
     </>
+  );
+}
+
+function PackagesHint() {
+  const status = usePackages();
+  if (!status) return null;
+  return status.configured && !status.error ? (
+    <p className="text-xs text-soft">Live status from 17TRACK. Each new number uses one of the key&apos;s tracking quota.</p>
+  ) : (
+    <p className="text-xs text-soft">
+      {status.error || "Numbers show without live status until a 17TRACK key is saved."}{" "}
+      <a className="underline" href="#settings/packages">
+        Settings › Packages
+      </a>
+    </p>
   );
 }
 

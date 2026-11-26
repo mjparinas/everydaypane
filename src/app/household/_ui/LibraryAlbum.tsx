@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 
 import type { DashboardConfig } from "@/lib/config/schema";
+import { isPicture, prepareUpload } from "@/lib/photoUpload";
 
 import { useAdmin } from "./store";
 
@@ -77,15 +78,20 @@ export function LibraryAlbum({ sourceId }: { sourceId: string }) {
   async function upload(files: FileList | null) {
     if (!files?.length) return;
     setError("");
-    const list = [...files].filter((f) => f.type.startsWith("image/") || /\.(heic|heif|jpe?g|png|webp)$/i.test(f.name));
+    const list = [...files].filter(isPicture);
     let failed = 0;
     for (const [i, file] of list.entries()) {
       setBusy(`Uploading ${i + 1} of ${list.length}…`);
       try {
-        const { blob, w, h } = await shrink(file);
+        const { blob, w, h, taken } = await prepareUpload(file);
         const r = await fetch(`/api/household/library/?source=${encodeURIComponent(sourceId)}`, {
           method: "POST",
-          headers: { "Content-Type": "image/jpeg", "x-photo-width": String(w), "x-photo-height": String(h) },
+          headers: {
+            "Content-Type": "image/jpeg",
+            "x-photo-width": String(w),
+            "x-photo-height": String(h),
+            ...(taken ? { "x-photo-taken": taken } : {}),
+          },
           body: blob,
         });
         if (!r.ok) failed++;

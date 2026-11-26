@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
 import { FamilyEvents } from "@/components/FamilyEvents";
+import { FamilyPhotos } from "@/components/FamilyPhotos";
 import { MealPlanner } from "@/components/MealPlanner";
 import { MessageBoard } from "@/components/MessageBoard";
 import { ShoppingList } from "@/components/ShoppingList";
@@ -42,6 +43,7 @@ export default async function FamilyPage() {
           </a>
         </p>
       </div>
+      <FamilyPhotos />
       <section className="grid gap-3" aria-labelledby="meals-heading">
         <h2 id="meals-heading" className="text-lg font-bold">
           Meal plan

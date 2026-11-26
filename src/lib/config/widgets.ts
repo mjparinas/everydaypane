@@ -1,6 +1,7 @@
 import { AIRTHINGS_DEFAULT_KINDS } from "../airthings";
 import { POOL_DEFAULT_KINDS } from "../blueRiiot";
 import { BORDER_DEFAULT_CROSSINGS } from "../border";
+import { BRIEF_SOURCES } from "../briefSources";
 import { RIVER_DEFAULT_STATIONS } from "../rivers";
 import { DEFAULT_MOUNTAINS } from "../snow";
 import type { Widget, WidgetType } from "./schema";
@@ -152,13 +153,21 @@ export const WIDGETS: { [T in WidgetType]: WidgetInfo<T> } = {
   },
   photos: {
     label: "Photos",
-    description: "A slideshow from Amazon Photos or links",
+    description: "A photo frame from your albums and family uploads",
     icon: "🖼️",
     size: { w: 6, h: 5 },
     minSize: { w: 2, h: 2 },
     supportsTitle: false,
     supportsFontScale: false,
-    defaults: () => ({ sourceIds: [], intervalSeconds: 30, fit: "cover", showCaption: false }),
+    defaults: () => ({
+      sourceIds: [],
+      intervalSeconds: 30,
+      fit: "auto",
+      showCaption: true,
+      pairPortraits: true,
+      drift: true,
+      memories: true,
+    }),
   },
   haEntity: {
     label: "Smart device",
@@ -282,11 +291,11 @@ export const WIDGETS: { [T in WidgetType]: WidgetInfo<T> } = {
   },
   packages: {
     label: "Packages",
-    description: "Track UPS, FedEx, Canada Post and USPS",
+    description: "Deliveries today and what's on its way, from 17TRACK",
     icon: "📦",
     size: { w: 4, h: 3 },
     minSize: { w: 2, h: 2 },
-    defaults: () => ({ packages: [], count: 6, showDelivered: false }),
+    defaults: () => ({ packages: [], count: 6, showDelivered: false, todayOnly: false }),
   },
   snow: {
     label: "Snow report",
@@ -650,6 +659,14 @@ export const WIDGETS: { [T in WidgetType]: WidgetInfo<T> } = {
     minSize: { w: 2, h: 1 },
     defaults: () => ({ category: "general" as const, custom: [] as string[] }),
   },
+  brief: {
+    label: "Morning brief",
+    description: "The day in a sentence: weather, plans, bins, delays",
+    icon: "☕",
+    size: { w: 6, h: 2 },
+    minSize: { w: 3, h: 1 },
+    defaults: () => ({ layout: "sentence" as const, sources: [...BRIEF_SOURCES], events: 3, eveningTomorrow: true }),
+  },
   onThisDay: {
     label: "On this day",
     description: "A moment from history, from Wikipedia",
@@ -744,7 +761,7 @@ export const WIDGET_TYPES = Object.keys(WIDGETS) as WidgetType[];
 
 /** Groups for the admin widget picker (Views › Add a widget). */
 export const WIDGET_GROUPS: { id: string; label: string; types: WidgetType[] }[] = [
-  { id: "time", label: "Time", types: ["clock", "date", "sunTimes", "moon", "timer", "pomodoro"] },
+  { id: "time", label: "Time", types: ["clock", "date", "brief", "sunTimes", "moon", "timer", "pomodoro"] },
   {
     id: "weather",
     label: "Weather & map",
