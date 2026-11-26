@@ -100,6 +100,11 @@ const MIGRATIONS = [
   // Washer and dryer cycles, so a run that stops reads as done until the next one (src/server/laundry.ts).
   `CREATE TABLE IF NOT EXISTS laundry_state (account_id TEXT NOT NULL, id TEXT NOT NULL, running INTEGER NOT NULL, ends_at INTEGER, done_at INTEGER, updated_at INTEGER NOT NULL, PRIMARY KEY (account_id, id))`,
   `CREATE TABLE IF NOT EXISTS staff_sign_in_failures (id INTEGER PRIMARY KEY AUTOINCREMENT, email TEXT NOT NULL, kind TEXT NOT NULL, at INTEGER NOT NULL)`,
+  // Getting-started emails (src/server/onboarding.ts): each one claimed before it's sent, so it goes out once.
+  `CREATE TABLE IF NOT EXISTS onboarding_sends (account_id TEXT NOT NULL, email TEXT NOT NULL, step TEXT NOT NULL, sent_at INTEGER NOT NULL, PRIMARY KEY (account_id, email, step))`,
+  // Addresses that unsubscribed from a kind of email from its link (`onboarding` for now).
+  `CREATE TABLE IF NOT EXISTS email_optouts (email TEXT NOT NULL, kind TEXT NOT NULL, at INTEGER NOT NULL, PRIMARY KEY (email, kind))`,
+  `CREATE INDEX IF NOT EXISTS accounts_by_created ON accounts (created_at)`,
 ];
 
 // Columns added after a table was first created. SQLite has no ADD COLUMN IF NOT EXISTS, so each one runs on its own

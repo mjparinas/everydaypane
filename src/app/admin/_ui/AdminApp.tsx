@@ -1602,7 +1602,7 @@ function FlagsTab({ flash, canWrite }: { flash: Flash; canWrite: boolean }) {
 
 function AutomationsTab({ flash, canWrite }: { flash: Flash; canWrite: boolean }) {
   const { data, reload, error } = useFetch<{
-    automations: { newPurchase: boolean; refund: boolean; report: boolean; morningDigest: boolean };
+    automations: { newPurchase: boolean; refund: boolean; report: boolean; morningDigest: boolean; onboarding: boolean };
     adminCount: number;
   }>("/api/admin/automations/");
   const [busy, setBusy] = useState<string | null>(null);
@@ -1620,6 +1620,7 @@ function AutomationsTab({ flash, canWrite }: { flash: Flash; canWrite: boolean }
           ["refund", "Refund / cancel"],
           ["report", "New problem report"],
           ["morningDigest", "Morning digest"],
+          ["onboarding", "Getting started emails (to new households)"],
         ] as const
       ).map(([k, label]) => (
         <div key={k} className="flex items-center justify-between gap-3 border-b border-line/60 py-3 text-sm last:border-0">

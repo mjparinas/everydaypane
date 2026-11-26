@@ -34,6 +34,8 @@ export const env = {
       .map((d) => d.trim().toLowerCase())
       .filter(Boolean),
   resendKey: () => process.env.RESEND_API_KEY ?? "",
+  /** Sender's postal address, required in every marketing-style email (CASL, CAN-SPAM). Onboarding emails wait for it. */
+  mailPostalAddress: () => process.env.MAIL_POSTAL_ADDRESS?.trim() ?? "",
   mailFrom: () => process.env.MAIL_FROM || "Everydaypane <onboarding@resend.dev>",
   siteUrl: () =>
     process.env.NEXT_PUBLIC_SITE_URL ||

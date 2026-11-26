@@ -62,6 +62,9 @@ export function LiveLayoutEditor({
     setDragState(d);
   };
   const [stageRect, setStageRect] = useState({ left: 0, top: 0, width: DESIGN_W, height: DESIGN_H });
+  // Until the preview reports where its stage really sits, the overlay is drawn over the whole frame and may move a
+  // few pixels when the report lands (browser tests wait for this before dragging a handle).
+  const [stageKnown, setStageKnown] = useState(false);
   const draftTimer = useRef<number | undefined>(undefined);
   const latest = useRef({ config, version, viewId });
 
@@ -125,6 +128,7 @@ export function LiveLayoutEditor({
       const layout = parsePreviewLayout(event.data);
       if (layout && event.source === iframe?.contentWindow) {
         setStageRect(layout.rect);
+        setStageKnown(true);
         return;
       }
       if (!parsePreviewReady(event.data)) return;
@@ -303,6 +307,7 @@ export function LiveLayoutEditor({
             containerType: "inline-size",
           }}
           onPointerDown={() => onSelect(null)}
+          data-stage={stageKnown ? "ready" : "pending"}
           data-testid="grid-editor"
         >
           {view.widgets.map((w) => {
