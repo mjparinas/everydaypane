@@ -93,7 +93,7 @@ export const ONBOARDING: readonly OnboardingStep[] = [
       { text: "Fill the tile or show the whole picture, with captions if you like." },
     ],
     cta: { label: "Add photos", path: "/household/#settings/photos" },
-    image: { file: "photos", alt: "A full-screen photo with the time and date laid over it" },
+    image: { file: "photos", alt: "A full-screen family photo with the time and a countdown laid over it" },
   },
   {
     id: "schedule",
@@ -199,7 +199,7 @@ export const ONBOARDING: readonly OnboardingStep[] = [
       { text: "A note for anything else: the door code, the dog's feeding time.", flag: "widget.note" },
     ],
     cta: { label: "Add a widget", path: "/household/#views" },
-    image: { file: "guests", alt: "Countdowns to Christmas and New Year's beside a clock" },
+    image: { file: "guests", alt: "Countdowns to Christmas and New Year's, a door-code note and a WiFi QR code" },
   },
   {
     id: "alerts",
@@ -215,7 +215,7 @@ export const ONBOARDING: readonly OnboardingStep[] = [
       { text: "DriveBC road events and earthquakes in the region." },
       { text: "Optionally emailed to everyone in the household, so nobody misses one." },
     ],
-    tip: "Tap the strip to dismiss it on that screen. A new alert brings it back.",
+    tip: "Tap the strip to read every alert. Dismiss hides it on that screen until a new one arrives.",
     cta: { label: "Choose your alerts", path: "/household/#settings/alerts" },
     image: { file: "alerts", alt: "A red weather warning strip across the top of the wall dashboard" },
   },
@@ -235,7 +235,7 @@ export const ONBOARDING: readonly OnboardingStep[] = [
     ],
     tip: "Settings changes reach the wall within 30 seconds. Household pushes them instantly.",
     cta: { label: "Check your screen settings", path: "/household/#settings/screen-care" },
-    image: { file: "wall-ready", alt: "The dashboard in its night colours, dark and easy on the eyes" },
+    image: { file: "wall-ready", alt: "Everydaypane on a kitchen wall, in its night colours and on an old tablet" },
   },
   {
     id: "smart-home",
@@ -253,7 +253,7 @@ export const ONBOARDING: readonly OnboardingStep[] = [
     ],
     tip: "Locks can only be locked from the wall, never unlocked, because anyone in the kitchen can reach it.",
     cta: { label: "Connect your devices", path: "/household/#settings/smart-home" },
-    image: { file: "smart-home", alt: "Smart home tiles for lights, the thermostat and what's playing" },
+    image: { file: "smart-home", alt: "Smart home tiles for lights, the thermostat, what's playing and the backyard camera" },
   },
   {
     id: "out-the-door",
@@ -304,7 +304,7 @@ export const ONBOARDING: readonly OnboardingStep[] = [
       { text: "Emergency alerts, the doorbell and timers still break through." },
     ],
     cta: { label: "Set up the screen saver", path: "/household/#settings/screen-saver" },
-    image: { file: "screen-saver", alt: "A full-screen photo frame view with a small clock" },
+    image: { file: "screen-saver", alt: "A Christmas photo filling the screen with a small clock, and the screen dark at night" },
   },
   {
     id: "timers",

@@ -508,11 +508,11 @@ export const WIDGETS: { [T in WidgetType]: WidgetInfo<T> } = {
   },
   shopping: {
     label: "Shopping List",
-    description: "Groceries the family adds from their phones, ticked off with a tap",
+    description: "Groceries the family adds from their phones, by aisle, ticked off with a tap",
     icon: "🛒",
     size: { w: 4, h: 4 },
     minSize: { w: 2, h: 2 },
-    defaults: () => ({ count: 12, allowCheck: true, allowAdd: false, showDone: false }),
+    defaults: () => ({ count: 12, allowCheck: true, allowAdd: false, showDone: false, groupByCategory: true }),
   },
   presence: {
     label: "Who's Home",

@@ -25,6 +25,7 @@ import {
   removeShoppingItem,
   setShoppingDone,
   setShoppingDoneFromPhone,
+  updateShoppingItem,
 } from "./shopping";
 
 const DAY = 86_400_000;
@@ -45,6 +46,7 @@ function withShopping(allowCheck = true, allowAdd = false): DashboardConfig {
     allowCheck,
     allowAdd,
     showDone: false,
+    groupByCategory: true,
   });
   return c;
 }
@@ -141,6 +143,73 @@ describe("shopping list", () => {
     } finally {
       vi.useRealTimers();
     }
+  });
+});
+
+describe("shopping aisles and running low", () => {
+  useTestServer();
+
+  it("guesses an aisle, keeps a picked one for the same item next time, and marks running low", async () => {
+    const milk = await addShoppingItem(LEGACY_ACCOUNT_ID, { text: "Oat milk", by: "kid@example.com" }, NOON);
+    const card = await addShoppingItem(LEGACY_ACCOUNT_ID, { text: "Birthday card", by: "kid@example.com", low: true }, NOON + 1);
+    if (!milk.ok || !card.ok) throw new Error("not added");
+    expect([milk.item.category, card.item.category, card.item.low]).toEqual(["dairy", "other", true]);
+
+    expect(await updateShoppingItem(LEGACY_ACCOUNT_ID, { id: milk.item.id, category: "drinks", low: true })).toBe("ok");
+    expect(await updateShoppingItem(LEGACY_ACCOUNT_ID, { id: "missing", low: true })).toBe("not-found");
+    let list = await listShopping(LEGACY_ACCOUNT_ID, NOON + 2);
+    expect(list.items.map((i) => [i.text, i.category, i.low])).toEqual([
+      ["Oat milk", "drinks", true],
+      ["Birthday card", "other", true],
+    ]);
+
+    // Bought, then added again with other capitals: the aisle someone picked comes back, "low" doesn't.
+    await setShoppingDoneFromPhone(LEGACY_ACCOUNT_ID, { id: milk.item.id, done: true }, NOON + 3);
+    const again = await addShoppingItem(LEGACY_ACCOUNT_ID, { text: "oat milk", by: "kid@example.com" }, NOON + 4);
+    expect(again.ok && [again.item.category, again.item.low]).toEqual(["drinks", false]);
+    list = await listShopping(LEGACY_ACCOUNT_ID, NOON + 5);
+    expect(list.items.find((i) => i.text === "oat milk")?.category).toBe("drinks");
+  });
+
+  it("guesses aisles for items saved before categories", async () => {
+    await run(
+      "INSERT INTO shopping (id, account_id, text, done, sort, added_at, done_at, added_by) VALUES ('old', ?, 'Bananas', 0, 1, ?, NULL, 'x')",
+      [LEGACY_ACCOUNT_ID, NOON],
+    );
+    const list = await listShopping(LEGACY_ACCOUNT_ID, NOON + 1);
+    expect(list.items).toEqual([{ id: "old", text: "Bananas", done: false, category: "produce", low: false }]);
+  });
+
+  it("moves aisle and marks low from a phone, and takes a running-low add from the wall", async () => {
+    const kid = await cookieFor("kid@example.com");
+    const headers = { cookie: kid };
+    const posted = await addPOST(
+      req("/api/shopping/", { method: "POST", headers, body: JSON.stringify({ text: "Tea", category: "pantry", low: true }) }),
+    );
+    expect(posted.status).toBe(201);
+    const { item } = (await posted.json()) as { item: { id: string; category: string; low: boolean } };
+    expect([item.category, item.low]).toEqual(["pantry", true]);
+    expect(
+      (
+        await PATCH(
+          req("/api/shopping/", { method: "PATCH", headers, body: JSON.stringify({ category: "drinks", low: false }) }),
+          ctx(item.id),
+        )
+      ).status,
+    ).toBe(200);
+    expect(
+      (await PATCH(req("/api/shopping/", { method: "PATCH", headers, body: JSON.stringify({ category: "aisle 9" }) }), ctx(item.id)))
+        .status,
+    ).toBe(400);
+    expect((await PATCH(req("/api/shopping/", { method: "PATCH", headers, body: JSON.stringify({}) }), ctx(item.id))).status).toBe(400);
+    expect(
+      (await PATCH(req("/api/shopping/", { method: "PATCH", headers, body: JSON.stringify({ low: true }) }), ctx("missing"))).status,
+    ).toBe(404);
+    const listed = (await (await listGET(req("/api/shopping/", { headers }))).json()) as ShoppingData;
+    expect(listed.items.map((i) => [i.text, i.category, i.low])).toEqual([["Tea", "drinks", false]]);
+
+    const wall = await addShoppingFromWall(LEGACY_ACCOUNT_ID, withShopping(true, true), { text: "Coffee", low: true });
+    expect(wall.ok && [wall.item.category, wall.item.low]).toEqual(["drinks", true]);
   });
 });
 
@@ -246,7 +315,7 @@ describe("/api/display/shopping/", () => {
     const first = await displayGET(req("/api/display/shopping/", { headers }));
     const tag = first.headers.get("etag") ?? "";
     const data = (await first.json()) as ShoppingData;
-    expect(data.items).toEqual([{ id: added.item.id, text: "Milk", done: false }]);
+    expect(data.items).toEqual([{ id: added.item.id, text: "Milk", done: false, category: "dairy", low: false }]);
     expect(JSON.stringify(data)).not.toContain("@example.com");
     expect((await displayGET(req("/api/display/shopping/", { headers: { ...headers, "if-none-match": tag } }))).status).toBe(304);
 

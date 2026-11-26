@@ -51,10 +51,10 @@ function SettingsLink({ href, children }: { href: string; children: ReactNode })
 }
 
 const PHOTO_INTERVALS = [
-  { value: "10", label: "10 S" },
-  { value: "30", label: "30 S" },
-  { value: "60", label: "1 Min" },
-  { value: "300", label: "5 Min" },
+  { value: "10", label: "10 s" },
+  { value: "30", label: "30 s" },
+  { value: "60", label: "1 min" },
+  { value: "300", label: "5 min" },
   { value: "custom", label: "Custom" },
 ] as const;
 
@@ -304,7 +304,7 @@ function HaEntitySettings({
         />
       ) : null}
       <Text
-        label={(provider === "homeAssistant" ? entities.length : devices.length) > 0 ? "Or Paste Entity ID" : "Entity"}
+        label={(provider === "homeAssistant" ? entities.length : devices.length) > 0 ? "Or Paste Entity Id" : "Entity"}
         value={w.entityId}
         maxLength={255}
         placeholder={provider === "homeAssistant" ? "light.kitchen" : `${provider}.device_id`}
@@ -1245,7 +1245,7 @@ function TypeSettings({
             hint="Latency at or above this shows the internet as slow."
             onChange={(v) => e((x) => void (x.slowMs = v))}
           />
-          <Toggle label="Latency Chart (24 H)" checked={w.showChart} onChange={(v) => e((x) => void (x.showChart = v))} />
+          <Toggle label="Latency Chart (24 h)" checked={w.showChart} onChange={(v) => e((x) => void (x.showChart = v))} />
           <Toggle label="Devices and Clients" checked={w.showCounts} onChange={(v) => e((x) => void (x.showCounts = v))} />
           <Toggle
             label="Current Usage"
@@ -1277,6 +1277,12 @@ function TypeSettings({
       return (
         <>
           <Stepper label="Items Shown" value={w.count} min={1} max={40} onChange={(v) => e((x) => void (x.count = v))} />
+          <Toggle
+            label="Group by Aisle"
+            hint="Produce, dairy, pantry and so on, in store order. Phones can move an item to another aisle."
+            checked={w.groupByCategory}
+            onChange={(v) => e((x) => void (x.groupByCategory = v))}
+          />
           <Toggle label="Show Bought Items" checked={w.showDone} onChange={(v) => e((x) => void (x.showDone = v))} />
           <Toggle
             label="Tap to Tick Off"
@@ -1888,7 +1894,7 @@ function TypeSettings({
     case "youtube":
     case "vimeo": {
       const e = edit<"youtube" | "vimeo">();
-      return <Text label="Video or Playlist ID" value={w.videoId} maxLength={64} onChange={(v) => e((x) => void (x.videoId = v))} />;
+      return <Text label="Video or Playlist Id" value={w.videoId} maxLength={64} onChange={(v) => e((x) => void (x.videoId = v))} />;
     }
     case "instagram": {
       const e = edit<"instagram">();
@@ -2210,10 +2216,10 @@ function AlertSettings<T extends Alerting>({ w, onChange }: { w: T; onChange: (c
 }
 
 const QUICK_TIMERS = [
-  { label: "1 Min", seconds: 60 },
-  { label: "3 Min", seconds: 180 },
-  { label: "5 Min", seconds: 300 },
-  { label: "10 Min", seconds: 600 },
+  { label: "1 min", seconds: 60 },
+  { label: "3 min", seconds: 180 },
+  { label: "5 min", seconds: 300 },
+  { label: "10 min", seconds: 600 },
 ] as const;
 
 function TimerPresets({ presets, onChange }: { presets: TimerPreset[]; onChange: Edit<"timer"> }) {
@@ -2938,7 +2944,7 @@ function EcoFlowSettings({
   return (
     <>
       <Toggle label="Solar Input" checked={w.showSolar} onChange={(v) => e((x) => void (x.showSolar = v))} />
-      <Toggle label="AC and DC in and Out" checked={w.showFlows} onChange={(v) => e((x) => void (x.showFlows = v))} />
+      <Toggle label="AC and DC In and Out" checked={w.showFlows} onChange={(v) => e((x) => void (x.showFlows = v))} />
       <Toggle label="Time to Full or Empty" checked={w.showTime} onChange={(v) => e((x) => void (x.showTime = v))} />
       {!status ? (
         <p className="text-sm text-soft">Checking EcoFlow…</p>

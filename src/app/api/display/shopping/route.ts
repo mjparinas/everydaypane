@@ -20,7 +20,7 @@ export async function GET(req: Request) {
 }
 
 const doneBody = z.object({ id: z.string().min(1).max(64), done: z.boolean() });
-const addBody = z.object({ text: z.string().min(1).max(80) });
+const addBody = z.object({ text: z.string().min(1).max(80), low: z.boolean().optional() });
 
 /** A tap on the wall: ticks one item off, puts it back, or adds a line when the widget allows it. */
 export async function POST(req: Request) {
@@ -33,7 +33,7 @@ export async function POST(req: Request) {
   const add = addBody.safeParse(raw);
   if (add.success) {
     const by = viewer.kind === "device" ? `display:${viewer.device.id}` : "wall";
-    const result = await addShoppingFromWall(accountId, config, { text: add.data.text }, by);
+    const result = await addShoppingFromWall(accountId, config, { text: add.data.text, low: add.data.low }, by);
     if (result.ok) return json({ ok: true, item: result.item }, 201);
     if (result.error === "forbidden") return json({ error: "Not allowed" }, 403);
     if (result.error === "full") return json({ error: "The list is full." }, 409);

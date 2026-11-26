@@ -16,10 +16,12 @@ import {
   type WhiteboardTool,
 } from "@/lib/whiteboard";
 
+import { LEGACY_ACCOUNT_ID } from "./accounts";
 import { query, run } from "./db";
 
-// One shared kitchen doodle for every display (Melvin, 2026-11-22). Stored as strokes on a fixed board so a wide tile
-// and a narrow one show the same drawing. Append-only until someone holds Clear.
+// One shared doodle for every display in a household (Melvin, 2026-11-22), drawn on from the wall or from phones
+// (Melvin, 2026-11-26: "let the whiteboard sync from phones"). Stored as strokes on a fixed board so a wide tile, a
+// narrow one and a phone show the same drawing. Append-only until someone holds Clear.
 
 type Row = { revision: number | bigint; json: string; updated_at: number | bigint };
 
@@ -60,9 +62,12 @@ function parseStrokes(json: string): WhiteboardStroke[] {
   }
 }
 
-async function read(now = Date.now()): Promise<WhiteboardData> {
-  const rows = await query<Row>("SELECT revision, json, updated_at FROM whiteboard WHERE id = 1");
-  const row = rows[0];
+async function read(accountId: string, now = Date.now()): Promise<WhiteboardData> {
+  const rows = await query<Row>("SELECT revision, json, updated_at FROM account_whiteboard WHERE account_id = ?", [accountId]);
+  // Before boards were per household there was one row for everyone; it belongs to the grandfather household.
+  const row =
+    rows[0] ??
+    (accountId === LEGACY_ACCOUNT_ID ? (await query<Row>("SELECT revision, json, updated_at FROM whiteboard WHERE id = 1"))[0] : undefined);
   if (!row) return empty(now);
   return {
     revision: Number(row.revision),
@@ -71,15 +76,15 @@ async function read(now = Date.now()): Promise<WhiteboardData> {
   };
 }
 
-async function write(data: WhiteboardData): Promise<void> {
+async function write(accountId: string, data: WhiteboardData): Promise<void> {
   await run(
-    "INSERT INTO whiteboard (id, revision, json, updated_at) VALUES (1, ?, ?, ?) ON CONFLICT(id) DO UPDATE SET revision = excluded.revision, json = excluded.json, updated_at = excluded.updated_at",
-    [data.revision, JSON.stringify(data.strokes), data.updatedAt],
+    "INSERT INTO account_whiteboard (account_id, revision, json, updated_at) VALUES (?, ?, ?, ?) ON CONFLICT(account_id) DO UPDATE SET revision = excluded.revision, json = excluded.json, updated_at = excluded.updated_at",
+    [accountId, data.revision, JSON.stringify(data.strokes), data.updatedAt],
   );
 }
 
-export async function getWhiteboard(now = Date.now()): Promise<WhiteboardData> {
-  return read(now);
+export async function getWhiteboard(accountId: string, now = Date.now()): Promise<WhiteboardData> {
+  return read(accountId, now);
 }
 
 export function whiteboardTag(data: WhiteboardData): string {
@@ -89,7 +94,7 @@ export function whiteboardTag(data: WhiteboardData): string {
 
 const COLOUR_SET = new Set<string>(WHITEBOARD_COLOURS);
 
-/** Checks a stroke from the wall before it is stored. */
+/** Checks a stroke from the wall or a phone before it is stored. */
 export function sanitizeStroke(input: unknown): WhiteboardStroke | null {
   if (!input || typeof input !== "object") return null;
   const s = input as Record<string, unknown>;
@@ -124,31 +129,33 @@ export function sanitizeStroke(input: unknown): WhiteboardStroke | null {
 
 /**
  * Appends a stroke when the client's revision still matches. A clear on another screen makes the revision move, and
- * the wall reloads instead of scribbling on a wiped board.
+ * the wall or phone reloads instead of scribbling on a wiped board.
  */
 export async function appendStroke(
+  accountId: string,
   revision: number,
   stroke: WhiteboardStroke,
   now = Date.now(),
 ): Promise<{ ok: true; data: WhiteboardData } | { ok: false; reason: "stale" | "duplicate"; data: WhiteboardData }> {
-  const current = await read(now);
+  const current = await read(accountId, now);
   if (revision !== current.revision) return { ok: false, reason: "stale", data: current };
   if (current.strokes.some((s) => s.id === stroke.id)) return { ok: false, reason: "duplicate", data: current };
   const strokes = [...current.strokes, stroke];
   while (strokes.length > MAX_STROKES) strokes.shift();
   const data: WhiteboardData = { revision: current.revision, updatedAt: now, strokes };
-  await write(data);
+  await write(accountId, data);
   return { ok: true, data };
 }
 
-/** Wipes the board when the client's revision matches (hold-to-clear on the wall). */
+/** Wipes the board when the client's revision matches (hold-to-clear on the wall or a phone). */
 export async function clearWhiteboard(
+  accountId: string,
   revision: number,
   now = Date.now(),
 ): Promise<{ ok: true; data: WhiteboardData } | { ok: false; reason: "stale"; data: WhiteboardData }> {
-  const current = await read(now);
+  const current = await read(accountId, now);
   if (revision !== current.revision) return { ok: false, reason: "stale", data: current };
   const data: WhiteboardData = { revision: current.revision + 1, updatedAt: now, strokes: [] };
-  await write(data);
+  await write(accountId, data);
   return { ok: true, data };
 }

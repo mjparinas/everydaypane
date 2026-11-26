@@ -8,14 +8,22 @@ describe("regional packs", () => {
       ["Langley", 49.1044, -122.6604, "lowerMainland"],
       ["Vancouver", 49.2827, -123.1207, "lowerMainland"],
       ["Chilliwack", 49.1579, -121.9515, "lowerMainland"],
-      ["Victoria", 48.4284, -123.3656, "bc"],
+      ["Victoria", 48.4284, -123.3656, "victoria"],
+      ["Sidney", 48.6506, -123.3986, "victoria"],
+      ["Nanaimo", 49.1659, -123.9401, "bc"],
       ["Kelowna", 49.888, -119.496, "bc"],
       ["Prince George", 53.917, -122.749, "bc"],
       ["Calgary", 51.0447, -114.0719, "calgary"],
-      ["Banff", 51.178, -115.571, "canada"],
+      ["Banff", 51.178, -115.571, "alberta"],
+      ["Lethbridge", 49.6956, -112.8451, "alberta"],
+      ["Fort McMurray", 56.7267, -111.381, "alberta"],
+      ["Saskatoon", 52.1332, -106.67, "canada"],
       ["Edmonton", 53.5461, -113.4938, "edmonton"],
       ["Toronto", 43.6532, -79.3832, "toronto"],
-      ["Ottawa", 45.4215, -75.6972, "canada"],
+      ["Ottawa", 45.4215, -75.6972, "ontario"],
+      ["Hamilton", 43.2557, -79.8711, "ontario"],
+      ["Windsor", 42.3149, -83.0364, "ontario"],
+      ["Thunder Bay", 48.3809, -89.2477, "ontario"],
       ["Gatineau", 45.4765, -75.7013, "quebec"],
       ["Montréal", 45.5019, -73.5674, "quebec"],
       ["Québec City", 46.8139, -71.208, "quebec"],
@@ -61,6 +69,13 @@ describe("regional packs", () => {
       earthquakes: "Earthquakes (USGS)",
     });
     expect(alertSourceLabels(REGIONS.quebec).power).toBe("Hydro-Québec power outages");
+    expect(alertSourceLabels(REGIONS.toronto)).toMatchObject({ roads: "Ontario 511 road events", power: null });
+    expect(alertSourceLabels(REGIONS.edmonton)).toMatchObject({
+      roads: "511 Alberta road events",
+      power: "EPCOR power outages (Edmonton)",
+    });
+    expect(alertSourceLabels(REGIONS.calgary).power).toBeNull();
+    expect(REGIONS.victoria.transit).toEqual(["bcTransitVictoria"]);
     expect(alertSourceLabels(REGIONS.other).weather).toBeNull();
   });
 });

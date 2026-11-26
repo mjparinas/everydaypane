@@ -6,6 +6,7 @@ import { FamilyPhotos } from "@/components/FamilyPhotos";
 import { MealPlanner } from "@/components/MealPlanner";
 import { MessageBoard } from "@/components/MessageBoard";
 import { ShoppingList } from "@/components/ShoppingList";
+import { Whiteboard } from "@/components/Whiteboard";
 import { Mark } from "@/components/Wordmark";
 import { deviceForToken } from "@/server/devices";
 
@@ -29,8 +30,8 @@ export default async function DisplayEditPage({ params }: { params: Promise<{ to
           </div>
         </header>
         <p className="text-sm text-soft max-w-xl">
-          Anyone who can open this link can change the meal plan, shopping list and message board, and add photos to albums open to the
-          family. Keep the QR on the wall, not shared online.
+          Anyone who can open this link can change the meal plan, shopping list, message board and whiteboard, and add photos to albums open
+          to the family. Keep the QR on the wall, not shared online.
         </p>
         <p className="text-sm">
           <a className="font-semibold text-brand underline-offset-2 hover:underline" href={`/d/${token}/chores/`}>
@@ -42,6 +43,12 @@ export default async function DisplayEditPage({ params }: { params: Promise<{ to
             Message Board
           </h2>
           <MessageBoard />
+        </section>
+        <section className="mx-auto grid w-full max-w-xl gap-3" aria-labelledby="whiteboard-heading">
+          <h2 id="whiteboard-heading" className="text-lg font-bold">
+            Whiteboard
+          </h2>
+          <Whiteboard />
         </section>
         <FamilyPhotos />
         <section className="grid gap-3" aria-labelledby="meals-heading">

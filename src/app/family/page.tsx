@@ -7,6 +7,7 @@ import { FamilyPhotos } from "@/components/FamilyPhotos";
 import { MealPlanner } from "@/components/MealPlanner";
 import { MessageBoard } from "@/components/MessageBoard";
 import { ShoppingList } from "@/components/ShoppingList";
+import { Whiteboard } from "@/components/Whiteboard";
 import { Mark } from "@/components/Wordmark";
 import { currentHouseholdSession, SESSION_COOKIE } from "@/server/auth";
 
@@ -43,6 +44,12 @@ export default async function FamilyPage() {
           </a>
         </p>
       </div>
+      <section className="mx-auto grid w-full max-w-xl gap-3" aria-labelledby="whiteboard-heading">
+        <h2 id="whiteboard-heading" className="text-lg font-bold">
+          Whiteboard
+        </h2>
+        <Whiteboard />
+      </section>
       <FamilyPhotos />
       <section className="grid gap-3" aria-labelledby="meals-heading">
         <h2 id="meals-heading" className="text-lg font-bold">

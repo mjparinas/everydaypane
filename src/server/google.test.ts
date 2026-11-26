@@ -9,9 +9,9 @@ import { LEGACY_ACCOUNT_ID } from "@/server/accounts";
 import { cookieFor, req, useTestServer } from "@/test/server";
 
 import { clearMemoryCache } from "./cache";
-import { loadConfig } from "./config";
+import { loadConfig, saveConfig } from "./config";
 import { addDevice } from "./devices";
-import { consentUrl, feedRange, resetGoogleForTests, trimCalendars, trimEvent } from "./google";
+import { calendarName, consentUrl, feedRange, resetGoogleForTests, trimCalendars, trimEvent } from "./google";
 import { getSecret } from "./secrets";
 
 const family = { name: "Family", color: "#3b5bdb" };
@@ -22,7 +22,9 @@ describe("Google Calendar data", () => {
   it("asks for read-only access and a refresh token", () => {
     const url = new URL(consentUrl("state-1", "https://pane.example/api/google/callback/"));
     expect(url.host).toBe("accounts.google.com");
-    expect(url.searchParams.get("scope")).toBe("https://www.googleapis.com/auth/calendar.readonly");
+    expect(url.searchParams.get("scope")).toBe(
+      "https://www.googleapis.com/auth/calendar.readonly https://www.googleapis.com/auth/userinfo.profile",
+    );
     expect(url.searchParams.get("access_type")).toBe("offline");
     expect(url.searchParams.get("redirect_uri")).toBe("https://pane.example/api/google/callback/");
     expect(url.searchParams.get("state")).toBe("state-1");
@@ -71,6 +73,24 @@ describe("Google Calendar data", () => {
     ]);
   });
 
+  it("names a calendar still called by its email after the account's owner", () => {
+    const list = trimCalendars(
+      {
+        items: [
+          { id: "me@example.com", summary: "me@example.com", primary: true },
+          { id: "holidays", summary: "Holidays in Canada" },
+        ],
+      },
+      "Melvin Parinas",
+    );
+    expect(list.map((c) => c.name)).toEqual(["Melvin Parinas", "Holidays in Canada"]);
+    // A name typed in Settings wins; an empty one falls back; without the owner's name the email stays.
+    expect(calendarName({ id: "me@example.com", name: "Dad" }, "Melvin Parinas")).toBe("Dad");
+    expect(calendarName({ id: "me@example.com", name: "  " }, "Melvin Parinas")).toBe("Melvin Parinas");
+    expect(calendarName({ id: "me@example.com", name: "me@example.com" }, null)).toBe("me@example.com");
+    expect(calendarName({ id: "abc@group.calendar.google.com", name: "Soccer" }, "Melvin Parinas")).toBe("Soccer");
+  });
+
   it("covers the month grid around today and the next six weeks", () => {
     const now = Date.parse("2026-11-17T20:00:00Z");
     // Six weeks from this one (Sunday Nov 15 to Saturday Dec 26) reach past the month grid.
@@ -97,6 +117,8 @@ describe("connecting Google Calendar", () => {
         calls.push({ url, init });
         if (url.startsWith("https://oauth2.googleapis.com/token")) return Promise.resolve(tokenAnswer());
         if (url.startsWith("https://oauth2.googleapis.com/revoke")) return Promise.resolve(new Response(null, { status: 200 }));
+        if (url.startsWith("https://www.googleapis.com/oauth2/v3/userinfo"))
+          return Promise.resolve(Response.json({ name: "Melvin Parinas" }));
         if (url.includes("/users/me/calendarList"))
           return Promise.resolve(
             Response.json({
@@ -175,6 +197,29 @@ describe("connecting Google Calendar", () => {
     expect(new Headers(eventCalls[0]?.init?.headers).get("authorization")).toBe("Bearer access-1");
   });
 
+  it("shows the owner's name, or the name typed in Settings, in place of the calendar's email", async () => {
+    await connectAs(await cookieFor("admin@example.com"));
+    expect(await getSecret(LEGACY_ACCOUNT_ID, "google.name")).toBe("Melvin Parinas");
+    const { token } = await addDevice(LEGACY_ACCOUNT_ID, "Kitchen", null);
+    const chips = async () =>
+      (
+        (await (await displayGET(req("/api/display/calendar/", { headers: { "x-display-token": token } }))).json()) as CalendarData
+      ).events.map((e) => e.calendar);
+
+    const rename = async (name: string) => {
+      const stored = await loadConfig(LEGACY_ACCOUNT_ID);
+      const config = structuredClone(stored.config);
+      const primary = config.integrations.google.calendars.find((c) => c.id === "me@example.com");
+      if (primary) primary.name = name;
+      await saveConfig(LEGACY_ACCOUNT_ID, config, stored.version);
+    };
+    await rename("me@example.com");
+    expect(await chips()).toEqual(["Melvin Parinas", "Melvin Parinas"]);
+    // A rename shows straight away rather than waiting for the cached events to expire.
+    await rename("Dad");
+    expect(await chips()).toEqual(["Dad", "Dad"]);
+  });
+
   it("refuses a callback whose state doesn't match, and people who aren't admins", async () => {
     const admin = await cookieFor("admin@example.com");
     const forged = await callbackGET(
@@ -208,6 +253,7 @@ describe("connecting Google Calendar", () => {
     const r = await adminDELETE(req("/api/household/google/", { method: "DELETE", headers: { cookie: admin } }));
     expect(r.status).toBe(200);
     expect(await getSecret(LEGACY_ACCOUNT_ID, "google.refreshToken")).toBeNull();
+    expect(await getSecret(LEGACY_ACCOUNT_ID, "google.name")).toBeNull();
     expect(calls.some((c) => c.url.startsWith("https://oauth2.googleapis.com/revoke"))).toBe(true);
   });
 });

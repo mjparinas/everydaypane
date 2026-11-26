@@ -13,10 +13,13 @@ import type { TransitAgencyId } from "./transitAgencies";
 
 export const REGION_IDS = [
   "lowerMainland",
+  "victoria",
   "bc",
   "calgary",
   "edmonton",
+  "alberta",
   "toronto",
+  "ontario",
   "quebec",
   "halifax",
   "canada",
@@ -32,8 +35,9 @@ export type Country = "CA" | "US" | "other";
 /** National alert feed: NAAD carries Alert Ready and Environment Canada; NWS carries U.S. watches and warnings. */
 export type NationalAlerts = "naad" | "nws" | null;
 export type QuakeCatalogue = "nrcan" | "usgs";
-export type PowerSource = "bcHydro" | "hydroQuebec" | null;
-export type RoadSource = "driveBC" | null;
+export type PowerSource = "bcHydro" | "hydroQuebec" | "epcor" | null;
+/** Road events: DriveBC needs nothing; Ontario 511 and 511 Alberta need Everydaypane's own developer key. */
+export type RoadSource = "driveBC" | "ontario511" | "alberta511" | null;
 export type EvacuationSource = "emergencyInfoBC" | null;
 
 export interface Region {
@@ -84,10 +88,22 @@ export const REGIONS: Record<RegionId, Region> = {
     transit: ["translink"],
     localWidgets: [...BC_WIDGETS, "borderWait", "garbage"],
   },
+  victoria: {
+    ...CANADA,
+    ...BC_SOURCES,
+    id: "victoria",
+    name: "Greater Victoria",
+    transit: ["bcTransitVictoria"],
+    localWidgets: BC_WIDGETS,
+  },
   bc: { ...CANADA, ...BC_SOURCES, id: "bc", name: "British Columbia", transit: [], localWidgets: BC_WIDGETS },
-  calgary: { ...CANADA, id: "calgary", name: "Calgary", transit: ["calgary"] },
-  edmonton: { ...CANADA, id: "edmonton", name: "Edmonton", transit: ["edmonton"] },
-  toronto: { ...CANADA, id: "toronto", name: "Toronto", transit: ["ttc"] },
+  calgary: { ...CANADA, id: "calgary", name: "Calgary", roads: "alberta511", transit: ["calgary"] },
+  // EPCOR serves the city of Edmonton; ENMAX (Calgary) and FortisAlberta publish no outage feed (checked 2026-11-26).
+  edmonton: { ...CANADA, id: "edmonton", name: "Edmonton", roads: "alberta511", power: "epcor", transit: ["edmonton"] },
+  alberta: { ...CANADA, id: "alberta", name: "Alberta", roads: "alberta511" },
+  toronto: { ...CANADA, id: "toronto", name: "Toronto", roads: "ontario511", transit: ["ttc"] },
+  // Hydro One and Toronto Hydro publish no outage feed anyone may read (checked 2026-11-26).
+  ontario: { ...CANADA, id: "ontario", name: "Ontario", roads: "ontario511" },
   quebec: { ...CANADA, id: "quebec", name: "Québec", power: "hydroQuebec" },
   halifax: { ...CANADA, id: "halifax", name: "Halifax", transit: ["halifax"] },
   canada: { ...CANADA, id: "canada", name: "Elsewhere in Canada" },
@@ -258,10 +274,30 @@ const QUEBEC_POLY: Poly = [
   [45.15, -74.35],
 ];
 
+// Alberta: the 49th parallel, 110° W to Saskatchewan, 60° N, and the Rockies (B.C.'s border above) to the west.
+const ALBERTA_POLY: Poly = [
+  [49.0, -110.0],
+  [60.0, -110.0],
+  [60.0, -120.0],
+  [53.8, -120.0],
+  [52.85, -118.5],
+  [52.2, -117.5],
+  [51.4, -116.3],
+  [51.2, -115.9],
+  [50.3, -114.7],
+  [49.0, -114.06],
+];
+
+// Ontario, as a box: Manitoba's border (95.15° W) to the Ottawa River, the Great Lakes to Hudson Bay. Québec is checked
+// first, so the box can run past the Ottawa River; the Canada outline keeps it out of the U.S.
+const ONTARIO_BOX: [number, number, number, number] = [41.6, -95.16, 57.0, -74.3];
+
 /** [south, west, north, east] around each metro area, inside its country. */
 const METRO_BOXES: [RegionId, [number, number, number, number]][] = [
   // Squamish and Bowen Island to Hope, the border to the North Shore mountains.
   ["lowerMainland", [48.95, -123.5, 49.75, -121.3]],
+  // The Capital Regional District: Sooke to Sidney, the Saanich Peninsula and the Western Communities.
+  ["victoria", [48.3, -123.75, 48.75, -123.2]],
   ["calgary", [50.75, -114.4, 51.3, -113.8]],
   ["edmonton", [53.3, -113.85, 53.8, -113.2]],
   // Toronto and the inner GTA (the TTC runs inside the city; GO and the 905 agencies aren't in this pack yet).
@@ -281,7 +317,9 @@ export function regionAt(lat: number, lon: number): RegionId {
   if (metro) return metro;
   if (country === "US") return "us";
   if (insidePolygon(lat, lon, BC_POLY)) return "bc";
+  if (insidePolygon(lat, lon, ALBERTA_POLY)) return "alberta";
   if (insidePolygon(lat, lon, QUEBEC_POLY)) return "quebec";
+  if (inBox(lat, lon, ONTARIO_BOX)) return "ontario";
   return "canada";
 }
 
@@ -303,9 +341,23 @@ export function alertSourceLabels(
         : r.alerts === "nws"
           ? "National Weather Service watches and warnings"
           : null,
-    roads: r.roads === "driveBC" ? "DriveBC road events" : null,
+    roads:
+      r.roads === "driveBC"
+        ? "DriveBC road events"
+        : r.roads === "ontario511"
+          ? "Ontario 511 road events"
+          : r.roads === "alberta511"
+            ? "511 Alberta road events"
+            : null,
     earthquakes: r.quakes === "nrcan" ? "Earthquakes (Earthquakes Canada)" : "Earthquakes (USGS)",
-    power: r.power === "bcHydro" ? "BC Hydro power outages" : r.power === "hydroQuebec" ? "Hydro-Québec power outages" : null,
+    power:
+      r.power === "bcHydro"
+        ? "BC Hydro power outages"
+        : r.power === "hydroQuebec"
+          ? "Hydro-Québec power outages"
+          : r.power === "epcor"
+            ? "EPCOR power outages (Edmonton)"
+            : null,
     evacuations: r.evacuations === "emergencyInfoBC" ? "Evacuation orders and alerts (EmergencyInfoBC)" : null,
   };
 }
