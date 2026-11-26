@@ -45,6 +45,7 @@ const LAZY = [
   "borderWait",
   "drivebc",
   "rachio",
+  "blueRiiot",
 ];
 const sharedApi = {
   name: "shared-api",

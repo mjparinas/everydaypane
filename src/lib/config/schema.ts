@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 import { AIRTHINGS_DEFAULT_KINDS, AIRTHINGS_KINDS } from "../airthings";
+import { POOL_DEFAULT_KINDS, POOL_KINDS } from "../blueRiiot";
 import { BORDER_CROSSINGS, BORDER_DIRECTIONS } from "../border";
 import { DRIVEBC_MAX_CAMERAS, DRIVEBC_REFRESH } from "../drivebc";
 import { EARTH_OVERLAYS, EARTH_ZOOMS } from "../earth";
@@ -240,6 +241,19 @@ export const widgetSchema = z.discriminatedUnion("type", [
       .min(1)
       .max(AIRTHINGS_KINDS.length)
       .default([...AIRTHINGS_DEFAULT_KINDS])
+      .refine((r) => new Set(r).size === r.length, "Each reading once"),
+  }),
+  // Blue Riiot pool monitor (Melvin, 2026-11-26: unofficial cloud API, signed in with the app's email and password under
+  // Settings › Pool). `pools` are Blue Riiot pool ids, none picked means every pool.
+  z.object({
+    ...base,
+    type: z.literal("blueRiiot"),
+    pools: z.array(z.string().trim().min(1).max(80)).max(4).default([]),
+    readings: z
+      .array(z.enum(POOL_KINDS))
+      .min(1)
+      .max(POOL_KINDS.length)
+      .default([...POOL_DEFAULT_KINDS])
       .refine((r) => new Set(r).size === r.length, "Each reading once"),
   }),
   // Rachio sprinklers (Melvin, 2026-11-25: native Rachio cloud API, not Home Assistant). API key under Settings ›
@@ -1032,6 +1046,8 @@ export const configSchema = z
               co2Ppm: z.number().int().min(800).max(5000).default(1500),
             })
             .default({ alertRadon: false, alertCo2: false, co2Ppm: 1500 }),
+          // Blue Riiot (2026-11-26): readings far outside the ideal range on the strip, off by default; sign-in in secrets.
+          blueRiiot: z.object({ alerts: z.boolean().default(false) }).default({ alerts: false }),
           weatherUnderground: z.object({ stationId: z.string().max(24).default("") }),
           menus: z.object({
             slug: z.string().trim().max(80).default(""),
@@ -1041,6 +1057,7 @@ export const configSchema = z
         .default({
           tempest: {},
           airthings: { alertRadon: false, alertCo2: false, co2Ppm: 1500 },
+          blueRiiot: { alerts: false },
           weatherUnderground: { stationId: "" },
           menus: { slug: "", schoolName: "" },
         }),

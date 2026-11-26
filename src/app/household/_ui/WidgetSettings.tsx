@@ -3,6 +3,7 @@
 import { useEffect, useState, type ReactNode } from "react";
 
 import { AIRTHINGS_KINDS, AIRTHINGS_LABELS } from "@/lib/airthings";
+import { POOL_KINDS, POOL_LABELS } from "@/lib/blueRiiot";
 import { BORDER_CROSSINGS, BORDER_DIRECTION_LABELS, BORDER_DIRECTIONS, BORDER_INFO } from "@/lib/border";
 import { PERIOD_LABELS, PERIODS } from "@/lib/config/periods";
 import type { CountdownEvent, DashboardConfig, TimerPreset, Widget } from "@/lib/config/schema";
@@ -17,6 +18,7 @@ import { MOUNTAINS } from "@/lib/snow";
 import { WINDY_OVERLAY_LABELS, WINDY_OVERLAYS, windyPressureAllowed } from "@/lib/windy";
 
 import { useAirthings } from "./airthings";
+import { usePools } from "./blueRiiot";
 import { PlaceFinder } from "./CommutePanel";
 import { useEcoFlow } from "./EcoFlowPanel";
 import { Range, Segmented, Select, Stepper, Text, TextArea, Toggle } from "./fields";
@@ -1165,6 +1167,8 @@ function TypeSettings({
       return <RiversSettings w={w} onChange={edit<"rivers">()} />;
     case "rachio":
       return <RachioSettings w={w} onChange={edit<"rachio">()} />;
+    case "blueRiiot":
+      return <PoolSettings w={w} onChange={edit<"blueRiiot">()} />;
     case "ecoflow":
       return <EcoFlowSettings w={w} e={edit<"ecoflow">()} />;
     case "unifi": {
@@ -2515,6 +2519,50 @@ function AirthingsSettings({ w, onChange }: { w: Extract<Widget, { type: "airthi
           ))}
         </>
       )}
+    </>
+  );
+}
+
+function PoolSettings({ w, onChange }: { w: Extract<Widget, { type: "blueRiiot" }>; onChange: Edit<"blueRiiot"> }) {
+  const status = usePools();
+  // A pool saved earlier that the account no longer lists still shows, so it can be switched off.
+  const listed = status?.pools ?? [];
+  const pools = [...listed, ...w.pools.filter((id) => !listed.some((p) => p.id === id)).map((id) => ({ id, name: id }))];
+  return (
+    <>
+      <p className="text-xs text-soft">Readings to show, where the pool has them (free chlorine only after a test strip in the app).</p>
+      {POOL_KINDS.map((k) => (
+        <Toggle
+          key={k}
+          label={POOL_LABELS[k]}
+          checked={w.readings.includes(k)}
+          onChange={(on) =>
+            onChange((x) => {
+              const next = on ? POOL_KINDS.filter((r) => r === k || x.readings.includes(r)) : x.readings.filter((r) => r !== k);
+              if (next.length) x.readings = next;
+            })
+          }
+        />
+      ))}
+      {!status ? null : !status.configured ? (
+        <p className="text-xs text-soft">
+          Connect Blue Riiot under <SettingsLink href="#settings/pool">Settings › Pool</SettingsLink>.
+        </p>
+      ) : pools.length === 0 ? (
+        <p className="text-xs text-soft">{status.error || "Blue Riiot lists no pools yet."}</p>
+      ) : pools.length > 1 ? (
+        <>
+          <p className="text-xs text-soft">Pick the pools to show. With none picked, it shows them all.</p>
+          {pools.map((p) => (
+            <Toggle
+              key={p.id}
+              label={p.name}
+              checked={w.pools.includes(p.id)}
+              onChange={(on) => onChange((x) => void (x.pools = on ? [...x.pools, p.id] : x.pools.filter((s) => s !== p.id)))}
+            />
+          ))}
+        </>
+      ) : null}
     </>
   );
 }

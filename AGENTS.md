@@ -30,6 +30,7 @@ same change, and moves it out of **In progress** when it merges.
 | School menu (`menus`) | Nutrislice breakfast and lunch for a day or week; not the meal plan | Nutrislice published JSON (`config.integrations.smartHome.menus`) |
 | Air quality (`airQuality`) | AQHI or US AQI (outdoor) | Open-Meteo air quality |
 | Sprinklers (`rachio`) | Each Rachio controller's next watering (when, schedule, minutes, zones), rain delay, offline; optional **Skip** with a second tap (`allowSkip`) | Rachio public API (household API key, `docs/rachio.md`) |
+| Pool (`blueRiiot`) | Water temperature, pH, ORP, salinity and (after a test strip) free chlorine per pool, green/amber/red by Blue Riiot's own ranges, when last measured; pick readings and pools | Blue Riiot's **unofficial** app cloud API (household's app email and password, `docs/blue-riiot.md`) |
 | Indoor air (`airthings`) | Radon, CO₂, VOC, PM2.5, PM1, humidity and temperature per Airthings monitor, green/amber/red by Airthings' levels; pick readings and devices | Airthings consumer API (household's own API client, `docs/airthings.md`) |
 | WiFi QR (`wifiQr`) | Join code, optionally the password | Settings document |
 | Phone edit QR (`editQr`) | QR to `/d/<token>/edit/` for meals, shopping and messages with no sign-in | This display's address |
@@ -120,6 +121,7 @@ The features catalogue lives in `src/lib/marketingFeatures.ts` (grouped like the
 **Alerts** (`src/server/alerts.ts`): Alert Ready (NAAD), **Environment Canada weather warnings** (through NAAD),
 DriveBC road events and weather conditions, Earthquakes Canada, BC Hydro power outages, **EmergencyInfoBC evacuation orders and alerts** (any hazard, covering the home or within `alerts.evacuationKm`). Each switchable in `config.alerts.sources`.
 Optional high radon and CO₂ from Airthings (`config.integrations.smartHome.airthings`, off by default).
+Optional pool water past Blue Riiot's warning range (`config.integrations.smartHome.blueRiiot.alerts`, off by default).
 Optional email to everyone on `ADMIN_EMAILS` and `FAMILY_EMAILS` when a new strip-worthy alert arrives (`config.alerts.notifyEmail`).
 
 **Household and family:** Clerk Account Portal in production (`accounts.everydaypane.com/sign-in` and `/sign-up`, from `NEXT_PUBLIC_CLERK_SIGN_IN_URL` / `SIGN_UP_URL`); local and CI stay on `/signin/`; Turso
@@ -150,7 +152,7 @@ Revenue, Traffic, Codes, Flags, …). Cookieless marketing beacon. Customer path
 
 **Integrations connected from Settings:** Google Calendar, Microsoft 365 calendars and **To Do** (OAuth, `?todo=1` / `?files=1`), Google Tasks, **Todoist**, Google Photos (Picker), iCal calendar links (with iCloud publish steps in Settings and `docs/icloud-calendar.md`),
 **Govee** (API key, Settings › Smart home), **Philips Hue** (OAuth, Settings › Smart home), **LIFX** (personal token, Settings › Smart home), Amazon Photos, **photo sources** (Bing, Reddit, weather albums, Immich API keys, Dropbox/Box/SmugMug OAuth, OneDrive via Microsoft, Flickr API key, iCloud published URLs), the photo library (Vercel Blob), Home Assistant (Cloudflare Tunnel + Access), Spotify, Sonos, garbage
-zone lookup, sports teams to follow, TransLink, commute places (TomTom geocoding), optional **package tracking** key, **UniFi Site Manager** API key (Settings › UniFi network), **EcoFlow** access and secret keys, **Oura** (OAuth, Settings › Content & finance), **Airthings** (API client id and secret, Settings › Indoor air), **Rachio** (API key, Settings › Sprinklers).
+zone lookup, sports teams to follow, TransLink, commute places (TomTom geocoding), optional **package tracking** key, **UniFi Site Manager** API key (Settings › UniFi network), **EcoFlow** access and secret keys, **Oura** (OAuth, Settings › Content & finance), **Airthings** (API client id and secret, Settings › Indoor air), **Rachio** (API key, Settings › Sprinklers), **Blue Riiot** (app email and password, Settings › Pool; unofficial).
 
 ## In progress
 
@@ -353,6 +355,10 @@ npm run templates:previews  # regenerate public/templates/*.png from real widget
 - **Rachio sprinklers** (Melvin, 2026-11-25: "build that all", a batch of native integrations): the next watering
   on the wall with a Skip button, from Rachio's official public API with the household's own API key, not Home
   Assistant (see Architecture). Skip is on for a new widget but needs a second tap (Claude's default, 2026-11-25).
+- **Blue Riiot pool** (Melvin, 2026-11-26: "Are there APIs for things like blueriiot", then yes to the unofficial
+  route): the Blue Connect's readings on the wall from the cloud the Blue Riiot app uses, signed in with the app's
+  email and password stored encrypted, because Blue Riiot has no developer API. Unofficial, so it can break; the docs
+  say so. Out-of-range alerts are off by default (see Architecture).
 - **Canadian English** in everything a person reads (colour, centre, favourite), as in Liftsmith.
 
 ## Display: super lightweight (rule, Melvin, 2026-11-17)
@@ -370,7 +376,7 @@ panel can be complex if you need it to be."
   imports it with display.js's own `?v=` only on a screen that shows it. Its `../api` is swapped at build time for
   `src/display/apiShared.ts`, which calls display.js's copy, so feeds, the device token and offline state stay single.
   The internet widget, the UniFi network widget, EcoFlow, the whiteboard, wildfires, the Windy map, the Smart device tile
-  (`haEntity.ts`; cameras and `HA_EVERY` stay in `ha.ts`), Oura, Indoor air (Airthings), the snow report, River levels, Border wait times, Sprinklers (Rachio) and Highway cameras (DriveBC) load this way, and `next.config.ts` gives each file the same
+  (`haEntity.ts`; cameras and `HA_EVERY` stay in `ha.ts`), Oura, Indoor air (Airthings), the snow report, River levels, Border wait times, Sprinklers (Rachio), Highway cameras (DriveBC) and the Pool (Blue Riiot) load this way, and `next.config.ts` gives each file the same
   immutable cache header as display.js.
 - **Budget:** the display's script stays under 80 KB gzipped and its stylesheet under 20 KB (`scripts/bundle-check.mjs`,
   a CI step; CSS raised from 10 KB on 2026-11-23 for more clock styles; script raised from 40 KB by Melvin on 2026-11-25: "double the size of the limit"). A new dependency on the display needs a very good reason.
@@ -846,6 +852,18 @@ panel can be complex if you need it to be."
   `schedulerule/skip` for a fixed schedule, else (Flex, or Rachio's "not supported for 3.0 API") a rain delay ending a
   minute after that watering. Skips are remembered in the cache table so the wall moves on even if Rachio still lists
   the run. The widget loads on its own (`rachio.js`). This sandbox can't reach Rachio, so tests use community shapes.
+- **Blue Riiot** (`src/server/blueRiiot.ts`, setup `docs/blue-riiot.md`): no official API, so the app's own cloud
+  (`api.riiotlabs.com/prod`), as pyblueriiot and Home Assistant's blueconnect component use it. `POST /user/login`
+  with the household's app email and password (encrypted `blueRiiot.email` / `blueRiiot.password`, checked with a
+  fresh sign-in before Settings › Pool saves them through `/api/household/blueriiot/`) returns short-lived AWS
+  credentials, kept in memory only; every read is a `GET` signed with AWS Signature V4 (`eu-west-1`, `execute-api`,
+  `signV4`, checked against AWS's published test vectors). Pools and their Blue Connect serials are cached six hours,
+  `lastMeasurements?mode=blue_and_strip` 15 minutes per household. Levels come from each reading's own `ok_min`/
+  `ok_max` and `warning_low`/`warning_high`, filled from fallbacks for pH, ORP and chlorine (`src/lib/blueRiiot.ts`);
+  ok, warn, bad or none. Displays poll `/api/display/blueriiot/` every five minutes and get pool names and readings in
+  the dashboard's units (°F for imperial). Pool alerts (`poolAlerts`, source `pool`, "moderate", id per pool, kind and
+  day) join the alerts route only when switched on, only for "bad" pH, ORP, chlorine or salinity under six hours old.
+  The widget loads on its own (`blueRiiot.js`). This sandbox can't reach Blue Riiot, so tests use community shapes.
 - **Tempest, Weather Underground and Nutrislice** (Phase 4, Household): Tempest and WU station settings in
   `config.integrations.smartHome`; Tempest token and optional WU key in secrets. **Menus** widget reads Nutrislice JSON
   only (`src/server/menus.ts`), never the `meals` table.

@@ -5,6 +5,7 @@ import { useState, useSyncExternalStore } from "react";
 import type { NativeSmartProvider } from "@/lib/smartHome";
 
 import { setAirthingsStatus, useAirthings } from "./airthings";
+import { setPoolStatus, usePools } from "./blueRiiot";
 import { ConfirmButton, NumberInput, Section, Text, Toggle } from "./fields";
 import { SprinklersSection } from "./rachio";
 import { loadSmartHome, useSmartHome, type SmartServiceStatus } from "./smartHome";
@@ -335,6 +336,8 @@ export function SmartHomePanel() {
 
       <SprinklersSection />
 
+      <PoolSection />
+
       <Section id="settings-menus" title="School menus">
         <p className="text-sm text-soft">
           Nutrislice district slug and default school name. Example for Langley: slug <code className="text-xs">langleysd35</code>, school
@@ -442,6 +445,79 @@ function IndoorAirSection() {
           onChange={(v) => edit((c) => void (c.integrations.smartHome.airthings.co2Ppm = v))}
         />
       )}
+    </Section>
+  );
+}
+
+/**
+ * Settings › Pool: the Blue Riiot app's own email and password (Blue Riiot has no developer API), checked by signing in
+ * before they are saved encrypted.
+ */
+function PoolSection() {
+  const status = usePools();
+  const edit = useAdmin((s) => s.edit);
+  const pool = useAdmin((s) => s.config.integrations.smartHome.blueRiiot);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+
+  async function send(method: "PUT" | "DELETE") {
+    setBusy(true);
+    setError("");
+    const r = await fetch("/api/household/blueriiot/", {
+      method,
+      headers: { "Content-Type": "application/json" },
+      ...(method === "PUT" ? { body: JSON.stringify({ email: email.trim(), password }) } : {}),
+    }).catch(() => null);
+    const body = (await r?.json().catch(() => null)) as { error?: string; configured?: boolean; pools?: [] } | null;
+    setBusy(false);
+    if (!r?.ok) return setError(body?.error || "Couldn't save that.");
+    setEmail("");
+    setPassword("");
+    setPoolStatus({ configured: body?.configured ?? false, pools: body?.pools ?? [], error: "" });
+  }
+
+  return (
+    <Section id="settings-pool" title="Pool (Blue Riiot)">
+      <p className="text-sm text-soft">
+        Water temperature, pH, ORP and salinity from a Blue Connect. Blue Riiot has no developer API, so this signs in with the email and
+        password you use in the Blue Riiot app, the way community integrations do; they are checked with Blue Riiot and saved encrypted.
+        It&rsquo;s unofficial, so a change on Blue Riiot&rsquo;s side can break it — see docs/blue-riiot.md.
+      </p>
+      {!status ? (
+        <p className="text-sm text-soft">Checking…</p>
+      ) : status.configured ? (
+        <>
+          {status.error ? (
+            <p className="text-sm text-bad">{status.error}</p>
+          ) : (
+            <p className="text-sm" role="status">
+              Connected. {status.pools.length ? `Pools: ${status.pools.map((p) => p.name).join(", ")}.` : "Blue Riiot lists no pools yet."}
+            </p>
+          )}
+          <div className="justify-self-start">
+            <ConfirmButton label="Disconnect Blue Riiot" onConfirm={() => void send("DELETE")} />
+          </div>
+        </>
+      ) : null}
+      <Text label="Blue Riiot email" value={email} maxLength={200} onChange={setEmail} />
+      <Text label="Blue Riiot password" type="password" value={password} maxLength={200} onChange={setPassword} />
+      {error && <p className="text-sm text-bad">{error}</p>}
+      <button
+        type="button"
+        className="btn-ghost justify-self-start"
+        disabled={busy || !email.trim() || !password}
+        onClick={() => void send("PUT")}
+      >
+        {busy ? "Checking…" : status?.configured ? "Replace sign-in" : "Connect Blue Riiot"}
+      </button>
+      <Toggle
+        label="Pool water out of range on the alert strip"
+        checked={pool.alerts}
+        hint="pH, ORP, free chlorine or salinity past Blue Riiot's warning range, from a reading in the last six hours."
+        onChange={(v) => edit((c) => void (c.integrations.smartHome.blueRiiot.alerts = v))}
+      />
     </Section>
   );
 }

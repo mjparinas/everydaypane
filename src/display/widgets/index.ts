@@ -91,6 +91,8 @@ export function mountWidget(el: HTMLElement, w: Widget, ctx: WidgetContext): Cle
       return lazyWidget("ecoflow", el, w, ctx);
     case "rachio":
       return lazyWidget("rachio", el, w, ctx);
+    case "blueRiiot":
+      return lazyWidget("blueRiiot", el, w, ctx);
     case "airQuality":
       return airQuality(el, w, ctx);
     case "wifiQr":
