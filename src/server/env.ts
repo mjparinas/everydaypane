@@ -53,6 +53,8 @@ export const env = {
   sonosClientSecret: () => process.env.SONOS_CLIENT_SECRET ?? "",
   /** Commute times with live traffic (docs/commute.md). */
   tomtomKey: () => process.env.TOMTOM_API_KEY ?? "",
+  /** Local gas prices from Google's Places API (docs/gas-prices.md): a Maps Platform key with Places API (New) on. */
+  googleMapsKey: () => process.env.GOOGLE_MAPS_API_KEY ?? "",
   // TransLink's open API (docs/translink.md): one key for the realtime departures feed.
   translinkKey: () => process.env.TRANSLINK_API_KEY ?? "",
   todoistClientId: () => process.env.TODOIST_CLIENT_ID ?? "",

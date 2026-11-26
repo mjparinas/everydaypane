@@ -224,6 +224,7 @@ export const SETTINGS_FLAGS: Record<string, string[]> = {
   sports: [widgetFlag("sports")],
   packages: [widgetFlag("packages")],
   school: [widgetFlag("school")],
+  "school-days": [widgetFlag("schoolDays")],
   tasks: [widgetFlag("tasks")],
   music: [widgetFlag("media")],
   ha: [smartHomeFlag("homeAssistant")],

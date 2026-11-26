@@ -3,6 +3,7 @@ import "server-only";
 import { distanceKm } from "@/lib/alerts";
 import type { DashboardConfig } from "@/lib/config/schema";
 import type { TransitData, TransitDeparture } from "@/lib/display/types";
+import { agencyOf, stopKey, TRANSIT_AGENCIES, type TransitAgencyId } from "@/lib/transitAgencies";
 
 import { cached } from "./cache";
 import { env } from "./env";
@@ -13,9 +14,13 @@ import { decodeTripUpdates, parseCsv, readZipFiles, zipFromUrl, type RtTrip } fr
 // to start. The static GTFS only supplies names: route numbers, headsigns and the stop list for the admin's stop
 // search. It is read with range requests (stops, routes and trips only, never the big stop_times.txt) and kept for
 // three days, since TransLink posts a new one each week. Setup: docs/translink.md.
+//
+// Regional packs (Melvin, 2026-11-26): the same reader serves every agency in src/lib/transitAgencies.ts (TTC, Calgary,
+// Edmonton, Halifax, King County Metro), all open GTFS-realtime with no key. Each agency's realtime read and static
+// names are cached on their own, so one agency being down never hides another's departures.
 
-export const REALTIME_URL = "https://gtfsapi.translink.ca/v3/gtfsrealtime";
-export const STATIC_URL = "https://gtfs-static.translink.ca/gtfs/google_transit.zip";
+export const REALTIME_URL = TRANSIT_AGENCIES.translink.realtimeUrl;
+export const STATIC_URL = TRANSIT_AGENCIES.translink.staticUrl;
 /** How long one read of the realtime feed is shared by every display. About 2,900 calls a day at most, whatever the number of screens. */
 const REALTIME_TTL = 30_000;
 const STATIC_TTL = 3 * 86_400_000;
@@ -82,11 +87,12 @@ export function cleanHeadsign(sign: string, route: string): string {
   return cut.slice(0, 60);
 }
 
-export async function staticPack(now = Date.now()): Promise<StaticPack> {
+export async function staticPack(now = Date.now(), agency: TransitAgencyId = "translink"): Promise<StaticPack> {
   const r = await cached(
-    "translink:static",
+    // TransLink keeps its old cache key, so a deploy doesn't throw away three days of names.
+    agency === "translink" ? "translink:static" : `transit:static:${agency}`,
     STATIC_TTL,
-    async () => buildPack(await readZipFiles(await zipFromUrl(STATIC_URL), ["routes.txt", "trips.txt", "stops.txt"])),
+    async () => buildPack(await readZipFiles(await zipFromUrl(agencyOf(agency).staticUrl), ["routes.txt", "trips.txt", "stops.txt"])),
     now,
   );
   return r.value;
@@ -94,11 +100,17 @@ export async function staticPack(now = Date.now()): Promise<StaticPack> {
 
 // ---- Departures ----
 
-/** Every stop a transit widget shows: the only ones kept from the region-wide feed. */
-export function usedStops(config: DashboardConfig): Set<string> {
-  const stops = new Set<string>();
-  for (const v of config.views) for (const w of v.widgets) if (w.type === "transit") for (const s of w.stops) stops.add(s.id);
-  return stops;
+/** Every stop a transit widget shows, by agency: the only ones kept from each region-wide feed. */
+export function usedStops(config: DashboardConfig): Map<TransitAgencyId, Set<string>> {
+  const out = new Map<TransitAgencyId, Set<string>>();
+  for (const v of config.views)
+    for (const w of v.widgets)
+      if (w.type === "transit") {
+        const set = out.get(w.agency) ?? new Set<string>();
+        for (const s of w.stops) set.add(s.id);
+        if (set.size) out.set(w.agency, set);
+      }
+  return out;
 }
 
 export function departures(trips: RtTrip[], pack: StaticPack, stops: Set<string>, nowS: number): Record<string, TransitDeparture[]> {
@@ -124,33 +136,60 @@ export function departures(trips: RtTrip[], pack: StaticPack, stops: Set<string>
 
 export class TransLinkError extends Error {}
 
-async function readRealtime(key: string): Promise<Uint8Array> {
-  const r = await fetch(`${REALTIME_URL}?apikey=${encodeURIComponent(key)}`, {
+async function readRealtime(agency: TransitAgencyId, key: string): Promise<Uint8Array> {
+  const a = agencyOf(agency);
+  const url = a.needsKey ? `${a.realtimeUrl}?apikey=${encodeURIComponent(key)}` : a.realtimeUrl;
+  const r = await fetch(url, {
     headers: { "User-Agent": "Everydaypane/1.0", Accept: "application/x-protobuf" },
     signal: AbortSignal.timeout(10_000),
   });
-  // The key is in the address, so errors name only the status, never the URL.
-  if (r.status === 401 || r.status === 403) throw new TransLinkError("TransLink refused the API key");
-  if (!r.ok) throw new TransLinkError(`TransLink answered ${r.status}`);
+  // TransLink's key is in the address, so errors name only the status, never the URL.
+  if (a.needsKey && (r.status === 401 || r.status === 403)) throw new TransLinkError(`${a.name} refused the API key`);
+  if (!r.ok) throw new TransLinkError(`${a.name} answered ${r.status}`);
   return new Uint8Array(await r.arrayBuffer());
 }
 
-export async function transitFeed(config: DashboardConfig, now = Date.now()): Promise<{ value: TransitData; stale: boolean }> {
-  const key = env.translinkKey();
-  const stops = usedStops(config);
-  if (!key) return { value: { updatedAt: now, configured: false, stops: {} }, stale: false };
-  if (stops.size === 0) return { value: { updatedAt: now, configured: true, stops: {} }, stale: false };
-  const r = await cached(
-    `translink:rt:${[...stops].sort().join(",")}`,
+type AgencyDepartures = { updatedAt: number; stops: Record<string, TransitDeparture[]> };
+
+async function agencyDepartures(agency: TransitAgencyId, stops: Set<string>, key: string, now: number) {
+  const ids = [...stops].sort().join(",");
+  return cached<AgencyDepartures>(
+    agency === "translink" ? `translink:rt:${ids}` : `transit:rt:${agency}:${ids}`,
     REALTIME_TTL,
     async () => {
-      // Names are nice to have: if the static file can't be read, departures still show, with TransLink's route ids.
-      const [feed, pack] = await Promise.all([readRealtime(key), staticPack(now).catch(() => EMPTY_PACK)]);
-      return { updatedAt: now, configured: true, stops: departures(decodeTripUpdates(feed, stops), pack, stops, Math.floor(now / 1000)) };
+      // Names are nice to have: if the static file can't be read, departures still show, with the agency's route ids.
+      const [feed, pack] = await Promise.all([readRealtime(agency, key), staticPack(now, agency).catch(() => EMPTY_PACK)]);
+      return { updatedAt: now, stops: departures(decodeTripUpdates(feed, stops), pack, stops, Math.floor(now / 1000)) };
     },
     now,
   );
-  return { value: r.value, stale: r.stale };
+}
+
+/**
+ * Departures for every stop on a transit widget, filed under `stopKey(agency, id)`. `configured` is false until
+ * TRANSLINK_API_KEY is set (only TransLink widgets care); `failed` names agencies whose feed couldn't be read just now.
+ */
+export async function transitFeed(config: DashboardConfig, now = Date.now()): Promise<{ value: TransitData; stale: boolean }> {
+  const key = env.translinkKey();
+  const used = usedStops(config);
+  // Whether TRANSLINK_API_KEY is set; only TransLink widgets look at it.
+  const configured = Boolean(key);
+  const jobs = [...used].filter(([agency]) => agency !== "translink" || key);
+  const results = await Promise.allSettled(jobs.map(([agency, stops]) => agencyDepartures(agency, stops, key, now)));
+  const stops: Record<string, TransitDeparture[]> = {};
+  const failed: TransitAgencyId[] = [];
+  let stale = false;
+  let updatedAt = now;
+  results.forEach((r, i) => {
+    const agency = jobs[i]?.[0] ?? "translink";
+    if (r.status === "rejected") return void failed.push(agency);
+    stale ||= r.value.stale;
+    updatedAt = Math.min(updatedAt, r.value.value.updatedAt);
+    for (const [id, list] of Object.entries(r.value.value.stops)) stops[stopKey(agency, id)] = list;
+  });
+  // Every feed down: let the route answer 502 as before, rather than an empty board that looks like no buses.
+  if (jobs.length > 0 && failed.length === jobs.length) throw new TransLinkError("Live departures are unavailable right now");
+  return { value: { updatedAt, configured, stops, ...(failed.length ? { failed } : {}) }, stale };
 }
 
 // ---- The admin's stop search ----

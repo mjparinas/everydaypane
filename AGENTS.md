@@ -37,7 +37,7 @@ same change, and moves it out of **In progress** when it merges.
 | Indoor air (`airthings`) | Radon, CO₂, VOC, PM2.5, PM1, humidity and temperature per Airthings monitor, green/amber/red by Airthings' levels; pick readings and devices | Airthings consumer API (household's own API client, `docs/airthings.md`) |
 | WiFi QR (`wifiQr`) | Join code, optionally the password | Settings document |
 | Phone edit QR (`editQr`) | QR to `/d/<token>/edit/` for meals, shopping and messages with no sign-in | This display's address |
-| Countdowns (`countdown`) | Days until holidays, birthdays and events, yearly ones roll over | Settings document |
+| Countdowns (`countdown`) | Days until holidays, birthdays, **anniversaries** and events, yearly ones roll over; the age a birthday turns or an anniversary's years; an optional **photo per date**; on the day it leads the tile with the photo large ("Happy birthday, Sam!", `celebrate`, on by default) | Settings document; photos in the private photo library store (`src/server/countdownPhotos.ts`) |
 | Schedule (`agenda`) | Today, or the next 1 to 14 days | Google Calendar + Microsoft 365 + iCal links, family events |
 | Month calendar (`calendarMonth`) | Month grid or 1 to 6 weeks from this one, Sunday or Monday start, weekends on or off, title toggle, fit titles (wrap/shrink, on by default), scroll after N weeks (default 3), optional tap-to-open day details with every event and its source colour | Google Calendar + Microsoft 365 + iCal links, family events |
 | Week calendar (`calendarWeek`) | One week in a grid, optional weekends | Same calendar feed |
@@ -53,6 +53,7 @@ same change, and moves it out of **In progress** when it merges.
 | Meals (`meals`) | Breakfast, lunch, dinner for a day or a week; recurring cadences fill future days | `account_meals` + `account_meal_rules` |
 | Shopping list (`shopping`) | Groceries from phones; **tap to tick off** (`allowCheck`); optional **add from the wall** (`allowAdd`); optional bought items | `shopping` table |
 | Who's home (`presence`) | Who is home, from person and device tracker entities, read only | Home Assistant |
+| School days (`schoolDays`) | School today or not (weekend, Pro-D day, break with the day school's back, summer), early dismissals, a "Tomorrow: no school" line, the next 0 to 6 days off with "in N days", and the weekly hot-lunch line | Settings › School days: the school year and days off (one-tap **Langley 2026–27 elementary or middle** preset), optional school iCal links read for Pro-D/No school/break events, lunch per weekday |
 | School status (`school`) | Open, closed, delayed or late start; optional school names | District status page (`config.school`) |
 | Whiteboard (`whiteboard`) | Finger draw with a few colours and an eraser; wider tiles show more colours; hold Clear to wipe; same doodle on every display | `whiteboard` table |
 | Alerts (`alerts`) | Current emergency alerts, optional "all clear" | See alerts below |
@@ -63,13 +64,14 @@ same change, and moves it out of **In progress** when it merges.
 | Snow report (`snow`) | New snow in the last 24 h, snow depth and snowfall today and the next two days, optional mountain temperature, for picked mountains (Cypress, Grouse, Seymour, Whistler by default; Sasquatch, Manning Park, Mt. Baker, Sun Peaks) | Open-Meteo forecast at each mountain's mid-mountain elevation (model estimate, no key) |
 | River levels (`rivers`) | Up to six river and creek gauges (Fraser at Mission and Hope, Salmon and Nicomekl in Langley, or any station by number): level, rising/falling/steady with the 6 h and 24 h change, a day's line, optional flow | Environment Canada real-time hydrometric (MSC GeoMet OGC API, Datamart CSV fallback) |
 | Tides (`tides`) | Next highs and lows at a station, optional height, optional **day curve** with a "now" line (`showCurve`); station search by name in its settings | Canadian IWLS + NOAA (US) (`docs/tides.md`) |
-| TransLink departures (`transit`) | Next buses from up to six picked stops, live times, route filter, walk-minutes cutoff | TransLink GTFS-realtime |
+| Transit departures (`transit`) | Next buses and trains from up to six picked stops of one **agency** (`agency`: TransLink, TTC, Calgary Transit, Edmonton ETS, Halifax Transit, King County Metro; the region's own first), live times, route filter, walk-minutes cutoff | GTFS-realtime per agency (`src/lib/transitAgencies.ts`); only TransLink needs a key |
 | Commute time (`commute`) | Drive times with live traffic from home to up to six places, "leave by" time | TomTom Routing API |
 | Rain radar (`radar`) | Animated radar over a map around home: the past 30 min to 3 h, then up to 3 h of forecast; rain or snow, five map areas, still or looping | Environment Canada (MSC GeoMet), Esri grey canvas map |
 | Wildfires (`wildfires`) | Active fires around home on the radar's map, coloured by stage of control (fires of note ringed), burned areas, evacuation orders and alerts, the nearest 0 to 5 fires listed; five map areas, fires under control on or off | BC Wildfire Service and EmergencyInfoBC public ArcGIS layers, Esri grey canvas map |
 | Timers (`timer`) | Kitchen timers started from preset buttons on the wall, up to six at once, pause, +1 min; flash, full-screen alert and beeps when done | Device (localStorage) |
 | Pomodoro (`pomodoro`) | Focus and break rounds, long break after the last round, optional auto-start, chime between phases | Device (localStorage) |
 | Highway cameras (`drivebc`) | Still pictures from up to four DriveBC highway cameras (Hwy 1, Port Mann, Coquihalla…), side by side or one at a time, refreshed every 1–15 min, paused under the screen saver; delayed or switched-off cameras say so | DriveBC site feed + `www.drivebc.ca/images/<id>.jpg`, OGL-BC (`docs/drivebc.md`) |
+| Gas prices (`gasPrices`) | The cheapest (or nearest) stations around home for regular, mid-grade, premium or diesel, within 1–15 km, price age, optional addresses; credits Google Maps | Google Places API (New) `fuelOptions` (`GOOGLE_MAPS_API_KEY`, `docs/gas-prices.md`) |
 | BC Ferries (`ferries`) | Next sailings on up to four routes, how full each is, cancellations and delays | Community BC Ferries API (bcferriesapi.ca) |
 | Border wait times (`borderWait`) | Car waits at Point Roberts, Peace Arch, Pacific Highway, Aldergrove and Abbotsford–Sumas, into the U.S. and into Canada (or one way), coloured green/amber/red, fastest marked, optional NEXUS; old readings greyed | CBSA open data (`bwt-eng.csv`) and U.S. CBP (`bwt.cbp.gov/api/bwtnew`), no key |
 | Earth wind map (`earth`) | earth.nullschool.net's animated wind globe centred on any place, four zooms, a colour layer (temperature, rain, humidity…), place marker, animation on or off | earth.nullschool.net (framed), Open-Meteo place search |
@@ -123,11 +125,18 @@ Manrope display, template preview screenshots from `public/templates/` — no pe
 The features catalogue lives in `src/lib/marketingFeatures.ts` (grouped like the admin widget picker).
 
 **Alerts** (`src/server/alerts.ts`): Alert Ready (NAAD), **Environment Canada weather warnings** (through NAAD),
-DriveBC road events and weather conditions, Earthquakes Canada, BC Hydro power outages, **EmergencyInfoBC evacuation orders and alerts** (any hazard, covering the home or within `alerts.evacuationKm`). Each switchable in `config.alerts.sources`.
+DriveBC road events and weather conditions, Earthquakes Canada, BC Hydro power outages, **EmergencyInfoBC evacuation orders and alerts** (any hazard, covering the home or within `alerts.evacuationKm`); in the U.S. **National Weather Service** watches and warnings and **USGS** earthquakes (USGS also outside both countries); in Québec **Hydro-Québec** power outages. Which apply is the household's **regional pack** (below). Each switchable in `config.alerts.sources`.
 Optional high radon and CO₂ from Airthings (`config.integrations.smartHome.airthings`, off by default).
 Optional pool water past Blue Riiot's warning range (`config.integrations.smartHome.blueRiiot.alerts`, off by default).
 **Washer and dryer done** notices (`config.integrations.smartHome.laundry.alertDone`, on by default, needs a Laundry widget on a view): blue instead of red (`notice`), shown whatever the strip threshold, never emailed and left out of the Alerts widget.
 Optional email to everyone on `ADMIN_EMAILS` and `FAMILY_EMAILS` when a new strip-worthy alert arrives (`config.alerts.notifyEmail`).
+**Smart notices** (`config.alerts.rules`, `src/lib/alertRules.ts`): blue notes that combine two integrations, each its own switch in Settings › Emergency alerts › Smart notices: sprinklers due in frost (Rachio + forecast, on), sprinklers due when rain is likely (off), backup battery left during a BC Hydro outage at home (EcoFlow, on), poor air outside with indoor PM2.5 (AQHI + Airthings, on, from AQHI 7), pool freeze warning (Blue Riiot + forecast, off), laundry left in the machine (off, after 60 min) and bins out the night before (garbage day, off, from 6 PM).
+
+**Regional packs** (`src/lib/regions.ts`, Melvin, 2026-11-26): the dashboard's location picks a region (Metro Vancouver
+and the Fraser Valley, B.C., Calgary, Edmonton, Toronto, Québec, Halifax, elsewhere in Canada, Seattle and King County,
+elsewhere in the U.S., outside both), or Settings › Location picks one by hand (`config.region`, `"auto"` by default).
+The region decides which alert sources are read and how their toggles are named (hidden where nothing feeds them),
+which transit agencies the departures widget offers first, and the "Your region" summary under Settings › Location.
 
 **Getting-started emails** (`src/lib/onboarding.ts`, `src/server/onboarding.ts`): 18 daily emails to a new household's admins, one feature each with a picture of the app (`public/email/onboarding/`, `node scripts/email-images.mjs`); 7 Free, 11 marked Household. One-click unsubscribe (`/api/email/unsubscribe/`), paused from `/admin/` › Automations.
 
@@ -161,7 +170,7 @@ are no per-household overrides (see Architecture, Feature flags).
 
 **Integrations connected from Settings:** Google Calendar, Microsoft 365 calendars and **To Do** (OAuth, `?todo=1` / `?files=1`), Google Tasks, **Todoist**, Google Photos (Picker), iCal calendar links (with iCloud publish steps in Settings and `docs/icloud-calendar.md`),
 **Govee** (API key, Settings › Smart home), **Philips Hue** (OAuth, Settings › Smart home), **LIFX** (personal token, Settings › Smart home), Amazon Photos, **photo sources** (Bing, Reddit, weather albums, Immich API keys, Dropbox/Box/SmugMug OAuth, OneDrive via Microsoft, Flickr API key, iCloud published URLs), the photo library (Vercel Blob), Home Assistant (Cloudflare Tunnel + Access), Spotify, Sonos, garbage
-zone lookup, sports teams to follow, TransLink, commute places (TomTom geocoding), optional **package tracking** key, **UniFi Site Manager** API key (Settings › UniFi network), **EcoFlow** access and secret keys, **Oura** (OAuth, Settings › Content & finance), **Airthings** (API client id and secret, Settings › Indoor air), **Rachio** (API key, Settings › Sprinklers), **Blue Riiot** (app email and password, Settings › Pool; unofficial), **LG ThinQ** personal access token (Settings › Laundry), **17TRACK** API key (Settings › Packages).
+zone lookup, sports teams to follow, TransLink (the TTC, Calgary, Edmonton, Halifax and King County Metro feeds need nothing), commute places (TomTom geocoding), optional **package tracking** key, **UniFi Site Manager** API key (Settings › UniFi network), **EcoFlow** access and secret keys, **Oura** (OAuth, Settings › Content & finance), **Airthings** (API client id and secret, Settings › Indoor air), **Rachio** (API key, Settings › Sprinklers), **Blue Riiot** (app email and password, Settings › Pool; unofficial), **LG ThinQ** personal access token (Settings › Laundry), **17TRACK** API key (Settings › Packages).
 
 ## In progress
 
@@ -332,6 +341,10 @@ npm run templates:previews  # regenerate public/templates/*.png from real widget
   each one is (see Architecture).
 - **Border wait times** (Melvin, 2026-11-25: "build that all", from a list naming border waits): a widget with the
   Lower Mainland crossings in both directions from the two agencies' public feeds, no key (see Architecture).
+- **Local gas prices** (Melvin, 2026-11-26: "build the other 6 gaps", one of them local gas prices around Langley): a
+  `gasPrices` widget from Google's Places API, the only official station-level source for Canada; GasBuddy (no public
+  API, scraping against its terms) and NRCan's city averages (robots-disallowed, months behind) were ruled out (Claude's
+  pick, 2026-11-26) (see Architecture).
 - **Earth wind map** (Melvin, 2026-11-21: "can i add this and specific a location? https://earth.nullschool.net"):
   earth.nullschool.net framed in a widget, centred on a place picked in its settings (Langley by default), with a
   zoom, a colour layer and its own place marker (see Architecture).
@@ -340,6 +353,12 @@ npm run templates:previews  # regenerate public/templates/*.png from real widget
   and touch off unless switched on (see Architecture). Wildfires are separate work.
 - **TransLink departures** (Melvin, 2026-11-19: "add translink"): a TransLink widget with the next buses from up to six
   picked stops, live from TransLink's GTFS-realtime feed (see Architecture).
+- **Regional packs** (Melvin, 2026-11-26: "Do 1, 2, 3, 4", item 3 being "a regional pack for other cities, so the local
+  strength scales beyond the Lower Mainland"): the location picks a pack of local sources (see Architecture). Claude's
+  picks of first packs, all keyless and official: NWS alerts and USGS earthquakes for the U.S., Hydro-Québec outages,
+  and five more GTFS-realtime agencies (TTC, Calgary, Edmonton, Halifax, King County Metro). Left for later because their
+  feeds couldn't be confirmed from the sandbox: Ontario and Alberta 511 road events, Ontario and Alberta power outages,
+  BC Transit (Victoria, Kelowna); STM, OC Transpo and Sound Transit need keys.
 - **Sports scores** (Melvin, 2026-11-21: "allow to customize the sports and the teams"): any teams from several leagues
   (up to 12), picked in Settings › Sports, with a live score while a game is on, the last result and the next game
   (see Architecture).
@@ -388,6 +407,13 @@ npm run templates:previews  # regenerate public/templates/*.png from real widget
   Crescent Beach); the moon is worked out on the device, both as its own widget and as a line on Sunrise & sunset; aurora
   chances come from NOAA's Kp forecast for home's latitude; On this day reads Wikipedia with a family-friendly filter
   (see Architecture).
+- **School days** (Melvin, 2026-11-26: "school lunch menu and school-day calendar", from the coordinator's gaps list):
+  the lunch menu half already existed (`menus`, Nutrislice), so the new part is a `schoolDays` widget that knows the
+  school year: Pro-D days, holidays, winter and spring break, summer, early dismissals and a weekly hot-lunch line for
+  schools without Nutrislice. Langley publishes its calendars as PDFs only (no iCal), so the 2026–27 elementary and
+  middle calendars are presets (`SCHOOL_PRESETS` in `src/lib/schoolCalendar.ts`); a new school year needs a new preset
+  from sd35.bc.ca/school-calendar. Separate from School status, which reads snow-day closures off the district page
+  (see Architecture).
 - **Washer and dryer** (Melvin, 2026-11-25: "build that all", from a list that included washer and dryer done alerts;
   native cloud APIs, not Home Assistant): a `laundry` widget with time left and "done" from LG ThinQ and Samsung
   SmartThings, and a blue "done" notice on the alert strip (see Architecture). Claude's defaults: notices on, "done"
@@ -401,6 +427,11 @@ npm run templates:previews  # regenerate public/templates/*.png from real widget
   has but "a good portion" Household, "properly emphasized", and "optimized for speed and performance"): built like
   Liftsmith's getting-started tour. Rules in Architecture. A new feature worth an email gets one appended to
   `ONBOARDING` with its picture in `scripts/email-images.mjs`; nothing in the series repeats another email.
+- **Birthdays and anniversaries** (Melvin, 2026-11-26: "build the other 6 gaps", one being "birthdays and anniversaries
+  with a countdown and a photo"): the existing Countdowns widget grew rather than a new widget. Anniversaries are a
+  fourth kind that counts years from the date as birthdays count the age; each date can carry one uploaded photo,
+  drawn as a small circle in its row and large on the day itself (see Architecture). Claude's defaults: celebrate on
+  the day is on, and a birthday or anniversary is always yearly when picked.
 - **Canadian English** in everything a person reads (colour, centre, favourite), as in Liftsmith.
 
 ## Display: super lightweight (rule, Melvin, 2026-11-17)
@@ -419,8 +450,8 @@ panel can be complex if you need it to be."
   `src/display/apiShared.ts`, which calls display.js's copy, so feeds, the device token and offline state stay single.
   The internet widget, the UniFi network widget, EcoFlow, the whiteboard, wildfires, the Windy map, the Smart device tile
   (`haEntity.ts`; cameras and `HA_EVERY` stay in `ha.ts`), Oura, Indoor air (Airthings), the snow report, River levels,
-  Border wait times, Sprinklers (Rachio), Highway cameras (DriveBC), the Pool (Blue Riiot), tides, moon phase, aurora,
-  On this day, Laundry and Packages load this way, and `next.config.ts` gives each file the same
+  Border wait times, Gas prices, Sprinklers (Rachio), Highway cameras (DriveBC), the Pool (Blue Riiot), tides, moon phase, aurora,
+  On this day, Laundry, School days and Packages load this way, and `next.config.ts` gives each file the same
   immutable cache header as display.js.
 - **Budget:** the display's script stays under 80 KB gzipped and its stylesheet under 20 KB (`scripts/bundle-check.mjs`,
   a CI step; CSS raised from 10 KB on 2026-11-23 for more clock styles; script raised from 40 KB by Melvin on 2026-11-25: "double the size of the limit"). A new dependency on the display needs a very good reason.
@@ -568,6 +599,15 @@ panel can be complex if you need it to be."
   then in the rest of the page. Anything else is open. A widget can name schools; a notice counts when it names one of
   them or says all schools. Displays poll `/api/display/school/`. The district name and page are Settings › School status
   (Langley School District, sd35.bc.ca, by default).
+- **School days** (`src/lib/schoolCalendar.ts`, `src/server/schoolDays.ts`): the year lives in `config.school`
+  (`calendarName`, `firstDay`, `lastDay`, `daysOff` with `kind` off or early, `icalIds`, `lunches` Monday to Friday).
+  `/api/display/school-days/` sends that list from today on, merged with days off read from the picked calendar links
+  (all-day events whose titles say Pro-D, No school, non-instructional, break and the like; any "early dismissal"; the
+  household's own entry wins a clash). A link is read even when it's switched off for the family calendar. The wall
+  works out today, tomorrow and the next days off itself (re-drawn every five minutes, so midnight turns it over);
+  weekends are always off, a weekend inside a break reads as the break, and after the last day it's summer. Settings ›
+  School days has the presets, the day list, the link switches and the lunches. The widget loads on its own
+  (`schoolDays.js`).
 - **Who's home** (Melvin, 2026-11-22): presence widgets list Home Assistant person and device tracker entities. Those ids
   are added to `usedEntities().all` and never to `controls`, so the wall can show home or away and cannot change them.
   The widget uses the same five-second Home Assistant feed as the other tiles.
@@ -589,6 +629,26 @@ panel can be complex if you need it to be."
   with ical.js (recurring events, exceptions and the file's own time zones; floating times in the dashboard's zone),
   caches it 15 minutes, and merges it into the same calendar feed as Google (`src/server/calendars.ts`). A link that
   fails never hides Google's events or the other links. Only public https addresses are fetched (including after redirects).
+- **Regional packs** (`src/lib/regions.ts`): coarse [lat, lon] outlines of Canada, the U.S. (lower 48, Alaska, Hawaii),
+  B.C. and Québec, then metro boxes, place a point (`regionAt`); `regionOf(config)` applies `config.region` first. The
+  outlines are good to a few km (Toronto vs Buffalo, Point Roberts, Detroit are right; a home on the border picks its
+  region by hand). Each `Region` names its national alert feed (`naad` | `nws`), quake catalogue (`nrcan` | `usgs`),
+  roads, power and evacuation sources, transit agencies and B.C.-only widgets. `alertsFeed` reads only the region's
+  sources, so a Calgary household no longer asks DriveBC or BC Hydro. **NWS**: `api.weather.gov/alerts/active?point=`
+  (no key, a User-Agent naming the site is required), cached two minutes per location; tests, cancels and ended alerts
+  dropped; "Unknown" severity is minor; everything is source `weather`. **USGS**: the FDSN GeoJSON query with
+  `latitude`/`longitude`/`maxradiuskm`, graded like Earthquakes Canada. **Hydro-Québec**: `bisversion.json` names the
+  current `bismarkers<version>.json`, whose `pannes` rows are positional (customers, start, estimated end, I/P, "[lon,
+  lat]" string, codes; shape read 2026-11-26); points only, so within 1 km is severe and within `powerKm` moderate from
+  1,000 customers, else minor. A new pack is a `REGIONS` entry (plus a box or outline) and, for a new source, a parser
+  in `alerts.ts` and a label in `alertSourceLabels`.
+- **Transit agencies** (`src/lib/transitAgencies.ts`): realtime and static GTFS addresses, credit line and licence
+  notice per agency. `src/server/translink.ts` serves them all: `usedStops` groups widget stops by agency, each agency's
+  realtime read (30 s) and static names (3 days) are cached on their own keys (TransLink keeps its old keys), and the
+  feed files departures under `stopKey(agency, id)` (TransLink's bare id, others `agency:id`). One agency failing lists
+  it in `failed` and leaves the others; all failing is a 502 as before. `configured` still means TRANSLINK_API_KEY is
+  set. The stop search takes `?agency=`. TTC's static zip is about 29 MB on Toronto's CKAN, read whole when ranges
+  aren't offered. Calgary's open data addresses redirect to signed S3 files.
 - **TransLink:** departure times come only from the GTFS-realtime trip updates
   (`gtfsapi.translink.ca/v3/gtfsrealtime`, key in `TRANSLINK_API_KEY` in Vercel), decoded by a small hand-written
   protobuf reader (`src/server/gtfs.ts`, no protobuf dependency). Route numbers, headsigns and the stop list come from
@@ -614,6 +674,17 @@ panel can be complex if you need it to be."
   and a footer link to `/api/email/unsubscribe/` (an HMAC of the address under `SESSION_SECRET`; GET asks, POST
   records `email_optouts`), why it was sent, and `MAIL_POSTAL_ADDRESS` (CASL); production sends nothing until that's
   set. Staff pause the series in `/admin/` › Automations (`onboarding`).
+- **Smart notices** (Melvin, 2026-11-26: "smart alerts across integrations", e.g. "the pool pH is off" or "the dryer's
+  done and nobody's home"): `evaluateRules` in `src/lib/alertRules.ts` is pure and takes whichever feeds a rule reads;
+  `ruleAlertsFor` in `src/server/alertRules.ts` gathers only the feeds a switched-on rule needs (`rulesNeed`), skips a
+  feed whose widget flag is off, reads EcoFlow only while a BC Hydro outage covers the home and Airthings only while the
+  air outside is past the threshold, and reuses each feed's own cache, so the alerts poll adds no new calls. Rule alerts
+  are `source: "smart"`, `notice: true` (blue, ℹ on the strip, never emailed, not in the Alerts widget), with ids that
+  stay the same for one occurrence (a watering's start, an outage id, a day) so a dismissal sticks. Off by default for
+  the ones that would fire often (Claude's defaults, 2026-11-26). Pool water out of range, radon and CO₂ and "washer
+  done" keep their own switches. "Nobody's home" rules were left out: a note on a wall in an empty house reaches nobody,
+  and notices aren't emailed. A new rule adds a key to `config.alerts.rules` (with a default), a branch in
+  `evaluateRules`, its feeds in `rulesNeed` and a switch in the Smart notices block.
 - **Alert email:** when `config.alerts.notifyEmail` is on, each new strip-worthy alert (`meetsBanner` in `src/lib/alerts.ts`)
   triggers one email per alert id to household members (`src/server/alertNotify.ts`, `sendEmail` through Resend, HTML from
   `alertEmail` in `src/lib/email.ts`); ids are stored in `account_alert_notified` so repeats are never sent. The display
@@ -754,6 +825,19 @@ panel can be complex if you need it to be."
   served. Displays poll `/api/display/border/` every five minutes; the widget loads on its own (`borderWait.js`) and
   greys out readings older than two hours, since both agencies update about hourly. This sandbox can't reach either,
   so tests use the shapes read on 2026-11-26.
+- **Gas prices** (`src/server/gas.ts`, setup `docs/gas-prices.md`): Places API (New) Nearby Search
+  (`places.googleapis.com/v1/places:searchNearby`, `includedTypes: ["gas_station"]`, 20 nearest, ranked by distance)
+  with field mask `places.id,displayName,shortFormattedAddress,formattedAddress,location,fuelOptions`. The key is
+  Everydaypane's own `GOOGLE_MAPS_API_KEY`, sent as `X-Goog-Api-Key`, never in a URL; without it the feed says
+  `missing: "key"` and calls nothing. `fuelOptions` bills at the Enterprise + Atmosphere rate (1,000 a month free, then
+  about US$40 per 1,000), so one search per household covers the farthest radius on its gas widgets (1–15 km) and is
+  kept two hours (about 360 a month a household). Google allows Places content to be kept only briefly, so the cache is
+  keyed per household, never shared. Google's FuelType names map to ours in `src/lib/gas.ts` (REGULAR_UNLEADED →
+  regular, MIDGRADE, PREMIUM, DIESEL, with SP9x as looser fallbacks); Money is `units` + `nanos`. Displays poll
+  `/api/display/gas/` every 15 minutes and get station names, short addresses, distances from home and prices, never
+  coordinates; the wall filters by its own radius and fuel, drops prices older than three days, writes CAD as cents a
+  litre and marks the single cheapest. The foot credits "Google Maps", as Google's terms ask. The widget loads on its own
+  (`gasPrices.js`). This sandbox can't reach Google, so tests use the documented shapes.
 - **Earth wind map:** earth.nullschool.net (Cameron Beccario's site) in an `<iframe>`; checked 2026-11-21: it sends no
   `X-Frame-Options` or `frame-ancestors`, and its script handles being framed itself (it blocks only a few named
   sites, hides its app banner and uses its lighter 1° data in a frame). Everything it shows is set by the address's
@@ -780,6 +864,14 @@ panel can be complex if you need it to be."
   and no touches (`pointer-events: none`) unless `interactive` is on, when touches on the map pan and zoom it but don't
   count as use for the screen saver. The CSP's `frame-src` allows embed.windy.com. This sandbox can't reach Windy, so
   tests check the address and the frame's life, and preview screenshots use a stand-in (`public/templates/samples/windy.html`).
+- **Countdown photos** (`src/server/countdownPhotos.ts`): a date's photo is shrunk to 800 px JPEG in the admin's
+  browser and uploaded to `/api/household/countdown-photo/`, which stores it in the photo library's private Blob store
+  under the reserved source id `countdown` (never a photos widget's album, so `/api/display/photo/` can't reach it);
+  the date keeps only the id (`photo`). Walls get it from `/api/display/countdown-photo/?i=` only while a saved
+  countdown widget names it; an admin's live preview may show any of the household's own, so it appears before
+  Publish. Each settings save deletes countdown photos no date names that are over a day old (a photo uploaded but
+  not yet published survives a save from another tab). Backups keep the id but not the picture; a missing one falls
+  back to the emoji on the wall.
 - **Settings backup and restore** (Melvin, 2026-11-21): Settings › Backup downloads the whole settings document as
   `everydaypane-settings-<date>.json` and restores one (`src/server/backup.ts`, `/api/household/backup/`). The file is the
   document itself, walked generically, so new widget types and settings are in it with no change there. It never holds

@@ -1,0 +1,14 @@
+{
+  "updatedAt": 1795473720000,
+  "calendarName": "Langley elementary",
+  "firstDay": "2026-09-08",
+  "lastDay": "2027-06-29",
+  "daysOff": [
+    { "start": "2026-12-03", "end": "2026-12-03", "name": "Early dismissal (conferences)", "kind": "early" },
+    { "start": "2026-12-18", "end": "2027-01-04", "name": "Winter break", "kind": "off" },
+    { "start": "2027-02-08", "end": "2027-02-08", "name": "Pro-D Day", "kind": "off" },
+    { "start": "2027-02-15", "end": "2027-02-15", "name": "Family Day", "kind": "off" },
+    { "start": "2027-03-15", "end": "2027-03-29", "name": "Spring break", "kind": "off" }
+  ],
+  "lunches": ["Pizza day", "", "Sushi", "", "Hot dog day"]
+}

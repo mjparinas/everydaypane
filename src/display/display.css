@@ -1085,6 +1085,47 @@ html.portrait-view .stage {
 .cd-emoji {
   flex: none;
 }
+.cd-photo {
+  flex: none;
+  width: 1.3em;
+  height: 1.3em;
+  border-radius: 50%;
+  object-fit: cover;
+}
+/* The day itself: the event leads the tile, its photo as large as the space allows. */
+.cd-hero {
+  display: flex;
+  align-items: center;
+  gap: 4cqw;
+  flex: 1 1 auto;
+  min-height: 0;
+  font-size: calc(min(12cqh, 7cqw) * var(--font-scale, 1));
+}
+.cd-hero .cd-emoji {
+  font-size: 1.6em;
+}
+.cd-hero-img {
+  flex: none;
+  width: min(38cqw, 55cqh);
+  height: min(38cqw, 55cqh);
+  border-radius: 50%;
+  object-fit: cover;
+  box-shadow: 0 0 0 0.12em var(--accent);
+}
+.cd-hero-text {
+  min-width: 0;
+}
+.cd-hero-title {
+  font-weight: 700;
+  line-height: 1.15;
+  overflow-wrap: break-word;
+  hyphens: auto;
+}
+.cd-hero-sub {
+  color: var(--muted);
+  font-size: 0.6em;
+  margin-top: 0.2em;
+}
 .cd-name {
   flex: 1;
   min-width: 0;
@@ -1931,6 +1972,60 @@ html.portrait-view .stage {
   color: var(--muted);
 }
 .bw-foot {
+  margin-top: auto;
+}
+
+/* Gas prices: a row per station, the price large on the left, the cheapest one in green. */
+.w-gas {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5em;
+  height: 100%;
+  overflow: hidden;
+  font-size: calc(clamp(12px, min(5cqw, 9cqh), 28px) * var(--font-scale, 1));
+}
+.gas-list {
+  display: grid;
+  gap: 0.5em;
+}
+.gas-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  column-gap: 0.7em;
+  align-items: baseline;
+}
+.gas-price {
+  grid-row: span 2;
+  font-size: 1.35em;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.gas-best .gas-price {
+  color: #40c057;
+}
+.gas-where {
+  display: grid;
+  min-width: 0;
+}
+.gas-name,
+.gas-addr {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.gas-name {
+  font-weight: 600;
+}
+.gas-addr,
+.gas-meta,
+.gas-foot {
+  color: var(--muted);
+  font-size: 0.75em;
+}
+.gas-meta {
+  grid-column: 2;
+}
+.gas-foot {
   margin-top: auto;
 }
 
@@ -3646,6 +3741,74 @@ html.portrait-view .stage {
   -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
+}
+/* School days: today's line large, then tomorrow and the next days off */
+.w-schoolDays {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4em;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+.sd-state {
+  font-size: calc(2em * var(--font-scale, 1));
+  font-weight: 800;
+  line-height: 1.05;
+}
+.sd-school {
+  color: var(--accent);
+}
+.sd-early {
+  color: var(--sun);
+}
+.sd-off {
+  color: var(--text);
+}
+.sd-sub,
+.sd-error {
+  color: var(--muted);
+  font-size: calc(0.95em * var(--font-scale, 1));
+}
+.sd-next {
+  font-weight: 600;
+  font-size: calc(1em * var(--font-scale, 1));
+}
+.sd-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3em;
+  margin: 0.3em 0 0;
+  padding: 0.4em 0 0;
+  list-style: none;
+  min-height: 0;
+  overflow: hidden;
+  border-top: 1px solid color-mix(in srgb, var(--text) 15%, transparent);
+  font-size: calc(0.95em * var(--font-scale, 1));
+}
+.sd-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  column-gap: 0.6em;
+}
+.sd-name {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.sd-break .sd-name {
+  font-weight: 700;
+}
+.sd-when {
+  grid-column: 1;
+  color: var(--muted);
+  font-size: 0.85em;
+}
+.sd-away {
+  grid-column: 2;
+  grid-row: 1;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
 }
 .pr-list {
   display: flex;
