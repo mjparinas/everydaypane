@@ -4068,6 +4068,75 @@ html.portrait-view .stage {
   color: var(--muted);
 }
 
+/* Blue Riiot pool: green in Blue Riiot's ideal range, amber in its warning range, red past it. */
+.w-pool {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6em;
+  font-size: 1.15em;
+  height: 100%;
+  overflow: hidden;
+}
+.pl-name {
+  font-weight: 600;
+  color: var(--muted);
+  margin-bottom: 0.2em;
+}
+.pl-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(8.5em, 1fr));
+  gap: 0.35em 1em;
+}
+.pl-r {
+  display: flex;
+  align-items: baseline;
+  gap: 0.45em;
+}
+.pl-dot {
+  width: 0.65em;
+  height: 0.65em;
+  border-radius: 50%;
+  flex: none;
+  align-self: center;
+  background: var(--muted);
+  opacity: 0.4;
+}
+.pl-ok .pl-dot {
+  background: #40c057;
+  opacity: 1;
+}
+.pl-warn .pl-dot {
+  background: #fab005;
+  opacity: 1;
+}
+.pl-bad .pl-dot {
+  background: #fa5252;
+  opacity: 1;
+}
+.pl-k {
+  color: var(--muted);
+}
+.pl-v {
+  margin-left: auto;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.pl-bad .pl-v {
+  color: #fa5252;
+}
+.pl-v small {
+  font-weight: 400;
+  font-size: 0.75em;
+  color: var(--muted);
+}
+.pl-when {
+  font-size: 0.8em;
+  color: var(--muted);
+}
+.pl-stale .pl-grid {
+  opacity: 0.6;
+}
+
 /* EcoFlow power stations */
 .w-ecoflow {
   display: flex;

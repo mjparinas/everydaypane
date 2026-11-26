@@ -142,6 +142,7 @@ const emptyIntegrations = (): DashboardConfig["integrations"] => ({
   smartHome: {
     tempest: {},
     airthings: { alertRadon: false, alertCo2: false, co2Ppm: 1500 },
+    blueRiiot: { alerts: false },
     weatherUnderground: { stationId: "" },
     menus: { slug: "", schoolName: "" },
   },

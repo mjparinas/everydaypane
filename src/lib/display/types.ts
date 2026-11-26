@@ -276,7 +276,7 @@ export interface SportsData {
 }
 
 export type AlertSeverity = "extreme" | "severe" | "moderate" | "minor";
-export type AlertSource = "alertReady" | "weather" | "roads" | "earthquakes" | "power" | "evacuations" | "indoorAir";
+export type AlertSource = "alertReady" | "weather" | "roads" | "earthquakes" | "power" | "evacuations" | "indoorAir" | "pool";
 
 /** One emergency alert for the area, from any source (src/server/alerts.ts). */
 export interface EmergencyAlert {
@@ -570,6 +570,34 @@ export interface AirthingsData {
   /** False until the household saves an Airthings API client. */
   configured: boolean;
   devices: AirthingsDevice[];
+  error?: string;
+  stale?: boolean;
+}
+
+/** One Blue Riiot pool reading as a display gets it (src/server/blueRiiot.ts): already in the dashboard's units. */
+export interface PoolReading {
+  kind: "temp" | "ph" | "orp" | "chlorine" | "salinity";
+  value: number;
+  unit: string;
+  level: "ok" | "warn" | "bad" | "none";
+  trend?: "up" | "down";
+  /** Blue Riiot's ideal range in the same units, when the reading is coloured. */
+  ideal?: { min: number | null; max: number | null };
+}
+
+export interface PoolInfo {
+  id: string;
+  name: string;
+  /** Epoch ms of the newest reading, or null when Blue Riiot has none. */
+  recorded: number | null;
+  readings: PoolReading[];
+}
+
+export interface PoolData {
+  updatedAt: number;
+  /** False until the household saves its Blue Riiot sign-in. */
+  configured: boolean;
+  pools: PoolInfo[];
   error?: string;
   stale?: boolean;
 }
