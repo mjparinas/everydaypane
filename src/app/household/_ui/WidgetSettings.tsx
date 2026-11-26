@@ -10,6 +10,7 @@ import { EARTH_OVERLAY_LABELS, EARTH_OVERLAYS, EARTH_ZOOM_LABELS, EARTH_ZOOMS } 
 import { FERRY_ROUTES, ferryRouteName } from "@/lib/ferries";
 import { MEAL_LABELS, MEAL_SLOTS } from "@/lib/meals";
 import { RIVER_PRESETS, RIVER_STATION_RE } from "@/lib/rivers";
+import { LIGHT_PROVIDERS, type DirectSmartProvider } from "@/lib/smartHome";
 import { WINDY_OVERLAY_LABELS, WINDY_OVERLAYS, windyPressureAllowed } from "@/lib/windy";
 
 import { useAirthings } from "./airthings";
@@ -21,6 +22,8 @@ import { useMusic } from "./music";
 import { loadSmartProvider, type SmartProviderDetail } from "./smartHome";
 import { newId } from "./store";
 import { UnifiSitePicker } from "./UnifiPanel";
+
+const PROVIDER_NAMES: Partial<Record<string, string>> = { govee: "Govee", hue: "Philips Hue", lifx: "LIFX" };
 
 // Every widget's own settings (Melvin, 2026-11-17: "settings for every feature"). One form per widget type; each
 // change is applied at once to the working copy and saved with the Save button. Bounded numbers use Range/Stepper
@@ -259,8 +262,10 @@ function HaEntitySettings({
           { value: "ecobee", label: "ecobee" },
           { value: "smartthings", label: "SmartThings" },
           { value: "govee", label: "Govee lights" },
+          { value: "hue", label: "Philips Hue lights" },
+          { value: "lifx", label: "LIFX lights" },
         ]}
-        onChange={(v) => e((x) => void ((x.provider = v), v === "govee" && (x.control = "light")))}
+        onChange={(v) => e((x) => void ((x.provider = v), LIGHT_PROVIDERS.includes(v as DirectSmartProvider) && (x.control = "light")))}
       />
       {provider !== "homeAssistant" && devices.length > 0 ? (
         <Select
@@ -298,10 +303,11 @@ function HaEntitySettings({
       ) : (
         <p className="text-sm text-soft">
           {devices.length > 0 ? "Devices from your account. " : null}
-          Connect {provider === "govee" ? "Govee" : provider} under{" "}
+          Connect {PROVIDER_NAMES[provider] ?? provider} under{" "}
           <SettingsLink href="#settings/smart-home">Settings › Smart home</SettingsLink>
           {devices.length > 0 ? " to change the account." : ", then pick a device here."}
           {provider === "govee" ? " Colour and scenes show while the light is on." : null}
+          {provider === "hue" || provider === "lifx" ? " Colour shows for colour lights while they are on." : null}
         </p>
       )}
       <details className="grid gap-3 rounded-xl border border-line bg-bg px-3 py-2" open={w.control !== "auto"}>

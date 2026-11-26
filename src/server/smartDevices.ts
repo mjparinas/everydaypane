@@ -7,11 +7,14 @@ import { nativeProviderFromEntity, type DirectSmartProvider } from "@/lib/smartH
 import { ecobeeAct, ecobeeEntities } from "./ecobee";
 import { goveeAct, goveeEntities } from "./govee";
 import type { HaAction } from "./homeassistant";
+import { hueAct, hueEntities } from "./hue";
+import { lifxAct, lifxEntities } from "./lifx";
 import { nestAct, nestEntities } from "./nest";
 import { smartHomeConnected } from "./smartHomeAuth";
 import { smartThingsAct, smartThingsEntities } from "./smartthings";
 
-// Native smart-home devices on the same five-second feed as Home Assistant (Phase 4, Household; Govee 2026-11-21).
+// Native smart-home devices on the same five-second feed as Home Assistant (Phase 4, Household; Govee 2026-11-21;
+// Philips Hue and LIFX 2026-11-25).
 
 export function usedNativeDevices(config: DashboardConfig): {
   controls: Set<string>;
@@ -23,6 +26,8 @@ export function usedNativeDevices(config: DashboardConfig): {
     ecobee: new Set(),
     smartthings: new Set(),
     govee: new Set(),
+    hue: new Set(),
+    lifx: new Set(),
   };
   for (const v of config.views) {
     for (const w of v.widgets) {
@@ -49,7 +54,11 @@ export async function nativeEntityFeed(accountId: string, config: DashboardConfi
     "|" +
     [...byProvider.smartthings].sort().join(",") +
     "|" +
-    [...byProvider.govee].sort().join(",");
+    [...byProvider.govee].sort().join(",") +
+    "|" +
+    [...byProvider.hue].sort().join(",") +
+    "|" +
+    [...byProvider.lifx].sort().join(",");
   if (memo && memo.key === key && now - memo.at < 2500) return memo.entities;
 
   const entities: Record<string, HaEntity> = {};
@@ -64,6 +73,11 @@ export async function nativeEntityFeed(accountId: string, config: DashboardConfi
   }
   // Govee keeps each light's state itself, on a slower clock that respects its rate limits (src/server/govee.ts).
   if (byProvider.govee.size) Object.assign(entities, await goveeEntities(accountId, byProvider.govee, now));
+  // Hue and LIFX each read every light in one call, kept 15 seconds (src/server/hue.ts, src/server/lifx.ts).
+  if (byProvider.hue.size && (await smartHomeConnected(accountId, "hue"))) {
+    Object.assign(entities, await hueEntities(accountId, byProvider.hue, now));
+  }
+  if (byProvider.lifx.size) Object.assign(entities, await lifxEntities(accountId, byProvider.lifx, now));
   memo = { key, at: now, entities };
   return entities;
 }
@@ -86,6 +100,13 @@ export async function nativeAct(
     if (action === "on" || action === "off" || action === "toggle") return goveeAct(accountId, entityId, { action });
     if ((action === "brightness" || action === "color") && value !== undefined) return goveeAct(accountId, entityId, { action, value });
     if (action === "scene" && option) return goveeAct(accountId, entityId, { action, option });
+    return "forbidden";
+  }
+  if (provider === "hue" || provider === "lifx") {
+    memo = null;
+    const act = provider === "hue" ? hueAct : lifxAct;
+    if (action === "on" || action === "off" || action === "toggle") return act(accountId, entityId, { action });
+    if ((action === "brightness" || action === "color") && value !== undefined) return act(accountId, entityId, { action, value });
     return "forbidden";
   }
   return smartThingsAct(accountId, entityId, action, value);
