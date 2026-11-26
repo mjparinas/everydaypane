@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { upcoming } from "./countdown";
+import { celebration, milestone, upcoming } from "./countdown";
 import type { CountdownEvent } from "./schema";
 
 const ev = (over: Partial<CountdownEvent>): CountdownEvent => ({
@@ -32,6 +32,24 @@ describe("countdowns", () => {
 
   it("says how old someone turns", () => {
     expect(upcoming([ev({ kind: "birthday", date: "2015-03-02", name: "Sam" })], "2026-11-17")[0]?.turning).toBe(12);
+  });
+
+  it("counts the years of an anniversary, and says them on the wall", () => {
+    const [u] = upcoming([ev({ kind: "anniversary", date: "2011-07-16", name: "Mom & Dad" })], "2026-11-17");
+    expect(u?.years).toBe(16);
+    expect(u?.turning).toBeNull();
+    expect(u && milestone(u)).toBe("16 years");
+    expect(u && celebration(u)).toBe("Happy anniversary, Mom & Dad!");
+    const [first] = upcoming([ev({ kind: "anniversary", date: "2025-12-01" })], "2026-11-17");
+    expect(first && milestone(first)).toBe("1 year");
+  });
+
+  it("has no milestone for an anniversary added in its first year, or for holidays", () => {
+    const [fresh] = upcoming([ev({ kind: "anniversary", date: "2026-12-01" })], "2026-11-17");
+    expect(fresh && milestone(fresh)).toBe("");
+    const [holiday] = upcoming([ev({ name: "Christmas" })], "2026-11-17");
+    expect(holiday && milestone(holiday)).toBe("");
+    expect(holiday && celebration(holiday)).toBe("Christmas is today!");
   });
 
   it("celebrates a 29 February birthday on the 28th in other years", () => {

@@ -19,6 +19,25 @@ interface Item {
   origin: "upload" | "google";
 }
 
+const MAX_SIDE = 2048;
+
+export async function shrink(file: File, maxSide = MAX_SIDE): Promise<{ blob: Blob; w: number; h: number }> {
+  const bitmap = await createImageBitmap(file, { imageOrientation: "from-image" });
+  const k = Math.min(1, maxSide / Math.max(bitmap.width, bitmap.height));
+  const w = Math.max(1, Math.round(bitmap.width * k));
+  const h = Math.max(1, Math.round(bitmap.height * k));
+  const canvas = document.createElement("canvas");
+  canvas.width = w;
+  canvas.height = h;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) throw new Error("No canvas");
+  ctx.drawImage(bitmap, 0, 0, w, h);
+  bitmap.close();
+  const blob = await new Promise<Blob | null>((r) => canvas.toBlob(r, "image/jpeg", 0.85));
+  if (!blob) throw new Error("Couldn't read that picture");
+  return { blob, w, h };
+}
+
 async function fetchLibrary(sourceId: string): Promise<{ storage: boolean; photos: Item[] }> {
   const r = await fetch(`/api/household/library/?source=${encodeURIComponent(sourceId)}`).catch(() => null);
   if (!r?.ok) return { storage: true, photos: [] };

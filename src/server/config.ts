@@ -4,6 +4,7 @@ import { defaultConfig, defaultConfigForPlan } from "@/lib/config/defaults";
 import { configSchema, type DashboardConfig } from "@/lib/config/schema";
 
 import { accountById, ensureAccountsSeeded, LEGACY_ACCOUNT_ID } from "./accounts";
+import { pruneCountdownPhotos } from "./countdownPhotos";
 import { query, run } from "./db";
 import { publicHaUrl, sameHaUrl } from "./haUrl";
 import { removePhotos } from "./library";
@@ -99,6 +100,8 @@ export async function saveConfig(accountId: string, input: unknown, baseVersion:
   for (const source of previous.config.integrations.photos.sources) {
     if (source.kind === "library" && !kept.has(source.id)) await removePhotos(accountId, source.id);
   }
+  // Birthday and anniversary photos no countdown date uses any more; a storage hiccup never fails the save.
+  await pruneCountdownPhotos(accountId, parsed.data, now).catch(() => 0);
   return { ok: true, version };
 }
 
