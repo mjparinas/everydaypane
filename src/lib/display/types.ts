@@ -830,3 +830,24 @@ export interface UnifiData {
   error?: string;
   stale?: boolean;
 }
+
+/** One mountain in the snow report (src/server/snow.ts). Amounts are centimetres; the wall converts for `unit`. */
+export interface SnowMountain {
+  id: string;
+  name: string;
+  /** Snow that fell in the last 24 hours. */
+  newSnow?: number;
+  /** Modelled snow on the ground now. */
+  depth?: number;
+  /** °C or °F, as the dashboard's units say. */
+  temperature?: number;
+  /** Today and the next two days: forecast snowfall for each local day. */
+  forecast: { day: string; snow: number }[];
+}
+
+export interface SnowData {
+  updatedAt: number;
+  unit: "cm" | "in";
+  mountains: SnowMountain[];
+  error?: string;
+}

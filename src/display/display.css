@@ -3816,6 +3816,57 @@ html.portrait-view .stage {
   opacity: 0.75;
 }
 
+/* Mountain snow report (Melvin, 2026-11-25): one grid for the table so the numbers line up in columns. */
+.w-snow {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5em;
+  height: 100%;
+  font-size: calc(clamp(13px, 7.5cqh, 26px) * var(--font-scale, 1));
+}
+.sn-table {
+  display: grid;
+  gap: 0.35em 0.9em;
+  align-items: baseline;
+  font-variant-numeric: tabular-nums;
+  overflow: hidden;
+}
+.sn-row {
+  display: contents;
+}
+.sn-row > :not(:first-child) {
+  text-align: right;
+}
+.sn-name {
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.sn-head > *,
+.sn-temp,
+.sn-day,
+.sn-note {
+  color: var(--muted);
+}
+.sn-head > * {
+  font-size: 0.65em;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+.sn-new {
+  font-weight: 700;
+}
+.sn-fresh .sn-new,
+.sn-day.sn-snowy {
+  color: var(--accent);
+}
+.sn-note {
+  margin-top: auto;
+  font-size: 0.6em;
+}
+
 /* Reduced motion (a11y audit, 2026-11-22): keep the danger colour on a ringing timer / alarm, drop the blink. */
 @media (prefers-reduced-motion: reduce) {
   .boot-logo,

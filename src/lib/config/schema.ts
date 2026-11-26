@@ -7,6 +7,7 @@ import { MEAL_SLOTS } from "../meals";
 import { NEWS_PRESETS } from "../newsPresets";
 import { SCREEN_SAVER_OFF } from "../screenSaver";
 import { SMART_HOME_PROVIDERS } from "../smartHome";
+import { DEFAULT_MOUNTAINS, MOUNTAIN_IDS } from "../snow";
 import { LEAGUE_IDS, MAX_TEAMS } from "../sports";
 import { WINDY_OVERLAYS } from "../windy";
 import { PERIODS } from "./periods";
@@ -328,6 +329,16 @@ export const widgetSchema = z.discriminatedUnion("type", [
       .max(12),
     count: z.number().int().min(1).max(12),
     showDelivered: z.boolean(),
+  }),
+  // Mountain snow report (Melvin, 2026-11-25): new snow, depth and the next days' snowfall for picked mountains, from
+  // Open-Meteo at each mountain (src/server/snow.ts, src/lib/snow.ts for the list).
+  z.object({
+    ...base,
+    type: z.literal("snow"),
+    mountains: z.array(z.enum(MOUNTAIN_IDS)).min(1).max(8).default(DEFAULT_MOUNTAINS),
+    showDepth: z.boolean().default(true),
+    showForecast: z.boolean().default(true),
+    showTemperature: z.boolean().default(false),
   }),
   // Tides (Phase 3, Household): next highs and lows at a tide station (NOAA US, Canadian IWLS for B.C.).
   z.object({

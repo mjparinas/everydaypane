@@ -1,4 +1,5 @@
 import { AIRTHINGS_DEFAULT_KINDS } from "../airthings";
+import { DEFAULT_MOUNTAINS } from "../snow";
 import type { Widget, WidgetType } from "./schema";
 
 // What the admin panel's widget picker offers, and what a new widget of each type starts with.
@@ -243,6 +244,14 @@ export const WIDGETS: { [T in WidgetType]: WidgetInfo<T> } = {
     size: { w: 4, h: 3 },
     minSize: { w: 2, h: 2 },
     defaults: () => ({ packages: [], count: 6, showDelivered: false }),
+  },
+  snow: {
+    label: "Snow report",
+    description: "New snow and depth on the local mountains",
+    icon: "🏔️",
+    size: { w: 4, h: 3 },
+    minSize: { w: 2, h: 2 },
+    defaults: () => ({ mountains: [...DEFAULT_MOUNTAINS], showDepth: true, showForecast: true, showTemperature: false }),
   },
   tides: {
     label: "Tides",
@@ -647,7 +656,7 @@ export const WIDGET_GROUPS: { id: string; label: string; types: WidgetType[] }[]
   {
     id: "weather",
     label: "Weather & map",
-    types: ["weather", "tempest", "weatherUnderground", "airQuality", "airthings", "radar", "wildfires", "earth", "windy"],
+    types: ["weather", "tempest", "weatherUnderground", "airQuality", "airthings", "snow", "radar", "wildfires", "earth", "windy"],
   },
   {
     id: "calendar",
