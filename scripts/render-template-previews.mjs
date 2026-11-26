@@ -156,8 +156,8 @@ const server = createServer((req, res) => {
   }
 
   if (pathname.startsWith("/api/display/camera")) {
-    res.writeHead(200, { "Content-Type": "image/svg+xml", "Cache-Control": "no-store" });
-    res.end(readSample("camera-door.svg"));
+    res.writeHead(200, { "Content-Type": "image/jpeg", "Cache-Control": "no-store" });
+    res.end(readSample("camera-backyard.jpg"));
     return;
   }
 
@@ -271,8 +271,12 @@ await page.addInitScript((now) => {
 }, FIXED_NOW);
 await page.clock.install({ time: FIXED_NOW });
 // Stable photo shuffle / any other Math.random use across CI runs.
+// Seeded from the page's address, so each template opens on its own photo instead of every photo frame showing
+// the same one (Melvin, 2026-11-26: "all the images just have halloween").
 await page.addInitScript(() => {
   let s = 1;
+  for (const ch of location.pathname) s = (s * 31 + ch.charCodeAt(0)) % 2147483646;
+  s = s || 1;
   Math.random = () => {
     s = (s * 16807) % 2147483647;
     return (s - 1) / 2147483646;

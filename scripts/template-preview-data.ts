@@ -149,7 +149,7 @@ export function withDemoBindings(widget: Widget): Widget {
         feeds: widget.feeds.length ? widget.feeds : [{ id: "cbc", name: "CBC", url: "https://example.com/cbc.rss" }],
       };
     case "note":
-      return { ...widget, text: widget.text || "Soccer kits by the door — practice at 5." };
+      return { ...widget, text: widget.text && widget.text !== "Have a great day!" ? widget.text : "Door code 4821\nBiscuit eats at 5 PM" };
     case "youtube":
       return { ...widget, videoId: widget.videoId || "dQw4w9WgXcQ", mode: "video" };
     case "vimeo":
@@ -205,6 +205,14 @@ export type TemplatePreview = {
   payload: DisplayPayload;
 };
 
+/** The holiday layouts show their own season's photo; every other layout shows everyday family photos (Melvin,
+ * 2026-11-26: "all the images just have halloween"). Source ids match scripts/template-samples/photos.json. */
+function seasonalPhotos(templateId: string): string[] {
+  if (templateId === "christmas" || templateId === "new-year") return ["christmas"];
+  if (templateId === "halloween") return ["halloween"];
+  return ["sample"];
+}
+
 export const TEMPLATE_PREVIEWS: TemplatePreview[] = VIEW_TEMPLATES.map((t) => {
   const built = t.build();
   const themeId = t.themeId ?? "aurora";
@@ -213,7 +221,7 @@ export const TEMPLATE_PREVIEWS: TemplatePreview[] = VIEW_TEMPLATES.map((t) => {
     name: t.name,
     themeId,
     ...built,
-    widgets: built.widgets.map(withDemoBindings),
+    widgets: built.widgets.map(withDemoBindings).map((w) => (w.type === "photos" ? { ...w, sourceIds: seasonalPhotos(t.id) } : w)),
   };
   const config = defaultConfig();
   config.name = "Everydaypane";
@@ -248,23 +256,27 @@ export type WidgetPreview = {
   payload: DisplayPayload;
 };
 
+/** Samples drawn bigger than the widget's default size, so their whole sample feed fits (the message board's three notes). */
+const SAMPLE_SIZE: Partial<Record<WidgetType, { w: number; h: number }>> = { messages: { w: 4, h: 4 } };
+
 export const WIDGET_PREVIEWS: WidgetPreview[] = WIDGET_TYPES.map((type) => {
   const info = WIDGETS[type];
+  const size = { ...info.size, ...SAMPLE_SIZE[type] };
   const seeded = newWidget(type, type, { x: 0, y: 0 });
   const widget = withDemoBindings({
     ...seeded,
     x: 0,
     y: 0,
-    w: info.size.w,
-    h: info.size.h,
+    w: size.w,
+    h: size.h,
     ...(info.supportsTitle === false ? {} : { title: info.label }),
   } as Widget);
   return {
     id: `widget-${type}`,
     type,
     name: info.label,
-    cols: info.size.w,
-    rows: info.size.h,
+    cols: size.w,
+    rows: size.h,
     mode: "day" as const,
     payload: basePreviewConfig(`widget-${type}`, [widget], "aurora"),
   };
