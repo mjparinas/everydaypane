@@ -47,6 +47,7 @@ export const SAMPLE_FEEDS: Record<string, unknown> = {
   wildfires: loadJson("wildfires.json"),
   tempest: loadJson("tempest.json"),
   airthings: loadJson("airthings.json"),
+  rivers: loadJson("rivers.json"),
   ecoflow: loadJson("ecoflow.json"),
   "weather-underground": loadJson("weather-underground.json"),
   unifi: loadJson("unifi.json"),

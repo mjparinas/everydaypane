@@ -9,6 +9,7 @@ import { WIDGETS } from "@/lib/config/widgets";
 import { EARTH_OVERLAY_LABELS, EARTH_OVERLAYS, EARTH_ZOOM_LABELS, EARTH_ZOOMS } from "@/lib/earth";
 import { FERRY_ROUTES, ferryRouteName } from "@/lib/ferries";
 import { MEAL_LABELS, MEAL_SLOTS } from "@/lib/meals";
+import { RIVER_PRESETS, RIVER_STATION_RE } from "@/lib/rivers";
 import { LIGHT_PROVIDERS, type DirectSmartProvider } from "@/lib/smartHome";
 import { MOUNTAINS } from "@/lib/snow";
 import { WINDY_OVERLAY_LABELS, WINDY_OVERLAYS, windyPressureAllowed } from "@/lib/windy";
@@ -1120,6 +1121,8 @@ function TypeSettings({
     }
     case "airthings":
       return <AirthingsSettings w={w} onChange={edit<"airthings">()} />;
+    case "rivers":
+      return <RiversSettings w={w} onChange={edit<"rivers">()} />;
     case "ecoflow":
       return <EcoFlowSettings w={w} e={edit<"ecoflow">()} />;
     case "unifi": {
@@ -2213,6 +2216,90 @@ function RoutesField({ routes, onChange }: { routes: string[]; onChange: (routes
         );
       }}
     />
+  );
+}
+
+function RiversSettings({ w, onChange }: { w: Extract<Widget, { type: "rivers" }>; onChange: Edit<"rivers"> }) {
+  const [number, setNumber] = useState("");
+  const [checking, setChecking] = useState(false);
+  const [note, setNote] = useState("");
+  const full = w.stations.length >= 6;
+  const presetName = (id: string) => RIVER_PRESETS.find((p) => p.id === id)?.name;
+  const add = async () => {
+    const id = number.trim().toUpperCase();
+    if (!RIVER_STATION_RE.test(id)) return setNote("A station number looks like 08MH024: two digits, two letters, three digits.");
+    if (w.stations.some((s) => s.id === id)) return setNote("That station is already on the widget.");
+    setChecking(true);
+    setNote("");
+    try {
+      const r = await fetch(`/api/household/river-stations/?id=${encodeURIComponent(id)}`);
+      const body = (await r.json()) as { station: { name: string } | null; error?: string };
+      if (!body.station) return setNote(body.error ?? "No real-time readings at that station number.");
+      onChange((x) => void x.stations.push({ id, label: "" }));
+      setNumber("");
+      setNote(`Added ${body.station.name}.`);
+    } catch {
+      setNote("Couldn't check that station just now.");
+    } finally {
+      setChecking(false);
+    }
+  };
+  return (
+    <>
+      <p className="text-xs text-soft">
+        Live gauges from Environment Canada, up to six. Levels are metres above each gauge&apos;s own zero, so compare a river with itself,
+        not with another river. Flood warnings still come through the alert strip.
+      </p>
+      {RIVER_PRESETS.map((p) => (
+        <Toggle
+          key={p.id}
+          label={p.name}
+          checked={w.stations.some((s) => s.id === p.id)}
+          onChange={(on) =>
+            onChange((x) => {
+              if (!on) x.stations = x.stations.filter((s) => s.id !== p.id);
+              else if (x.stations.length < 6 && !x.stations.some((s) => s.id === p.id)) x.stations.push({ id: p.id, label: "" });
+            })
+          }
+        />
+      ))}
+      {w.stations.map((s, i) => (
+        <div key={s.id} className="grid gap-2">
+          <Text
+            label={`${presetName(s.id) ?? "Station"} (${s.id})`}
+            value={s.label}
+            maxLength={60}
+            placeholder="Name on the wall (optional)"
+            onChange={(v) => onChange((x) => void (x.stations[i]!.label = v))}
+          />
+          <button
+            type="button"
+            className="btn-ghost justify-self-start text-bad"
+            onClick={() => onChange((x) => void x.stations.splice(i, 1))}
+          >
+            Remove
+          </button>
+        </div>
+      ))}
+      {!full && (
+        <>
+          <Text
+            label="Add another station by number"
+            value={number}
+            maxLength={7}
+            placeholder="08MH024"
+            hint="Find numbers on Environment Canada's real-time hydrometric map (wateroffice.ec.gc.ca)."
+            onChange={setNumber}
+          />
+          <button type="button" className="btn-ghost justify-self-start" disabled={checking || !number.trim()} onClick={() => void add()}>
+            {checking ? "Checking…" : "Add station"}
+          </button>
+        </>
+      )}
+      {note && <p className="text-xs text-soft">{note}</p>}
+      <Toggle label="Show the day's line" checked={w.showChart} onChange={(v) => onChange((x) => void (x.showChart = v))} />
+      <Toggle label="Show flow (where measured)" checked={w.showDischarge} onChange={(v) => onChange((x) => void (x.showDischarge = v))} />
+    </>
   );
 }
 

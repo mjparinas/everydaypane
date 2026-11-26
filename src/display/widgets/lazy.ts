@@ -18,6 +18,7 @@ type Lazy = {
   oura: Mount<"oura">;
   airthings: Mount<"airthings">;
   snow: Mount<"snow">;
+  rivers: Mount<"rivers">;
 };
 
 (globalThis as { __epApi?: typeof api }).__epApi = api;

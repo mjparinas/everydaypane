@@ -5,6 +5,7 @@ import { EARTH_OVERLAYS, EARTH_ZOOMS } from "../earth";
 import { FERRY_ROUTES } from "../ferries";
 import { MEAL_SLOTS } from "../meals";
 import { NEWS_PRESETS } from "../newsPresets";
+import { RIVER_DEFAULT_STATIONS, RIVER_STATION_RE } from "../rivers";
 import { SCREEN_SAVER_OFF } from "../screenSaver";
 import { SMART_HOME_PROVIDERS } from "../smartHome";
 import { DEFAULT_MOUNTAINS, MOUNTAIN_IDS } from "../snow";
@@ -340,6 +341,19 @@ export const widgetSchema = z.discriminatedUnion("type", [
     showDepth: z.boolean().default(true),
     showForecast: z.boolean().default(true),
     showTemperature: z.boolean().default(false),
+  }),
+  // River levels (Melvin, 2026-11-25): Environment Canada real-time hydrometric gauges (src/server/rivers.ts), up to
+  // six stations by Water Survey number with an optional label, each with its level, trend and a day's chart.
+  z.object({
+    ...base,
+    type: z.literal("rivers"),
+    stations: z
+      .array(z.object({ id: z.string().regex(RIVER_STATION_RE), label: z.string().trim().max(60).default("") }))
+      .max(6)
+      .default(RIVER_DEFAULT_STATIONS.map((id) => ({ id, label: "" })))
+      .refine((r) => new Set(r.map((x) => x.id)).size === r.length, "Each station once"),
+    showDischarge: z.boolean().default(false),
+    showChart: z.boolean().default(true),
   }),
   // Tides (Phase 3, Household): next highs and lows at a tide station (NOAA US, Canadian IWLS for B.C.).
   z.object({
