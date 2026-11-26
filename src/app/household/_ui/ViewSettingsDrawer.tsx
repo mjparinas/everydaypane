@@ -4,8 +4,10 @@ import { useState } from "react";
 
 import type { DashboardConfig, View } from "@/lib/config/schema";
 
-import { ConfirmButton, Range, Segmented, Select, Stepper, Text } from "./fields";
+import { ConfirmButton, Range, Segmented, Select, Stepper, Text, Toggle } from "./fields";
+import { HouseholdBadge, usePlan } from "./plan";
 import { SlideDrawer } from "./SlideDrawer";
+import { useAdmin } from "./store";
 
 const GRID_PRESETS = [
   { value: "12x8", label: "12×8 (1080p)", cols: 12, rows: 8 },
@@ -120,6 +122,7 @@ export function ViewSettingsDrawer({
         options={[{ value: "", label: "Use the dashboard default" }, ...config.themes.map((t) => ({ value: t.id, label: t.name }))]}
         onChange={(v) => onEdit((x) => void (x.themeId = v || null))}
       />
+      <IdleViewToggle viewId={view.id} />
       <div className="flex flex-wrap gap-2 border-t border-line pt-4">
         <button type="button" className="btn-ghost" onClick={onDuplicate} disabled={config.views.length >= 30}>
           Duplicate view
@@ -137,5 +140,52 @@ export function ViewSettingsDrawer({
           ))}
       </div>
     </SlideDrawer>
+  );
+}
+
+// Make this view the screen saver's idle screen straight from the view it is (Melvin, 2026-11-26: the screen saver
+// "needs to be more prominent"). Same settings as Settings › Screen saver; one idle view per household.
+function IdleViewToggle({ viewId }: { viewId: string }) {
+  const saver = useAdmin((st) => st.config.screenSaver);
+  const edit = useAdmin((st) => st.edit);
+  const { isPaid, openUpgrade } = usePlan();
+  const isIdle = saver.idle && saver.shows === "view" && saver.viewId === viewId;
+
+  if (!isPaid) {
+    return (
+      <div className="grid gap-2 border-t border-line pt-4">
+        <p className="flex items-center gap-2 text-sm font-semibold">
+          Screen saver <HouseholdBadge />
+        </p>
+        <p className="text-xs text-soft">On Household, any view can be the photo frame the wall shows when nobody&rsquo;s using it.</p>
+        <button type="button" className="btn-ghost justify-self-start" onClick={() => openUpgrade("screenSaver")}>
+          See why Household
+        </button>
+      </div>
+    );
+  }
+  return (
+    <div className="border-t border-line pt-4">
+      <Toggle
+        label="Show when nobody's using the screen"
+        checked={isIdle}
+        hint={
+          isIdle
+            ? `The screen saver shows this view after ${saver.minutes} min without a touch. A tap goes back to the dashboard.`
+            : "Makes this the screen saver's idle view, like a photo frame. Timing and night hours are in Settings › Screen saver."
+        }
+        onChange={(on) =>
+          edit((c) => {
+            if (on) {
+              c.screenSaver.idle = true;
+              c.screenSaver.shows = "view";
+              c.screenSaver.viewId = viewId;
+            } else {
+              c.screenSaver.shows = "photos";
+            }
+          })
+        }
+      />
+    </div>
   );
 }

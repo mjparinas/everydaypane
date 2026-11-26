@@ -180,3 +180,77 @@ function PaneGallery({ className = "", priority = false }: { className?: string;
     </figure>
   );
 }
+
+// Homepage screen saver feature (Melvin, 2026-11-26: the photo frame screen saver should be featured on the homepage):
+// the same pane flips between the dashboard in use and the idle photo frame, the way the wall does after a few quiet minutes.
+const IDLE_STATES = [
+  { label: "In use", shot: SHOTS.morning, ms: 3500 },
+  { label: "Nobody around", shot: { ...SHOTS.photos, title: "A few quiet minutes later, the wall becomes a photo frame" }, ms: 5000 },
+] as const;
+
+export function IdleFrameMock({ className = "" }: { className?: string }) {
+  const [index, setIndex] = useState(0);
+  const [paused, setPaused] = useState(false);
+
+  useEffect(() => {
+    if (paused) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const id = window.setTimeout(() => setIndex((i) => (i + 1) % IDLE_STATES.length), IDLE_STATES[index]!.ms);
+    return () => window.clearTimeout(id);
+  }, [index, paused]);
+
+  const active = IDLE_STATES[index]!;
+  return (
+    <figure
+      className={`pane-mock ${className}`}
+      onMouseEnter={() => setPaused(true)}
+      onMouseLeave={() => setPaused(false)}
+      onFocusCapture={() => setPaused(true)}
+      onBlurCapture={(e) => {
+        if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setPaused(false);
+      }}
+    >
+      <div className="pane-bezel">
+        <div className="pane-chrome" aria-hidden>
+          <span />
+          <span />
+          <span />
+        </div>
+        <div className="pane-gallery">
+          {IDLE_STATES.map((s, i) => (
+            // eslint-disable-next-line @next/next/no-img-element -- static marketing shot from /public
+            <img
+              key={s.shot.src}
+              className={`pane-shot pane-gallery-shot${i === index ? " is-active" : ""}`}
+              src={s.shot.src}
+              alt={i === index ? s.shot.title : ""}
+              width={s.shot.width}
+              height={s.shot.height}
+              loading="lazy"
+              decoding="async"
+              aria-hidden={i === index ? undefined : true}
+            />
+          ))}
+        </div>
+      </div>
+      <div className="mt-3 flex justify-center gap-2" role="group" aria-label="Show the wall">
+        {IDLE_STATES.map((s, i) => (
+          <button
+            key={s.label}
+            type="button"
+            aria-pressed={i === index}
+            className={`min-h-11 rounded-xl border px-4 text-sm font-semibold transition-colors ${
+              i === index ? "border-brand bg-brand text-brand-ink" : "border-line bg-panel text-soft hover:text-ink"
+            }`}
+            onClick={() => setIndex(i)}
+          >
+            {s.label}
+          </button>
+        ))}
+      </div>
+      <figcaption className="mt-2 text-center text-sm text-soft" aria-live="polite">
+        {active.shot.title}
+      </figcaption>
+    </figure>
+  );
+}

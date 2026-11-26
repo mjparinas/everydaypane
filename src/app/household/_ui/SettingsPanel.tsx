@@ -20,7 +20,7 @@ import { MusicPanel } from "./MusicPanel";
 import { PhotosPanel } from "./PhotosPanel";
 import { HouseholdBadge, HouseholdSoftLock, PlanSettingsCard, usePlan } from "./plan";
 import { ReportProblem } from "./ReportProblem";
-import { ScreenSaverPanel } from "./ScreenSaverPanel";
+import { ScreenSaverPanel, ScreenSaverSummary } from "./ScreenSaverPanel";
 import { SmartHomePanel } from "./SmartHomePanel";
 import { SportsPanel } from "./SportsPanel";
 import { useAdmin } from "./store";
@@ -45,9 +45,10 @@ const GROUPS = [
   { id: "photos-music", label: "Photos & music", tier: "Everyday", sections: ["photos", "music"] },
   {
     id: "screen",
-    label: "Screen & alerts",
+    // Screen saver leads this group and its chip (Melvin, 2026-11-26: "needs to be more prominent in the settings").
+    label: "Screen saver & alerts",
     tier: "Everyday",
-    sections: ["screen-care", "screen-saver", "alerts", "backup"],
+    sections: ["screen-saver", "screen-care", "alerts", "backup"],
   },
   {
     id: "content",
@@ -165,6 +166,7 @@ export function SettingsPanel() {
       {showGroup("home") && (
         <div className="grid gap-4 lg:grid-cols-2">
           <PlanSettingsCard />
+          <ScreenSaverSummary onOpen={() => goSettingsSection("screen-saver")} />
           <Section id="settings-dashboard" title="Dashboard">
             <Text label="Name" value={config.name} maxLength={60} onChange={(v) => edit((c) => void (c.name = v))} />
             <Select
@@ -372,6 +374,11 @@ export function SettingsPanel() {
 
       {showGroup("screen") && (
         <div className="grid gap-4 lg:grid-cols-2">
+          <div id="settings-screen-saver">
+            <HouseholdSoftLock reason="screenSaver" label="Screen saver needs Household">
+              <ScreenSaverPanel />
+            </HouseholdSoftLock>
+          </div>
           <Section id="settings-screen-care" title="Screen care">
             <Toggle
               label="Burn-in protection"
@@ -403,11 +410,6 @@ export function SettingsPanel() {
             )}
             <p className="text-xs text-soft">Night dimming is set for each part of the day under Schedule.</p>
           </Section>
-          <div id="settings-screen-saver">
-            <HouseholdSoftLock reason="screenSaver" label="Screen saver needs Household">
-              <ScreenSaverPanel />
-            </HouseholdSoftLock>
-          </div>
           <div className="lg:col-span-2">
             <Section id="settings-alerts" title="Emergency alerts">
               <Toggle label="Show alerts" checked={alerts.enabled} onChange={(v) => edit((c) => void (c.alerts.enabled = v))} />

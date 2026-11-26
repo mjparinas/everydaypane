@@ -9,7 +9,7 @@ import { pageMeta } from "@/lib/pageMeta";
 import { DISPLAY_PATH, SIGNUP_PATH, SITE_URL } from "@/lib/site";
 
 import { HouseholdCheckoutButton } from "./CheckoutButtons";
-import { PaneMock } from "./PaneMock";
+import { IdleFrameMock, PaneMock } from "./PaneMock";
 import { SiteBeacon } from "./SiteBeacon";
 import { Check, CtaBanner, Eyebrow, JsonLd, organizationJsonLd, SiteFooter, SiteHeader } from "./SiteChrome";
 
@@ -37,11 +37,20 @@ const FEATURES = [
     body: "Next buses from your TransLink stops, drive times with live traffic, rain radar over the Lower Mainland and BC Ferries sailings with how full they are.",
     shot: "commute" as const,
   },
+];
+
+// The screen saver gets its own homepage section (Melvin, 2026-11-26), so photos are told there rather than as a
+// fourth "On the wall" row with the same screenshot.
+const IDLE_POINTS = [
   {
-    title: "Photos as the backdrop",
-    body: "Amazon albums, Google Photos picks and your own library fill the wall. Other widgets sit on top with a readable panel, and a screen saver keeps the kitchen calm at night.",
-    shot: "photos" as const,
+    t: "Any view can be the frame",
+    d: "Start from the Photo frame layout, or build your own with photos, a clock, the weather or a countdown.",
   },
+  {
+    t: "A tap brings it all back",
+    d: "The first touch only wakes the wall. It never presses a button on the frame, and goes back to whatever should be up now.",
+  },
+  { t: "Calm at night", d: "Pick a dark window for overnight. Motion sensors, the doorbell, a timer or an emergency alert still wake it." },
 ];
 
 const VALUE = [
@@ -249,6 +258,38 @@ export function HomeView() {
             <div className="mt-12">
               <PaneMock variant="night" />
             </div>
+          </div>
+        </section>
+
+        <section id="photo-frame" className="mx-auto max-w-6xl px-4 py-16">
+          <div className="grid items-center gap-10 lg:grid-cols-[1fr_1.15fr]">
+            <div>
+              <Eyebrow>Screen saver</Eyebrow>
+              <h2 className="mt-3 font-display text-3xl font-extrabold tracking-tight text-balance sm:text-4xl">
+                When nobody&rsquo;s looking, it&rsquo;s a photo frame
+              </h2>
+              <p className="mt-3 text-soft">
+                A few quiet minutes after the last touch (you pick how many), the wall trades the schedule for your Amazon albums, Google
+                Photos picks or own library, with the time in the corner. Walk up, tap once, and the dashboard is back.
+              </p>
+              <ul className="mt-6 grid gap-4">
+                {IDLE_POINTS.map((p) => (
+                  <li key={p.t} className="flex gap-3">
+                    <Check />
+                    <span>
+                      <span className="font-semibold">{p.t}.</span> <span className="text-soft">{p.d}</span>
+                    </span>
+                  </li>
+                ))}
+              </ul>
+              <p className="mt-6 flex flex-wrap items-center gap-x-5 gap-y-2">
+                <Link href="/blog/photo-frame-screen-saver/" className="font-semibold text-brand hover:underline">
+                  How the photo frame works →
+                </Link>
+                <span className="text-sm text-soft">On Household</span>
+              </p>
+            </div>
+            <IdleFrameMock />
           </div>
         </section>
 

@@ -28,7 +28,7 @@ function fromHhmm(value: string): number | null {
   return m ? Number(m[1]) * 60 + Number(m[2]) : null;
 }
 
-function formatDisplay(value: string, hour12: boolean): string {
+export function formatDisplay(value: string, hour12: boolean): string {
   const mins = fromHhmm(value);
   if (mins == null) return value || "—";
   const h24 = Math.floor(mins / 60);

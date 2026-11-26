@@ -352,6 +352,11 @@ npm run templates:previews  # regenerate public/templates/*.png from real widget
   back to whatever the display would show now (its fixed view or the schedule's). Melvin's calls: Household only (the
   whole screen saver already is), one idle view per household (not per display), the waking tap never presses a
   widget, and the timeout stays the 1-minute-minimum `minutes`. The night window still goes dark instead.
+- **Screen saver made prominent** (Melvin, 2026-11-26: "this screen saver mode needs to be more prominent in the
+  settings … featured on the homepage … a blog post about it"): a Screen saver card on Settings › Home with its state
+  and a jump link; the group chip is **Screen saver & alerts** with the screen saver first; Edit view has **Show when
+  nobody's using the screen** to make that view the idle view; the homepage has a `#photo-frame` section (in use ↔
+  photo frame on one pane); the guide is `/blog/photo-frame-screen-saver/`, linked from Settings as "How it works".
 - **Airthings indoor air** (Melvin, 2026-11-21: "do all 6", from a list of native cloud APIs; native only, not Home
   Assistant): an Indoor air widget for radon, CO₂, VOC, particles, humidity and temperature, with optional high radon
   and CO₂ on the alert strip (see Architecture). Separate from the outdoor Air quality widget.
