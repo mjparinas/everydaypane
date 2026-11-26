@@ -176,7 +176,7 @@
   },
   {
     "type": "transit",
-    "name": "TransLink",
+    "name": "Transit departures",
     "file": "transit.png"
   },
   {
@@ -235,6 +235,11 @@
     "file": "borderWait.png"
   },
   {
+    "type": "gasPrices",
+    "name": "Gas prices",
+    "file": "gasPrices.png"
+  },
+  {
     "type": "sports",
     "name": "Sports scores",
     "file": "sports.png"
@@ -263,6 +268,11 @@
     "type": "school",
     "name": "School status",
     "file": "school.png"
+  },
+  {
+    "type": "schoolDays",
+    "name": "School days",
+    "file": "schoolDays.png"
   },
   {
     "type": "whiteboard",

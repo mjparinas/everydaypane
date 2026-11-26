@@ -56,6 +56,11 @@
   --snow: #e7f5ff;
   --bolt: #ffd43b;
   --font: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  /* Wall type floors (design review, 2026-11-26): a 21.5" 1080p panel is read from two or three metres, where 11 to
+     14 px text was a smudge. Small labels, captions and meta never go below --t-meta; secondary lines (times, places,
+     forecast days, list rows in a small tile) never below --t-small. Map credits are the one exception. */
+  --t-meta: 16px;
+  --t-small: 18px;
   color-scheme: dark;
 }
 :root[data-mode="day"] {
@@ -451,14 +456,14 @@ html.portrait-view .stage {
 
 .w-label {
   color: var(--muted);
-  font-size: calc(clamp(12px, 9cqh, 22px) * var(--font-scale, 1));
+  font-size: calc(clamp(var(--t-meta), 9cqh, 24px) * var(--font-scale, 1));
   font-weight: 600;
   letter-spacing: 0.02em;
   text-transform: uppercase;
 }
 .w-sub {
   color: var(--muted);
-  font-size: calc(clamp(11px, 7cqh, 18px) * var(--font-scale, 1));
+  font-size: calc(clamp(var(--t-meta), 7cqh, 20px) * var(--font-scale, 1));
 }
 .w-empty {
   color: var(--muted);
@@ -466,7 +471,7 @@ html.portrait-view .stage {
   place-items: center;
   height: 100%;
   text-align: center;
-  font-size: calc(clamp(12px, 8cqh, 20px) * var(--font-scale, 1));
+  font-size: calc(clamp(var(--t-small), 8cqh, 24px) * var(--font-scale, 1));
 }
 
 /* Clock */
@@ -486,14 +491,14 @@ html.portrait-view .stage {
   font-size: calc(min(70cqh, 26cqw) * var(--font-scale, 1));
 }
 .c-s {
-  font-size: 0.38em;
+  font-size: max(0.38em, var(--t-meta));
   color: var(--muted);
   font-weight: 600;
   letter-spacing: 0;
   margin-left: 0.3em;
 }
 .c-ampm {
-  font-size: 0.28em;
+  font-size: max(0.28em, var(--t-meta));
   color: var(--muted);
   font-weight: 600;
   letter-spacing: 0.02em;
@@ -518,7 +523,7 @@ html.portrait-view .stage {
   opacity: 0.55;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  font-size: 0.7em;
+  font-size: max(0.7em, var(--t-meta));
 }
 .c-nixie .c-time {
   color: #ff7a3d;
@@ -667,7 +672,7 @@ html.portrait-view .stage {
 .d-rest {
   color: var(--muted);
   font-weight: 500;
-  font-size: calc(min(28cqh, 11cqw) * var(--font-scale, 1));
+  font-size: calc(max(var(--t-meta), min(28cqh, 11cqw)) * var(--font-scale, 1));
 }
 
 /* Sunrise and sunset — sizes track the cell so a 1- or 2-row tile fills the height (Melvin, 2026-11-22).
@@ -704,7 +709,7 @@ html.portrait-view .stage {
 }
 .st-label {
   color: var(--muted);
-  font-size: calc(min(12cqh, 4cqw) * var(--font-scale, 1));
+  font-size: calc(max(var(--t-meta), min(12cqh, 4cqw)) * var(--font-scale, 1));
   font-weight: 600;
   line-height: 1.1;
   overflow: hidden;
@@ -721,7 +726,7 @@ html.portrait-view .stage {
 }
 .st-daylight {
   color: var(--muted);
-  font-size: calc(min(10cqh, 3.8cqw) * var(--font-scale, 1));
+  font-size: calc(max(var(--t-meta), min(10cqh, 3.8cqw)) * var(--font-scale, 1));
   text-align: center;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -730,7 +735,7 @@ html.portrait-view .stage {
 
 .st-moon {
   color: var(--muted);
-  font-size: calc(min(10cqh, 3.8cqw) * var(--font-scale, 1));
+  font-size: calc(max(var(--t-meta), min(10cqh, 3.8cqw)) * var(--font-scale, 1));
   text-align: center;
   white-space: nowrap;
   overflow: hidden;
@@ -812,7 +817,7 @@ html.portrait-view .stage {
 }
 .wx-meta {
   color: var(--muted);
-  font-size: calc(min(9.5cqh, 3.8cqw) * var(--font-scale, 1));
+  font-size: calc(max(var(--t-meta), min(9.5cqh, 3.8cqw)) * var(--font-scale, 1));
   line-height: 1.15;
   white-space: nowrap;
   overflow: hidden;
@@ -821,7 +826,7 @@ html.portrait-view .stage {
 .wx-extra {
   flex: 0 0 auto;
   color: var(--muted);
-  font-size: calc(max(11px, min(4.4cqh, 2.4cqw)) * var(--font-scale, 1));
+  font-size: calc(max(var(--t-meta), min(4.4cqh, 2.4cqw)) * var(--font-scale, 1));
   font-weight: 600;
   white-space: nowrap;
   overflow: hidden;
@@ -844,7 +849,7 @@ html.portrait-view .stage {
 }
 .wx-pop {
   color: var(--rain);
-  font-size: 0.85em;
+  font-size: max(0.9em, var(--t-meta));
 }
 .wx-hours,
 .wx-days {
@@ -862,7 +867,7 @@ html.portrait-view .stage {
   align-content: start;
   gap: 0.2em;
   text-align: center;
-  font-size: calc(min(5.6cqh, 3cqw) * var(--font-scale, 1));
+  font-size: calc(max(var(--t-small), min(5.6cqh, 3cqw)) * var(--font-scale, 1));
   font-weight: 600;
   line-height: 1.15;
 }
@@ -871,10 +876,11 @@ html.portrait-view .stage {
   width: calc(min(14cqh, 7cqw) * var(--wx-icon-scale, 1));
   aspect-ratio: 1;
 }
-/* Beside today's weather the forecast is a quiet strip: smaller text and icons, never below 11px. */
+/* Beside today's weather the forecast is a quieter strip: smaller than today, but still read from across the kitchen
+   (it was 11 to 13 px before the design review, 2026-11-26). */
 .w-weather[data-now="1"] .wx-hour,
 .w-weather[data-now="1"] .wx-day {
-  font-size: calc(max(11px, min(4.2cqh, 2.3cqw)) * var(--font-scale, 1));
+  font-size: calc(max(var(--t-small), min(5.2cqh, 2.6cqw)) * var(--font-scale, 1));
   gap: 0.1em;
 }
 .w-weather[data-now="1"] .wx-day .icon,
@@ -887,7 +893,7 @@ html.portrait-view .stage {
 }
 .w-weather[data-dense="1"] .wx-hour,
 .w-weather[data-dense="1"] .wx-day {
-  font-size: calc(max(11px, min(3.6cqh, 2cqw)) * var(--font-scale, 1));
+  font-size: calc(max(var(--t-meta), min(4.4cqh, 2.3cqw)) * var(--font-scale, 1));
 }
 .w-weather[data-dense="1"] .wx-hour .icon,
 .w-weather[data-dense="1"] .wx-day .icon {
@@ -927,7 +933,7 @@ html.portrait-view .stage {
   }
   .w-weather[data-now] .wx-day,
   .w-weather[data-now] .wx-hour {
-    font-size: calc(max(11px, min(9cqh, 2.2cqw)) * var(--font-scale, 1));
+    font-size: calc(max(var(--t-small), min(9cqh, 2.4cqw)) * var(--font-scale, 1));
   }
   .w-weather[data-now] .wx-day .icon,
   .w-weather[data-now] .wx-hour .icon {
@@ -939,7 +945,7 @@ html.portrait-view .stage {
   color: var(--muted);
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  font-size: 0.85em;
+  font-size: max(0.9em, var(--t-meta));
 }
 .wx-dt {
   display: flex;
@@ -966,7 +972,7 @@ html.portrait-view .stage {
   letter-spacing: -0.03em;
 }
 .air-name {
-  font-size: calc(min(13cqh, 7cqw) * var(--font-scale, 1));
+  font-size: calc(max(var(--t-small), min(13cqh, 7cqw)) * var(--font-scale, 1));
   font-weight: 600;
 }
 .air-bar {
@@ -1077,22 +1083,47 @@ html.portrait-view .stage {
 }
 
 /* Countdown */
+/* Sized for the tile (two dates used a third of a tall tile, design review 2026-11-26); fillTile steps it down when a
+   long list overflows. */
 .w-countdown {
   display: flex;
   flex-direction: column;
-  gap: 3cqh;
+  gap: 0.5em;
   height: 100%;
+  overflow: hidden;
+  font-size: calc(clamp(var(--t-small), min(9cqh, 6.5cqw), 48px) * var(--font-scale, 1));
 }
 .cd-row {
   display: flex;
   align-items: center;
   gap: 0.6em;
-  font-size: calc(min(9cqh, 6.5cqw) * var(--font-scale, 1));
   min-width: 0;
 }
 .cd-first {
-  font-size: calc(min(13cqh, 8cqw) * var(--font-scale, 1));
+  font-size: 1.35em;
   font-weight: 600;
+}
+/* Tall and narrow: the days go under the name, so both can be large. */
+@container cell (max-aspect-ratio: 0.9) {
+  .w-countdown {
+    font-size: calc(clamp(var(--t-small), min(8cqh, 9cqw), 48px) * var(--font-scale, 1));
+    gap: 0.8em;
+  }
+  .cd-row {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: center;
+    column-gap: 0.5em;
+  }
+  .cd-days {
+    grid-column: 2;
+  }
+  .cd-name {
+    white-space: normal;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+  }
 }
 .cd-emoji {
   flex: none;
@@ -1225,7 +1256,7 @@ html.portrait-view .stage {
   border-radius: calc(var(--radius) * 0.6);
   padding: 0.45em 0.7em;
   color: #1d1d1f;
-  font-size: calc(min(8cqh, 6cqw) * var(--font-scale, 1));
+  font-size: calc(max(var(--t-small), min(8cqh, 6cqw)) * var(--font-scale, 1));
   flex: none;
 }
 .msg-yellow {
@@ -1251,7 +1282,7 @@ html.portrait-view .stage {
 }
 .msg-meta {
   margin-top: 0.2em;
-  font-size: 0.7em;
+  font-size: max(0.7em, var(--t-meta));
   opacity: 0.65;
 }
 
@@ -1262,12 +1293,12 @@ html.portrait-view .stage {
   gap: 0.45em;
   height: 100%;
   overflow: hidden;
-  font-size: calc(clamp(13px, min(4.6cqw, 9cqh), 26px) * var(--font-scale, 1));
+  font-size: calc(clamp(var(--t-small), min(4.6cqw, 9cqh), 30px) * var(--font-scale, 1));
   mask-image: linear-gradient(#000 90%, transparent);
 }
 .ml-one {
   justify-content: space-evenly;
-  font-size: calc(clamp(14px, min(6.5cqw, 11cqh), 40px) * var(--font-scale, 1));
+  font-size: calc(clamp(20px, min(6.5cqw, 11cqh), 44px) * var(--font-scale, 1));
   mask-image: none;
 }
 .ml-day {
@@ -1276,7 +1307,7 @@ html.portrait-view .stage {
 }
 .ml-date {
   color: var(--muted);
-  font-size: 0.75em;
+  font-size: max(0.75em, var(--t-meta));
   font-weight: 600;
 }
 .ml-today .ml-date {
@@ -1296,7 +1327,7 @@ html.portrait-view .stage {
   flex: none;
   min-width: 6.2em;
   color: var(--muted);
-  font-size: 0.7em;
+  font-size: max(0.75em, var(--t-meta));
 }
 .ml-text {
   min-width: 0;
@@ -1326,13 +1357,17 @@ html.portrait-view .stage {
   gap: 0.6em;
   height: 100%;
   overflow: hidden;
-  font-size: calc(clamp(14px, 4.4cqw, 26px) * var(--font-scale, 1));
+  /* Sized for the whole tile; fillTile steps it down while a busy day overflows (design review, 2026-11-26). */
+  font-size: calc(clamp(20px, min(7cqh, 5.4cqw), 44px) * var(--font-scale, 1));
+}
+/* Only a list that still runs past the tile at the smallest size fades out at the bottom. */
+.w-agenda[data-over] {
   mask-image: linear-gradient(#000 88%, transparent);
 }
 .ag-head {
   margin: 0 0 0.3em;
   color: var(--muted);
-  font-size: 0.72em;
+  font-size: max(0.75em, var(--t-meta));
   font-weight: 700;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -1358,7 +1393,7 @@ html.portrait-view .stage {
 }
 .ag-time {
   color: var(--muted);
-  font-size: 0.82em;
+  font-size: max(0.85em, var(--t-meta));
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
@@ -1375,6 +1410,31 @@ html.portrait-view .stage {
 .ag-past {
   opacity: 0.45;
 }
+/* A tall, narrow schedule puts each time above its title, so titles can be large and take two lines instead of
+   ending in "…" at a third of the width (design review, 2026-11-26). */
+@container cell (max-aspect-ratio: 1) {
+  .w-agenda {
+    font-size: calc(clamp(20px, min(7cqh, 7.5cqw), 48px) * var(--font-scale, 1));
+  }
+  .ag-list {
+    gap: 0.7em;
+  }
+  .ag-row {
+    grid-template-columns: auto minmax(0, 1fr);
+    row-gap: 0.05em;
+  }
+  .ag-time,
+  .ag-title {
+    grid-column: 2;
+  }
+  .ag-title {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    line-height: 1.2;
+    white-space: normal;
+  }
+}
 .ag-free {
   font-size: 1em;
 }
@@ -1384,7 +1444,7 @@ html.portrait-view .stage {
   display: flex;
   flex-direction: column;
   height: 100%;
-  font-size: calc(clamp(11px, 1.6cqw, 18px) * var(--font-scale, 1));
+  font-size: calc(clamp(14px, 1.7cqw, 20px) * var(--font-scale, 1));
 }
 .mo-title {
   margin-bottom: 0.4em;
@@ -1478,7 +1538,7 @@ html.portrait-view .stage {
 }
 .mo-more {
   color: var(--muted);
-  font-size: 0.75em;
+  font-size: 0.85em;
 }
 .mo-dots {
   display: flex;
@@ -1641,7 +1701,7 @@ html.portrait-view .stage {
   padding: 0.1em 0.55em;
   border-radius: 999px;
   color: #fff;
-  font-size: 0.8em;
+  font-size: max(0.8em, var(--t-meta));
   font-weight: 600;
   white-space: nowrap;
 }
@@ -2054,8 +2114,10 @@ html.portrait-view .stage {
 }
 .tl-stop {
   display: grid;
+  align-content: start;
   gap: 0.25em;
   min-height: 0;
+  overflow: hidden;
 }
 .tl-name {
   /* Never squeezed to nothing: without the stop's name, two stops' buses read as one list out of order. */
@@ -2124,9 +2186,10 @@ html.portrait-view .stage {
   font-size: 0.8em;
 }
 .tl-src {
+  flex: none;
   margin-top: auto;
   color: var(--muted);
-  font-size: 0.6em;
+  font-size: max(0.6em, 14px);
 }
 
 /* Sports: one row per team with its colour down the left; the score or the next game's time on the right. */
@@ -2434,7 +2497,7 @@ html.portrait-view .stage {
   max-width: 70%;
   padding: 2.5em 1.1em 0.8em 3em;
   color: #fff;
-  font-size: calc(clamp(12px, 2.1cqw, 22px) * var(--font-scale, 1));
+  font-size: calc(clamp(var(--t-meta), 2.1cqw, 24px) * var(--font-scale, 1));
   font-weight: 500;
   letter-spacing: 0.01em;
   text-align: right;
@@ -2571,6 +2634,7 @@ html.portrait-view .stage {
 }
 .ha-target small {
   display: block;
+  font-size: max(0.83em, var(--t-meta));
   color: var(--muted);
   font-weight: 400;
   text-transform: capitalize;
@@ -2799,7 +2863,7 @@ html.portrait-view .stage {
   flex-direction: column;
   height: 100%;
   overflow: hidden;
-  font-size: calc(clamp(14px, 4.6cqw, 26px) * var(--font-scale, 1));
+  font-size: calc(clamp(20px, min(6cqh, 5cqw), 36px) * var(--font-scale, 1));
 }
 .tk-lists {
   flex: 1;
@@ -2810,7 +2874,7 @@ html.portrait-view .stage {
 .tk-list {
   margin: 0.5em 0 0.15em;
   color: var(--muted);
-  font-size: 0.72em;
+  font-size: max(0.72em, var(--t-meta));
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.06em;
@@ -2860,7 +2924,7 @@ html.portrait-view .stage {
 .tk-due {
   flex: none;
   color: var(--muted);
-  font-size: 0.75em;
+  font-size: max(0.75em, var(--t-meta));
 }
 .tk-overdue {
   color: var(--danger);
@@ -2984,7 +3048,7 @@ html.portrait-view .stage {
   top: 0.3em;
   right: 0.5em;
   color: #555;
-  font-size: calc(9px * var(--font-scale, 1));
+  font-size: calc(12px * var(--font-scale, 1));
   text-shadow: 0 0 2px #fff;
 }
 [data-mode="night"] .rd-credit {
@@ -3091,7 +3155,7 @@ html.portrait-view .stage {
   gap: 0.5em;
   height: 100%;
   min-height: 0;
-  font-size: calc(clamp(13px, 5cqmin, 24px) * var(--font-scale, 1));
+  font-size: calc(clamp(var(--t-small), 5cqmin, 28px) * var(--font-scale, 1));
 }
 .tm-list {
   display: grid;
@@ -3201,7 +3265,7 @@ html.portrait-view .stage {
 }
 .tm-plen {
   color: var(--muted);
-  font-size: 0.8em;
+  font-size: max(0.8em, var(--t-meta));
 }
 .tm-preset:disabled {
   opacity: 0.4;
@@ -3308,7 +3372,7 @@ html.portrait-view .stage {
   gap: 0.4em;
   height: 100%;
   overflow: hidden;
-  font-size: calc(clamp(13px, min(calc(14cqw / var(--n, 1)), 6.5cqh), 28px) * var(--font-scale, 1));
+  font-size: calc(clamp(var(--t-meta), min(calc(14cqw / var(--n, 1)), 6.5cqh), 28px) * var(--font-scale, 1));
 }
 .ch-cols {
   display: grid;
@@ -3519,7 +3583,7 @@ html.portrait-view .stage {
 .ch-worth {
   flex: none;
   color: #f5b301;
-  font-size: 0.7em;
+  font-size: max(0.7em, var(--t-meta));
 }
 .ch-free {
   color: var(--muted);
@@ -3679,7 +3743,7 @@ html.portrait-view .stage {
   display: flex;
   justify-content: space-between;
   gap: 0.75rem;
-  font-size: calc(0.95rem * var(--font-scale, 1));
+  font-size: calc(clamp(var(--t-small), 4.5cqw, 26px) * var(--font-scale, 1));
 }
 .p5-wrap {
   line-height: 1.35;
@@ -3694,12 +3758,31 @@ html.portrait-view .stage {
 }
 .p5-quote {
   margin: 0;
-  font-size: calc(1rem * var(--font-scale, 1));
-  line-height: 1.4;
+  line-height: 1.35;
+  text-wrap: pretty;
+}
+/* A joke, quote or affirmation fills its tile and steps down when it's long (design review, 2026-11-26). */
+.w-joke,
+.w-quotes,
+.w-affirm {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0.6em;
+  height: 100%;
+  overflow: hidden;
+  font-size: calc(clamp(var(--t-small), min(14cqh, 6cqw), 48px) * var(--font-scale, 1));
+}
+.p5-quote cite {
+  display: block;
+  margin-top: 0.4em;
+  color: var(--muted);
+  font-size: 0.7em;
+  font-style: normal;
 }
 .p5-mono {
   font-family: ui-monospace, monospace;
-  font-size: calc(0.75rem * var(--font-scale, 1));
+  font-size: calc(var(--t-meta) * var(--font-scale, 1));
   line-height: 1.35;
   opacity: 0.9;
 }
@@ -3894,7 +3977,7 @@ html.portrait-view .stage {
   overflow: hidden;
 }
 .sc-state {
-  font-size: calc(min(28cqh, 12cqw) * var(--font-scale, 1));
+  font-size: calc(max(24px, min(28cqh, 12cqw)) * var(--font-scale, 1));
   font-weight: 800;
   line-height: 1.05;
 }
@@ -3920,7 +4003,7 @@ html.portrait-view .stage {
 }
 .sc-detail {
   color: var(--muted);
-  font-size: calc(min(8cqh, 3.6cqw) * var(--font-scale, 1));
+  font-size: calc(max(var(--t-meta), min(8cqh, 3.6cqw)) * var(--font-scale, 1));
   display: -webkit-box;
   -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
@@ -4100,6 +4183,21 @@ html.portrait-view .stage {
   font-size: 0.85em;
   color: var(--danger);
 }
+/* Week and Up next had no size of their own and drew at the page's 16 px whatever the tile (design review, 2026-11-26).
+   Both are sized for the tile and stepped down by fillTile when a busy week overflows. */
+.w-week,
+.w-upnext {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+.w-week {
+  font-size: calc(clamp(18px, min(6cqh, 2cqw), 28px) * var(--font-scale, 1));
+}
+.w-upnext {
+  font-size: calc(clamp(20px, min(9cqh, 6cqw), 44px) * var(--font-scale, 1));
+}
 .wk-grid {
   display: grid;
   grid-template-columns: repeat(var(--n, 7), minmax(0, 1fr));
@@ -4114,7 +4212,7 @@ html.portrait-view .stage {
   gap: 0.15em;
 }
 .wk-head {
-  font-size: 0.75em;
+  font-size: max(0.8em, var(--t-meta));
   font-weight: 700;
   margin: 0;
   color: var(--muted);
@@ -4126,7 +4224,7 @@ html.portrait-view .stage {
   margin: 0;
   padding: 0;
   list-style: none;
-  font-size: 0.8em;
+  font-size: max(0.85em, var(--t-meta));
   line-height: 1.2;
 }
 .wk-ev {
@@ -4134,6 +4232,7 @@ html.portrait-view .stage {
   align-items: flex-start;
   gap: 0.25em;
   overflow: hidden;
+  overflow-wrap: anywhere;
 }
 .wk-dot {
   width: 0.45em;
@@ -4163,7 +4262,7 @@ html.portrait-view .stage {
   margin: 0.5em 0 0;
   padding: 0;
   list-style: none;
-  font-size: 0.85em;
+  font-size: max(0.8em, var(--t-small));
 }
 .un-row {
   display: flex;
@@ -4190,7 +4289,7 @@ html.portrait-view .stage {
   text-overflow: ellipsis;
   white-space: nowrap;
   font: inherit;
-  font-size: 0.8em;
+  font-size: max(0.8em, var(--t-meta));
   padding: 0.25em 0.5em;
   border-radius: 999px;
   border: 1px solid var(--accent);
@@ -4491,6 +4590,9 @@ html.portrait-view .stage {
 }
 .td-kind {
   color: var(--muted);
+}
+.td-list {
+  font-size: max(1em, var(--t-small));
 }
 .td-when {
   font-weight: 600;

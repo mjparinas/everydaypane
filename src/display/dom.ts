@@ -90,3 +90,33 @@ export function keepFitted(el: HTMLElement, fit: () => void): () => void {
     ro?.disconnect();
   };
 }
+
+/**
+ * Lets a list or a short text fill its tile (design review, 2026-11-26: four events used a fifth of a tall schedule
+ * tile). The stylesheet sizes `root` for the whole tile; this steps it down while it overflows, never below `floorPx`,
+ * on resize and whenever the widget calls `fit` after drawing new content.
+ */
+export function fillTile(
+  el: HTMLElement,
+  root: HTMLElement,
+  floorPx: number,
+  box: HTMLElement = root,
+): { fit: () => void; stop: () => void } {
+  const fit = () => {
+    shrinkToFit(box, root, floorPx);
+    // Still too long at the floor: the stylesheet may fade the bottom edge to say there's more.
+    root.toggleAttribute("data-over", box.scrollHeight > box.clientHeight + 1);
+  };
+  return { fit, stop: keepFitted(el, fit) };
+}
+
+/**
+ * Hides a list's last items, one at a time, while the list overflows its box, keeping at least one, so the wall
+ * never shows half a row (design review, 2026-11-26: hide what doesn't fit rather than shrink it below the floor).
+ */
+export function dropOverflow(box: HTMLElement, items: string): void {
+  const rows = [...box.querySelectorAll<HTMLElement>(items)];
+  // An inline style, because a row's own `display` rule would beat the `hidden` attribute.
+  for (const r of rows) r.style.display = "";
+  for (let i = rows.length - 1; i > 0 && box.scrollHeight > box.clientHeight + 1; i--) rows[i]!.style.display = "none";
+}

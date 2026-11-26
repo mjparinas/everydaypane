@@ -2,7 +2,7 @@ import { addDays, byDay, dayLabel, eventDays, eventTime, isWeekend, localDate, m
 import type { CalendarData, CalendarEvent } from "@/lib/display/types";
 
 import { subscribe } from "../api";
-import { fill, h } from "../dom";
+import { fill, fillTile, h } from "../dom";
 import { fmt } from "../format";
 import { everyMinute } from "../ticker";
 import type { Mount } from "./types";
@@ -29,6 +29,7 @@ function row(e: CalendarEvent, date: string, ctx: { timeZone: string; hour12: bo
 export const agenda: Mount<"agenda"> = (el, w, ctx) => {
   const root = h("div", { class: "w-agenda" }, h("div", { class: "w-empty" }, "Loading the calendar…"));
   el.append(root);
+  const tile = fillTile(el, root, 18);
   let data: CalendarData | null = null;
   let drawn = "";
 
@@ -66,6 +67,7 @@ export const agenda: Mount<"agenda"> = (el, w, ctx) => {
         ),
       ),
     );
+    tile.fit();
   };
 
   const stopFeed = subscribe<CalendarData>(FEED, EVERY, (d) => {
@@ -76,6 +78,7 @@ export const agenda: Mount<"agenda"> = (el, w, ctx) => {
   return () => {
     stopFeed();
     stopTick();
+    tile.stop();
   };
 };
 
@@ -295,6 +298,7 @@ function trimDay(day: HTMLElement): void {
 export const calendarWeek: Mount<"calendarWeek"> = (el, w, ctx) => {
   const root = h("div", { class: "w-week" }, h("div", { class: "w-empty" }, "Loading the calendar…"));
   el.append(root);
+  const tile = fillTile(el, root, 16);
   let data: CalendarData | null = null;
   const draw = (now: number) => {
     if (!data) return;
@@ -326,6 +330,7 @@ export const calendarWeek: Mount<"calendarWeek"> = (el, w, ctx) => {
         }),
       ),
     );
+    tile.fit();
   };
   const stopFeed = subscribe<CalendarData>(FEED, EVERY, (d) => {
     data = d;
@@ -335,6 +340,7 @@ export const calendarWeek: Mount<"calendarWeek"> = (el, w, ctx) => {
   return () => {
     stopFeed();
     stopTick();
+    tile.stop();
   };
 };
 
@@ -354,6 +360,7 @@ function upcoming(data: CalendarData, timeZone: string, now: number): CalendarEv
 export const calendarUpNext: Mount<"calendarUpNext"> = (el, w, ctx) => {
   const root = h("div", { class: "w-upnext" }, h("div", { class: "w-empty" }, "Loading the calendar…"));
   el.append(root);
+  const tile = fillTile(el, root, 18);
   let data: CalendarData | null = null;
   const draw = (now: number) => {
     if (!data) return;
@@ -395,6 +402,7 @@ export const calendarUpNext: Mount<"calendarUpNext"> = (el, w, ctx) => {
           )
         : null,
     );
+    tile.fit();
   };
   const stopFeed = subscribe<CalendarData>(FEED, EVERY, (d) => {
     data = d;
@@ -404,5 +412,6 @@ export const calendarUpNext: Mount<"calendarUpNext"> = (el, w, ctx) => {
   return () => {
     stopFeed();
     stopTick();
+    tile.stop();
   };
 };

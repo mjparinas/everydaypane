@@ -3,7 +3,7 @@ import type { TransitData, TransitDeparture } from "@/lib/display/types";
 import { agencyOf, stopKey } from "@/lib/transitAgencies";
 
 import { subscribe } from "../api";
-import { fill, h } from "../dom";
+import { dropOverflow, fill, h, keepFitted } from "../dom";
 import { fmt } from "../format";
 import { everyMinute } from "../ticker";
 import type { Mount } from "./types";
@@ -46,6 +46,9 @@ export const transit: Mount<"transit"> = (el, w, ctx) => {
   let data: TransitData | null = null;
   const clock = fmt(ctx.timeZone, { hour: "numeric", minute: "2-digit", hour12: ctx.hour12 });
 
+  // Each stop gets its share of the tile and drops the buses that don't fit, instead of running into the next stop's
+  // name (design review, 2026-11-26).
+  const fit = () => root.querySelectorAll<HTMLElement>(".tl-stop").forEach((s) => dropOverflow(s, ".tl-row"));
   const draw = () => {
     if (!data) return;
     if (agency.needsKey && !data.configured)
@@ -87,6 +90,7 @@ export const transit: Mount<"transit"> = (el, w, ctx) => {
       }),
       h("div", { class: "tl-src" }, data.failed?.includes(w.agency) ? `${agency.name} isn't answering right now` : agency.credit),
     );
+    fit();
   };
 
   const stopFeed = subscribe<TransitData>("transit", TRANSIT_EVERY, (d) => {
@@ -94,8 +98,10 @@ export const transit: Mount<"transit"> = (el, w, ctx) => {
     draw();
   });
   const stopTick = everyMinute(draw);
+  const stopFit = keepFitted(el, fit);
   return () => {
     stopFeed();
     stopTick();
+    stopFit();
   };
 };

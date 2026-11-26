@@ -1,7 +1,7 @@
 import { celebration, milestone, upcoming, type UpcomingEvent } from "@/lib/config/countdown";
 
 import { imageUrl } from "../api";
-import { fill, h } from "../dom";
+import { fill, fillTile, h } from "../dom";
 import { isoDate } from "../format";
 import { everyMinute } from "../ticker";
 import type { Mount } from "./types";
@@ -58,8 +58,9 @@ function hero(u: UpcomingEvent): HTMLElement {
 export const countdown: Mount<"countdown"> = (el, w, ctx) => {
   const root = h("div", { class: "w-countdown" });
   el.append(root);
+  const tile = fillTile(el, root, 18);
   let lastDay = "";
-  return everyMinute((now) => {
+  const stopTick = everyMinute((now) => {
     const today = isoDate(now, ctx.timeZone);
     if (today === lastDay) return;
     lastDay = today;
@@ -76,5 +77,10 @@ export const countdown: Mount<"countdown"> = (el, w, ctx) => {
       ...celebrating.map(hero),
       ...rest.map((u, i) => row(u, i === 0 && !celebrating.length)),
     );
+    tile.fit();
   });
+  return () => {
+    stopTick();
+    tile.stop();
+  };
 };
