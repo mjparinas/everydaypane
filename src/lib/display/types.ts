@@ -162,6 +162,16 @@ export interface TidesData {
   events: TideEvent[];
   units: "m" | "ft";
   byStation?: Record<string, TideEvent[]>;
+  /** Predicted water level every `stepMinutes` from `start`, for stations on a widget with the day curve on. */
+  curves?: Record<string, TideCurve>;
+}
+
+export interface TideCurve {
+  /** ISO time of the first point. */
+  start: string;
+  stepMinutes: number;
+  /** Metres; the widget converts to feet. */
+  heights: number[];
 }
 
 export type BinKind = "garbage" | "recycling" | "organics" | "glass" | "other";
@@ -276,7 +286,7 @@ export interface SportsData {
 }
 
 export type AlertSeverity = "extreme" | "severe" | "moderate" | "minor";
-export type AlertSource = "alertReady" | "weather" | "roads" | "earthquakes" | "power" | "evacuations" | "indoorAir";
+export type AlertSource = "alertReady" | "weather" | "roads" | "earthquakes" | "power" | "evacuations" | "indoorAir" | "pool" | "laundry";
 
 /** One emergency alert for the area, from any source (src/server/alerts.ts). */
 export interface EmergencyAlert {
@@ -289,6 +299,11 @@ export interface EmergencyAlert {
   /** Epoch ms. */
   sent: number;
   expires: number | null;
+  /**
+   * A household notice (a washer or dryer done), not an emergency: on the strip whatever `alerts.banner` is, in blue
+   * rather than red, never emailed and left out of the alerts widget.
+   */
+  notice?: boolean;
 }
 
 export interface AlertData {
@@ -574,6 +589,34 @@ export interface AirthingsData {
   stale?: boolean;
 }
 
+/** One Blue Riiot pool reading as a display gets it (src/server/blueRiiot.ts): already in the dashboard's units. */
+export interface PoolReading {
+  kind: "temp" | "ph" | "orp" | "chlorine" | "salinity";
+  value: number;
+  unit: string;
+  level: "ok" | "warn" | "bad" | "none";
+  trend?: "up" | "down";
+  /** Blue Riiot's ideal range in the same units, when the reading is coloured. */
+  ideal?: { min: number | null; max: number | null };
+}
+
+export interface PoolInfo {
+  id: string;
+  name: string;
+  /** Epoch ms of the newest reading, or null when Blue Riiot has none. */
+  recorded: number | null;
+  readings: PoolReading[];
+}
+
+export interface PoolData {
+  updatedAt: number;
+  /** False until the household saves its Blue Riiot sign-in. */
+  configured: boolean;
+  pools: PoolInfo[];
+  error?: string;
+  stale?: boolean;
+}
+
 /** The next watering on one Rachio controller (src/server/rachio.ts). */
 export interface RachioWatering {
   /** Epoch ms it starts. */
@@ -772,6 +815,40 @@ export interface RssData {
   items: RssItem[];
 }
 
+/** Tonight's aurora outlook at home (src/server/aurora.ts); no coordinates, only the answer. */
+export interface AuroraData {
+  updatedAt: number;
+  stale?: boolean;
+  error?: string;
+  /** The latest observed or estimated Kp, and the start of its three-hour block. */
+  kpNow?: number;
+  kpNowAt?: string;
+  /** The highest Kp forecast for tonight's dark hours, and when that block starts. */
+  tonightKp?: number;
+  tonightAt?: string;
+  chance: "good" | "possible" | "slim" | "unlikely";
+  /** Kp that would bring it low into home's northern sky. */
+  kpForHorizon: number;
+  /** NOAA G scale for tonight's peak, 0 when no storm. */
+  storm: number;
+  /** Three-hour blocks from the current one, about a day ahead. */
+  blocks: { start: string; kp: number; predicted: boolean }[];
+}
+
+export interface OnThisDayItem {
+  year: number;
+  text: string;
+}
+
+export interface OnThisDayData {
+  updatedAt: number;
+  stale?: boolean;
+  error?: string;
+  /** Today in the dashboard's time zone, YYYY-MM-DD. */
+  date: string;
+  items: OnThisDayItem[];
+}
+
 export interface DadJokeData {
   updatedAt: number;
   stale?: boolean;
@@ -946,4 +1023,28 @@ export interface RiversData {
   updatedAt: number;
   units: "metric" | "imperial";
   stations: RiverStationData[];
+}
+
+/** One washer or dryer as a display gets it (src/server/laundry.ts). */
+export interface LaundryAppliance {
+  id: string;
+  name: string;
+  kind: "washer" | "dryer" | "combo";
+  state: "running" | "paused" | "done" | "idle" | "off" | "error";
+  phase?: string;
+  /** Epoch ms the cycle should end, while running or paused. */
+  endsAt?: number;
+  /** 0–100 through the cycle, when the machine says how long it is. */
+  progress?: number;
+  /** Epoch ms the last cycle ended, while it shows as done. */
+  doneAt?: number;
+}
+
+export interface LaundryData {
+  updatedAt: number;
+  /** False until an LG token is saved or SmartThings is connected. */
+  configured: boolean;
+  appliances: LaundryAppliance[];
+  error?: string;
+  stale?: boolean;
 }

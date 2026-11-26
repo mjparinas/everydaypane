@@ -160,6 +160,22 @@ export function widgetAllowed(w: Widget, off: FlagsOff): boolean {
  * motion sensors, indoor alerts) are turned off with their flag. Never saved: the household panel keeps editing the
  * full document, so turning a flag back on brings everything back as it was.
  */
+type SmartHomeSettings = DashboardConfig["integrations"]["smartHome"];
+
+/** Alerts that need no widget on screen (Airthings, laundry done, pool readings) go quiet with their widget's flag. */
+function smartHomeWithFlags(smart: SmartHomeSettings, off: FlagsOff): SmartHomeSettings {
+  const airthings = off.has(widgetFlag("airthings"));
+  const laundry = off.has(widgetFlag("laundry"));
+  const pool = off.has(widgetFlag("blueRiiot"));
+  if (!airthings && !laundry && !pool) return smart;
+  return {
+    ...smart,
+    airthings: airthings ? { ...smart.airthings, alertRadon: false, alertCo2: false } : smart.airthings,
+    laundry: laundry ? { ...smart.laundry, alertDone: false } : smart.laundry,
+    blueRiiot: pool ? { ...smart.blueRiiot, alerts: false } : smart.blueRiiot,
+  };
+}
+
 export function applyFlags(config: DashboardConfig, off: FlagsOff): DashboardConfig {
   if (off.size === 0) return config;
   const sources = config.integrations.photos.sources.filter((s) => !off.has(photoFlag(s.kind)));
@@ -191,12 +207,7 @@ export function applyFlags(config: DashboardConfig, off: FlagsOff): DashboardCon
             doorbell: { ...config.integrations.homeAssistant.doorbell, entityId: "", cameraEntityId: "" },
           }
         : config.integrations.homeAssistant,
-      smartHome: off.has(widgetFlag("airthings"))
-        ? {
-            ...config.integrations.smartHome,
-            airthings: { ...config.integrations.smartHome.airthings, alertRadon: false, alertCo2: false },
-          }
-        : config.integrations.smartHome,
+      smartHome: smartHomeWithFlags(config.integrations.smartHome, off),
     },
   };
   return next;
@@ -218,6 +229,8 @@ export const SETTINGS_FLAGS: Record<string, string[]> = {
   "smart-home": (["nest", "ecobee", "smartthings", "govee", "hue", "lifx"] as const).map(smartHomeFlag),
   "weather-stations": [widgetFlag("tempest"), widgetFlag("weatherUnderground")],
   "indoor-air": [widgetFlag("airthings")],
+  laundry: [widgetFlag("laundry")],
+  pool: [widgetFlag("blueRiiot")],
   sprinklers: [widgetFlag("rachio")],
   menus: [widgetFlag("menus")],
   unifi: [widgetFlag("unifi")],

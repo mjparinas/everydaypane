@@ -29,12 +29,16 @@ export type SecretKey =
   | "lifx.token"
   | "tempest.token"
   | "wu.apiKey"
+  | "lg.token"
   | "airthings.clientId"
   | "airthings.clientSecret"
   | "ecoflow.accessKey"
   | "ecoflow.secretKey"
   | "unifi.apiKey"
   | "rachio.apiKey"
+  // Blue Riiot has no developer API: the app's own email and password (src/server/blueRiiot.ts).
+  | "blueRiiot.email"
+  | "blueRiiot.password"
   | "microsoft.refreshToken"
   | "microsoft.scopes"
   | "todoist.refreshToken"
@@ -95,12 +99,15 @@ export async function secretsSet(accountId: string): Promise<Record<SecretKey, b
     "lifx.token": set.has("lifx.token"),
     "tempest.token": set.has("tempest.token"),
     "wu.apiKey": set.has("wu.apiKey"),
+    "lg.token": set.has("lg.token"),
     "airthings.clientId": set.has("airthings.clientId"),
     "airthings.clientSecret": set.has("airthings.clientSecret"),
     "ecoflow.accessKey": set.has("ecoflow.accessKey"),
     "ecoflow.secretKey": set.has("ecoflow.secretKey"),
     "unifi.apiKey": set.has("unifi.apiKey"),
     "rachio.apiKey": set.has("rachio.apiKey"),
+    "blueRiiot.email": set.has("blueRiiot.email"),
+    "blueRiiot.password": set.has("blueRiiot.password"),
     "microsoft.refreshToken": set.has("microsoft.refreshToken"),
     "microsoft.scopes": set.has("microsoft.scopes"),
     "todoist.refreshToken": set.has("todoist.refreshToken"),

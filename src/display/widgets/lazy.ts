@@ -17,11 +17,17 @@ type Lazy = {
   haEntity: Mount<"haEntity">;
   oura: Mount<"oura">;
   airthings: Mount<"airthings">;
+  laundry: Mount<"laundry">;
   drivebc: Mount<"drivebc">;
   snow: Mount<"snow">;
   rivers: Mount<"rivers">;
   borderWait: Mount<"borderWait">;
   rachio: Mount<"rachio">;
+  blueRiiot: Mount<"blueRiiot">;
+  tides: Mount<"tides">;
+  moon: Mount<"moon">;
+  aurora: Mount<"aurora">;
+  onThisDay: Mount<"onThisDay">;
 };
 
 (globalThis as { __epApi?: typeof api }).__epApi = api;

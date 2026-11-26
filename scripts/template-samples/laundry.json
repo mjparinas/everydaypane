@@ -1,0 +1,16 @@
+{
+  "updatedAt": 1795473720000,
+  "configured": true,
+  "appliances": [
+    {
+      "id": "lg.washer",
+      "name": "Washer",
+      "kind": "washer",
+      "state": "running",
+      "phase": "Rinsing",
+      "endsAt": 1795475100000,
+      "progress": 64
+    },
+    { "id": "lg.dryer", "name": "Dryer", "kind": "dryer", "state": "done", "doneAt": 1795473000000 }
+  ]
+}

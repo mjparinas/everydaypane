@@ -15,6 +15,16 @@
     "file": "sunTimes.png"
   },
   {
+    "type": "moon",
+    "name": "Moon phase",
+    "file": "moon.png"
+  },
+  {
+    "type": "aurora",
+    "name": "Aurora tonight",
+    "file": "aurora.png"
+  },
+  {
     "type": "weather",
     "name": "Weather",
     "file": "weather.png"
@@ -80,6 +90,21 @@
     "file": "tempest.png"
   },
   {
+    "type": "airthings",
+    "name": "Indoor air",
+    "file": "airthings.png"
+  },
+  {
+    "type": "blueRiiot",
+    "name": "Pool",
+    "file": "blueRiiot.png"
+  },
+  {
+    "type": "rachio",
+    "name": "Sprinklers",
+    "file": "rachio.png"
+  },
+  {
     "type": "ecoflow",
     "name": "EcoFlow",
     "file": "ecoflow.png"
@@ -128,6 +153,16 @@
     "type": "packages",
     "name": "Packages",
     "file": "packages.png"
+  },
+  {
+    "type": "snow",
+    "name": "Snow report",
+    "file": "snow.png"
+  },
+  {
+    "type": "rivers",
+    "name": "River levels",
+    "file": "rivers.png"
   },
   {
     "type": "tides",
@@ -180,9 +215,19 @@
     "file": "pomodoro.png"
   },
   {
+    "type": "drivebc",
+    "name": "Highway cameras",
+    "file": "drivebc.png"
+  },
+  {
     "type": "ferries",
     "name": "BC Ferries",
     "file": "ferries.png"
+  },
+  {
+    "type": "borderWait",
+    "name": "Border wait times",
+    "file": "borderWait.png"
   },
   {
     "type": "sports",
@@ -193,6 +238,11 @@
     "type": "earth",
     "name": "Earth wind map",
     "file": "earth.png"
+  },
+  {
+    "type": "windy",
+    "name": "Windy map",
+    "file": "windy.png"
   },
   {
     "type": "shopping",
@@ -280,6 +330,11 @@
     "file": "affirmation.png"
   },
   {
+    "type": "onThisDay",
+    "name": "On this day",
+    "file": "onThisDay.png"
+  },
+  {
     "type": "horoscope",
     "name": "Horoscope",
     "file": "horoscope.png"
@@ -318,5 +373,10 @@
     "type": "maps",
     "name": "Google Maps",
     "file": "maps.png"
+  },
+  {
+    "type": "internet",
+    "name": "Internet",
+    "file": "internet.png"
   }
 ]

@@ -37,16 +37,22 @@ export function alertStrip(getPayload: () => DisplayPayload | null, onNew?: () =
   const draw = () => {
     const banner = getPayload()?.alerts.banner ?? "never";
     const hidden = dismissed();
-    const show = current.filter((a) => meetsBanner(a.severity, banner) && !hidden.has(key(a)));
+    // Household notices (a washer done) show whatever the threshold, since the strip being on is the switch for them.
+    const show = current.filter((a) => (a.notice || meetsBanner(a.severity, banner)) && !hidden.has(key(a)));
     el.classList.toggle("show", show.length > 0);
     const fresh = show.filter((a) => !seen.has(key(a)));
     for (const a of fresh) seen.add(key(a));
     if (fresh.length) onNew?.();
     const [top] = show;
     if (!top) return fill(el);
+    // Only notices on the strip: blue, not the emergency red.
+    el.classList.toggle(
+      "notice",
+      show.every((a) => a.notice),
+    );
     fill(
       el,
-      h("span", { class: "as-icon", "aria-hidden": "true" }, "⚠"),
+      h("span", { class: "as-icon", "aria-hidden": "true" }, top.notice ? "✓" : "⚠"),
       h(
         "span",
         { class: "as-text" },
@@ -69,7 +75,9 @@ export function alertStrip(getPayload: () => DisplayPayload | null, onNew?: () =
   return { el, stop };
 }
 
-export function alertsList(root: HTMLElement, alerts: EmergencyAlert[], opts: { showAllClear: boolean; place: string; title?: string }) {
+export function alertsList(root: HTMLElement, all: EmergencyAlert[], opts: { showAllClear: boolean; place: string; title?: string }) {
+  // The widget lists emergencies; household notices live on the strip and their own widgets.
+  const alerts = all.filter((a) => !a.notice);
   if (!alerts.length) {
     fill(
       root,

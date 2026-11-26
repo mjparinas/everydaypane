@@ -1,0 +1,17 @@
+{
+  "updatedAt": 1795473720000,
+  "configured": true,
+  "pools": [
+    {
+      "id": "pool-backyard",
+      "name": "Backyard pool",
+      "recorded": 1795473000000,
+      "readings": [
+        { "kind": "temp", "value": 26.4, "unit": "°C", "level": "ok", "trend": "up", "ideal": { "min": 20, "max": 40 } },
+        { "kind": "ph", "value": 7.8, "unit": "", "level": "warn", "ideal": { "min": 7.2, "max": 7.6 } },
+        { "kind": "orp", "value": 712, "unit": "mV", "level": "ok", "ideal": { "min": 650, "max": 750 } },
+        { "kind": "salinity", "value": 3.1, "unit": "g/L", "level": "ok", "ideal": { "min": 2.7, "max": 3.4 } }
+      ]
+    }
+  ]
+}

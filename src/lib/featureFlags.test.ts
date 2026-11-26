@@ -45,6 +45,11 @@ describe("feature flag registry", () => {
       "widget.drivebc",
       "widget.rachio",
       "widget.tides",
+      "widget.moon",
+      "widget.aurora",
+      "widget.onThisDay",
+      "widget.laundry",
+      "widget.blueRiiot",
       "widget.transit",
       "widget.commute",
       "widget.ferries",
@@ -124,7 +129,14 @@ describe("applyFlags", () => {
     c.integrations.homeAssistant.doorbell = { entityId: "event.ring", cameraEntityId: "camera.door", seconds: 30 };
     c.screenSaver.motionEntityIds = ["binary_sensor.kitchen"];
     c.integrations.smartHome.airthings.alertRadon = true;
-    const out = applyFlags(c, new Set([smartHomeFlag("homeAssistant"), widgetFlag("airthings")]));
+    c.integrations.smartHome.laundry.alertDone = true;
+    c.integrations.smartHome.blueRiiot.alerts = true;
+    const out = applyFlags(
+      c,
+      new Set([smartHomeFlag("homeAssistant"), widgetFlag("airthings"), widgetFlag("laundry"), widgetFlag("blueRiiot")]),
+    );
+    expect(out.integrations.smartHome.laundry.alertDone).toBe(false);
+    expect(out.integrations.smartHome.blueRiiot.alerts).toBe(false);
     expect(out.integrations.homeAssistant.doorbell.entityId).toBe("");
     expect(out.screenSaver.motionEntityIds).toEqual([]);
     expect(out.integrations.smartHome.airthings.alertRadon).toBe(false);

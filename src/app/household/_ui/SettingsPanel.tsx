@@ -59,7 +59,7 @@ const GROUPS = [
     id: "ha",
     label: "Home & devices",
     tier: "Advanced",
-    sections: ["ha", "smart-home", "unifi", "ecoflow", "weather-stations", "indoor-air", "sprinklers", "menus"],
+    sections: ["ha", "smart-home", "unifi", "ecoflow", "weather-stations", "indoor-air", "sprinklers", "pool", "laundry", "menus"],
   },
 ] as const;
 

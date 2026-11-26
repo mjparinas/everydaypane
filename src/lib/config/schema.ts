@@ -1,10 +1,12 @@
 import { z } from "zod";
 
 import { AIRTHINGS_DEFAULT_KINDS, AIRTHINGS_KINDS } from "../airthings";
+import { POOL_DEFAULT_KINDS, POOL_KINDS } from "../blueRiiot";
 import { BORDER_CROSSINGS, BORDER_DIRECTIONS } from "../border";
 import { DRIVEBC_MAX_CAMERAS, DRIVEBC_REFRESH } from "../drivebc";
 import { EARTH_OVERLAYS, EARTH_ZOOMS } from "../earth";
 import { FERRY_ROUTES } from "../ferries";
+import { DONE_MINUTES_DEFAULT } from "../laundry";
 import { MEAL_SLOTS } from "../meals";
 import { NEWS_PRESETS } from "../newsPresets";
 import { RIVER_DEFAULT_STATIONS, RIVER_STATION_RE } from "../rivers";
@@ -136,6 +138,23 @@ export const widgetSchema = z.discriminatedUnion("type", [
     type: z.literal("sunTimes"),
     showEmoji: z.boolean().default(true),
     showDaylight: z.boolean().default(true),
+    // Tonight's moon phase under the sun times, worked out on the device (Melvin, 2026-11-25). Off for widgets saved
+    // before it existed, on for new ones.
+    showMoon: z.boolean().default(false),
+  }),
+  // Moon phase (Melvin, 2026-11-25): a drawn disc, the phase name, how much is lit and the next full and new moons,
+  // all worked out on the device (src/lib/moon.ts). `showName` adds the full moon's traditional name (Cold Moon).
+  z.object({
+    ...base,
+    type: z.literal("moon"),
+    showNext: z.boolean().default(true),
+    showName: z.boolean().default(true),
+  }),
+  // Aurora tonight (Melvin, 2026-11-25): NOAA's Kp forecast and the chance of seeing it from home (src/server/aurora.ts).
+  z.object({
+    ...base,
+    type: z.literal("aurora"),
+    showBlocks: z.boolean().default(true),
   }),
   z.object({
     ...base,
@@ -242,6 +261,19 @@ export const widgetSchema = z.discriminatedUnion("type", [
       .default([...AIRTHINGS_DEFAULT_KINDS])
       .refine((r) => new Set(r).size === r.length, "Each reading once"),
   }),
+  // Blue Riiot pool monitor (Melvin, 2026-11-26: unofficial cloud API, signed in with the app's email and password under
+  // Settings › Pool). `pools` are Blue Riiot pool ids, none picked means every pool.
+  z.object({
+    ...base,
+    type: z.literal("blueRiiot"),
+    pools: z.array(z.string().trim().min(1).max(80)).max(4).default([]),
+    readings: z
+      .array(z.enum(POOL_KINDS))
+      .min(1)
+      .max(POOL_KINDS.length)
+      .default([...POOL_DEFAULT_KINDS])
+      .refine((r) => new Set(r).size === r.length, "Each reading once"),
+  }),
   // Rachio sprinklers (Melvin, 2026-11-25: native Rachio cloud API, not Home Assistant). API key under Settings ›
   // Sprinklers; `devices` are controller ids, none picked means every controller. `allowSkip` lets a tap on the wall
   // skip the next watering, because anyone in the kitchen can reach the screen.
@@ -272,6 +304,14 @@ export const widgetSchema = z.discriminatedUnion("type", [
     showChart: z.boolean().default(true),
     showCounts: z.boolean().default(true),
     showUsage: z.boolean().default(false),
+  }),
+  // Washer and dryer (Melvin, 2026-11-25): time left and "done" from LG ThinQ and Samsung through SmartThings. Machines
+  // are found under Settings › Laundry; `appliances` empty means every machine.
+  z.object({
+    ...base,
+    type: z.literal("laundry"),
+    appliances: z.array(z.string().trim().min(1).max(130)).max(8).default([]),
+    showIdle: z.boolean().default(true),
   }),
   // Weather Underground PWS (Phase 4, Household).
   z.object({
@@ -375,6 +415,8 @@ export const widgetSchema = z.discriminatedUnion("type", [
     stationName: z.string().max(80),
     count: z.number().int().min(1).max(8),
     showHeight: z.boolean(),
+    // The day's predicted water level as a curve with a "now" marker (Melvin, 2026-11-25).
+    showCurve: z.boolean().default(false),
   }),
   // TransLink departures (Melvin, 2026-11-19): the next buses from a few stops, live from TransLink's GTFS-realtime
   // feed (src/server/translink.ts). Stops are picked in the widget's settings and kept with their stop number and
@@ -654,6 +696,14 @@ export const widgetSchema = z.discriminatedUnion("type", [
     type: z.literal("affirmation"),
     category: z.enum(["general", "kids", "calm", "courage"]).default("general"),
     custom: z.array(z.string().trim().min(1).max(160)).max(24).default([]),
+  }),
+  // On this day (Melvin, 2026-11-25): Wikipedia's featured history for today, filtered for the kitchen by default.
+  z.object({
+    ...base,
+    type: z.literal("onThisDay"),
+    kind: z.enum(["events", "births"]).default("events"),
+    count: z.number().int().min(1).max(5).default(1),
+    familyFriendly: z.boolean().default(true),
   }),
   // Playful horoscope (Melvin, 2026-11-23): curated kitchen blurbs by sign, not a live astrology feed.
   z.object({
@@ -1032,6 +1082,20 @@ export const configSchema = z
               co2Ppm: z.number().int().min(800).max(5000).default(1500),
             })
             .default({ alertRadon: false, alertCo2: false, co2Ppm: 1500 }),
+          // Laundry (2026-11-25): LG's country picks its API region; the LG token is in secrets. A finished load is
+          // "done" for doneMinutes, and can put a blue notice on the alert strip.
+          laundry: z
+            .object({
+              country: z
+                .string()
+                .regex(/^[A-Z]{2}$/)
+                .default("CA"),
+              alertDone: z.boolean().default(true),
+              doneMinutes: z.number().int().min(15).max(720).default(DONE_MINUTES_DEFAULT),
+            })
+            .default({ country: "CA", alertDone: true, doneMinutes: DONE_MINUTES_DEFAULT }),
+          // Blue Riiot (2026-11-26): readings far outside the ideal range on the strip, off by default; sign-in in secrets.
+          blueRiiot: z.object({ alerts: z.boolean().default(false) }).default({ alerts: false }),
           weatherUnderground: z.object({ stationId: z.string().max(24).default("") }),
           menus: z.object({
             slug: z.string().trim().max(80).default(""),
@@ -1041,6 +1105,8 @@ export const configSchema = z
         .default({
           tempest: {},
           airthings: { alertRadon: false, alertCo2: false, co2Ppm: 1500 },
+          laundry: { country: "CA", alertDone: true, doneMinutes: DONE_MINUTES_DEFAULT },
+          blueRiiot: { alerts: false },
           weatherUnderground: { stationId: "" },
           menus: { slug: "", schoolName: "" },
         }),

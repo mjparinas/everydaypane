@@ -3,6 +3,7 @@
 import { useEffect, useState, type ReactNode } from "react";
 
 import { AIRTHINGS_KINDS, AIRTHINGS_LABELS } from "@/lib/airthings";
+import { POOL_KINDS, POOL_LABELS } from "@/lib/blueRiiot";
 import { BORDER_CROSSINGS, BORDER_DIRECTION_LABELS, BORDER_DIRECTIONS, BORDER_INFO } from "@/lib/border";
 import { PERIOD_LABELS, PERIODS } from "@/lib/config/periods";
 import type { CountdownEvent, DashboardConfig, TimerPreset, Widget } from "@/lib/config/schema";
@@ -17,10 +18,12 @@ import { MOUNTAINS } from "@/lib/snow";
 import { WINDY_OVERLAY_LABELS, WINDY_OVERLAYS, windyPressureAllowed } from "@/lib/windy";
 
 import { useAirthings } from "./airthings";
+import { usePools } from "./blueRiiot";
 import { PlaceFinder } from "./CommutePanel";
 import { useEcoFlow } from "./EcoFlowPanel";
 import { Range, Segmented, Select, Stepper, Text, TextArea, Toggle } from "./fields";
 import { HaEntityList, useHa } from "./haEntities";
+import { useLaundry } from "./laundry";
 import { useMusic } from "./music";
 import { useRachio } from "./rachio";
 import { loadSmartProvider, type SmartProviderDetail } from "./smartHome";
@@ -418,6 +421,12 @@ function TypeSettings({
             checked={w.showDaylight}
             hint="The line under the times, like “8 hr 51 min of daylight”."
             onChange={(v) => e((x) => void (x.showDaylight = v))}
+          />
+          <Toggle
+            label="Show the moon"
+            checked={w.showMoon}
+            hint="Tonight's phase and how much of it is lit, like “Waxing gibbous · 82% lit”."
+            onChange={(v) => e((x) => void (x.showMoon = v))}
           />
           <p className="text-xs text-soft">Times are for {config.location.name || "the dashboard's location"} (Settings).</p>
         </>
@@ -1161,10 +1170,14 @@ function TypeSettings({
     }
     case "airthings":
       return <AirthingsSettings w={w} onChange={edit<"airthings">()} />;
+    case "laundry":
+      return <LaundrySettings w={w} onChange={edit<"laundry">()} />;
     case "rivers":
       return <RiversSettings w={w} onChange={edit<"rivers">()} />;
     case "rachio":
       return <RachioSettings w={w} onChange={edit<"rachio">()} />;
+    case "blueRiiot":
+      return <PoolSettings w={w} onChange={edit<"blueRiiot">()} />;
     case "ecoflow":
       return <EcoFlowSettings w={w} e={edit<"ecoflow">()} />;
     case "unifi": {
@@ -1688,16 +1701,32 @@ function TypeSettings({
       const e = edit<"tides">();
       return (
         <>
-          <Text label="Station name" value={w.stationName} maxLength={80} onChange={(v) => e((x) => void (x.stationName = v))} />
-          <Text
-            label="Station id"
-            value={w.stationId}
-            maxLength={40}
-            hint="NOAA: digits only. Canada: iwls:8320 for Point Atkinson."
-            onChange={(v) => e((x) => void (x.stationId = v))}
+          <p className="text-sm">
+            Station: <strong>{w.stationName || "none picked"}</strong>
+            {w.stationId ? <span className="text-soft"> ({w.stationId})</span> : null}
+          </p>
+          <PlaceFinder
+            label="Find a station"
+            button="Find"
+            placeholder="White Rock, Crescent Beach, Seattle…"
+            nothing="No tide station by that name. Try a nearby harbour or beach."
+            url={(q) => `/api/household/tide-stations/?${new URLSearchParams({ q })}`}
+            onPick={(p) =>
+              e((x) => {
+                if (!p.id) return;
+                x.stationId = p.id;
+                x.stationName = p.label.replace(/\s*\([^)]*\)$/, "").slice(0, 80);
+              })
+            }
           />
           <Stepper label="Highs and lows shown" value={w.count} min={1} max={8} onChange={(v) => e((x) => void (x.count = v))} />
           <Toggle label="Show height" checked={w.showHeight} onChange={(v) => e((x) => void (x.showHeight = v))} />
+          <Toggle
+            label="Show the day's curve"
+            checked={w.showCurve}
+            hint="The predicted water level from two hours ago to tomorrow, with a line at now."
+            onChange={(v) => e((x) => void (x.showCurve = v))}
+          />
           <p className="text-xs text-soft">
             See{" "}
             <a className="text-brand underline-offset-2 hover:underline" href="/docs/tides.md">
@@ -1854,6 +1883,62 @@ function TypeSettings({
             onChange={(v) => e((x) => void (x.showDetails = v))}
           />
           <p className="text-xs text-soft">Connect the ring&apos;s Oura account in Settings › Content &amp; finance.</p>
+        </>
+      );
+    }
+    case "moon": {
+      const e = edit<"moon">();
+      return (
+        <>
+          <Toggle label="Show the next full and new moon" checked={w.showNext} onChange={(v) => e((x) => void (x.showNext = v))} />
+          <Toggle
+            label="Name the full moon"
+            checked={w.showName}
+            hint="The traditional names, like Cold Moon in December and the Harvest Moon nearest the fall equinox."
+            onChange={(v) => e((x) => void (x.showName = v))}
+          />
+          <p className="text-xs text-soft">Worked out on the screen itself, so it needs no connection.</p>
+        </>
+      );
+    }
+    case "aurora": {
+      const e = edit<"aurora">();
+      return (
+        <>
+          <Toggle
+            label="Show the next 24 hours"
+            checked={w.showBlocks}
+            hint="A bar for each three-hour block of NOAA's Kp forecast; bars high enough to see it from home are coloured."
+            onChange={(v) => e((x) => void (x.showBlocks = v))}
+          />
+          <p className="text-xs text-soft">
+            The chance is worked out for {config.location.name || "the dashboard's location"} from NOAA&apos;s Kp forecast. It still needs a
+            clear, dark sky to the north.
+          </p>
+        </>
+      );
+    }
+    case "onThisDay": {
+      const e = edit<"onThisDay">();
+      return (
+        <>
+          <Segmented
+            label="Show"
+            value={w.kind}
+            options={[
+              { value: "events", label: "Events" },
+              { value: "births", label: "Birthdays" },
+            ]}
+            onChange={(v) => e((x) => void (x.kind = v))}
+          />
+          <Stepper label="How many" value={w.count} min={1} max={5} onChange={(v) => e((x) => void (x.count = v))} />
+          <Toggle
+            label="Family friendly"
+            checked={w.familyFriendly}
+            hint="Leaves out wars, disasters and crimes, which is much of history. It errs on leaving things out."
+            onChange={(v) => e((x) => void (x.familyFriendly = v))}
+          />
+          <p className="text-xs text-soft">From Wikipedia&apos;s &ldquo;On this day&rdquo;; the same picks show all day on every screen.</p>
         </>
       );
     }
@@ -2519,6 +2604,50 @@ function AirthingsSettings({ w, onChange }: { w: Extract<Widget, { type: "airthi
   );
 }
 
+function PoolSettings({ w, onChange }: { w: Extract<Widget, { type: "blueRiiot" }>; onChange: Edit<"blueRiiot"> }) {
+  const status = usePools();
+  // A pool saved earlier that the account no longer lists still shows, so it can be switched off.
+  const listed = status?.pools ?? [];
+  const pools = [...listed, ...w.pools.filter((id) => !listed.some((p) => p.id === id)).map((id) => ({ id, name: id }))];
+  return (
+    <>
+      <p className="text-xs text-soft">Readings to show, where the pool has them (free chlorine only after a test strip in the app).</p>
+      {POOL_KINDS.map((k) => (
+        <Toggle
+          key={k}
+          label={POOL_LABELS[k]}
+          checked={w.readings.includes(k)}
+          onChange={(on) =>
+            onChange((x) => {
+              const next = on ? POOL_KINDS.filter((r) => r === k || x.readings.includes(r)) : x.readings.filter((r) => r !== k);
+              if (next.length) x.readings = next;
+            })
+          }
+        />
+      ))}
+      {!status ? null : !status.configured ? (
+        <p className="text-xs text-soft">
+          Connect Blue Riiot under <SettingsLink href="#settings/pool">Settings › Pool</SettingsLink>.
+        </p>
+      ) : pools.length === 0 ? (
+        <p className="text-xs text-soft">{status.error || "Blue Riiot lists no pools yet."}</p>
+      ) : pools.length > 1 ? (
+        <>
+          <p className="text-xs text-soft">Pick the pools to show. With none picked, it shows them all.</p>
+          {pools.map((p) => (
+            <Toggle
+              key={p.id}
+              label={p.name}
+              checked={w.pools.includes(p.id)}
+              onChange={(on) => onChange((x) => void (x.pools = on ? [...x.pools, p.id] : x.pools.filter((s) => s !== p.id)))}
+            />
+          ))}
+        </>
+      ) : null}
+    </>
+  );
+}
+
 function RachioSettings({ w, onChange }: { w: Extract<Widget, { type: "rachio" }>; onChange: Edit<"rachio"> }) {
   const status = useRachio();
   // A controller saved earlier that the account no longer lists still shows, so it can be switched off.
@@ -2597,6 +2726,41 @@ function EcoFlowSettings({
             ),
           )}
           {status.error && <p className="text-sm text-bad">{status.error}</p>}
+        </>
+      )}
+    </>
+  );
+}
+
+function LaundrySettings({ w, onChange }: { w: Extract<Widget, { type: "laundry" }>; onChange: Edit<"laundry"> }) {
+  const status = useLaundry();
+  return (
+    <>
+      <Toggle
+        label="Show machines that are idle or off"
+        checked={w.showIdle}
+        hint="Off: only running, paused and done machines."
+        onChange={(v) => onChange((x) => void (x.showIdle = v))}
+      />
+      {!status ? null : !status.lg && !status.smartthings ? (
+        <p className="text-xs text-soft">
+          Connect LG ThinQ or SmartThings under <SettingsLink href="#settings/laundry">Settings › Laundry</SettingsLink>.
+        </p>
+      ) : status.machines.length === 0 ? (
+        <p className="text-xs text-soft">{status.error || "No washers or dryers found yet."}</p>
+      ) : (
+        <>
+          <p className="text-xs text-soft">Pick the machines to show. With none picked, it shows them all.</p>
+          {status.machines.map((m) => (
+            <Toggle
+              key={m.id}
+              label={m.name}
+              checked={w.appliances.includes(m.id)}
+              onChange={(on) =>
+                onChange((x) => void (x.appliances = on ? [...x.appliances, m.id] : x.appliances.filter((a) => a !== m.id)))
+              }
+            />
+          ))}
         </>
       )}
     </>

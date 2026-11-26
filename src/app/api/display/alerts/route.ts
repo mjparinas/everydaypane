@@ -2,8 +2,10 @@ import { rank } from "@/lib/alerts";
 import { indoorAlertsFor } from "@/server/airthings";
 import { notifyNewStripAlerts } from "@/server/alertNotify";
 import { alertsFeed } from "@/server/alerts";
+import { poolAlertsFor } from "@/server/blueRiiot";
 import { loadDisplayConfig } from "@/server/featureFlags";
 import { json, unauthorized } from "@/server/http";
+import { laundryAlertsFor } from "@/server/laundry";
 import { accountIdOf, viewerFor } from "@/server/viewer";
 
 export async function GET(req: Request) {
@@ -11,11 +13,18 @@ export async function GET(req: Request) {
   if (!viewer) return unauthorized();
   const accountId = accountIdOf(viewer);
   const { config } = await loadDisplayConfig(accountId);
-  // High radon and CO₂ from Airthings join the area's alerts when switched on (Settings › Indoor air); one failing
-  // never hides the other.
-  const [area, indoor] = await Promise.all([alertsFeed(config), indoorAlertsFor(accountId, config).catch(() => [])]);
-  const data = indoor.length
-    ? { ...area, alerts: [...area.alerts, ...indoor].sort((a, b) => rank(a.severity) - rank(b.severity) || b.sent - a.sent) }
+  // High radon and CO₂ from Airthings (Settings › Indoor air), pool water far out of range from Blue Riiot
+  // (Settings › Pool) and "washer done" notices (Settings › Laundry) join the area's alerts when switched on; one
+  // failing never hides the others.
+  const [area, indoor, pool, laundry] = await Promise.all([
+    alertsFeed(config),
+    indoorAlertsFor(accountId, config).catch(() => []),
+    poolAlertsFor(accountId, config).catch(() => []),
+    laundryAlertsFor(accountId, config).catch(() => []),
+  ]);
+  const home = [...indoor, ...pool, ...laundry];
+  const data = home.length
+    ? { ...area, alerts: [...area.alerts, ...home].sort((a, b) => rank(a.severity) - rank(b.severity) || b.sent - a.sent) }
     : area;
   void notifyNewStripAlerts(accountId, config, data.alerts).catch((error) => console.error("[alerts] notify email failed", error));
   return json(data);
