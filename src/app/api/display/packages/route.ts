@@ -8,6 +8,5 @@ export async function GET(req: Request) {
   if (!viewer) return unauthorized();
   const accountId = accountIdOf(viewer);
   const { config } = await loadDisplayConfig(accountId);
-  const data = await packagesFeed(accountId, config);
-  return json({ ...data.value, stale: data.stale });
+  return json(await packagesFeed(accountId, config));
 }

@@ -29,6 +29,7 @@ type Lazy = {
   moon: Mount<"moon">;
   aurora: Mount<"aurora">;
   onThisDay: Mount<"onThisDay">;
+  packages: Mount<"packages">;
   schoolDays: Mount<"schoolDays">;
 };
 
