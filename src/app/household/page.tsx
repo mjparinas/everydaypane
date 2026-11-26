@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
 import { accountById } from "@/server/accounts";
+import { unconfiguredFlagsNow } from "@/server/adminSystem";
 import { currentHouseholdSession, SESSION_COOKIE } from "@/server/auth";
 import { loadConfig } from "@/server/config";
 import { flagsOffFresh } from "@/server/featureFlags";
@@ -29,6 +30,7 @@ export default async function HouseholdPage() {
       staff={isStaffEmail(session.email)}
       initialPlan={account?.plan ?? "free"}
       flagsOff={[...off]}
+      unconfigured={unconfiguredFlagsNow()}
     />
   );
 }

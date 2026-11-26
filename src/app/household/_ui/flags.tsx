@@ -8,17 +8,31 @@ import { settingsSectionOn, widgetAllowed, widgetFlag } from "@/lib/featureFlags
 // Platform feature flags in the household panel (Melvin, 2026-11-26). The page hands over the flag names that are
 // off for this household; a switched-off widget leaves the picker and its Settings card disappears. Nothing here is
 // a security boundary: the server drops switched-off integrations from every display feed on its own.
+// `unconfigured` names widgets and providers whose Everydaypane API key is missing on this deploy (Melvin, 2026-11-26:
+// "if there's a widget that needs keys, don't show it in /household unless it's set"). They aren't offered (picker,
+// provider cards, Settings cards), but unlike a flag they aren't "off": a widget already placed keeps its settings and
+// the wall keeps drawing it with its own "not set up" message.
 
 type FlagsValue = { off: ReadonlySet<string>; on: (name: string) => boolean; widgetOn: (type: WidgetType) => boolean };
 
 const empty: ReadonlySet<string> = new Set();
+const NONE: readonly string[] = [];
 const FlagsContext = createContext<FlagsValue>({ off: empty, on: () => true, widgetOn: () => true });
 
-export function FlagsProvider({ off, children }: { off: readonly string[]; children: ReactNode }) {
+export function FlagsProvider({
+  off,
+  unconfigured = NONE,
+  children,
+}: {
+  off: readonly string[];
+  unconfigured?: readonly string[];
+  children: ReactNode;
+}) {
   const value = useMemo((): FlagsValue => {
     const set = new Set(off);
-    return { off: set, on: (name) => !set.has(name), widgetOn: (type) => !set.has(widgetFlag(type)) };
-  }, [off]);
+    const hidden = new Set([...off, ...unconfigured]);
+    return { off: set, on: (name) => !hidden.has(name), widgetOn: (type) => !hidden.has(widgetFlag(type)) };
+  }, [off, unconfigured]);
   return <FlagsContext.Provider value={value}>{children}</FlagsContext.Provider>;
 }
 

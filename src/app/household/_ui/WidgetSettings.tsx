@@ -11,6 +11,7 @@ import type { CountdownEvent, DashboardConfig, TimerPreset, Widget } from "@/lib
 import { WIDGETS } from "@/lib/config/widgets";
 import { DRIVEBC_LICENCE, DRIVEBC_MAX_CAMERAS, DRIVEBC_REFRESH } from "@/lib/drivebc";
 import { EARTH_OVERLAY_LABELS, EARTH_OVERLAYS, EARTH_ZOOM_LABELS, EARTH_ZOOMS } from "@/lib/earth";
+import { musicFlag, smartHomeFlag, tasksFlag } from "@/lib/featureFlags";
 import { FERRY_ROUTES, ferryRouteName } from "@/lib/ferries";
 import { GAS_FUEL_LABELS, GAS_FUELS, GAS_RADIUS_MAX, GAS_RADIUS_MIN, GAS_SORT_LABELS, GAS_SORTS } from "@/lib/gas";
 import { MEAL_LABELS, MEAL_SLOTS } from "@/lib/meals";
@@ -26,6 +27,7 @@ import { usePools } from "./blueRiiot";
 import { PlaceFinder } from "./CommutePanel";
 import { useEcoFlow } from "./EcoFlowPanel";
 import { Range, Segmented, Select, Stepper, Text, TextArea, Toggle } from "./fields";
+import { useFlags } from "./flags";
 import { HaEntityList, useHa } from "./haEntities";
 import { useLaundry } from "./laundry";
 import { shrink } from "./LibraryAlbum";
@@ -240,6 +242,14 @@ function FontScale({ widget, onChange }: { widget: Widget; onChange: (change: (w
 type Edit<T extends Widget["type"]> = (change: (w: Extract<Widget, { type: T }>) => void) => void;
 
 /** Recognition-first smart device setup (critique P1, 2026-11-24): pick a named entity, Control under Advanced. */
+/**
+ * Provider choices offered in a widget's settings: those switched off by staff or missing Everydaypane's own key are
+ * left out (Melvin, 2026-11-26), except the one the widget already uses, so its settings still read right.
+ */
+function offered<V extends string>(options: readonly { value: V; label: string }[], current: V, ok: (v: V) => boolean) {
+  return options.filter((o) => o.value === current || ok(o.value));
+}
+
 function HaEntitySettings({
   widget: w,
   provider,
@@ -249,6 +259,7 @@ function HaEntitySettings({
   provider: NonNullable<Extract<Widget, { type: "haEntity" }>["provider"]> | "homeAssistant";
   onEdit: Edit<"haEntity">;
 }) {
+  const { on } = useFlags();
   const ha = useHa();
   const entities = ha?.entities ?? [];
   const picked = entities.some((ent) => ent.id === w.entityId);
@@ -269,15 +280,19 @@ function HaEntitySettings({
       <Select
         label="Provider"
         value={provider}
-        options={[
-          { value: "homeAssistant", label: "Home Assistant" },
-          { value: "nest", label: "Nest" },
-          { value: "ecobee", label: "ecobee" },
-          { value: "smartthings", label: "SmartThings" },
-          { value: "govee", label: "Govee Lights" },
-          { value: "hue", label: "Philips Hue Lights" },
-          { value: "lifx", label: "LIFX Lights" },
-        ]}
+        options={offered(
+          [
+            { value: "homeAssistant", label: "Home Assistant" },
+            { value: "nest", label: "Nest" },
+            { value: "ecobee", label: "ecobee" },
+            { value: "smartthings", label: "SmartThings" },
+            { value: "govee", label: "Govee Lights" },
+            { value: "hue", label: "Philips Hue Lights" },
+            { value: "lifx", label: "LIFX Lights" },
+          ] as const,
+          provider,
+          (p) => on(smartHomeFlag(p)),
+        )}
         onChange={(v) => e((x) => void ((x.provider = v), LIGHT_PROVIDERS.includes(v as DirectSmartProvider) && (x.control = "light")))}
       />
       {provider !== "homeAssistant" && devices.length > 0 ? (
@@ -356,6 +371,7 @@ function TypeSettings({
   onChange: (change: (w: Widget) => void) => void;
 }) {
   // Each case narrows `w` by its type, so the edit function can be typed for that widget.
+  const { on } = useFlags();
   const edit =
     <T extends Widget["type"]>(): Edit<T> =>
     (change) =>
@@ -1316,11 +1332,15 @@ function TypeSettings({
           <Select
             label="Provider"
             value={w.provider}
-            options={[
-              { value: "google", label: "Google Tasks" },
-              { value: "microsoft", label: "Microsoft To Do" },
-              { value: "todoist", label: "Todoist" },
-            ]}
+            options={offered(
+              [
+                { value: "google", label: "Google Tasks" },
+                { value: "microsoft", label: "Microsoft To Do" },
+                { value: "todoist", label: "Todoist" },
+              ] as const,
+              w.provider,
+              (p) => on(tasksFlag(p)),
+            )}
             onChange={(v) => e((x) => void ((x.provider = v), (x.listIds = [])))}
           />
           <Stepper label="Tasks Shown" value={w.count} min={1} max={30} onChange={(v) => e((x) => void (x.count = v))} />
@@ -1521,11 +1541,15 @@ function TypeSettings({
           <Select
             label="Player From"
             value={w.provider}
-            options={[
-              { value: "homeAssistant", label: "Home Assistant" },
-              { value: "spotify", label: "Spotify (Signed in Directly)" },
-              { value: "sonos", label: "Sonos (Signed in Directly)" },
-            ]}
+            options={offered(
+              [
+                { value: "homeAssistant", label: "Home Assistant" },
+                { value: "spotify", label: "Spotify (Signed in Directly)" },
+                { value: "sonos", label: "Sonos (Signed in Directly)" },
+              ] as const,
+              w.provider,
+              (p) => p === "homeAssistant" || on(musicFlag(p)),
+            )}
             hint={
               <>
                 Connect Spotify or Sonos under <SettingsLink href="#settings/music">Settings › Music</SettingsLink> to use them without Home
