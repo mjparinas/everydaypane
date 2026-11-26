@@ -43,6 +43,7 @@ const LAZY = [
   "snow",
   "rivers",
   "borderWait",
+  "gasPrices",
   "drivebc",
   "rachio",
   "blueRiiot",

@@ -41,6 +41,7 @@ describe("feature flag registry", () => {
       "widget.airthings",
       "widget.rivers",
       "widget.borderWait",
+      "widget.gasPrices",
       "widget.snow",
       "widget.drivebc",
       "widget.rachio",

@@ -78,6 +78,8 @@ export function mountWidget(el: HTMLElement, w: Widget, ctx: WidgetContext): Cle
       return weatherUnderground(el, w, ctx);
     case "borderWait":
       return lazyWidget("borderWait", el, w, ctx);
+    case "gasPrices":
+      return lazyWidget("gasPrices", el, w, ctx);
     case "airthings":
       return lazyWidget("airthings", el, w, ctx);
     case "laundry":

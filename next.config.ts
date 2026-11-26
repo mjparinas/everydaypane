@@ -22,7 +22,7 @@ const nextConfig: NextConfig = {
     { source: "/display/display.js", headers: [{ key: "Cache-Control", value: "public, max-age=31536000, immutable" }] },
     {
       source:
-        "/display/:widget(ecoflow|internet|unifi|whiteboard|wildfires|windy|haEntity|oura|airthings|snow|rivers|borderWait|rachio|drivebc|blueRiiot|tides|moon|aurora|onThisDay|laundry).js",
+        "/display/:widget(ecoflow|internet|unifi|whiteboard|wildfires|windy|haEntity|oura|airthings|snow|rivers|borderWait|gasPrices|rachio|drivebc|blueRiiot|tides|moon|aurora|onThisDay|laundry).js",
       headers: [{ key: "Cache-Control", value: "public, max-age=31536000, immutable" }],
     },
     { source: "/display/display.css", headers: [{ key: "Cache-Control", value: "public, max-age=31536000, immutable" }] },

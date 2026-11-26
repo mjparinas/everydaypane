@@ -70,6 +70,7 @@ same change, and moves it out of **In progress** when it merges.
 | Timers (`timer`) | Kitchen timers started from preset buttons on the wall, up to six at once, pause, +1 min; flash, full-screen alert and beeps when done | Device (localStorage) |
 | Pomodoro (`pomodoro`) | Focus and break rounds, long break after the last round, optional auto-start, chime between phases | Device (localStorage) |
 | Highway cameras (`drivebc`) | Still pictures from up to four DriveBC highway cameras (Hwy 1, Port Mann, Coquihalla…), side by side or one at a time, refreshed every 1–15 min, paused under the screen saver; delayed or switched-off cameras say so | DriveBC site feed + `www.drivebc.ca/images/<id>.jpg`, OGL-BC (`docs/drivebc.md`) |
+| Gas prices (`gasPrices`) | The cheapest (or nearest) stations around home for regular, mid-grade, premium or diesel, within 1–15 km, price age, optional addresses; credits Google Maps | Google Places API (New) `fuelOptions` (`GOOGLE_MAPS_API_KEY`, `docs/gas-prices.md`) |
 | BC Ferries (`ferries`) | Next sailings on up to four routes, how full each is, cancellations and delays | Community BC Ferries API (bcferriesapi.ca) |
 | Border wait times (`borderWait`) | Car waits at Point Roberts, Peace Arch, Pacific Highway, Aldergrove and Abbotsford–Sumas, into the U.S. and into Canada (or one way), coloured green/amber/red, fastest marked, optional NEXUS; old readings greyed | CBSA open data (`bwt-eng.csv`) and U.S. CBP (`bwt.cbp.gov/api/bwtnew`), no key |
 | Earth wind map (`earth`) | earth.nullschool.net's animated wind globe centred on any place, four zooms, a colour layer (temperature, rain, humidity…), place marker, animation on or off | earth.nullschool.net (framed), Open-Meteo place search |
@@ -332,6 +333,10 @@ npm run templates:previews  # regenerate public/templates/*.png from real widget
   each one is (see Architecture).
 - **Border wait times** (Melvin, 2026-11-25: "build that all", from a list naming border waits): a widget with the
   Lower Mainland crossings in both directions from the two agencies' public feeds, no key (see Architecture).
+- **Local gas prices** (Melvin, 2026-11-26: "build the other 6 gaps", one of them local gas prices around Langley): a
+  `gasPrices` widget from Google's Places API, the only official station-level source for Canada; GasBuddy (no public
+  API, scraping against its terms) and NRCan's city averages (robots-disallowed, months behind) were ruled out (Claude's
+  pick, 2026-11-26) (see Architecture).
 - **Earth wind map** (Melvin, 2026-11-21: "can i add this and specific a location? https://earth.nullschool.net"):
   earth.nullschool.net framed in a widget, centred on a place picked in its settings (Langley by default), with a
   zoom, a colour layer and its own place marker (see Architecture).
@@ -415,7 +420,7 @@ panel can be complex if you need it to be."
   `src/display/apiShared.ts`, which calls display.js's copy, so feeds, the device token and offline state stay single.
   The internet widget, the UniFi network widget, EcoFlow, the whiteboard, wildfires, the Windy map, the Smart device tile
   (`haEntity.ts`; cameras and `HA_EVERY` stay in `ha.ts`), Oura, Indoor air (Airthings), the snow report, River levels,
-  Border wait times, Sprinklers (Rachio), Highway cameras (DriveBC), the Pool (Blue Riiot), tides, moon phase, aurora,
+  Border wait times, Gas prices, Sprinklers (Rachio), Highway cameras (DriveBC), the Pool (Blue Riiot), tides, moon phase, aurora,
   On this day and Laundry load this way, and `next.config.ts` gives each file the same
   immutable cache header as display.js.
 - **Budget:** the display's script stays under 80 KB gzipped and its stylesheet under 20 KB (`scripts/bundle-check.mjs`,
@@ -750,6 +755,19 @@ panel can be complex if you need it to be."
   served. Displays poll `/api/display/border/` every five minutes; the widget loads on its own (`borderWait.js`) and
   greys out readings older than two hours, since both agencies update about hourly. This sandbox can't reach either,
   so tests use the shapes read on 2026-11-26.
+- **Gas prices** (`src/server/gas.ts`, setup `docs/gas-prices.md`): Places API (New) Nearby Search
+  (`places.googleapis.com/v1/places:searchNearby`, `includedTypes: ["gas_station"]`, 20 nearest, ranked by distance)
+  with field mask `places.id,displayName,shortFormattedAddress,formattedAddress,location,fuelOptions`. The key is
+  Everydaypane's own `GOOGLE_MAPS_API_KEY`, sent as `X-Goog-Api-Key`, never in a URL; without it the feed says
+  `missing: "key"` and calls nothing. `fuelOptions` bills at the Enterprise + Atmosphere rate (1,000 a month free, then
+  about US$40 per 1,000), so one search per household covers the farthest radius on its gas widgets (1–15 km) and is
+  kept two hours (about 360 a month a household). Google allows Places content to be kept only briefly, so the cache is
+  keyed per household, never shared. Google's FuelType names map to ours in `src/lib/gas.ts` (REGULAR_UNLEADED →
+  regular, MIDGRADE, PREMIUM, DIESEL, with SP9x as looser fallbacks); Money is `units` + `nanos`. Displays poll
+  `/api/display/gas/` every 15 minutes and get station names, short addresses, distances from home and prices, never
+  coordinates; the wall filters by its own radius and fuel, drops prices older than three days, writes CAD as cents a
+  litre and marks the single cheapest. The foot credits "Google Maps", as Google's terms ask. The widget loads on its own
+  (`gasPrices.js`). This sandbox can't reach Google, so tests use the documented shapes.
 - **Earth wind map:** earth.nullschool.net (Cameron Beccario's site) in an `<iframe>`; checked 2026-11-21: it sends no
   `X-Frame-Options` or `frame-ancestors`, and its script handles being framed itself (it blocks only a few named
   sites, hides its app banner and uses its lighter 1° data in a frame). Everything it shows is set by the address's
