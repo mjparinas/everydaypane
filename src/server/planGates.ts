@@ -42,6 +42,9 @@ export function gateConfig(plan: PlanId, config: DashboardConfig): GateResult {
     if (config.screenSaver.idle || config.screenSaver.night) {
       return { ok: false, error: "The screen saver needs Household. Turn it off or upgrade." };
     }
+    if (config.messagePopups.enabled) {
+      return { ok: false, error: "Message pop-ups need Household. Turn them off or upgrade." };
+    }
     if (config.alerts.notifyEmail) {
       return { ok: false, error: "Alert emails need Household. Turn them off or upgrade." };
     }

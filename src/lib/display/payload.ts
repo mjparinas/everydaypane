@@ -46,6 +46,7 @@ export function displayPayload(
       cameraEntityId: doorbell.cameraEntityId,
     },
     screenSaver: config.screenSaver,
+    messagePopups: { enabled: config.messagePopups.enabled },
     instantRefresh: opts.instantRefresh === true,
   };
 }

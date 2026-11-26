@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-11-24T19:06:00.000Z",
+  "generatedAt": "2026-11-26T20:53:51Z",
   "title": "Design System: Everydaypane",
   "extensions": {
     "colorMeta": {
@@ -175,11 +175,26 @@
       }
     ],
     "breakpoints": [
-      { "name": "nav-wordmark", "value": "420px" },
-      { "name": "nav-sign-in", "value": "380px" },
-      { "name": "md", "value": "768px" },
-      { "name": "lg", "value": "1024px" },
-      { "name": "site-max", "value": "72rem" }
+      {
+        "name": "nav-wordmark",
+        "value": "420px"
+      },
+      {
+        "name": "nav-sign-in",
+        "value": "380px"
+      },
+      {
+        "name": "md",
+        "value": "768px"
+      },
+      {
+        "name": "lg",
+        "value": "1024px"
+      },
+      {
+        "name": "site-max",
+        "value": "72rem"
+      }
     ]
   },
   "components": [
@@ -285,6 +300,11 @@
         "section": "typography"
       },
       {
+        "name": "The Wall Floor Rule",
+        "body": "(design review, Melvin, 2026-11-26). The wall is read from two to three metres, so no text on /display/ goes under 16 px (--t-meta: labels, times, places, captions) and secondary lines stay at least 18 px (--t-small); primary rows aim for 28 px and up. Floors are max(… , var(--t-meta)) or a clamp() minimum, never a bare small em. Lists and short texts are sized for the whole tile and step down only when they overflow (fillTile in src/display/dom.ts); when a list still doesn't fit at the floor, the last rows are hidden whole (dropOverflow) rather than shrunk or cut in half. Tall, narrow tiles stack (agenda, countdowns) instead of squeezing a row. Exceptions: the dense month grid and map credits.",
+        "section": "typography"
+      },
+      {
         "name": "The Phone Reach Rule",
         "body": "Household and family controls keep ≥44px-class hit areas; do not shrink primary actions for desktop density alone.",
         "section": "layout"
@@ -310,7 +330,8 @@
       "Do set everydaypane with “pane” in brand blue on light surfaces.",
       "Do use Manrope for marketing/display voice and Inter for operational body UI.",
       "Do honour prefers-reduced-motion (disable site-rise; solid states for alarms on the wall).",
-      "Do use Canadian English in UI copy (colour, centre, favourite)."
+      "Do use Canadian English in UI copy (colour, centre, favourite).",
+      "Do write names in Title Case (headings, tabs, buttons, labels, options, widget titles, wall status chips) and sentences in sentence case (hints, errors, empty states, emails, body copy); titleCase in src/lib/titleCase.ts has the rules (Melvin, 2026-11-26)."
     ],
     "donts": [
       "Don't restyle the wall with marketing @theme tokens — wall themes own that surface.",

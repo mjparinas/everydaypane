@@ -28,6 +28,7 @@ import {
 import { h } from "./dom";
 import { clockParts } from "./format";
 import { attachModal } from "./modal";
+import { messagePopups } from "./popups";
 import { reloadForRelease } from "./release";
 import { screenSaver, type MountIdleView, type Saver } from "./saver";
 import { mountWidget } from "./widgets";
@@ -419,6 +420,7 @@ async function loadState(): Promise<boolean> {
   render();
   burnIn();
   alerts();
+  popups();
   doorbell();
   saver?.update();
   return true;
@@ -553,6 +555,22 @@ function alerts() {
     strip.stop();
     strip.el.remove();
     strip = null;
+  }
+}
+
+// ---- Message pop-ups: new message board notes in the bottom-right corner until someone dismisses them. ----
+
+let popupStack: { el: HTMLElement; stop: () => void } | null = null;
+function popups() {
+  // An admin's preview leaves them out, so the corner of the Views editor stays clear.
+  const on = payload?.messagePopups.enabled === true && !PREVIEW;
+  if (on && !popupStack) {
+    popupStack = messagePopups(() => saver?.wake());
+    app.append(popupStack.el);
+  } else if (!on && popupStack) {
+    popupStack.stop();
+    popupStack.el.remove();
+    popupStack = null;
   }
 }
 

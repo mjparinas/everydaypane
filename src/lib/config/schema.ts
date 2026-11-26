@@ -1142,6 +1142,9 @@ export const configSchema = z
     // sensors), the display shows only photos or goes dark; during the night window it goes dark, and a touch or
     // motion wakes it for `minutes`. Separate from the schedule's dimming, which still applies while it is awake.
     // Off by default, so a document saved before it existed still loads and behaves the same.
+    // Message pop-ups (Melvin, 2026-11-26): new message board notes show in the bottom-right corner of every display,
+    // in the colour their sender picked, until someone taps Dismiss (src/display/popups.ts). Household, off by default.
+    messagePopups: z.object({ enabled: z.boolean() }).default({ enabled: false }),
     screenSaver: screenSaverSchema.default(() => ({ ...SCREEN_SAVER_OFF, photoSourceIds: [], motionEntityIds: [] })),
     // Each period starts at a fixed time, sunrise or sunset, and runs until the next one starts. The overnight
     // period's key is still `night` (Melvin, 2026-11-22: renamed in the admin only).

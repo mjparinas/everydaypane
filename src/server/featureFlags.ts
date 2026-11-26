@@ -84,6 +84,7 @@ function needle(name: string): string | null {
   if (kind === "widget") return `%"type":"${key}"%`;
   if (kind === "photos") return `%"kind":"${key}"%`;
   if (kind === "feature" && key === "idleView") return `%"shows":"view"%`;
+  if (kind === "feature" && key === "messagePopups") return `%"messagePopups":{"enabled":true}%`;
   // Smart notices and regional packs reach every household (every document has rules and a region).
   if (kind === "feature") return null;
   // Home Assistant also covers cameras, who's home, the doorbell and motion sensors, so every household reloads.
