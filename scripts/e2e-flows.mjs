@@ -163,6 +163,13 @@ export const flows = [
       // The keyboard moves the bottom-right corner, as dragging that corner does.
       await widget.focus();
       await page.keyboard.press("Shift+ArrowLeft");
+      // The editor relabels the widget on its next render, so wait for the label rather than read it at once.
+      const labelled = (text) =>
+        page
+          .locator(`[data-widget="home-countdown"][aria-label*="${text}"]`)
+          .waitFor({ timeout: 5_000 })
+          .catch(() => undefined);
+      await labelled("2 by 3");
       const after = await widget.getAttribute("aria-label");
       expect(after.includes("2 by 3"), `the widget didn't shrink: ${after}`);
       // Any corner resizes (Melvin, 2026-11-21). Dragging the top-left one a cell left grows the widget onto the
@@ -174,6 +181,7 @@ export const flows = [
       await page.mouse.down();
       await page.mouse.move(handle.x + handle.width / 2 - cell, handle.y + handle.height / 2, { steps: 5 });
       await page.mouse.up();
+      await labelled("3 by 3 at column 9, row 6");
       const grown = await widget.getAttribute("aria-label");
       expect(grown.includes("3 by 3 at column 9, row 6"), `the top-left corner didn't resize: ${grown}`);
       await page.getByRole("button", { name: "Publish to wall", exact: true }).click();
