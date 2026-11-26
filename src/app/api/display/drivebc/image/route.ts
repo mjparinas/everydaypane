@@ -1,5 +1,5 @@
-import { loadConfig } from "@/server/config";
 import { driveBcImage } from "@/server/drivebc";
+import { loadDisplayConfig } from "@/server/featureFlags";
 import { notFound, unauthorized } from "@/server/http";
 import { accountIdOf, viewerFor } from "@/server/viewer";
 
@@ -9,7 +9,7 @@ export async function GET(req: Request) {
   if (!viewer) return unauthorized();
   const id = new URL(req.url).searchParams.get("c") ?? "";
   try {
-    return (await driveBcImage((await loadConfig(accountIdOf(viewer))).config, id)) ?? notFound();
+    return (await driveBcImage((await loadDisplayConfig(accountIdOf(viewer))).config, id)) ?? notFound();
   } catch {
     return new Response(null, { status: 502 });
   }

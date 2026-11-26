@@ -12,6 +12,7 @@ import type { PlanId } from "@/lib/plans";
 import { signInHref } from "@/lib/site";
 
 import { DisplaysPanel } from "./DisplaysPanel";
+import { FlagsProvider } from "./flags";
 import { HouseholdFeaturePrompt, PlanProvider, SaveNeedsUpgrade, UpgradeDialog, usePlan } from "./plan";
 import { SchedulePanel } from "./SchedulePanel";
 import { SettingsPanel } from "./SettingsPanel";
@@ -251,17 +252,22 @@ export function Admin({
   email,
   staff = false,
   initialPlan = "free",
+  flagsOff = [],
 }: {
   initial: DashboardConfig;
   version: number;
   email: string;
   staff?: boolean;
   initialPlan?: PlanId;
+  /** Platform feature flags that are off for this household (Melvin, 2026-11-26). */
+  flagsOff?: readonly string[];
 }) {
   return (
     <AdminProvider config={initial} version={version}>
       <PlanProvider initialPlan={initialPlan}>
-        <AdminPanel email={email} staff={staff} />
+        <FlagsProvider off={flagsOff}>
+          <AdminPanel email={email} staff={staff} />
+        </FlagsProvider>
       </PlanProvider>
     </AdminProvider>
   );

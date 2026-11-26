@@ -1,5 +1,5 @@
-import { loadConfig } from "@/server/config";
 import { driveBcFeed } from "@/server/drivebc";
+import { loadDisplayConfig } from "@/server/featureFlags";
 import { json, unauthorized } from "@/server/http";
 import { accountIdOf, viewerFor } from "@/server/viewer";
 
@@ -7,5 +7,5 @@ import { accountIdOf, viewerFor } from "@/server/viewer";
 export async function GET(req: Request) {
   const viewer = await viewerFor(req);
   if (!viewer) return unauthorized();
-  return json(await driveBcFeed((await loadConfig(accountIdOf(viewer))).config));
+  return json(await driveBcFeed((await loadDisplayConfig(accountIdOf(viewer))).config));
 }

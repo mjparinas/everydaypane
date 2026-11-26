@@ -1,5 +1,5 @@
 import { localDate } from "@/lib/calendar";
-import { loadConfig } from "@/server/config";
+import { loadDisplayConfig } from "@/server/featureFlags";
 import { json, unauthorized } from "@/server/http";
 import { mealsBetween, planTag } from "@/server/meals";
 import { accountIdOf, viewerFor } from "@/server/viewer";
@@ -10,7 +10,7 @@ export async function GET(req: Request) {
   const viewer = await viewerFor(req);
   if (!viewer) return unauthorized();
   const accountId = accountIdOf(viewer);
-  const today = localDate(Date.now(), (await loadConfig(accountId)).config.location.timeZone);
+  const today = localDate(Date.now(), (await loadDisplayConfig(accountId)).config.location.timeZone);
   const body = { today, meals: await mealsBetween(accountId, today, 8) };
   const tag = planTag(body);
   if (req.headers.get("if-none-match") === tag)

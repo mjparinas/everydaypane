@@ -2,7 +2,10 @@
 
 import { useState, useSyncExternalStore, type ReactNode } from "react";
 
+import { musicFlag } from "@/lib/featureFlags";
+
 import { ConfirmButton, Section } from "./fields";
+import { Flagged } from "./flags";
 import { loadMusic, useMusic, type ServiceStatus } from "./music";
 
 // Spotify and Sonos without Home Assistant (Melvin, 2026-11-18: "build along side it"). Each account is connected once
@@ -97,32 +100,36 @@ export function MusicPanel() {
         integrations keep working too: each Music widget picks where its player comes from.
       </p>
       {error && <p className="text-sm text-bad">{error}</p>}
-      <Service
-        name="Spotify"
-        service="spotify"
-        status={status?.spotify}
-        result={spotifyResult}
-        envNames="SPOTIFY_CLIENT_ID and SPOTIFY_CLIENT_SECRET"
-        intro="Sign in to show what the account is playing on any speaker and move it between Spotify Connect speakers. Play, pause and skip need Spotify Premium."
-        onDisconnect={() => void disconnect("spotify")}
-      >
-        <p className="text-sm text-soft">Connected. Music widgets with Spotify as their source follow whatever this account plays.</p>
-      </Service>
-      <Service
-        name="Sonos"
-        service="sonos"
-        status={status?.sonos}
-        result={sonosResult}
-        envNames="SONOS_CLIENT_ID and SONOS_CLIENT_SECRET"
-        intro="Sign in to your Sonos account to play, pause, skip, set the volume and start your Sonos favourites in any room."
-        onDisconnect={() => void disconnect("sonos")}
-      >
-        <p className="text-sm text-soft">
-          {status?.sonos.players.length
-            ? `Speakers: ${status.sonos.players.map((p) => p.name).join(", ")}.`
-            : "Connected, but Sonos lists no speakers yet."}
-        </p>
-      </Service>
+      <Flagged name={musicFlag("spotify")}>
+        <Service
+          name="Spotify"
+          service="spotify"
+          status={status?.spotify}
+          result={spotifyResult}
+          envNames="SPOTIFY_CLIENT_ID and SPOTIFY_CLIENT_SECRET"
+          intro="Sign in to show what the account is playing on any speaker and move it between Spotify Connect speakers. Play, pause and skip need Spotify Premium."
+          onDisconnect={() => void disconnect("spotify")}
+        >
+          <p className="text-sm text-soft">Connected. Music widgets with Spotify as their source follow whatever this account plays.</p>
+        </Service>
+      </Flagged>
+      <Flagged name={musicFlag("sonos")}>
+        <Service
+          name="Sonos"
+          service="sonos"
+          status={status?.sonos}
+          result={sonosResult}
+          envNames="SONOS_CLIENT_ID and SONOS_CLIENT_SECRET"
+          intro="Sign in to your Sonos account to play, pause, skip, set the volume and start your Sonos favourites in any room."
+          onDisconnect={() => void disconnect("sonos")}
+        >
+          <p className="text-sm text-soft">
+            {status?.sonos.players.length
+              ? `Speakers: ${status.sonos.players.map((p) => p.name).join(", ")}.`
+              : "Connected, but Sonos lists no speakers yet."}
+          </p>
+        </Service>
+      </Flagged>
     </Section>
   );
 }

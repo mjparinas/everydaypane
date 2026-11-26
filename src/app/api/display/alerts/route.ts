@@ -3,7 +3,7 @@ import { indoorAlertsFor } from "@/server/airthings";
 import { notifyNewStripAlerts } from "@/server/alertNotify";
 import { alertsFeed } from "@/server/alerts";
 import { poolAlertsFor } from "@/server/blueRiiot";
-import { loadConfig } from "@/server/config";
+import { loadDisplayConfig } from "@/server/featureFlags";
 import { json, unauthorized } from "@/server/http";
 import { laundryAlertsFor } from "@/server/laundry";
 import { accountIdOf, viewerFor } from "@/server/viewer";
@@ -12,7 +12,7 @@ export async function GET(req: Request) {
   const viewer = await viewerFor(req);
   if (!viewer) return unauthorized();
   const accountId = accountIdOf(viewer);
-  const { config } = await loadConfig(accountId);
+  const { config } = await loadDisplayConfig(accountId);
   // High radon and CO₂ from Airthings (Settings › Indoor air), pool water far out of range from Blue Riiot
   // (Settings › Pool) and "washer done" notices (Settings › Laundry) join the area's alerts when switched on; one
   // failing never hides the others.

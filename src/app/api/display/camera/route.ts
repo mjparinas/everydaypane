@@ -1,4 +1,4 @@
-import { loadConfig } from "@/server/config";
+import { loadDisplayConfig } from "@/server/featureFlags";
 import { cameraImage } from "@/server/homeassistant";
 import { notFound, unauthorized } from "@/server/http";
 import { accountIdOf, viewerFor } from "@/server/viewer";
@@ -10,7 +10,7 @@ export async function GET(req: Request) {
   const accountId = accountIdOf(viewer);
   const entity = new URL(req.url).searchParams.get("e") ?? "";
   try {
-    return (await cameraImage(accountId, (await loadConfig(accountId)).config, entity)) ?? notFound();
+    return (await cameraImage(accountId, (await loadDisplayConfig(accountId)).config, entity)) ?? notFound();
   } catch {
     return new Response(null, { status: 502 });
   }

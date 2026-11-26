@@ -1,4 +1,4 @@
-import { loadConfig } from "@/server/config";
+import { loadDisplayConfig } from "@/server/featureFlags";
 import { json, unauthorized } from "@/server/http";
 import { accountIdOf, viewerFor } from "@/server/viewer";
 import { weather } from "@/server/weather";
@@ -8,7 +8,7 @@ export async function GET(req: Request) {
   if (!viewer) return unauthorized();
   const accountId = accountIdOf(viewer);
   try {
-    const data = await weather((await loadConfig(accountId)).config);
+    const data = await weather((await loadDisplayConfig(accountId)).config);
     return json({ ...data.value, stale: data.stale });
   } catch {
     return json({ error: "Weather is unavailable right now" }, 502);

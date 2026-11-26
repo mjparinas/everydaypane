@@ -1,4 +1,4 @@
-import { loadConfig } from "@/server/config";
+import { loadDisplayConfig } from "@/server/featureFlags";
 import { json, unauthorized } from "@/server/http";
 import { radarFeed } from "@/server/radar";
 import { accountIdOf, viewerFor } from "@/server/viewer";
@@ -8,5 +8,5 @@ export async function GET(req: Request) {
   const viewer = await viewerFor(req);
   if (!viewer) return unauthorized();
   const accountId = accountIdOf(viewer);
-  return json(await radarFeed((await loadConfig(accountId)).config));
+  return json(await radarFeed((await loadDisplayConfig(accountId)).config));
 }

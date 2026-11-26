@@ -1,6 +1,6 @@
-import { loadConfig } from "@/server/config";
 import { displayPayload } from "@/server/display";
 import { DISPLAY_ASSET_VERSION } from "@/server/displayHtml";
+import { loadDisplayConfig } from "@/server/featureFlags";
 import { json, unauthorized } from "@/server/http";
 import { planForAccount } from "@/server/planGates";
 import { accountIdOf, viewerFor } from "@/server/viewer";
@@ -13,7 +13,7 @@ export async function GET(req: Request) {
   const accountId = accountIdOf(viewer);
   const preview = viewer.kind === "person" && viewer.session.role === "admin" ? new URL(req.url).searchParams.get("view") : null;
   if (viewer.kind === "person" && !preview) return unauthorized();
-  const { config, version } = await loadConfig(accountId);
+  const { config, version } = await loadDisplayConfig(accountId, { fresh: true });
   const device = viewer.kind === "device" ? viewer.device : null;
   const etag = `"${version}-${device?.viewId ?? preview ?? "auto"}"`;
   if (req.headers.get("if-none-match") === etag)

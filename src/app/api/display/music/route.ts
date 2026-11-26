@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { loadConfig } from "@/server/config";
+import { loadDisplayConfig } from "@/server/featureFlags";
 import { json, readJson, sameOrigin, unauthorized } from "@/server/http";
 import { MUSIC_ACTIONS, musicAct, musicFeed, PLAYER_KEY } from "@/server/music";
 import { accountIdOf, viewerFor } from "@/server/viewer";
@@ -11,7 +11,7 @@ export async function GET(req: Request) {
   if (!viewer) return unauthorized();
   const accountId = accountIdOf(viewer);
   try {
-    const { config } = await loadConfig(accountId);
+    const { config } = await loadDisplayConfig(accountId);
     return json(await musicFeed(accountId, config));
   } catch (error) {
     return json({ error: error instanceof Error ? error.message : "No answer" }, 502);
@@ -36,7 +36,7 @@ export async function POST(req: Request) {
   if (!parsed.success) return json({ error: "Bad request" }, 400);
   const { player, action, value, option } = parsed.data;
   try {
-    const { config } = await loadConfig(accountId);
+    const { config } = await loadDisplayConfig(accountId);
     const result = await musicAct(accountId, config, player, action, value, option);
     return result === "ok" ? json({ ok: true }) : json({ error: "Not allowed" }, 403);
   } catch (error) {

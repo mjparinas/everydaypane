@@ -2,11 +2,13 @@
 
 import { useState, useSyncExternalStore } from "react";
 
+import { smartHomeFlag } from "@/lib/featureFlags";
 import type { NativeSmartProvider } from "@/lib/smartHome";
 
 import { setAirthingsStatus, useAirthings } from "./airthings";
 import { setPoolStatus, usePools } from "./blueRiiot";
 import { ConfirmButton, NumberInput, Section, Text, Toggle } from "./fields";
+import { Flagged } from "./flags";
 import { LaundrySection } from "./LaundrySection";
 import { SprinklersSection } from "./rachio";
 import { loadSmartHome, useSmartHome, type SmartServiceStatus } from "./smartHome";
@@ -242,44 +244,56 @@ export function SmartHomePanel() {
           keep working; each tile picks where its device comes from. Google Nest needs a paid Device Access subscription — see docs/nest.md.
         </p>
         {error && <p className="text-sm text-bad">{error}</p>}
-        <ServiceBlock
-          name="Nest"
-          provider="nest"
-          status={status?.nest}
-          result={nestR ?? ""}
-          envNames="NEST_PROJECT_ID and Google OAuth (or NEST_CLIENT_ID / NEST_CLIENT_SECRET)"
-          docs="docs/nest.md"
-          onDisconnect={() => void disconnect("nest")}
-        />
-        <ServiceBlock
-          name="ecobee"
-          provider="ecobee"
-          status={status?.ecobee}
-          result={ecobeeR ?? ""}
-          envNames="ECOBEE_CLIENT_ID and ECOBEE_CLIENT_SECRET"
-          docs="docs/ecobee.md"
-          onDisconnect={() => void disconnect("ecobee")}
-        />
-        <ServiceBlock
-          name="SmartThings"
-          provider="smartthings"
-          status={status?.smartthings}
-          result={stR ?? ""}
-          envNames="SMARTTHINGS_CLIENT_ID and SMARTTHINGS_CLIENT_SECRET"
-          docs="docs/smartthings.md"
-          onDisconnect={() => void disconnect("smartthings")}
-        />
-        <GoveeBlock status={status?.govee} onChanged={() => void loadSmartHome(true)} />
-        <ServiceBlock
-          name="Philips Hue"
-          provider="hue"
-          status={status?.hue}
-          result={hueR ?? ""}
-          envNames="HUE_CLIENT_ID and HUE_CLIENT_SECRET"
-          docs="docs/hue.md"
-          onDisconnect={() => void disconnect("hue")}
-        />
-        <LifxBlock status={status?.lifx} onChanged={() => void loadSmartHome(true)} />
+        <Flagged name={smartHomeFlag("nest")}>
+          <ServiceBlock
+            name="Nest"
+            provider="nest"
+            status={status?.nest}
+            result={nestR ?? ""}
+            envNames="NEST_PROJECT_ID and Google OAuth (or NEST_CLIENT_ID / NEST_CLIENT_SECRET)"
+            docs="docs/nest.md"
+            onDisconnect={() => void disconnect("nest")}
+          />
+        </Flagged>
+        <Flagged name={smartHomeFlag("ecobee")}>
+          <ServiceBlock
+            name="ecobee"
+            provider="ecobee"
+            status={status?.ecobee}
+            result={ecobeeR ?? ""}
+            envNames="ECOBEE_CLIENT_ID and ECOBEE_CLIENT_SECRET"
+            docs="docs/ecobee.md"
+            onDisconnect={() => void disconnect("ecobee")}
+          />
+        </Flagged>
+        <Flagged name={smartHomeFlag("smartthings")}>
+          <ServiceBlock
+            name="SmartThings"
+            provider="smartthings"
+            status={status?.smartthings}
+            result={stR ?? ""}
+            envNames="SMARTTHINGS_CLIENT_ID and SMARTTHINGS_CLIENT_SECRET"
+            docs="docs/smartthings.md"
+            onDisconnect={() => void disconnect("smartthings")}
+          />
+        </Flagged>
+        <Flagged name={smartHomeFlag("govee")}>
+          <GoveeBlock status={status?.govee} onChanged={() => void loadSmartHome(true)} />
+        </Flagged>
+        <Flagged name={smartHomeFlag("hue")}>
+          <ServiceBlock
+            name="Philips Hue"
+            provider="hue"
+            status={status?.hue}
+            result={hueR ?? ""}
+            envNames="HUE_CLIENT_ID and HUE_CLIENT_SECRET"
+            docs="docs/hue.md"
+            onDisconnect={() => void disconnect("hue")}
+          />
+        </Flagged>
+        <Flagged name={smartHomeFlag("lifx")}>
+          <LifxBlock status={status?.lifx} onChanged={() => void loadSmartHome(true)} />
+        </Flagged>
       </Section>
 
       <Section id="settings-weather-stations" title="Weather stations">

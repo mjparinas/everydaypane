@@ -177,13 +177,49 @@ export const flows = [
       const grid = await page.getByTestId("grid-editor").boundingBox();
       const handle = await widget.locator('[data-corner="nw"]').boundingBox();
       const cell = grid.width / 12;
+      // What sits under the handle, so a failure says whether something covered it.
+      const under = await page.evaluate(
+        ([x, y]) => {
+          const el = document.elementFromPoint(x, y);
+          return el
+            ? `${el.tagName}${el.getAttribute("data-corner") ? `[${el.getAttribute("data-corner")}]` : ""}.${el.className}`.slice(0, 120)
+            : "nothing";
+        },
+        [handle.x + handle.width / 2, handle.y + handle.height / 2],
+      );
+      // The pointer events the editor gets, so a failure says whether the drag was cancelled or never moved.
+      await page.evaluate(() => {
+        const log = [];
+        window.__pointerLog = log;
+        const grid = document.querySelector('[data-testid="grid-editor"]');
+        for (const type of ["pointerdown", "pointermove", "pointerup", "pointercancel", "lostpointercapture", "gotpointercapture"]) {
+          grid.addEventListener(
+            type,
+            (e) =>
+              log.push(
+                `${type}@${Math.round(e.clientX)},${Math.round(e.clientY)}:${e.target.getAttribute?.("data-corner") ?? e.target.tagName}`,
+              ),
+            true,
+          );
+        }
+      });
       await page.mouse.move(handle.x + handle.width / 2, handle.y + handle.height / 2);
       await page.mouse.down();
       await page.mouse.move(handle.x + handle.width / 2 - cell, handle.y + handle.height / 2, { steps: 5 });
+      const during = await widget.getAttribute("aria-label");
       await page.mouse.up();
       await labelled("3 by 3 at column 9, row 6");
       const grown = await widget.getAttribute("aria-label");
-      expect(grown.includes("3 by 3 at column 9, row 6"), `the top-left corner didn't resize: ${grown}`);
+      // Every widget's place in the editor, so a failure shows what the grown widget would have overlapped.
+      const layout = grown.includes("3 by 3 at column 9, row 6")
+        ? ""
+        : `${(await page.locator("[data-widget]").evaluateAll((els) => els.map((el) => el.getAttribute("aria-label")))).join(" | ")}; events: ${(
+            await page.evaluate(() => window.__pointerLog ?? [])
+          ).join(" ")}`;
+      expect(
+        grown.includes("3 by 3 at column 9, row 6"),
+        `the top-left corner didn't resize: ${grown} (during the drag: ${during}; under the handle: ${under}; grid ${Math.round(grid.width)} px; layout: ${layout})`,
+      );
       await page.getByRole("button", { name: "Publish to wall", exact: true }).click();
       await page.getByText(/Published\. Displays update/).waitFor();
       const { config } = await (await page.request.get(`${base}/api/household/config/`)).json();

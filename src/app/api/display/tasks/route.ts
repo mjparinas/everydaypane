@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { loadConfig } from "@/server/config";
+import { loadDisplayConfig } from "@/server/featureFlags";
 import { GoogleDisconnected } from "@/server/google";
 import { TasksNotAllowed } from "@/server/googleTasks";
 import { json, readJson, sameOrigin, unauthorized } from "@/server/http";
@@ -12,7 +12,7 @@ export async function GET(req: Request) {
   const viewer = await viewerFor(req);
   if (!viewer) return unauthorized();
   const accountId = accountIdOf(viewer);
-  const { config } = await loadConfig(accountId);
+  const { config } = await loadDisplayConfig(accountId);
   try {
     const data = await tasksFeed(accountId, config);
     return json({ ...data.value, stale: data.stale });
@@ -43,7 +43,7 @@ export async function POST(req: Request) {
   const parsed = body.safeParse(await readJson(req, 2000).catch(() => null));
   if (!parsed.success) return json({ error: "Bad request" }, 400);
   try {
-    const { config } = await loadConfig(accountId);
+    const { config } = await loadDisplayConfig(accountId);
     const result = await completeTask(accountId, config, parsed.data.provider, parsed.data.list, parsed.data.task);
     return result === "ok" ? json({ ok: true }) : json({ error: "Not allowed" }, 403);
   } catch (error) {

@@ -1,4 +1,4 @@
-import { loadConfig } from "@/server/config";
+import { loadDisplayConfig } from "@/server/featureFlags";
 import { albumArt } from "@/server/homeassistant";
 import { notFound, unauthorized } from "@/server/http";
 import { musicArt } from "@/server/music";
@@ -15,7 +15,7 @@ export async function GET(req: Request) {
   const params = new URL(req.url).searchParams;
   const player = params.get("p");
   try {
-    const { config } = await loadConfig(accountId);
+    const { config } = await loadDisplayConfig(accountId);
     if (player) return (await musicArt(accountId, config, player, params.get("k") ?? "")) ?? notFound();
     return (await albumArt(accountId, config, params.get("e") ?? "")) ?? notFound();
   } catch {

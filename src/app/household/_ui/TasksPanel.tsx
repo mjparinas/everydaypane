@@ -2,7 +2,10 @@
 
 import { useEffect, useState } from "react";
 
+import { tasksFlag } from "@/lib/featureFlags";
+
 import { Section, Toggle } from "./fields";
+import { Flagged } from "./flags";
 import { useAdmin } from "./store";
 
 // Google Tasks (Melvin, 2026-11-17): allow Tasks on the Google connection once, then pick which of the account's
@@ -204,9 +207,15 @@ function MicrosoftTodoPanel() {
 export function AllTasksPanels() {
   return (
     <>
-      <TasksPanel />
-      <MicrosoftTodoPanel />
-      <TodoistPanel />
+      <Flagged name={tasksFlag("google")}>
+        <TasksPanel />
+      </Flagged>
+      <Flagged name={tasksFlag("microsoft")}>
+        <MicrosoftTodoPanel />
+      </Flagged>
+      <Flagged name={tasksFlag("todoist")}>
+        <TodoistPanel />
+      </Flagged>
     </>
   );
 }

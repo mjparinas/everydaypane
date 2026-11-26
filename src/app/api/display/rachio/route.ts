@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { loadConfig } from "@/server/config";
+import { loadDisplayConfig } from "@/server/featureFlags";
 import { json, readJson, sameOrigin, unauthorized } from "@/server/http";
 import { rachioFeed, RachioRefused, skipNext } from "@/server/rachio";
 import { accountIdOf, viewerFor } from "@/server/viewer";
@@ -26,7 +26,7 @@ export async function POST(req: Request) {
   const parsed = body.safeParse(await readJson(req, 1000).catch(() => null));
   if (!parsed.success) return json({ error: "Bad request" }, 400);
   try {
-    const { config } = await loadConfig(accountId);
+    const { config } = await loadDisplayConfig(accountId);
     const result = await skipNext(accountId, config, parsed.data.controller, parsed.data.start);
     if (result === "not-allowed") return json({ error: "Not allowed" }, 403);
     if (result === "gone") return json({ error: "That watering changed. Look again." }, 502);
