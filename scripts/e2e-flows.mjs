@@ -174,8 +174,19 @@ export const flows = [
       expect(after.includes("2 by 3"), `the widget didn't shrink: ${after}`);
       // Any corner resizes (Melvin, 2026-11-21). Dragging the top-left one a cell left grows the widget onto the
       // photos, which other widgets may cover, while its bottom-right corner stays put.
+      // The overlay follows the preview's stage, which the preview reports once it has drawn (and again when a draft
+      // changes it). Pressing before that report lands hit the overlay a few pixels off the handle in CI
+      // (2026-11-26: pointermove on the handle, pointerdown on the grid), so wait for the report and a still layout.
+      await page.locator('[data-testid="grid-editor"][data-stage="ready"]').waitFor({ timeout: 10_000 });
+      const box = () => widget.locator('[data-corner="nw"]').boundingBox();
+      let handle = await box();
+      for (let i = 0; i < 20; i++) {
+        await page.waitForTimeout(100);
+        const again = await box();
+        if (again && handle && again.x === handle.x && again.y === handle.y) break;
+        handle = again;
+      }
       const grid = await page.getByTestId("grid-editor").boundingBox();
-      const handle = await widget.locator('[data-corner="nw"]').boundingBox();
       const cell = grid.width / 12;
       // What sits under the handle, so a failure says whether something covered it.
       const under = await page.evaluate(
