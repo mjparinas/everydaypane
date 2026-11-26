@@ -1,4 +1,5 @@
 import type { WeatherData } from "@/lib/display/types";
+import { moonPhase } from "@/lib/moon";
 
 import { subscribe } from "../api";
 import { fill, h } from "../dom";
@@ -14,6 +15,13 @@ export function daylightLength(sunrise: string, sunset: string): string {
   const total = minutes(sunset) - minutes(sunrise);
   if (!Number.isFinite(total) || total < 0) return "";
   return `${Math.floor(total / 60)} hr ${total % 60} min`;
+}
+
+// Tonight's moon, worked out on the device (src/lib/moon.ts). It is redrawn with the weather feed every 15 minutes.
+function moonLine(emoji: boolean) {
+  const m = moonPhase(Date.now());
+  const text = `${m.name} · ${Math.round(m.illumination * 100)}% lit`;
+  return h("div", { class: "st-moon" }, emoji ? `${m.emoji} ${text}` : text);
 }
 
 export const sunTimes: Mount<"sunTimes"> = (el, w, ctx) => {
@@ -45,6 +53,7 @@ export const sunTimes: Mount<"sunTimes"> = (el, w, ctx) => {
         ),
       ),
       daylight ? h("div", { class: "st-daylight" }, emoji ? `☀️ ${daylight} of daylight` : `${daylight} of daylight`) : null,
+      w.showMoon ? moonLine(emoji) : null,
     );
   });
 };
