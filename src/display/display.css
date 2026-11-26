@@ -1190,20 +1190,24 @@ html.portrait-view .stage {
 }
 
 /* Note */
+/* The title sits at the top like every other widget's label, and the note itself is centred in the space left,
+   set off by an accent rule (Melvin, 2026-11-26: "the note title should be at the top … style the note nicer"). */
 .w-note {
   display: flex;
   flex-direction: column;
   gap: 0.4em;
   height: 100%;
-  justify-content: center;
-  justify-content: safe center;
   overflow: hidden;
 }
 .note-text {
+  margin-block: auto;
+  padding-left: 0.55em;
+  border-left: max(4px, 0.14em) solid var(--accent);
   white-space: pre-wrap;
   overflow-wrap: anywhere;
-  font-weight: 600;
-  line-height: 1.2;
+  font-weight: 650;
+  line-height: 1.25;
+  letter-spacing: -0.01em;
 }
 .note-s .note-text {
   font-size: calc(min(10cqh, 6cqw) * var(--font-scale, 1));

@@ -49,7 +49,7 @@
     "camera.front_door": {
       "id": "camera.front_door",
       "state": "idle",
-      "name": "Front door",
+      "name": "Backyard",
       "changed": 1763937720000
     },
     "media_player.kitchen": {
@@ -58,10 +58,10 @@
       "name": "Kitchen Sonos",
       "changed": 1763937600000,
       "media": {
-        "title": "Here Comes the Sun",
-        "artist": "The Beatles",
-        "album": "Abbey Road",
-        "art": "abbey-road",
+        "title": "Golden Hour Drive",
+        "artist": "The Harbour Lights",
+        "album": "Westward",
+        "art": "westward",
         "duration": 185,
         "position": 62,
         "positionAt": 1795473720000,

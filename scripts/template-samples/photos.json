@@ -6,10 +6,16 @@
         ["family-kitchen", 1920, 1080, "2026-10-12"],
         ["kids-soccer", 1600, 1200, "2026-09-28"],
         ["ferry-view", 1920, 1080, "2026-08-15"],
-        ["christmas-tree", 1200, 1600, "2025-12-25"],
-        ["halloween-porch", 1600, 1200, "2026-10-31"],
         ["game-night", 1920, 1080, "2026-11-08"]
       ],
+      "error": null
+    },
+    "christmas": {
+      "photos": [["christmas-tree", 1200, 1600, "2025-12-25"]],
+      "error": null
+    },
+    "halloween": {
+      "photos": [["halloween-porch", 1600, 1200, "2026-10-31"]],
       "error": null
     }
   }
