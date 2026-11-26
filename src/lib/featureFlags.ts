@@ -5,8 +5,8 @@ import type { SmartHomeProvider } from "./smartHome";
 // Platform feature flags (Melvin, 2026-11-26: "feature flags in the admin area for all of these integrations").
 // One registry, built from the widget catalogue plus every provider and photo source the schema allows, so a new
 // widget, provider or photo source gets a flag with no extra step (the typed records below fail to compile until a
-// new provider or source has a label). Staff switch a flag for everyone in /admin/ › Flags, or for one household
-// from its page there; a household override wins over the platform value. A flag that is off hides the widget from
+// new provider or source has a label). Staff switch a flag for everyone in /admin/ › Flags; there are no
+// per-household overrides (Melvin, 2026-11-26), so an unfinished widget stays off everywhere. A flag that is off hides the widget from
 // the picker and its Settings, and the display's copy of the settings drops it (`applyFlags`), so its feed is never
 // polled and the server never calls the service for that household. Kept free of zod and React: the household panel,
 // the server and the tests all import it.

@@ -1,12 +1,12 @@
 import { dadJokeFeed } from "@/server/dadJoke";
 import { featureOn } from "@/server/featureFlags";
 import { json, notFound, unauthorized } from "@/server/http";
-import { accountIdOf, viewerFor } from "@/server/viewer";
+import { viewerFor } from "@/server/viewer";
 
 export async function GET(req: Request) {
   const viewer = await viewerFor(req);
   if (!viewer) return unauthorized();
-  if (!(await featureOn(accountIdOf(viewer), "widget.dadJoke"))) return notFound();
+  if (!(await featureOn("widget.dadJoke"))) return notFound();
   const safe = new URL(req.url).searchParams.get("safe") !== "0";
   return json(await dadJokeFeed(safe));
 }

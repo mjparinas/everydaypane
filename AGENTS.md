@@ -154,8 +154,8 @@ with `?mode=`, and a quiet Day/Night control on the preview swaps without reload
 separate from the household panel — same split as Tuned and Liftsmith. Staff use the same Clerk sign-in as households,
 gated by that allow-list; Overview through Log (Households, Displays,
 Revenue, Traffic, Codes, Flags, …). Cookieless marketing beacon. Customer path is `/household/`. **Flags** has an
-on/off switch for every widget, smart-home provider, music and to-do service and photo source, for everyone, and each
-household's page can override any of them (see Architecture, Feature flags).
+on/off switch for every widget, smart-home provider, music and to-do service and photo source, for everyone; there
+are no per-household overrides (see Architecture, Feature flags).
 
 **Integrations connected from Settings:** Google Calendar, Microsoft 365 calendars and **To Do** (OAuth, `?todo=1` / `?files=1`), Google Tasks, **Todoist**, Google Photos (Picker), iCal calendar links (with iCloud publish steps in Settings and `docs/icloud-calendar.md`),
 **Govee** (API key, Settings › Smart home), **Philips Hue** (OAuth, Settings › Smart home), **LIFX** (personal token, Settings › Smart home), Amazon Photos, **photo sources** (Bing, Reddit, weather albums, Immich API keys, Dropbox/Box/SmugMug OAuth, OneDrive via Microsoft, Flickr API key, iCloud published URLs), the photo library (Vercel Blob), Home Assistant (Cloudflare Tunnel + Access), Spotify, Sonos, garbage
@@ -469,8 +469,9 @@ panel can be complex if you need it to be."
   registry in `src/lib/featureFlags.ts`, built from `WIDGETS` plus typed records of every smart-home provider, music
   provider, to-do provider and photo source kind, so **a new widget gets a flag automatically** (`widget.<type>`) and a
   new provider or photo source doesn't compile until it has a label there. Staff switch them in `/admin/` › Flags
-  (`feature_flags`) or per household on its page (`account_feature_flags`, wins over the platform). Everything is on
-  by default. Off means: gone from the widget picker, its Settings card hidden (`SETTINGS_FLAGS`, keyed by
+  (`feature_flags`), platform-wide only: **no per-household overrides** (Melvin, 2026-11-26: widgets still under
+  development must not be switched on for one household; the first version's `account_feature_flags` rows are
+  ignored). Everything is on by default. Off means: gone from the widget picker, its Settings card hidden (`SETTINGS_FLAGS`, keyed by
   `#settings/<id>`; a new Settings card for an integration adds a line there), and dropped from the display's copy
   of the settings by `applyFlags`. Every `/api/display/*` route reads settings through `loadDisplayConfig`
   (`src/server/featureFlags.ts`), never `loadConfig`, so a switched-off widget isn't drawn, its feed isn't polled

@@ -19,7 +19,7 @@ export default async function HouseholdPage() {
   const [{ config, version }, account, off] = await Promise.all([
     loadConfig(session.accountId),
     accountById(session.accountId),
-    flagsOffFresh(session.accountId),
+    flagsOffFresh(),
   ]);
   return (
     <Admin
