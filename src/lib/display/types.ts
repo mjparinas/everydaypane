@@ -831,6 +831,33 @@ export interface UnifiData {
   stale?: boolean;
 }
 
+/** One direction at one border crossing (src/server/border.ts). */
+export interface BorderWait {
+  /** Minutes for regular cars; 0 is no delay; null when the agency has no reading right now. */
+  minutes: number | null;
+  /** NEXUS lane minutes, when the agency reports them. */
+  nexus?: number;
+  closed: boolean;
+  /** Epoch ms of the agency's reading; 0 when it gave no time. */
+  at: number;
+}
+
+export interface BorderCrossingData {
+  id: string;
+  name: string;
+  /** Into the U.S., from U.S. CBP. */
+  toUS: BorderWait | null;
+  /** Into Canada, from CBSA. */
+  toCanada: BorderWait | null;
+}
+
+export interface BorderData {
+  updatedAt: number;
+  crossings: BorderCrossingData[];
+  /** Which agency's feed couldn't be read (and had no last good copy). */
+  down: { cbsa: boolean; cbp: boolean };
+}
+
 /** One river gauge as a display gets it (src/server/rivers.ts): metres and m³/s; the wall converts for imperial. */
 export interface RiverStationData {
   id: string;
