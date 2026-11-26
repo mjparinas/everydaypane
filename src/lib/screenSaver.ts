@@ -10,6 +10,7 @@ export const SCREEN_SAVER_OFF: ScreenSaver = {
   minutes: 10,
   shows: "photos",
   photoSourceIds: [],
+  photoSeconds: 60,
   showClock: true,
   night: false,
   nightStart: "23:00",

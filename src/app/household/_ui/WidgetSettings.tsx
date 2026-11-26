@@ -51,8 +51,8 @@ function SettingsLink({ href, children }: { href: string; children: ReactNode })
 }
 
 const PHOTO_INTERVALS = [
-  { value: "10", label: "10 S" },
-  { value: "30", label: "30 S" },
+  { value: "10", label: "10 Sec" },
+  { value: "30", label: "30 Sec" },
   { value: "60", label: "1 Min" },
   { value: "300", label: "5 Min" },
   { value: "custom", label: "Custom" },
@@ -2297,14 +2297,16 @@ function TimerPresets({ presets, onChange }: { presets: TimerPreset[]; onChange:
   );
 }
 
-function PhotoInterval({ value, onChange }: { value: number; onChange: (v: number) => void }) {
+/** Time between photos, shared by the photos widget and Settings › Screen saver. */
+export function PhotoInterval({ value, hint, onChange }: { value: number; hint?: string; onChange: (v: number) => void }) {
   const known = PHOTO_INTERVALS.some((o) => o.value !== "custom" && Number(o.value) === value);
   const [forceCustom, setForceCustom] = useState(!known);
   const segment = forceCustom || !known ? "custom" : (String(value) as (typeof PHOTO_INTERVALS)[number]["value"]);
   return (
     <div className="grid gap-3">
       <Segmented
-        label="Seconds per Photo"
+        label="Time Between Photos"
+        hint={hint}
         value={segment}
         options={PHOTO_INTERVALS}
         onChange={(v) => {
