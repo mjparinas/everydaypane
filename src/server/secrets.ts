@@ -10,6 +10,7 @@ import { query, run } from "./db";
 export type SecretKey =
   | "google.refreshToken"
   | "google.scopes"
+  | "google.name"
   | "amazon.cookie"
   | "amazon.tld"
   | "homeAssistant.token"
@@ -85,6 +86,7 @@ export async function secretsSet(accountId: string): Promise<Record<SecretKey, b
   return {
     "google.refreshToken": set.has("google.refreshToken"),
     "google.scopes": set.has("google.scopes"),
+    "google.name": set.has("google.name"),
     "amazon.cookie": set.has("amazon.cookie"),
     "amazon.tld": set.has("amazon.tld"),
     "homeAssistant.token": set.has("homeAssistant.token"),

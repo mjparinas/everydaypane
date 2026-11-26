@@ -300,6 +300,12 @@ npm run templates:previews  # regenerate public/templates/*.png from real widget
   `combinedFeed` with `titleCase` (`src/lib/titleCase.ts`), so the display bundle doesn't grow and the calendars
   themselves never change. Words with a capital after the first letter (BC, PRO-D, iPhone, an all-caps title) are left
   as typed, and short joining words (a, of, the…) stay lower case mid-title (Claude's rules, 2026-11-26).
+- **Calendar names on the wall** (Melvin, 2026-11-26: "one of my calendars just shows my email, can you see if you can
+  get my name instead?"): a Google primary calendar is named after the account's email, so its chip in the day popup
+  read the address. Google connections now also ask for `userinfo.profile`, and the account's name (`google.name`
+  secret) stands in for any calendar whose name is still its own email id (`calendarName` in `src/server/google.ts`);
+  an account connected before this needs connecting again. Every Google and Microsoft 365 calendar that's switched on
+  also has **Name on the Wall** in Settings › Calendars, which always wins; empty means the default.
 - **Month calendar title** (Melvin, 2026-11-19: "add a toggle to show/hide month title"): the month widget's
   "November 2026" line can be switched off in its settings (`showTitle`, on by default); the grid takes the space.
 - **Tile padding** (Melvin, 2026-11-22: "is it possible to adjust the inner padding of the tiles"): each view has a

@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useSyncExternalStore } from "react";
 
-import { ConfirmButton, Section, Toggle } from "./fields";
+import { ConfirmButton, Section, Text, Toggle } from "./fields";
 import { useAdmin } from "./store";
 
 interface Status {
@@ -53,7 +53,7 @@ export function MicrosoftPanel() {
     setStatus(await fetchStatus().catch(() => null));
   }
 
-  function setCalendar(id: string, change: { enabled?: boolean; color?: string }) {
+  function setCalendar(id: string, change: { enabled?: boolean; color?: string; name?: string }) {
     const known = status?.calendars.find((c) => c.id === id);
     edit((c) => {
       const list = c.integrations.microsoft.calendars;
@@ -67,9 +67,12 @@ export function MicrosoftPanel() {
     ? [
         ...status.calendars.map((g) => {
           const saved = calendars.find((c) => c.id === g.id);
-          return { id: g.id, name: g.name, color: saved?.color ?? g.color, enabled: saved?.enabled ?? false, gone: false };
+          // The saved name is what the wall shows. One still equal to the calendar's id (a Google primary calendar's email)
+          // reads as the account's own name, as it does on the wall (calendarName in src/server/google.ts).
+          const label = saved && saved.name !== g.id ? saved.name : g.name;
+          return { id: g.id, name: g.name, label, color: saved?.color ?? g.color, enabled: saved?.enabled ?? false, gone: false };
         }),
-        ...calendars.filter((c) => !status.calendars.some((g) => g.id === c.id)).map((c) => ({ ...c, gone: true })),
+        ...calendars.filter((c) => !status.calendars.some((g) => g.id === c.id)).map((c) => ({ ...c, label: c.name, gone: true })),
       ]
     : [];
 
@@ -111,12 +114,21 @@ export function MicrosoftPanel() {
                   value={r.color}
                   onChange={(e) => setCalendar(r.id, { color: e.target.value.toLowerCase() })}
                 />
-                <div className="min-w-0 flex-1">
+                <div className="grid min-w-0 flex-1 gap-1">
                   <Toggle
                     label={r.gone ? `${r.name} (no longer in the account)` : r.name}
                     checked={r.enabled}
                     onChange={(v) => setCalendar(r.id, { enabled: v })}
                   />
+                  {r.enabled && (
+                    <Text
+                      label="Name on the Wall"
+                      value={r.label}
+                      maxLength={60}
+                      placeholder={r.name}
+                      onChange={(v) => setCalendar(r.id, { name: v })}
+                    />
+                  )}
                 </div>
               </div>
             ))}
