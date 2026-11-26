@@ -9,7 +9,7 @@
 // Shared by the server, the household panel and the display (the display only reads names), so no zod and no server
 // imports here.
 
-export const TRANSIT_AGENCY_IDS = ["translink", "ttc", "calgary", "edmonton", "halifax", "kingCounty"] as const;
+export const TRANSIT_AGENCY_IDS = ["translink", "ttc", "calgary", "edmonton", "halifax", "kingCounty", "bcTransitVictoria"] as const;
 export type TransitAgencyId = (typeof TRANSIT_AGENCY_IDS)[number];
 
 export interface TransitAgency {
@@ -78,6 +78,16 @@ export const TRANSIT_AGENCIES: Record<TransitAgencyId, TransitAgency> = {
     staticUrl: "https://metro.kingcounty.gov/GTFS/google_transit.zip",
     needsKey: false,
     credit: "Live times from King County Metro",
+  },
+  // BC Transit's open data page (bctransit.com/open-data, read 2026-11-26) lists Victoria as operator 48; its other
+  // systems (Kelowna, Nanaimo…) use the same addresses with their own operatorIds.
+  bcTransitVictoria: {
+    name: "BC Transit",
+    area: "Greater Victoria",
+    realtimeUrl: "https://bct.tmix.se/gtfs-realtime/tripupdates.pb?operatorIds=48",
+    staticUrl: "https://bct.tmix.se/Tmix.Cap.TdExport.WebApi/gtfs/?operatorIds=48",
+    needsKey: false,
+    credit: "Live times from BC Transit · Open Government Licence – British Columbia",
   },
 };
 

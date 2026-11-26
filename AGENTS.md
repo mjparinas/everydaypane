@@ -52,11 +52,11 @@ same change, and moves it out of **In progress** when it merges.
 | Note (`note`) | Fixed text from the admin | Settings document |
 | Message board (`messages`) | Family notes from phones; optional **post from the wall** (`allowAdd`) | `messages` table |
 | Meals (`meals`) | Breakfast, lunch, dinner for a day or a week; recurring cadences fill future days | `account_meals` + `account_meal_rules` |
-| Shopping list (`shopping`) | Groceries from phones; **tap to tick off** (`allowCheck`); optional **add from the wall** (`allowAdd`); optional bought items | `shopping` table |
+| Shopping list (`shopping`) | Groceries from phones; **aisle headings** (`groupByCategory`: produce, dairy, pantry… guessed from the words, movable on a phone); **running low** tag; **tap to tick off** (`allowCheck`); optional **add from the wall** (`allowAdd`, with a Low chip); optional bought items | `shopping` table |
 | Who's home (`presence`) | Who is home, from person and device tracker entities, read only | Home Assistant |
 | School days (`schoolDays`) | School today or not (weekend, Pro-D day, break with the day school's back, summer), early dismissals, a "Tomorrow: no school" line, the next 0 to 6 days off with "in N days", and the weekly hot-lunch line | Settings › School days: the school year and days off (one-tap **Langley 2026–27 elementary or middle** preset), optional school iCal links read for Pro-D/No school/break events, lunch per weekday |
 | School status (`school`) | Open, closed, delayed or late start; optional school names | District status page (`config.school`) |
-| Whiteboard (`whiteboard`) | Finger draw with a few colours and an eraser; wider tiles show more colours; hold Clear to wipe; same doodle on every display | `whiteboard` table |
+| Whiteboard (`whiteboard`) | Finger draw with a few colours and an eraser; wider tiles show more colours; hold Clear to wipe; same doodle on every display; **draw from phones** at `/family/` and `/d/<token>/edit/` | `account_whiteboard` table (one board per household) |
 | Alerts (`alerts`) | Current emergency alerts, optional "all clear" | See alerts below |
 | Chore chart (`chores`) | Today's chores by **morning/afternoon/evening** (or anytime), **tap to tick off**, completion dots / progress rings, stars this week, optional **star rewards** and **child PIN**; kids phone at `/d/<token>/chores/` and `/family/chores/` | Settings document + `chores_done` + `chore_redemptions` |
 | Sports scores (`sports`) | Live score, last result and next game for followed teams (NHL, NBA, WNBA, NFL, MLB, MLS, Premier League, Champions League) | ESPN public site API |
@@ -65,7 +65,7 @@ same change, and moves it out of **In progress** when it merges.
 | Snow report (`snow`) | New snow in the last 24 h, snow depth and snowfall today and the next two days, optional mountain temperature, for picked mountains (Cypress, Grouse, Seymour, Whistler by default; Sasquatch, Manning Park, Mt. Baker, Sun Peaks) | Open-Meteo forecast at each mountain's mid-mountain elevation (model estimate, no key) |
 | River levels (`rivers`) | Up to six river and creek gauges (Fraser at Mission and Hope, Salmon and Nicomekl in Langley, or any station by number): level, rising/falling/steady with the 6 h and 24 h change, a day's line, optional flow | Environment Canada real-time hydrometric (MSC GeoMet OGC API, Datamart CSV fallback) |
 | Tides (`tides`) | Next highs and lows at a station, optional height, optional **day curve** with a "now" line (`showCurve`); station search by name in its settings | Canadian IWLS + NOAA (US) (`docs/tides.md`) |
-| Transit departures (`transit`) | Next buses and trains from up to six picked stops of one **agency** (`agency`: TransLink, TTC, Calgary Transit, Edmonton ETS, Halifax Transit, King County Metro; the region's own first), live times, route filter, walk-minutes cutoff | GTFS-realtime per agency (`src/lib/transitAgencies.ts`); only TransLink needs a key |
+| Transit departures (`transit`) | Next buses and trains from up to six picked stops of one **agency** (`agency`: TransLink, TTC, Calgary Transit, Edmonton ETS, Halifax Transit, King County Metro, BC Transit in Victoria; the region's own first), live times, route filter, walk-minutes cutoff | GTFS-realtime per agency (`src/lib/transitAgencies.ts`); only TransLink needs a key |
 | Commute time (`commute`) | Drive times with live traffic from home to up to six places, "leave by" time | TomTom Routing API |
 | Rain radar (`radar`) | Animated radar over a map around home: the past 30 min to 3 h, then up to 3 h of forecast; rain or snow, five map areas, still or looping | Environment Canada (MSC GeoMet), Esri grey canvas map |
 | Wildfires (`wildfires`) | Active fires around home on the radar's map, coloured by stage of control (fires of note ringed), burned areas, evacuation orders and alerts, the nearest 0 to 5 fires listed; five map areas, fires under control on or off | BC Wildfire Service and EmergencyInfoBC public ArcGIS layers, Esri grey canvas map |
@@ -128,7 +128,7 @@ Manrope display, template preview screenshots from `public/templates/` — no pe
 The features catalogue lives in `src/lib/marketingFeatures.ts` (grouped like the admin widget picker).
 
 **Alerts** (`src/server/alerts.ts`): Alert Ready (NAAD), **Environment Canada weather warnings** (through NAAD),
-DriveBC road events and weather conditions, Earthquakes Canada, BC Hydro power outages, **EmergencyInfoBC evacuation orders and alerts** (any hazard, covering the home or within `alerts.evacuationKm`); in the U.S. **National Weather Service** watches and warnings and **USGS** earthquakes (USGS also outside both countries); in Québec **Hydro-Québec** power outages. Which apply is the household's **regional pack** (below). Each switchable in `config.alerts.sources`.
+DriveBC road events and weather conditions, Earthquakes Canada, BC Hydro power outages, **EmergencyInfoBC evacuation orders and alerts** (any hazard, covering the home or within `alerts.evacuationKm`); in the U.S. **National Weather Service** watches and warnings and **USGS** earthquakes (USGS also outside both countries); in Québec **Hydro-Québec** power outages; in Ontario and Alberta **Ontario 511** and **511 Alberta** road events (each needs Everydaypane's developer key, `ONTARIO_511_KEY` / `ALBERTA_511_KEY`, and is skipped without it); in Edmonton **EPCOR** power outages. Which apply is the household's **regional pack** (below). Each switchable in `config.alerts.sources`.
 Optional high radon and CO₂ from Airthings (`config.integrations.smartHome.airthings`, off by default).
 Optional pool water past Blue Riiot's warning range (`config.integrations.smartHome.blueRiiot.alerts`, off by default).
 **Washer and dryer done** notices (`config.integrations.smartHome.laundry.alertDone`, on by default, needs a Laundry widget on a view): blue instead of red (`notice`), shown whatever the strip threshold, never emailed and left out of the Alerts widget.
@@ -136,7 +136,7 @@ Optional email to everyone on `ADMIN_EMAILS` and `FAMILY_EMAILS` when a new stri
 **Smart notices** (`config.alerts.rules`, `src/lib/alertRules.ts`): blue notes that combine two integrations, each its own switch in Settings › Emergency alerts › Smart notices: sprinklers due in frost (Rachio + forecast, on), sprinklers due when rain is likely (off), backup battery left during a BC Hydro outage at home (EcoFlow, on), poor air outside with indoor PM2.5 (AQHI + Airthings, on, from AQHI 7), pool freeze warning (Blue Riiot + forecast, off), laundry left in the machine (off, after 60 min) and bins out the night before (garbage day, off, from 6 PM).
 
 **Regional packs** (`src/lib/regions.ts`, Melvin, 2026-11-26): the dashboard's location picks a region (Metro Vancouver
-and the Fraser Valley, B.C., Calgary, Edmonton, Toronto, Québec, Halifax, elsewhere in Canada, Seattle and King County,
+and the Fraser Valley, Greater Victoria, B.C., Calgary, Edmonton, Alberta, Toronto, Ontario, Québec, Halifax, elsewhere in Canada, Seattle and King County,
 elsewhere in the U.S., outside both), or Settings › Location picks one by hand (`config.region`, `"auto"` by default).
 The region decides which alert sources are read and how their toggles are named (hidden where nothing feeds them),
 which transit agencies the departures widget offers first, and the "Your region" summary under Settings › Location.
@@ -173,7 +173,7 @@ on/off switch for every widget, smart-home provider, music and to-do service and
 
 **Integrations connected from Settings:** Google Calendar, Microsoft 365 calendars and **To Do** (OAuth, `?todo=1` / `?files=1`), Google Tasks, **Todoist**, Google Photos (Picker), iCal calendar links (with iCloud publish steps in Settings and `docs/icloud-calendar.md`),
 **Govee** (API key, Settings › Smart home), **Philips Hue** (OAuth, Settings › Smart home), **LIFX** (personal token, Settings › Smart home), Amazon Photos, **photo sources** (Bing, Reddit, weather albums, Immich API keys, Dropbox/Box/SmugMug OAuth, OneDrive via Microsoft, Flickr API key, iCloud published URLs), the photo library (Vercel Blob), Home Assistant (Cloudflare Tunnel + Access), Spotify, Sonos, garbage
-zone lookup, sports teams to follow, TransLink (the TTC, Calgary, Edmonton, Halifax and King County Metro feeds need nothing), commute places (TomTom geocoding), optional **package tracking** key, **UniFi Site Manager** API key (Settings › UniFi network), **EcoFlow** access and secret keys, **Oura** (OAuth, Settings › Content & finance), **Airthings** (API client id and secret, Settings › Indoor air), **Rachio** (API key, Settings › Sprinklers), **Blue Riiot** (app email and password, Settings › Pool; unofficial), **LG ThinQ** personal access token (Settings › Laundry), **17TRACK** API key (Settings › Packages).
+zone lookup, sports teams to follow, TransLink (the TTC, Calgary, Edmonton, Halifax, King County Metro and BC Transit feeds need nothing), commute places (TomTom geocoding), optional **package tracking** key, **UniFi Site Manager** API key (Settings › UniFi network), **EcoFlow** access and secret keys, **Oura** (OAuth, Settings › Content & finance), **Airthings** (API client id and secret, Settings › Indoor air), **Rachio** (API key, Settings › Sprinklers), **Blue Riiot** (app email and password, Settings › Pool; unofficial), **LG ThinQ** personal access token (Settings › Laundry), **17TRACK** API key (Settings › Packages).
 
 ## In progress
 
@@ -239,10 +239,17 @@ npm run templates:previews  # regenerate public/templates/*.png from real widget
   recurring cadences (every weekday, every N days), planned from a phone and shown on the wall (see Architecture).
 - **Shopping list** (Melvin, 2026-11-22): groceries the family adds from their phones, shown on the wall, ticked off
   with a tap when the widget allows it (see Architecture).
+- **Shopping aisles and running low** (Melvin, 2026-11-26: "add categories and running low"): every item has an aisle
+  from a fixed store-order list (`src/lib/shopping.ts`) and can be marked running low ("still some left, grab it if
+  you're there"; an unmarked item means it's out). Claude's defaults: the aisle is guessed from the words
+  (`src/lib/shoppingGuess.ts`) so nobody has to pick, an aisle picked on a phone sticks for that item next time, new
+  widgets group by aisle and older ones keep their flat list until switched, and "low" is a tag rather than a re-sort.
 - **Whiteboard** (Melvin, 2026-11-22): a simple shared doodle on the wall — a few colours, finger draw, eraser, hold
-  Clear to wipe; wider tiles show more colours; the same board on every display (see Architecture).
+  Clear to wipe; wider tiles show more colours; the same board on every display (see Architecture). **From phones**
+  (Melvin, 2026-11-26: "yes let the whiteboard sync from phones"): `/family/` and the kitchen edit link draw on the
+  same board with every colour, the eraser and hold to clear.
 - **Phone edit without login** (Melvin, 2026-11-22: QR to the display link with `/edit`): `/d/<token>/edit/` edits
-  meals, shopping and the message board with no magic link; an `editQr` widget and the Displays tab both show the QR
+  meals, shopping, the message board and (2026-11-26) the whiteboard with no magic link; an `editQr` widget and the Displays tab both show the QR
   (see Architecture). Not Google Tasks or a new local to-do list — those stay separate.
 - **UV, pollen, school status and who's home** (Melvin, 2026-11-22): the weather widget can show the UV index and the
   highest pollen count Open-Meteo reports; a school widget reads the district page (Langley SD35 by default) for closed,
@@ -295,6 +302,12 @@ npm run templates:previews  # regenerate public/templates/*.png from real widget
   `combinedFeed` with `titleCase` (`src/lib/titleCase.ts`), so the display bundle doesn't grow and the calendars
   themselves never change. Words with a capital after the first letter (BC, PRO-D, iPhone, an all-caps title) are left
   as typed, and short joining words (a, of, the…) stay lower case mid-title (Claude's rules, 2026-11-26).
+- **Calendar names on the wall** (Melvin, 2026-11-26: "one of my calendars just shows my email, can you see if you can
+  get my name instead?"): a Google primary calendar is named after the account's email, so its chip in the day popup
+  read the address. Google connections now also ask for `userinfo.profile`, and the account's name (`google.name`
+  secret) stands in for any calendar whose name is still its own email id (`calendarName` in `src/server/google.ts`);
+  an account connected before this needs connecting again. Every Google and Microsoft 365 calendar that's switched on
+  also has **Name on the Wall** in Settings › Calendars, which always wins; empty means the default.
 - **Month calendar title** (Melvin, 2026-11-19: "add a toggle to show/hide month title"): the month widget's
   "November 2026" line can be switched off in its settings (`showTitle`, on by default); the grid takes the space.
 - **Tile padding** (Melvin, 2026-11-22: "is it possible to adjust the inner padding of the tiles"): each view has a
@@ -367,7 +380,12 @@ npm run templates:previews  # regenerate public/templates/*.png from real widget
   picks of first packs, all keyless and official: NWS alerts and USGS earthquakes for the U.S., Hydro-Québec outages,
   and five more GTFS-realtime agencies (TTC, Calgary, Edmonton, Halifax, King County Metro). Left for later because their
   feeds couldn't be confirmed from the sandbox: Ontario and Alberta 511 road events, Ontario and Alberta power outages,
-  BC Transit (Victoria, Kelowna); STM, OC Transpo and Sound Transit need keys.
+  BC Transit (Victoria, Kelowna); STM, OC Transpo and Sound Transit need keys. **Second round** (Melvin, 2026-11-26:
+  "can you add these: Ontario and Alberta 511 road events, Ontario and Alberta power outages, and Victoria's BC
+  Transit"): Ontario 511 and 511 Alberta road events (Everydaypane's own developer key per province, in Vercel), EPCOR
+  outages for Edmonton, and BC Transit Victoria with a Greater Victoria region; Alberta and Ontario regions outside the
+  metros. Hydro One, Toronto Hydro, ENMAX and FortisAlberta publish no outage feed anyone may read, so the rest of
+  Ontario and Alberta has no power source (checked 2026-11-26).
 - **Sports scores** (Melvin, 2026-11-21: "allow to customize the sports and the teams"): any teams from several leagues
   (up to 12), picked in Settings › Sports, with a live score while a game is on, the last result and the next game
   (see Architecture).
@@ -594,7 +612,11 @@ panel can be complex if you need it to be."
   display, hold Clear, wider tile → more colours): one shared board in the `whiteboard` table
   (`src/server/whiteboard.ts`), strokes on a fixed 1600×900 board so every tile letterboxes the same doodle. Displays
   poll `/api/display/whiteboard/` every three seconds; a stroke posts on finger-up and Clear posts after an 800 ms hold.
-  No brush sizes, undo or sync from phones.
+  One board per household in `account_whiteboard` (2026-11-26; the old single-row `whiteboard` table was shared by
+  every household, and its doodle is read as the grandfather household's until that household draws). Phones use
+  `/api/whiteboard/` (`Whiteboard` component; family session or display token through `familyEditorFor`, 600 posts an
+  hour per person, off with the `widget.whiteboard` flag), which shares its handlers with the wall's route
+  (`src/server/whiteboardApi.ts`) and polls every three seconds while the page is visible. No brush sizes or undo.
 - **Meal planning** (Melvin, 2026-11-17: "add meal planning"; repeats Melvin, 2026-11-23: cereal every Monday, eggs
   every Tuesday, every N days): one-off rows in `account_meals` and recurring rules in `account_meal_rules`
   (`src/server/meals.ts`), planned by anyone on `ADMIN_EMAILS` or `FAMILY_EMAILS` from the admin panel's Meals tab or
@@ -612,7 +634,14 @@ panel can be complex if you need it to be."
   already open. Displays poll `/api/display/shopping/` every minute with an ETag. A tap on the wall ticks an item off
   at once (a second tap puts it back) only when a shopping widget has `allowCheck`, because anyone in the kitchen can
   reach the screen; a signed-in phone (or the kitchen edit link) can always tick. The widget shows a chosen number of
-  items and can show or hide what's already bought.
+  items and can show or hide what's already bought. **Aisles** are the `category` column; null means "guess from the
+  words when read" (`guessCategory`: whole words, the match that ends last wins, then the longer, "frozen" anywhere is
+  Frozen), so rows saved before aisles get one with no backfill. Picking an aisle on a phone (`PATCH` with `category`)
+  writes it to every row with the same words (case-insensitive), and `addShoppingItem` reuses it from those rows. The
+  word list stays off the wall: the feed carries the category id and the display imports only the labels. **Running
+  low** is the `low` column, set from the phone's Low buttons or the wall's Low chip next to Add; the wall shows an amber
+  "low" tag. With `groupByCategory` the open items are drawn under aisle headings in store order (bought ones last,
+  ungrouped), and `count` is cut after grouping.
 - **Phone edit page** (Melvin, 2026-11-22): `/d/<token>/edit/` reuses the family meal, shopping and message components
   with no magic link (`FamilyAuthProvider` sends `x-display-token`; `familyEditorFor` in `src/server/familyAuth.ts`
   accepts a session or that token). Kitchen posts are keyed `display:<deviceId>` (no admin pin). An `editQr` widget and
@@ -669,7 +698,13 @@ panel can be complex if you need it to be."
   `latitude`/`longitude`/`maxradiuskm`, graded like Earthquakes Canada. **Hydro-Québec**: `bisversion.json` names the
   current `bismarkers<version>.json`, whose `pannes` rows are positional (customers, start, estimated end, I/P, "[lon,
   lat]" string, codes; shape read 2026-11-26); points only, so within 1 km is severe and within `powerKm` moderate from
-  1,000 customers, else minor. A new pack is a `REGIONS` entry (plus a box or outline) and, for a new source, a parser
+  1,000 customers, else minor. **Ontario 511 / 511 Alberta**: `511on.ca/api/v2/get/event` and
+  `511.alberta.ca/api/v2/get/event` (`?key=&format=json`, `ONTARIO_511_KEY` / `ALBERTA_511_KEY`; no key, no call), the
+  province's whole list read every five minutes for everyone (Ontario allows ten calls a minute) and trimmed
+  (`trim511`), then per home: full closures and "Major" events within `radiusKm`, unplanned closures severe, planned
+  roadwork only once started and moderate (times are Unix seconds). **EPCOR**: the public ArcGIS layer `ocps_prod_av`
+  (polygons; `affcusts`, `cause`, `estresto` text, `faulted`, `nbhoods`) queried around home, graded like BC Hydro's.
+  A new pack is a `REGIONS` entry (plus a box or outline) and, for a new source, a parser
   in `alerts.ts` and a label in `alertSourceLabels`.
 - **Transit agencies** (`src/lib/transitAgencies.ts`): realtime and static GTFS addresses, credit line and licence
   notice per agency. `src/server/translink.ts` serves them all: `usedStops` groups widget stops by agency, each agency's
@@ -1169,7 +1204,7 @@ panel can be complex if you need it to be."
   CSP that allows only our own origin (and Sentry's ingest, Cloudflare's speed test in `connect-src` for the internet widget, `'self'` plus earth.nullschool.net, embed.windy.com and the video and chart embeds in `frame-src`;
   `script-src` never allows `'unsafe-inline'` — Next.js pages get a per-request nonce from `proxy.ts`, the display loads
   only `/display/display.js`), and a Permissions-Policy that turns off camera, microphone and location.
-- **Family sessions** (`FAMILY_EMAILS`) use `/family/` and the meals, shopping and messages APIs only. They are not
+- **Family sessions** (`FAMILY_EMAILS`) use `/family/` and the meals, shopping, messages and whiteboard APIs only. They are not
   accepted as display viewers (`viewerFor`), so they cannot call `/api/display/*` (Home Assistant, cameras, tasks, …).
 - **Display-token family edits:** a valid `x-display-token` may use the meals, shopping and messages APIs the same way
   a family session does (`familyEditorFor`), so `/d/<token>/edit/` works without login. It does not grant admin pin,

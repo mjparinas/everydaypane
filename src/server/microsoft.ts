@@ -8,7 +8,7 @@ import type { CalendarData, CalendarEvent } from "@/lib/display/types";
 import { cached, forget, type Cached } from "./cache";
 import { randomToken } from "./crypto";
 import { env } from "./env";
-import { feedRange, sortEvents } from "./google";
+import { calendarName, feedRange, sortEvents } from "./google";
 import { getSecret, setSecret } from "./secrets";
 
 // Microsoft 365 calendars (Melvin, 2026-11-23): read-only OAuth through Microsoft Graph, merged into the same
@@ -241,9 +241,9 @@ async function eventsFor(
 
 export async function microsoftFeed(accountId: string, config: DashboardConfig, now = Date.now()): Promise<Cached<CalendarData>> {
   await accessToken(accountId, now);
-  const calendars = config.integrations.microsoft.calendars.filter((c) => c.enabled);
+  const calendars = config.integrations.microsoft.calendars.filter((c) => c.enabled).map((c) => ({ ...c, name: calendarName(c, null) }));
   const { from, to } = feedRange(now, config.location.timeZone);
-  const key = `m365:${accountId}:${from}:${calendars.map((c) => `${c.id}=${c.color}`).join(",")}`;
+  const key = `m365:${accountId}:${from}:${calendars.map((c) => `${c.id}=${c.color}=${c.name}`).join(",")}`;
   return cached(
     key,
     TTL,

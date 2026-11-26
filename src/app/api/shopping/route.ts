@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+import { SHOPPING_CATEGORIES } from "@/lib/shopping";
 import { rateLimit } from "@/server/db";
 import { familyEditorAccountId, familyEditorFor, familyEditorKey } from "@/server/familyAuth";
 import { json, readJson, sameOrigin, unauthorized } from "@/server/http";
@@ -20,6 +21,9 @@ export async function GET(req: Request) {
 
 const body = z.object({
   text: z.string().trim().min(1, "Write an item").max(ITEM_MAX, `Keep it under ${ITEM_MAX} characters`),
+  // Left out, the aisle is reused from the last time this item was added, or guessed from its words.
+  category: z.enum(SHOPPING_CATEGORIES).optional(),
+  low: z.boolean().optional(),
 });
 
 export async function POST(req: Request) {
@@ -31,7 +35,12 @@ export async function POST(req: Request) {
   if (!(await limited(key))) return tooMany();
   const parsed = body.safeParse(await readJson(req, 1_000).catch(() => null));
   if (!parsed.success) return json({ error: parsed.error.issues[0]?.message ?? "Bad request" }, 400);
-  const result = await addShoppingItem(accountId, { text: parsed.data.text, by: key });
+  const result = await addShoppingItem(accountId, {
+    text: parsed.data.text,
+    by: key,
+    category: parsed.data.category,
+    low: parsed.data.low,
+  });
   if (!result.ok) {
     const message = result.error === "full" ? "The list is full (100 items). Tick some off or remove them." : "Write an item";
     return json({ error: message }, 400);

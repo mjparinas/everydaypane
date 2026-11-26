@@ -57,6 +57,10 @@ export const env = {
   googleMapsKey: () => process.env.GOOGLE_MAPS_API_KEY ?? "",
   // TransLink's open API (docs/translink.md): one key for the realtime departures feed.
   translinkKey: () => process.env.TRANSLINK_API_KEY ?? "",
+  /** Ontario 511 developer key (511on.ca › Developers). Without it Ontario road events are skipped. */
+  ontario511Key: () => process.env.ONTARIO_511_KEY ?? "",
+  /** 511 Alberta developer key (511.alberta.ca › Developers). Without it Alberta road events are skipped. */
+  alberta511Key: () => process.env.ALBERTA_511_KEY ?? "",
   todoistClientId: () => process.env.TODOIST_CLIENT_ID ?? "",
   todoistClientSecret: () => process.env.TODOIST_CLIENT_SECRET ?? "",
   dropboxClientId: () => process.env.DROPBOX_CLIENT_ID ?? "",

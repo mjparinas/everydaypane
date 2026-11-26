@@ -6,6 +6,8 @@ import { localDate } from "@/lib/calendar";
 import type { DashboardConfig } from "@/lib/config/schema";
 import type { ShoppingData, ShoppingItem } from "@/lib/display/types";
 import { MEAL_SLOTS } from "@/lib/meals";
+import { isShoppingCategory, type ShoppingCategory } from "@/lib/shopping";
+import { guessCategory } from "@/lib/shoppingGuess";
 
 import { randomToken } from "./crypto";
 import { query, run } from "./db";
@@ -14,6 +16,8 @@ import { mealsBetween } from "./meals";
 // The family shopping list (Melvin, 2026-11-22): items added from phones, shown on the wall, and ticked off there only
 // when a shopping widget allows taps, because anyone in the kitchen can reach the screen. Bought items stay for a week
 // so they can be cleared or shown, then they're deleted as the list is read or written, so no cron job is needed.
+// Each item has an aisle and can be marked "running low" (Melvin, 2026-11-26): the aisle is guessed from the words
+// until someone picks one on a phone, and a picked aisle is reused the next time the same item is added.
 
 export const ITEM_MAX = 80;
 /** Open items, not bought ones. A hundred lines is a long grocery run; past that, tick some off or remove them. */
@@ -28,7 +32,20 @@ type Row = {
   sort: number | bigint;
   added_at: number | bigint;
   done_at: number | bigint | null;
+  category: string | null;
+  low: number | bigint | null;
 };
+
+const categoryOf = (r: { text: string; category: string | null }): ShoppingCategory =>
+  isShoppingCategory(r.category) ? r.category : guessCategory(r.text);
+
+const itemOf = (r: Row): ShoppingItem => ({
+  id: r.id,
+  text: r.text,
+  done: Number(r.done) === 1,
+  category: categoryOf(r),
+  low: Number(r.low ?? 0) === 1,
+});
 
 const norm = (text: string) => text.trim().replace(/\s+/g, " ");
 const keyOf = (text: string) => norm(text).toLocaleLowerCase("en-CA");
@@ -47,20 +64,20 @@ async function prune(accountId: string, now: number): Promise<void> {
 export async function listShopping(accountId: string, now = Date.now()): Promise<ShoppingData> {
   await prune(accountId, now);
   const rows = await query<Row>(
-    "SELECT id, text, done, sort, added_at, done_at FROM shopping WHERE account_id = ? ORDER BY done ASC, sort ASC",
+    "SELECT id, text, done, sort, added_at, done_at, category, low FROM shopping WHERE account_id = ? ORDER BY done ASC, sort ASC",
     [accountId],
   );
   let updatedAt = 0;
   const items = rows.map((r) => {
     updatedAt = Math.max(updatedAt, Number(r.added_at), r.done_at == null ? 0 : Number(r.done_at));
-    return { id: r.id, text: r.text, done: Number(r.done) === 1 };
+    return itemOf(r);
   });
   return { updatedAt, items };
 }
 
 export async function addShoppingItem(
   accountId: string,
-  input: { text: string; by: string },
+  input: { text: string; by: string; category?: ShoppingCategory | undefined; low?: boolean | undefined },
   now = Date.now(),
 ): Promise<{ ok: true; item: ShoppingItem } | { ok: false; error: "empty" | "long" | "full" }> {
   const text = norm(input.text);
@@ -71,15 +88,41 @@ export async function addShoppingItem(
   if (Number(open[0]?.n ?? 0) >= OPEN_MAX) return { ok: false, error: "full" };
   const max = await query<{ n: number | bigint }>("SELECT COALESCE(MAX(sort), 0) AS n FROM shopping WHERE account_id = ?", [accountId]);
   const id = randomToken(9);
-  await run("INSERT INTO shopping (id, account_id, text, done, sort, added_at, done_at, added_by) VALUES (?, ?, ?, 0, ?, ?, NULL, ?)", [
-    id,
-    accountId,
-    text,
-    Number(max[0]?.n ?? 0) + 1,
-    now,
-    input.by,
-  ]);
-  return { ok: true, item: { id, text, done: false } };
+  // An aisle someone picked for this item before (still in the last week's list) beats the guess.
+  const category = input.category ?? (await pickedCategory(accountId, text));
+  const low = input.low === true;
+  await run(
+    "INSERT INTO shopping (id, account_id, text, done, sort, added_at, done_at, added_by, category, low) VALUES (?, ?, ?, 0, ?, ?, NULL, ?, ?, ?)",
+    [id, accountId, text, Number(max[0]?.n ?? 0) + 1, now, input.by, category ?? null, low ? 1 : 0],
+  );
+  return { ok: true, item: { id, text, done: false, category: category ?? guessCategory(text), low } };
+}
+
+async function pickedCategory(accountId: string, text: string): Promise<ShoppingCategory | undefined> {
+  const rows = await query<{ category: string | null }>(
+    "SELECT category FROM shopping WHERE account_id = ? AND lower(text) = ? AND category IS NOT NULL ORDER BY added_at DESC LIMIT 1",
+    [accountId, keyOf(text)],
+  );
+  const picked = rows[0]?.category;
+  return isShoppingCategory(picked) ? picked : undefined;
+}
+
+/**
+ * Moves an item to another aisle or marks it running low, from a phone. Moving it also moves every other row with the
+ * same words, so a bought "oat milk" put back later stays where it was put.
+ */
+export async function updateShoppingItem(
+  accountId: string,
+  input: { id: string; category?: ShoppingCategory | undefined; low?: boolean | undefined },
+): Promise<"ok" | "not-found"> {
+  const rows = await query<{ text: string }>("SELECT text FROM shopping WHERE account_id = ? AND id = ?", [accountId, input.id]);
+  const row = rows[0];
+  if (!row) return "not-found";
+  if (input.category)
+    await run("UPDATE shopping SET category = ? WHERE account_id = ? AND lower(text) = ?", [input.category, accountId, keyOf(row.text)]);
+  if (input.low !== undefined)
+    await run("UPDATE shopping SET low = ? WHERE account_id = ? AND id = ?", [input.low ? 1 : 0, accountId, input.id]);
+  return "ok";
 }
 
 async function writeDone(accountId: string, id: string, done: boolean, now: number): Promise<"ok" | "not-found"> {
@@ -110,13 +153,13 @@ export async function setShoppingDone(
 export async function addShoppingFromWall(
   accountId: string,
   config: DashboardConfig,
-  input: { text: string },
+  input: { text: string; low?: boolean | undefined },
   by = "wall",
   now = Date.now(),
 ): Promise<{ ok: true; item: ShoppingItem } | { ok: false; error: "forbidden" | "empty" | "long" | "full" }> {
   const allowed = config.views.some((v) => v.widgets.some((w) => w.type === "shopping" && w.allowAdd));
   if (!allowed) return { ok: false, error: "forbidden" };
-  const result = await addShoppingItem(accountId, { text: input.text, by }, now);
+  const result = await addShoppingItem(accountId, { text: input.text, by, low: input.low }, now);
   if (!result.ok) return { ok: false, error: result.error };
   return result;
 }

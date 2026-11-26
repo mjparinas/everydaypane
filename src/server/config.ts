@@ -179,6 +179,7 @@ export function upgrade(stored: unknown): unknown {
           if (w.type === "shopping") {
             if (!("allowAdd" in w)) w.allowAdd = false;
             if (!("allowCheck" in w)) w.allowCheck = false;
+            if (!("groupByCategory" in w)) w.groupByCategory = false;
           }
           if (w.type === "messages" && !("allowAdd" in w)) w.allowAdd = false;
           if (w.type === "tasks" && !("provider" in w)) w.provider = "google";

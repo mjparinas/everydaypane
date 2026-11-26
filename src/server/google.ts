@@ -27,6 +27,12 @@ export const PHOTOS_SCOPE = "https://www.googleapis.com/auth/photospicker.mediai
 // Google Tasks (Melvin, 2026-11-17, in place of Google Keep, which has no API for personal accounts): read the lists and
 // tick tasks off from the wall. Asked for only when the admin connects Google Tasks (src/server/googleTasks.ts).
 export const TASKS_SCOPE = "https://www.googleapis.com/auth/tasks";
+// The account owner's name (Melvin, 2026-11-26: "one of my calendars just shows my email, can you see if you can get my
+// name instead?"). A Google primary calendar is named after the account's email, so the wall's calendar chip read
+// "someone@gmail.com". Asked for on every connection; an account connected before this keeps its email until it is
+// connected again or the calendar is renamed in Settings.
+export const PROFILE_SCOPE = "https://www.googleapis.com/auth/userinfo.profile";
+const USERINFO_URL = "https://www.googleapis.com/oauth2/v3/userinfo";
 export const GMAIL_SCOPE = "https://www.googleapis.com/auth/gmail.readonly";
 export const STATE_COOKIE = "ep_google_state";
 const TTL = 5 * 60_000;
@@ -41,7 +47,9 @@ export function consentUrl(state: string, redirect: string, photos = false, task
     client_id: env.googleClientId(),
     redirect_uri: redirect,
     response_type: "code",
-    scope: [SCOPE, ...(photos ? [PHOTOS_SCOPE] : []), ...(tasks ? [TASKS_SCOPE] : []), ...(gmail ? [GMAIL_SCOPE] : [])].join(" "),
+    scope: [SCOPE, PROFILE_SCOPE, ...(photos ? [PHOTOS_SCOPE] : []), ...(tasks ? [TASKS_SCOPE] : []), ...(gmail ? [GMAIL_SCOPE] : [])].join(
+      " ",
+    ),
     // offline + consent: Google returns a refresh token every time, even when the account was connected before.
     access_type: "offline",
     prompt: "consent",
@@ -91,12 +99,36 @@ async function tokenRequest(params: Record<string, string>): Promise<z.infer<typ
 
 const access = new Map<string, { token: string; expiresAt: number; refresh: string }>();
 
+/** The Google account's own name, or "" when the profile scope wasn't granted or Google didn't answer. */
+async function ownerName(token: string): Promise<string> {
+  try {
+    const r = await fetch(USERINFO_URL, { headers: { Authorization: `Bearer ${token}` }, signal: AbortSignal.timeout(5000) });
+    if (!r.ok) return "";
+    const body = z.object({ name: z.string().optional() }).safeParse(await r.json());
+    return body.success ? (body.data.name ?? "").trim().slice(0, 120) : "";
+  } catch {
+    return "";
+  }
+}
+
+const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+/**
+ * The name a calendar goes by on the wall: the owner's name in place of an email address, but only while the name is
+ * still the calendar's own id (Google's default for a primary calendar). A name typed in Settings always wins.
+ */
+export function calendarName(calendar: { id: string; name: string }, owner: string | null | undefined): string {
+  const name = calendar.name.trim() || calendar.id;
+  return owner && name === calendar.id && EMAIL.test(name) ? owner : name;
+}
+
 /** Trades the one-time code from the consent screen for a refresh token and stores it. */
 export async function connect(accountId: string, code: string, redirect: string, now = Date.now()): Promise<void> {
   const t = await tokenRequest({ grant_type: "authorization_code", code, redirect_uri: redirect });
   if (!t.refresh_token) throw new Error("Google didn't send a refresh token");
   await setSecret(accountId, "google.refreshToken", t.refresh_token, now);
   await setSecret(accountId, "google.scopes", t.scope ?? SCOPE, now);
+  await setSecret(accountId, "google.name", (await ownerName(t.access_token)) || null, now);
   access.set(accountId, { token: t.access_token, expiresAt: now + (t.expires_in - 60) * 1000, refresh: t.refresh_token });
   await forget("calendar:");
   await forget("tasks:");
@@ -108,6 +140,7 @@ export async function disconnect(accountId: string): Promise<void> {
   access.delete(accountId);
   await setSecret(accountId, "google.refreshToken", null);
   await setSecret(accountId, "google.scopes", null);
+  await setSecret(accountId, "google.name", null);
   await forget("calendar:");
   await forget("tasks:");
   await forget("gmail:");
@@ -195,12 +228,12 @@ export interface GoogleCalendar {
 
 const hexColour = (c: string | undefined, fallback = "#3b5bdb") => (c && /^#[0-9a-fA-F]{6}$/.test(c) ? c.toLowerCase() : fallback);
 
-export function trimCalendars(raw: unknown): GoogleCalendar[] {
+export function trimCalendars(raw: unknown, owner?: string | null): GoogleCalendar[] {
   return calendarListSchema
     .parse(raw)
     .items.map((c) => ({
       id: c.id,
-      name: (c.summaryOverride ?? c.summary ?? c.id).slice(0, 120),
+      name: calendarName({ id: c.id, name: (c.summaryOverride ?? c.summary ?? c.id).slice(0, 120) }, owner),
       color: hexColour(c.backgroundColor),
       primary: c.primary === true,
     }))
@@ -208,7 +241,8 @@ export function trimCalendars(raw: unknown): GoogleCalendar[] {
 }
 
 export async function listCalendars(accountId: string): Promise<GoogleCalendar[]> {
-  return trimCalendars(await api(accountId, "/users/me/calendarList", { minAccessRole: "reader", maxResults: "250" }));
+  const raw = await api(accountId, "/users/me/calendarList", { minAccessRole: "reader", maxResults: "250" });
+  return trimCalendars(raw, await getSecret(accountId, "google.name"));
 }
 
 // ---- Events ----
@@ -302,9 +336,11 @@ export function sortEvents(events: CalendarEvent[]): CalendarEvent[] {
 export async function calendarFeed(accountId: string, config: DashboardConfig, now = Date.now()): Promise<Cached<CalendarData>> {
   // Checked first, so a revoked connection shows as such instead of the last cached events living on forever.
   await accessToken(accountId, now);
-  const calendars = config.integrations.google.calendars.filter((c) => c.enabled);
+  const owner = await getSecret(accountId, "google.name");
+  const calendars = config.integrations.google.calendars.filter((c) => c.enabled).map((c) => ({ ...c, name: calendarName(c, owner) }));
   const { from, to } = feedRange(now, config.location.timeZone);
-  const key = `calendar:${accountId}:${from}:${calendars.map((c) => `${c.id}=${c.color}`).join(",")}`;
+  // The name is in the key so a calendar renamed in Settings shows its new name on the next read, not in five minutes.
+  const key = `calendar:${accountId}:${from}:${calendars.map((c) => `${c.id}=${c.color}=${c.name}`).join(",")}`;
   return cached(
     key,
     TTL,
