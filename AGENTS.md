@@ -128,6 +128,7 @@ Optional high radon and CO₂ from Airthings (`config.integrations.smartHome.air
 Optional pool water past Blue Riiot's warning range (`config.integrations.smartHome.blueRiiot.alerts`, off by default).
 **Washer and dryer done** notices (`config.integrations.smartHome.laundry.alertDone`, on by default, needs a Laundry widget on a view): blue instead of red (`notice`), shown whatever the strip threshold, never emailed and left out of the Alerts widget.
 Optional email to everyone on `ADMIN_EMAILS` and `FAMILY_EMAILS` when a new strip-worthy alert arrives (`config.alerts.notifyEmail`).
+**Smart notices** (`config.alerts.rules`, `src/lib/alertRules.ts`): blue notes that combine two integrations, each its own switch in Settings › Emergency alerts › Smart notices: sprinklers due in frost (Rachio + forecast, on), sprinklers due when rain is likely (off), backup battery left during a BC Hydro outage at home (EcoFlow, on), poor air outside with indoor PM2.5 (AQHI + Airthings, on, from AQHI 7), pool freeze warning (Blue Riiot + forecast, off), laundry left in the machine (off, after 60 min) and bins out the night before (garbage day, off, from 6 PM).
 
 **Getting-started emails** (`src/lib/onboarding.ts`, `src/server/onboarding.ts`): 18 daily emails to a new household's admins, one feature each with a picture of the app (`public/email/onboarding/`, `node scripts/email-images.mjs`); 7 Free, 11 marked Household. One-click unsubscribe (`/api/email/unsubscribe/`), paused from `/admin/` › Automations.
 
@@ -615,6 +616,17 @@ panel can be complex if you need it to be."
   and a footer link to `/api/email/unsubscribe/` (an HMAC of the address under `SESSION_SECRET`; GET asks, POST
   records `email_optouts`), why it was sent, and `MAIL_POSTAL_ADDRESS` (CASL); production sends nothing until that's
   set. Staff pause the series in `/admin/` › Automations (`onboarding`).
+- **Smart notices** (Melvin, 2026-11-26: "smart alerts across integrations", e.g. "the pool pH is off" or "the dryer's
+  done and nobody's home"): `evaluateRules` in `src/lib/alertRules.ts` is pure and takes whichever feeds a rule reads;
+  `ruleAlertsFor` in `src/server/alertRules.ts` gathers only the feeds a switched-on rule needs (`rulesNeed`), skips a
+  feed whose widget flag is off, reads EcoFlow only while a BC Hydro outage covers the home and Airthings only while the
+  air outside is past the threshold, and reuses each feed's own cache, so the alerts poll adds no new calls. Rule alerts
+  are `source: "smart"`, `notice: true` (blue, ℹ on the strip, never emailed, not in the Alerts widget), with ids that
+  stay the same for one occurrence (a watering's start, an outage id, a day) so a dismissal sticks. Off by default for
+  the ones that would fire often (Claude's defaults, 2026-11-26). Pool water out of range, radon and CO₂ and "washer
+  done" keep their own switches. "Nobody's home" rules were left out: a note on a wall in an empty house reaches nobody,
+  and notices aren't emailed. A new rule adds a key to `config.alerts.rules` (with a default), a branch in
+  `evaluateRules`, its feeds in `rulesNeed` and a switch in the Smart notices block.
 - **Alert email:** when `config.alerts.notifyEmail` is on, each new strip-worthy alert (`meetsBanner` in `src/lib/alerts.ts`)
   triggers one email per alert id to household members (`src/server/alertNotify.ts`, `sendEmail` through Resend, HTML from
   `alertEmail` in `src/lib/email.ts`); ids are stored in `account_alert_notified` so repeats are never sent. The display
