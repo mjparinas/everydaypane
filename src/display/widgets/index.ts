@@ -52,7 +52,6 @@ import { sports } from "./sports";
 import { sunTimes } from "./sunTimes";
 import { tasks } from "./tasks";
 import { tempest } from "./tempest";
-import { tides } from "./tides";
 import { timer } from "./timer";
 import { transit } from "./transit";
 import type { Cleanup, WidgetContext } from "./types";
@@ -138,7 +137,13 @@ export function mountWidget(el: HTMLElement, w: Widget, ctx: WidgetContext): Cle
     case "packages":
       return packages(el, w, ctx);
     case "tides":
-      return tides(el, w, ctx);
+      return lazyWidget("tides", el, w, ctx);
+    case "moon":
+      return lazyWidget("moon", el, w, ctx);
+    case "aurora":
+      return lazyWidget("aurora", el, w, ctx);
+    case "onThisDay":
+      return lazyWidget("onThisDay", el, w, ctx);
     case "transit":
       return transit(el, w, ctx);
     case "sports":

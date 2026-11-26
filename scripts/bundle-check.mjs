@@ -17,6 +17,10 @@ const BUDGET = {
   "public/display/haEntity.js": 6_000,
   "public/display/oura.js": 6_000,
   "public/display/airthings.js": 6_000,
+  "public/display/tides.js": 4_000,
+  "public/display/moon.js": 4_000,
+  "public/display/aurora.js": 4_000,
+  "public/display/onThisDay.js": 3_000,
 };
 let failed = false;
 for (const [file, max] of Object.entries(BUDGET)) {

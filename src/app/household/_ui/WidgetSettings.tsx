@@ -408,6 +408,12 @@ function TypeSettings({
             hint="The line under the times, like “8 hr 51 min of daylight”."
             onChange={(v) => e((x) => void (x.showDaylight = v))}
           />
+          <Toggle
+            label="Show the moon"
+            checked={w.showMoon}
+            hint="Tonight's phase and how much of it is lit, like “Waxing gibbous · 82% lit”."
+            onChange={(v) => e((x) => void (x.showMoon = v))}
+          />
           <p className="text-xs text-soft">Times are for {config.location.name || "the dashboard's location"} (Settings).</p>
         </>
       );
@@ -1556,16 +1562,32 @@ function TypeSettings({
       const e = edit<"tides">();
       return (
         <>
-          <Text label="Station name" value={w.stationName} maxLength={80} onChange={(v) => e((x) => void (x.stationName = v))} />
-          <Text
-            label="Station id"
-            value={w.stationId}
-            maxLength={40}
-            hint="NOAA: digits only. Canada: iwls:8320 for Point Atkinson."
-            onChange={(v) => e((x) => void (x.stationId = v))}
+          <p className="text-sm">
+            Station: <strong>{w.stationName || "none picked"}</strong>
+            {w.stationId ? <span className="text-soft"> ({w.stationId})</span> : null}
+          </p>
+          <PlaceFinder
+            label="Find a station"
+            button="Find"
+            placeholder="White Rock, Crescent Beach, Seattle…"
+            nothing="No tide station by that name. Try a nearby harbour or beach."
+            url={(q) => `/api/household/tide-stations/?${new URLSearchParams({ q })}`}
+            onPick={(p) =>
+              e((x) => {
+                if (!p.id) return;
+                x.stationId = p.id;
+                x.stationName = p.label.replace(/\s*\([^)]*\)$/, "").slice(0, 80);
+              })
+            }
           />
           <Stepper label="Highs and lows shown" value={w.count} min={1} max={8} onChange={(v) => e((x) => void (x.count = v))} />
           <Toggle label="Show height" checked={w.showHeight} onChange={(v) => e((x) => void (x.showHeight = v))} />
+          <Toggle
+            label="Show the day's curve"
+            checked={w.showCurve}
+            hint="The predicted water level from two hours ago to tomorrow, with a line at now."
+            onChange={(v) => e((x) => void (x.showCurve = v))}
+          />
           <p className="text-xs text-soft">
             See{" "}
             <a className="text-brand underline-offset-2 hover:underline" href="/docs/tides.md">
@@ -1722,6 +1744,62 @@ function TypeSettings({
             onChange={(v) => e((x) => void (x.showDetails = v))}
           />
           <p className="text-xs text-soft">Connect the ring&apos;s Oura account in Settings › Content &amp; finance.</p>
+        </>
+      );
+    }
+    case "moon": {
+      const e = edit<"moon">();
+      return (
+        <>
+          <Toggle label="Show the next full and new moon" checked={w.showNext} onChange={(v) => e((x) => void (x.showNext = v))} />
+          <Toggle
+            label="Name the full moon"
+            checked={w.showName}
+            hint="The traditional names, like Cold Moon in December and the Harvest Moon nearest the fall equinox."
+            onChange={(v) => e((x) => void (x.showName = v))}
+          />
+          <p className="text-xs text-soft">Worked out on the screen itself, so it needs no connection.</p>
+        </>
+      );
+    }
+    case "aurora": {
+      const e = edit<"aurora">();
+      return (
+        <>
+          <Toggle
+            label="Show the next 24 hours"
+            checked={w.showBlocks}
+            hint="A bar for each three-hour block of NOAA's Kp forecast; bars high enough to see it from home are coloured."
+            onChange={(v) => e((x) => void (x.showBlocks = v))}
+          />
+          <p className="text-xs text-soft">
+            The chance is worked out for {config.location.name || "the dashboard's location"} from NOAA&apos;s Kp forecast. It still needs a
+            clear, dark sky to the north.
+          </p>
+        </>
+      );
+    }
+    case "onThisDay": {
+      const e = edit<"onThisDay">();
+      return (
+        <>
+          <Segmented
+            label="Show"
+            value={w.kind}
+            options={[
+              { value: "events", label: "Events" },
+              { value: "births", label: "Birthdays" },
+            ]}
+            onChange={(v) => e((x) => void (x.kind = v))}
+          />
+          <Stepper label="How many" value={w.count} min={1} max={5} onChange={(v) => e((x) => void (x.count = v))} />
+          <Toggle
+            label="Family friendly"
+            checked={w.familyFriendly}
+            hint="Leaves out wars, disasters and crimes, which is much of history. It errs on leaving things out."
+            onChange={(v) => e((x) => void (x.familyFriendly = v))}
+          />
+          <p className="text-xs text-soft">From Wikipedia&apos;s &ldquo;On this day&rdquo;; the same picks show all day on every screen.</p>
         </>
       );
     }

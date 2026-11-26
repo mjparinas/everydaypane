@@ -132,6 +132,23 @@ export const widgetSchema = z.discriminatedUnion("type", [
     type: z.literal("sunTimes"),
     showEmoji: z.boolean().default(true),
     showDaylight: z.boolean().default(true),
+    // Tonight's moon phase under the sun times, worked out on the device (Melvin, 2026-11-25). Off for widgets saved
+    // before it existed, on for new ones.
+    showMoon: z.boolean().default(false),
+  }),
+  // Moon phase (Melvin, 2026-11-25): a drawn disc, the phase name, how much is lit and the next full and new moons,
+  // all worked out on the device (src/lib/moon.ts). `showName` adds the full moon's traditional name (Cold Moon).
+  z.object({
+    ...base,
+    type: z.literal("moon"),
+    showNext: z.boolean().default(true),
+    showName: z.boolean().default(true),
+  }),
+  // Aurora tonight (Melvin, 2026-11-25): NOAA's Kp forecast and the chance of seeing it from home (src/server/aurora.ts).
+  z.object({
+    ...base,
+    type: z.literal("aurora"),
+    showBlocks: z.boolean().default(true),
   }),
   z.object({
     ...base,
@@ -337,6 +354,8 @@ export const widgetSchema = z.discriminatedUnion("type", [
     stationName: z.string().max(80),
     count: z.number().int().min(1).max(8),
     showHeight: z.boolean(),
+    // The day's predicted water level as a curve with a "now" marker (Melvin, 2026-11-25).
+    showCurve: z.boolean().default(false),
   }),
   // TransLink departures (Melvin, 2026-11-19): the next buses from a few stops, live from TransLink's GTFS-realtime
   // feed (src/server/translink.ts). Stops are picked in the widget's settings and kept with their stop number and
@@ -588,6 +607,14 @@ export const widgetSchema = z.discriminatedUnion("type", [
     type: z.literal("affirmation"),
     category: z.enum(["general", "kids", "calm", "courage"]).default("general"),
     custom: z.array(z.string().trim().min(1).max(160)).max(24).default([]),
+  }),
+  // On this day (Melvin, 2026-11-25): Wikipedia's featured history for today, filtered for the kitchen by default.
+  z.object({
+    ...base,
+    type: z.literal("onThisDay"),
+    kind: z.enum(["events", "births"]).default("events"),
+    count: z.number().int().min(1).max(5).default(1),
+    familyFriendly: z.boolean().default(true),
   }),
   // Playful horoscope (Melvin, 2026-11-23): curated kitchen blurbs by sign, not a live astrology feed.
   z.object({
