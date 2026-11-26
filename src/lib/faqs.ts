@@ -25,6 +25,10 @@ export const HOME_FAQS: Faq[] = [
     a: "Yes, when you allow it on a widget. Taps sync back (Google Tasks and the shopping list included), with an undo window on tasks so a stray tap isn't permanent.",
   },
   {
+    q: "Can it be a photo frame when nobody's using it?",
+    a: "Yes. On Household, the screen saver shows a view you choose after a few minutes without a touch, like the Photo frame layout with your albums and the time. A tap brings the dashboard back, and it can go dark overnight.",
+  },
+  {
     q: "Are there ads?",
     a: "No, and there never will be. The Household plan is how Everydaypane stays free of ads and tracking.",
   },
