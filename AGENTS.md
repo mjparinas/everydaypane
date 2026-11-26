@@ -37,7 +37,7 @@ same change, and moves it out of **In progress** when it merges.
 | Indoor air (`airthings`) | Radon, CO₂, VOC, PM2.5, PM1, humidity and temperature per Airthings monitor, green/amber/red by Airthings' levels; pick readings and devices | Airthings consumer API (household's own API client, `docs/airthings.md`) |
 | WiFi QR (`wifiQr`) | Join code, optionally the password | Settings document |
 | Phone edit QR (`editQr`) | QR to `/d/<token>/edit/` for meals, shopping and messages with no sign-in | This display's address |
-| Countdowns (`countdown`) | Days until holidays, birthdays and events, yearly ones roll over | Settings document |
+| Countdowns (`countdown`) | Days until holidays, birthdays, **anniversaries** and events, yearly ones roll over; the age a birthday turns or an anniversary's years; an optional **photo per date**; on the day it leads the tile with the photo large ("Happy birthday, Sam!", `celebrate`, on by default) | Settings document; photos in the private photo library store (`src/server/countdownPhotos.ts`) |
 | Schedule (`agenda`) | Today, or the next 1 to 14 days | Google Calendar + Microsoft 365 + iCal links, family events |
 | Month calendar (`calendarMonth`) | Month grid or 1 to 6 weeks from this one, Sunday or Monday start, weekends on or off, title toggle, fit titles (wrap/shrink, on by default), scroll after N weeks (default 3), optional tap-to-open day details with every event and its source colour | Google Calendar + Microsoft 365 + iCal links, family events |
 | Week calendar (`calendarWeek`) | One week in a grid, optional weekends | Same calendar feed |
@@ -397,6 +397,11 @@ npm run templates:previews  # regenerate public/templates/*.png from real widget
   has but "a good portion" Household, "properly emphasized", and "optimized for speed and performance"): built like
   Liftsmith's getting-started tour. Rules in Architecture. A new feature worth an email gets one appended to
   `ONBOARDING` with its picture in `scripts/email-images.mjs`; nothing in the series repeats another email.
+- **Birthdays and anniversaries** (Melvin, 2026-11-26: "build the other 6 gaps", one being "birthdays and anniversaries
+  with a countdown and a photo"): the existing Countdowns widget grew rather than a new widget. Anniversaries are a
+  fourth kind that counts years from the date as birthdays count the age; each date can carry one uploaded photo,
+  drawn as a small circle in its row and large on the day itself (see Architecture). Claude's defaults: celebrate on
+  the day is on, and a birthday or anniversary is always yearly when picked.
 - **Canadian English** in everything a person reads (colour, centre, favourite), as in Liftsmith.
 
 ## Display: super lightweight (rule, Melvin, 2026-11-17)
@@ -776,6 +781,14 @@ panel can be complex if you need it to be."
   and no touches (`pointer-events: none`) unless `interactive` is on, when touches on the map pan and zoom it but don't
   count as use for the screen saver. The CSP's `frame-src` allows embed.windy.com. This sandbox can't reach Windy, so
   tests check the address and the frame's life, and preview screenshots use a stand-in (`public/templates/samples/windy.html`).
+- **Countdown photos** (`src/server/countdownPhotos.ts`): a date's photo is shrunk to 800 px JPEG in the admin's
+  browser and uploaded to `/api/household/countdown-photo/`, which stores it in the photo library's private Blob store
+  under the reserved source id `countdown` (never a photos widget's album, so `/api/display/photo/` can't reach it);
+  the date keeps only the id (`photo`). Walls get it from `/api/display/countdown-photo/?i=` only while a saved
+  countdown widget names it; an admin's live preview may show any of the household's own, so it appears before
+  Publish. Each settings save deletes countdown photos no date names that are over a day old (a photo uploaded but
+  not yet published survives a save from another tab). Backups keep the id but not the picture; a missing one falls
+  back to the emoji on the wall.
 - **Settings backup and restore** (Melvin, 2026-11-21): Settings › Backup downloads the whole settings document as
   `everydaypane-settings-<date>.json` and restores one (`src/server/backup.ts`, `/api/household/backup/`). The file is the
   document itself, walked generically, so new widget types and settings are in it with no change there. It never holds

@@ -24,6 +24,7 @@ import { useEcoFlow } from "./EcoFlowPanel";
 import { Range, Segmented, Select, Stepper, Text, TextArea, Toggle } from "./fields";
 import { HaEntityList, useHa } from "./haEntities";
 import { useLaundry } from "./laundry";
+import { shrink } from "./LibraryAlbum";
 import { useMusic } from "./music";
 import { useRachio } from "./rachio";
 import { loadSmartProvider, type SmartProviderDetail } from "./smartHome";
@@ -522,7 +523,7 @@ function TypeSettings({
       );
     case "countdown": {
       const e = edit<"countdown">();
-      return <CountdownEvents events={w.events} count={w.count} onChange={e} />;
+      return <CountdownEvents w={w} onChange={e} />;
     }
     case "calendarWeek": {
       const e = edit<"calendarWeek">();
@@ -2212,10 +2213,76 @@ function SonosSpeaker({ value, onChange }: { value: string; onChange: (v: string
   );
 }
 
-function CountdownEvents({ events, count, onChange }: { events: CountdownEvent[]; count: number; onChange: Edit<"countdown"> }) {
+// Square-ish photos for a date's round picture (Melvin, 2026-11-26); 800 px is plenty for the day's large circle.
+const COUNTDOWN_PHOTO_SIDE = 800;
+
+function CountdownPhoto({ photo, onChange }: { photo: string | undefined; onChange: (id: string | undefined) => void }) {
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  async function upload(file: File | undefined) {
+    if (!file) return;
+    setError("");
+    setBusy(true);
+    try {
+      const { blob, w, h } = await shrink(file, COUNTDOWN_PHOTO_SIDE);
+      const r = await fetch("/api/household/countdown-photo/", {
+        method: "POST",
+        headers: { "Content-Type": "image/jpeg", "x-photo-width": String(w), "x-photo-height": String(h) },
+        body: blob,
+      });
+      const body = (await r.json().catch(() => ({}))) as { id?: string; error?: string };
+      if (!r.ok || !body.id) throw new Error(body.error ?? "Couldn't upload that photo.");
+      onChange(body.id);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Couldn't upload that photo.");
+    } finally {
+      setBusy(false);
+    }
+  }
+  return (
+    <div className="flex items-center gap-3">
+      {photo ? (
+        // eslint-disable-next-line @next/next/no-img-element -- a private photo through our own route, not a static asset
+        <img
+          src={`/api/display/countdown-photo/?i=${encodeURIComponent(photo)}`}
+          alt=""
+          className="size-12 flex-none rounded-full border border-line object-cover"
+        />
+      ) : (
+        <span className="grid size-12 flex-none place-items-center rounded-full border border-dashed border-line text-xs text-soft">
+          Photo
+        </span>
+      )}
+      <label className="btn-ghost cursor-pointer">
+        {busy ? "Uploading…" : photo ? "Change photo" : "Add a photo"}
+        <input type="file" accept="image/*" className="sr-only" disabled={busy} onChange={(e) => void upload(e.target.files?.[0])} />
+      </label>
+      {photo && !busy && (
+        <button type="button" className="btn-ghost text-bad" onClick={() => onChange(undefined)}>
+          Remove photo
+        </button>
+      )}
+      {error && <p className="text-xs text-bad">{error}</p>}
+    </div>
+  );
+}
+
+const COUNTDOWN_HINTS: Partial<Record<CountdownEvent["kind"], string>> = {
+  birthday: "Use the date of birth to show the age they turn.",
+  anniversary: "Use the wedding (or first) date to show how many years it will be.",
+};
+
+function CountdownEvents({ w, onChange }: { w: Extract<Widget, { type: "countdown" }>; onChange: Edit<"countdown"> }) {
+  const { events, count } = w;
   return (
     <>
       <Stepper label="Events shown" value={count} min={1} max={12} onChange={(v) => onChange((x) => void (x.count = v))} />
+      <Toggle
+        label="Celebrate on the day"
+        checked={w.celebrate !== false}
+        hint="On a birthday or anniversary, it leads the tile with its photo large: “Happy birthday, Sam!”"
+        onChange={(v) => onChange((x) => void (x.celebrate = v))}
+      />
       <div className="grid gap-3">
         {events.map((ev, i) => (
           <div key={ev.id} className="grid gap-2 rounded-xl border border-line p-3">
@@ -2230,17 +2297,34 @@ function CountdownEvents({ events, count, onChange }: { events: CountdownEvent[]
                 value={ev.kind}
                 options={[
                   { value: "birthday", label: "Birthday" },
+                  { value: "anniversary", label: "Anniversary" },
                   { value: "holiday", label: "Holiday" },
                   { value: "event", label: "Event" },
                 ]}
-                onChange={(v) => onChange((x) => void (x.events[i]!.kind = v))}
+                onChange={(v) =>
+                  onChange((x) => {
+                    const e = x.events[i]!;
+                    e.kind = v;
+                    if (v === "birthday" || v === "anniversary") e.yearly = true;
+                  })
+                }
               />
             </div>
             <Toggle
               label="Every year"
               checked={ev.yearly}
-              hint={ev.kind === "birthday" ? "For a birthday, use the date of birth to show the age they turn." : undefined}
+              hint={COUNTDOWN_HINTS[ev.kind]}
               onChange={(v) => onChange((x) => void (x.events[i]!.yearly = v))}
+            />
+            <CountdownPhoto
+              photo={ev.photo}
+              onChange={(id) =>
+                onChange((x) => {
+                  const e = x.events[i]!;
+                  if (id) e.photo = id;
+                  else delete e.photo;
+                })
+              }
             />
             <button
               type="button"
@@ -2252,25 +2336,36 @@ function CountdownEvents({ events, count, onChange }: { events: CountdownEvent[]
           </div>
         ))}
       </div>
-      <button
-        type="button"
-        className="btn-ghost"
-        disabled={events.length >= 50}
-        onClick={() =>
-          onChange((x) => {
-            x.events.push({
-              id: newId("ev"),
-              name: "Birthday",
-              date: new Date().toISOString().slice(0, 10),
-              emoji: "🎂",
-              kind: "birthday",
-              yearly: true,
-            });
-          })
-        }
-      >
-        Add a date
-      </button>
+      <div className="flex flex-wrap gap-2">
+        {(
+          [
+            { kind: "birthday", name: "Birthday", emoji: "🎂" },
+            { kind: "anniversary", name: "Anniversary", emoji: "💍" },
+            { kind: "holiday", name: "Holiday", emoji: "🎉" },
+          ] as const
+        ).map((t) => (
+          <button
+            key={t.kind}
+            type="button"
+            className="btn-ghost"
+            disabled={events.length >= 50}
+            onClick={() =>
+              onChange((x) => {
+                x.events.push({
+                  id: newId("ev"),
+                  name: t.name,
+                  date: new Date().toISOString().slice(0, 10),
+                  emoji: t.emoji,
+                  kind: t.kind,
+                  yearly: true,
+                });
+              })
+            }
+          >
+            Add {t.kind === "holiday" ? "a holiday" : `a ${t.name.toLowerCase()}`}
+          </button>
+        ))}
+      </div>
     </>
   );
 }
