@@ -52,7 +52,7 @@ export const rachio: Mount<"rachio"> = (el, w, ctx) => {
       c.rainDelayUntil && c.rainDelayUntil > now.getTime()
         ? h("div", { class: "rc-sub" }, `Rain delay until ${day.format(c.rainDelayUntil)}`)
         : null;
-    const offline = c.online ? null : h("div", { class: "rc-sub rc-warn" }, "Controller offline");
+    const offline = c.online ? null : h("div", { class: "rc-sub rc-warn" }, "Controller Offline");
     if (!n)
       return h(
         "div",
@@ -87,7 +87,7 @@ export const rachio: Mount<"rachio"> = (el, w, ctx) => {
         h(
           "div",
           { class: "rc-main" },
-          h("div", { class: "rc-when" }, running ? "Watering now" : when(n.start, now, ctx.timeZone, ctx.hour12)),
+          h("div", { class: "rc-when" }, running ? "Watering Now" : when(n.start, now, ctx.timeZone, ctx.hour12)),
           h("div", { class: "rc-sub" }, `${n.name} · ${n.minutes} min`),
         ),
         button,
@@ -118,7 +118,7 @@ export const rachio: Mount<"rachio"> = (el, w, ctx) => {
     data = d;
     draw();
   });
-  // "Today 5 AM" turns into "Watering now" between feeds.
+  // "Today 5 AM" turns into "Watering Now" between feeds.
   const tick = window.setInterval(draw, 60_000);
   return () => {
     stop();

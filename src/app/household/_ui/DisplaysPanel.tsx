@@ -78,7 +78,7 @@ export function DisplaysPanel() {
     };
   }, []);
 
-  const viewOptions = [{ value: "", label: "Follow the schedule" }, ...views.map((v) => ({ value: v.id, label: v.name }))];
+  const viewOptions = [{ value: "", label: "Follow the Schedule" }, ...views.map((v) => ({ value: v.id, label: v.name }))];
 
   async function add(e: React.FormEvent) {
     e.preventDefault();
@@ -115,7 +115,7 @@ export function DisplaysPanel() {
 
   return (
     <div className="grid gap-4 lg:grid-cols-2">
-      <Section title="Add a display">
+      <Section title="Add a Display">
         {!isPaid && (
           <p className="text-sm text-soft">
             Free includes {FREE_LIMITS.displays} displays
@@ -132,7 +132,7 @@ export function DisplaysPanel() {
           <Text label="Name" value={name} maxLength={40} onChange={setName} placeholder="Kitchen" />
           <Select label="Shows" value={viewId} options={viewOptions} onChange={setViewId} />
           <button className="btn-primary" disabled={!name.trim()}>
-            Add display
+            Add Display
           </button>
         </form>
         {added && <GetKitchenOnline name={added.name} wallUrl={added.url} editUrl={added.editUrl} />}
@@ -222,11 +222,11 @@ function GetKitchenOnline({ name, wallUrl, editUrl }: { name: string; wallUrl: s
         <li>Unlock with your phone — scan the QR on the wall, or sign in and pick this display.</li>
       </ol>
       <button type="button" className="btn-ghost justify-self-start text-sm" aria-expanded={more} onClick={() => setMore((v) => !v)}>
-        {more ? "Hide phone edit & casting" : "Phone edit & casting tips"}
+        {more ? "Hide Phone Edit & Casting" : "Phone Edit & Casting Tips"}
       </button>
       {more ? (
         <div className="grid gap-2 border-t border-line pt-2">
-          <Address url={editUrl} label="Phone edit (meals, shopping, messages — no sign-in)" />
+          <Address url={editUrl} label="Phone Edit (Meals, Shopping, Messages — No Sign-In)" />
           <p className="text-xs text-soft">Anyone with the phone-edit link can change those lists. Keep the QR on the wall, not online.</p>
           <CastHints />
         </div>
@@ -251,16 +251,16 @@ function DisplaySetupDetails({
   const [open, setOpen] = useState(false);
   return (
     <div className="grid gap-2">
-      <Address url={wallUrl} label="Wall address" />
+      <Address url={wallUrl} label="Wall Address" />
       <button type="button" className="btn-ghost justify-self-start text-sm" aria-expanded={open} onClick={() => setOpen((v) => !v)}>
-        {open ? "Hide setup extras" : "Phone edit, QR & casting"}
+        {open ? "Hide Setup Extras" : "Phone Edit, QR & Casting"}
       </button>
       {open ? (
         <div className="grid gap-2 rounded-lg border border-line bg-bg p-3">
           <CastHints />
           {editUrl ? (
             <>
-              <Address url={editUrl} label="Phone edit" />
+              <Address url={editUrl} label="Phone Edit" />
               <div className="flex items-start gap-3">
                 {/* eslint-disable-next-line @next/next/no-img-element -- admin SVG from our own route */}
                 <img
@@ -282,11 +282,11 @@ function DisplaySetupDetails({
       ) : null}
       <div className="flex flex-wrap gap-2">
         <ConfirmButton
-          label="New link"
+          label="New Link"
           confirm="Tap again: signs this display out and refreshes the phone-edit address"
           onConfirm={onNewLink}
         />
-        <ConfirmButton label="Delete display" confirm="Tap again: this signs the screen out" onConfirm={onDelete} />
+        <ConfirmButton label="Delete Display" confirm="Tap again: this signs the screen out" onConfirm={onDelete} />
       </div>
     </div>
   );

@@ -30,11 +30,11 @@ const COLOURS: { value: Colour; label: string; bg: string }[] = [
 const bgOf = (c: Colour) => COLOURS.find((x) => x.value === c)?.bg ?? "#fff3a8";
 
 const EXPIRY = [
-  { value: "", label: "Until someone deletes it" },
-  { value: "12", label: "12 hours" },
-  { value: "24", label: "1 day" },
-  { value: "72", label: "3 days" },
-  { value: "168", label: "1 week" },
+  { value: "", label: "Until Someone Deletes It" },
+  { value: "12", label: "12 Hours" },
+  { value: "24", label: "1 Day" },
+  { value: "72", label: "3 Days" },
+  { value: "168", label: "1 Week" },
 ] as const;
 
 const NAME_KEY = "ep-board-name";
@@ -154,7 +154,7 @@ export function MessageBoard() {
             />
           </label>
           <label className="grid gap-1 text-sm font-medium">
-            Keep it
+            Keep It
             <select className="field" value={expiry} onChange={(e) => setExpiry(e.target.value)}>
               {EXPIRY.map((x) => (
                 <option key={x.value} value={x.value}>
@@ -186,7 +186,7 @@ export function MessageBoard() {
           ))}
         </fieldset>
         <button className="btn-primary" disabled={sending || !text.trim() || !author.trim()}>
-          {sending ? "Posting…" : "Post to the board"}
+          {sending ? "Posting…" : "Post to the Board"}
         </button>
         {error && (
           <p className="text-sm text-bad" role="alert">

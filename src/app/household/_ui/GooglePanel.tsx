@@ -140,7 +140,7 @@ export function GooglePanel() {
           </div>
           <div className="flex flex-wrap gap-2 border-t border-line pt-4">
             <a className="btn-ghost" href="/api/google/connect/">
-              Use another account
+              Use Another Account
             </a>
             <ConfirmButton label="Disconnect" onConfirm={() => void disconnect()} />
           </div>

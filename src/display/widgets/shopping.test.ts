@@ -78,7 +78,7 @@ describe("shopping widget", () => {
     const el = document.createElement("div");
     const stop = shopping(el, newWidget("shopping", "s", { x: 0, y: 0 }), ctx);
     await vi.advanceTimersByTimeAsync(0);
-    expect(el.querySelector(".w-empty")?.textContent).toBe("All bought");
+    expect(el.querySelector(".w-empty")?.textContent).toBe("All Bought");
     stop();
   });
 

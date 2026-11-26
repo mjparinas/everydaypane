@@ -176,7 +176,7 @@ export function ShoppingList() {
           type="button"
           className={low ? "btn-ghost border-amber-400 bg-amber-100 text-amber-900" : "btn-ghost"}
           aria-pressed={low}
-          title="Still some left, pick it up if you're there"
+          title="Still Some Left, Pick It Up if You're There"
           onClick={() => setLow((v) => !v)}
         >
           Low
@@ -222,11 +222,11 @@ export function ShoppingList() {
       )}
       <div className="flex flex-wrap gap-2">
         <button type="button" className="btn-ghost" disabled={busy} onClick={() => void fromMeals()}>
-          Add from this week&apos;s meals
+          Add from This Week&apos;s Meals
         </button>
         {done.length > 0 && (
           <button type="button" className="btn-ghost" disabled={busy} onClick={() => void clearBought()}>
-            Clear bought
+            Clear Bought
           </button>
         )}
       </div>

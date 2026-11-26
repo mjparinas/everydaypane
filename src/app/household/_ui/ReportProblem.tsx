@@ -30,7 +30,7 @@ export function ReportProblem() {
 
   return (
     <section className="card grid gap-3">
-      <h2 className="text-lg font-semibold">Report a problem</h2>
+      <h2 className="text-lg font-semibold">Report a Problem</h2>
       <p className="text-sm text-soft">Tell us what went wrong on the wall or in this panel. Staff see it in platform admin.</p>
       <form className="grid gap-2" onSubmit={(e) => void submit(e)}>
         <textarea className="field min-h-24" value={text} onChange={(e) => setText(e.target.value)} required maxLength={8000} />

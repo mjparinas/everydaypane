@@ -9,7 +9,7 @@ import { SITE_URL } from "@/lib/site";
 
 export const metadata: Metadata = {
   ...pageMeta({
-    title: "Blog & updates",
+    title: "Blog & Updates",
     description: "Everydaypane release notes, setup guides and comparisons — so families can discover the wall dashboard.",
     path: "/blog/",
   }),
@@ -39,11 +39,11 @@ export default function BlogIndex() {
         }}
       />
       <Eyebrow>Blog</Eyebrow>
-      <h1 className="mt-3 font-display text-4xl font-extrabold tracking-tight sm:text-5xl">Updates, guides and comparisons</h1>
+      <h1 className="mt-3 font-display text-4xl font-extrabold tracking-tight sm:text-5xl">Updates, Guides and Comparisons</h1>
       <p className="mt-4 max-w-2xl text-lg text-soft">
         Every release, plus deep articles that help families find Everydaypane.{" "}
         <a href="/blog/feed.xml" className="font-semibold text-brand hover:underline">
-          RSS feed
+          RSS Feed
         </a>
         .
       </p>
@@ -82,7 +82,7 @@ export default function BlogIndex() {
         ))}
       </ul>
       <div className="mt-14">
-        <CtaBanner cta="blog-index" title="Put a pane on your wall" body="Start free — Household unlocks every widget when you're ready." />
+        <CtaBanner cta="blog-index" title="Put a Pane on Your Wall" body="Start free — Household unlocks every widget when you're ready." />
       </div>
     </SitePage>
   );

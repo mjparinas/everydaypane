@@ -41,7 +41,7 @@ export const drivebc: Mount<"drivebc"> = (el, w, ctx) => {
   let stopped = false;
 
   const tiles: Tile[] = w.cameras.map((c) => {
-    const img = h("img", { class: "dbc-img", alt: c.name || "Highway camera", draggable: "false" });
+    const img = h("img", { class: "dbc-img", alt: c.name || "Highway Camera", draggable: "false" });
     const note = h("span", { class: "dbc-note" });
     const name = w.showName ? h("span", { class: "dbc-name" }, c.name) : null;
     const box = h("div", { class: "dbc-cam" }, img, h("div", { class: "dbc-bar" }, name, note));
@@ -57,7 +57,7 @@ export const drivebc: Mount<"drivebc"> = (el, w, ctx) => {
     const s = status?.cameras.find((c) => c.id === t.id);
     const text =
       s?.state === "off"
-        ? "Camera off"
+        ? "Camera Off"
         : t.failed && !t.loaded
           ? "Picture unavailable"
           : s?.state === "late"

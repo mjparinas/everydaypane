@@ -45,7 +45,7 @@ export function GarbagePanel() {
   }
 
   return (
-    <Section title="Garbage pickup">
+    <Section title="Garbage Pickup">
       <p className="text-sm text-soft">
         {garbage.zoneId ? (
           <>
@@ -58,7 +58,7 @@ export function GarbagePanel() {
       </p>
       <form className="flex items-end gap-2" onSubmit={(e) => void find(e)}>
         <div className="min-w-0 flex-1">
-          <Text label={garbage.zoneId ? "Another address" : "Street address"} value={address} maxLength={120} onChange={setAddress} />
+          <Text label={garbage.zoneId ? "Another Address" : "Street Address"} value={address} maxLength={120} onChange={setAddress} />
         </div>
         <button className="btn-primary" disabled={busy || address.trim().length < 3}>
           {busy ? "Finding…" : "Find"}

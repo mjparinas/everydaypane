@@ -113,7 +113,7 @@ export const unifi: Mount<"unifi"> = (el, w, ctx) => {
       h(
         "div",
         { class: "un-foot" },
-        [site.isp, d.sites.length > 1 ? site.name : "", d.stale ? "Last good reading" : ""].filter(Boolean).join(" · "),
+        [site.isp, d.sites.length > 1 ? site.name : "", d.stale ? "Last Good Reading" : ""].filter(Boolean).join(" · "),
       ),
     );
   });

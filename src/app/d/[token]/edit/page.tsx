@@ -35,12 +35,12 @@ export default async function DisplayEditPage({ params }: { params: Promise<{ to
         </p>
         <p className="text-sm">
           <a className="font-semibold text-brand underline-offset-2 hover:underline" href={`/d/${token}/chores/`}>
-            Kids chores →
+            Kids Chores →
           </a>
         </p>
         <section className="mx-auto grid w-full max-w-xl gap-3" aria-labelledby="messages-heading">
           <h2 id="messages-heading" className="text-lg font-bold">
-            Message board
+            Message Board
           </h2>
           <MessageBoard />
         </section>
@@ -53,13 +53,13 @@ export default async function DisplayEditPage({ params }: { params: Promise<{ to
         <FamilyPhotos />
         <section className="grid gap-3" aria-labelledby="meals-heading">
           <h2 id="meals-heading" className="text-lg font-bold">
-            Meal plan
+            Meal Plan
           </h2>
           <MealPlanner />
         </section>
         <section className="mx-auto grid w-full max-w-xl gap-3" aria-labelledby="shopping-heading">
           <h2 id="shopping-heading" className="text-lg font-bold">
-            Shopping list
+            Shopping List
           </h2>
           <ShoppingList />
         </section>

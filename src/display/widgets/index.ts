@@ -1,4 +1,5 @@
 import type { Widget } from "@/lib/config/schema";
+import { titleCase } from "@/lib/titleCase";
 
 import { airQuality } from "./air";
 import { alerts } from "./alerts";
@@ -59,7 +60,10 @@ import { weatherUnderground } from "./weatherUnderground";
 import { wifiQr } from "./wifi";
 
 /** Mounts a widget into its cell and returns what stops its timers. A widget that throws shows a quiet error, never a blank screen. */
-export function mountWidget(el: HTMLElement, w: Widget, ctx: WidgetContext): Cleanup {
+export function mountWidget(el: HTMLElement, widget: Widget, ctx: WidgetContext): Cleanup {
+  // Widget headings in title case (Melvin, 2026-11-26: "i prefer title case pretty much everywhere"), including titles
+  // saved before that, so "Up Next" reads "Up Next". Acronyms and capitals someone typed stay (src/lib/titleCase.ts).
+  const w = widget.title ? { ...widget, title: titleCase(widget.title) } : widget;
   switch (w.type) {
     case "clock":
       return clock(el, w, ctx);

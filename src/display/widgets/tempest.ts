@@ -17,7 +17,7 @@ export const tempest: Mount<"tempest"> = (el, w) => {
         ? h("div", { class: "tp-row" }, `Wind ${d.wind} ${d.units.wind}${d.gust ? ` (gust ${d.gust})` : ""}`)
         : null,
       w.showRain && d.rain !== undefined ? h("div", { class: "tp-row" }, `Rain today ${d.rain} ${d.units.rain}`) : null,
-      d.stale ? h("div", { class: "tp-stale" }, "Last good reading") : null,
+      d.stale ? h("div", { class: "tp-stale" }, "Last Good Reading") : null,
     ];
     fill(root, h("div", { class: "w-label" }, w.title || "Tempest"), ...parts.filter(Boolean));
   });

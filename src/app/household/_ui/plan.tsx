@@ -319,7 +319,7 @@ export function HouseholdFeaturePrompt({ reason, title, blurb }: { reason: Upgra
       <p className="text-soft">{blurb}</p>
       <p className="text-sm text-soft">{UPGRADE_REASONS[reason]}</p>
       <button type="button" className="btn-primary justify-self-center" onClick={() => openUpgrade(reason)}>
-        Why upgrade
+        Why Upgrade
       </button>
     </div>
   );
@@ -444,7 +444,7 @@ export function UpgradeDialog() {
           {isPaid ? (
             hasCustomer ? (
               <button type="button" className="btn-primary" disabled={billingBusy || !stripeEnabled} onClick={() => void openPortal()}>
-                {billingBusy ? "Opening…" : "Manage billing"}
+                {billingBusy ? "Opening…" : "Manage Billing"}
               </button>
             ) : (
               <button type="button" className="btn-primary" onClick={closeUpgrade}>
@@ -459,11 +459,11 @@ export function UpgradeDialog() {
               onClick={() => void startCheckout()}
               data-cta="household-checkout"
             >
-              {billingBusy ? "Opening…" : stripeEnabled ? "Get Household" : "Billing unavailable"}
+              {billingBusy ? "Opening…" : stripeEnabled ? "Get Household" : "Billing Unavailable"}
             </button>
           )}
           <button type="button" className="btn-ghost" onClick={closeUpgrade}>
-            {isPaid ? "Close" : "Keep using Free"}
+            {isPaid ? "Close" : "Keep Using Free"}
           </button>
         </div>
       </div>
@@ -494,12 +494,12 @@ export function PlanSettingsCard() {
             disabled={billingBusy || !stripeEnabled}
             onClick={() => void openPortal()}
           >
-            {billingBusy ? "Opening…" : "Manage billing"}
+            {billingBusy ? "Opening…" : "Manage Billing"}
           </button>
         ) : null
       ) : (
         <button type="button" className="btn-primary justify-self-start" onClick={() => openUpgrade("default")}>
-          See why Household
+          See Why Household
         </button>
       )}
     </Section>

@@ -10,19 +10,19 @@ type Shot = { src: string; title: string; width: number; height: number };
 const SHOTS: Record<Variant, Shot> = {
   morning: {
     src: "/templates/kitchen-glance.png",
-    title: "Kitchen glance — clock, weather, today's schedule and photos",
+    title: "Kitchen Glance — Clock, Weather, Today's Schedule and Photos",
     width: 1280,
     height: 720,
   },
   family: {
     src: "/templates/family-hub.png",
-    title: "Family hub — chores, meals, messages and who's home",
+    title: "Family Hub — Chores, Meals, Messages and Who's Home",
     width: 1280,
     height: 720,
   },
   commute: {
     src: "/templates/commute-dash.png",
-    title: "Commute dash — buses, drive times and rain radar",
+    title: "Commute Dash — Buses, Drive Times and Rain Radar",
     width: 1280,
     height: 720,
   },
@@ -46,21 +46,21 @@ const GALLERY: Shot[] = [
   SHOTS.family,
   {
     src: "/templates/calendar-wall.png",
-    title: "Calendar wall — month grid with the week ahead",
+    title: "Calendar Wall — Month Grid with the Week Ahead",
     width: 1280,
     height: 720,
   },
   SHOTS.commute,
   {
     src: "/templates/kids-routine.png",
-    title: "Kids routine — chores, timers and the day's plan",
+    title: "Kids Routine — Chores, Timers and the Day's Plan",
     width: 1280,
     height: 720,
   },
   SHOTS.photos,
   {
     src: "/templates/smart-home.png",
-    title: "Smart home — lights, climate and who's home",
+    title: "Smart Home — Lights, Climate and Who's Home",
     width: 1280,
     height: 720,
   },
@@ -184,8 +184,8 @@ function PaneGallery({ className = "", priority = false }: { className?: string;
 // Homepage screen saver feature (Melvin, 2026-11-26: the photo frame screen saver should be featured on the homepage):
 // the same pane flips between the dashboard in use and the idle photo frame, the way the wall does after a few quiet minutes.
 const IDLE_STATES = [
-  { label: "In use", shot: SHOTS.morning, ms: 3500 },
-  { label: "Nobody around", shot: { ...SHOTS.photos, title: "A few quiet minutes later, the wall becomes a photo frame" }, ms: 5000 },
+  { label: "In Use", shot: SHOTS.morning, ms: 3500 },
+  { label: "Nobody Around", shot: { ...SHOTS.photos, title: "A few quiet minutes later, the wall becomes a photo frame" }, ms: 5000 },
 ] as const;
 
 export function IdleFrameMock({ className = "" }: { className?: string }) {

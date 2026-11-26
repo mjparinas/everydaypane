@@ -39,25 +39,25 @@ export function ContentPanel() {
       <Section id="settings-ynab" title="YNAB">
         <p className="text-xs text-soft">OAuth app or paste a personal access token. Budget id is optional if you only have one.</p>
         <Text
-          label="Budget id"
+          label="Budget ID"
           value={ynab.budgetId}
           maxLength={64}
           onChange={(v) => edit((c) => void (c.integrations.ynab.budgetId = v))}
         />
         <Text
-          label="Budget name"
+          label="Budget Name"
           value={ynab.budgetName}
           maxLength={80}
           onChange={(v) => edit((c) => void (c.integrations.ynab.budgetName = v))}
         />
-        <Text label="Personal access token" value={ynabTok} maxLength={200} onChange={setYnabTok} />
+        <Text label="Personal Access Token" value={ynabTok} maxLength={200} onChange={setYnabTok} />
         <button
           type="button"
           className="btn-ghost justify-self-start"
           disabled={!ynabTok.trim()}
           onClick={() => void saveSecret("ynab", ynabTok.trim())}
         >
-          Save YNAB token
+          Save YNAB Token
         </button>
       </Section>
       <Section id="settings-fitbit" title="Fitbit">
@@ -67,10 +67,10 @@ export function ContentPanel() {
         </a>
       </Section>
       <OuraSection />
-      <Section id="settings-gmail-unread" title="Gmail unread">
+      <Section id="settings-gmail-unread" title="Gmail Unread">
         <p className="text-xs text-soft">Adds gmail.readonly to your existing Google connection (inbox count only).</p>
         <a className="btn-primary justify-self-start" href="/api/google/connect/?gmail=1">
-          Connect Gmail unread
+          Connect Gmail Unread
         </a>
       </Section>
       <Section id="settings-slack" title="Slack">
@@ -82,25 +82,25 @@ export function ContentPanel() {
       <Section id="settings-trello" title="Trello">
         <p className="text-xs text-soft">API key on the server (TRELLO_API_KEY); paste a member token from trello.com/app-key.</p>
         <Text
-          label="Board id"
+          label="Board ID"
           value={trello.boardId}
           maxLength={32}
           onChange={(v) => edit((c) => void (c.integrations.trello.boardId = v))}
         />
         <Text
-          label="Board name"
+          label="Board Name"
           value={trello.boardName}
           maxLength={80}
           onChange={(v) => edit((c) => void (c.integrations.trello.boardName = v))}
         />
-        <Text label="Member token" value={trelloTok} maxLength={120} onChange={setTrelloTok} />
+        <Text label="Member Token" value={trelloTok} maxLength={120} onChange={setTrelloTok} />
         <button
           type="button"
           className="btn-ghost justify-self-start"
           disabled={!trelloTok.trim()}
           onClick={() => void saveSecret("trello", trelloTok.trim())}
         >
-          Save Trello token
+          Save Trello Token
         </button>
       </Section>
     </div>
@@ -137,7 +137,7 @@ function OuraSection() {
         <div className="flex flex-wrap items-center gap-3">
           <span className="text-sm">Connected</span>
           <a className="btn-ghost" href="/api/oura/connect/">
-            Connect a different ring
+            Connect a Different Ring
           </a>
           <button type="button" className="btn-ghost" disabled={busy} onClick={() => void disconnect()}>
             Disconnect

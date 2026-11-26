@@ -46,7 +46,7 @@ export async function sendTestAutomationEmail() {
     text: `This is a test automation email from the ${BRAND.name} admin panel.`,
     html: emailHtml({
       preheader: "Test automation email",
-      title: "Test alert",
+      title: "Test Alert",
       bodyHtml: `<p style="margin:0">Automations are working. You can turn kinds on and off on the Automations tab.</p>`,
     }),
   });
@@ -74,7 +74,7 @@ export async function sendMorningDigest(now = Date.now()) {
       text: body,
       html: emailHtml({
         preheader: body,
-        title: "Morning digest",
+        title: "Morning Digest",
         bodyHtml: `<p style="margin:0 0 12px">${body}</p><p style="margin:0"><a href="${env.siteUrl()}/admin/">Open the admin panel</a></p>`,
       }),
     });

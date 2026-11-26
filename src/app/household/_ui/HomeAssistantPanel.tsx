@@ -50,7 +50,7 @@ export function HomeAssistantPanel() {
         works for free.
       </p>
       <Text
-        label="Home Assistant address"
+        label="Home Assistant Address"
         type="url"
         value={ha.url}
         maxLength={200}
@@ -64,7 +64,7 @@ export function HomeAssistantPanel() {
       />
 
       <div className="grid gap-2 rounded-xl border border-line p-3">
-        <h3 className="font-semibold">Access token</h3>
+        <h3 className="font-semibold">Access Token</h3>
         {status?.tokenSet ? (
           <div className="flex flex-wrap items-center gap-2">
             <p className="text-sm text-soft">Saved.</p>
@@ -73,7 +73,7 @@ export function HomeAssistantPanel() {
         ) : (
           <>
             <Text
-              label="Long-lived access token"
+              label="Long-Lived Access Token"
               type="password"
               value={token}
               maxLength={4000}
@@ -86,14 +86,14 @@ export function HomeAssistantPanel() {
               disabled={busy || !token.trim()}
               onClick={() => void save({ token })}
             >
-              Save token
+              Save Token
             </button>
           </>
         )}
       </div>
 
       <div className="grid gap-2 rounded-xl border border-line p-3">
-        <h3 className="font-semibold">Cloudflare Access service token</h3>
+        <h3 className="font-semibold">Cloudflare Access Service Token</h3>
         {status?.accessSet ? (
           <div className="flex flex-wrap items-center gap-2">
             <p className="text-sm text-soft">Saved. Requests carry it, so only Everydaypane gets through.</p>
@@ -106,14 +106,14 @@ export function HomeAssistantPanel() {
               Access.
             </p>
             <Text label="Client ID" value={accessId} maxLength={200} onChange={setAccessId} />
-            <Text label="Client secret" type="password" value={accessSecret} maxLength={400} onChange={setAccessSecret} />
+            <Text label="Client Secret" type="password" value={accessSecret} maxLength={400} onChange={setAccessSecret} />
             <button
               type="button"
               className="btn-primary justify-self-start"
               disabled={busy || !accessId.trim() || !accessSecret.trim()}
               onClick={() => void save({ accessId, accessSecret })}
             >
-              Save service token
+              Save Service Token
             </button>
           </>
         )}
@@ -129,7 +129,7 @@ export function HomeAssistantPanel() {
             void loadHa(true).then(() => setBusy(false));
           }}
         >
-          {busy ? "Checking…" : "Test connection"}
+          {busy ? "Checking…" : "Test Connection"}
         </button>
         <p className={`text-sm ${status?.connected ? "text-good" : "text-soft"}`}>
           {!status
@@ -142,13 +142,13 @@ export function HomeAssistantPanel() {
       {error && <p className="text-sm text-bad">{error}</p>}
 
       <div className="grid gap-3 border-t border-line pt-4">
-        <h3 className="font-semibold">Doorbell pop-up</h3>
+        <h3 className="font-semibold">Doorbell Pop-Up</h3>
         <p className="text-sm text-soft">
           When the doorbell rings, every screen shows its camera full screen. Use the doorbell&rsquo;s ring entity from UniFi Protect (an{" "}
           <span className="font-mono">event.</span> or <span className="font-mono">binary_sensor.</span> entity). Leave empty for no pop-up.
         </p>
         <Text
-          label="Doorbell ring entity"
+          label="Doorbell Ring Entity"
           value={ha.doorbell.entityId}
           maxLength={255}
           placeholder="event.front_door_doorbell"
@@ -157,7 +157,7 @@ export function HomeAssistantPanel() {
         />
         <HaEntityList id="ha-all" />
         <Text
-          label="Camera to show"
+          label="Camera to Show"
           value={ha.doorbell.cameraEntityId}
           maxLength={255}
           placeholder="camera.front_door_high"
@@ -166,7 +166,7 @@ export function HomeAssistantPanel() {
         />
         <HaEntityList id="ha-cams" only="camera." />
         <Range
-          label="Show for"
+          label="Show For"
           value={ha.doorbell.seconds}
           min={5}
           max={300}

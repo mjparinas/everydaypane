@@ -31,7 +31,7 @@ describe("getting-started email", () => {
     expect(m.html).toContain("Household plan only.");
     expect(m.html).toContain("$7 a month or $59 a year");
     expect(m.html).toContain('href="https://www.everydaypane.com/household/#upgrade"');
-    expect(m.text).toContain("See what Household adds: https://www.everydaypane.com/household/#upgrade");
+    expect(m.text).toContain("See What Household Adds: https://www.everydaypane.com/household/#upgrade");
   });
 
   it("tells a paying household it's included and links to the setting", () => {

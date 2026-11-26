@@ -8,7 +8,7 @@ import { currentHouseholdSession, SESSION_COOKIE } from "@/server/auth";
 
 import { PhoneApprove } from "./PhoneApprove";
 
-export const metadata: Metadata = { title: "Approve display" };
+export const metadata: Metadata = { title: "Approve Display" };
 
 export default async function PhoneSignInPage({ searchParams }: { searchParams: Promise<{ code?: string }> }) {
   const { code: raw } = await searchParams;

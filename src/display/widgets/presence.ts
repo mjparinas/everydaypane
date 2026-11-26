@@ -25,7 +25,7 @@ export const presence: Mount<"presence"> = (el, w) => {
     if (w.entities.length === 0) return fill(root, h("div", { class: "w-empty" }, "Pick people for this widget."));
     fill(
       root,
-      h("div", { class: "w-label" }, w.title || "Who's home"),
+      h("div", { class: "w-label" }, w.title || "Who's Home"),
       h(
         "ul",
         { class: "pr-list" },

@@ -24,9 +24,9 @@ const PERIODS: { value: ChorePeriod; label: string }[] = CHORE_PERIODS.map((valu
 }));
 
 const ROTATIONS: { value: Chore["rotate"]; label: string }[] = [
-  { value: "none", label: "Everyone picked does it" },
-  { value: "day", label: "Take turns, each time it's due" },
-  { value: "week", label: "Take turns, a week each" },
+  { value: "none", label: "Everyone Picked Does It" },
+  { value: "day", label: "Take Turns, Each Time It's Due" },
+  { value: "week", label: "Take Turns, a Week Each" },
 ];
 
 function Chips({
@@ -102,7 +102,7 @@ export function ChoresPanel() {
           <div className="grid grid-cols-2 gap-3">
             <Colour label="Colour" value={p.color} onChange={(v) => changePerson(p.id, { color: v })} />
             <Range
-              label="Weekly star goal"
+              label="Weekly Star Goal"
               value={p.goal}
               min={0}
               max={500}
@@ -143,7 +143,7 @@ export function ChoresPanel() {
           }}
         >
           <div className="min-w-0 flex-1">
-            <Text label="Add a kid" value={kid} maxLength={30} placeholder="Name" onChange={setKid} />
+            <Text label="Add a Kid" value={kid} maxLength={30} placeholder="Name" onChange={setKid} />
           </div>
           <button className="btn-primary" disabled={!kid.trim()}>
             Add
@@ -190,7 +190,7 @@ export function ChoresPanel() {
               })
             }
           />
-          <Select label="Time of day" value={i.period} options={PERIODS} onChange={(v) => changeChore(i.id, (x) => void (x.period = v))} />
+          <Select label="Time of Day" value={i.period} options={PERIODS} onChange={(v) => changeChore(i.id, (x) => void (x.period = v))} />
           {i.personIds.length > 1 && (
             <Select label="How" value={i.rotate} options={ROTATIONS} onChange={(v) => changeChore(i.id, (x) => void (x.rotate = v))} />
           )}
@@ -224,7 +224,7 @@ export function ChoresPanel() {
           }}
         >
           <div className="min-w-0 flex-1">
-            <Text label="Add a chore" value={chore} maxLength={40} placeholder="Make the bed, feed the cat…" onChange={setChore} />
+            <Text label="Add a Chore" value={chore} maxLength={40} placeholder="Make the bed, feed the cat…" onChange={setChore} />
           </div>
           <button className="btn-primary" disabled={!chore.trim()}>
             Add
@@ -233,7 +233,7 @@ export function ChoresPanel() {
       )}
       <p className="text-xs text-soft">Save to send the change to your displays. Changing who is on a rotation starts the turns over.</p>
 
-      <h3 className="text-sm font-semibold">Star rewards</h3>
+      <h3 className="text-sm font-semibold">Star Rewards</h3>
       <p className="text-xs text-soft">Kids redeem these on the wall when they have enough stars this week (Monday to Sunday).</p>
       {rewards.map((r) => (
         <div key={r.id} className="grid grid-cols-[1fr_6rem] gap-3 rounded-xl border border-line p-3">
@@ -271,7 +271,7 @@ export function ChoresPanel() {
           }}
         >
           <div className="min-w-0 flex-1">
-            <Text label="Add a reward" value={reward} maxLength={40} placeholder="Extra screen time…" onChange={setReward} />
+            <Text label="Add a Reward" value={reward} maxLength={40} placeholder="Extra screen time…" onChange={setReward} />
           </div>
           <button className="btn-primary" disabled={!reward.trim()}>
             Add
@@ -284,7 +284,7 @@ export function ChoresPanel() {
         Optional four-digit PIN. When set, kids need it to untick a chore or redeem a reward. Ticking chores on stays open.
       </p>
       <Toggle
-        label="PIN required on the wall"
+        label="PIN Required on the Wall"
         checked={pinSet}
         hint="Turn off after clearing the PIN below. Save after changing this."
         onChange={(v) => edit((c) => void (c.chores.pinSet = v))}

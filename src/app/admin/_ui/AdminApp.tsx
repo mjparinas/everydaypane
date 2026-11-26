@@ -181,14 +181,14 @@ export function AdminApp() {
 
   if (gate === "loading") {
     return (
-      <AdminAuthCard title="Everydaypane admin">
+      <AdminAuthCard title="Everydaypane Admin">
         <Bones lines={3} />
       </AdminAuthCard>
     );
   }
   if (gate === "error") {
     return (
-      <AdminAuthCard title="Couldn't open admin" sub="The database may be down. Reload in a moment.">
+      <AdminAuthCard title="Couldn't Open Admin" sub="The database may be down. Reload in a moment.">
         <button type="button" className="btn-primary" onClick={() => window.location.reload()}>
           Reload
         </button>
@@ -227,7 +227,7 @@ export function AdminApp() {
         type="button"
         className="btn-ghost text-xs font-semibold"
         onClick={() => setPaletteOpen(true)}
-        title="Command palette (⌘K)"
+        title="Command Palette (⌘K)"
         aria-keyshortcuts="Meta+K Control+K"
       >
         <kbd className="rounded border border-line px-1.5 py-0.5">⌘K</kbd>
@@ -276,9 +276,9 @@ function SignIn() {
     window.location.replace(signInHref("/admin/"));
   }, []);
   return (
-    <AdminAuthCard title="Staff sign-in" sub="Redirecting to Everydaypane sign-in. Only ADMIN_EMAILS can open this panel.">
+    <AdminAuthCard title="Staff Sign-In" sub="Redirecting to Everydaypane sign-in. Only ADMIN_EMAILS can open this panel.">
       <a className="btn-primary" href={signInHref("/admin/")}>
-        Continue to sign-in
+        Continue to Sign-In
       </a>
     </AdminAuthCard>
   );
@@ -399,7 +399,7 @@ function OverviewTab({ days, onJump }: { days: number; onJump: (t: string) => vo
   return (
     <>
       {data.needsYou.length > 0 ? (
-        <Card title="Needs you" sub="Do these before the numbers">
+        <Card title="Needs You" sub="Do these before the numbers">
           <ul className="grid gap-2">
             {data.needsYou.map((n) => (
               <li key={n.key} className="flex flex-wrap items-center justify-between gap-2 rounded-xl bg-bg px-3 py-2 text-sm">
@@ -427,13 +427,13 @@ function OverviewTab({ days, onJump }: { days: number; onJump: (t: string) => vo
         ))}
       </div>
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <Tile label="New households" value={String(data.signups)} delta={data.signupsDelta} />
-        <Tile label="New displays" value={String(data.displays)} delta={data.displaysDelta} />
+        <Tile label="New Households" value={String(data.signups)} delta={data.signupsDelta} />
+        <Tile label="New Displays" value={String(data.displays)} delta={data.displaysDelta} />
         <Tile label="Free / Household" value={`${data.free} / ${data.paid}`} />
         <Tile label="Est. gross MRR" value={`$${data.grossMrr}`} hint="USD" />
       </div>
       <FunnelPanel days={days} />
-      <Card title="Sign-ups a day">
+      <Card title="Sign-Ups a Day">
         <Columns days={data.dailySignups} />
       </Card>
     </>
@@ -451,7 +451,7 @@ function TodoTab({ flash, refreshBadges }: { flash: Flash; refreshBadges: () => 
   if (!data) return <Bones />;
   return (
     <>
-      <Card title="From the product" sub="Things Everydaypane noticed — snooze or dismiss">
+      <Card title="From the Product" sub="Things Everydaypane noticed — snooze or dismiss">
         <ul className="grid gap-2">
           {data.items.length === 0 && <li className="text-sm text-soft">Nothing the product is flagging.</li>}
           {data.items.map((i) => (
@@ -515,7 +515,7 @@ function TodoTab({ flash, refreshBadges }: { flash: Flash; refreshBadges: () => 
           ))}
         </ul>
       </Card>
-      <Card title="Your tasks" sub="Private checklist for staff — not shown to households">
+      <Card title="Your Tasks" sub="Private checklist for staff — not shown to households">
         <form
           className="mb-3 flex gap-2"
           onSubmit={(e) => {
@@ -535,7 +535,7 @@ function TodoTab({ flash, refreshBadges }: { flash: Flash; refreshBadges: () => 
           }}
         >
           <label className="sr-only" htmlFor="admin-task">
-            New task
+            New Task
           </label>
           <input
             id="admin-task"
@@ -631,7 +631,7 @@ function ReportsTab({
             className={`btn-ghost capitalize ${status === s ? "border-brand text-brand" : ""}`}
             onClick={() => onStatus(s)}
           >
-            {s === "open" ? "To read" : s}
+            {s === "open" ? "To Read" : s}
           </button>
         ))}
       </div>
@@ -726,11 +726,11 @@ function TrafficTab({ days }: { days: number }) {
     <>
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <Tile label="Visitors" value={String(data.visitors)} delta={data.visitorsDelta} />
-        <Tile label="Page views" value={String(data.views)} delta={data.viewsDelta} />
-        <Tile label="Households created" value={acq ? String(acq.signups) : "…"} />
-        <Tile label="Displays created" value={acq ? String(acq.displays) : "…"} />
+        <Tile label="Page Views" value={String(data.views)} delta={data.viewsDelta} />
+        <Tile label="Households Created" value={acq ? String(acq.signups) : "…"} />
+        <Tile label="Displays Created" value={acq ? String(acq.displays) : "…"} />
       </div>
-      <Card title="Visitors a day">
+      <Card title="Visitors a Day">
         <Columns days={data.daily} />
       </Card>
       <div className="grid gap-4 lg:grid-cols-2">
@@ -740,10 +740,10 @@ function TrafficTab({ days }: { days: number }) {
         <Card title="Referrers">
           <Bars items={data.referrers} />
         </Card>
-        <Card title="Site sources">
+        <Card title="Site Sources">
           <Bars items={data.sources} />
         </Card>
-        <Card title="Button clicks">
+        <Card title="Button Clicks">
           <Bars items={data.tracks} />
         </Card>
       </div>
@@ -751,7 +751,7 @@ function TrafficTab({ days }: { days: number }) {
         <p className="text-sm text-bad">{acquis.error}</p>
       ) : acq ? (
         <div className="grid gap-4 lg:grid-cols-3">
-          <Card title="Household sources">
+          <Card title="Household Sources">
             <Bars items={acq.sources} />
           </Card>
           <Card title="Campaigns">
@@ -764,7 +764,7 @@ function TrafficTab({ days }: { days: number }) {
       ) : (
         <Bones lines={2} />
       )}
-      <Card title="Organic search" sub="Optional — add keys in Vercel when you want this here">
+      <Card title="Organic Search" sub="Optional — add keys in Vercel when you want this here">
         <p className="text-sm text-soft">Until then, check Google Search Console or Bing Webmaster for search traffic.</p>
       </Card>
     </>
@@ -780,7 +780,7 @@ function FunnelPanel({ days }: { days: number }) {
   if (!data) return <Bones lines={3} />;
   const first = data.steps[0]?.n || 1;
   return (
-    <Card title="Getting going → paid">
+    <Card title="Getting Going → Paid">
       {data.biggest ? (
         <p className="mb-3 rounded-xl bg-sun/15 px-3 py-2 text-sm">
           Biggest drop: {data.biggest.from} → {data.biggest.to} (−{data.biggest.drop})
@@ -819,9 +819,9 @@ function DevicesMetricsTab({ days }: { days: number }) {
   if (!data) return <Bones />;
   return (
     <>
-      <Tile label="Displays created" value={String(data.displaysCreated)} />
+      <Tile label="Displays Created" value={String(data.displaysCreated)} />
       <div className="grid gap-4 lg:grid-cols-3">
-        <Card title="Device type">
+        <Card title="Device Type">
           <Bars items={data.devices} />
         </Card>
         <Card title="Browsers">
@@ -854,12 +854,12 @@ function RevenueTab({ flash, canWrite }: { flash: Flash; canWrite: boolean }) {
   return (
     <>
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <Tile label="Household plans" value={String(data.paid)} />
+        <Tile label="Household Plans" value={String(data.paid)} />
         <Tile label="Stripe-linked" value={String(data.stripeLinked)} />
         <Tile label="Gross MRR" value={`$${data.grossMrr}`} />
-        <Tile label="Profit / month" value={`$${data.profitMonth}`} hint={`costs $${data.costsMonth}`} />
+        <Tile label="Profit / Month" value={`$${data.profitMonth}`} hint={`costs $${data.costsMonth}`} />
       </div>
-      <Card title="Running costs" sub="Typed by staff; yearly fees count as a twelfth">
+      <Card title="Running Costs" sub="Typed by staff; yearly fees count as a twelfth">
         {costs.map((c, i) => (
           <div key={c.id || i} className="mb-2 flex flex-wrap gap-2">
             <input
@@ -894,7 +894,7 @@ function RevenueTab({ flash, canWrite }: { flash: Flash; canWrite: boolean }) {
               disabled={busy}
               onClick={() => setDraft([...costs, { id: `c${Date.now()}`, name: "", amount: 0, period: "month" }])}
             >
-              Add cost
+              Add Cost
             </button>
             <button
               type="button"
@@ -913,7 +913,7 @@ function RevenueTab({ flash, canWrite }: { flash: Flash; canWrite: boolean }) {
                 );
               }}
             >
-              {busy ? "Saving…" : "Save costs"}
+              {busy ? "Saving…" : "Save Costs"}
             </button>
           </div>
         )}
@@ -933,7 +933,7 @@ function CodesTab({ flash, canWrite }: { flash: Flash; canWrite: boolean }) {
   return (
     <>
       {canWrite && (
-        <Card title="Create Household code" sub="One upgrade redeem — until used or you disable it">
+        <Card title="Create Household Code" sub="One upgrade redeem — until used or you disable it">
           <form
             className="flex flex-wrap gap-2"
             onSubmit={(e) => {
@@ -957,7 +957,7 @@ function CodesTab({ flash, canWrite }: { flash: Flash; canWrite: boolean }) {
             }}
           >
             <label className="sr-only" htmlFor="admin-code-note">
-              Internal note
+              Internal Note
             </label>
             <input
               id="admin-code-note"
@@ -968,7 +968,7 @@ function CodesTab({ flash, canWrite }: { flash: Flash; canWrite: boolean }) {
               disabled={busy === "create"}
             />
             <button type="submit" className="btn-primary disabled:opacity-50" disabled={busy === "create"}>
-              {busy === "create" ? "Creating…" : "Create code"}
+              {busy === "create" ? "Creating…" : "Create Code"}
             </button>
           </form>
         </Card>
@@ -1114,7 +1114,7 @@ function HouseholdsTab({
                       {d.lastSeenAt ? ` · seen ${day(d.lastSeenAt)}` : ""}
                     </span>
                     <button type="button" className="btn-ghost text-xs" onClick={() => onOpenDisplay(d.id)}>
-                      Open display
+                      Open Display
                     </button>
                   </li>
                 ))}
@@ -1305,7 +1305,7 @@ function HouseholdsTab({
               disabled={bulkBusy != null}
             />
             <button type="submit" className="btn-primary disabled:opacity-50" disabled={!bulkNote.trim() || bulkBusy != null}>
-              {bulkBusy === "note" ? "…" : "Add note"}
+              {bulkBusy === "note" ? "…" : "Add Note"}
             </button>
           </form>
         </div>
@@ -1352,7 +1352,7 @@ function HouseholdsTab({
       {canWrite && ids.length > 0 ? (
         <p className="mt-2 text-xs text-soft">
           <button type="button" className="btn-ghost text-xs" onClick={() => setSelected(allSelected ? new Set() : new Set(ids))}>
-            {allSelected ? "Deselect page" : "Select page"}
+            {allSelected ? "Deselect Page" : "Select Page"}
           </button>
         </p>
       ) : null}
@@ -1425,11 +1425,11 @@ function DisplaysTab({
             <p>Last seen {d.lastSeenAt ? when(d.lastSeenAt) : "—"}</p>
             <div className="flex flex-wrap gap-2">
               <button type="button" className="btn-primary" onClick={() => onOpenHousehold(d.accountId)}>
-                Open household
+                Open Household
               </button>
               {canWrite && (
                 <ConfirmButton
-                  label={d.isTest ? "Unmark test" : "Mark as test"}
+                  label={d.isTest ? "Unmark Test" : "Mark as Test"}
                   confirm={d.isTest ? "Tap again: unmark test" : "Tap again: mark test"}
                   variant="primary"
                   busy={busy}
@@ -1521,7 +1521,7 @@ function useFlagFilter(flags: FlagRow[] | undefined, changed: (f: FlagRow) => bo
       />
       <label className="flex items-center gap-2 text-sm">
         <input type="checkbox" checked={onlyChanged} onChange={(e) => setOnlyChanged(e.target.checked)} />
-        Changed only
+        Changed Only
       </label>
     </div>
   );
@@ -1548,7 +1548,7 @@ function FlagsTab({ flash, canWrite }: { flash: Flash; canWrite: boolean }) {
   };
   return (
     <>
-      <Card title="Feature flags" sub={`${data.flags.length} widgets and integrations · ${off} off for everyone.`}>
+      <Card title="Feature Flags" sub={`${data.flags.length} widgets and integrations · ${off} off for everyone.`}>
         {controls}
         {shown.length === 0 && <p className="mt-3 text-sm text-soft">Nothing matches.</p>}
       </Card>
@@ -1611,7 +1611,7 @@ function AutomationsTab({ flash, canWrite }: { flash: Flash; canWrite: boolean }
   const a = data.automations;
   return (
     <Card
-      title="Email alerts"
+      title="Email Alerts"
       sub={`Goes to ${data.adminCount} staff address${data.adminCount === 1 ? "" : "es"} (admins on the server list)`}
     >
       {(
@@ -1660,7 +1660,7 @@ function AutomationsTab({ flash, canWrite }: { flash: Flash; canWrite: boolean }
             ).then(() => setBusy(null));
           }}
         >
-          {busy === "test" ? "Sending…" : "Send test email"}
+          {busy === "test" ? "Sending…" : "Send Test Email"}
         </button>
       )}
     </Card>
@@ -1685,9 +1685,9 @@ function SystemTab() {
         <Tile label="Database" value={data.database.ok ? `${data.database.ms} ms` : "Down"} />
         <Tile label="Households" value={String(data.counts.accounts)} />
         <Tile label="Displays" value={String(data.counts.devices)} />
-        <Tile label="Failed staff sign-ins" value={String(data.failedSignInsToday)} hint="24h" />
+        <Tile label="Failed Staff Sign-Ins" value={String(data.failedSignInsToday)} hint="24h" />
       </div>
-      <Card title="This deployment" sub={`${data.vercelEnv} · ${data.commit}`}>
+      <Card title="This Deployment" sub={`${data.vercelEnv} · ${data.commit}`}>
         <p className="text-sm text-soft">Environment and commit for the build that’s live right now.</p>
       </Card>
       {groups.map((g) => (
@@ -1724,12 +1724,12 @@ function LogTab() {
   if (error) return <p className="text-bad">{error}</p>;
   return (
     <Card
-      title="Audit log"
+      title="Audit Log"
       sub="Staff actions on households, flags, codes, and plans"
       right={
         <div className="flex flex-wrap gap-2">
           <label className="grid gap-0.5 text-xs font-semibold text-soft">
-            Staff email
+            Staff Email
             <input
               className="field w-40 font-normal text-sm text-ink"
               placeholder="e.g. you@"
@@ -1738,7 +1738,7 @@ function LogTab() {
             />
           </label>
           <label className="grid gap-0.5 text-xs font-semibold text-soft">
-            Action starts with
+            Action Starts With
             <input
               className="field w-40 font-normal text-sm text-ink"
               placeholder="e.g. plan. or flag."

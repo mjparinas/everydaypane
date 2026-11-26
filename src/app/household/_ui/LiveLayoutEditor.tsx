@@ -267,7 +267,7 @@ export function LiveLayoutEditor({
           data-testid="open-full-preview"
           onClick={openFullPreview}
         >
-          Open full preview ↗
+          Open Full Preview ↗
         </a>
       </div>
       <div
@@ -279,7 +279,7 @@ export function LiveLayoutEditor({
         <iframe
           key={viewId}
           ref={frame}
-          title="Preview of this view"
+          title="Preview of This View"
           src={src}
           className="absolute top-0 left-0 border-0"
           style={{

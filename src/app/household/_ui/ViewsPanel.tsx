@@ -240,7 +240,7 @@ export function ViewsPanel() {
               />
               <path d="M10.2 2.8 13.2 5.8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
             </svg>
-            Edit view
+            Edit View
           </button>
           {!emptyView ? (
             <button
@@ -264,7 +264,7 @@ export function ViewsPanel() {
                 });
               }}
             >
-              Starter templates
+              Starter Templates
             </button>
           ) : null}
         </div>
@@ -340,7 +340,7 @@ export function ViewsPanel() {
 
       {showTemplates ? (
         <div id="starter-templates" ref={templatesRef} className="scroll-mt-28" tabIndex={-1}>
-          <Section title={emptyView ? "Start from a template" : "Starter templates"}>
+          <Section title={emptyView ? "Start from a Template" : "Starter Templates"}>
             <p className="text-sm text-soft" role="status">
               {emptyView
                 ? "This view is empty — pick a ready-made layout, or add widgets above."
@@ -401,7 +401,7 @@ export function ViewsPanel() {
                   setNotice("");
                 }}
               >
-                Hide templates
+                Hide Templates
               </button>
             ) : null}
           </Section>

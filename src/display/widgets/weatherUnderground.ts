@@ -24,8 +24,8 @@ export const weatherUnderground: Mount<"weatherUnderground"> = (el, w) => {
             d.rainToday !== undefined ? ` · Today ${d.rainToday} ${d.units.rain}` : "",
           )
         : null,
-      d.stale ? h("div", { class: "wu-stale" }, "Last good reading") : null,
+      d.stale ? h("div", { class: "wu-stale" }, "Last Good Reading") : null,
     ];
-    fill(root, h("div", { class: "w-label" }, w.title || "Weather station"), ...parts.filter(Boolean));
+    fill(root, h("div", { class: "w-label" }, w.title || "Weather Station"), ...parts.filter(Boolean));
   });
 };

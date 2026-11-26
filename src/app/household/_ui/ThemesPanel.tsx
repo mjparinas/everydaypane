@@ -12,10 +12,10 @@ import { newId, useAdmin } from "./store";
 
 const COLOURS: { key: keyof Palette; label: string }[] = [
   { key: "background", label: "Background" },
-  { key: "backgroundTo", label: "Background (gradient end)" },
-  { key: "surface", label: "Widget background" },
+  { key: "backgroundTo", label: "Background (Gradient End)" },
+  { key: "surface", label: "Widget Background" },
   { key: "text", label: "Text" },
-  { key: "muted", label: "Quiet text" },
+  { key: "muted", label: "Quiet Text" },
   { key: "accent", label: "Accent" },
   { key: "danger", label: "Warnings" },
 ];
@@ -78,7 +78,7 @@ export function ThemesPanel() {
             setThemeId(id);
           }}
         >
-          Copy this scheme
+          Copy This Scheme
         </button>
       </div>
 
@@ -88,12 +88,12 @@ export function ThemesPanel() {
           <div className="flex flex-wrap gap-2">
             {theme.id !== config.themeId && (
               <button className="btn-primary" onClick={() => edit((c) => void (c.themeId = theme.id))}>
-                Use on every view
+                Use on Every View
               </button>
             )}
             {theme.id !== config.themeId && config.themes.length > 1 && (
               <ConfirmButton
-                label="Delete scheme"
+                label="Delete Scheme"
                 onConfirm={() => {
                   edit((c) => {
                     c.themes = c.themes.filter((t) => t.id !== theme.id);
@@ -144,12 +144,12 @@ export function ThemesPanel() {
               { value: "outfit", label: "Outfit" },
               { value: "dm-sans", label: "DM Sans" },
               { value: "literata", label: "Literata" },
-              { value: "system", label: "The display's own font" },
+              { value: "system", label: "The Display's Own Font" },
             ]}
             onChange={(v) => editTheme((t) => void (t.font = v))}
           />
           <Range
-            label="Corner rounding"
+            label="Corner Rounding"
             value={theme.radius}
             min={0}
             max={40}
@@ -158,7 +158,7 @@ export function ThemesPanel() {
             onChange={(v) => editTheme((t) => void (t.radius = v))}
           />
           <Range
-            label="Widget background"
+            label="Widget Background"
             value={theme.surfaceOpacity}
             min={0}
             max={1}
@@ -168,7 +168,7 @@ export function ThemesPanel() {
             onChange={(v) => editTheme((t) => void (t.surfaceOpacity = v))}
           />
           <Toggle
-            label="Frosted glass"
+            label="Frosted Glass"
             checked={theme.glass}
             hint="Blurs the background behind widgets. It looks nice but makes a low-power wall panel work harder."
             onChange={(v) => editTheme((t) => void (t.glass = v))}

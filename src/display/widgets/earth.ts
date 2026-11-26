@@ -26,7 +26,7 @@ export const earth: Mount<"earth"> = (el, w) => {
     const height = root.clientHeight || el.clientHeight;
     frame = h("iframe", {
       class: "ea-frame",
-      title: "Earth wind map",
+      title: "Earth Wind Map",
       src: earthUrl(w, width, height),
       referrerpolicy: "no-referrer",
       // Scripts and its own storage only: no pop-ups, and it can never move the dashboard away.

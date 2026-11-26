@@ -36,20 +36,20 @@ export function todayLines(t: SchoolToday, lunch: string): { main: string; cls: 
       const sub = [
         t.early ?? "",
         lunch ? `Lunch: ${lunch}` : "",
-        t.lastDay ? "Last day of school" : t.firstDay ? "First day of school" : "",
+        t.lastDay ? "Last Day of School" : t.firstDay ? "First Day of School" : "",
       ];
-      return { main: "School today", cls: t.early ? "sd-early" : "sd-school", sub: sub.filter(Boolean).join(" · ") };
+      return { main: "School Today", cls: t.early ? "sd-early" : "sd-school", sub: sub.filter(Boolean).join(" · ") };
     }
     case "weekend":
-      return { main: "No school", cls: "sd-off", sub: "Weekend" };
+      return { main: "No School", cls: "sd-off", sub: "Weekend" };
     case "off":
       return {
-        main: "No school today",
+        main: "No School Today",
         cls: "sd-off",
         sub: [t.name, t.backOn ? `back ${longDay.format(at(t.backOn))}` : ""].filter(Boolean).join(" · "),
       };
     case "summer":
-      return { main: "Summer holidays", cls: "sd-off", sub: t.backOn ? `School starts ${longDay.format(at(t.backOn))}` : "" };
+      return { main: "Summer Holidays", cls: "sd-off", sub: t.backOn ? `School starts ${longDay.format(at(t.backOn))}` : "" };
   }
 }
 
@@ -99,7 +99,7 @@ export const schoolDays: Mount<"schoolDays"> = (el, w, ctx) => {
                 "li",
                 { class: `sd-row${o.weekdays >= 3 ? " sd-break" : ""}` },
                 h("span", { class: "sd-name" }, o.name),
-                h("span", { class: "sd-when" }, o.name === "Summer holidays" ? `from ${rangeText({ ...o, end: o.start })}` : rangeText(o)),
+                h("span", { class: "sd-when" }, o.name === "Summer Holidays" ? `from ${rangeText({ ...o, end: o.start })}` : rangeText(o)),
                 h("span", { class: "sd-away" }, daysAway(today, o.start)),
               ),
             ),

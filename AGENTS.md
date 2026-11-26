@@ -302,6 +302,15 @@ npm run templates:previews  # regenerate public/templates/*.png from real widget
   `combinedFeed` with `titleCase` (`src/lib/titleCase.ts`), so the display bundle doesn't grow and the calendars
   themselves never change. Words with a capital after the first letter (BC, PRO-D, iPhone, an all-caps title) are left
   as typed, and short joining words (a, of, the…) stay lower case mid-title (Claude's rules, 2026-11-26).
+- **Title Case everywhere a thing is named** (Melvin, 2026-11-26: "i prefer title case pretty much everywhere. if it
+  doesn't make sense in an area can you let me know"): headings, tabs, nav, buttons, field and toggle labels, select
+  options, widget names and titles (the wall title-cases saved titles too, in `mountWidget`), starter template names,
+  blog titles and headings, and short status chips on the wall ("Out for Delivery", "Under Control"). Sentences stay in
+  sentence case: hints, descriptions, errors, empty states ("Nothing coming up"), placeholders, the morning brief,
+  emails (subject and body), marketing paragraphs and alert text from agencies. What people type (notes, meals,
+  messages, shopping, chores, view names) is shown as typed, except calendar titles (`calendarTitleCase`). Rules are
+  Chicago-style, in `titleCase` (`src/lib/titleCase.ts`): small words (a, of, the, with…) lower mid-title, capitals
+  already there kept (Microsoft To Do, BC, PRO-D, ID). New UI copy follows the same split.
 - **Calendar names on the wall** (Melvin, 2026-11-26: "one of my calendars just shows my email, can you see if you can
   get my name instead?"): a Google primary calendar is named after the account's email, so its chip in the day popup
   read the address. Google connections now also ask for `userinfo.profile`, and the account's name (`google.name`

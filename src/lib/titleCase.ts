@@ -6,7 +6,7 @@
 //   acronyms and names someone typed on purpose survive. A title typed all in capitals is therefore left as typed.
 // - Every other word gets a capital first letter, each part of a hyphenated word too ("drop-off" → "Drop-Off").
 // - Short joining words (a, of, the, and…) stay lower case unless they start or end the title or follow a colon,
-//   dash or opening bracket.
+//   dash or opening quote (a bracket doesn't: "Amazon Sign-In (for Photos of People)").
 // - Email addresses, web addresses and words with a dot inside (zoom.us) are left alone.
 
 const SMALL = new Set([
@@ -71,7 +71,7 @@ export function titleCase(title: string): string {
     if (!LETTER.test(t) || /[@/]|\.\p{L}/u.test(t) || hasInnerCapital(t)) return;
     const bare = t.replace(/^[^\p{L}]+|[^\p{L}]+$/gu, "").toLocaleLowerCase();
     const prev = words[n - 1]?.t ?? "";
-    const startsPhrase = n === 0 || /[:–—-]$/.test(prev) || /^[([{"“]/.test(t);
+    const startsPhrase = n === 0 || /[:–—-]$/.test(prev) || /^["“]/.test(t);
     const endsTitle = n === words.length - 1;
     if (SMALL.has(bare) && !startsPhrase && !endsTitle) out[i] = t.toLocaleLowerCase();
     else out[i] = capitalise(t);

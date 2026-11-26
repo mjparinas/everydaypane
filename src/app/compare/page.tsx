@@ -16,7 +16,7 @@ export default function CompareIndex() {
   return (
     <SitePage wide>
       <Eyebrow>Compare</Eyebrow>
-      <h1 className="mt-3 font-display text-4xl font-extrabold tracking-tight sm:text-5xl">How Everydaypane stacks up</h1>
+      <h1 className="mt-3 font-display text-4xl font-extrabold tracking-tight sm:text-5xl">How Everydaypane Stacks Up</h1>
       <p className="mt-4 max-w-2xl text-lg text-soft">
         Facts checked against vendor pages on 2026-11-23. We say when the other product is the better pick.
       </p>
@@ -32,7 +32,7 @@ export default function CompareIndex() {
         ))}
       </ul>
       <div className="mt-14">
-        <CtaBanner cta="compare-index" title="Prefer trying over reading?" body="Start free and drag your first widgets onto the wall." />
+        <CtaBanner cta="compare-index" title="Prefer Trying Over Reading?" body="Start free and drag your first widgets onto the wall." />
       </div>
     </SitePage>
   );

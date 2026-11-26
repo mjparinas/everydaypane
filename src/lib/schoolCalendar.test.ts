@@ -38,9 +38,9 @@ describe("school calendar", () => {
     expect(schoolToday(year, "2026-11-23")).toEqual({ state: "school" });
     expect(schoolToday(year, "2026-12-03")).toEqual({ state: "school", early: "Early dismissal (conferences)" });
     expect(schoolToday(year, "2026-11-11")).toEqual({ state: "off", name: "Remembrance Day", backOn: "2026-11-12" });
-    expect(schoolToday(year, "2026-12-21")).toEqual({ state: "off", name: "Winter break", backOn: "2027-01-05" });
+    expect(schoolToday(year, "2026-12-21")).toEqual({ state: "off", name: "Winter Break", backOn: "2027-01-05" });
     // A weekend inside a break is still the break; one outside it is just the weekend.
-    expect(schoolToday(year, "2026-12-19")).toMatchObject({ state: "off", name: "Winter break" });
+    expect(schoolToday(year, "2026-12-19")).toMatchObject({ state: "off", name: "Winter Break" });
     expect(schoolToday(year, "2026-11-28")).toEqual({ state: "weekend" });
     expect(schoolToday(year, "2026-08-20")).toEqual({ state: "summer", backOn: "2026-09-08" });
     expect(schoolToday(year, "2027-07-10")).toEqual({ state: "summer", backOn: null });
@@ -54,10 +54,10 @@ describe("school calendar", () => {
 
   it("lists the next days off, breaks as one entry, and summer last", () => {
     const next = upcomingDaysOff(year, "2026-11-23", 3);
-    expect(next.map((o) => o.name)).toEqual(["Winter break", "Pro-D Day", "Family Day"]);
+    expect(next.map((o) => o.name)).toEqual(["Winter Break", "Pro-D Day", "Family Day"]);
     expect(next[0]).toMatchObject({ start: "2026-12-18", end: "2027-01-04", weekdays: 12 });
     const late = upcomingDaysOff(year, "2027-05-25", 5);
-    expect(late).toEqual([{ start: "2027-06-30", end: "2027-06-30", name: "Summer holidays", weekdays: 50 }]);
+    expect(late).toEqual([{ start: "2027-06-30", end: "2027-06-30", name: "Summer Holidays", weekdays: 50 }]);
   });
 
   it("reads days off from calendar titles", () => {

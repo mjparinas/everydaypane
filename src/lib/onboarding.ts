@@ -47,7 +47,7 @@ export const ONBOARDING: readonly OnboardingStep[] = [
     flags: [],
     subject: "Put Everydaypane on the wall",
     preheader: "Any screen with a browser becomes your family's dashboard in about a minute.",
-    title: "Let's get it on the wall",
+    title: "Let's Get It on the Wall",
     intro:
       "Everydaypane runs on any screen with a web browser: a wall tablet, an old laptop, a kitchen TV. Here's the quickest way to get yours up.",
     points: [
@@ -57,7 +57,7 @@ export const ONBOARDING: readonly OnboardingStep[] = [
       { text: "Free includes two displays, so the hallway can have one too." },
     ],
     tip: "No touchscreen? Cast a Chrome tab to a Chromecast TV, or set /display as a kiosk browser's start page.",
-    cta: { label: "Set up a display", path: "/household/#displays" },
+    cta: { label: "Set Up a Display", path: "/household/#displays" },
     image: { file: "wall", alt: "A kitchen wall dashboard with the clock, weather, calendar, meals and chores" },
   },
   {
@@ -66,7 +66,7 @@ export const ONBOARDING: readonly OnboardingStep[] = [
     flags: ["widget.agenda"],
     subject: "Your family's week, on one wall",
     preheader: "Bring in Google or Microsoft 365 calendars and see who's where at a glance.",
-    title: "Everyone's week, in one place",
+    title: "Everyone's Week, in One Place",
     intro: "Connect the calendars your family already uses and the wall keeps itself up to date. No more “wait, is that today?”",
     points: [
       { text: "Google Calendar and Microsoft 365, each calendar in its own colour." },
@@ -75,7 +75,7 @@ export const ONBOARDING: readonly OnboardingStep[] = [
       { text: "Changes on your phone reach the wall within a few minutes." },
     ],
     tip: "Household adds iCal links (school, sports teams, a shared Outlook calendar) and up to 50 calendars.",
-    cta: { label: "Connect a calendar", path: "/household/#settings/google" },
+    cta: { label: "Connect a Calendar", path: "/household/#settings/google" },
     image: { file: "calendars", alt: "A week of family events in the schedule and month calendar widgets" },
   },
   {
@@ -84,7 +84,7 @@ export const ONBOARDING: readonly OnboardingStep[] = [
     flags: ["widget.photos"],
     subject: "Make the wall feel like home",
     preheader: "Your photos as the backdrop, with the clock and weather floating on top.",
-    title: "Your photos, front and centre",
+    title: "Your Photos, Front and Centre",
     intro: "A dashboard is more fun to walk past when it's full of your own people. Add a photos widget and let it run.",
     points: [
       { text: "Pick favourites from Google Photos, or upload straight from your computer.", flag: "photos.library" },
@@ -92,7 +92,7 @@ export const ONBOARDING: readonly OnboardingStep[] = [
       { text: "Photos can be the backdrop: other widgets sit on top with a soft panel so they stay readable." },
       { text: "Fill the tile or show the whole picture, with captions if you like." },
     ],
-    cta: { label: "Add photos", path: "/household/#settings/photos" },
+    cta: { label: "Add Photos", path: "/household/#settings/photos" },
     image: { file: "photos", alt: "A full-screen family photo with the time and a countdown laid over it" },
   },
   {
@@ -101,7 +101,7 @@ export const ONBOARDING: readonly OnboardingStep[] = [
     flags: [],
     subject: "A different wall for mornings and evenings",
     preheader: "The dashboard changes with your day: lunches at breakfast, a calm clock at bedtime.",
-    title: "A wall that changes with your day",
+    title: "A Wall That Changes with Your Day",
     intro:
       "Mornings need the bus and the lunch plan. Evenings need dinner and tomorrow. With a time-of-day schedule, the wall shows the right thing on its own.",
     points: [
@@ -110,7 +110,7 @@ export const ONBOARDING: readonly OnboardingStep[] = [
       { text: "Night mode and dimming kick in by themselves, so it never glares at 2 AM." },
       { text: "Up to 30 views, and a display can loop through a few of them." },
     ],
-    cta: { label: "Set up the schedule", path: "/household/#schedule" },
+    cta: { label: "Set Up the Schedule", path: "/household/#schedule" },
     image: { file: "schedule", alt: "A bright morning view next to a dark overnight clock view" },
   },
   {
@@ -119,7 +119,7 @@ export const ONBOARDING: readonly OnboardingStep[] = [
     flags: [],
     subject: "Make it yours in five minutes",
     preheader: "Start from a ready-made layout, then drag, resize and recolour while you watch.",
-    title: "Make it yours in five minutes",
+    title: "Make It Yours in Five Minutes",
     intro: "You don't have to start from a blank grid. Pick a starter layout, then change anything while the live preview updates.",
     points: [
       { text: "Starter templates for kitchens, kids' rooms, night stands and more." },
@@ -128,7 +128,7 @@ export const ONBOARDING: readonly OnboardingStep[] = [
       { text: "Make any widget's text bigger for across the room, or turn its background off." },
     ],
     tip: "Changes stay in your phone until you tap Publish to wall, so you can play without anyone noticing.",
-    cta: { label: "Open the layout editor", path: "/household/#views" },
+    cta: { label: "Open the Layout Editor", path: "/household/#views" },
     image: { file: "layouts", alt: "Six starter layouts for different rooms" },
   },
   {
@@ -146,7 +146,7 @@ export const ONBOARDING: readonly OnboardingStep[] = [
       { text: "One tap adds the week's meals to the list." },
     ],
     tip: "Scan the wall's phone-edit QR and anyone at home can add milk to the list, no sign-in needed.",
-    cta: { label: "Plan this week", path: "/household/#meals" },
+    cta: { label: "Plan This Week", path: "/household/#meals" },
     image: { file: "meals", alt: "The meals widget showing today's plan beside the shopping list" },
   },
   {
@@ -155,7 +155,7 @@ export const ONBOARDING: readonly OnboardingStep[] = [
     flags: ["widget.weather"],
     subject: "Do they need a jacket?",
     preheader: "Today's weather big enough to read from the doorway, plus the week ahead.",
-    title: "Know before you head out",
+    title: "Know Before You Head Out",
     intro: "The weather widget answers the morning question from across the room: jacket, umbrella or neither.",
     points: [
       { text: "Right now in big type, then the next hours and up to seven days." },
@@ -164,7 +164,7 @@ export const ONBOARDING: readonly OnboardingStep[] = [
       { text: "Choose Open-Meteo or Environment Canada as the forecast." },
     ],
     tip: "Household adds an animated rain radar and a wildfire map around your home.",
-    cta: { label: "Add the weather", path: "/household/#views" },
+    cta: { label: "Add the Weather", path: "/household/#views" },
     image: { file: "weather", alt: "The weather widget with today's conditions and the week ahead, beside air quality" },
   },
   {
@@ -173,7 +173,7 @@ export const ONBOARDING: readonly OnboardingStep[] = [
     flags: ["widget.chores"],
     subject: "Chores the kids actually want to tick off",
     preheader: "A chore chart with stars, rewards and a tap to finish. No nagging required.",
-    title: "Chores, minus the nagging",
+    title: "Chores, Minus the Nagging",
     intro: "Put the chore chart where everyone walks past it. Kids tap to tick off, earn stars, and can see exactly what's left.",
     points: [
       { text: "Morning, afternoon or evening chores on the days you choose." },
@@ -181,7 +181,7 @@ export const ONBOARDING: readonly OnboardingStep[] = [
       { text: "Stars for each job, a weekly goal and rewards they can spend them on." },
       { text: "Kids can tick off from their own phone, with an optional PIN." },
     ],
-    cta: { label: "Set up chores", path: "/household/#settings/chores" },
+    cta: { label: "Set Up Chores", path: "/household/#settings/chores" },
     image: { file: "chores", alt: "A chore chart with three kids, ticked-off chores and stars earned" },
   },
   {
@@ -190,7 +190,7 @@ export const ONBOARDING: readonly OnboardingStep[] = [
     flags: [],
     subject: "The little things guests notice",
     preheader: "A WiFi QR code, countdowns to the good stuff and clocks for family far away.",
-    title: "The little things guests notice",
+    title: "The Little Things Guests Notice",
     intro: "Small widgets, big “oh, that's handy” energy. These are all on Free.",
     points: [
       { text: "A WiFi QR code: guests point their camera and they're on. No spelling the password.", flag: "widget.wifiQr" },
@@ -198,7 +198,7 @@ export const ONBOARDING: readonly OnboardingStep[] = [
       { text: "Clocks for other cities, in seven styles from flip to neon.", flag: "widget.clock" },
       { text: "A note for anything else: the door code, the dog's feeding time.", flag: "widget.note" },
     ],
-    cta: { label: "Add a widget", path: "/household/#views" },
+    cta: { label: "Add a Widget", path: "/household/#views" },
     image: { file: "guests", alt: "Countdowns to Christmas and New Year's, a door-code note and a WiFi QR code" },
   },
   {
@@ -207,7 +207,7 @@ export const ONBOARDING: readonly OnboardingStep[] = [
     flags: ["widget.alerts"],
     subject: "The alerts that matter, where you'll see them",
     preheader: "Weather warnings, power outages and evacuation orders across the top of the wall.",
-    title: "Alerts where you'll actually see them",
+    title: "Alerts Where You'll Actually See Them",
     intro: "When something serious is happening nearby, it shows up as a red strip across the top of every screen in the house.",
     points: [
       { text: "Alert Ready and Environment Canada weather warnings." },
@@ -216,7 +216,7 @@ export const ONBOARDING: readonly OnboardingStep[] = [
       { text: "Optionally emailed to everyone in the household, so nobody misses one." },
     ],
     tip: "Tap the strip to read every alert. Dismiss hides it on that screen until a new one arrives.",
-    cta: { label: "Choose your alerts", path: "/household/#settings/alerts" },
+    cta: { label: "Choose Your Alerts", path: "/household/#settings/alerts" },
     image: { file: "alerts", alt: "A red weather warning strip across the top of the wall dashboard" },
   },
   {
@@ -225,7 +225,7 @@ export const ONBOARDING: readonly OnboardingStep[] = [
     flags: [],
     subject: "Built to live on a wall",
     preheader: "Offline mode, burn-in protection and a page light enough for an old tablet.",
-    title: "Built to live on a wall",
+    title: "Built to Live on a Wall",
     intro: "A dashboard runs all day, every day. Everydaypane is made for that, on every plan.",
     points: [
       { text: "Light enough to run smoothly on an old tablet or a low-power panel." },
@@ -234,7 +234,7 @@ export const ONBOARDING: readonly OnboardingStep[] = [
       { text: "Day and night colours, so it's easy on the eyes after dark." },
     ],
     tip: "Settings changes reach the wall within 30 seconds. Household pushes them instantly.",
-    cta: { label: "Check your screen settings", path: "/household/#settings/screen-care" },
+    cta: { label: "Check Your Screen Settings", path: "/household/#settings/screen-care" },
     image: { file: "wall-ready", alt: "Everydaypane on a kitchen wall, in its night colours and on an old tablet" },
   },
   {
@@ -243,7 +243,7 @@ export const ONBOARDING: readonly OnboardingStep[] = [
     flags: ["widget.haEntity"],
     subject: "Your smart home, one tap away",
     preheader: "Lights, thermostats and the doorbell camera, right on the kitchen wall.",
-    title: "Your smart home, one tap away",
+    title: "Your Smart Home, One Tap Away",
     intro: "Turn the wall into the house's control panel. Big, simple tiles anyone in the family can use.",
     points: [
       { text: "Lights with brightness and colour: Philips Hue, LIFX and Govee.", flag: "smartHome.hue" },
@@ -252,7 +252,7 @@ export const ONBOARDING: readonly OnboardingStep[] = [
       { text: "Spotify and Sonos: see what's playing, skip, change the volume.", flag: "widget.media" },
     ],
     tip: "Locks can only be locked from the wall, never unlocked, because anyone in the kitchen can reach it.",
-    cta: { label: "Connect your devices", path: "/household/#settings/smart-home" },
+    cta: { label: "Connect Your Devices", path: "/household/#settings/smart-home" },
     image: { file: "smart-home", alt: "Smart home tiles for lights, the thermostat, what's playing and the backyard camera" },
   },
   {
@@ -261,7 +261,7 @@ export const ONBOARDING: readonly OnboardingStep[] = [
     flags: [],
     subject: "Leave on time, every time",
     preheader: "Drive times with traffic, the next bus, ferries and border waits before you grab your keys.",
-    title: "Leave on time, every time",
+    title: "Leave on Time, Every Time",
     intro: "Glance at the wall on the way to the door and know whether you're early, late, or about to sit in traffic.",
     points: [
       { text: "Drive times with live traffic to work, school or practice, and when to leave.", flag: "widget.commute" },
@@ -269,7 +269,7 @@ export const ONBOARDING: readonly OnboardingStep[] = [
       { text: "BC Ferries sailings and how full they are.", flag: "widget.ferries" },
       { text: "Border waits at the Lower Mainland crossings, and DriveBC highway cameras.", flag: "widget.borderWait" },
     ],
-    cta: { label: "Add your places", path: "/household/#settings/commute" },
+    cta: { label: "Add Your Places", path: "/household/#settings/commute" },
     image: { file: "out-the-door", alt: "Commute times, the next buses and ferry sailings" },
   },
   {
@@ -278,7 +278,7 @@ export const ONBOARDING: readonly OnboardingStep[] = [
     flags: ["widget.messages"],
     subject: "Leave a note on the fridge, minus the fridge",
     preheader: "A family message board you post to from your phone, and a whiteboard for doodles.",
-    title: "Notes on the fridge, minus the fridge",
+    title: "Notes on the Fridge, Minus the Fridge",
     intro: "“Running late, start dinner without me.” Post it from your phone and it's on the wall a moment later.",
     points: [
       { text: "Notes in a few colours, from anyone in the family." },
@@ -286,7 +286,7 @@ export const ONBOARDING: readonly OnboardingStep[] = [
       { text: "Let people post right from the wall, too." },
       { text: "A finger-drawing whiteboard that shows the same doodle on every screen.", flag: "widget.whiteboard" },
     ],
-    cta: { label: "Open the message board", path: "/household/#messages" },
+    cta: { label: "Open the Message Board", path: "/household/#messages" },
     image: { file: "family-board", alt: "Colourful family notes on the message board beside a whiteboard doodle" },
   },
   {
@@ -295,7 +295,7 @@ export const ONBOARDING: readonly OnboardingStep[] = [
     flags: [],
     subject: "A screen saver that's really a photo frame",
     preheader: "When nobody's around, the wall becomes a photo frame, or goes dark for the night.",
-    title: "When nobody's looking",
+    title: "When Nobody's Looking",
     intro: "A dashboard doesn't need to show the bus times at midnight. The screen saver takes over when the room goes quiet.",
     points: [
       { text: "After a few minutes without a touch: photos only, a dark screen, or any view you design." },
@@ -303,7 +303,7 @@ export const ONBOARDING: readonly OnboardingStep[] = [
       { text: "Dark at night on a schedule. A tap wakes it, and never presses a button by accident." },
       { text: "Emergency alerts, the doorbell and timers still break through." },
     ],
-    cta: { label: "Set up the screen saver", path: "/household/#settings/screen-saver" },
+    cta: { label: "Set Up the Screen Saver", path: "/household/#settings/screen-saver" },
     image: { file: "screen-saver", alt: "A Christmas photo filling the screen with a small clock, and the screen dark at night" },
   },
   {
@@ -312,7 +312,7 @@ export const ONBOARDING: readonly OnboardingStep[] = [
     flags: ["widget.timer"],
     subject: "Kitchen timers you can hear across the room",
     preheader: "Start a timer with one tap. When it's done, the whole wall lets you know.",
-    title: "Timers you can't miss",
+    title: "Timers You Can't Miss",
     intro: "Hands covered in flour? Tap a preset and get on with it. When time's up, you'll know from the other room.",
     points: [
       { text: "One-tap presets, up to six timers at once, pause and +1 minute." },
@@ -320,7 +320,7 @@ export const ONBOARDING: readonly OnboardingStep[] = [
       { text: "Timers keep ringing even if the wall switches views." },
       { text: "A separate pomodoro for homework: focus, break, repeat.", flag: "widget.pomodoro" },
     ],
-    cta: { label: "Add timers", path: "/household/#views" },
+    cta: { label: "Add Timers", path: "/household/#views" },
     image: { file: "timers", alt: "A full-screen red alert saying the timer is done" },
   },
   {
@@ -329,7 +329,7 @@ export const ONBOARDING: readonly OnboardingStep[] = [
     flags: [],
     subject: "The house, at a glance",
     preheader: "Laundry done, the power stations, indoor air, the sprinklers and the internet, all on the wall.",
-    title: "The whole house, at a glance",
+    title: "The Whole House, at a Glance",
     intro: "The things you'd normally open five apps for, quietly keeping you posted from the wall.",
     points: [
       { text: "The washer and dryer: time left, and a “done” notice so the towels don't sit.", flag: "widget.laundry" },
@@ -337,7 +337,7 @@ export const ONBOARDING: readonly OnboardingStep[] = [
       { text: "EcoFlow power stations, Rachio sprinklers and your Blue Riiot pool.", flag: "widget.ecoflow" },
       { text: "Whether the internet is up, and how fast it really is.", flag: "widget.internet" },
     ],
-    cta: { label: "Connect your home", path: "/household/#settings/laundry" },
+    cta: { label: "Connect Your Home", path: "/household/#settings/laundry" },
     image: { file: "house", alt: "Laundry, indoor air and network status widgets" },
   },
   {
@@ -346,7 +346,7 @@ export const ONBOARDING: readonly OnboardingStep[] = [
     flags: ["widget.sports"],
     subject: "Game on, right on the wall",
     preheader: "Live scores, last night's result and the next game for the teams you follow.",
-    title: "Game on",
+    title: "Game On",
     intro: "Follow your teams without opening an app. The score is on the wall while the game is on.",
     points: [
       { text: "NHL, NBA, WNBA, NFL, MLB, MLS, the Premier League and the Champions League." },
@@ -355,7 +355,7 @@ export const ONBOARDING: readonly OnboardingStep[] = [
       { text: "Last night's result at breakfast, then the next game." },
     ],
     tip: "That's the end of the tour. Reply to any of these emails if there's something you wish the wall did.",
-    cta: { label: "Pick your teams", path: "/household/#settings/sports" },
+    cta: { label: "Pick Your Teams", path: "/household/#settings/sports" },
     image: { file: "sports", alt: "Live and upcoming scores for the Canucks and Whitecaps" },
   },
 ];

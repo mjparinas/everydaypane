@@ -42,10 +42,10 @@ const SD35_SHARED: SchoolDayOff[] = [
   off("2026-10-23", "Pro-D Day"),
   off("2026-11-11", "Remembrance Day"),
   off("2026-11-20", "Design & Assessment Day"),
-  off("2026-12-18", "Winter break", "2027-01-04"),
+  off("2026-12-18", "Winter Break", "2027-01-04"),
   off("2027-02-08", "Pro-D Day"),
   off("2027-02-15", "Family Day"),
-  off("2027-03-15", "Spring break", "2027-03-29"),
+  off("2027-03-15", "Spring Break", "2027-03-29"),
   off("2027-04-12", "Design & Assessment Day"),
   off("2027-05-21", "Pro-D Day"),
   off("2027-05-24", "Victoria Day"),
@@ -56,8 +56,8 @@ const SD35_SOURCE = "Langley School District 2026–27 calendar, approved April 
 export const SCHOOL_PRESETS: SchoolPreset[] = [
   {
     id: "sd35-elementary-2026-27",
-    label: "Langley elementary, 2026–27",
-    calendarName: "Langley elementary",
+    label: "Langley Elementary, 2026–27",
+    calendarName: "Langley Elementary",
     firstDay: "2026-09-08",
     lastDay: "2027-06-29",
     daysOff: sortDays([
@@ -69,8 +69,8 @@ export const SCHOOL_PRESETS: SchoolPreset[] = [
   },
   {
     id: "sd35-middle-2026-27",
-    label: "Langley middle school, 2026–27",
-    calendarName: "Langley middle school",
+    label: "Langley Middle School, 2026–27",
+    calendarName: "Langley Middle School",
     firstDay: "2026-09-08",
     lastDay: "2027-06-29",
     daysOff: sortDays([
@@ -119,7 +119,7 @@ export function nameFromTitle(title: string): string {
     .replace(/\s*\((?:students?\s+)?not in attendance\)/i, "")
     .replace(/\s+/g, " ")
     .trim();
-  return t.slice(0, 60) || "No school";
+  return t.slice(0, 60) || "No School";
 }
 
 export type SchoolToday =
@@ -201,7 +201,7 @@ export function upcomingDaysOff(year: SchoolYear, date: string, count: number, i
   }
   if (year.lastDay && year.lastDay >= date) {
     const summer = addDays(year.lastDay, 1);
-    if (!out.some((o) => o.start === summer)) out.push({ start: summer, end: summer, name: "Summer holidays", weekdays: 50 });
+    if (!out.some((o) => o.start === summer)) out.push({ start: summer, end: summer, name: "Summer Holidays", weekdays: 50 });
   }
   return out.sort((a, b) => a.start.localeCompare(b.start)).slice(0, count);
 }

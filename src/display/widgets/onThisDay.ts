@@ -17,7 +17,7 @@ export const onThisDay: Mount<"onThisDay"> = (el, w) => {
     const thisYear = Number(d.date.slice(0, 4));
     fill(
       root,
-      h("div", { class: "w-label" }, w.title || (w.kind === "births" ? "Born on this day" : "On this day")),
+      h("div", { class: "w-label" }, w.title || (w.kind === "births" ? "Born on This Day" : "On This Day")),
       h(
         "ul",
         { class: `otd-list${items.length === 1 ? " otd-one" : ""}` },

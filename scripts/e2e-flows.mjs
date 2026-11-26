@@ -233,7 +233,7 @@ export const flows = [
         grown.includes("3 by 3 at column 9, row 6"),
         `the top-left corner didn't resize: ${grown} (during the drag: ${during}; under the handle: ${under}; grid ${Math.round(grid.width)} px; layout: ${layout})`,
       );
-      await page.getByRole("button", { name: "Publish to wall", exact: true }).click();
+      await page.getByRole("button", { name: "Publish to Wall", exact: true }).click();
       await page.getByText(/Published\. Displays update/).waitFor();
       const { config } = await (await page.request.get(`${base}/api/household/config/`)).json();
       const saved = config.views.find((v) => v.id === "home").widgets.find((w) => w.id === "home-countdown");
@@ -245,8 +245,8 @@ export const flows = [
     async run({ page, base, expect }) {
       await page.goto(`${base}/household/#settings/backup`);
       await page.reload();
-      await page.getByRole("link", { name: "Download backup" }).waitFor();
-      const [download] = await Promise.all([page.waitForEvent("download"), page.getByRole("link", { name: "Download backup" }).click()]);
+      await page.getByRole("link", { name: "Download Backup" }).waitFor();
+      const [download] = await Promise.all([page.waitForEvent("download"), page.getByRole("link", { name: "Download Backup" }).click()]);
       expect(/^everydaypane-settings-\d{4}-\d{2}-\d{2}\.json$/.test(download.suggestedFilename()), download.suggestedFilename());
       const file = await download.path();
       // Change the settings behind the page's back, then put the backup's back.
@@ -260,7 +260,7 @@ export const flows = [
       await page.reload();
       await page.locator('input[type="file"][accept*="json"]').setInputFiles(file);
       await page.getByTestId("restore-confirm").waitFor();
-      await page.getByRole("button", { name: "Restore these settings" }).click();
+      await page.getByRole("button", { name: "Restore These Settings" }).click();
       await page.getByText(/^Restored .*Displays pick it up within 30 seconds\.$/).waitFor();
       const after = await (await page.request.get(`${base}/api/household/config/`)).json();
       expect(after.config.name === before.config.name, `name is ${after.config.name}`);
@@ -305,7 +305,7 @@ export const flows = [
       await p.goto(`${base}/household/`);
       await p.getByTestId("grid-editor").waitFor();
       await p.getByRole("navigation", { name: "Sections" }).last().getByRole("button", { name: "Colours" }).click();
-      await p.getByRole("button", { name: "Copy this scheme" }).waitFor();
+      await p.getByRole("button", { name: "Copy This Scheme" }).waitFor();
       const overflow = await p.evaluate(() => document.documentElement.scrollWidth > innerWidth);
       expect(!overflow, "the admin panel scrolls sideways on a phone");
       await phone.close();
@@ -624,11 +624,11 @@ export const flows = [
       const phone = await browser.newContext({ viewport: { width: 390, height: 844 }, storageState: await page.context().storageState() });
       const p = await phone.newPage();
       await p.goto(`${base}/household/#settings/chores`);
-      await p.getByLabel("Add a kid").waitFor();
-      await p.getByLabel("Add a kid").fill("Ana");
-      await p.getByLabel("Add a kid").press("Enter");
-      await p.getByLabel("Add a chore").fill("Make the bed");
-      await p.getByLabel("Add a chore").press("Enter");
+      await p.getByLabel("Add a Kid").waitFor();
+      await p.getByLabel("Add a Kid").fill("Ana");
+      await p.getByLabel("Add a Kid").press("Enter");
+      await p.getByLabel("Add a Chore").fill("Make the bed");
+      await p.getByLabel("Add a Chore").press("Enter");
       await p.getByRole("group", { name: "Who" }).getByRole("button", { name: "Ana", pressed: true }).waitFor();
       const overflow = await p.evaluate(() => document.documentElement.scrollWidth > innerWidth);
       expect(!overflow, "Settings › Chores scrolls sideways on a phone");

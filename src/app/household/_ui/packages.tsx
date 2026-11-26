@@ -98,10 +98,10 @@ export function PackagesSection() {
           </div>
         </>
       ) : null}
-      <Text label="API key" type="password" value={key} maxLength={100} onChange={setKey} />
+      <Text label="API Key" type="password" value={key} maxLength={100} onChange={setKey} />
       {error && <p className="text-sm text-bad">{error}</p>}
       <button type="button" className="btn-ghost justify-self-start" disabled={busy || !key.trim()} onClick={() => void send("PUT")}>
-        {busy ? "Checking…" : status?.configured ? "Replace API key" : "Connect 17TRACK"}
+        {busy ? "Checking…" : status?.configured ? "Replace API Key" : "Connect 17TRACK"}
       </button>
     </Section>
   );

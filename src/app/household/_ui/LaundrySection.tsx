@@ -54,7 +54,7 @@ export function LaundrySection() {
   }
 
   return (
-    <Section id="settings-laundry" title="Laundry (washer and dryer)">
+    <Section id="settings-laundry" title="Laundry (Washer and Dryer)">
       <p className="text-sm text-soft">
         Time left and &ldquo;done&rdquo; for LG machines through LG ThinQ, and Samsung machines through SmartThings. For LG, make a personal
         access token at connect-pat.lgthinq.com (sign in with your ThinQ account, tick the device permissions) and paste it here; it is
@@ -74,28 +74,28 @@ export function LaundrySection() {
         </p>
       )}
       <Select
-        label="LG account country"
+        label="LG Account Country"
         value={COUNTRIES.some((c) => c.value === laundry.country) ? laundry.country : "CA"}
         options={COUNTRIES}
         hint="Picks LG's servers. Publish to wall after changing it, then connect again."
         onChange={(v) => edit((c) => void (c.integrations.smartHome.laundry.country = v))}
       />
-      <Text label="LG personal access token" type="password" value={token} maxLength={400} onChange={setToken} />
+      <Text label="LG Personal Access Token" type="password" value={token} maxLength={400} onChange={setToken} />
       {error && <p className="text-sm text-bad">{error}</p>}
       <div className="flex flex-wrap gap-2">
         <button type="button" className="btn-ghost" disabled={busy || token.trim().length < 16} onClick={() => void send("PUT")}>
-          {busy ? "Checking…" : status?.lg ? "Replace LG token" : "Connect LG ThinQ"}
+          {busy ? "Checking…" : status?.lg ? "Replace LG Token" : "Connect LG ThinQ"}
         </button>
         {status?.lg && <ConfirmButton label="Disconnect LG" onConfirm={() => void send("DELETE")} />}
       </div>
       <Toggle
-        label="Done notice on the alert strip"
+        label="Done Notice on the Alert Strip"
         checked={laundry.alertDone}
         hint="A blue strip when a load finishes, tap to dismiss. Needs a Laundry widget on a view and alerts switched on; never emailed."
         onChange={(v) => edit((c) => void (c.integrations.smartHome.laundry.alertDone = v))}
       />
       <Stepper
-        label="Show as done for"
+        label="Show as Done For"
         value={laundry.doneMinutes}
         min={15}
         max={720}

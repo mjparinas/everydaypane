@@ -21,7 +21,7 @@ export const BORDER_DIRECTIONS = ["both", "toUS", "toCanada"] as const;
 export type BorderDirections = (typeof BORDER_DIRECTIONS)[number];
 
 export const BORDER_DIRECTION_LABELS: Record<BorderDirections, string> = {
-  both: "Both directions",
+  both: "Both Directions",
   toUS: "Into the U.S. only",
   toCanada: "Into Canada only",
 };

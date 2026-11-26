@@ -7,7 +7,7 @@ import { pageMeta } from "@/lib/pageMeta";
 import { CONTACT_EMAIL } from "@/lib/site";
 
 export const metadata: Metadata = pageMeta({
-  title: "Terms of use",
+  title: "Terms of Use",
   description: `Terms for using ${BRAND.name}: acceptable use, accounts, the Free and Household plans, and liability limits.`,
   path: "/terms/",
 });
@@ -16,12 +16,12 @@ export default function TermsPage() {
   return (
     <SitePage>
       <Eyebrow>Legal</Eyebrow>
-      <h1 className="mt-3 font-display text-4xl font-extrabold tracking-tight">Terms of use</h1>
+      <h1 className="mt-3 font-display text-4xl font-extrabold tracking-tight">Terms of Use</h1>
       <p className="mt-4 text-soft">
         These terms cover the {BRAND.name} website and service at this domain. By signing in or opening a display link, you agree to them.
       </p>
 
-      <h2 className="mt-10 text-xl font-bold">The service</h2>
+      <h2 className="mt-10 text-xl font-bold">The Service</h2>
       <p className="mt-3 text-soft">
         {BRAND.name} is a wall dashboard and admin for a household. It is provided &ldquo;as is.&rdquo; Features may change as we ship
         updates; the blog&rsquo;s release notes describe what is new.
@@ -45,7 +45,7 @@ export default function TermsPage() {
         household&rsquo;s plan in our database.
       </p>
 
-      <h2 className="mt-10 text-xl font-bold">Acceptable use</h2>
+      <h2 className="mt-10 text-xl font-bold">Acceptable Use</h2>
       <ul className="mt-3 list-disc space-y-1 pl-6 text-soft">
         <li>Use {BRAND.name} for your household (or households you administer), not as a public kiosk for strangers.</li>
         <li>Do not attempt to access another family&rsquo;s data, scrape private APIs, or abuse rate limits.</li>
@@ -53,7 +53,7 @@ export default function TermsPage() {
         <li>Respect third-party terms for Google, Amazon, Home Assistant, TransLink, TomTom, Spotify, Sonos and others you connect.</li>
       </ul>
 
-      <h2 className="mt-10 text-xl font-bold">Your content</h2>
+      <h2 className="mt-10 text-xl font-bold">Your Content</h2>
       <p className="mt-3 text-soft">
         You keep ownership of calendars, photos, meals, messages and other content you connect or type. You grant us permission to process
         that content only to run the dashboard for your household, as described in the{" "}
@@ -63,7 +63,7 @@ export default function TermsPage() {
         .
       </p>
 
-      <h2 className="mt-10 text-xl font-bold">Third-party services</h2>
+      <h2 className="mt-10 text-xl font-bold">Third-Party Services</h2>
       <p className="mt-3 text-soft">
         Weather, transit, ferries, sports, maps and other feeds come from third parties. Their availability and accuracy are outside our
         control. One failing source should not hide the others, but we do not guarantee uptime of upstream APIs.

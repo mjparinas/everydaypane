@@ -21,7 +21,7 @@ export const MARKETING_PLANS: MarketingPlan[] = [
     priceMonthly: 0,
     priceYearly: 0,
     blurb: "Two wall displays with the essentials. No card, no ads.",
-    cta: "Start free",
+    cta: "Start Free",
     features: [
       "2 wall displays and 1 view",
       "Clock, date, weather, sunrise & sunset, air quality",

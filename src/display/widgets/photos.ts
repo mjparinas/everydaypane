@@ -10,7 +10,7 @@ import type { Mount } from "./types";
 // cross-fades with opacity only, and is loaded before it is shown, at the width the frame draws it, so the proxy sends
 // no more pixels than needed. The photo frame polish (Melvin, 2026-11-26: rival Skylight) adds, each switchable:
 // smart fit (whole photo over a soft copy of itself when filling would crop a lot), two portraits side by side, a slow
-// drift (transform only), "On this day" photos first and photos added since the frame last looked shown next.
+// drift (transform only), "On This Day" photos first and photos added since the frame last looked shown next.
 // The choices are in src/lib/photoFrame.ts.
 
 /** Widths are rounded up to a few steps so the browser and proxy caches get hits. */

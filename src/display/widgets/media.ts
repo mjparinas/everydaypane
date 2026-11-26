@@ -86,7 +86,7 @@ export function positionNow(e: HaEntity, now: number): number | null {
 export function nowPlaying(e: HaEntity): { title: string; detail: string } {
   const m = e.media;
   if (e.state === "unavailable" || e.state === "unknown") return { title: "Unavailable", detail: "" };
-  if (e.state === "off" || !m?.title) return { title: "Nothing playing", detail: m?.source ?? "" };
+  if (e.state === "off" || !m?.title) return { title: "Nothing Playing", detail: m?.source ?? "" };
   return { title: m.title, detail: [m.artist, m.album].filter(Boolean).join(" · ") };
 }
 
@@ -119,7 +119,7 @@ export const media: Mount<"media"> = (el, w) => {
   const volume = h("input", { type: "range", class: "ha-range mp-volume", min: 0, max: 100, "aria-label": "Volume" });
   const sources = h("select", {
     class: "mp-sources",
-    "aria-label": w.provider === "spotify" || w.entityId.includes("spotify") ? "Play on" : "Play",
+    "aria-label": w.provider === "spotify" || w.entityId.includes("spotify") ? "Play On" : "Play",
   });
   const msg = h("div", { class: "ha-msg" });
   const controls = h("div", { class: "mp-controls" }, prev, play, next);

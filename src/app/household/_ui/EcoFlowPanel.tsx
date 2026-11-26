@@ -111,15 +111,15 @@ export function EcoFlowPanel() {
           )}
           <div className="flex flex-wrap gap-2">
             <button type="button" className="btn-ghost" onClick={() => void loadEcoFlow(true)}>
-              Check again
+              Check Again
             </button>
-            <ConfirmButton label="Remove keys" onConfirm={() => void disconnect()} />
+            <ConfirmButton label="Remove Keys" onConfirm={() => void disconnect()} />
           </div>
         </>
       ) : null}
-      <Text label="Access key" type="password" value={accessKey} maxLength={128} onChange={setAccessKey} />
+      <Text label="Access Key" type="password" value={accessKey} maxLength={128} onChange={setAccessKey} />
       <Text
-        label="Secret key"
+        label="Secret Key"
         type="password"
         value={secretKey}
         maxLength={128}
@@ -132,7 +132,7 @@ export function EcoFlowPanel() {
         disabled={busy || accessKey.trim().length < 8 || secretKey.trim().length < 8}
         onClick={() => void save()}
       >
-        {status?.connected ? "Replace keys" : "Save keys"}
+        {status?.connected ? "Replace Keys" : "Save Keys"}
       </button>
     </Section>
   );

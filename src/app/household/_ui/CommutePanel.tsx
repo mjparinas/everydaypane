@@ -131,7 +131,7 @@ export function CommutePanel() {
         )}
       </p>
       <PlaceFinder
-        label={commute.home ? "Another home address" : "Home address"}
+        label={commute.home ? "Another Home Address" : "Home Address"}
         button="Find"
         onPick={(p) => edit((c) => void (c.integrations.commute.home = p))}
       />
@@ -146,7 +146,7 @@ export function CommutePanel() {
                 <Text label="Name" value={d.name} maxLength={40} onChange={(v) => change(d.id, { name: v })} />
               </div>
               <TimePicker
-                label="Be there by"
+                label="Be There By"
                 value={d.arriveBy}
                 hour12={hour12}
                 optional
@@ -167,9 +167,9 @@ export function CommutePanel() {
 
       {commute.destinations.length < MAX ? (
         <div className="grid gap-2 rounded-xl border border-dashed border-line p-3">
-          <Text label="New place" value={name} maxLength={40} placeholder="Work, School…" onChange={setName} />
+          <Text label="New Place" value={name} maxLength={40} placeholder="Work, School…" onChange={setName} />
           <PlaceFinder
-            label="Its address"
+            label="Its Address"
             button="Add"
             onPick={(p) => {
               edit((c) => {

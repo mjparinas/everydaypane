@@ -68,7 +68,7 @@ export function UnifiPanel() {
   }
 
   return (
-    <Section id="settings-unifi" title="UniFi network">
+    <Section id="settings-unifi" title="UniFi Network">
       <p className="text-sm text-soft">
         Internet uptime, latency and outages from your UniFi gateway, read from UniFi&rsquo;s own cloud (Site Manager). Nothing runs at
         home. Make a read-only API key at unifi.ui.com › API; see docs/unifi.md.
@@ -88,11 +88,11 @@ export function UnifiPanel() {
                 : "The key sees no sites yet."}
             </p>
           )}
-          <ConfirmButton label="Remove key" onConfirm={() => void save(null)} />
+          <ConfirmButton label="Remove Key" onConfirm={() => void save(null)} />
         </>
       ) : null}
       <Text
-        label={status?.connected ? "Replace API key" : "Site Manager API key"}
+        label={status?.connected ? "Replace API Key" : "Site Manager API Key"}
         type="password"
         value={key}
         maxLength={200}
@@ -105,7 +105,7 @@ export function UnifiPanel() {
         disabled={busy || key.trim().length < 16}
         onClick={() => void save(key.trim())}
       >
-        {busy ? "Checking…" : "Save key"}
+        {busy ? "Checking…" : "Save Key"}
       </button>
     </Section>
   );
@@ -117,7 +117,7 @@ export function UnifiSitePicker({ value, onChange }: { value: string; onChange: 
   const sites = status?.sites ?? [];
   if (!status?.connected) return null;
   if (sites.length < 2 && !value) return null;
-  const options = [{ value: "", label: "First site" }, ...sites.map((s) => ({ value: s.id, label: s.name }))];
-  if (value && !sites.some((s) => s.id === value)) options.push({ value, label: "A site this key no longer sees" });
+  const options = [{ value: "", label: "First Site" }, ...sites.map((s) => ({ value: s.id, label: s.name }))];
+  if (value && !sites.some((s) => s.id === value)) options.push({ value, label: "A Site This Key No Longer Sees" });
   return <Select label="Site" value={value} options={options} onChange={onChange} />;
 }

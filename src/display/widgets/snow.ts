@@ -22,7 +22,7 @@ export const snow: Mount<"snow"> = (el, w) => {
     const cols = 2 + (w.showDepth ? 1 : 0) + days.length;
     fill(
       root,
-      h("div", { class: "w-label" }, w.title || "Snow report"),
+      h("div", { class: "w-label" }, w.title || "Snow Report"),
       h(
         "div",
         { class: "sn-table", style: `grid-template-columns:minmax(0,1fr) repeat(${cols - 1},auto)` },

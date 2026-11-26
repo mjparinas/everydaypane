@@ -78,7 +78,7 @@ export function CalendarLinksPanel() {
   }
 
   return (
-    <Section title="Calendar links">
+    <Section title="Calendar Links">
       <p className="text-sm text-soft">
         Add any calendar that has an iCal address: a school or team calendar, or someone else&rsquo;s Google or Outlook calendar. In Google
         Calendar it&rsquo;s under the calendar&rsquo;s Settings › &ldquo;Secret address in iCal format&rdquo;.
@@ -114,7 +114,7 @@ export function CalendarLinksPanel() {
                   <Text label="Name" value={l.name} maxLength={60} onChange={(v) => change(l.id, { name: v })} />
                 </div>
               </div>
-              <Toggle label="Show on displays" checked={l.enabled} onChange={(v) => change(l.id, { enabled: v })} />
+              <Toggle label="Show on Displays" checked={l.enabled} onChange={(v) => change(l.id, { enabled: v })} />
               {stored[l.id] === false && <p className="text-sm text-bad">This link has lost its address. Remove it and add it again.</p>}
               <ConfirmButton label="Remove" onConfirm={() => remove(l.id)} />
             </div>
@@ -122,9 +122,9 @@ export function CalendarLinksPanel() {
         </div>
       )}
       <form onSubmit={(e) => void add(e)} className="grid gap-2">
-        <Text label="Calendar address" type="url" value={url} onChange={setUrl} placeholder="https://… or webcal://…" />
+        <Text label="Calendar Address" type="url" value={url} onChange={setUrl} placeholder="https://… or webcal://…" />
         <button className="btn-primary justify-self-start" disabled={busy || url.trim().length < 8}>
-          {busy ? "Checking…" : "Add calendar"}
+          {busy ? "Checking…" : "Add Calendar"}
         </button>
       </form>
       {note && (

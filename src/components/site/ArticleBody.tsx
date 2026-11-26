@@ -49,7 +49,7 @@ export function ArticleBody({ blocks }: { blocks: Block[] }) {
             <p key={i} className="rounded-2xl border border-line bg-panel px-5 py-4">
               <span className="font-semibold">Ready to try it? </span>
               <Link href={SIGNUP_PATH} className="font-semibold text-brand hover:underline">
-                Start free on Everydaypane
+                Start Free on Everydaypane
               </Link>
               .
             </p>

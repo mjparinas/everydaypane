@@ -31,7 +31,7 @@ export function weatherNotes(d: WeatherData, showUv: boolean, showPollen: boolea
     bits.push(`UV ${d.current.uv} · ${uvWord(d.current.uv)}`);
     if (d.today.uvMax !== undefined && d.today.uvMax > d.current.uv) bits.push(`peaks at ${d.today.uvMax}`);
   } else if (showUv && d.today.uvMax !== undefined) bits.push(`UV peaks at ${d.today.uvMax}`);
-  if (showPollen && d.pollen !== undefined) bits.push(d.pollen <= 0 ? "No pollen" : `Pollen ${d.pollen} · ${pollenWord(d.pollen)}`);
+  if (showPollen && d.pollen !== undefined) bits.push(d.pollen <= 0 ? "No Pollen" : `Pollen ${d.pollen} · ${pollenWord(d.pollen)}`);
   return bits.join(" · ");
 }
 

@@ -23,7 +23,7 @@ export const GOOGLE_FUEL_TYPES: Record<GasFuel, string[]> = {
 export const GAS_SORTS = ["price", "distance"] as const;
 export type GasSort = (typeof GAS_SORTS)[number];
 
-export const GAS_SORT_LABELS: Record<GasSort, string> = { price: "Cheapest first", distance: "Nearest first" };
+export const GAS_SORT_LABELS: Record<GasSort, string> = { price: "Cheapest First", distance: "Nearest First" };
 
 /** How far from home a widget may look, in km. Google's nearby search reaches 50 km; a kitchen cares about 15. */
 export const GAS_RADIUS_MIN = 1;

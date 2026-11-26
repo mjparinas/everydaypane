@@ -26,6 +26,7 @@ A castable browser wall dashboard that stays super-lightweight on the display (s
 - Phone: `/household/` for setup; `/family/` and `/d/<token>/edit/` for meals, shopping, messages without full admin; kids chore pages.
 - Time-of-day views (morning, afternoon, evening, overnight), day/night themes, burn-in protection, offline mode, screen saver.
 - Canadian English in everything a person reads (colour, centre, favourite).
+- Title Case for names (headings, tabs, buttons, field and toggle labels, options, widget titles, wall status chips); sentence case for sentences (hints, errors, empty states, emails, marketing paragraphs) and user content (Melvin, 2026-11-26).
 - B.C. permanent daylight time: Vancouver clocks/dates/calendars/schedules stay on fixed UTC−7 after the March 2026 transition even when the display browser has stale zone data.
 - Staff `/admin/`: Clerk sign-in, then `ADMIN_EMAILS` (no in-app 2FA); tabs grouped Work / Numbers / People / Running; deep links `?tab=&days=&q=&open=`; ops-cockpit refinements (2026-11-24): confirm-to-act mutations, group+strip nav, Overview command centre, clarified copy, debounced search, ⌘K palette, bulk household plan/note, Displays → Open household.
 - Hosting: Vercel + Turso; marketing at everydaypane.com.

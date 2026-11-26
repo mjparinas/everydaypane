@@ -38,7 +38,7 @@ export const aurora: Mount<"aurora"> = (el, w, ctx) => {
         : null;
     fill(
       root,
-      h("div", { class: "w-label" }, w.title || "Aurora tonight"),
+      h("div", { class: "w-label" }, w.title || "Aurora Tonight"),
       h(
         "div",
         { class: `au-head au-${d.chance}` },

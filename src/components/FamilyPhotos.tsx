@@ -105,7 +105,7 @@ export function FamilyPhotos() {
   return (
     <section className="mx-auto grid w-full max-w-xl gap-3" aria-labelledby="photos-heading">
       <h2 id="photos-heading" className="text-lg font-bold">
-        Photos for the wall
+        Photos for the Wall
       </h2>
       <p className="text-sm text-soft">New photos come up next on the photo frame, within a few minutes.</p>
       {albums.length > 1 && (
@@ -121,7 +121,7 @@ export function FamilyPhotos() {
         </label>
       )}
       <label className={`btn-primary justify-self-start ${busy ? "pointer-events-none opacity-60" : "cursor-pointer"}`}>
-        {busy || "Add photos"}
+        {busy || "Add Photos"}
         <input
           ref={input}
           type="file"

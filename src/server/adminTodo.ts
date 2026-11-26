@@ -44,7 +44,7 @@ export async function derivedTodo(): Promise<TodoItem[]> {
     items.push({
       key: `env:${missing.join(",")}`,
       kind: "setup",
-      title: "Required settings missing",
+      title: "Required Settings Missing",
       detail: missing.join(", "),
       href: "System",
     });

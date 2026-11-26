@@ -40,7 +40,7 @@ export default async function FamilyPage() {
         <FamilyEvents />
         <p className="text-sm">
           <a className="font-semibold text-brand underline-offset-2 hover:underline" href="/family/chores/">
-            Kids chores →
+            Kids Chores →
           </a>
         </p>
       </div>
@@ -53,13 +53,13 @@ export default async function FamilyPage() {
       <FamilyPhotos />
       <section className="grid gap-3" aria-labelledby="meals-heading">
         <h2 id="meals-heading" className="text-lg font-bold">
-          Meal plan
+          Meal Plan
         </h2>
         <MealPlanner />
       </section>
       <section className="mx-auto grid w-full max-w-xl gap-3" aria-labelledby="shopping-heading">
         <h2 id="shopping-heading" className="text-lg font-bold">
-          Shopping list
+          Shopping List
         </h2>
         <ShoppingList />
       </section>

@@ -12,21 +12,21 @@ describe("moon phase", () => {
 
   it("finds the eclipse new moon of 8 April 2024 (18:21 UTC) and the full moon after it (23 April, 23:49 UTC)", () => {
     const before = moonPhase(Date.UTC(2024, 3, 8, 12));
-    expect(before.name).toBe("New moon");
+    expect(before.name).toBe("New Moon");
     expect(minutesApart(before.nextNew, Date.UTC(2024, 3, 8, 18, 21))).toBeLessThan(3);
     expect(minutesApart(before.nextFull, Date.UTC(2024, 3, 23, 23, 49))).toBeLessThan(3);
   });
 
   it("names the phases through a month", () => {
     const at = (day: number) => moonPhase(Date.UTC(2024, 3, day, 12)).name;
-    expect(at(8)).toBe("New moon");
-    expect(at(11)).toBe("Waxing crescent");
-    expect(at(15)).toBe("First quarter");
-    expect(at(19)).toBe("Waxing gibbous");
-    expect(at(24)).toBe("Full moon");
-    expect(at(27)).toBe("Waning gibbous");
-    expect(moonPhase(Date.UTC(2024, 4, 1, 12)).name).toBe("Last quarter");
-    expect(moonPhase(Date.UTC(2024, 4, 4, 12)).name).toBe("Waning crescent");
+    expect(at(8)).toBe("New Moon");
+    expect(at(11)).toBe("Waxing Crescent");
+    expect(at(15)).toBe("First Quarter");
+    expect(at(19)).toBe("Waxing Gibbous");
+    expect(at(24)).toBe("Full Moon");
+    expect(at(27)).toBe("Waning Gibbous");
+    expect(moonPhase(Date.UTC(2024, 4, 1, 12)).name).toBe("Last Quarter");
+    expect(moonPhase(Date.UTC(2024, 4, 4, 12)).name).toBe("Waning Crescent");
   });
 
   it("lights the disc from nothing to all of it and back", () => {

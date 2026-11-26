@@ -9,7 +9,7 @@ import { tokenFromSealedCookie, WALL_COOKIE } from "@/server/displayAuth";
 
 import { DisplayUnlock } from "./DisplayUnlock";
 
-export const metadata: Metadata = { title: "Unlock display", robots: { index: false, follow: false } };
+export const metadata: Metadata = { title: "Unlock Display", robots: { index: false, follow: false } };
 
 export default async function DisplayUnlockPage() {
   const jar = await cookies();

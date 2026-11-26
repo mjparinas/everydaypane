@@ -30,9 +30,9 @@ export const menus: Mount<"menus"> = (el, w) => {
     });
     fill(
       root,
-      h("div", { class: "w-label" }, w.title || data.school || "School menu"),
+      h("div", { class: "w-label" }, w.title || data.school || "School Menu"),
       ...blocks,
-      data.stale ? h("div", { class: "mn-stale" }, "Last good menu") : null,
+      data.stale ? h("div", { class: "mn-stale" }, "Last Good Menu") : null,
     );
   });
 };

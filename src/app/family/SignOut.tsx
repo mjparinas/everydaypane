@@ -19,7 +19,7 @@ function TestSignOut() {
         void fetch("/api/auth/signout/", { method: "POST" }).then(() => router.replace("/signin/"));
       }}
     >
-      Sign out
+      Sign Out
     </button>
   );
 }
@@ -34,7 +34,7 @@ function ClerkSignOut() {
         void signOut({ redirectUrl: signInHref() }).catch(() => router.replace(signInHref()));
       }}
     >
-      Sign out
+      Sign Out
     </button>
   );
 }

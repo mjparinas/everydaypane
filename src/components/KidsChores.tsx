@@ -244,7 +244,7 @@ export function KidsChores() {
       {board.rewards.length > 0 ? (
         <section className="grid gap-2" aria-labelledby="rewards-heading">
           <h3 id="rewards-heading" className="text-sm font-bold text-soft">
-            Star rewards
+            Star Rewards
           </h3>
           <ul className="grid gap-2">
             {board.rewards.map((r) => (

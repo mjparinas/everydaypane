@@ -77,7 +77,7 @@ export function SportsPanel() {
 
       {teams.length < MAX_TEAMS && !adding ? (
         <button type="button" className="btn-ghost justify-self-start" onClick={() => setAdding(true)}>
-          Follow a team
+          Follow a Team
         </button>
       ) : teams.length < MAX_TEAMS ? (
         <div className="grid gap-2 rounded-xl border border-dashed border-line p-3">

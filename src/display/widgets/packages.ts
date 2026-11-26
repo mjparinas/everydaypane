@@ -12,12 +12,12 @@ const EVERY = 5 * 60_000;
 
 const STATUS: Record<PackageTrack["status"], string> = {
   unknown: "Waiting for an update",
-  preTransit: "Label created",
-  inTransit: "On its way",
-  outForDelivery: "Out for delivery",
-  pickup: "Ready for pickup",
+  preTransit: "Label Created",
+  inTransit: "On Its Way",
+  outForDelivery: "Out for Delivery",
+  pickup: "Ready for Pickup",
   delivered: "Delivered",
-  exception: "Needs a look",
+  exception: "Needs a Look",
 };
 
 export const packages: Mount<"packages"> = (el, w, ctx) => {
@@ -28,7 +28,7 @@ export const packages: Mount<"packages"> = (el, w, ctx) => {
   const weekday = fmt(ctx.timeZone, { weekday: "long" });
   let data: PackagesData | null = null;
 
-  /** "Arriving today", "Expected Thursday" or "Delivered 2:14 PM", from the carrier's own dates. */
+  /** "Arriving Today", "Expected Thursday" or "Delivered 2:14 PM", from the carrier's own dates. */
   function when(p: PackageTrack, now: number): string {
     if (p.status === "delivered")
       return p.deliveredAt === undefined
@@ -40,7 +40,7 @@ export const packages: Mount<"packages"> = (el, w, ctx) => {
     const eta = p.etaFrom ?? p.etaTo;
     if (eta === undefined) return "";
     const w = etaWhen(p, now, ctx.timeZone);
-    if (w === "today") return "Arriving today";
+    if (w === "today") return "Arriving Today";
     if (w === "late") return `Was due ${day.format(p.etaTo ?? eta)}`;
     const days = (eta - now) / 86_400_000;
     const name = days < 6 ? weekday.format(eta) : day.format(eta);
@@ -98,7 +98,7 @@ export const packages: Mount<"packages"> = (el, w, ctx) => {
     );
   };
 
-  // Redraw at least every few minutes even without new data, so "Arriving today" turns over at midnight.
+  // Redraw at least every few minutes even without new data, so "Arriving Today" turns over at midnight.
   const tick = window.setInterval(draw, 5 * 60_000);
   const stop = subscribe<PackagesData>("packages", EVERY, (d) => {
     data = d;

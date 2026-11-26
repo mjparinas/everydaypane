@@ -80,7 +80,7 @@ export default function PricingPage() {
       </div>
       <div className="mt-12 overflow-x-auto rounded-2xl border border-line bg-panel">
         <table className="w-full min-w-[32rem] text-left text-sm">
-          <caption className="sr-only">Free vs Household feature comparison</caption>
+          <caption className="sr-only">Free vs Household Feature Comparison</caption>
           <thead className="border-b border-line bg-bg/80 text-xs uppercase">
             <tr>
               <th className="px-4 py-3">Feature</th>
@@ -100,7 +100,7 @@ export default function PricingPage() {
         </table>
       </div>
       <div className="mt-14">
-        <CtaBanner cta="pricing-end" title="Start on Free today" body="Upgrade to Household when you want every widget on every screen." />
+        <CtaBanner cta="pricing-end" title="Start on Free Today" body="Upgrade to Household when you want every widget on every screen." />
       </div>
     </SitePage>
   );

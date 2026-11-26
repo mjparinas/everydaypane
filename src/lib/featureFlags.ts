@@ -35,9 +35,9 @@ const SMART_HOME: { [P in SmartHomeProvider]: { label: string; description: stri
   nest: { label: "Nest", description: "Google Nest thermostats and cameras through Device Access." },
   ecobee: { label: "ecobee", description: "ecobee thermostats signed in directly." },
   smartthings: { label: "SmartThings", description: "Samsung SmartThings devices signed in directly." },
-  govee: { label: "Govee lights", description: "Govee lights with the household's API key." },
-  hue: { label: "Philips Hue lights", description: "Hue lights through the Hue Remote API." },
-  lifx: { label: "LIFX lights", description: "LIFX lights with the household's personal token." },
+  govee: { label: "Govee Lights", description: "Govee lights with the household's API key." },
+  hue: { label: "Philips Hue Lights", description: "Hue lights through the Hue Remote API." },
+  lifx: { label: "LIFX Lights", description: "LIFX lights with the household's personal token." },
 };
 
 const MUSIC: { [P in Exclude<MediaProvider, "homeAssistant">]: { label: string; description: string } } = {
@@ -52,13 +52,13 @@ const TASKS: { [P in TasksProvider]: { label: string; description: string } } = 
 };
 
 const PHOTOS: { [K in PhotoKind]: { label: string; description: string } } = {
-  amazonShare: { label: "Amazon shared albums", description: "Amazon Photos shared album links." },
-  amazonPeople: { label: "Amazon people", description: "Amazon Photos people, with the household's cookies." },
-  urls: { label: "Photo URL lists", description: "Lists of picture addresses pasted in Settings." },
-  library: { label: "Photo library", description: "Uploads and Google Photos picks kept in Everydaypane." },
-  bingPotd: { label: "Bing picture of the day", description: "Bing's daily picture." },
+  amazonShare: { label: "Amazon Shared Albums", description: "Amazon Photos shared album links." },
+  amazonPeople: { label: "Amazon People", description: "Amazon Photos people, with the household's cookies." },
+  urls: { label: "Photo URL Lists", description: "Lists of picture addresses pasted in Settings." },
+  library: { label: "Photo Library", description: "Uploads and Google Photos picks kept in Everydaypane." },
+  bingPotd: { label: "Bing Picture of the Day", description: "Bing's daily picture." },
   reddit: { label: "Reddit", description: "Pictures from subreddits." },
-  weatherAlbums: { label: "Weather-linked albums", description: "Albums picked by today's weather." },
+  weatherAlbums: { label: "Weather-Linked Albums", description: "Albums picked by today's weather." },
   immich: { label: "Immich", description: "A household's own Immich server." },
   dropbox: { label: "Dropbox", description: "A Dropbox folder." },
   onedrive: { label: "OneDrive", description: "A OneDrive folder." },
@@ -72,15 +72,15 @@ const PHOTOS: { [K in PhotoKind]: { label: string; description: string } } = {
 // "off" is worked out in `applyFlags`, so the display and its feeds need no flag code of their own.
 const FEATURES = {
   idleView: {
-    label: "Idle view",
+    label: "Idle View",
     description: "The screen saver showing a view of the household's choosing. Off, those screens show photos instead.",
   },
   smartNotices: {
-    label: "Smart notices",
+    label: "Smart Notices",
     description: "Blue notes that combine two integrations (sprinklers in frost, battery in an outage…). Off, none are made.",
   },
   regionalPacks: {
-    label: "Regional packs",
+    label: "Regional Packs",
     description:
       "Local alert and transit sources picked by region (NWS, USGS, Hydro-Québec, TTC, Calgary…). Off, every household reads the Lower Mainland sources and TransLink only.",
   },

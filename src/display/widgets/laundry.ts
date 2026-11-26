@@ -33,9 +33,9 @@ export const laundry: Mount<"laundry"> = (el, w, ctx) => {
       status = "Done";
       if (a.doneAt !== undefined) {
         const ago = mins(now - a.doneAt);
-        detail = ago < 1 ? "Just finished" : `Finished ${at.format(a.doneAt)} · ${span(ago)} ago`;
+        detail = ago < 1 ? "Just Finished" : `Finished ${at.format(a.doneAt)} · ${span(ago)} ago`;
       }
-    } else status = a.state === "error" ? "Needs attention" : a.state === "off" ? "Off" : "Idle";
+    } else status = a.state === "error" ? "Needs Attention" : a.state === "off" ? "Off" : "Idle";
     return h(
       "div",
       { class: `ld-m ld-${a.state}` },
@@ -71,7 +71,7 @@ export const laundry: Mount<"laundry"> = (el, w, ctx) => {
       root,
       label,
       h("div", { class: "ld-list" }, ...shown.map((a) => row(a, now))),
-      d.stale ? h("div", { class: "ld-old" }, "Last known status") : null,
+      d.stale ? h("div", { class: "ld-old" }, "Last Known Status") : null,
     );
   };
 

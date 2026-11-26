@@ -133,10 +133,10 @@ function SaveBar({ compact }: { compact?: boolean }) {
       {status.kind === "conflict" ? (
         <>
           <button className="btn-ghost" onClick={() => void clearConflict()}>
-            Keep editing
+            Keep Editing
           </button>
           <button className="btn-primary" onClick={() => void reload()}>
-            Load their changes
+            Load Their Changes
           </button>
         </>
       ) : (
@@ -144,16 +144,16 @@ function SaveBar({ compact }: { compact?: boolean }) {
           {showUpgradeCta && status.message ? <SaveNeedsUpgrade message={status.message} /> : null}
           {isPaid && !dirty && (
             <button type="button" className="btn-ghost" onClick={() => void refreshDisplays()}>
-              Refresh displays
+              Refresh Displays
             </button>
           )}
           {dirty && (
             <button className="btn-ghost" onClick={discard}>
-              Undo all
+              Undo All
             </button>
           )}
           <button className="btn-primary" disabled={!dirty || status.kind === "saving"} onClick={() => void save()}>
-            {status.kind === "saving" ? "Publishing…" : "Publish to wall"}
+            {status.kind === "saving" ? "Publishing…" : "Publish to Wall"}
           </button>
         </>
       )}
@@ -345,7 +345,7 @@ function AdminPanel({ email, staff }: { email: string; staff: boolean }) {
             </a>
           )}
           <button className={`px-3 py-2 text-sm text-soft hover:text-ink ${staff ? "" : "ml-auto"}`} onClick={() => void signOut()}>
-            Sign out
+            Sign Out
           </button>
         </nav>
       </header>
@@ -361,7 +361,7 @@ function AdminPanel({ email, staff }: { email: string; staff: boolean }) {
           ) : (
             <HouseholdFeaturePrompt
               reason="schedule"
-              title="Schedule through the day"
+              title="Schedule Through the Day"
               blurb="Morning, afternoon, evening and overnight views, with sunrise or sunset starts — on Household."
             />
           ))}
@@ -375,7 +375,7 @@ function AdminPanel({ email, staff }: { email: string; staff: boolean }) {
           ) : (
             <HouseholdFeaturePrompt
               reason="messages"
-              title="Family message board"
+              title="Family Message Board"
               blurb="Notes from phones show on the wall. Pin important ones — on Household."
             />
           ))}
@@ -388,7 +388,7 @@ function AdminPanel({ email, staff }: { email: string; staff: boolean }) {
           ) : (
             <HouseholdFeaturePrompt
               reason="meals"
-              title="Meal planning"
+              title="Meal Planning"
               blurb="Breakfast, lunch and dinner for the week, planned from a phone and shown in the kitchen — on Household."
             />
           ))}
@@ -401,7 +401,7 @@ function AdminPanel({ email, staff }: { email: string; staff: boolean }) {
           ) : (
             <HouseholdFeaturePrompt
               reason="shopping"
-              title="Shopping list"
+              title="Shopping List"
               blurb="Groceries from phones, ticked off on the wall — on Household."
             />
           ))}
@@ -409,7 +409,7 @@ function AdminPanel({ email, staff }: { email: string; staff: boolean }) {
           <div className="grid gap-4">
             <SettingsPanel />
             <button className="btn-ghost justify-self-start md:hidden" onClick={() => void signOut()}>
-              Sign out
+              Sign Out
             </button>
           </div>
         )}
