@@ -36,7 +36,7 @@ export const moon: Mount<"moon"> = (el, w, ctx) => {
   const draw = () => {
     const now = Date.now();
     const m = moonPhase(now);
-    const isFull = m.name === "Full moon";
+    const isFull = m.name === "Full Moon";
     const name = isFull && w.showName ? fullMoonName(m.phase < 0.5 ? m.nextFull : now, month) : "";
     fill(
       root,

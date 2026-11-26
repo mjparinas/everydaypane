@@ -65,7 +65,7 @@ const RELEASES: Post[] = [
   release(
     "0.1.0",
     "2026-11-17",
-    "What's new in Everydaypane 0.1.0",
+    "What's New in Everydaypane 0.1.0",
     "The first Everydaypane build: clocks, weather, Google Calendar, photos, Home Assistant, alerts and a phone admin.",
     [
       "Digital and analogue clocks for any time zone, with Vancouver and Toronto ready",
@@ -83,7 +83,7 @@ const RELEASES: Post[] = [
   release(
     "0.1.1",
     "2026-11-17",
-    "What's new in Everydaypane 0.1.1",
+    "What's New in Everydaypane 0.1.1",
     "Music on the wall through Home Assistant — Spotify and Sonos controls without leaving the kitchen.",
     [
       "Music widget: now playing, play/pause, skip, volume and sources",
@@ -96,7 +96,7 @@ const RELEASES: Post[] = [
   release(
     "0.1.2",
     "2026-11-17",
-    "What's new in Everydaypane 0.1.2",
+    "What's New in Everydaypane 0.1.2",
     "Meal planning from a phone, shown as breakfast, lunch and dinner on the wall.",
     [
       "Meals table with one row per day and meal",
@@ -109,7 +109,7 @@ const RELEASES: Post[] = [
   release(
     "0.2.0",
     "2026-11-19",
-    "What's new in Everydaypane 0.2.0",
+    "What's New in Everydaypane 0.2.0",
     "TransLink departures, commute times with traffic, BC Hydro outages and settings backup.",
     [
       "TransLink widget with live GTFS-realtime times from up to six stops",
@@ -124,7 +124,7 @@ const RELEASES: Post[] = [
   release(
     "0.3.0",
     "2026-11-21",
-    "What's new in Everydaypane 0.3.0",
+    "What's New in Everydaypane 0.3.0",
     "Rain radar, chore chart, kitchen timers, pomodoro, BC Ferries, earth wind map, sports scores and a screen saver.",
     [
       "Environment Canada radar over an Esri map, observed and forecast",
@@ -142,7 +142,7 @@ const RELEASES: Post[] = [
   release(
     "0.4.0",
     "2026-11-22",
-    "What's new in Everydaypane 0.4.0",
+    "What's New in Everydaypane 0.4.0",
     "Shopping list, school status, who's home, UV and pollen, live views editor and B.C. permanent daylight time handling.",
     [
       "Shopping list with tap-to-tick on the wall",
@@ -161,7 +161,7 @@ const RELEASES: Post[] = [
   release(
     "0.5.0",
     "2026-11-23",
-    "What's new in Everydaypane 0.5.0",
+    "What's New in Everydaypane 0.5.0",
     "Public homepage, pricing, comparisons, blog, privacy and terms — so families can discover Everydaypane.",
     [
       "Marketing homepage in the spirit of Tuned and Liftsmith",
@@ -180,7 +180,7 @@ const GUIDES: Post[] = [
   guide(
     "setup-wall-display",
     "2026-11-23",
-    "Set up Everydaypane on a wall display",
+    "Set Up Everydaypane on a Wall Display",
     "Hang Everydaypane on a kitchen touchscreen, tablet, Chromecast or Fire tablet: Free signup, display link, kiosk tips and the default 12×8 grid.",
     "Setup",
     [
@@ -244,18 +244,18 @@ const GUIDES: Post[] = [
   guide(
     "home-assistant-cloudflare-tunnel",
     "2026-11-18",
-    "Home Assistant through a free Cloudflare Tunnel",
+    "Home Assistant Through a Free Cloudflare Tunnel",
     "Reach Home Assistant at a public hostname with Cloudflare Access service tokens — no Nabu Casa required.",
     "Setup",
     [
       {
         p: "Displays never talk to Home Assistant directly. The Everydaypane server calls HA's REST API through a **Cloudflare Tunnel** locked with Access service auth.",
       },
-      { h2: "Why this shape" },
+      { h2: "Why This Shape" },
       {
         p: "Nabu Casa works, but Melvin chose the free Cloudflared add-on so the kitchen dashboard is not another monthly bill. The tunnel hostname (for example `ha.getliftsmith.com`) only accepts requests with our Access client id and secret.",
       },
-      { h2: "What the wall can do" },
+      { h2: "What the Wall Can Do" },
       {
         ul: [
           "Toggle, light, sensor, climate, cover, lock (lock only), button",
@@ -272,7 +272,7 @@ const GUIDES: Post[] = [
   guide(
     "translink-departures-on-the-wall",
     "2026-11-19",
-    "TransLink departures on the kitchen wall",
+    "TransLink Departures on the Kitchen Wall",
     "Pick up to six stops, filter routes, and show live times from GTFS-realtime without a heavy protobuf library.",
     "Transit",
     [
@@ -296,7 +296,7 @@ const GUIDES: Post[] = [
   guide(
     "commute-times-with-tomtom",
     "2026-11-19",
-    "Commute times with live traffic",
+    "Commute Times with Live Traffic",
     "Why TomTom, how places are geocoded once, and how leave-by times work on the wall.",
     "Transit",
     [
@@ -317,7 +317,7 @@ const GUIDES: Post[] = [
   guide(
     "rain-radar-environment-canada",
     "2026-11-21",
-    "Rain radar from Environment Canada",
+    "Rain Radar from Environment Canada",
     "MSC GeoMet 1 km radar, forecast extrapolation and an Esri grey canvas basemap — no RainViewer key required.",
     "Weather",
     [
@@ -333,7 +333,7 @@ const GUIDES: Post[] = [
   guide(
     "chore-chart-for-kids",
     "2026-11-21",
-    "A chore chart kids will actually use",
+    "A Chore Chart Kids Will Actually Use",
     "Recurring chores, fair rotation, stars and weekly goals — separate from Google Tasks on purpose.",
     "Family",
     [
@@ -353,7 +353,7 @@ const GUIDES: Post[] = [
   guide(
     "shopping-list-and-meals",
     "2026-11-22",
-    "Shopping list and meal planning from phones",
+    "Shopping List and Meal Planning from Phones",
     "How /family/ and the admin Meals and Shopping tabs keep the wall fed without a settings Save.",
     "Family",
     [
@@ -373,7 +373,7 @@ const GUIDES: Post[] = [
   guide(
     "emergency-alerts-for-bc",
     "2026-11-17",
-    "Emergency alerts for Langley and BC",
+    "Emergency Alerts for Langley and BC",
     "Alert Ready, Environment Canada, DriveBC, Earthquakes Canada and BC Hydro on one dismissible red strip.",
     "Safety",
     [
@@ -395,7 +395,7 @@ const GUIDES: Post[] = [
   guide(
     "photos-amazon-google-library",
     "2026-11-17",
-    "Family photos without a public album URL",
+    "Family Photos Without a Public Album URL",
     "Amazon shared albums and people search, Google Photos Picker copies into a private Vercel Blob library, and proxied images at cell size.",
     "Photos",
     [
@@ -411,7 +411,7 @@ const GUIDES: Post[] = [
   guide(
     "screen-saver-and-burn-in",
     "2026-11-21",
-    "Screen saver, dimming and burn-in protection",
+    "Screen Saver, Dimming and Burn-In Protection",
     "Idle photos or dark, night window, motion wake, pixel shift — and why a browser cannot switch a panel's backlight off.",
     "Display",
     [
@@ -431,7 +431,7 @@ const GUIDES: Post[] = [
   guide(
     "bc-ferries-on-everydaypane",
     "2026-11-21",
-    "BC Ferries sailings on Everydaypane",
+    "BC Ferries Sailings on Everydaypane",
     "Next sailings, percent full, cancellations and delays from the community BC Ferries API.",
     "Transit",
     [
@@ -447,7 +447,7 @@ const GUIDES: Post[] = [
   guide(
     "sports-scores-espn",
     "2026-11-21",
-    "Live sports scores without team logos",
+    "Live Sports Scores Without Team Logos",
     "Follow NHL, NBA, WNBA, NFL, MLB, MLS and football clubs via ESPN's public site API — colour dots keep the display light.",
     "Sports",
     [
@@ -460,7 +460,7 @@ const GUIDES: Post[] = [
   guide(
     "kitchen-timers-and-pomodoro",
     "2026-11-21",
-    "Kitchen timers and a separate pomodoro",
+    "Kitchen Timers and a Separate Pomodoro",
     "Local-only timers with full-screen alerts and Web Audio beeps; pomodoro chimes between focus and break.",
     "Timers",
     [
@@ -473,7 +473,7 @@ const GUIDES: Post[] = [
   guide(
     "offline-mode-service-worker",
     "2026-11-17",
-    "Offline mode on the wall",
+    "Offline Mode on the Wall",
     "How the service worker serves the last good data and shows Offline without turning the kitchen blank.",
     "Display",
     [
@@ -611,10 +611,10 @@ const COMPARES: Post[] = [
   compare(
     "best-family-dashboard-2026",
     "2026-11-23",
-    "Best family wall dashboard in 2026",
+    "Best Family Wall Dashboard in 2026",
     "How to choose between Everydaypane, DAKboard, Home Screens, Skylight, MagicMirror, Echo Show, Hearth and Cozyla for a kitchen wall.",
     [
-      { h2: "Start with the job" },
+      { h2: "Start with the Job" },
       {
         ul: [
           "**Appliance, zero config:** Skylight Calendar 2.",
@@ -625,7 +625,7 @@ const COMPARES: Post[] = [
           "**Smart home + BC transit + bring your own screen:** Everydaypane.",
         ],
       },
-      { h2: "Three-year cost thinking" },
+      { h2: "Three-Year Cost Thinking" },
       {
         p: "A $300–$800 panel plus $70–$90/year adds up. Everydaypane Household at $59/year on a display you own is usually the lowest cost for the widest kitchen feature set — especially if Home Assistant is already humming.",
       },
@@ -647,7 +647,7 @@ const MORE_GUIDES: Post[] = [
       {
         p: "A wall dashboard earns its spot when someone is reading it: the morning rush, packing lunches, checking the bus. The rest of the day the kitchen is quiet, and a schedule nobody is looking at is just a bright rectangle. The **screen saver** turns that time into a photo frame. After a few minutes with no touch the wall shows a view you designed, and one tap brings the dashboard straight back.",
       },
-      { h2: "What it does" },
+      { h2: "What It Does" },
       {
         ul: [
           "After the minutes you choose without a touch (anywhere from 1 to 240), the wall shows your idle view. It can also show photos full screen, or simply go dark.",
@@ -657,11 +657,11 @@ const MORE_GUIDES: Post[] = [
           "Night still wins. If **Go dark at night** is on, the screen is black between the hours you pick instead of showing photos to an empty room.",
         ],
       },
-      { h2: "What wakes it" },
+      { h2: "What Wakes It" },
       {
         p: "A touch, a Home Assistant motion sensor near the screen (up to five), the doorbell, a new emergency alert, or a kitchen timer going off. The alert strip and the doorbell pop-up are drawn above the screen saver, so nothing urgent hides behind a photo.",
       },
-      { h2: "Set it up" },
+      { h2: "Set It Up" },
       {
         ol: [
           "In the household panel, open **Views** and add a view. Pick the **Photo frame** starter template: photos fill the screen with a small clock and date in the corner. Change anything you like; other widgets can sit on top of the photos with a readable panel.",
@@ -671,7 +671,7 @@ const MORE_GUIDES: Post[] = [
           "Tap **Publish to wall**. Every display picks up the change on its next settings check.",
         ],
       },
-      { h2: "Good to know" },
+      { h2: "Good to Know" },
       {
         ul: [
           "There is one idle view per household, shared by every display.",
@@ -690,14 +690,14 @@ const MORE_GUIDES: Post[] = [
   guide(
     "kitchen-wall-dashboard-free",
     "2026-11-23",
-    "A free kitchen wall dashboard (without buying a panel)",
+    "A Free Kitchen Wall Dashboard (Without Buying a Panel)",
     "What Free includes on Everydaypane: two displays, calendars, weather and photos — and when Household is worth it.",
     "Guides",
     [
       {
         p: "Looking for a **family wall dashboard** or **kitchen display** without a $300–$800 appliance? Everydaypane is software: open a browser on a tablet, TV or wall panel you already own.",
       },
-      { h2: "What Free includes" },
+      { h2: "What Free Includes" },
       {
         ul: [
           "Two wall displays and one view",
@@ -711,7 +711,7 @@ const MORE_GUIDES: Post[] = [
       {
         p: "[Start free](/signin/?intent=signup) with an email and we create your household. Then open **Displays**, add a screen and copy the wall address onto the panel.",
       },
-      { h2: "When to upgrade to Household" },
+      { h2: "When to Upgrade to Household" },
       {
         p: "Household ($7/mo or $59/yr) unlocks chores, meals, shopping, TransLink, commute, BC Ferries, Home Assistant, timers, more views and displays, and the rest of the widget catalogue. Compare Free vs Household on [pricing](/pricing/), or see [Everydaypane vs DAKboard](/compare/dakboard/).",
       },
@@ -724,7 +724,7 @@ const MORE_GUIDES: Post[] = [
   guide(
     "ical-calendar-links",
     "2026-11-17",
-    "Add school and sports calendars with iCal links",
+    "Add School and Sports Calendars with iCal Links",
     "Secret calendar addresses stay encrypted; failures never hide Google's events.",
     "Setup",
     [
@@ -740,7 +740,7 @@ const MORE_GUIDES: Post[] = [
   guide(
     "month-calendar-weeks-and-weekends",
     "2026-11-21",
-    "Show 1 to 6 weeks and hide weekends",
+    "Show 1 to 6 Weeks and Hide Weekends",
     "Rolling week views, Sunday or Monday start, fit titles and scroll after N week rows.",
     "Calendar",
     [
@@ -753,7 +753,7 @@ const MORE_GUIDES: Post[] = [
   guide(
     "widgets-on-top-of-photos",
     "2026-11-21",
-    "Layer widgets on top of the photos backdrop",
+    "Layer Widgets on Top of the Photos Backdrop",
     "Photos sit behind everything else; on-photo panels stay at least 55% opaque and clocks turn white with a soft shadow.",
     "Display",
     [
@@ -766,7 +766,7 @@ const MORE_GUIDES: Post[] = [
   guide(
     "per-widget-backgrounds",
     "2026-11-22",
-    "Turn each tile's background on or off",
+    "Turn Each Tile's Background on or Off",
     "Clocks and dates start without a panel; opacity falls back to the theme when unset.",
     "Display",
     [
@@ -779,7 +779,7 @@ const MORE_GUIDES: Post[] = [
   guide(
     "live-views-editor",
     "2026-11-22",
-    "Edit the real layout live from your phone",
+    "Edit the Real Layout Live from Your Phone",
     "The Views tab embeds the display under a drag overlay and patches draft widgets in place over postMessage.",
     "Admin",
     [
@@ -805,7 +805,7 @@ const MORE_GUIDES: Post[] = [
   guide(
     "school-status-langley-sd35",
     "2026-11-22",
-    "School open, closed or delayed on the wall",
+    "School Open, Closed or Delayed on the Wall",
     "How Everydaypane reads the district status page (Langley SD35 by default) without following private addresses.",
     "Family",
     [
@@ -818,7 +818,7 @@ const MORE_GUIDES: Post[] = [
   guide(
     "spotify-and-sonos-without-ha",
     "2026-11-18",
-    "Spotify and Sonos beside Home Assistant",
+    "Spotify and Sonos Beside Home Assistant",
     "Music widgets can use HA, Spotify Premium or a Sonos speaker — one feed shape on the wall.",
     "Music",
     [
@@ -831,7 +831,7 @@ const MORE_GUIDES: Post[] = [
   guide(
     "garbage-day-langley",
     "2026-11-17",
-    "Township of Langley garbage on the wall",
+    "Township of Langley Garbage on the Wall",
     "Recycle Coach project 521, district LANGL — look up your zone from the address or pick Monday A / Thursday B by hand.",
     "Family",
     [
@@ -844,7 +844,7 @@ const MORE_GUIDES: Post[] = [
   guide(
     "settings-backup-and-restore",
     "2026-11-21",
-    "Back up and restore your settings",
+    "Back Up and Restore Your Settings",
     "Download the settings document as JSON; secrets, meals and photos stay out unless you opt WiFi passwords in.",
     "Admin",
     [
@@ -860,7 +860,7 @@ const STORIES: Post[] = [
   story(
     "why-a-kitchen-wall-dashboard",
     "2026-11-17",
-    "Why put a dashboard on the kitchen wall?",
+    "Why Put a Dashboard on the Kitchen Wall?",
     "Phones fragment the family calendar. A shared pane by the kettle answers the questions everyone asks out loud.",
     [
       {
@@ -878,7 +878,7 @@ const STORIES: Post[] = [
   story(
     "canadian-english-on-purpose",
     "2026-11-22",
-    "Canadian English on purpose",
+    "Canadian English on Purpose",
     "Colour, centre, favourite — Everydaypane is written the way Canadian readers expect.",
     [
       {
@@ -890,7 +890,7 @@ const STORIES: Post[] = [
   story(
     "lightweight-display-budget",
     "2026-11-17",
-    "Why the display stays under 40 KB",
+    "Why the Display Stays Under 40 KB",
     "The wall is not a React app. Server-rendered HTML plus one esbuild bundle keeps low-power screens snappy.",
     [
       {
@@ -909,7 +909,7 @@ const STORIES: Post[] = [
   story(
     "privacy-without-tracking",
     "2026-11-17",
-    "Privacy without tracking cookies",
+    "Privacy Without Tracking Cookies",
     "No ads, no analytics cookies, scrubbed error reports and encrypted secrets.",
     [
       {
@@ -922,7 +922,7 @@ const STORIES: Post[] = [
   story(
     "family-emails-vs-admin",
     "2026-11-22",
-    "Family emails vs admin",
+    "Family Emails vs Admin",
     "Partners and kids on FAMILY_EMAILS can plan meals and shopping without getting Home Assistant controls.",
     [
       {

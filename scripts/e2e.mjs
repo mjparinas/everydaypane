@@ -64,7 +64,7 @@ export async function signIn(page, email) {
     page.waitForResponse(
       (r) => r.url() === `${BASE}/household/` && r.request().isNavigationRequest() && r.request().frame() === page.mainFrame(),
     ),
-    page.getByRole("button", { name: "Sign in", exact: true }).click(),
+    page.getByRole("button", { name: "Sign In", exact: true }).click(),
   ]);
   expect(response.ok(), `household after sign-in: ${response.status()}`);
 }

@@ -24,7 +24,7 @@ export const AURORA_CHANCE_LABELS: Record<AuroraChance, string> = {
   good: "Good chance: look north",
   possible: "Possible, low in the northern sky",
   slim: "Slim: a phone camera might catch it",
-  unlikely: "Unlikely tonight",
+  unlikely: "Unlikely Tonight",
 };
 
 /** Kp needed for each chance at a magnetic latitude (|lat|, so the southern lights work the same way). */

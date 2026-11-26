@@ -71,10 +71,10 @@ function optionsFor(date: string): { value: CadenceKey; label: string }[] {
   const wd = mealWeekday(date);
   const day = MEAL_WEEKDAYS[wd] ?? "day";
   return [
-    { value: "once", label: "Just this day" },
-    { value: "interval:1", label: "Every day" },
-    { value: "interval:2", label: "Every 2 days" },
-    { value: "interval:3", label: "Every 3 days" },
+    { value: "once", label: "Just This Day" },
+    { value: "interval:1", label: "Every Day" },
+    { value: "interval:2", label: "Every 2 Days" },
+    { value: "interval:3", label: "Every 3 Days" },
     { value: `weekdays:${wd}`, label: `Every ${day}` },
     { value: "weekdays:1,2,3,4,5", label: "Weekdays (Mon–Fri)" },
     { value: "weekdays:0,6", label: "Weekends" },
@@ -246,7 +246,7 @@ export function MealPlanner() {
         </button>
         {plan.from !== plan.today ? (
           <button type="button" className="btn-ghost" onClick={() => void load(null)}>
-            Back to today
+            Back to Today
           </button>
         ) : (
           <p className="text-sm text-soft">Saves as you go · set a repeat to fill future days</p>
@@ -344,7 +344,7 @@ export function MealPlanner() {
                               className="btn-ghost px-1.5 py-0.5 text-xs"
                               onClick={() => void updateSeries(date, slot, value)}
                             >
-                              Update series
+                              Update Series
                             </button>
                           ) : null}
                           <button type="button" className="btn-ghost px-1.5 py-0.5 text-xs" onClick={() => void stopRule(date, slot)}>

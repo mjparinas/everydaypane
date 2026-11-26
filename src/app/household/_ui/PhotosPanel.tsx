@@ -29,19 +29,19 @@ async function fetchAmazon(): Promise<AmazonStatus> {
 }
 
 const KINDS = [
-  { value: "library", label: "Upload, or pick from Google Photos" },
-  { value: "amazonShare", label: "Amazon shared album (a link)" },
-  { value: "amazonPeople", label: "Amazon photos of people" },
-  { value: "urls", label: "A list of photo addresses" },
-  { value: "bingPotd", label: "Bing picture of the day" },
-  { value: "reddit", label: "Reddit subreddit" },
-  { value: "weatherAlbums", label: "Weather-based albums" },
+  { value: "library", label: "Upload, or Pick from Google Photos" },
+  { value: "amazonShare", label: "Amazon Shared Album (a Link)" },
+  { value: "amazonPeople", label: "Amazon Photos of People" },
+  { value: "urls", label: "A List of Photo Addresses" },
+  { value: "bingPotd", label: "Bing Picture of the Day" },
+  { value: "reddit", label: "Reddit Subreddit" },
+  { value: "weatherAlbums", label: "Weather-Based Albums" },
   { value: "immich", label: "Immich" },
-  { value: "dropbox", label: "Dropbox folder" },
-  { value: "onedrive", label: "OneDrive folder" },
-  { value: "box", label: "Box folder" },
+  { value: "dropbox", label: "Dropbox Folder" },
+  { value: "onedrive", label: "OneDrive Folder" },
+  { value: "box", label: "Box Folder" },
   { value: "flickr", label: "Flickr" },
-  { value: "smugmug", label: "SmugMug album" },
+  { value: "smugmug", label: "SmugMug Album" },
   { value: "icloudPublished", label: "iCloud published album links" },
 ] as const;
 
@@ -198,7 +198,7 @@ export function PhotosPanel() {
           {s.kind === "library" && (
             <>
               <Toggle
-                label="Family can add photos from their phones"
+                label="Family Can Add Photos from Their Phones"
                 checked={s.familyUploads}
                 onChange={(on) => editSource(s.id, (x) => void (x.kind === "library" && (x.familyUploads = on)))}
               />
@@ -242,7 +242,7 @@ export function PhotosPanel() {
         <Text label="Name" value={name} maxLength={60} placeholder="Family album" onChange={setName} />
         {kind === "amazonShare" && (
           <Text
-            label="Share link"
+            label="Share Link"
             value={link}
             maxLength={300}
             placeholder="https://www.amazon.ca/photos/share/…"
@@ -250,11 +250,11 @@ export function PhotosPanel() {
             onChange={setLink}
           />
         )}
-        {kind === "urls" && <TextArea label="Photo addresses, one per line" value={urls} maxLength={60_000} onChange={setUrls} />}
+        {kind === "urls" && <TextArea label="Photo Addresses, One per Line" value={urls} maxLength={60_000} onChange={setUrls} />}
         {kind === "reddit" && <Text label="Subreddit" value={subreddit} maxLength={60} placeholder="earthporn" onChange={setSubreddit} />}
         {kind === "immich" && (
           <Text
-            label="Immich server"
+            label="Immich Server"
             value={immichUrl}
             maxLength={300}
             placeholder="https://photos.example.com"
@@ -264,7 +264,7 @@ export function PhotosPanel() {
         )}
         {kind === "dropbox" && (
           <>
-            <Text label="Folder path" value={dropboxPath} maxLength={500} placeholder="/Photos" onChange={setDropboxPath} />
+            <Text label="Folder Path" value={dropboxPath} maxLength={500} placeholder="/Photos" onChange={setDropboxPath} />
             <a className="text-sm text-brand underline-offset-2 hover:underline" href="/api/photos/dropbox/connect/">
               Connect Dropbox
             </a>
@@ -272,7 +272,7 @@ export function PhotosPanel() {
         )}
         {kind === "onedrive" && (
           <a className="text-sm text-brand underline-offset-2 hover:underline" href="/api/microsoft/connect/?files=1">
-            Connect Microsoft 365 for OneDrive photos
+            Connect Microsoft 365 for OneDrive Photos
           </a>
         )}
         {kind === "box" && (
@@ -282,7 +282,7 @@ export function PhotosPanel() {
         )}
         {kind === "smugmug" && (
           <>
-            <Text label="Album key" value={albumKey} maxLength={80} onChange={setAlbumKey} />
+            <Text label="Album Key" value={albumKey} maxLength={80} onChange={setAlbumKey} />
             <a className="text-sm text-brand underline-offset-2 hover:underline" href="/api/photos/smugmug/connect/">
               Connect SmugMug
             </a>
@@ -290,7 +290,7 @@ export function PhotosPanel() {
         )}
         {kind === "icloudPublished" && (
           <>
-            <TextArea label="Published album links, one per line" value={urls} maxLength={60_000} onChange={setUrls} />
+            <TextArea label="Published Album Links, One per Line" value={urls} maxLength={60_000} onChange={setUrls} />
             <p className="text-xs text-soft">
               See{" "}
               <a className="text-brand underline-offset-2 hover:underline" href="/docs/icloud-photos.md">
@@ -305,17 +305,17 @@ export function PhotosPanel() {
         )}
         {error && <p className="text-sm text-bad">{error}</p>}
         <button type="button" className="btn-primary justify-self-start" onClick={addSource}>
-          Add photos
+          Add Photos
         </button>
       </div>
 
       {needsAmazon && (
         <div className="grid gap-3 border-t border-line pt-4">
-          <h3 className="font-semibold">Amazon sign-in (for photos of people)</h3>
+          <h3 className="font-semibold">Amazon Sign-In (for Photos of People)</h3>
           {amazon?.connected ? (
             <div className="flex flex-wrap items-center gap-2">
               <p className="text-sm text-soft">Signed in to amazon.{amazon.tld ?? "ca"}.</p>
-              <ConfirmButton label="Sign out" onConfirm={() => void saveCookie(null)} />
+              <ConfirmButton label="Sign Out" onConfirm={() => void saveCookie(null)} />
             </div>
           ) : (
             <>
@@ -325,7 +325,7 @@ export function PhotosPanel() {
                 header here. It&rsquo;s stored encrypted and lasts until you sign out of Amazon.
               </p>
               <Select
-                label="Amazon site"
+                label="Amazon Site"
                 value={tld}
                 options={[
                   { value: "ca", label: "amazon.ca" },
@@ -333,14 +333,14 @@ export function PhotosPanel() {
                 ]}
                 onChange={(v) => setTld(v)}
               />
-              <TextArea label="Cookie header" value={cookie} maxLength={8000} onChange={setCookie} />
+              <TextArea label="Cookie Header" value={cookie} maxLength={8000} onChange={setCookie} />
               <button
                 type="button"
                 className="btn-primary justify-self-start"
                 disabled={!cookie.trim()}
                 onClick={() => void saveCookie(cookie)}
               >
-                Save Amazon sign-in
+                Save Amazon Sign-In
               </button>
             </>
           )}

@@ -73,7 +73,7 @@ function ServiceBlock({
       ) : (
         <div className="flex flex-wrap gap-2">
           <a className="btn-ghost" href={`/api/smart-home/${provider}/connect/`}>
-            Use another account
+            Use Another Account
           </a>
           <ConfirmButton label="Disconnect" onConfirm={onDisconnect} />
         </div>
@@ -127,7 +127,7 @@ function GoveeBlock({ status, onChanged }: { status: SmartServiceStatus | undefi
         </p>
       )}
       <Text
-        label={status?.connected ? "Replace API key" : "Govee API key"}
+        label={status?.connected ? "Replace API Key" : "Govee API Key"}
         type="password"
         value={key}
         maxLength={80}
@@ -136,9 +136,9 @@ function GoveeBlock({ status, onChanged }: { status: SmartServiceStatus | undefi
       />
       <div className="flex flex-wrap gap-2">
         <button type="button" className="btn-primary" disabled={busy || key.trim().length < 8} onClick={() => void save()}>
-          {busy ? "Checking…" : "Save key"}
+          {busy ? "Checking…" : "Save Key"}
         </button>
-        {status?.connected && <ConfirmButton label="Remove key" onConfirm={() => void remove()} />}
+        {status?.connected && <ConfirmButton label="Remove Key" onConfirm={() => void remove()} />}
       </div>
     </div>
   );
@@ -189,7 +189,7 @@ function LifxBlock({ status, onChanged }: { status: SmartServiceStatus | undefin
         </p>
       )}
       <Text
-        label={status?.connected ? "Replace token" : "LIFX token"}
+        label={status?.connected ? "Replace Token" : "LIFX Token"}
         type="password"
         value={token}
         maxLength={120}
@@ -198,9 +198,9 @@ function LifxBlock({ status, onChanged }: { status: SmartServiceStatus | undefin
       />
       <div className="flex flex-wrap gap-2">
         <button type="button" className="btn-primary" disabled={busy || token.trim().length < 16} onClick={() => void save()}>
-          {busy ? "Checking…" : "Save token"}
+          {busy ? "Checking…" : "Save Token"}
         </button>
-        {status?.connected && <ConfirmButton label="Remove token" onConfirm={() => void remove()} />}
+        {status?.connected && <ConfirmButton label="Remove Token" onConfirm={() => void remove()} />}
       </div>
     </div>
   );
@@ -238,7 +238,7 @@ export function SmartHomePanel() {
 
   return (
     <>
-      <Section id="settings-smart-home" title="Smart home (direct)">
+      <Section id="settings-smart-home" title="Smart Home (Direct)">
         <p className="text-sm text-soft">
           Control Nest, ecobee, SmartThings, and Govee, Philips Hue and LIFX lights on the wall without Home Assistant. Home Assistant tiles
           keep working; each tile picks where its device comes from. Google Nest needs a paid Device Access subscription — see docs/nest.md.
@@ -296,10 +296,10 @@ export function SmartHomePanel() {
         </Flagged>
       </Section>
 
-      <Section id="settings-weather-stations" title="Weather stations">
+      <Section id="settings-weather-stations" title="Weather Stations">
         <p className="text-sm text-soft">Tempest and Weather Underground need Household. Open-Meteo weather is unchanged on Free.</p>
         <NumberInput
-          label="Tempest station id"
+          label="Tempest Station ID"
           value={smart.tempest.stationId ?? 0}
           min={0}
           max={999_999}
@@ -307,7 +307,7 @@ export function SmartHomePanel() {
           onChange={(v) => edit((c) => void (c.integrations.smartHome.tempest.stationId = v > 0 ? v : undefined))}
         />
         <Text
-          label="Tempest API token"
+          label="Tempest API Token"
           type="password"
           value={tempestToken}
           maxLength={80}
@@ -320,17 +320,17 @@ export function SmartHomePanel() {
           disabled={!tempestToken.trim()}
           onClick={() => void saveSecret({ tempestToken: tempestToken.trim() })}
         >
-          Save Tempest token
+          Save Tempest Token
         </button>
         <Text
-          label="Weather Underground station id"
+          label="Weather Underground Station ID"
           value={smart.weatherUnderground.stationId}
           maxLength={24}
           placeholder="ICALANG13"
           onChange={(v) => edit((c) => void (c.integrations.smartHome.weatherUnderground.stationId = v.trim().toUpperCase()))}
         />
         <Text
-          label="WU API key (optional)"
+          label="WU API Key (Optional)"
           type="password"
           value={wuKey}
           maxLength={80}
@@ -343,7 +343,7 @@ export function SmartHomePanel() {
           disabled={!wuKey.trim()}
           onClick={() => void saveSecret({ wuApiKey: wuKey.trim() })}
         >
-          Save WU key
+          Save WU Key
         </button>
       </Section>
 
@@ -355,20 +355,20 @@ export function SmartHomePanel() {
 
       <LaundrySection />
 
-      <Section id="settings-menus" title="School menus">
+      <Section id="settings-menus" title="School Menus">
         <p className="text-sm text-soft">
           Nutrislice district slug and default school name. Example for Langley: slug <code className="text-xs">langleysd35</code>, school
           slug from the district&rsquo;s Nutrislice site. Menus never copy into the meal plan.
         </p>
         <Text
-          label="District slug"
+          label="District Slug"
           value={smart.menus.slug}
           maxLength={80}
           placeholder="langleysd35"
           onChange={(v) => edit((c) => void (c.integrations.smartHome.menus.slug = v.trim()))}
         />
         <Text
-          label="Default school slug"
+          label="Default School Slug"
           value={smart.menus.schoolName}
           maxLength={80}
           onChange={(v) => edit((c) => void (c.integrations.smartHome.menus.schoolName = v.trim()))}
@@ -405,7 +405,7 @@ function IndoorAirSection() {
   }
 
   return (
-    <Section id="settings-indoor-air" title="Indoor air (Airthings)">
+    <Section id="settings-indoor-air" title="Indoor Air (Airthings)">
       <p className="text-sm text-soft">
         Radon, CO₂, VOC, particles, humidity and temperature from your Airthings monitors. Make an API client at dashboard.airthings.com ›
         Integrations › API (read-only is enough) and paste it here; it is checked with Airthings and saved encrypted. A Wave only reaches
@@ -430,8 +430,8 @@ function IndoorAirSection() {
           </div>
         </>
       ) : null}
-      <Text label="Client id" value={clientId} maxLength={100} onChange={setClientId} />
-      <Text label="Client secret" type="password" value={secret} maxLength={200} onChange={setSecret} />
+      <Text label="Client ID" value={clientId} maxLength={100} onChange={setClientId} />
+      <Text label="Client Secret" type="password" value={secret} maxLength={200} onChange={setSecret} />
       {error && <p className="text-sm text-bad">{error}</p>}
       <button
         type="button"
@@ -439,22 +439,22 @@ function IndoorAirSection() {
         disabled={busy || !clientId.trim() || !secret.trim()}
         onClick={() => void send("PUT")}
       >
-        {busy ? "Checking…" : status?.configured ? "Replace API client" : "Connect Airthings"}
+        {busy ? "Checking…" : status?.configured ? "Replace API Client" : "Connect Airthings"}
       </button>
       <Toggle
-        label="High radon on the alert strip"
+        label="High Radon on the Alert Strip"
         checked={air.alertRadon}
         hint="When a device reads 150 Bq/m³ (4 pCi/L) or more, Airthings' red level."
         onChange={(v) => edit((c) => void (c.integrations.smartHome.airthings.alertRadon = v))}
       />
       <Toggle
-        label="High CO₂ on the alert strip"
+        label="High CO₂ on the Alert Strip"
         checked={air.alertCo2}
         onChange={(v) => edit((c) => void (c.integrations.smartHome.airthings.alertCo2 = v))}
       />
       {air.alertCo2 && (
         <NumberInput
-          label="CO₂ alert from (ppm)"
+          label="CO₂ Alert from (Ppm)"
           value={air.co2Ppm}
           min={800}
           max={5000}
@@ -518,8 +518,8 @@ function PoolSection() {
           </div>
         </>
       ) : null}
-      <Text label="Blue Riiot email" value={email} maxLength={200} onChange={setEmail} />
-      <Text label="Blue Riiot password" type="password" value={password} maxLength={200} onChange={setPassword} />
+      <Text label="Blue Riiot Email" value={email} maxLength={200} onChange={setEmail} />
+      <Text label="Blue Riiot Password" type="password" value={password} maxLength={200} onChange={setPassword} />
       {error && <p className="text-sm text-bad">{error}</p>}
       <button
         type="button"
@@ -527,10 +527,10 @@ function PoolSection() {
         disabled={busy || !email.trim() || !password}
         onClick={() => void send("PUT")}
       >
-        {busy ? "Checking…" : status?.configured ? "Replace sign-in" : "Connect Blue Riiot"}
+        {busy ? "Checking…" : status?.configured ? "Replace Sign-In" : "Connect Blue Riiot"}
       </button>
       <Toggle
-        label="Pool water out of range on the alert strip"
+        label="Pool Water Out of Range on the Alert Strip"
         checked={pool.alerts}
         hint="pH, ORP, free chlorine or salinity past Blue Riiot's warning range, from a reading in the last six hours."
         onChange={(v) => edit((c) => void (c.integrations.smartHome.blueRiiot.alerts = v))}

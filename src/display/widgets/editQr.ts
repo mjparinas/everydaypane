@@ -16,7 +16,7 @@ export const editQr: Mount<"editQr"> = (el, w) => {
       h(
         "div",
         { class: "wifi-text" },
-        h("div", { class: "w-label" }, w.title || "Edit on your phone"),
+        h("div", { class: "w-label" }, w.title || "Edit on Your Phone"),
         h("div", { class: "w-sub" }, "Meals · shopping · messages"),
       ),
     ),

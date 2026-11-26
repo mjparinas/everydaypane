@@ -6,18 +6,18 @@ import type { Mount } from "./types";
 
 // Canada's AQHI bands (Health Canada) and the US EPA's AQI bands.
 export function aqhiBand(v: number): { name: string; level: number } {
-  if (v <= 3) return { name: "Low risk", level: 1 };
-  if (v <= 6) return { name: "Moderate risk", level: 2 };
-  if (v <= 10) return { name: "High risk", level: 3 };
-  return { name: "Very high risk", level: 4 };
+  if (v <= 3) return { name: "Low Risk", level: 1 };
+  if (v <= 6) return { name: "Moderate Risk", level: 2 };
+  if (v <= 10) return { name: "High Risk", level: 3 };
+  return { name: "Very High Risk", level: 4 };
 }
 
 export function usAqiBand(v: number): { name: string; level: number } {
   if (v <= 50) return { name: "Good", level: 1 };
   if (v <= 100) return { name: "Moderate", level: 2 };
-  if (v <= 150) return { name: "Unhealthy for some", level: 3 };
+  if (v <= 150) return { name: "Unhealthy for Some", level: 3 };
   if (v <= 200) return { name: "Unhealthy", level: 4 };
-  return { name: "Very unhealthy", level: 5 };
+  return { name: "Very Unhealthy", level: 5 };
 }
 
 export const airQuality: Mount<"airQuality"> = (el, w) => {

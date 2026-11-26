@@ -17,7 +17,7 @@ export default function FeaturesPage() {
   return (
     <SitePage wide>
       <Eyebrow>Features</Eyebrow>
-      <h1 className="mt-3 font-display text-4xl font-extrabold tracking-tight sm:text-5xl">Everything on the pane</h1>
+      <h1 className="mt-3 font-display text-4xl font-extrabold tracking-tight sm:text-5xl">Everything on the Pane</h1>
       <p className="mt-4 max-w-2xl text-lg text-soft">
         Free includes the essentials on two displays (one view).{" "}
         <Link href="/pricing/" className="font-semibold text-brand hover:underline">
@@ -51,7 +51,7 @@ export default function FeaturesPage() {
           </section>
         ))}
         <section>
-          <h2 className="font-display text-2xl font-extrabold tracking-tight">Display behaviour</h2>
+          <h2 className="font-display text-2xl font-extrabold tracking-tight">Display Behaviour</h2>
           <ul className="mt-4 grid gap-3 sm:grid-cols-2">
             {FEATURE_BEHAVIOURS.map((item) => (
               <li key={item.name} className="card">
@@ -65,7 +65,7 @@ export default function FeaturesPage() {
       <div className="mt-14">
         <CtaBanner
           cta="features-end"
-          title="Build your first view"
+          title="Build Your First View"
           body="Drag widgets onto a 12×8 grid from your phone in a few minutes."
         />
       </div>

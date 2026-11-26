@@ -117,7 +117,7 @@ export function BackupPanel() {
         addresses, meals, messages and library photos stay on the server and aren&apos;t in it.
       </p>
       <Toggle
-        label="Include WiFi passwords"
+        label="Include WiFi Passwords"
         checked={wifi}
         onChange={setWifi}
         hint={
@@ -129,10 +129,10 @@ export function BackupPanel() {
       {dirty && <p className="text-xs text-bad">You have unsaved changes. The backup has the last saved settings, so save first.</p>}
       <div className="flex flex-wrap gap-2">
         <a className="btn-primary" href={`/api/household/backup/${wifi ? "?wifi=1" : ""}`} download>
-          Download backup
+          Download Backup
         </a>
         <label className={`btn-ghost cursor-pointer ${busy ? "pointer-events-none opacity-50" : ""}`}>
-          Restore from a file
+          Restore from a File
           <input
             type="file"
             accept="application/json,.json"
@@ -154,7 +154,7 @@ export function BackupPanel() {
           </p>
           <div className="flex flex-wrap gap-2">
             <button type="button" className="btn-primary" disabled={busy} onClick={() => void restore()}>
-              Restore these settings
+              Restore These Settings
             </button>
             <button type="button" className="btn-ghost" disabled={busy} onClick={() => setPending(null)}>
               Cancel

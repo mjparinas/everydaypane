@@ -16,7 +16,7 @@ export function waitText(x: BorderWait | null): string {
   if (!x) return "—";
   if (x.closed) return "Closed";
   if (x.minutes === null) return "—";
-  if (x.minutes === 0) return "No wait";
+  if (x.minutes === 0) return "No Wait";
   return x.minutes >= 60 ? `${Math.floor(x.minutes / 60)} h ${x.minutes % 60 ? `${x.minutes % 60} min` : ""}`.trim() : `${x.minutes} min`;
 }
 

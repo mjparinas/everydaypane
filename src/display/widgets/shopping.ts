@@ -70,7 +70,7 @@ export const shopping: Mount<"shopping"> = (el, w) => {
       return fill(
         root,
         title,
-        h("div", { class: "w-empty" }, bought && !w.showDone ? "All bought" : "Nothing on the list"),
+        h("div", { class: "w-empty" }, bought && !w.showDone ? "All Bought" : "Nothing on the list"),
         w.allowAdd ? buildAdd() : null,
         note,
       );

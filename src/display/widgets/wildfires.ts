@@ -19,9 +19,9 @@ const s = (tag: string, attrs: Record<string, string | number>) => {
 
 export const STAGE_LABEL: Record<FireStage, string> = {
   new: "New",
-  outOfControl: "Out of control",
-  held: "Being held",
-  underControl: "Under control",
+  outOfControl: "Out of Control",
+  held: "Being Held",
+  underControl: "Under Control",
 };
 
 /** The fires a widget shows: all of them, or only those not yet under control. */
@@ -30,7 +30,7 @@ export const shownFires = (fires: WildfireFire[], showControlled: boolean) =>
 
 /** "120 ha", "1,250 ha", "0.5 ha"; under a tenth of a hectare is a spot fire. */
 export function hectares(ha: number): string {
-  if (ha < 0.1) return "Spot fire";
+  if (ha < 0.1) return "Spot Fire";
   return `${ha < 10 ? ha.toFixed(1).replace(/\.0$/, "") : Math.round(ha).toLocaleString("en-CA")} ha`;
 }
 

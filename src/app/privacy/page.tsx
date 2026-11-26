@@ -23,7 +23,7 @@ export default function PrivacyPage() {
         unlocks more widgets through Stripe. Each household&rsquo;s screens and settings stay private to that household.
       </p>
 
-      <h2 className="mt-10 text-xl font-bold">Accounts and sign-in</h2>
+      <h2 className="mt-10 text-xl font-bold">Accounts and Sign-In</h2>
       <ul className="mt-3 list-disc space-y-1 pl-6 text-soft">
         <li>
           Sign-in is through Clerk (an email code, or Apple or Google when those are turned on). Everydaypane does not store passwords.
@@ -74,7 +74,7 @@ export default function PrivacyPage() {
         so we can unlock the plan and open the customer portal. See Stripe&rsquo;s privacy policy for how they process payments.
       </p>
 
-      <h2 className="mt-10 text-xl font-bold">Everything else</h2>
+      <h2 className="mt-10 text-xl font-bold">Everything Else</h2>
       <ul className="mt-3 list-disc space-y-1 pl-6 text-soft">
         <li>Integration tokens (Google, Amazon cookies, Home Assistant, music and smart-home OAuth) are encrypted at rest.</li>
         <li>Error reports are scrubbed of email addresses and display links before they leave the server.</li>

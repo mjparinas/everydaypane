@@ -51,10 +51,10 @@ function SettingsLink({ href, children }: { href: string; children: ReactNode })
 }
 
 const PHOTO_INTERVALS = [
-  { value: "10", label: "10 s" },
-  { value: "30", label: "30 s" },
-  { value: "60", label: "1 min" },
-  { value: "300", label: "5 min" },
+  { value: "10", label: "10 S" },
+  { value: "30", label: "30 S" },
+  { value: "60", label: "1 Min" },
+  { value: "300", label: "5 Min" },
   { value: "custom", label: "Custom" },
 ] as const;
 
@@ -81,8 +81,8 @@ export const TIME_ZONES = [
 // The month calendar shows the whole month, or 1 to 6 weeks starting with this one (Melvin, 2026-11-21).
 type WeeksChoice = "month" | "1" | "2" | "3" | "4" | "5" | "6";
 const WEEKS_OPTIONS: { value: WeeksChoice; label: string }[] = [
-  { value: "month", label: "The whole month" },
-  ...(["1", "2", "3", "4", "5", "6"] as const).map((n) => ({ value: n, label: n === "1" ? "This week" : `${n} weeks from this one` })),
+  { value: "month", label: "The Whole Month" },
+  ...(["1", "2", "3", "4", "5", "6"] as const).map((n) => ({ value: n, label: n === "1" ? "This Week" : `${n} weeks from this one` })),
 ];
 
 function zoneOptions(current: string) {
@@ -122,7 +122,7 @@ export function WidgetSettings({
       )}
       <TypeSettings widget={widget} config={config} onChange={onChange} />
       <details className="grid gap-4 border-t border-line pt-4">
-        <summary className="cursor-pointer text-xs font-semibold tracking-wide text-soft uppercase">Looks &amp; schedule</summary>
+        <summary className="cursor-pointer text-xs font-semibold tracking-wide text-soft uppercase">Looks &Amp; Schedule</summary>
         <PanelBackground widget={widget} config={config} onChange={onChange} />
         {info.supportsFontScale !== false && <FontScale widget={widget} onChange={onChange} />}
         <VisiblePeriods widget={widget} onChange={onChange} />
@@ -135,7 +135,7 @@ function VisiblePeriods({ widget, onChange }: { widget: Widget; onChange: (chang
   const picked = widget.visiblePeriods ?? [];
   return (
     <fieldset className="grid gap-1">
-      <legend className="mb-1 text-sm font-medium">Show during</legend>
+      <legend className="mb-1 text-sm font-medium">Show During</legend>
       <p className="text-xs text-soft">
         Leave every period off to show all day. Picking one or more hides it outside those parts of the day.
       </p>
@@ -186,7 +186,7 @@ function PanelBackground({
       />
       {widget.showBackground ? (
         <Range
-          label="Background opacity"
+          label="Background Opacity"
           value={widget.backgroundOpacity ?? themeOpacity}
           min={0}
           max={1}
@@ -197,7 +197,7 @@ function PanelBackground({
         />
       ) : null}
       <Range
-        label="Outer padding"
+        label="Outer Padding"
         value={widget.outerPadding ?? 0}
         min={0}
         max={48}
@@ -219,7 +219,7 @@ function PanelBackground({
 function FontScale({ widget, onChange }: { widget: Widget; onChange: (change: (w: Widget) => void) => void }) {
   return (
     <Range
-      label="Font size"
+      label="Font Size"
       value={widget.fontScale ?? 1}
       min={0.7}
       max={1.5}
@@ -274,9 +274,9 @@ function HaEntitySettings({
           { value: "nest", label: "Nest" },
           { value: "ecobee", label: "ecobee" },
           { value: "smartthings", label: "SmartThings" },
-          { value: "govee", label: "Govee lights" },
-          { value: "hue", label: "Philips Hue lights" },
-          { value: "lifx", label: "LIFX lights" },
+          { value: "govee", label: "Govee Lights" },
+          { value: "hue", label: "Philips Hue Lights" },
+          { value: "lifx", label: "LIFX Lights" },
         ]}
         onChange={(v) => e((x) => void ((x.provider = v), LIGHT_PROVIDERS.includes(v as DirectSmartProvider) && (x.control = "light")))}
       />
@@ -285,7 +285,7 @@ function HaEntitySettings({
           label="Device"
           value={devices.some((d) => d.id === w.entityId) ? w.entityId : ""}
           options={[
-            { value: "", label: "Choose a device…" },
+            { value: "", label: "Choose a Device…" },
             ...devices.map((d) => ({ value: d.id, label: d.sku ? `${d.name} (${d.sku})` : d.name })),
           ]}
           onChange={(v) => e((x) => void (x.entityId = v))}
@@ -296,7 +296,7 @@ function HaEntitySettings({
           label="Device"
           value={picked ? w.entityId : ""}
           options={[
-            { value: "", label: "Choose a device…" },
+            { value: "", label: "Choose a Device…" },
             ...entities.map((ent) => ({ value: ent.id, label: ent.name && ent.name !== ent.id ? `${ent.name} (${ent.id})` : ent.id })),
           ]}
           onChange={(v) => e((x) => void (x.entityId = v))}
@@ -304,7 +304,7 @@ function HaEntitySettings({
         />
       ) : null}
       <Text
-        label={(provider === "homeAssistant" ? entities.length : devices.length) > 0 ? "Or paste entity id" : "Entity"}
+        label={(provider === "homeAssistant" ? entities.length : devices.length) > 0 ? "Or Paste Entity ID" : "Entity"}
         value={w.entityId}
         maxLength={255}
         placeholder={provider === "homeAssistant" ? "light.kitchen" : `${provider}.device_id`}
@@ -317,26 +317,26 @@ function HaEntitySettings({
         <p className="text-sm text-soft">
           {devices.length > 0 ? "Devices from your account. " : null}
           Connect {PROVIDER_NAMES[provider] ?? provider} under{" "}
-          <SettingsLink href="#settings/smart-home">Settings › Smart home</SettingsLink>
+          <SettingsLink href="#settings/smart-home">Settings › Smart Home</SettingsLink>
           {devices.length > 0 ? " to change the account." : ", then pick a device here."}
           {provider === "govee" ? " Colour and scenes show while the light is on." : null}
           {provider === "hue" || provider === "lifx" ? " Colour shows for colour lights while they are on." : null}
         </p>
       )}
       <details className="grid gap-3 rounded-xl border border-line bg-bg px-3 py-2" open={w.control !== "auto"}>
-        <summary className="cursor-pointer text-sm font-semibold text-ink">Advanced control type</summary>
+        <summary className="cursor-pointer text-sm font-semibold text-ink">Advanced Control Type</summary>
         <Select
           label="Control"
           value={w.control}
           options={[
-            { value: "auto", label: "Pick from the entity" },
-            { value: "toggle", label: "On/off switch" },
-            { value: "light", label: "Light with brightness" },
+            { value: "auto", label: "Pick from the Entity" },
+            { value: "toggle", label: "On/off Switch" },
+            { value: "light", label: "Light with Brightness" },
             { value: "sensor", label: "Reading" },
             { value: "climate", label: "Thermostat" },
-            { value: "cover", label: "Blinds or garage door" },
+            { value: "cover", label: "Blinds or Garage Door" },
             { value: "lock", label: "Lock" },
-            { value: "button", label: "Button or scene" },
+            { value: "button", label: "Button or Scene" },
           ]}
           onChange={(v) => e((x) => void (x.control = v))}
           hint="Leave on Auto unless the wall shows the wrong kind of control."
@@ -394,7 +394,7 @@ function TypeSettings({
             ]}
             onChange={(v) => e((x) => void (x.style = v))}
           />
-          <Toggle label="Show seconds" checked={w.showSeconds} onChange={(v) => e((x) => void (x.showSeconds = v))} />
+          <Toggle label="Show Seconds" checked={w.showSeconds} onChange={(v) => e((x) => void (x.showSeconds = v))} />
         </>
       );
     }
@@ -403,12 +403,12 @@ function TypeSettings({
       return (
         <>
           <Select
-            label="Time zone"
+            label="Time Zone"
             value={w.timeZone}
             options={zoneOptions(w.timeZone)}
             onChange={(v) => e((x) => void (x.timeZone = v))}
           />
-          <Toggle label="Show the year" checked={w.showYear} onChange={(v) => e((x) => void (x.showYear = v))} />
+          <Toggle label="Show the Year" checked={w.showYear} onChange={(v) => e((x) => void (x.showYear = v))} />
         </>
       );
     }
@@ -417,19 +417,19 @@ function TypeSettings({
       return (
         <>
           <Toggle
-            label="Show emoji"
+            label="Show Emoji"
             checked={w.showEmoji}
             hint="The sunrise and sunset icons, and the sun on the daylight line."
             onChange={(v) => e((x) => void (x.showEmoji = v))}
           />
           <Toggle
-            label="Show hours of daylight"
+            label="Show Hours of Daylight"
             checked={w.showDaylight}
             hint="The line under the times, like “8 hr 51 min of daylight”."
             onChange={(v) => e((x) => void (x.showDaylight = v))}
           />
           <Toggle
-            label="Show the moon"
+            label="Show the Moon"
             checked={w.showMoon}
             hint="Tonight's phase and how much of it is lit, like “Waxing gibbous · 82% lit”."
             onChange={(v) => e((x) => void (x.showMoon = v))}
@@ -442,10 +442,10 @@ function TypeSettings({
       const e = edit<"weather">();
       return (
         <>
-          <Toggle label="Show current conditions" checked={w.showCurrent} onChange={(v) => e((x) => void (x.showCurrent = v))} />
-          <Toggle label="Show the next hours" checked={w.showHourly} onChange={(v) => e((x) => void (x.showHourly = v))} />
+          <Toggle label="Show Current Conditions" checked={w.showCurrent} onChange={(v) => e((x) => void (x.showCurrent = v))} />
+          <Toggle label="Show the Next Hours" checked={w.showHourly} onChange={(v) => e((x) => void (x.showHourly = v))} />
           <Range
-            label="Forecast icon size"
+            label="Forecast Icon Size"
             value={w.iconScale ?? 1}
             min={0.5}
             max={1.5}
@@ -459,14 +459,14 @@ function TypeSettings({
               })
             }
           />
-          <Toggle label="Show the UV index" checked={w.showUv} onChange={(v) => e((x) => void (x.showUv = v))} />
+          <Toggle label="Show the UV Index" checked={w.showUv} onChange={(v) => e((x) => void (x.showUv = v))} />
           <Toggle
-            label="Show pollen"
+            label="Show Pollen"
             checked={w.showPollen}
             hint="The highest count Open-Meteo reports. Often missing in North America."
             onChange={(v) => e((x) => void (x.showPollen = v))}
           />
-          <Stepper label="Days ahead" value={w.days} min={0} max={7} onChange={(v) => e((x) => void (x.days = v))} />
+          <Stepper label="Days Ahead" value={w.days} min={0} max={7} onChange={(v) => e((x) => void (x.days = v))} />
           <p className="text-xs text-soft">
             Forecast from {(config.weather?.provider ?? "openMeteo") === "environmentCanada" ? "Environment Canada" : "Open-Meteo"} for{" "}
             {config.location.name || "the dashboard's location"} (<SettingsLink href="#settings/location">Settings › Location</SettingsLink>
@@ -493,14 +493,14 @@ function TypeSettings({
       const e = edit<"wifiQr">();
       return (
         <>
-          <Text label="Network name" value={w.ssid} maxLength={32} onChange={(v) => e((x) => void (x.ssid = v))} />
+          <Text label="Network Name" value={w.ssid} maxLength={32} onChange={(v) => e((x) => void (x.ssid = v))} />
           <Select
             label="Security"
             value={w.encryption}
             options={[
               { value: "WPA", label: "WPA / WPA2 / WPA3" },
               { value: "WEP", label: "WEP" },
-              { value: "nopass", label: "None (open network)" },
+              { value: "nopass", label: "None (Open Network)" },
             ]}
             onChange={(v) => e((x) => void (x.encryption = v))}
           />
@@ -514,8 +514,8 @@ function TypeSettings({
               onChange={(v) => e((x) => void (x.password = v))}
             />
           )}
-          <Toggle label="Hidden network" checked={w.hidden} onChange={(v) => e((x) => void (x.hidden = v))} />
-          <Toggle label="Show the password as text too" checked={w.showPassword} onChange={(v) => e((x) => void (x.showPassword = v))} />
+          <Toggle label="Hidden Network" checked={w.hidden} onChange={(v) => e((x) => void (x.hidden = v))} />
+          <Toggle label="Show the Password as Text Too" checked={w.showPassword} onChange={(v) => e((x) => void (x.showPassword = v))} />
         </>
       );
     }
@@ -535,7 +535,7 @@ function TypeSettings({
       return (
         <>
           <Select
-            label="Week starts on"
+            label="Week Starts On"
             value={String(w.weekStartsOn)}
             options={[
               { value: "0", label: "Sunday" },
@@ -543,13 +543,13 @@ function TypeSettings({
             ]}
             onChange={(v) => e((x) => void (x.weekStartsOn = Number(v) as 0 | 1))}
           />
-          <Toggle label="Show weekends" checked={w.showWeekends} onChange={(v) => e((x) => void (x.showWeekends = v))} />
+          <Toggle label="Show Weekends" checked={w.showWeekends} onChange={(v) => e((x) => void (x.showWeekends = v))} />
         </>
       );
     }
     case "calendarUpNext": {
       const e = edit<"calendarUpNext">();
-      return <Stepper label="Also show next" value={w.count} min={1} max={10} onChange={(v) => e((x) => void (x.count = v))} />;
+      return <Stepper label="Also Show Next" value={w.count} min={1} max={10} onChange={(v) => e((x) => void (x.count = v))} />;
     }
     case "agenda": {
       const e = edit<"agenda">();
@@ -559,15 +559,15 @@ function TypeSettings({
             label="Show"
             value={w.range}
             options={[
-              { value: "today", label: "Today only" },
-              { value: "upcoming", label: "The next few days" },
+              { value: "today", label: "Today Only" },
+              { value: "upcoming", label: "The Next Few Days" },
             ]}
             onChange={(v) => e((x) => void (x.range = v))}
           />
           {w.range === "upcoming" && <Stepper label="Days" value={w.days} min={1} max={14} onChange={(v) => e((x) => void (x.days = v))} />}
           <p className="text-xs text-soft">
             Connect calendars under <SettingsLink href="#settings/google">Settings › Google Calendar</SettingsLink> or{" "}
-            <SettingsLink href="#settings/icals">Calendar links</SettingsLink>. Family events come from{" "}
+            <SettingsLink href="#settings/icals">Calendar Links</SettingsLink>. Family events come from{" "}
             <span className="font-mono">/family/</span>.
           </p>
         </>
@@ -578,7 +578,7 @@ function TypeSettings({
       return (
         <>
           <Select
-            label="Weeks start on"
+            label="Weeks Start On"
             value={String(w.weekStartsOn) as "0" | "1"}
             options={[
               { value: "0", label: "Sunday" },
@@ -597,24 +597,24 @@ function TypeSettings({
               })
             }
           />
-          <Toggle label="Show weekends" checked={w.showWeekends} onChange={(v) => e((x) => void (x.showWeekends = v))} />
-          <Toggle label="Show the month title" checked={w.showTitle} onChange={(v) => e((x) => void (x.showTitle = v))} />
+          <Toggle label="Show Weekends" checked={w.showWeekends} onChange={(v) => e((x) => void (x.showWeekends = v))} />
+          <Toggle label="Show the Month Title" checked={w.showTitle} onChange={(v) => e((x) => void (x.showTitle = v))} />
           <Toggle
-            label="Open day details when tapped"
+            label="Open Day Details When Tapped"
             checked={w.showDayDetails}
             onChange={(v) => e((x) => void (x.showDayDetails = v))}
             hint="See every event for that day, including events hidden behind “+N more”."
           />
           <details className="grid gap-3 rounded-xl border border-line bg-bg px-3 py-2">
-            <summary className="cursor-pointer text-sm font-semibold text-ink">Advanced layout</summary>
+            <summary className="cursor-pointer text-sm font-semibold text-ink">Advanced Layout</summary>
             <Toggle
-              label="Fit event titles"
+              label="Fit Event Titles"
               checked={w.fitTitles}
               onChange={(v) => e((x) => void (x.fitTitles = v))}
               hint="Wrap titles (and shrink if needed) so they are not cut off with an ellipsis. Busy days still show “+N more”."
             />
             <Stepper
-              label="Scroll after"
+              label="Scroll After"
               value={w.scrollWeeks}
               min={1}
               max={6}
@@ -628,15 +628,15 @@ function TypeSettings({
     }
     case "garbage": {
       const e = edit<"garbage">();
-      return <Stepper label="Weeks ahead" value={w.weeks} min={1} max={8} onChange={(v) => e((x) => void (x.weeks = v))} />;
+      return <Stepper label="Weeks Ahead" value={w.weeks} min={1} max={8} onChange={(v) => e((x) => void (x.weeks = v))} />;
     }
     case "commute": {
       const e = edit<"commute">();
       const places = config.integrations.commute.destinations;
       return (
         <>
-          <Toggle label="Show arrival time" checked={w.showArrival} onChange={(v) => e((x) => void (x.showArrival = v))} />
-          <Toggle label="Show distance" checked={w.showDistance} onChange={(v) => e((x) => void (x.showDistance = v))} />
+          <Toggle label="Show Arrival Time" checked={w.showArrival} onChange={(v) => e((x) => void (x.showArrival = v))} />
+          <Toggle label="Show Distance" checked={w.showDistance} onChange={(v) => e((x) => void (x.showDistance = v))} />
           {places.length === 0 ? (
             <p className="text-xs text-soft">
               Add home and the places to drive to under <SettingsLink href="#settings/commute">Settings › Commute</SettingsLink>.
@@ -678,26 +678,26 @@ function TypeSettings({
             onChange={(v) => e((x) => void (x.precip = v))}
           />
           <Select
-            label="Map area"
+            label="Map Area"
             value={String(w.zoom)}
             options={[
               { value: "6", label: "Southern B.C." },
-              { value: "7", label: "South coast" },
+              { value: "7", label: "South Coast" },
               { value: "8", label: "Lower Mainland" },
               { value: "9", label: "Fraser Valley" },
-              { value: "10", label: "Close to home" },
+              { value: "10", label: "Close to Home" },
             ]}
             onChange={(v) => e((x) => void (x.zoom = Number(v)))}
             hint="The map is centred on the dashboard's location (Settings)."
           />
           <Select
-            label="Radar from the past"
+            label="Radar from the Past"
             value={String(w.pastMinutes)}
             options={minutes([30, 60, 90, 120, 180])}
             onChange={(v) => e((x) => void (x.pastMinutes = Number(v)))}
           />
           <Select
-            label="Forecast ahead"
+            label="Forecast Ahead"
             value={String(w.forecastMinutes)}
             options={minutes([0, 30, 60, 120, 180], "No forecast")}
             onChange={(v) => e((x) => void (x.forecastMinutes = Number(v)))}
@@ -712,35 +712,35 @@ function TypeSettings({
       return (
         <>
           <Select
-            label="Map area"
+            label="Map Area"
             value={String(w.zoom)}
             options={[
               { value: "6", label: "Southern B.C." },
-              { value: "7", label: "South coast" },
+              { value: "7", label: "South Coast" },
               { value: "8", label: "Lower Mainland" },
               { value: "9", label: "Fraser Valley" },
-              { value: "10", label: "Close to home" },
+              { value: "10", label: "Close to Home" },
             ]}
             onChange={(v) => e((x) => void (x.zoom = Number(v)))}
             hint="The map is centred on the dashboard's location (Settings), on the same map as the rain radar."
           />
-          <Toggle label="Burned areas" checked={w.showPerimeters} onChange={(v) => e((x) => void (x.showPerimeters = v))} />
+          <Toggle label="Burned Areas" checked={w.showPerimeters} onChange={(v) => e((x) => void (x.showPerimeters = v))} />
           <Toggle
-            label="Evacuation orders and alerts"
+            label="Evacuation Orders and Alerts"
             checked={w.showEvacuations}
             onChange={(v) => e((x) => void (x.showEvacuations = v))}
             hint="Orders in red and alerts in amber, for any hazard. Settings › Emergency alerts can also put nearby ones on the red strip."
           />
           <Toggle
-            label="Fires under control"
+            label="Fires Under Control"
             checked={w.showControlled}
             onChange={(v) => e((x) => void (x.showControlled = v))}
             hint="Off shows only new, out-of-control and held fires."
           />
           <Select
-            label="Nearest fires listed"
+            label="Nearest Fires Listed"
             value={String(w.listCount)}
-            options={[0, 1, 2, 3, 4, 5].map((n) => ({ value: String(n), label: n === 0 ? "None (map only)" : String(n) }))}
+            options={[0, 1, 2, 3, 4, 5].map((n) => ({ value: String(n), label: n === 0 ? "None (Map Only)" : String(n) }))}
             onChange={(v) => e((x) => void (x.listCount = Number(v)))}
           />
           <p className="text-xs text-soft">
@@ -772,12 +772,12 @@ function TypeSettings({
                   })
                 }
               >
-                Use the dashboard&rsquo;s location{home.name ? ` (${home.name})` : ""}
+                Use the Dashboard&rsquo;s Location{home.name ? ` (${home.name})` : ""}
               </button>
             )}
           </div>
           <PlaceFinder
-            label="Another place"
+            label="Another Place"
             button="Find"
             placeholder="Town or city, anywhere"
             nothing="Nothing matched. Try a town or city name, like \u201cManila\u201d."
@@ -791,7 +791,7 @@ function TypeSettings({
             }
           />
           <Select
-            label="How far out"
+            label="How Far Out"
             value={w.zoom}
             options={EARTH_ZOOMS.map((z) => ({ value: z, label: EARTH_ZOOM_LABELS[z] }))}
             onChange={(v) => e((x) => void (x.zoom = v))}
@@ -803,7 +803,7 @@ function TypeSettings({
             return (
               <>
                 <Select
-                  label="Colours show"
+                  label="Colours Show"
                   value={isPrimary ? w.overlay : w.overlay}
                   options={[
                     ...primary.map((o) => ({ value: o, label: EARTH_OVERLAY_LABELS[o] })),
@@ -812,7 +812,7 @@ function TypeSettings({
                   onChange={(v) => e((x) => void (x.overlay = v))}
                 />
                 <details className="rounded-xl border border-line bg-bg px-3 py-2" open={!isPrimary}>
-                  <summary className="cursor-pointer text-sm font-semibold text-ink">More colour layers</summary>
+                  <summary className="cursor-pointer text-sm font-semibold text-ink">More Colour Layers</summary>
                   <div className="mt-3">
                     <Select
                       label="Layer"
@@ -829,13 +829,13 @@ function TypeSettings({
             );
           })()}
           <Toggle
-            label="Mark the place"
+            label="Mark the Place"
             checked={w.showPlace}
             hint="A ring on the map, with a small card of its wind and the reading for the colours."
             onChange={(v) => e((x) => void (x.showPlace = v))}
           />
           <Toggle
-            label="Animate the wind"
+            label="Animate the Wind"
             checked={w.animate}
             hint="The moving lines are the heaviest thing on the screen. Off draws a still map."
             onChange={(v) => e((x) => void (x.animate = v))}
@@ -871,12 +871,12 @@ function TypeSettings({
                   })
                 }
               >
-                Use the dashboard&rsquo;s location{home.name ? ` (${home.name})` : ""}
+                Use the Dashboard&rsquo;s Location{home.name ? ` (${home.name})` : ""}
               </button>
             )}
           </div>
           <PlaceFinder
-            label="Another place"
+            label="Another Place"
             button="Find"
             placeholder="Town or city, anywhere"
             nothing="Nothing matched. Try a town or city name, like \u201cManila\u201d."
@@ -896,27 +896,27 @@ function TypeSettings({
             onChange={(v) => e((x) => void (x.overlay = v))}
           />
           <Select
-            label="Map area"
+            label="Map Area"
             value={String(w.zoom)}
             options={[
               { value: "3", label: "North America" },
               { value: "4", label: "Western Canada and the U.S." },
               { value: "5", label: "B.C. and Washington" },
               { value: "6", label: "Southern B.C." },
-              { value: "7", label: "South coast" },
+              { value: "7", label: "South Coast" },
               { value: "8", label: "Lower Mainland" },
               { value: "9", label: "Fraser Valley" },
-              { value: "10", label: "Close to home" },
-              { value: "11", label: "The neighbourhood" },
+              { value: "10", label: "Close to Home" },
+              { value: "11", label: "The Neighbourhood" },
             ]}
             onChange={(v) => e((x) => void (x.zoom = Number(v)))}
           />
-          <Toggle label="Mark the place" checked={w.marker} onChange={(v) => e((x) => void (x.marker = v))} />
+          <Toggle label="Mark the Place" checked={w.marker} onChange={(v) => e((x) => void (x.marker = v))} />
           {windyPressureAllowed(w.overlay) && (
-            <Toggle label="Pressure lines" checked={w.pressure} onChange={(v) => e((x) => void (x.pressure = v))} />
+            <Toggle label="Pressure Lines" checked={w.pressure} onChange={(v) => e((x) => void (x.pressure = v))} />
           )}
           <Toggle
-            label="Let people move the map"
+            label="Let People Move the Map"
             checked={w.interactive}
             onChange={(v) => e((x) => void (x.interactive = v))}
             hint="Off, a tap can't pan or zoom it away from the place. On, touches on the map don't count as using the screen for the screen saver."
@@ -933,8 +933,8 @@ function TypeSettings({
       const e = edit<"ferries">();
       return (
         <>
-          <Stepper label="Sailings per route" value={w.count} min={1} max={8} onChange={(v) => e((x) => void (x.count = v))} />
-          <Toggle label="Show the ship's name" checked={w.showVessel} onChange={(v) => e((x) => void (x.showVessel = v))} />
+          <Stepper label="Sailings per Route" value={w.count} min={1} max={8} onChange={(v) => e((x) => void (x.count = v))} />
+          <Toggle label="Show the Ship's Name" checked={w.showVessel} onChange={(v) => e((x) => void (x.showVessel = v))} />
           <p className="text-xs text-soft">Pick up to four routes. These are the ones BC Ferries says how full they are for.</p>
           {FERRY_ROUTES.map((code) => (
             <Toggle
@@ -964,7 +964,7 @@ function TypeSettings({
             onChange={(v) => e((x) => void (x.directions = v))}
           />
           <Toggle
-            label="NEXUS lane waits"
+            label="NEXUS Lane Waits"
             checked={w.showNexus}
             hint="Under the regular wait, where the agency reports one."
             onChange={(v) => e((x) => void (x.showNexus = v))}
@@ -1001,7 +1001,7 @@ function TypeSettings({
             onChange={(v) => e((x) => void (x.fuel = v))}
           />
           <Range
-            label="How far from home"
+            label="How Far from Home"
             value={w.radiusKm}
             min={GAS_RADIUS_MIN}
             max={GAS_RADIUS_MAX}
@@ -1009,14 +1009,14 @@ function TypeSettings({
             format={(v) => `${v} km`}
             onChange={(v) => e((x) => void (x.radiusKm = v))}
           />
-          <Stepper label="Stations shown" value={w.count} min={1} max={8} onChange={(v) => e((x) => void (x.count = v))} />
+          <Stepper label="Stations Shown" value={w.count} min={1} max={8} onChange={(v) => e((x) => void (x.count = v))} />
           <Select
             label="Order"
             value={w.sort}
             options={GAS_SORTS.map((o) => ({ value: o, label: GAS_SORT_LABELS[o] }))}
             onChange={(v) => e((x) => void (x.sort = v))}
           />
-          <Toggle label="Show addresses" checked={w.showAddress} onChange={(v) => e((x) => void (x.showAddress = v))} />
+          <Toggle label="Show Addresses" checked={w.showAddress} onChange={(v) => e((x) => void (x.showAddress = v))} />
           <p className="text-xs text-soft">
             Prices from Google Maps, around the home address under{" "}
             <SettingsLink href="#settings/location">Settings › Location</SettingsLink>. They refresh every two hours, and a price older than
@@ -1031,7 +1031,7 @@ function TypeSettings({
       return (
         <>
           <Toggle
-            label="Show the last result"
+            label="Show the Last Result"
             checked={w.showLast}
             hint="Next to the next game, when no game is on."
             onChange={(v) => e((x) => void (x.showLast = v))}
@@ -1066,20 +1066,20 @@ function TypeSettings({
             label="Fit"
             value={w.fit}
             options={[
-              { value: "auto", label: "Smart: fill unless it would crop a lot" },
-              { value: "cover", label: "Fill the space (crops edges)" },
-              { value: "contain", label: "Show the whole photo" },
+              { value: "auto", label: "Smart: Fill Unless It Would Crop a Lot" },
+              { value: "cover", label: "Fill the Space (Crops Edges)" },
+              { value: "contain", label: "Show the Whole Photo" },
             ]}
             onChange={(v) => e((x) => void (x.fit = v))}
           />
           <Toggle
-            label="Pair portrait photos side by side"
+            label="Pair Portrait Photos Side by Side"
             checked={w.pairPortraits}
             onChange={(v) => e((x) => void (x.pairPortraits = v))}
           />
-          <Toggle label="Slow zoom across each photo" checked={w.drift} onChange={(v) => e((x) => void (x.drift = v))} />
-          <Toggle label="Show “On this day” photos first" checked={w.memories} onChange={(v) => e((x) => void (x.memories = v))} />
-          <Toggle label="Show when each photo was taken" checked={w.showCaption} onChange={(v) => e((x) => void (x.showCaption = v))} />
+          <Toggle label="Slow Zoom Across Each Photo" checked={w.drift} onChange={(v) => e((x) => void (x.drift = v))} />
+          <Toggle label="Show “On This Day” Photos First" checked={w.memories} onChange={(v) => e((x) => void (x.memories = v))} />
+          <Toggle label="Show When Each Photo Was Taken" checked={w.showCaption} onChange={(v) => e((x) => void (x.showCaption = v))} />
           <p className="text-xs text-soft">Photos added since the screen last looked always come up next.</p>
           {sources.length === 0 ? (
             <p className="text-xs text-soft">
@@ -1129,9 +1129,9 @@ function TypeSettings({
       const e = edit<"messages">();
       return (
         <>
-          <Stepper label="Notes shown" value={w.count} min={1} max={20} onChange={(v) => e((x) => void (x.count = v))} />
+          <Stepper label="Notes Shown" value={w.count} min={1} max={20} onChange={(v) => e((x) => void (x.count = v))} />
           <Toggle
-            label="Post from the wall"
+            label="Post from the Wall"
             hint="Anyone at the screen can leave a note. Keep this off if the display is easy to reach by guests."
             checked={w.allowAdd}
             onChange={(v) => e((x) => void (x.allowAdd = v))}
@@ -1151,7 +1151,7 @@ function TypeSettings({
             value={String(w.days)}
             options={[1, 2, 3, 4, 5, 6, 7].map((n) => ({
               value: String(n),
-              label: n === 1 ? "Today (tomorrow from 8 PM)" : n === 7 ? "The week" : `The next ${n} days`,
+              label: n === 1 ? "Today (Tomorrow from 8 PM)" : n === 7 ? "The Week" : `The next ${n} days`,
             }))}
             onChange={(v) => e((x) => void (x.days = Number(v)))}
           />
@@ -1182,7 +1182,7 @@ function TypeSettings({
       return (
         <>
           <Text
-            label="School slug"
+            label="School Slug"
             value={w.school || defaultSchool}
             maxLength={80}
             hint="From the district's Nutrislice URL. District slug lives under Settings › Menus."
@@ -1211,9 +1211,9 @@ function TypeSettings({
         <>
           <Toggle label="Wind" checked={w.showWind} onChange={(v) => e((x) => void (x.showWind = v))} />
           <Toggle label="Humidity" checked={w.showHumidity} onChange={(v) => e((x) => void (x.showHumidity = v))} />
-          <Toggle label="Rain today" checked={w.showRain} onChange={(v) => e((x) => void (x.showRain = v))} />
+          <Toggle label="Rain Today" checked={w.showRain} onChange={(v) => e((x) => void (x.showRain = v))} />
           <p className="text-sm text-soft">
-            Set station id and token under <SettingsLink href="#settings/weather-stations">Settings › Weather stations</SettingsLink>.
+            Set station id and token under <SettingsLink href="#settings/weather-stations">Settings › Weather Stations</SettingsLink>.
           </p>
         </>
       );
@@ -1236,7 +1236,7 @@ function TypeSettings({
         <>
           <UnifiSitePicker value={w.siteId} onChange={(v) => e((x) => void (x.siteId = v))} />
           <Stepper
-            label="Slow from"
+            label="Slow From"
             value={w.slowMs}
             min={20}
             max={1000}
@@ -1245,16 +1245,16 @@ function TypeSettings({
             hint="Latency at or above this shows the internet as slow."
             onChange={(v) => e((x) => void (x.slowMs = v))}
           />
-          <Toggle label="Latency chart (24 h)" checked={w.showChart} onChange={(v) => e((x) => void (x.showChart = v))} />
-          <Toggle label="Devices and clients" checked={w.showCounts} onChange={(v) => e((x) => void (x.showCounts = v))} />
+          <Toggle label="Latency Chart (24 H)" checked={w.showChart} onChange={(v) => e((x) => void (x.showChart = v))} />
+          <Toggle label="Devices and Clients" checked={w.showCounts} onChange={(v) => e((x) => void (x.showCounts = v))} />
           <Toggle
-            label="Current usage"
+            label="Current Usage"
             checked={w.showUsage}
             hint="What the home downloaded and uploaded in the last five minutes; not a speed test."
             onChange={(v) => e((x) => void (x.showUsage = v))}
           />
           <p className="text-sm text-soft">
-            Save the Site Manager API key under <SettingsLink href="#settings/unifi">Settings › UniFi network</SettingsLink>.
+            Save the Site Manager API key under <SettingsLink href="#settings/unifi">Settings › UniFi Network</SettingsLink>.
           </p>
         </>
       );
@@ -1267,7 +1267,7 @@ function TypeSettings({
           <Toggle label="Humidity" checked={w.showHumidity} onChange={(v) => e((x) => void (x.showHumidity = v))} />
           <Toggle label="Rain" checked={w.showRain} onChange={(v) => e((x) => void (x.showRain = v))} />
           <p className="text-sm text-soft">
-            Set station id under <SettingsLink href="#settings/weather-stations">Settings › Weather stations</SettingsLink>.
+            Set station id under <SettingsLink href="#settings/weather-stations">Settings › Weather Stations</SettingsLink>.
           </p>
         </>
       );
@@ -1276,16 +1276,16 @@ function TypeSettings({
       const e = edit<"shopping">();
       return (
         <>
-          <Stepper label="Items shown" value={w.count} min={1} max={40} onChange={(v) => e((x) => void (x.count = v))} />
-          <Toggle label="Show bought items" checked={w.showDone} onChange={(v) => e((x) => void (x.showDone = v))} />
+          <Stepper label="Items Shown" value={w.count} min={1} max={40} onChange={(v) => e((x) => void (x.count = v))} />
+          <Toggle label="Show Bought Items" checked={w.showDone} onChange={(v) => e((x) => void (x.showDone = v))} />
           <Toggle
-            label="Tap to tick off"
+            label="Tap to Tick Off"
             hint="Anyone at the screen can mark an item bought. Tapping it again puts it back."
             checked={w.allowCheck}
             onChange={(v) => e((x) => void (x.allowCheck = v))}
           />
           <Toggle
-            label="Add from the wall"
+            label="Add from the Wall"
             hint="Anyone at the screen can type a new item. Keep this off if guests can reach the display."
             checked={w.allowAdd}
             onChange={(v) => e((x) => void (x.allowAdd = v))}
@@ -1317,10 +1317,10 @@ function TypeSettings({
             ]}
             onChange={(v) => e((x) => void ((x.provider = v), (x.listIds = [])))}
           />
-          <Stepper label="Tasks shown" value={w.count} min={1} max={30} onChange={(v) => e((x) => void (x.count = v))} />
-          <Toggle label="Show due dates" checked={w.showDue} onChange={(v) => e((x) => void (x.showDue = v))} />
+          <Stepper label="Tasks Shown" value={w.count} min={1} max={30} onChange={(v) => e((x) => void (x.count = v))} />
+          <Toggle label="Show Due Dates" checked={w.showDue} onChange={(v) => e((x) => void (x.showDue = v))} />
           <Toggle
-            label="Tap to tick off"
+            label="Tap to Tick Off"
             hint="Anyone at the screen can mark a task done. A second tap within a few seconds undoes it."
             checked={w.allowCheck}
             onChange={(v) => e((x) => void (x.allowCheck = v))}
@@ -1355,15 +1355,15 @@ function TypeSettings({
             label="Layout"
             value={w.layout}
             options={[
-              { value: "columns", label: "Columns (list)" },
-              { value: "byPeriod", label: "By time of day" },
-              { value: "progress", label: "Progress rings" },
+              { value: "columns", label: "Columns (List)" },
+              { value: "byPeriod", label: "By Time of Day" },
+              { value: "progress", label: "Progress Rings" },
             ]}
             onChange={(v) => e((x) => void (x.layout = v))}
           />
-          <Toggle label="Show stars" checked={w.showStars} onChange={(v) => e((x) => void (x.showStars = v))} />
+          <Toggle label="Show Stars" checked={w.showStars} onChange={(v) => e((x) => void (x.showStars = v))} />
           <Toggle
-            label="Tap to tick off"
+            label="Tap to Tick Off"
             hint="Anyone at the screen can mark a chore done. Tapping it again takes it back."
             checked={w.allowCheck}
             onChange={(v) => e((x) => void (x.allowCheck = v))}
@@ -1391,7 +1391,7 @@ function TypeSettings({
     case "alerts": {
       const e = edit<"alerts">();
       return (
-        <Toggle label="Say “No alerts” when all is clear" checked={w.showAllClear} onChange={(v) => e((x) => void (x.showAllClear = v))} />
+        <Toggle label="Say “No Alerts” When All Is Clear" checked={w.showAllClear} onChange={(v) => e((x) => void (x.showAllClear = v))} />
       );
     }
     case "camera": {
@@ -1399,7 +1399,7 @@ function TypeSettings({
       return (
         <>
           <Text
-            label="Camera entity"
+            label="Camera Entity"
             value={w.entityId}
             maxLength={255}
             placeholder="camera.front_door"
@@ -1408,7 +1408,7 @@ function TypeSettings({
           />
           <HaEntityList id="ha-cameras" only="camera." />
           <Range
-            label="Refresh every"
+            label="Refresh Every"
             value={w.refreshSeconds}
             min={2}
             max={600}
@@ -1429,7 +1429,7 @@ function TypeSettings({
             onRemove={(id) => e((x) => void (x.cameras = x.cameras.filter((c) => c.id !== id)))}
           />
           <Range
-            label="New picture every"
+            label="New Picture Every"
             value={w.refreshSeconds}
             min={DRIVEBC_REFRESH.min}
             max={DRIVEBC_REFRESH.max}
@@ -1442,14 +1442,14 @@ function TypeSettings({
             label="Layout"
             value={w.layout}
             options={[
-              { value: "grid", label: "All cameras side by side" },
-              { value: "cycle", label: "One camera at a time" },
+              { value: "grid", label: "All Cameras Side by Side" },
+              { value: "cycle", label: "One Camera at a Time" },
             ]}
             onChange={(v) => e((x) => void (x.layout = v))}
           />
           {w.layout === "cycle" && (
             <Range
-              label="Next camera after"
+              label="Next Camera After"
               value={w.cycleSeconds}
               min={5}
               max={120}
@@ -1458,7 +1458,7 @@ function TypeSettings({
               onChange={(v) => e((x) => void (x.cycleSeconds = v))}
             />
           )}
-          <Toggle label="Show camera names" checked={w.showName} onChange={(v) => e((x) => void (x.showName = v))} />
+          <Toggle label="Show Camera Names" checked={w.showName} onChange={(v) => e((x) => void (x.showName = v))} />
         </>
       );
     }
@@ -1494,9 +1494,9 @@ function TypeSettings({
             onRemove={(id) => e((x) => void (x.stops = x.stops.filter((s) => s.id !== id)))}
           />
           <RoutesField routes={w.routes} onChange={(routes) => e((x) => void (x.routes = routes))} />
-          <Stepper label="Departures per stop" value={w.count} min={1} max={12} onChange={(v) => e((x) => void (x.count = v))} />
+          <Stepper label="Departures per Stop" value={w.count} min={1} max={12} onChange={(v) => e((x) => void (x.count = v))} />
           <Range
-            label="Walk to the stop"
+            label="Walk to the Stop"
             value={w.walkMinutes}
             min={0}
             max={60}
@@ -1513,12 +1513,12 @@ function TypeSettings({
       return (
         <>
           <Select
-            label="Player from"
+            label="Player From"
             value={w.provider}
             options={[
               { value: "homeAssistant", label: "Home Assistant" },
-              { value: "spotify", label: "Spotify (signed in directly)" },
-              { value: "sonos", label: "Sonos (signed in directly)" },
+              { value: "spotify", label: "Spotify (Signed in Directly)" },
+              { value: "sonos", label: "Sonos (Signed in Directly)" },
             ]}
             hint={
               <>
@@ -1548,10 +1548,10 @@ function TypeSettings({
             <p className="text-xs text-soft">Follows whatever the connected Spotify account is playing, on any speaker.</p>
           )}
           {w.provider === "sonos" && <SonosSpeaker value={w.playerId} onChange={(v) => e((x) => void (x.playerId = v))} />}
-          <Toggle label="Album art" checked={w.showArt} onChange={(v) => e((x) => void (x.showArt = v))} />
+          <Toggle label="Album Art" checked={w.showArt} onChange={(v) => e((x) => void (x.showArt = v))} />
           <Toggle label="Volume" checked={w.showVolume} onChange={(v) => e((x) => void (x.showVolume = v))} />
           <Toggle
-            label="Sources to play"
+            label="Sources to Play"
             checked={w.showSources}
             hint="Sonos favourites, or for Spotify the speakers to play on."
             onChange={(v) => e((x) => void (x.showSources = v))}
@@ -1591,7 +1591,7 @@ function TypeSettings({
             onChange={(v) => e((x) => void (x.shortBreakMinutes = v))}
           />
           <Range
-            label="Long break"
+            label="Long Break"
             value={w.longBreakMinutes}
             min={1}
             max={90}
@@ -1600,14 +1600,14 @@ function TypeSettings({
             onChange={(v) => e((x) => void (x.longBreakMinutes = v))}
           />
           <Stepper
-            label="Focus rounds before the long break"
+            label="Focus Rounds Before the Long Break"
             value={w.rounds}
             min={1}
             max={12}
             onChange={(v) => e((x) => void (x.rounds = v))}
           />
           <Toggle
-            label="Start the next phase by itself"
+            label="Start the Next Phase by Itself"
             checked={w.autoStart}
             hint="Off: it waits for a tap on Start after each focus round and break."
             onChange={(v) => e((x) => void (x.autoStart = v))}
@@ -1658,7 +1658,7 @@ function TypeSettings({
               disabled={blank}
               onClick={() => e((x) => void x.entities.push({ entityId: "", label: "" }))}
             >
-              Add a person
+              Add a Person
             </button>
           )}
         </>
@@ -1670,7 +1670,7 @@ function TypeSettings({
         <>
           <SchoolNames schools={w.schools} onChange={(schools) => e((x) => void (x.schools = schools))} />
           <p className="text-xs text-soft">
-            The district page is set under <SettingsLink href="#settings/school">Settings › School status</SettingsLink>.
+            The district page is set under <SettingsLink href="#settings/school">Settings › School Status</SettingsLink>.
           </p>
         </>
       );
@@ -1679,11 +1679,11 @@ function TypeSettings({
       const e = edit<"schoolDays">();
       return (
         <>
-          <Stepper label="Days off listed" value={w.count} min={0} max={6} onChange={(v) => e((x) => void (x.count = v))} />
-          <Toggle label="Show hot lunch" checked={w.showLunch} onChange={(v) => e((x) => void (x.showLunch = v))} />
+          <Stepper label="Days Off Listed" value={w.count} min={0} max={6} onChange={(v) => e((x) => void (x.count = v))} />
+          <Toggle label="Show Hot Lunch" checked={w.showLunch} onChange={(v) => e((x) => void (x.showLunch = v))} />
           <p className="text-xs text-soft">
             The school year, days off and lunches are set under{" "}
-            <SettingsLink href="#settings/school-days">Settings › School days</SettingsLink>.
+            <SettingsLink href="#settings/school-days">Settings › School Days</SettingsLink>.
           </p>
         </>
       );
@@ -1692,10 +1692,10 @@ function TypeSettings({
       const e = edit<"packages">();
       return (
         <>
-          <Stepper label="Packages shown" value={w.count} min={1} max={12} onChange={(v) => e((x) => void (x.count = v))} />
-          <Toggle label="Only today's deliveries" checked={w.todayOnly} onChange={(v) => e((x) => void (x.todayOnly = v))} />
+          <Stepper label="Packages Shown" value={w.count} min={1} max={12} onChange={(v) => e((x) => void (x.count = v))} />
+          <Toggle label="Only Today's Deliveries" checked={w.todayOnly} onChange={(v) => e((x) => void (x.todayOnly = v))} />
           <Toggle
-            label="Show packages delivered before today"
+            label="Show Packages Delivered Before Today"
             checked={w.showDelivered}
             onChange={(v) => e((x) => void (x.showDelivered = v))}
           />
@@ -1705,7 +1705,7 @@ function TypeSettings({
                 label="Carrier"
                 value={p.carrier}
                 options={[
-                  { value: "other", label: "Work it out from the number" },
+                  { value: "other", label: "Work It Out from the Number" },
                   { value: "canadaPost", label: "Canada Post" },
                   { value: "purolator", label: "Purolator" },
                   { value: "ups", label: "UPS" },
@@ -1716,7 +1716,7 @@ function TypeSettings({
                 onChange={(v) => e((x) => void (x.packages[i]!.carrier = v))}
               />
               <Text
-                label="Tracking number"
+                label="Tracking Number"
                 value={p.trackingNumber}
                 maxLength={64}
                 onChange={(v) => e((x) => void (x.packages[i]!.trackingNumber = v))}
@@ -1743,7 +1743,7 @@ function TypeSettings({
               className="btn-ghost justify-self-start"
               onClick={() => e((x) => void x.packages.push({ id: newId("pkg"), carrier: "other", trackingNumber: "", label: "" }))}
             >
-              Add a package
+              Add a Package
             </button>
           )}
           <PackagesHint />
@@ -1770,14 +1770,14 @@ function TypeSettings({
               }
             />
           ))}
-          <Toggle label="Snow depth" checked={w.showDepth} onChange={(v) => e((x) => void (x.showDepth = v))} />
+          <Toggle label="Snow Depth" checked={w.showDepth} onChange={(v) => e((x) => void (x.showDepth = v))} />
           <Toggle
-            label="Snowfall today and the next two days"
+            label="Snowfall Today and the Next Two Days"
             checked={w.showForecast}
             onChange={(v) => e((x) => void (x.showForecast = v))}
           />
           <Toggle
-            label="Temperature on the mountain"
+            label="Temperature on the Mountain"
             checked={w.showTemperature}
             onChange={(v) => e((x) => void (x.showTemperature = v))}
           />
@@ -1796,7 +1796,7 @@ function TypeSettings({
             {w.stationId ? <span className="text-soft"> ({w.stationId})</span> : null}
           </p>
           <PlaceFinder
-            label="Find a station"
+            label="Find a Station"
             button="Find"
             placeholder="White Rock, Crescent Beach, Seattle…"
             nothing="No tide station by that name. Try a nearby harbour or beach."
@@ -1809,10 +1809,10 @@ function TypeSettings({
               })
             }
           />
-          <Stepper label="Highs and lows shown" value={w.count} min={1} max={8} onChange={(v) => e((x) => void (x.count = v))} />
-          <Toggle label="Show height" checked={w.showHeight} onChange={(v) => e((x) => void (x.showHeight = v))} />
+          <Stepper label="Highs and Lows Shown" value={w.count} min={1} max={8} onChange={(v) => e((x) => void (x.count = v))} />
+          <Toggle label="Show Height" checked={w.showHeight} onChange={(v) => e((x) => void (x.showHeight = v))} />
           <Toggle
-            label="Show the day's curve"
+            label="Show the Day's Curve"
             checked={w.showCurve}
             hint="The predicted water level from two hours ago to tomorrow, with a line at now."
             onChange={(v) => e((x) => void (x.showCurve = v))}
@@ -1832,7 +1832,7 @@ function TypeSettings({
       return (
         <>
           <Text
-            label="Symbols (comma-separated)"
+            label="Symbols (Comma-Separated)"
             value={w.symbols.join(", ")}
             maxLength={120}
             onChange={(v) =>
@@ -1846,7 +1846,7 @@ function TypeSettings({
             }
           />
           <Stepper label="Rows" value={w.count} min={1} max={12} onChange={(v) => e((x) => void (x.count = v))} />
-          <Toggle label="Show daily change %" checked={w.showChange} onChange={(v) => e((x) => void (x.showChange = v))} />
+          <Toggle label="Show Daily Change %" checked={w.showChange} onChange={(v) => e((x) => void (x.showChange = v))} />
         </>
       );
     }
@@ -1855,7 +1855,7 @@ function TypeSettings({
       return (
         <>
           <Text
-            label="CoinGecko ids"
+            label="CoinGecko Ids"
             value={w.coins.join(", ")}
             maxLength={200}
             onChange={(v) =>
@@ -1868,7 +1868,7 @@ function TypeSettings({
               )
             }
           />
-          <Text label="Quote currency" value={w.vs} maxLength={3} onChange={(v) => e((x) => void (x.vs = v.toLowerCase().slice(0, 3)))} />
+          <Text label="Quote Currency" value={w.vs} maxLength={3} onChange={(v) => e((x) => void (x.vs = v.toLowerCase().slice(0, 3)))} />
         </>
       );
     }
@@ -1880,7 +1880,7 @@ function TypeSettings({
       const e = edit<"maps">();
       return (
         <>
-          <Text label="Place or query" value={w.query} maxLength={200} onChange={(v) => e((x) => void (x.query = v))} />
+          <Text label="Place or Query" value={w.query} maxLength={200} onChange={(v) => e((x) => void (x.query = v))} />
           <Stepper label="Zoom" value={w.zoom} min={1} max={20} onChange={(v) => e((x) => void (x.zoom = v))} />
         </>
       );
@@ -1888,7 +1888,7 @@ function TypeSettings({
     case "youtube":
     case "vimeo": {
       const e = edit<"youtube" | "vimeo">();
-      return <Text label="Video or playlist id" value={w.videoId} maxLength={64} onChange={(v) => e((x) => void (x.videoId = v))} />;
+      return <Text label="Video or Playlist ID" value={w.videoId} maxLength={64} onChange={(v) => e((x) => void (x.videoId = v))} />;
     }
     case "instagram": {
       const e = edit<"instagram">();
@@ -1915,7 +1915,7 @@ function TypeSettings({
             onChange={(v) => e((x) => void (x.category = v))}
           />
           <TextArea
-            label="Extra lines (one per row)"
+            label="Extra Lines (One per Row)"
             value={w.custom.join("\n")}
             maxLength={2000}
             onChange={(v) =>
@@ -1963,11 +1963,11 @@ function TypeSettings({
       const e = edit<"oura">();
       return (
         <>
-          <Toggle label="Sleep score" checked={w.showSleep} onChange={(v) => e((x) => void (x.showSleep = v))} />
-          <Toggle label="Readiness score" checked={w.showReadiness} onChange={(v) => e((x) => void (x.showReadiness = v))} />
-          <Toggle label="Activity score and steps" checked={w.showActivity} onChange={(v) => e((x) => void (x.showActivity = v))} />
+          <Toggle label="Sleep Score" checked={w.showSleep} onChange={(v) => e((x) => void (x.showSleep = v))} />
+          <Toggle label="Readiness Score" checked={w.showReadiness} onChange={(v) => e((x) => void (x.showReadiness = v))} />
+          <Toggle label="Activity Score and Steps" checked={w.showActivity} onChange={(v) => e((x) => void (x.showActivity = v))} />
           <Toggle
-            label="Show last night's details"
+            label="Show Last Night's Details"
             checked={w.showDetails}
             hint="Hours asleep, bedtime, HRV and lowest heart rate. Anyone in the kitchen can read the wall, so this is off unless you turn it on."
             onChange={(v) => e((x) => void (x.showDetails = v))}
@@ -1980,9 +1980,9 @@ function TypeSettings({
       const e = edit<"moon">();
       return (
         <>
-          <Toggle label="Show the next full and new moon" checked={w.showNext} onChange={(v) => e((x) => void (x.showNext = v))} />
+          <Toggle label="Show the Next Full and New Moon" checked={w.showNext} onChange={(v) => e((x) => void (x.showNext = v))} />
           <Toggle
-            label="Name the full moon"
+            label="Name the Full Moon"
             checked={w.showName}
             hint="The traditional names, like Cold Moon in December and the Harvest Moon nearest the fall equinox."
             onChange={(v) => e((x) => void (x.showName = v))}
@@ -1996,7 +1996,7 @@ function TypeSettings({
       return (
         <>
           <Toggle
-            label="Show the next 24 hours"
+            label="Show the Next 24 Hours"
             checked={w.showBlocks}
             hint="A bar for each three-hour block of NOAA's Kp forecast; bars high enough to see it from home are coloured."
             onChange={(v) => e((x) => void (x.showBlocks = v))}
@@ -2013,11 +2013,11 @@ function TypeSettings({
       return (
         <>
           <Segmented
-            label="Show it as"
+            label="Show It As"
             value={w.layout}
             options={[
-              { value: "sentence", label: "A sentence" },
-              { value: "list", label: "A list" },
+              { value: "sentence", label: "A Sentence" },
+              { value: "list", label: "A List" },
             ]}
             onChange={(v) => e((x) => void (x.layout = v))}
           />
@@ -2038,9 +2038,9 @@ function TypeSettings({
               }
             />
           ))}
-          <Stepper label="Calendar events to name" value={w.events} min={1} max={5} onChange={(v) => e((x) => void (x.events = v))} />
+          <Stepper label="Calendar Events to Name" value={w.events} min={1} max={5} onChange={(v) => e((x) => void (x.events = v))} />
           <Toggle
-            label="Read tomorrow in the evening"
+            label="Read Tomorrow in the Evening"
             checked={w.eveningTomorrow}
             hint="From 7 PM it reads tomorrow's weather, plans and bins instead of what's left of today."
             onChange={(v) => e((x) => void (x.eveningTomorrow = v))}
@@ -2062,9 +2062,9 @@ function TypeSettings({
             ]}
             onChange={(v) => e((x) => void (x.kind = v))}
           />
-          <Stepper label="How many" value={w.count} min={1} max={5} onChange={(v) => e((x) => void (x.count = v))} />
+          <Stepper label="How Many" value={w.count} min={1} max={5} onChange={(v) => e((x) => void (x.count = v))} />
           <Toggle
-            label="Family friendly"
+            label="Family Friendly"
             checked={w.familyFriendly}
             hint="Leaves out wars, disasters and crimes, which is much of history. It errs on leaving things out."
             onChange={(v) => e((x) => void (x.familyFriendly = v))}
@@ -2105,18 +2105,18 @@ function TypeSettings({
             screen is. Each screen with this widget measures for itself.
           </p>
           <Select
-            label="Check the ping every"
+            label="Check the Ping Every"
             value={String(w.pingSeconds)}
             options={[
-              { value: "10", label: "10 seconds" },
-              { value: "30", label: "30 seconds" },
+              { value: "10", label: "10 Seconds" },
+              { value: "30", label: "30 Seconds" },
               { value: "60", label: "Minute" },
-              { value: "300", label: "5 minutes" },
+              { value: "300", label: "5 Minutes" },
             ]}
             onChange={(v) => e((x) => void (x.pingSeconds = Number(v)))}
           />
           <Stepper
-            label="Slow above"
+            label="Slow Above"
             value={w.slowMs}
             min={20}
             max={2000}
@@ -2126,26 +2126,26 @@ function TypeSettings({
             onChange={(v) => e((x) => void (x.slowMs = v))}
           />
           <Select
-            label="Speed test"
+            label="Speed Test"
             value={String(w.speedHours)}
             options={[
-              { value: "0", label: "Only when someone taps the widget" },
-              { value: "1", label: "Every hour" },
-              { value: "3", label: "Every 3 hours" },
-              { value: "6", label: "Every 6 hours" },
-              { value: "12", label: "Every 12 hours" },
-              { value: "24", label: "Once a day" },
+              { value: "0", label: "Only When Someone Taps the Widget" },
+              { value: "1", label: "Every Hour" },
+              { value: "3", label: "Every 3 Hours" },
+              { value: "6", label: "Every 6 Hours" },
+              { value: "12", label: "Every 12 Hours" },
+              { value: "24", label: "Once a Day" },
             ]}
             hint="A test downloads about 11 MB on a slow line and up to about 60 MB on a fast one. A tap on the widget runs one now."
             onChange={(v) => e((x) => void (x.speedHours = Number(v)))}
           />
           <Toggle
-            label="Upload speed too"
+            label="Upload Speed Too"
             checked={w.upload}
             hint="Sends up to about 12 MB more."
             onChange={(v) => e((x) => void (x.upload = v))}
           />
-          <Toggle label="Ping graph" checked={w.showGraph} onChange={(v) => e((x) => void (x.showGraph = v))} />
+          <Toggle label="Ping Graph" checked={w.showGraph} onChange={(v) => e((x) => void (x.showGraph = v))} />
         </>
       );
     }
@@ -2159,7 +2159,7 @@ function SchoolNames({ schools, onChange }: { schools: string[]; onChange: (scho
   const [text, setText] = useState(schools.join(", "));
   return (
     <Text
-      label="Only these schools"
+      label="Only These Schools"
       value={text}
       maxLength={1000}
       placeholder="Any district notice"
@@ -2191,13 +2191,13 @@ function AlertSettings<T extends Alerting>({ w, onChange }: { w: T; onChange: (c
     <>
       <Toggle label="Sound" checked={w.sound} onChange={(v) => onChange((x) => void (x.sound = v))} />
       <Toggle
-        label="Full-screen alert"
+        label="Full-Screen Alert"
         checked={w.fullScreen}
         hint="Flashes the whole screen with what's done, until someone taps."
         onChange={(v) => onChange((x) => void (x.fullScreen = v))}
       />
       <Range
-        label="Stop alerting after"
+        label="Stop Alerting After"
         value={w.ringSeconds}
         min={5}
         max={600}
@@ -2210,10 +2210,10 @@ function AlertSettings<T extends Alerting>({ w, onChange }: { w: T; onChange: (c
 }
 
 const QUICK_TIMERS = [
-  { label: "1 min", seconds: 60 },
-  { label: "3 min", seconds: 180 },
-  { label: "5 min", seconds: 300 },
-  { label: "10 min", seconds: 600 },
+  { label: "1 Min", seconds: 60 },
+  { label: "3 Min", seconds: 180 },
+  { label: "5 Min", seconds: 300 },
+  { label: "10 Min", seconds: 600 },
 ] as const;
 
 function TimerPresets({ presets, onChange }: { presets: TimerPreset[]; onChange: Edit<"timer"> }) {
@@ -2284,7 +2284,7 @@ function TimerPresets({ presets, onChange }: { presets: TimerPreset[]; onChange:
           className="btn-ghost justify-self-start"
           onClick={() => onChange((x) => void x.presets.push({ id: newId("tm"), label: "", emoji: "", seconds: 300 }))}
         >
-          Add a timer button
+          Add a Timer Button
         </button>
       )}
     </div>
@@ -2298,7 +2298,7 @@ function PhotoInterval({ value, onChange }: { value: number; onChange: (v: numbe
   return (
     <div className="grid gap-3">
       <Segmented
-        label="Seconds per photo"
+        label="Seconds per Photo"
         value={segment}
         options={PHOTO_INTERVALS}
         onChange={(v) => {
@@ -2310,7 +2310,7 @@ function PhotoInterval({ value, onChange }: { value: number; onChange: (v: numbe
         }}
       />
       {(forceCustom || !known) && (
-        <Range label="Custom interval" value={value} min={5} max={3600} step={5} format={(n) => `${n} s`} onChange={onChange} />
+        <Range label="Custom Interval" value={value} min={5} max={3600} step={5} format={(n) => `${n} s`} onChange={onChange} />
       )}
     </div>
   );
@@ -2328,7 +2328,7 @@ function SonosSpeaker({ value, onChange }: { value: string; onChange: (v: string
     );
   // A saved speaker Sonos no longer lists stays selectable, so it can be seen and changed.
   const options = [
-    { value: "", label: "Pick a speaker" },
+    { value: "", label: "Pick a Speaker" },
     ...players.map((p) => ({ value: p.id, label: p.name })),
     ...(value && !players.some((p) => p.id === value) ? [{ value, label: `${value} (not found)` }] : []),
   ];
@@ -2384,12 +2384,12 @@ function CountdownPhoto({ photo, onChange }: { photo: string | undefined; onChan
         </span>
       )}
       <label className="btn-ghost cursor-pointer">
-        {busy ? "Uploading…" : photo ? "Change photo" : "Add a photo"}
+        {busy ? "Uploading…" : photo ? "Change Photo" : "Add a Photo"}
         <input type="file" accept="image/*" className="sr-only" disabled={busy} onChange={(e) => void upload(e.target.files?.[0])} />
       </label>
       {photo && !busy && (
         <button type="button" className="btn-ghost text-bad" onClick={() => onChange(undefined)}>
-          Remove photo
+          Remove Photo
         </button>
       )}
       {error && <p className="text-xs text-bad">{error}</p>}
@@ -2406,9 +2406,9 @@ function CountdownEvents({ w, onChange }: { w: Extract<Widget, { type: "countdow
   const { events, count } = w;
   return (
     <>
-      <Stepper label="Events shown" value={count} min={1} max={12} onChange={(v) => onChange((x) => void (x.count = v))} />
+      <Stepper label="Events Shown" value={count} min={1} max={12} onChange={(v) => onChange((x) => void (x.count = v))} />
       <Toggle
-        label="Celebrate on the day"
+        label="Celebrate on the Day"
         checked={w.celebrate !== false}
         hint="On a birthday or anniversary, it leads the tile with its photo large: “Happy birthday, Sam!”"
         onChange={(v) => onChange((x) => void (x.celebrate = v))}
@@ -2441,7 +2441,7 @@ function CountdownEvents({ w, onChange }: { w: Extract<Widget, { type: "countdow
               />
             </div>
             <Toggle
-              label="Every year"
+              label="Every Year"
               checked={ev.yearly}
               hint={COUNTDOWN_HINTS[ev.kind]}
               onChange={(v) => onChange((x) => void (x.events[i]!.yearly = v))}
@@ -2551,7 +2551,7 @@ function DriveBcCameras({
         <form className="flex items-end gap-2" onSubmit={(e) => void search(e)}>
           <div className="min-w-0 flex-1">
             <Text
-              label="Find a camera"
+              label="Find a Camera"
               value={q}
               maxLength={60}
               placeholder="Port Mann, Hwy 1, Coquihalla; empty for the nearest"
@@ -2644,7 +2644,7 @@ function TransitStops({
       {stops.length < 6 && (
         <form className="flex items-end gap-2" onSubmit={(e) => void search(e)}>
           <div className="min-w-0 flex-1">
-            <Text label="Find a stop" value={q} maxLength={60} placeholder="Stop number or name; empty for the nearest" onChange={setQ} />
+            <Text label="Find a Stop" value={q} maxLength={60} placeholder="Stop number or name; empty for the nearest" onChange={setQ} />
           </div>
           <button className="btn-primary" disabled={busy}>
             {busy ? "Finding…" : "Find"}
@@ -2679,7 +2679,7 @@ function RoutesField({ routes, onChange }: { routes: string[]; onChange: (routes
   const [text, setText] = useState(routes.join(", "));
   return (
     <Text
-      label="Only these routes"
+      label="Only These Routes"
       value={text}
       maxLength={200}
       placeholder="All routes"
@@ -2768,7 +2768,7 @@ function RiversSettings({ w, onChange }: { w: Extract<Widget, { type: "rivers" }
       {!full && (
         <>
           <Text
-            label="Add another station by number"
+            label="Add Another Station by Number"
             value={number}
             maxLength={7}
             placeholder="08MH024"
@@ -2776,13 +2776,13 @@ function RiversSettings({ w, onChange }: { w: Extract<Widget, { type: "rivers" }
             onChange={setNumber}
           />
           <button type="button" className="btn-ghost justify-self-start" disabled={checking || !number.trim()} onClick={() => void add()}>
-            {checking ? "Checking…" : "Add station"}
+            {checking ? "Checking…" : "Add Station"}
           </button>
         </>
       )}
       {note && <p className="text-xs text-soft">{note}</p>}
-      <Toggle label="Show the day's line" checked={w.showChart} onChange={(v) => onChange((x) => void (x.showChart = v))} />
-      <Toggle label="Show flow (where measured)" checked={w.showDischarge} onChange={(v) => onChange((x) => void (x.showDischarge = v))} />
+      <Toggle label="Show the Day's Line" checked={w.showChart} onChange={(v) => onChange((x) => void (x.showChart = v))} />
+      <Toggle label="Show Flow (Where Measured)" checked={w.showDischarge} onChange={(v) => onChange((x) => void (x.showDischarge = v))} />
     </>
   );
 }
@@ -2807,7 +2807,7 @@ function AirthingsSettings({ w, onChange }: { w: Extract<Widget, { type: "airthi
       ))}
       {!status ? null : !status.configured ? (
         <p className="text-xs text-soft">
-          Connect Airthings under <SettingsLink href="#settings/indoor-air">Settings › Indoor air</SettingsLink>.
+          Connect Airthings under <SettingsLink href="#settings/indoor-air">Settings › Indoor Air</SettingsLink>.
         </p>
       ) : status.devices.length === 0 ? (
         <p className="text-xs text-soft">{status.error || "Airthings lists no devices yet."}</p>
@@ -2895,12 +2895,12 @@ function RachioSettings({ w, onChange }: { w: Extract<Widget, { type: "rachio" }
   return (
     <>
       <Toggle
-        label="Skip from the wall"
+        label="Skip from the Wall"
         checked={w.allowSkip}
         hint="A Skip button on the next watering. Anyone in the kitchen can tap it."
         onChange={(v) => onChange((x) => void (x.allowSkip = v))}
       />
-      <Toggle label="Show zones" checked={w.showZones} onChange={(v) => onChange((x) => void (x.showZones = v))} />
+      <Toggle label="Show Zones" checked={w.showZones} onChange={(v) => onChange((x) => void (x.showZones = v))} />
       {!status ? null : !status.configured ? (
         <p className="text-xs text-soft">
           Connect Rachio under <SettingsLink href="#settings/sprinklers">Settings › Sprinklers</SettingsLink>.
@@ -2937,9 +2937,9 @@ function EcoFlowSettings({
   const extra = w.devices.filter((sn) => !devices.some((d) => d.sn === sn));
   return (
     <>
-      <Toggle label="Solar input" checked={w.showSolar} onChange={(v) => e((x) => void (x.showSolar = v))} />
-      <Toggle label="AC and DC in and out" checked={w.showFlows} onChange={(v) => e((x) => void (x.showFlows = v))} />
-      <Toggle label="Time to full or empty" checked={w.showTime} onChange={(v) => e((x) => void (x.showTime = v))} />
+      <Toggle label="Solar Input" checked={w.showSolar} onChange={(v) => e((x) => void (x.showSolar = v))} />
+      <Toggle label="AC and DC in and Out" checked={w.showFlows} onChange={(v) => e((x) => void (x.showFlows = v))} />
+      <Toggle label="Time to Full or Empty" checked={w.showTime} onChange={(v) => e((x) => void (x.showTime = v))} />
       {!status ? (
         <p className="text-sm text-soft">Checking EcoFlow…</p>
       ) : !status.connected ? (
@@ -2976,7 +2976,7 @@ function LaundrySettings({ w, onChange }: { w: Extract<Widget, { type: "laundry"
   return (
     <>
       <Toggle
-        label="Show machines that are idle or off"
+        label="Show Machines That Are Idle or Off"
         checked={w.showIdle}
         hint="Off: only running, paused and done machines."
         onChange={(v) => onChange((x) => void (x.showIdle = v))}

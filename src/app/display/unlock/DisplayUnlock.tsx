@@ -161,7 +161,7 @@ export function DisplayUnlock({ signedInAs }: { signedInAs: string | null }) {
     <div className="mt-6 grid gap-8">
       {signedInAs ? (
         <section className="grid gap-3">
-          <h2 className="text-sm font-semibold">Choose a display</h2>
+          <h2 className="text-sm font-semibold">Choose a Display</h2>
           <p className="text-sm text-soft">
             Signed in as <span className="font-medium text-ink">{signedInAs}</span>. Pick which wall this screen is.
           </p>
@@ -194,7 +194,7 @@ export function DisplayUnlock({ signedInAs }: { signedInAs: string | null }) {
       ) : null}
 
       <section className="grid gap-3">
-        <h2 className="text-sm font-semibold">{signedInAs ? "Or unlock with your phone" : "Scan with your phone"}</h2>
+        <h2 className="text-sm font-semibold">{signedInAs ? "Or Unlock with Your Phone" : "Scan with Your Phone"}</h2>
         <p className="text-sm text-soft">
           {signedInAs
             ? "For TVs and panels without touch: scan the code, sign in on your phone, pick this display, then Approve."
@@ -222,7 +222,7 @@ export function DisplayUnlock({ signedInAs }: { signedInAs: string | null }) {
           </p>
         )}
         <button type="button" className="btn-ghost" onClick={() => setQrNonce((n) => n + 1)} disabled={status === "unlocking"}>
-          New code
+          New Code
         </button>
       </section>
     </div>

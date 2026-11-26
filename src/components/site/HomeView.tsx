@@ -23,17 +23,17 @@ export const homeMetadata = pageMeta({
 
 const FEATURES = [
   {
-    title: "The week, on one wall",
+    title: "The Week, on One Wall",
     body: "Google Calendar, iCal links and family events share a today schedule and a month grid. Tap Google Tasks to tick them off — synced back with a four-second undo.",
     shot: "morning" as const,
   },
   {
-    title: "Chores, meals and the list",
+    title: "Chores, Meals and the List",
     body: "Kids earn stars on the chore chart. Breakfast, lunch and dinner plan from a phone. The shopping list ticks off with a tap when you allow it.",
     shot: "family" as const,
   },
   {
-    title: "Leaving the house, sorted",
+    title: "Leaving the House, Sorted",
     body: "Next buses from your TransLink stops, drive times with live traffic, rain radar over the Lower Mainland and BC Ferries sailings with how full they are.",
     shot: "commute" as const,
   },
@@ -55,19 +55,19 @@ const IDLE_POINTS = [
 
 const VALUE = [
   {
-    title: 'Fewer "what time is…?" questions',
+    title: 'Fewer "What Time Is…?" Questions',
     body: "Clocks for Vancouver and Toronto, the date, sunrise and sunset, and today's calendar sit where everyone walks past.",
   },
   {
-    title: "Kids can see their jobs",
+    title: "Kids Can See Their Jobs",
     body: "Chores rotate fairly, stars add up to a weekly goal, and a second tap takes a tick back — no nagging app on a phone they ignore.",
   },
   {
-    title: "The house talks back",
+    title: "The House Talks Back",
     body: "Home Assistant lights, climate and locks (lock only), UniFi doorbell full-screen, Spotify or Sonos now-playing, and who's home.",
   },
   {
-    title: "Built for here",
+    title: "Built for Here",
     body: "Langley garbage zones, SD35 school status, Alert Ready, Environment Canada warnings, DriveBC, earthquakes and BC Hydro outages on a dismissible red strip.",
   },
 ];
@@ -144,7 +144,7 @@ export function HomeView() {
               <Wordmark height={40} className="mb-5" />
               <Eyebrow>Family wall dashboard</Eyebrow>
               <h1 className="mt-4 font-display text-[2.55rem] leading-[1.05] font-extrabold tracking-tight text-balance sm:text-6xl">
-                Your home, <span className="bg-gradient-to-r from-brand to-sky bg-clip-text text-transparent">at a glance.</span>
+                Your Home, <span className="bg-gradient-to-r from-brand to-sky bg-clip-text text-transparent">at a glance.</span>
               </h1>
               <p className="mt-5 max-w-xl text-lg text-soft sm:text-xl">{BRAND.lede}</p>
               <div className="mt-7 flex flex-wrap gap-3">
@@ -153,14 +153,14 @@ export function HomeView() {
                   data-cta="hero"
                   className="inline-flex min-h-14 items-center justify-center rounded-2xl bg-brand px-7 text-lg font-semibold text-brand-ink shadow-[0_12px_40px_-12px_rgb(59_91_219/0.7)]"
                 >
-                  Start free
+                  Start Free
                 </Link>
                 <a
                   href="#screens"
                   data-cta="hero-screens"
                   className="inline-flex min-h-14 items-center justify-center rounded-2xl border border-line bg-panel px-6 text-lg font-semibold"
                 >
-                  See the screens
+                  See the Screens
                 </a>
               </div>
               <p className="mt-4 text-base text-soft">
@@ -170,7 +170,7 @@ export function HomeView() {
                   data-cta="hero-connect-display"
                   className="font-semibold text-brand underline-offset-4 hover:underline"
                 >
-                  Connect a display →
+                  Connect a Display →
                 </Link>
               </p>
               <ul className="mt-5 flex flex-wrap gap-x-5 gap-y-2 text-sm text-soft">
@@ -207,7 +207,7 @@ export function HomeView() {
 
         <section className="mx-auto max-w-6xl px-4 py-16">
           <Eyebrow>Three steps</Eyebrow>
-          <h2 className="mt-3 font-display text-3xl font-extrabold tracking-tight sm:text-4xl">From sign-in to a living wall</h2>
+          <h2 className="mt-3 font-display text-3xl font-extrabold tracking-tight sm:text-4xl">From Sign-In to a Living Wall</h2>
           <ol className="mt-8 grid gap-4 md:grid-cols-3">
             {[
               {
@@ -239,7 +239,7 @@ export function HomeView() {
           <div className="mx-auto max-w-6xl px-4">
             <Eyebrow>On the wall</Eyebrow>
             <h2 className="mt-3 font-display text-3xl font-extrabold tracking-tight sm:text-4xl">
-              Colourful screens the whole family reads
+              Colourful Screens the Whole Family Reads
             </h2>
             <p className="mt-3 max-w-2xl text-soft">
               Real starter layouts from the Views tab — the same screenshots families pick when they set up a wall.
@@ -266,7 +266,7 @@ export function HomeView() {
             <div>
               <Eyebrow>Screen saver</Eyebrow>
               <h2 className="mt-3 font-display text-3xl font-extrabold tracking-tight text-balance sm:text-4xl">
-                When nobody&rsquo;s looking, it&rsquo;s a photo frame
+                When Nobody&rsquo;s Looking, It&rsquo;s a Photo Frame
               </h2>
               <p className="mt-3 text-soft">
                 A few quiet minutes after the last touch (you pick how many), the wall trades the schedule for your Amazon albums, Google
@@ -284,7 +284,7 @@ export function HomeView() {
               </ul>
               <p className="mt-6 flex flex-wrap items-center gap-x-5 gap-y-2">
                 <Link href="/blog/photo-frame-screen-saver/" className="font-semibold text-brand hover:underline">
-                  How the photo frame works →
+                  How the Photo Frame Works →
                 </Link>
                 <span className="text-sm text-soft">On Household</span>
               </p>
@@ -295,7 +295,7 @@ export function HomeView() {
 
         <section className="mx-auto max-w-6xl px-4 py-16">
           <Eyebrow>Why families keep it up</Eyebrow>
-          <h2 className="mt-3 font-display text-3xl font-extrabold tracking-tight sm:text-4xl">Value you feel before breakfast</h2>
+          <h2 className="mt-3 font-display text-3xl font-extrabold tracking-tight sm:text-4xl">Value You Feel Before Breakfast</h2>
           <div className="mt-8 grid gap-4 sm:grid-cols-2">
             {VALUE.map((v) => (
               <article key={v.title} className="card">
@@ -309,7 +309,7 @@ export function HomeView() {
         <section className="border-y border-line bg-gradient-to-b from-panel/80 to-bg py-16">
           <div className="mx-auto max-w-6xl px-4">
             <Eyebrow>Everything on the pane</Eyebrow>
-            <h2 className="mt-3 font-display text-3xl font-extrabold tracking-tight sm:text-4xl">Widgets, listed</h2>
+            <h2 className="mt-3 font-display text-3xl font-extrabold tracking-tight sm:text-4xl">Widgets, Listed</h2>
             <p className="mt-3 max-w-2xl text-soft">
               Thirty-plus widget types, each with its own settings. Free covers the essentials; Household unlocks the rest.
             </p>
@@ -322,7 +322,7 @@ export function HomeView() {
             </ul>
             <p className="mt-6">
               <Link href="/features/" className="font-semibold text-brand hover:underline">
-                Full feature list →
+                Full Feature List →
               </Link>
             </p>
           </div>
@@ -389,12 +389,12 @@ export function HomeView() {
 
           <div className="mt-12 overflow-x-auto rounded-2xl border border-line bg-panel">
             <table className="w-full min-w-[32rem] text-left text-sm">
-              <caption className="sr-only">Feature comparison between Free and Household</caption>
+              <caption className="sr-only">Feature Comparison Between Free and Household</caption>
               <thead className="border-b border-line bg-bg/80 text-xs tracking-wide uppercase">
                 <tr>
                   <th className="px-4 py-3 font-semibold">Feature</th>
                   <th className="px-4 py-3 font-semibold">Free</th>
-                  <th className="px-4 py-3 font-semibold text-brand">Household · best value</th>
+                  <th className="px-4 py-3 font-semibold text-brand">Household · Best Value</th>
                 </tr>
               </thead>
               <tbody>
@@ -424,14 +424,14 @@ export function HomeView() {
         <section className="border-y border-line bg-panel/50 py-16">
           <div className="mx-auto max-w-6xl px-4">
             <Eyebrow>Blog</Eyebrow>
-            <h2 className="mt-3 font-display text-3xl font-extrabold tracking-tight sm:text-4xl">Updates, guides and comparisons</h2>
+            <h2 className="mt-3 font-display text-3xl font-extrabold tracking-tight sm:text-4xl">Updates, Guides and Comparisons</h2>
             <p className="mt-3 max-w-2xl text-soft">
               Release notes, setup guides and deep comparisons — written so families can find Everydaypane when they search.
             </p>
             <LatestPosts />
             <p className="mt-6">
               <Link href="/blog/" className="font-semibold text-brand hover:underline">
-                All posts →
+                All Posts →
               </Link>
             </p>
           </div>
@@ -439,7 +439,7 @@ export function HomeView() {
 
         <section className="mx-auto max-w-3xl px-4 py-16">
           <Eyebrow>Good to know</Eyebrow>
-          <h2 className="mt-3 font-display text-3xl font-extrabold tracking-tight">Questions families ask</h2>
+          <h2 className="mt-3 font-display text-3xl font-extrabold tracking-tight">Questions Families Ask</h2>
           <div className="mt-8 divide-y divide-line rounded-2xl border border-line bg-panel">
             {HOME_FAQS.map((f) => (
               <details key={f.q} className="group px-5 py-4">
@@ -458,7 +458,7 @@ export function HomeView() {
         <section className="mx-auto max-w-6xl px-4 pb-20">
           <CtaBanner
             cta="home-end"
-            title="Hang your family's week on the wall"
+            title="Hang Your Family's Week on the Wall"
             body="Start on Free in a few minutes. Upgrade to Household when you want every widget — still no ads."
           />
         </section>

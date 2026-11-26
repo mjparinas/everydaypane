@@ -30,7 +30,7 @@ export function ScreenSaverSummary({ onOpen }: { onOpen: () => void }) {
   const on = s.idle || s.night;
 
   return (
-    <Section id="settings-screen-saver-summary" title="Screen saver" actions={isPaid ? undefined : <HouseholdBadge />}>
+    <Section id="settings-screen-saver-summary" title="Screen Saver" actions={isPaid ? undefined : <HouseholdBadge />}>
       {on ? (
         <p className="text-sm text-soft">
           <strong className="text-ink">On.</strong> {status}
@@ -47,15 +47,15 @@ export function ScreenSaverSummary({ onOpen }: { onOpen: () => void }) {
       <div className="flex flex-wrap items-center gap-3">
         {isPaid ? (
           <button type="button" className={on ? "btn-ghost" : "btn-primary"} onClick={onOpen}>
-            {on ? "Change screen saver" : "Set up the screen saver"}
+            {on ? "Change Screen Saver" : "Set Up the Screen Saver"}
           </button>
         ) : (
           <button type="button" className="btn-primary" onClick={() => openUpgrade("screenSaver")}>
-            See why Household
+            See Why Household
           </button>
         )}
         <a href={SCREEN_SAVER_GUIDE} target="_blank" rel="noopener" className="text-sm font-semibold text-brand hover:underline">
-          How it works
+          How It Works
         </a>
       </div>
     </Section>
@@ -75,15 +75,15 @@ export function ScreenSaverPanel() {
 
   return (
     <Section
-      title="Screen saver"
+      title="Screen Saver"
       actions={
         <a href={SCREEN_SAVER_GUIDE} target="_blank" rel="noopener" className="text-sm font-semibold text-brand hover:underline">
-          How it works
+          How It Works
         </a>
       }
     >
       <Toggle
-        label="When nobody's using it"
+        label="When Nobody's Using It"
         checked={s.idle}
         hint="After a while with no touch, the screen shows photos, a view of your choice, or goes dark. A tap brings the dashboard back."
         onChange={(v) => edit((c) => void (c.screenSaver.idle = v))}
@@ -93,9 +93,9 @@ export function ScreenSaverPanel() {
           label="Show"
           value={s.shows}
           options={[
-            { value: "photos", label: "Photos, full screen" },
-            { value: "view", label: "A view (like a photo frame)" },
-            { value: "dark", label: "Nothing (dark screen)" },
+            { value: "photos", label: "Photos, Full Screen" },
+            { value: "view", label: "A View (Like a Photo Frame)" },
+            { value: "dark", label: "Nothing (Dark Screen)" },
           ]}
           onChange={(v) =>
             edit((c) => {
@@ -109,7 +109,7 @@ export function ScreenSaverPanel() {
       {s.idle && s.shows === "view" && (
         <>
           <Select
-            label="Idle view"
+            label="Idle View"
             value={s.viewId ?? ""}
             options={views.map((v) => ({ value: v.id, label: v.name }))}
             onChange={(v) => edit((c) => void (c.screenSaver.viewId = v))}
@@ -144,12 +144,12 @@ export function ScreenSaverPanel() {
           ) : (
             <p className="text-xs text-soft">Add a photo album under Photos first; until then the screen goes dark instead.</p>
           )}
-          <Toggle label="Show the time and date" checked={s.showClock} onChange={(v) => edit((c) => void (c.screenSaver.showClock = v))} />
+          <Toggle label="Show the Time and Date" checked={s.showClock} onChange={(v) => edit((c) => void (c.screenSaver.showClock = v))} />
         </>
       )}
 
       <Toggle
-        label="Go dark at night"
+        label="Go Dark at Night"
         checked={s.night}
         hint="The screen is black between these times. A tap wakes it for a while, then it goes dark again."
         onChange={(v) => edit((c) => void (c.screenSaver.night = v))}
@@ -169,7 +169,7 @@ export function ScreenSaverPanel() {
       {(s.idle || s.night) && (
         <>
           <Range
-            label="Minutes without a touch"
+            label="Minutes Without a Touch"
             value={s.minutes}
             min={1}
             max={240}
@@ -179,7 +179,7 @@ export function ScreenSaverPanel() {
             onChange={(v) => edit((c) => void (c.screenSaver.minutes = v))}
           />
           <div className="grid gap-2 border-t border-line pt-3">
-            <h3 className="text-sm font-semibold">Motion sensors</h3>
+            <h3 className="text-sm font-semibold">Motion Sensors</h3>
             <p className="text-xs text-soft">
               {haUrl
                 ? "Home Assistant motion or occupancy sensors near the screen. While one sees someone, the screen stays awake, and it wakes when someone walks up."

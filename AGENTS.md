@@ -293,6 +293,15 @@ npm run templates:previews  # regenerate public/templates/*.png from real widget
   `combinedFeed` with `titleCase` (`src/lib/titleCase.ts`), so the display bundle doesn't grow and the calendars
   themselves never change. Words with a capital after the first letter (BC, PRO-D, iPhone, an all-caps title) are left
   as typed, and short joining words (a, of, the…) stay lower case mid-title (Claude's rules, 2026-11-26).
+- **Title Case everywhere a thing is named** (Melvin, 2026-11-26: "i prefer title case pretty much everywhere. if it
+  doesn't make sense in an area can you let me know"): headings, tabs, nav, buttons, field and toggle labels, select
+  options, widget names and titles (the wall title-cases saved titles too, in `mountWidget`), starter template names,
+  blog titles and headings, and short status chips on the wall ("Out for Delivery", "Under Control"). Sentences stay in
+  sentence case: hints, descriptions, errors, empty states ("Nothing coming up"), placeholders, the morning brief,
+  emails (subject and body), marketing paragraphs and alert text from agencies. What people type (notes, meals,
+  messages, shopping, chores, view names) is shown as typed, except calendar titles (`calendarTitleCase`). Rules are
+  Chicago-style, in `titleCase` (`src/lib/titleCase.ts`): small words (a, of, the, with…) lower mid-title, capitals
+  already there kept (Microsoft To Do, BC, PRO-D, ID). New UI copy follows the same split.
 - **Month calendar title** (Melvin, 2026-11-19: "add a toggle to show/hide month title"): the month widget's
   "November 2026" line can be switched off in its settings (`showTitle`, on by default); the grid takes the space.
 - **Tile padding** (Melvin, 2026-11-22: "is it possible to adjust the inner padding of the tiles"): each view has a

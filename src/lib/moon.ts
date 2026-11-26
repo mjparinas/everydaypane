@@ -59,17 +59,17 @@ function lunation(now: number): number {
 }
 
 export type MoonPhaseName =
-  "New moon" | "Waxing crescent" | "First quarter" | "Waxing gibbous" | "Full moon" | "Waning gibbous" | "Last quarter" | "Waning crescent";
+  "New Moon" | "Waxing Crescent" | "First Quarter" | "Waxing Gibbous" | "Full Moon" | "Waning Gibbous" | "Last Quarter" | "Waning Crescent";
 
 const NAMES: MoonPhaseName[] = [
-  "New moon",
-  "Waxing crescent",
-  "First quarter",
-  "Waxing gibbous",
-  "Full moon",
-  "Waning gibbous",
-  "Last quarter",
-  "Waning crescent",
+  "New Moon",
+  "Waxing Crescent",
+  "First Quarter",
+  "Waxing Gibbous",
+  "Full Moon",
+  "Waning Gibbous",
+  "Last Quarter",
+  "Waning Crescent",
 ];
 // As seen from the northern hemisphere: lit on the right while waxing.
 const EMOJI = ["🌑", "🌒", "🌓", "🌔", "🌕", "🌖", "🌗", "🌘"];

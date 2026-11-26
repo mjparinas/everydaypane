@@ -195,7 +195,7 @@ export function LibraryAlbum({ sourceId }: { sourceId: string }) {
       )}
       <div className="flex flex-wrap gap-2">
         <label className={`btn-primary cursor-pointer ${busy ? "pointer-events-none opacity-50" : ""}`}>
-          Upload photos
+          Upload Photos
           <input
             type="file"
             accept="image/*"

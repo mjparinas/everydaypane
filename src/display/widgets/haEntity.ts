@@ -61,7 +61,7 @@ const dead = (e: HaEntity) => e.state === "unavailable" || e.state === "unknown"
 
 /** Colours a tap can set on a colour light: warm white first, then a few bright ones. */
 export const LIGHT_COLOURS: readonly [string, string][] = [
-  ["#ffd9a8", "Warm white"],
+  ["#ffd9a8", "Warm White"],
   ["#ffffff", "White"],
   ["#ff3b30", "Red"],
   ["#ff9500", "Orange"],
@@ -253,10 +253,10 @@ export const haEntity: Mount<"haEntity"> = (el, w) => {
         {
           type: "button",
           class: "ha-btn ha-lock",
-          "aria-label": "Hold to lock",
+          "aria-label": "Hold to Lock",
           draggable: "false",
         },
-        "Hold to lock",
+        "Hold to Lock",
       );
       let lockHeldAt: number | null = null;
       const stopLockHold = () => {

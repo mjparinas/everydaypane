@@ -31,12 +31,12 @@ export function minutesLabel(time: number, nowS: number, clock: string): string 
   return m < 60 ? `${m} min` : clock;
 }
 
-/** "3 min late", "2 min early", "On time" for a live prediction, "Scheduled" for one with no bus on it yet. */
+/** "3 min late", "2 min early", "On Time" for a live prediction, "Scheduled" for one with no bus on it yet. */
 export function delayLabel(d: TransitDeparture): { text: string; cls: string } {
   const m = d.delay === null ? 0 : Math.round(d.delay / 60);
   if (m >= 1) return { text: `${m} min late`, cls: "tl-late" };
   if (m <= -1) return { text: `${-m} min early`, cls: "tl-early" };
-  return d.live ? { text: "On time", cls: "tl-ontime" } : { text: "Scheduled", cls: "" };
+  return d.live ? { text: "On Time", cls: "tl-ontime" } : { text: "Scheduled", cls: "" };
 }
 
 export const transit: Mount<"transit"> = (el, w, ctx) => {
@@ -57,7 +57,7 @@ export const transit: Mount<"transit"> = (el, w, ctx) => {
     const nowS = Math.floor(Date.now() / 1000);
     fill(
       root,
-      h("div", { class: "w-label" }, w.title || "Next buses"),
+      h("div", { class: "w-label" }, w.title || "Next Buses"),
       ...w.stops.map((stop) => {
         const list = shownDepartures(data?.stops[stopKey(w.agency, stop.id)] ?? [], w, nowS);
         return h(

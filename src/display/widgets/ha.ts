@@ -50,5 +50,5 @@ export const camera: Mount<"camera"> = (el, w) => {
   const status = h("div", { class: "cam-status" });
   const label = w.title ? h("div", { class: "cam-label" }, w.title) : null;
   el.append(h("div", { class: "w-camera" }, img, label, status));
-  return cameraLoop(img, w.entityId, w.refreshSeconds * 1000, (failed) => setText(status, failed ? "Camera offline" : ""));
+  return cameraLoop(img, w.entityId, w.refreshSeconds * 1000, (failed) => setText(status, failed ? "Camera Offline" : ""));
 };

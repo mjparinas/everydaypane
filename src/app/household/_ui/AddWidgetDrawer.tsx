@@ -126,8 +126,8 @@ export function AddWidgetDrawer({ onClose, onPick }: { onClose: () => void; onPi
   const showCatalogue = searching || browseAll;
 
   return (
-    <SlideDrawer title="Add a widget" openKey="add-widget" onClose={onClose} testId="add-widget-drawer" closeLabel="Close widget picker">
-      <Text label="Search widgets" value={query} maxLength={40} placeholder="Clock, weather…" onChange={setQuery} />
+    <SlideDrawer title="Add a Widget" openKey="add-widget" onClose={onClose} testId="add-widget-drawer" closeLabel="Close widget picker">
+      <Text label="Search Widgets" value={query} maxLength={40} placeholder="Clock, weather…" onChange={setQuery} />
       {!isPaid && (
         <p className="rounded-xl bg-bg p-3 text-xs text-soft">
           Core widgets are free. Household widgets open upgrade details instead of adding.
@@ -136,14 +136,14 @@ export function AddWidgetDrawer({ onClose, onPick }: { onClose: () => void; onPi
 
       {showRecommended && (
         <div className="grid gap-2">
-          <h3 className="text-sm font-semibold text-soft">Recommended for this view</h3>
+          <h3 className="text-sm font-semibold text-soft">Recommended for This View</h3>
           <div className="grid grid-cols-2 gap-2">
             {RECOMMENDED.filter(widgetOn).map((t) => (
               <WidgetCard key={t} type={t} locked={false} onPick={onPick} onUpgrade={() => openUpgrade("widget")} />
             ))}
           </div>
           <button type="button" className="btn-ghost mt-1 justify-self-start" onClick={() => setBrowseAll(true)}>
-            Browse all widgets
+            Browse All Widgets
           </button>
         </div>
       )}
@@ -179,12 +179,12 @@ export function AddWidgetDrawer({ onClose, onPick }: { onClose: () => void; onPi
           {!isPaid && householdTypes.length > 0 ? (
             <div className="grid gap-2 border-t border-line pt-3">
               <button type="button" className="btn-ghost justify-self-start" onClick={() => setShowHousehold((v) => !v)}>
-                {showHousehold ? "Hide" : "Show"} {householdTypes.length} Household widgets
+                {showHousehold ? "Hide" : "Show"} {householdTypes.length} Household Widgets
                 <HouseholdBadge className="ml-1.5" />
               </button>
               {showHousehold ? (
                 <GroupGrid
-                  group={{ id: "household", label: "Household widgets", types: householdTypes }}
+                  group={{ id: "household", label: "Household Widgets", types: householdTypes }}
                   isPaid={false}
                   onPick={onPick}
                   openUpgrade={() => openUpgrade("widget")}
@@ -193,7 +193,7 @@ export function AddWidgetDrawer({ onClose, onPick }: { onClose: () => void; onPi
             </div>
           ) : null}
           <button type="button" className="btn-ghost justify-self-start text-soft" onClick={() => setBrowseAll(false)}>
-            Show recommended only
+            Show Recommended Only
           </button>
         </div>
       )}

@@ -74,7 +74,7 @@ export function PhoneApprove({ initialCode, signedInAs }: { initialCode: string 
         <p className="text-sm text-soft">Sign in on this phone first, then pick which wall display to unlock.</p>
         {!normalized && (
           <label className="mt-4 grid gap-1 text-sm font-medium">
-            Code on the display
+            Code on the Display
             <input
               className="field font-mono tracking-widest"
               value={code}
@@ -109,7 +109,7 @@ export function PhoneApprove({ initialCode, signedInAs }: { initialCode: string 
         Signed in as <span className="font-medium text-ink">{signedInAs}</span>. Pick which display the wall should show, then Approve.
       </p>
       <label className="grid gap-1 text-sm font-medium">
-        Code on the display
+        Code on the Display
         <input
           className="field font-mono tracking-widest"
           value={code}
@@ -142,7 +142,7 @@ export function PhoneApprove({ initialCode, signedInAs }: { initialCode: string 
         disabled={state.kind === "sending" || !deviceId || devices === null || devices.length === 0}
         onClick={() => void approve()}
       >
-        {state.kind === "sending" ? "Approving…" : "Approve this display"}
+        {state.kind === "sending" ? "Approving…" : "Approve This Display"}
       </button>
       {state.kind === "error" && (
         <p className="text-sm text-bad" role="alert">

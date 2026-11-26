@@ -230,6 +230,7 @@ Rounded indigo mark (three panes: clock, sun, pale) + Manrope everyday**pane**. 
 - **Do** use Manrope for marketing/display voice and Inter for operational body UI.
 - **Do** honour `prefers-reduced-motion` (disable `site-rise`; solid states for alarms on the wall).
 - **Do** use Canadian English in UI copy (colour, centre, favourite).
+- **Do** write names in Title Case (headings, tabs, buttons, labels, options, widget titles, wall status chips) and sentences in sentence case (hints, errors, empty states, emails, body copy); `titleCase` in `src/lib/titleCase.ts` has the rules (Melvin, 2026-11-26).
 
 ### Don't:
 - **Don't** restyle the wall with marketing `@theme` tokens — wall themes own that surface.

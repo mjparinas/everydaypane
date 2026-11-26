@@ -5,10 +5,10 @@ export const POOL_KINDS = ["temp", "ph", "orp", "chlorine", "salinity"] as const
 export type PoolKind = (typeof POOL_KINDS)[number];
 
 export const POOL_LABELS: Record<PoolKind, string> = {
-  temp: "Water temperature",
+  temp: "Water Temperature",
   ph: "pH",
   orp: "ORP (sanitiser)",
-  chlorine: "Free chlorine",
+  chlorine: "Free Chlorine",
   salinity: "Salinity",
 };
 

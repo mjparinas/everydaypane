@@ -33,14 +33,14 @@ export const meals: Mount<"meals"> = (el, w, ctx) => {
         "div",
         { class: `ml-row${date === start && slot === next.slot ? " ml-next" : ""}${text ? "" : " ml-empty"}` },
         h("span", { class: "ml-slot" }, MEAL_ICONS[slot], " ", MEAL_LABELS[slot]),
-        h("span", { class: "ml-text" }, text ?? "Not planned"),
+        h("span", { class: "ml-text" }, text ?? "Not Planned"),
       );
 
     if (w.days === 1) {
       const plan = data.meals[start] ?? {};
       fill(
         root,
-        h("div", { class: "w-label" }, w.title || (start === today ? "Today's meals" : "Tomorrow's meals")),
+        h("div", { class: "w-label" }, w.title || (start === today ? "Today's Meals" : "Tomorrow's Meals")),
         ...w.slots.map((s) => row(start, s, plan[s])),
       );
       return;

@@ -71,7 +71,7 @@ function Service({
           {children}
           <div className="flex flex-wrap gap-2">
             <a className="btn-ghost" href={`/api/music/${service}/connect/`}>
-              Use another account
+              Use Another Account
             </a>
             <ConfirmButton label="Disconnect" onConfirm={onDisconnect} />
           </div>

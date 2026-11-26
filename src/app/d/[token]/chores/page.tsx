@@ -31,7 +31,7 @@ export default async function DisplayChoresPage({ params }: { params: Promise<{ 
         <KidsChores />
         <p className="text-xs text-soft">
           <a className="underline-offset-2 hover:underline" href={`/d/${token}/edit/`}>
-            Edit meals & shopping
+            Edit Meals & Shopping
           </a>
         </p>
       </main>

@@ -59,11 +59,11 @@ function StaffMeta({ staff, onSignOut, compact }: { staff?: { email: string; rol
       )}
       <span className={`flex flex-wrap gap-x-2 ${compact ? "justify-end" : ""}`}>
         <a className="underline hover:text-ink" href="/household/">
-          My household
+          My Household
         </a>
         {onSignOut && (
           <button type="button" className="underline hover:text-ink" onClick={onSignOut}>
-            Sign out
+            Sign Out
           </button>
         )}
       </span>

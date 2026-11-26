@@ -117,7 +117,7 @@ export const radar: Mount<"radar"> = (el, w, ctx) => {
     );
     const latest = i === lastPast();
     const late = latest && Date.now() - f.time > OLD_MS;
-    tag.textContent = f.forecast ? "Forecast" : late ? "Radar delayed" : latest ? "Latest" : "";
+    tag.textContent = f.forecast ? "Forecast" : late ? "Radar Delayed" : latest ? "Latest" : "";
     tag.className = `rd-tag${f.forecast ? " rd-ahead" : ""}`;
   };
 

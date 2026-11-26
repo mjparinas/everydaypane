@@ -20,7 +20,7 @@ describe("weather notes", () => {
     expect(weatherNotes(data, true, true)).toBe("UV 2 · low · peaks at 4 · Pollen 12 · low");
     expect(weatherNotes(data, true, false)).toBe("UV 2 · low · peaks at 4");
     expect(weatherNotes(data, false, true)).toBe("Pollen 12 · low");
-    expect(weatherNotes({ ...data, pollen: 0 }, false, true)).toBe("No pollen");
+    expect(weatherNotes({ ...data, pollen: 0 }, false, true)).toBe("No Pollen");
     expect(weatherNotes(data, false, false)).toBe("");
   });
 

@@ -11,7 +11,7 @@ import { useAdmin } from "./store";
 
 const GRID_PRESETS = [
   { value: "12x8", label: "12×8 (1080p)", cols: 12, rows: 8 },
-  { value: "8x12", label: "8×12 (portrait)", cols: 8, rows: 12 },
+  { value: "8x12", label: "8×12 (Portrait)", cols: 8, rows: 12 },
   { value: "10x6", label: "10×6", cols: 10, rows: 6 },
   { value: "16x9", label: "16×9", cols: 16, rows: 9 },
 ] as const;
@@ -55,7 +55,7 @@ export function ViewSettingsDrawer({
 
   return (
     <SlideDrawer
-      title={view.name || "This view"}
+      title={view.name || "This View"}
       openKey={view.id}
       onClose={onClose}
       testId="view-settings-drawer"
@@ -63,7 +63,7 @@ export function ViewSettingsDrawer({
     >
       <Text label="Name" value={view.name} maxLength={40} onChange={(v) => onEdit((x) => void (x.name = v))} />
       <Segmented
-        label="Grid size"
+        label="Grid Size"
         value={gridPreset}
         options={[
           ...GRID_PRESETS.map((p) => ({ value: p.value as GridPreset, label: p.label })),
@@ -87,7 +87,7 @@ export function ViewSettingsDrawer({
         </div>
       )}
       <Range
-        label="Gap between tiles"
+        label="Gap Between Tiles"
         value={view.gap}
         min={0}
         max={48}
@@ -97,7 +97,7 @@ export function ViewSettingsDrawer({
         onChange={(n) => onEdit((x) => void (x.gap = n))}
       />
       <Range
-        label="Edge inset"
+        label="Edge Inset"
         value={view.padding}
         min={0}
         max={96}
@@ -107,7 +107,7 @@ export function ViewSettingsDrawer({
         onChange={(n) => onEdit((x) => void (x.padding = n))}
       />
       <Range
-        label="Padding inside tiles"
+        label="Padding Inside Tiles"
         value={view.tilePadding}
         min={0}
         max={48}
@@ -117,15 +117,15 @@ export function ViewSettingsDrawer({
         onChange={(n) => onEdit((x) => void (x.tilePadding = n))}
       />
       <Select
-        label="Colour scheme"
+        label="Colour Scheme"
         value={view.themeId ?? ""}
-        options={[{ value: "", label: "Use the dashboard default" }, ...config.themes.map((t) => ({ value: t.id, label: t.name }))]}
+        options={[{ value: "", label: "Use the Dashboard Default" }, ...config.themes.map((t) => ({ value: t.id, label: t.name }))]}
         onChange={(v) => onEdit((x) => void (x.themeId = v || null))}
       />
       <IdleViewToggle viewId={view.id} />
       <div className="flex flex-wrap gap-2 border-t border-line pt-4">
         <button type="button" className="btn-ghost" onClick={onDuplicate} disabled={config.views.length >= 30}>
-          Duplicate view
+          Duplicate View
         </button>
         {canDelete &&
           (usedBySchedule.length ? (
@@ -136,7 +136,7 @@ export function ViewSettingsDrawer({
               › Screen saver first.
             </p>
           ) : (
-            <ConfirmButton label="Delete view" onConfirm={onDelete} />
+            <ConfirmButton label="Delete View" onConfirm={onDelete} />
           ))}
       </div>
     </SlideDrawer>
@@ -159,7 +159,7 @@ function IdleViewToggle({ viewId }: { viewId: string }) {
         </p>
         <p className="text-xs text-soft">On Household, any view can be the photo frame the wall shows when nobody&rsquo;s using it.</p>
         <button type="button" className="btn-ghost justify-self-start" onClick={() => openUpgrade("screenSaver")}>
-          See why Household
+          See Why Household
         </button>
       </div>
     );
@@ -167,7 +167,7 @@ function IdleViewToggle({ viewId }: { viewId: string }) {
   return (
     <div className="border-t border-line pt-4">
       <Toggle
-        label="Show when nobody's using the screen"
+        label="Show When Nobody's Using the Screen"
         checked={isIdle}
         hint={
           isIdle

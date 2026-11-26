@@ -278,15 +278,15 @@ describe("meals", () => {
 
   it("shows today's meals with the next one highlighted", async () => {
     const { el, stop } = await mount("2026-11-17T20:00:00Z"); // lunchtime in Langley
-    expect(el.querySelector(".w-label")?.textContent).toBe("Today's meals");
+    expect(el.querySelector(".w-label")?.textContent).toBe("Today's Meals");
     expect(rows(el)).toEqual(["🥣 BreakfastOatmeal", "> 🥪 LunchLeftover soup", "🍽️ DinnerTacos"]);
     stop();
   });
 
   it("moves to tomorrow in the evening, and says when a meal isn't planned", async () => {
     const { el, stop } = await mount("2026-11-18T04:30:00Z"); // 8:30 PM or later on the 17th
-    expect(el.querySelector(".w-label")?.textContent).toBe("Tomorrow's meals");
-    expect(rows(el)).toEqual(["> 🥣 BreakfastPancakes", "🥪 LunchNot planned", "🍽️ DinnerNot planned"]);
+    expect(el.querySelector(".w-label")?.textContent).toBe("Tomorrow's Meals");
+    expect(rows(el)).toEqual(["> 🥣 BreakfastPancakes", "🥪 LunchNot Planned", "🍽️ DinnerNot Planned"]);
     stop();
   });
 
@@ -392,7 +392,7 @@ describe("music widget", () => {
   it("says when nothing is playing", () => {
     expect(nowPlaying(player)).toEqual({ title: "Here Comes the Sun", detail: "The Beatles · Abbey Road" });
     expect(nowPlaying({ ...player, state: "idle", media: { features: 0, source: "TV" } })).toEqual({
-      title: "Nothing playing",
+      title: "Nothing Playing",
       detail: "TV",
     });
     expect(nowPlaying({ ...player, state: "unavailable" }).title).toBe("Unavailable");
@@ -472,7 +472,7 @@ describe("music widget with Spotify or Sonos signed in directly", () => {
     await vi.waitFor(() => expect(el.querySelector(".mp-title")?.textContent).toBe("Song"));
     expect(gets[0]).toBe("/api/display/music/");
     expect(el.querySelector<HTMLImageElement>(".mp-art")?.getAttribute("src")).toBe("/api/display/art/?p=spotify&k=0123456789abcdef");
-    expect(el.querySelector(".mp-sources")?.getAttribute("aria-label")).toBe("Play on");
+    expect(el.querySelector(".mp-sources")?.getAttribute("aria-label")).toBe("Play On");
     el.querySelector<HTMLButtonElement>("[aria-label=Next]")?.click();
     await vi.waitFor(() => expect(el.querySelector(".ha-msg")?.textContent).toBe("Controlling Spotify needs Premium"));
     expect(posts).toEqual([{ player: "spotify", action: "next" }]);
@@ -1013,7 +1013,7 @@ describe("TransLink departures", () => {
     expect(minutesLabel(NOW + 75 * 60, NOW, "4:21")).toBe("4:21");
     expect(delayLabel(dep("502", 5, 180))).toEqual({ text: "3 min late", cls: "tl-late" });
     expect(delayLabel(dep("502", 5, -120))).toEqual({ text: "2 min early", cls: "tl-early" });
-    expect(delayLabel(dep("502", 5, 20))).toEqual({ text: "On time", cls: "tl-ontime" });
+    expect(delayLabel(dep("502", 5, 20))).toEqual({ text: "On Time", cls: "tl-ontime" });
     expect(delayLabel(dep("502", 5, null, false))).toEqual({ text: "Scheduled", cls: "" });
   });
 
@@ -1214,7 +1214,7 @@ describe("wildfires", () => {
   };
 
   it("writes sizes for the wall and can leave out fires under control", () => {
-    expect(hectares(0.01)).toBe("Spot fire");
+    expect(hectares(0.01)).toBe("Spot Fire");
     expect(hectares(2)).toBe("2 ha");
     expect(hectares(2.5)).toBe("2.5 ha");
     expect(hectares(2400)).toBe("2,400 ha");
@@ -1237,8 +1237,8 @@ describe("wildfires", () => {
     expect(el.querySelectorAll(".wf-perimeter")).toHaveLength(1);
     expect(el.querySelectorAll(".wf-evac.wf-order")).toHaveLength(1);
     expect([...el.querySelectorAll(".wf-row")].map((r) => r.textContent)).toEqual([
-      "Stave Lake31 km · Spot fire · Under control",
-      "Chilliwack Lake88 km · 120 ha · Out of control",
+      "Stave Lake31 km · Spot Fire · Under Control",
+      "Chilliwack Lake88 km · 120 ha · Out of Control",
     ]);
     document.documentElement.dataset.mode = "night";
     await vi.advanceTimersByTimeAsync(60_000);

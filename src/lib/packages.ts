@@ -90,7 +90,7 @@ export function isToday(p: PackageTrack, now: number, timeZone: string): boolean
   return etaWhen(p, now, timeZone) === "today";
 }
 
-/** Delivered today stays on the wall; one delivered on an earlier day only shows with "Show delivered". */
+/** Delivered today stays on the wall; one delivered on an earlier day only shows with "Show Delivered". */
 export function deliveredEarlier(p: PackageTrack, now: number, timeZone: string): boolean {
   return p.status === "delivered" && !(p.deliveredAt !== undefined && dayIn(p.deliveredAt, timeZone) === dayIn(now, timeZone));
 }

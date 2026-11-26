@@ -19,7 +19,7 @@ describe("border wait widget", () => {
     expect(waitText(null)).toBe("—");
     expect(waitText({ minutes: null, closed: false, at })).toBe("—");
     expect(waitText({ minutes: null, closed: true, at })).toBe("Closed");
-    expect(waitText({ minutes: 0, closed: false, at })).toBe("No wait");
+    expect(waitText({ minutes: 0, closed: false, at })).toBe("No Wait");
     expect(waitText({ minutes: 25, closed: false, at })).toBe("25 min");
     expect(waitText({ minutes: 60, closed: false, at })).toBe("1 h");
     expect(waitText({ minutes: 75, closed: false, at })).toBe("1 h 15 min");

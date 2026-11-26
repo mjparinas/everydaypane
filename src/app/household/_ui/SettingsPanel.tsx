@@ -43,33 +43,33 @@ const GROUPS = [
   { id: "home", label: "Home", tier: "Home", sections: ["dashboard", "location", "plan"] },
   {
     id: "calendars",
-    label: "Calendars & tasks",
+    label: "Calendars & Tasks",
     tier: "Everyday",
     sections: ["google", "microsoft", "icals", "tasks"],
   },
   {
     id: "family",
-    label: "Family tools",
+    label: "Family Tools",
     tier: "Everyday",
     sections: ["garbage", "commute", "chores", "sports", "packages", "school", "school-days"],
   },
-  { id: "photos-music", label: "Photos & music", tier: "Everyday", sections: ["photos", "music"] },
+  { id: "photos-music", label: "Photos & Music", tier: "Everyday", sections: ["photos", "music"] },
   {
     id: "screen",
     // Screen saver leads this group and its chip (Melvin, 2026-11-26: "needs to be more prominent in the settings").
-    label: "Screen saver & alerts",
+    label: "Screen Saver & Alerts",
     tier: "Everyday",
     sections: ["screen-saver", "screen-care", "alerts", "backup"],
   },
   {
     id: "content",
-    label: "Content & finance",
+    label: "Content & Finance",
     tier: "Advanced",
     sections: ["content", "ynab", "fitbit", "oura", "gmail-unread", "slack", "trello"],
   },
   {
     id: "ha",
-    label: "Home & devices",
+    label: "Home & Devices",
     tier: "Advanced",
     sections: ["ha", "smart-home", "unifi", "ecoflow", "weather-stations", "indoor-air", "sprinklers", "pool", "laundry", "menus"],
   },
@@ -186,17 +186,17 @@ export function SettingsPanel() {
               value={config.units}
               options={[
                 { value: "metric", label: "Metric (°C, km/h)" },
-                { value: "imperial", label: "Imperial (°F, mph)" },
+                { value: "imperial", label: "Imperial (°F, Mph)" },
               ]}
               onChange={(v) => edit((c) => void (c.units = v))}
             />
-            <Toggle label="12-hour clock" checked={config.hour12} onChange={(v) => edit((c) => void (c.hour12 = v))} />
+            <Toggle label="12-Hour Clock" checked={config.hour12} onChange={(v) => edit((c) => void (c.hour12 = v))} />
           </Section>
 
           <Section id="settings-location" title="Location">
             <p className="text-xs text-soft">Weather, air quality and sunrise come from here. A neighbourhood-level spot is plenty.</p>
             <PlaceFinder
-              label="Find a place"
+              label="Find a Place"
               button="Find"
               placeholder="Town or neighbourhood, like Langley"
               nothing="Nothing matched. Try a town or neighbourhood name."
@@ -209,12 +209,12 @@ export function SettingsPanel() {
                 })
               }
             />
-            <Text label="Place name" value={location.name} maxLength={60} onChange={(v) => edit((c) => void (c.location.name = v))} />
+            <Text label="Place Name" value={location.name} maxLength={60} onChange={(v) => edit((c) => void (c.location.name = v))} />
             <Select
-              label="Weather forecast"
+              label="Weather Forecast"
               value={config.weather?.provider ?? "openMeteo"}
               options={[
-                { value: "openMeteo", label: "Open-Meteo (default)" },
+                { value: "openMeteo", label: "Open-Meteo (Default)" },
                 { value: "environmentCanada", label: "Environment Canada" },
               ]}
               onChange={(v) => edit((c) => void (c.weather.provider = v))}
@@ -224,7 +224,7 @@ export function SettingsPanel() {
               quality. Outside Canada, Everydaypane falls back to Open-Meteo.
             </p>
             <Select
-              label="Time zone"
+              label="Time Zone"
               value={location.timeZone}
               options={
                 TIME_ZONES.some((z) => z.value === location.timeZone)
@@ -239,7 +239,7 @@ export function SettingsPanel() {
               aria-expanded={coordsOpen}
               onClick={() => setCoordsOpen((o) => !o)}
             >
-              {coordsOpen ? "Hide coordinates" : "Edit coordinates"}
+              {coordsOpen ? "Hide Coordinates" : "Edit Coordinates"}
             </button>
             {coordsOpen && (
               <div className="grid grid-cols-2 gap-3">
@@ -276,7 +276,7 @@ export function SettingsPanel() {
                 className="font-semibold text-brand underline-offset-2 hover:underline"
                 onClick={() => openUpgrade("calendar")}
               >
-                Need more?
+                Need More?
               </button>
             </p>
           )}
@@ -287,9 +287,9 @@ export function SettingsPanel() {
             <MicrosoftPanel />
           </div>
           <div className="lg:col-span-2">
-            <Section id="settings-calendar-titles" title="Event titles">
+            <Section id="settings-calendar-titles" title="Event Titles">
               <Toggle
-                label="Title case"
+                label="Title Case"
                 hint="Shows “dentist with sam” as “Dentist with Sam” on the wall. Acronyms like BC and PRO-D stay as typed, and your calendars aren't changed."
                 checked={config.calendarTitleCase}
                 onChange={(v) => edit((c) => void (c.calendarTitleCase = v))}
@@ -303,7 +303,7 @@ export function SettingsPanel() {
           </div>
           <FlaggedSettings section="tasks">
             <div id="settings-tasks" className="lg:col-span-2">
-              <HouseholdSoftLock reason="tasks" label="Tasks need Household">
+              <HouseholdSoftLock reason="tasks" label="Tasks Need Household">
                 <AllTasksPanels />
               </HouseholdSoftLock>
             </div>
@@ -312,7 +312,7 @@ export function SettingsPanel() {
       )}
 
       {showGroup("family") && (
-        <HouseholdSoftLock reason="family" label="Family tools need Household">
+        <HouseholdSoftLock reason="family" label="Family Tools Need Household">
           <div className="grid gap-4 lg:grid-cols-2">
             <FlaggedSettings section="garbage">
               <div id="settings-garbage">
@@ -337,18 +337,18 @@ export function SettingsPanel() {
             <FlaggedSettings section="packages">
               <PackagesSection />
             </FlaggedSettings>
-            <Section id="settings-school" title="School status">
+            <Section id="settings-school" title="School Status">
               <p className="text-xs text-soft">
                 The school widget reads this page for a closure, delay or late start. With nothing like that on the page, it says open.
               </p>
               <Text
-                label="District name"
+                label="District Name"
                 value={config.school.districtName}
                 maxLength={80}
                 onChange={(v) => edit((c) => void (c.school.districtName = v))}
               />
               <Text
-                label="Status page"
+                label="Status Page"
                 type="url"
                 value={config.school.statusUrl}
                 maxLength={300}
@@ -368,7 +368,7 @@ export function SettingsPanel() {
           </div>
           <FlaggedSettings section="music">
             <div id="settings-music" className="lg:col-span-2">
-              <HouseholdSoftLock reason="music" label="Music needs Household">
+              <HouseholdSoftLock reason="music" label="Music Needs Household">
                 <MusicPanel />
               </HouseholdSoftLock>
             </div>
@@ -378,14 +378,14 @@ export function SettingsPanel() {
 
       {showGroup("content") && (
         <div id="settings-content">
-          <HouseholdSoftLock reason="content" label="Content & finance need Household">
+          <HouseholdSoftLock reason="content" label="Content & Finance Need Household">
             <ContentPanel />
           </HouseholdSoftLock>
         </div>
       )}
 
       {showGroup("ha") && (
-        <HouseholdSoftLock reason="ha" label="Smart home needs Household">
+        <HouseholdSoftLock reason="ha" label="Smart Home Needs Household">
           <div className="grid gap-4">
             <FlaggedSettings section="ha">
               <div id="settings-ha">
@@ -402,13 +402,13 @@ export function SettingsPanel() {
       {showGroup("screen") && (
         <div className="grid gap-4 lg:grid-cols-2">
           <div id="settings-screen-saver">
-            <HouseholdSoftLock reason="screenSaver" label="Screen saver needs Household">
+            <HouseholdSoftLock reason="screenSaver" label="Screen Saver Needs Household">
               <ScreenSaverPanel />
             </HouseholdSoftLock>
           </div>
-          <Section id="settings-screen-care" title="Screen care">
+          <Section id="settings-screen-care" title="Screen Care">
             <Toggle
-              label="Burn-in protection"
+              label="Burn-In Protection"
               checked={burnIn.shift}
               hint="Moves the whole layout a few pixels now and then, so nothing sits on the same pixels for hours."
               onChange={(v) => edit((c) => void (c.burnIn.shift = v))}
@@ -416,7 +416,7 @@ export function SettingsPanel() {
             {burnIn.shift && (
               <>
                 <Range
-                  label="Up to"
+                  label="Up To"
                   value={burnIn.maxPixels}
                   min={1}
                   max={24}
@@ -438,25 +438,25 @@ export function SettingsPanel() {
             <p className="text-xs text-soft">Night dimming is set for each part of the day under Schedule.</p>
           </Section>
           <div className="lg:col-span-2">
-            <Section id="settings-alerts" title="Emergency alerts">
-              <Toggle label="Show alerts" checked={alerts.enabled} onChange={(v) => edit((c) => void (c.alerts.enabled = v))} />
+            <Section id="settings-alerts" title="Emergency Alerts">
+              <Toggle label="Show Alerts" checked={alerts.enabled} onChange={(v) => edit((c) => void (c.alerts.enabled = v))} />
               {alerts.enabled && (
                 <>
                   <Select
-                    label="Red strip across the top for"
+                    label="Red Strip Across the Top For"
                     value={alerts.banner}
                     options={[
-                      { value: "extreme", label: "Extreme alerts only" },
-                      { value: "severe", label: "Severe and up" },
-                      { value: "moderate", label: "Moderate and up" },
-                      { value: "minor", label: "Every alert" },
-                      { value: "never", label: "Never (alerts widget only)" },
+                      { value: "extreme", label: "Extreme Alerts Only" },
+                      { value: "severe", label: "Severe and Up" },
+                      { value: "moderate", label: "Moderate and Up" },
+                      { value: "minor", label: "Every Alert" },
+                      { value: "never", label: "Never (Alerts Widget Only)" },
                     ]}
                     hint="Anyone can tap the strip to dismiss it."
                     onChange={(v) => edit((c) => void (c.alerts.banner = v))}
                   />
                   <details className="rounded-xl border border-line bg-bg px-3 py-2">
-                    <summary className="cursor-pointer text-sm font-semibold text-ink">Alert sources</summary>
+                    <summary className="cursor-pointer text-sm font-semibold text-ink">Alert Sources</summary>
                     <div className="mt-3 grid gap-3">
                       {/* Regional packs (2026-11-26): only the sources that cover this household's region, named for it. */}
                       {(Object.entries(alertSourceLabels(regionOf(config))) as [keyof typeof alerts.sources, string | null][]).map(
@@ -480,32 +480,32 @@ export function SettingsPanel() {
                     </div>
                   </details>
                   <details className="rounded-xl border border-line bg-bg px-3 py-2" id="settings-smart-notices">
-                    <summary className="cursor-pointer text-sm font-semibold text-ink">Smart notices</summary>
+                    <summary className="cursor-pointer text-sm font-semibold text-ink">Smart Notices</summary>
                     <div className="mt-3 grid gap-3">
                       <p className="text-xs text-soft">
                         Blue notes on the strip that put two things together, like the sprinklers and the forecast. Each needs the
                         integrations it names; they are never emailed.
                       </p>
                       <Toggle
-                        label="Sprinklers due in frost"
+                        label="Sprinklers Due in Frost"
                         checked={rules.sprinklerFrost}
                         onChange={(v) => edit((c) => void (c.alerts.rules.sprinklerFrost = v))}
                         hint="Rachio + the forecast: a watering in the next day when it will be near freezing."
                       />
                       <Toggle
-                        label="Sprinklers due when rain is likely"
+                        label="Sprinklers Due When Rain Is Likely"
                         checked={rules.sprinklerRain}
                         onChange={(v) => edit((c) => void (c.alerts.rules.sprinklerRain = v))}
                         hint="Rachio + the forecast: 70% chance of rain or more within three hours of a watering."
                       />
                       <Toggle
-                        label="Backup battery during a power outage"
+                        label="Backup Battery During a Power Outage"
                         checked={rules.outageBattery}
                         onChange={(v) => edit((c) => void (c.alerts.rules.outageBattery = v))}
                         hint="BC Hydro + EcoFlow: when an outage covers your home, how much each power station has left."
                       />
                       <Toggle
-                        label="Poor air outside"
+                        label="Poor Air Outside"
                         checked={rules.smokyAir}
                         onChange={(v) => edit((c) => void (c.alerts.rules.smokyAir = v))}
                         hint="Air quality, plus indoor PM2.5 from Airthings when you have it: keep the windows shut."
@@ -522,13 +522,13 @@ export function SettingsPanel() {
                         />
                       )}
                       <Toggle
-                        label="Pool freeze warning"
+                        label="Pool Freeze Warning"
                         checked={rules.poolFreeze}
                         onChange={(v) => edit((c) => void (c.alerts.rules.poolFreeze = v))}
                         hint="Blue Riiot + the forecast: a hard freeze in the next day while the pool is still reporting."
                       />
                       <Toggle
-                        label="Laundry left in the machine"
+                        label="Laundry Left in the Machine"
                         checked={rules.laundryWaiting}
                         onChange={(v) => edit((c) => void (c.alerts.rules.laundryWaiting = v))}
                         hint="Laundry: a reminder once a finished load has sat a while, even after the done note is dismissed."
@@ -545,7 +545,7 @@ export function SettingsPanel() {
                         />
                       )}
                       <Toggle
-                        label="Bins out the night before"
+                        label="Bins Out the Night Before"
                         checked={rules.garbageEve}
                         onChange={(v) => edit((c) => void (c.alerts.rules.garbageEve = v))}
                         hint="Garbage day: which carts go out, the evening before pickup."
@@ -565,7 +565,7 @@ export function SettingsPanel() {
                   </details>
                   {isPaid ? (
                     <Toggle
-                      label="Email admins and family for new red-strip alerts"
+                      label="Email Admins and Family for New Red-Strip Alerts"
                       checked={alerts.notifyEmail}
                       onChange={(v) => edit((c) => void (c.alerts.notifyEmail = v))}
                       hint="Each alert is emailed once to household admins and family addresses."
@@ -590,7 +590,7 @@ export function SettingsPanel() {
                     onChange={(v) => edit((c) => void (c.alerts.radiusKm = v))}
                   />
                   <Range
-                    label="Earthquakes from magnitude"
+                    label="Earthquakes from Magnitude"
                     value={alerts.minMagnitude}
                     min={2}
                     max={9}
@@ -599,7 +599,7 @@ export function SettingsPanel() {
                     onChange={(v) => edit((c) => void (c.alerts.minMagnitude = v))}
                   />
                   <Range
-                    label="Power outages within"
+                    label="Power Outages Within"
                     value={alerts.powerKm}
                     min={0}
                     max={50}
@@ -608,7 +608,7 @@ export function SettingsPanel() {
                     onChange={(v) => edit((c) => void (c.alerts.powerKm = v))}
                   />
                   <Range
-                    label="Evacuation orders within"
+                    label="Evacuation Orders Within"
                     value={alerts.evacuationKm}
                     min={0}
                     max={100}
@@ -627,7 +627,7 @@ export function SettingsPanel() {
             </Section>
           </div>
           <div id="settings-backup">
-            <HouseholdSoftLock reason="backup" label="Backup needs Household">
+            <HouseholdSoftLock reason="backup" label="Backup Needs Household">
               <BackupPanel />
             </HouseholdSoftLock>
           </div>

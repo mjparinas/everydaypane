@@ -11,7 +11,7 @@ describe("school days widget", () => {
   });
 
   it("writes today's line", () => {
-    expect(todayLines({ state: "school" }, "Pizza day")).toEqual({ main: "School today", cls: "sd-school", sub: "Lunch: Pizza day" });
+    expect(todayLines({ state: "school" }, "Pizza day")).toEqual({ main: "School Today", cls: "sd-school", sub: "Lunch: Pizza day" });
     expect(todayLines({ state: "off", name: "Pro-D Day", backOn: "2026-10-26" }, "").sub).toBe("Pro-D Day · back Monday, Oct 26");
     expect(todayLines({ state: "summer", backOn: "2026-09-08" }, "").sub).toBe("School starts Tuesday, Sep 8");
   });
@@ -21,9 +21,9 @@ describe("school days widget", () => {
       "Tomorrow: no school (Pro-D Day)",
     );
     expect(
-      tomorrowLine({ state: "off", name: "Winter break", backOn: null }, { state: "off", name: "Winter break", backOn: null }, ""),
+      tomorrowLine({ state: "off", name: "Winter Break", backOn: null }, { state: "off", name: "Winter Break", backOn: null }, ""),
     ).toBe("");
-    expect(tomorrowLine({ state: "off", name: "Winter break", backOn: null }, { state: "school" }, "Sushi")).toBe(
+    expect(tomorrowLine({ state: "off", name: "Winter Break", backOn: null }, { state: "school" }, "Sushi")).toBe(
       "Back to school tomorrow · Lunch: Sushi",
     );
     expect(tomorrowLine({ state: "school" }, { state: "school" }, "")).toBe("");

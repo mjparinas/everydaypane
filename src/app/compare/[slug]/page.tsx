@@ -53,7 +53,7 @@ export default async function CompareSlugPage({ params }: { params: Promise<{ sl
 
       <div className="mt-8 grid gap-4 md:grid-cols-2">
         <article className="card border-brand/40 bg-brand/5">
-          <h2 className="font-bold text-brand">Why families pick {BRAND.name}</h2>
+          <h2 className="font-bold text-brand">Why Families Pick {BRAND.name}</h2>
           <p className="mt-2 text-sm text-soft">{c.ourEdge}</p>
         </article>
         <article className="card">
@@ -108,7 +108,7 @@ export default async function CompareSlugPage({ params }: { params: Promise<{ sl
           ))}
         , or the{" "}
         <Link href="/blog/best-family-dashboard-2026/" className="font-semibold text-brand hover:underline">
-          2026 roundup
+          2026 Roundup
         </Link>
         .
       </p>

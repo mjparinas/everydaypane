@@ -48,7 +48,7 @@ export const WIDGETS: { [T in WidgetType]: WidgetInfo<T> } = {
     defaults: () => ({ timeZone: "America/Vancouver", showYear: false }),
   },
   sunTimes: {
-    label: "Sunrise & sunset",
+    label: "Sunrise & Sunset",
     description: "Today's sunrise, sunset, daylight and moon",
     icon: "🌅",
     size: { w: 3, h: 2 },
@@ -56,7 +56,7 @@ export const WIDGETS: { [T in WidgetType]: WidgetInfo<T> } = {
     defaults: () => ({ showEmoji: true, showDaylight: true, showMoon: true }),
   },
   moon: {
-    label: "Moon phase",
+    label: "Moon Phase",
     description: "Tonight's moon and the next full moon",
     icon: "🌔",
     size: { w: 3, h: 2 },
@@ -64,7 +64,7 @@ export const WIDGETS: { [T in WidgetType]: WidgetInfo<T> } = {
     defaults: () => ({ showNext: true, showName: true }),
   },
   aurora: {
-    label: "Aurora tonight",
+    label: "Aurora Tonight",
     description: "Northern lights forecast and your chance",
     icon: "🌌",
     size: { w: 3, h: 2 },
@@ -80,7 +80,7 @@ export const WIDGETS: { [T in WidgetType]: WidgetInfo<T> } = {
     defaults: () => ({ days: 7, showCurrent: true, showHourly: false, iconScale: 1, showUv: true, showPollen: true }),
   },
   airQuality: {
-    label: "Air quality",
+    label: "Air Quality",
     description: "AQHI (Canada) or US AQI",
     icon: "🌬️",
     size: { w: 3, h: 2 },
@@ -88,7 +88,7 @@ export const WIDGETS: { [T in WidgetType]: WidgetInfo<T> } = {
     defaults: () => ({ scale: "aqhi" }),
   },
   wifiQr: {
-    label: "WiFi QR code",
+    label: "WiFi QR Code",
     description: "Guests scan to join",
     icon: "📶",
     size: { w: 2, h: 3 },
@@ -96,7 +96,7 @@ export const WIDGETS: { [T in WidgetType]: WidgetInfo<T> } = {
     defaults: () => ({ ssid: "Home", password: "", encryption: "WPA", hidden: false, showPassword: false }),
   },
   editQr: {
-    label: "Phone edit QR",
+    label: "Phone Edit QR",
     description: "Scan to edit meals, shopping and messages",
     icon: "📱",
     size: { w: 2, h: 3 },
@@ -120,7 +120,7 @@ export const WIDGETS: { [T in WidgetType]: WidgetInfo<T> } = {
     defaults: () => ({ range: "today", days: 3 }),
   },
   calendarWeek: {
-    label: "Week calendar",
+    label: "Week Calendar",
     description: "This week in a grid",
     icon: "📅",
     size: { w: 6, h: 4 },
@@ -128,7 +128,7 @@ export const WIDGETS: { [T in WidgetType]: WidgetInfo<T> } = {
     defaults: () => ({ weekStartsOn: 0 as const, showWeekends: true }),
   },
   calendarUpNext: {
-    label: "Up next",
+    label: "Up Next",
     description: "The next event large, with more after",
     icon: "⏭️",
     size: { w: 4, h: 3 },
@@ -136,7 +136,7 @@ export const WIDGETS: { [T in WidgetType]: WidgetInfo<T> } = {
     defaults: () => ({ count: 4 }),
   },
   calendarMonth: {
-    label: "Month calendar",
+    label: "Month Calendar",
     description: "The whole month with events",
     icon: "📆",
     size: { w: 8, h: 6 },
@@ -144,7 +144,7 @@ export const WIDGETS: { [T in WidgetType]: WidgetInfo<T> } = {
     defaults: () => ({ weekStartsOn: 0, showTitle: true, showWeekends: true, showDayDetails: true, fitTitles: true, scrollWeeks: 3 }),
   },
   garbage: {
-    label: "Garbage day",
+    label: "Garbage Day",
     description: "Next pickups from your collection calendar",
     icon: "🗑️",
     size: { w: 3, h: 2 },
@@ -170,7 +170,7 @@ export const WIDGETS: { [T in WidgetType]: WidgetInfo<T> } = {
     }),
   },
   haEntity: {
-    label: "Smart device",
+    label: "Smart Device",
     description: "Home Assistant, Nest, ecobee or SmartThings",
     icon: "🏠",
     size: { w: 2, h: 2 },
@@ -186,7 +186,7 @@ export const WIDGETS: { [T in WidgetType]: WidgetInfo<T> } = {
     defaults: () => ({ showWind: true, showRain: true, showHumidity: true }),
   },
   airthings: {
-    label: "Indoor air",
+    label: "Indoor Air",
     description: "Radon, CO₂ and more from Airthings",
     icon: "🫁",
     size: { w: 3, h: 3 },
@@ -218,7 +218,7 @@ export const WIDGETS: { [T in WidgetType]: WidgetInfo<T> } = {
     defaults: () => ({ devices: [], showSolar: true, showFlows: true, showTime: true }),
   },
   unifi: {
-    label: "UniFi network",
+    label: "UniFi Network",
     description: "Internet health from your UniFi gateway",
     icon: "📶",
     size: { w: 3, h: 2 },
@@ -242,7 +242,7 @@ export const WIDGETS: { [T in WidgetType]: WidgetInfo<T> } = {
     defaults: () => ({ showWind: true, showRain: true, showHumidity: true }),
   },
   menus: {
-    label: "School menu",
+    label: "School Menu",
     description: "Breakfast and lunch from Nutrislice",
     icon: "🍎",
     size: { w: 4, h: 4 },
@@ -258,7 +258,7 @@ export const WIDGETS: { [T in WidgetType]: WidgetInfo<T> } = {
     defaults: () => ({ text: "Have a great day!", size: "m" }),
   },
   messages: {
-    label: "Message board",
+    label: "Message Board",
     description: "Notes the family posts from their phones",
     icon: "💬",
     size: { w: 4, h: 3 },
@@ -298,7 +298,7 @@ export const WIDGETS: { [T in WidgetType]: WidgetInfo<T> } = {
     defaults: () => ({ packages: [], count: 6, showDelivered: false, todayOnly: false }),
   },
   snow: {
-    label: "Snow report",
+    label: "Snow Report",
     description: "New snow and depth on the local mountains",
     icon: "🏔️",
     size: { w: 4, h: 3 },
@@ -306,7 +306,7 @@ export const WIDGETS: { [T in WidgetType]: WidgetInfo<T> } = {
     defaults: () => ({ mountains: [...DEFAULT_MOUNTAINS], showDepth: true, showForecast: true, showTemperature: false }),
   },
   rivers: {
-    label: "River levels",
+    label: "River Levels",
     description: "Fraser and creek gauges, rising or falling",
     icon: "🏞️",
     size: { w: 3, h: 3 },
@@ -322,7 +322,7 @@ export const WIDGETS: { [T in WidgetType]: WidgetInfo<T> } = {
     defaults: () => ({ stationId: "iwls:07577", stationName: "White Rock", count: 4, showHeight: true, showCurve: true }),
   },
   transit: {
-    label: "Transit departures",
+    label: "Transit Departures",
     description: "Next buses and trains from your stops, live (TransLink, TTC, Calgary, Edmonton, Halifax, King County Metro)",
     icon: "🚌",
     size: { w: 5, h: 3 },
@@ -354,7 +354,7 @@ export const WIDGETS: { [T in WidgetType]: WidgetInfo<T> } = {
     }),
   },
   chores: {
-    label: "Chore chart",
+    label: "Chore Chart",
     description: "The kids' chores for today, ticked off with a tap, and their stars",
     icon: "⭐",
     size: { w: 6, h: 4 },
@@ -370,7 +370,7 @@ export const WIDGETS: { [T in WidgetType]: WidgetInfo<T> } = {
     defaults: () => ({ destinationIds: [], showDistance: false, showArrival: true }),
   },
   radar: {
-    label: "Rain radar",
+    label: "Rain Radar",
     description: "Environment Canada's radar, the past hour and what's coming",
     icon: "🌧️",
     size: { w: 4, h: 4 },
@@ -427,7 +427,7 @@ export const WIDGETS: { [T in WidgetType]: WidgetInfo<T> } = {
     }),
   },
   drivebc: {
-    label: "Highway cameras",
+    label: "Highway Cameras",
     description: "DriveBC pictures of the highways you drive",
     icon: "🛣️",
     size: { w: 4, h: 3 },
@@ -444,7 +444,7 @@ export const WIDGETS: { [T in WidgetType]: WidgetInfo<T> } = {
     defaults: () => ({ routes: ["TSASWB" as const], count: 3, showVessel: false }),
   },
   borderWait: {
-    label: "Border wait times",
+    label: "Border Wait Times",
     description: "Peace Arch, Pacific Highway and Aldergrove, both ways",
     icon: "🛂",
     size: { w: 4, h: 3 },
@@ -452,7 +452,7 @@ export const WIDGETS: { [T in WidgetType]: WidgetInfo<T> } = {
     defaults: () => ({ crossings: [...BORDER_DEFAULT_CROSSINGS], directions: "both" as const, showNexus: false }),
   },
   gasPrices: {
-    label: "Gas prices",
+    label: "Gas Prices",
     description: "The cheapest gas stations near home",
     icon: "⛽",
     size: { w: 3, h: 3 },
@@ -460,7 +460,7 @@ export const WIDGETS: { [T in WidgetType]: WidgetInfo<T> } = {
     defaults: () => ({ fuel: "regular" as const, radiusKm: 5, count: 4, sort: "price" as const, showAddress: false }),
   },
   sports: {
-    label: "Sports scores",
+    label: "Sports Scores",
     description: "Live scores and next games for your teams",
     icon: "🏒",
     size: { w: 4, h: 3 },
@@ -468,7 +468,7 @@ export const WIDGETS: { [T in WidgetType]: WidgetInfo<T> } = {
     defaults: () => ({ teamIds: [], showLast: true }),
   },
   earth: {
-    label: "Earth wind map",
+    label: "Earth Wind Map",
     description: "Animated wind and weather from earth.nullschool.net",
     icon: "🌀",
     size: { w: 6, h: 4 },
@@ -487,7 +487,7 @@ export const WIDGETS: { [T in WidgetType]: WidgetInfo<T> } = {
     }),
   },
   windy: {
-    label: "Windy map",
+    label: "Windy Map",
     description: "Windy's weather map: radar, rain, wind, temperature, clouds, snow or air quality",
     icon: "🌬️",
     size: { w: 6, h: 4 },
@@ -507,7 +507,7 @@ export const WIDGETS: { [T in WidgetType]: WidgetInfo<T> } = {
     }),
   },
   shopping: {
-    label: "Shopping list",
+    label: "Shopping List",
     description: "Groceries the family adds from their phones, ticked off with a tap",
     icon: "🛒",
     size: { w: 4, h: 4 },
@@ -515,7 +515,7 @@ export const WIDGETS: { [T in WidgetType]: WidgetInfo<T> } = {
     defaults: () => ({ count: 12, allowCheck: true, allowAdd: false, showDone: false }),
   },
   presence: {
-    label: "Who's home",
+    label: "Who's Home",
     description: "Who is home, from Home Assistant",
     icon: "👨‍👩‍👧",
     size: { w: 3, h: 2 },
@@ -523,7 +523,7 @@ export const WIDGETS: { [T in WidgetType]: WidgetInfo<T> } = {
     defaults: () => ({ entities: [] }),
   },
   school: {
-    label: "School status",
+    label: "School Status",
     description: "Open, closed or delayed (Langley SD35 snow days)",
     icon: "🏫",
     size: { w: 3, h: 2 },
@@ -531,7 +531,7 @@ export const WIDGETS: { [T in WidgetType]: WidgetInfo<T> } = {
     defaults: () => ({ schools: [] }),
   },
   schoolDays: {
-    label: "School days",
+    label: "School Days",
     description: "School today or not, Pro-D days, breaks and hot lunch",
     icon: "🎒",
     size: { w: 3, h: 3 },
@@ -564,7 +564,7 @@ export const WIDGETS: { [T in WidgetType]: WidgetInfo<T> } = {
     defaults: () => ({ coins: ["bitcoin", "ethereum"], vs: "cad", count: 6 }),
   },
   fx: {
-    label: "FX rates",
+    label: "FX Rates",
     description: "Currency pairs (ECB / Frankfurter)",
     icon: "💱",
     size: { w: 3, h: 2 },
@@ -612,7 +612,7 @@ export const WIDGETS: { [T in WidgetType]: WidgetInfo<T> } = {
     defaults: () => ({ showSleep: true, showReadiness: true, showActivity: true, showDetails: false }),
   },
   emailCount: {
-    label: "Gmail unread",
+    label: "Gmail Unread",
     description: "Unread messages in your inbox",
     icon: "✉️",
     size: { w: 2, h: 2 },
@@ -636,7 +636,7 @@ export const WIDGETS: { [T in WidgetType]: WidgetInfo<T> } = {
     defaults: () => ({ source: "preset", presetId: "cbc-bc", customUrl: "", query: "British Columbia", count: 10 }),
   },
   dadJoke: {
-    label: "Dad joke",
+    label: "Dad Joke",
     description: "A fresh joke from icanhazdadjoke.com",
     icon: "😄",
     size: { w: 4, h: 2 },
@@ -660,7 +660,7 @@ export const WIDGETS: { [T in WidgetType]: WidgetInfo<T> } = {
     defaults: () => ({ category: "general" as const, custom: [] as string[] }),
   },
   brief: {
-    label: "Morning brief",
+    label: "Morning Brief",
     description: "The day in a sentence: weather, plans, bins, delays",
     icon: "☕",
     size: { w: 6, h: 2 },
@@ -668,7 +668,7 @@ export const WIDGETS: { [T in WidgetType]: WidgetInfo<T> } = {
     defaults: () => ({ layout: "sentence" as const, sources: [...BRIEF_SOURCES], events: 3, eveningTomorrow: true }),
   },
   onThisDay: {
-    label: "On this day",
+    label: "On This Day",
     description: "A moment from history, from Wikipedia",
     icon: "📜",
     size: { w: 4, h: 2 },
@@ -764,7 +764,7 @@ export const WIDGET_GROUPS: { id: string; label: string; types: WidgetType[] }[]
   { id: "time", label: "Time", types: ["clock", "date", "brief", "sunTimes", "moon", "timer", "pomodoro"] },
   {
     id: "weather",
-    label: "Weather & map",
+    label: "Weather & Map",
     types: [
       "weather",
       "tempest",
@@ -822,12 +822,12 @@ export const WIDGET_GROUPS: { id: string; label: string; types: WidgetType[] }[]
   },
   {
     id: "content",
-    label: "News & fun",
+    label: "News & Fun",
     types: ["rss", "news", "onThisDay", "dadJoke", "quotes", "affirmation", "horoscope", "emailCount", "fitbit", "oura"],
   },
   {
     id: "social",
-    label: "Social & video",
+    label: "Social & Video",
     types: ["instagram", "trello", "slack", "youtube", "vimeo", "maps", "airports"],
   },
 ];

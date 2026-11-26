@@ -13,7 +13,7 @@ import { TimePicker } from "./TimePicker";
 // Sunrise/sunset come from today's weather at the dashboard location (Melvin, 2026-11-22).
 
 const START_KINDS = [
-  { value: "fixed", label: "Fixed time" },
+  { value: "fixed", label: "Fixed Time" },
   { value: "sunrise", label: "Sunrise" },
   { value: "sunset", label: "Sunset" },
 ] as const;
@@ -39,16 +39,16 @@ export function SchedulePanel() {
 
   return (
     <div className="grid gap-4">
-      <Section title="Through the day">
+      <Section title="Through the Day">
         <Toggle
-          label="Change views through the day"
+          label="Change Views Through the Day"
           checked={s.enabled}
           hint="When this is off, displays that follow the schedule show the first view all day. Sunrise and sunset use today's times for your location under Settings."
           onChange={(v) => edit((c) => void (c.schedule.enabled = v))}
         />
         {s.enabled && (
           <Range
-            label="Rotate views"
+            label="Rotate Views"
             value={s.loopSeconds ?? 0}
             min={0}
             max={300}
@@ -75,7 +75,7 @@ export function SchedulePanel() {
           return (
             <Section key={p} title={PERIOD_LABELS[p]}>
               <Select
-                label="Starts at"
+                label="Starts At"
                 value={kind}
                 options={START_KINDS}
                 onChange={(v) =>
@@ -103,7 +103,7 @@ export function SchedulePanel() {
                 onChange={(v) => edit((c) => void (c.schedule[p].mode = v))}
               />
               <Range
-                label="Dim the screen"
+                label="Dim the Screen"
                 value={s[p].dim}
                 min={0}
                 max={0.9}

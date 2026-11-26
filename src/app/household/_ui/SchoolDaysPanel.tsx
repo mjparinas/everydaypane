@@ -12,8 +12,8 @@ import { useAdmin } from "./store";
 // iCal link), days can be added or changed by hand, and a school's own calendar link can add its Pro-D days too.
 
 const KINDS = [
-  { value: "off", label: "No school" },
-  { value: "early", label: "Early dismissal" },
+  { value: "off", label: "No School" },
+  { value: "early", label: "Early Dismissal" },
 ] as const;
 
 export function SchoolDaysPanel() {
@@ -34,43 +34,43 @@ export function SchoolDaysPanel() {
   }
 
   return (
-    <Section id="settings-school-days" title="School days">
+    <Section id="settings-school-days" title="School Days">
       <p className="text-xs text-soft">
         The School days widget says whether there&apos;s school today, flags tomorrow&apos;s day off and counts down to the next Pro-D day
         and break. Weekends are always off; the days below are the rest.
       </p>
       <div className="grid gap-2 rounded-xl border border-line p-3">
         <Select
-          label="Fill in a school year"
+          label="Fill in a School Year"
           value={preset}
           options={SCHOOL_PRESETS.map((p) => ({ value: p.id, label: p.label }))}
           onChange={setPreset}
           hint={picked ? `From the ${picked.source}. Replaces the list below.` : undefined}
         />
         <button type="button" className="btn-ghost justify-self-start" onClick={fill}>
-          Fill in {picked?.label ?? "school year"}
+          Fill In {picked?.label ?? "school year"}
         </button>
       </div>
       <Text
-        label="Calendar name"
+        label="Calendar Name"
         value={school.calendarName}
         maxLength={60}
         placeholder="Langley elementary"
         onChange={(v) => edit((c) => void (c.school.calendarName = v))}
       />
       <div className="grid gap-3 sm:grid-cols-2">
-        <Text label="First day of school" type="date" value={school.firstDay} onChange={(v) => edit((c) => void (c.school.firstDay = v))} />
-        <Text label="Last day of school" type="date" value={school.lastDay} onChange={(v) => edit((c) => void (c.school.lastDay = v))} />
+        <Text label="First Day of School" type="date" value={school.firstDay} onChange={(v) => edit((c) => void (c.school.firstDay = v))} />
+        <Text label="Last Day of School" type="date" value={school.lastDay} onChange={(v) => edit((c) => void (c.school.lastDay = v))} />
       </div>
 
       <div className="grid gap-2">
-        <h3 className="text-sm font-semibold">Days off and early dismissals</h3>
+        <h3 className="text-sm font-semibold">Days Off and Early Dismissals</h3>
         {school.daysOff.length === 0 ? <p className="text-xs text-soft">None yet. Fill in a school year or add a day.</p> : null}
         {school.daysOff.map((d, i) => (
           <div key={`${i}-${d.start}`} className="grid gap-2 rounded-xl border border-line p-3 sm:grid-cols-[1fr_1fr]">
             <Text label="Name" value={d.name} maxLength={60} onChange={(v) => edit((c) => void (c.school.daysOff[i]!.name = v))} />
             <Select
-              label="What happens"
+              label="What Happens"
               value={d.kind}
               options={KINDS}
               onChange={(v) => edit((c) => void (c.school.daysOff[i]!.kind = v))}
@@ -88,7 +88,7 @@ export function SchoolDaysPanel() {
               }
             />
             <Text
-              label="To (same day for one)"
+              label="To (Same Day for One)"
               type="date"
               value={d.end}
               onChange={(v) => edit((c) => void (c.school.daysOff[i]!.end = v))}
@@ -114,18 +114,18 @@ export function SchoolDaysPanel() {
               })
             }
           >
-            Add a day off
+            Add a Day Off
           </button>
           {school.daysOff.length > 1 ? (
             <button type="button" className="btn-ghost" onClick={() => edit((c) => void (c.school.daysOff = sortDays(c.school.daysOff)))}>
-              Sort by date
+              Sort by Date
             </button>
           ) : null}
         </div>
       </div>
 
       <div className="grid gap-1">
-        <h3 className="text-sm font-semibold">From a school calendar link</h3>
+        <h3 className="text-sm font-semibold">From a School Calendar Link</h3>
         {icals.length === 0 ? (
           <p className="text-xs text-soft">
             If your school publishes an iCal calendar, add it under Calendar links and switch it on here; its all-day Pro-D, No school and
@@ -135,7 +135,7 @@ export function SchoolDaysPanel() {
           icals.map((l) => (
             <Toggle
               key={l.id}
-              label={l.name || "Calendar link"}
+              label={l.name || "Calendar Link"}
               checked={school.icalIds.includes(l.id)}
               onChange={(on) =>
                 edit((c) => {
@@ -149,7 +149,7 @@ export function SchoolDaysPanel() {
       </div>
 
       <div className="grid gap-2">
-        <h3 className="text-sm font-semibold">Hot lunch</h3>
+        <h3 className="text-sm font-semibold">Hot Lunch</h3>
         <p className="text-xs text-soft">The lunch on each school day, if your school has a weekly one. Leave a day empty for none.</p>
         <div className="grid gap-2 sm:grid-cols-2">
           {LUNCH_DAYS.map((day, i) => (

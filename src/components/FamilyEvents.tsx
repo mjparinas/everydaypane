@@ -129,7 +129,7 @@ export function FamilyEvents() {
   return (
     <section className="grid gap-3" aria-labelledby="events-heading">
       <h2 id="events-heading" className="text-lg font-bold">
-        Family calendar
+        Family Calendar
       </h2>
       <p className="text-sm text-soft">Shows on the wall in the Family calendar (blue), with Google and school calendars.</p>
       {error && (
@@ -144,7 +144,7 @@ export function FamilyEvents() {
         </label>
         <label className="flex items-center gap-2 text-sm">
           <input type="checkbox" checked={allDay} onChange={(e) => setAllDay(e.target.checked)} />
-          All day
+          All Day
         </label>
         {allDay ? (
           <div className="grid grid-cols-2 gap-3">
@@ -186,7 +186,7 @@ export function FamilyEvents() {
           </div>
         )}
         <button className="btn-primary" type="submit" disabled={sending}>
-          {sending ? "Saving…" : "Add to calendar"}
+          {sending ? "Saving…" : "Add to Calendar"}
         </button>
       </form>
       <ul className="grid gap-2">

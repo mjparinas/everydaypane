@@ -30,7 +30,7 @@ const words = (s: string) => s.charAt(0).toUpperCase() + s.slice(1).toLowerCase(
 // ---- LG ThinQ Connect: `runState.currentState` (thinq.developer.lge.com device profiles, read 2026-11-25). ----
 
 const LG_PHASES: Record<string, string> = {
-  DETECTING: "Sensing load",
+  DETECTING: "Sensing Load",
   SOAKING: "Soaking",
   PREWASH: "Prewash",
   RUNNING: "Washing",
@@ -41,8 +41,8 @@ const LG_PHASES: Record<string, string> = {
   COOL_DOWN: "Cooling",
   STEAM_SOFTENING: "Steam",
   REFRESHING: "Refreshing",
-  WRINKLE_CARE: "Wrinkle care",
-  RINSE_HOLD: "Rinse hold",
+  WRINKLE_CARE: "Wrinkle Care",
+  RINSE_HOLD: "Rinse Hold",
   ADD_DRAIN: "Draining",
   DISPENSING: "Dispensing",
   SOFTENING: "Softening",
@@ -70,7 +70,7 @@ export function lgState(current: string | undefined): { state: LaundryState; pha
       return { state: "error" };
     default: {
       const phase = LG_PHASES[s];
-      return { state: "running", phase: phase ?? (s.startsWith("FROZEN_PREVENT") ? "Freeze guard" : words(s)) };
+      return { state: "running", phase: phase ?? (s.startsWith("FROZEN_PREVENT") ? "Freeze Guard" : words(s)) };
     }
   }
 }
@@ -104,11 +104,11 @@ export function lgRegion(country: string): "aic" | "eic" | "kic" {
 // ---- SmartThings (Samsung): washerOperatingState / dryerOperatingState and the samsungce.* versions. ----
 
 const ST_JOBS: Record<string, string> = {
-  weightSensing: "Sensing load",
+  weightSensing: "Sensing Load",
   preWash: "Prewash",
   wash: "Washing",
   aIWash: "Washing",
-  airWash: "Air wash",
+  airWash: "Air Wash",
   rinse: "Rinsing",
   aIRinse: "Rinsing",
   spin: "Spinning",
@@ -116,10 +116,10 @@ const ST_JOBS: Record<string, string> = {
   drying: "Drying",
   aIDrying: "Drying",
   cooling: "Cooling",
-  wrinklePrevent: "Wrinkle care",
+  wrinklePrevent: "Wrinkle Care",
   refreshing: "Refreshing",
   sanitizing: "Sanitizing",
-  delayWash: "Delayed start",
+  delayWash: "Delayed Start",
 };
 
 /**

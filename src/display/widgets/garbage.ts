@@ -35,11 +35,11 @@ export const garbage: Mount<"garbage"> = (el, w, ctx) => {
     const tonight = next.date === addDays(today, 1) && evening;
     fill(
       root,
-      h("div", { class: "w-label" }, w.title || "Garbage day"),
+      h("div", { class: "w-label" }, w.title || "Garbage Day"),
       h(
         "div",
         { class: `gb-next${tonight ? " gb-tonight" : ""}${next.date === today ? " gb-today" : ""}` },
-        h("div", { class: "gb-when" }, tonight ? "Bins out tonight" : dayName(next.date, today)),
+        h("div", { class: "gb-when" }, tonight ? "Bins Out Tonight" : dayName(next.date, today)),
         bins(next.bins),
       ),
       later.length

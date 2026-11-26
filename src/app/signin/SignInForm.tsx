@@ -61,7 +61,7 @@ function TestSignInForm({ next: forcedNext, intent = "signin" }: { next?: string
     <form onSubmit={(e) => void submit(e)} className="mt-6 grid gap-3">
       {signup ? (
         <label className="grid gap-1 text-sm font-medium">
-          Household name
+          Household Name
           <input
             className="field"
             type="text"
@@ -79,7 +79,7 @@ function TestSignInForm({ next: forcedNext, intent = "signin" }: { next?: string
         <input className="field" type="email" required autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} />
       </label>
       <button className="btn-primary" disabled={state.kind === "sending"}>
-        {state.kind === "sending" ? "Sending…" : signup ? "Create free household" : "Sign in"}
+        {state.kind === "sending" ? "Sending…" : signup ? "Create Free Household" : "Sign In"}
       </button>
       {state.kind === "error" && (
         <p className="text-sm text-bad" role="alert">
@@ -222,10 +222,10 @@ function ClerkSignInForm({ next: forcedNext, intent = "signin" }: { next?: strin
           />
         </label>
         <button className="btn-primary" disabled={busy}>
-          Sign in
+          Sign In
         </button>
         <button type="button" className="text-sm font-semibold text-brand" onClick={() => setPhase("email")}>
-          Use a different email
+          Use a Different Email
         </button>
       </form>
     );
@@ -235,7 +235,7 @@ function ClerkSignInForm({ next: forcedNext, intent = "signin" }: { next?: strin
     <form onSubmit={(e) => void sendCode(e)} className="mt-6 grid gap-3">
       {signup ? (
         <label className="grid gap-1 text-sm font-medium">
-          Household name
+          Household Name
           <input
             className="field"
             type="text"
@@ -253,7 +253,7 @@ function ClerkSignInForm({ next: forcedNext, intent = "signin" }: { next?: strin
         <input className="field" type="email" required autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} />
       </label>
       <button className="btn-primary" disabled={busy}>
-        {busy ? "Sending…" : signup ? "Create free household" : "Email me a code"}
+        {busy ? "Sending…" : signup ? "Create Free Household" : "Email Me a Code"}
       </button>
       {phase === "error" && (
         <p className="text-sm text-bad" role="alert">

@@ -85,10 +85,10 @@ export async function SiteHeader() {
                 href={SIGN_IN_PATH}
                 className="hidden min-[380px]:inline-flex rounded-lg px-3 py-2 text-soft hover:bg-panel hover:text-ink"
               >
-                Sign in
+                Sign In
               </Link>
               <Link href={SIGNUP_PATH} className="btn-primary ml-1 rounded-xl px-3.5 text-sm sm:px-4" data-cta="nav-start-free">
-                Start free
+                Start Free
               </Link>
             </>
           )}
@@ -115,15 +115,15 @@ export function SiteFooter() {
             { href: "/features/", label: "Features" },
             { href: "/pricing/", label: "Pricing" },
             { href: "/compare/", label: "Compare" },
-            { href: APP_PATH, label: "Open household" },
-            { href: DISPLAY_PATH, label: "Connect a display" },
-            { href: FAMILY_PATH, label: "Family board" },
+            { href: APP_PATH, label: "Open Household" },
+            { href: DISPLAY_PATH, label: "Connect a Display" },
+            { href: FAMILY_PATH, label: "Family Board" },
           ]}
         />
         <FooterCol
           title="Learn"
           links={[
-            { href: "/blog/", label: "Blog & updates" },
+            { href: "/blog/", label: "Blog & Updates" },
             { href: "/compare/dakboard/", label: "vs DAKboard" },
             { href: "/compare/homescreens/", label: "vs Home Screens" },
             { href: "/compare/skylight/", label: "vs Skylight" },
@@ -199,7 +199,7 @@ export function CtaBanner({ title, body, cta }: { title: string; body: string; c
         data-track="start_free"
         className="relative mt-6 inline-flex min-h-12 items-center rounded-2xl bg-white px-6 font-semibold text-brand shadow-md"
       >
-        Start free
+        Start Free
       </Link>
     </section>
   );

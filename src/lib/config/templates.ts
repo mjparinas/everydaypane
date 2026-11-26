@@ -63,7 +63,7 @@ const PORTRAIT = { cols: 8, rows: 12, gap: 14, padding: 12, tilePadding: 14 } as
 export const VIEW_TEMPLATES: ViewTemplate[] = [
   {
     id: "kitchen-glance",
-    name: "Kitchen glance",
+    name: "Kitchen Glance",
     description: "Clock, weather, today's schedule and photos — the everyday kitchen wall.",
     category: "everyday",
     tier: "free",
@@ -84,7 +84,7 @@ export const VIEW_TEMPLATES: ViewTemplate[] = [
   },
   {
     id: "photo-frame",
-    name: "Photo frame",
+    name: "Photo Frame",
     description: "Photos fill the wall with a small clock and date in the corner.",
     category: "media",
     tier: "free",
@@ -105,7 +105,7 @@ export const VIEW_TEMPLATES: ViewTemplate[] = [
   },
   {
     id: "calendar-wall",
-    name: "Calendar wall",
+    name: "Calendar Wall",
     description: "Month grid with the week ahead and a clock.",
     category: "everyday",
     tier: "free",
@@ -122,7 +122,7 @@ export const VIEW_TEMPLATES: ViewTemplate[] = [
   },
   {
     id: "simple-day",
-    name: "Simple day",
+    name: "Simple Day",
     description: "Big clock, date, weather and a note — easy to read from across the room.",
     category: "everyday",
     tier: "free",
@@ -153,7 +153,7 @@ export const VIEW_TEMPLATES: ViewTemplate[] = [
   },
   {
     id: "morning-brief",
-    name: "Morning brief",
+    name: "Morning Brief",
     description: "Weather, sunrise, air quality and today's schedule for the breakfast rush.",
     category: "everyday",
     tier: "free",
@@ -183,7 +183,7 @@ export const VIEW_TEMPLATES: ViewTemplate[] = [
   },
   {
     id: "dual-city",
-    name: "Two cities",
+    name: "Two Cities",
     description: "Vancouver and Toronto clocks with weather and the day ahead.",
     category: "everyday",
     tier: "free",
@@ -203,7 +203,7 @@ export const VIEW_TEMPLATES: ViewTemplate[] = [
   },
   {
     id: "week-planner",
-    name: "Week planner",
+    name: "Week Planner",
     description: "This week's grid, upcoming events and a countdown strip.",
     category: "everyday",
     tier: "free",
@@ -223,7 +223,7 @@ export const VIEW_TEMPLATES: ViewTemplate[] = [
   },
   {
     id: "night-clock",
-    name: "Night clock",
+    name: "Night Clock",
     description: "A large clock for late evening, with tomorrow's weather underneath.",
     category: "everyday",
     tier: "free",
@@ -254,7 +254,7 @@ export const VIEW_TEMPLATES: ViewTemplate[] = [
   },
   {
     id: "focus-desk",
-    name: "Focus desk",
+    name: "Focus Desk",
     description: "Pomodoro, to-dos and a quiet clock — deep work on the wall.",
     category: "productivity",
     tier: "paid",
@@ -283,7 +283,7 @@ export const VIEW_TEMPLATES: ViewTemplate[] = [
   },
   {
     id: "kitchen-command",
-    name: "Kitchen command",
+    name: "Kitchen Command",
     description: "Meals, shopping list, timers and today's schedule for cooking.",
     category: "family",
     tier: "paid",
@@ -305,7 +305,7 @@ export const VIEW_TEMPLATES: ViewTemplate[] = [
   },
   {
     id: "family-hub",
-    name: "Family hub",
+    name: "Family Hub",
     description: "Chores, school status, meals and the message board.",
     category: "family",
     tier: "paid",
@@ -327,7 +327,7 @@ export const VIEW_TEMPLATES: ViewTemplate[] = [
   },
   {
     id: "kids-routine",
-    name: "Kids routine",
+    name: "Kids Routine",
     description: "Chores, school, timers and tonight's dinner for the after-school rush.",
     category: "family",
     tier: "paid",
@@ -350,7 +350,7 @@ export const VIEW_TEMPLATES: ViewTemplate[] = [
   },
   {
     id: "commute-dash",
-    name: "Commute dash",
+    name: "Commute Dash",
     description: "Buses, drive times and weather before you leave the house.",
     category: "commute",
     tier: "paid",
@@ -371,7 +371,7 @@ export const VIEW_TEMPLATES: ViewTemplate[] = [
   },
   {
     id: "ferry-weekend",
-    name: "Ferry weekend",
+    name: "Ferry Weekend",
     description: "BC Ferries sailings, tides and the weekend forecast.",
     category: "commute",
     tier: "paid",
@@ -507,7 +507,7 @@ export const VIEW_TEMPLATES: ViewTemplate[] = [
   },
   {
     id: "rainy-day",
-    name: "Rainy day",
+    name: "Rainy Day",
     description: "Animated radar, forecast and air quality when the weather turns.",
     category: "everyday",
     tier: "paid",
@@ -536,7 +536,7 @@ export const VIEW_TEMPLATES: ViewTemplate[] = [
   },
   {
     id: "sports-lounge",
-    name: "Sports lounge",
+    name: "Sports Lounge",
     description: "Live scores, music and photos for game night.",
     category: "media",
     tier: "paid",
@@ -557,7 +557,7 @@ export const VIEW_TEMPLATES: ViewTemplate[] = [
   },
   {
     id: "smart-home",
-    name: "Smart home",
+    name: "Smart Home",
     description: "Who's home, a camera glance and a few house controls.",
     category: "everyday",
     tier: "paid",
@@ -580,7 +580,7 @@ export const VIEW_TEMPLATES: ViewTemplate[] = [
   },
   {
     id: "family-hub-portrait",
-    name: "Family hub (portrait)",
+    name: "Family Hub (Portrait)",
     description: "Tall twin of Family hub for a hallway tablet or fridge panel.",
     category: "family",
     tier: "paid",
@@ -602,7 +602,7 @@ export const VIEW_TEMPLATES: ViewTemplate[] = [
   },
   {
     id: "kids-routine-portrait",
-    name: "Kids routine (portrait)",
+    name: "Kids Routine (Portrait)",
     description: "Tall twin of Kids routine — chores first, dinner and agenda below.",
     category: "family",
     tier: "paid",
@@ -624,7 +624,7 @@ export const VIEW_TEMPLATES: ViewTemplate[] = [
   },
   {
     id: "playroom-portrait",
-    name: "Playroom (portrait)",
+    name: "Playroom (Portrait)",
     description: "Word clock, chore bands and a joke — a tall kids corner.",
     category: "family",
     tier: "paid",

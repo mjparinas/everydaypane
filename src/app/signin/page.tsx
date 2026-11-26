@@ -7,7 +7,7 @@ import { SIGN_IN_PATH, SIGNUP_PATH } from "@/lib/site";
 
 import { SignInForm, type SignInIntent } from "./SignInForm";
 
-export const metadata: Metadata = { title: "Sign in" };
+export const metadata: Metadata = { title: "Sign In" };
 
 export default async function SignInPage({ searchParams }: { searchParams: Promise<{ intent?: string; next?: string }> }) {
   const sp = await searchParams;
@@ -33,14 +33,14 @@ export default async function SignInPage({ searchParams }: { searchParams: Promi
             <p className="mt-4 text-sm text-soft">
               Already have a household?{" "}
               <Link href={SIGN_IN_PATH} className="font-semibold text-brand hover:underline">
-                Sign in
+                Sign In
               </Link>
             </p>
           ) : (
             <p className="mt-4 text-sm text-soft">
               New here?{" "}
               <Link href={SIGNUP_PATH} className="font-semibold text-brand hover:underline">
-                Start free
+                Start Free
               </Link>
             </p>
           )}

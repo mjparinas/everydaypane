@@ -207,11 +207,11 @@ export function ShoppingList() {
       )}
       <div className="flex flex-wrap gap-2">
         <button type="button" className="btn-ghost" disabled={busy} onClick={() => void fromMeals()}>
-          Add from this week&apos;s meals
+          Add from This Week&apos;s Meals
         </button>
         {done.length > 0 && (
           <button type="button" className="btn-ghost" disabled={busy} onClick={() => void clearBought()}>
-            Clear bought
+            Clear Bought
           </button>
         )}
       </div>

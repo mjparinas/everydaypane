@@ -54,7 +54,7 @@ export function WidgetSettingsDrawer({
         <button type="button" className="btn-ghost" onClick={onDuplicate}>
           Duplicate
         </button>
-        <ConfirmButton label="Remove widget" onConfirm={onRemove} />
+        <ConfirmButton label="Remove Widget" onConfirm={onRemove} />
       </div>
     </SlideDrawer>
   );

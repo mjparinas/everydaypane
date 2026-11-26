@@ -85,7 +85,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
       <div className="mt-14">
         <CtaBanner
           cta={`blog-${post.slug}`}
-          title="See it on your wall"
+          title="See It on Your Wall"
           body="Start free in minutes. Household is the best value when you want every widget."
         />
       </div>
