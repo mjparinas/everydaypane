@@ -233,7 +233,7 @@ export const HA_ACTIONS = [
   "mute",
   "unmute",
   "source",
-  // Colour lights (Govee): an RGB number 0 to 0xffffff, or a scene by name (`option`).
+  // Colour lights (Govee, Hue, LIFX): an RGB number 0 to 0xffffff, or a scene by name (`option`).
   "color",
   "scene",
 ] as const;

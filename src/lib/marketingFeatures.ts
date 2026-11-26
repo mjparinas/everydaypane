@@ -52,7 +52,8 @@ const FEATURE_BLURBS: Partial<Record<WidgetType, string>> = {
   borderWait: "Car waits at Peace Arch, Pacific Highway, Aldergrove and more, into the U.S. and into Canada.",
   garbage: "Township of Langley Recycle Coach zones.",
   school: "Open, closed, delayed or late start.",
-  haEntity: "Lights, climate, covers, lock (lock only), Nest, ecobee, SmartThings, Govee colour lights and scenes.",
+  haEntity:
+    "Lights, climate, covers, lock (lock only), Nest, ecobee, SmartThings, Govee colour lights and scenes, Philips Hue and LIFX lights.",
   camera: "UniFi Protect snapshots on a timer.",
   media: "HA, Spotify or Sonos now-playing controls.",
   presence: "Person and device trackers, read only.",

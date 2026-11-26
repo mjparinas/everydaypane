@@ -1,13 +1,13 @@
 import type { HaControl } from "@/lib/config/schema";
 import type { HaData, HaEntity } from "@/lib/display/types";
-import { nativeProviderFromEntity } from "@/lib/smartHome";
+import { LIGHT_PROVIDERS, nativeProviderFromEntity } from "@/lib/smartHome";
 
 import { refresh, send, subscribe } from "../api";
 import { fill, h } from "../dom";
 import { HA_EVERY } from "./ha";
 import type { Mount } from "./types";
 
-// Smart device tiles (Home Assistant, Nest, ecobee, SmartThings, Govee). Every tap goes to our server, which only passes
+// Smart device tiles (Home Assistant, Nest, ecobee, SmartThings, Govee, Philips Hue, LIFX). Every tap goes to our server, which only passes
 // on a fixed set of actions for entities a widget shows (src/server/homeassistant.ts); unlocking is never offered.
 // States come from one shared five-second feed, so ten tiles still make one request. Loaded on its own
 // (src/display/widgets/lazy.ts, 2026-11-25) so screens without a tile don't carry it.
@@ -22,7 +22,7 @@ type Kind = Exclude<HaControl, "auto">;
 export function controlFor(entityId: string, control: HaControl): Kind {
   if (control !== "auto") return control;
   const native = nativeProviderFromEntity(entityId);
-  if (native === "govee") return "light";
+  if (native && LIGHT_PROVIDERS.includes(native)) return "light";
   if (native) {
     if (entityId.startsWith("smartthings.") && entityId.includes("lock")) return "lock";
     return "climate";
@@ -178,7 +178,7 @@ export const haEntity: Mount<"haEntity"> = (el, w) => {
         range.addEventListener("change", () => void act("brightness", Number(range.value)));
         parts.push(range);
       }
-      // Govee colour lights: a row of colours and the light's scenes, only while it is on.
+      // Colour lights (Govee, Hue, LIFX): a row of colours and the light's scenes, only while it is on.
       if (kind === "light" && e.state === "on" && e.color !== undefined) parts.push(swatches(e.color, (rgb) => void act("color", rgb)));
       if (kind === "light" && e.state === "on" && e.scenes?.length)
         parts.push(scenePicker(e.scenes, (name) => void act("scene", undefined, name)));

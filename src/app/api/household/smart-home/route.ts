@@ -4,6 +4,8 @@ import type { NativeSmartProvider } from "@/lib/smartHome";
 import { ecobeeDevices } from "@/server/ecobee";
 import { forgetGovee, goveeCheckKey, goveeDevices, GoveeKeyRefused } from "@/server/govee";
 import { json, readJson, sameOrigin, unauthorized } from "@/server/http";
+import { forgetHue, hueDevices } from "@/server/hue";
+import { forgetLifx, lifxCheckToken, lifxDevices, LifxTokenRefused } from "@/server/lifx";
 import { nestDevices } from "@/server/nest";
 import { getSecret, setSecret } from "@/server/secrets";
 import { disconnectSmartHome, smartConfigured, smartHomeConnected, SmartHomeDisconnected } from "@/server/smartHomeAuth";
@@ -15,11 +17,16 @@ async function status(accountId: string, service: NativeSmartProvider) {
   return { configured, connected: configured && (await smartHomeConnected(accountId, service)) };
 }
 
-const providers = ["nest", "ecobee", "smartthings"] as const;
+const providers = ["nest", "ecobee", "smartthings", "hue"] as const;
 
 // Govee signs in with an API key from the Govee Home app, not OAuth, so it is always "configured".
 async function goveeStatus(accountId: string) {
   return { configured: true, connected: Boolean(await getSecret(accountId, "govee.apiKey")) };
+}
+
+// LIFX likewise: a personal access token from cloud.lifx.com (Melvin, 2026-11-25).
+async function lifxStatus(accountId: string) {
+  return { configured: true, connected: Boolean(await getSecret(accountId, "lifx.token")) };
 }
 
 export async function GET(req: Request) {
@@ -42,7 +49,21 @@ export async function GET(req: Request) {
     }
     return json({ ...base, devices, error });
   }
-  if (pick === "nest" || pick === "ecobee" || pick === "smartthings") {
+  if (pick === "lifx") {
+    const base: { configured: boolean; connected: boolean; expired?: boolean } = await lifxStatus(accountId);
+    let devices: { id: string; name: string }[] = [];
+    let error = "";
+    if (base.connected) {
+      try {
+        devices = await lifxDevices(accountId);
+      } catch (e) {
+        if (e instanceof LifxTokenRefused) Object.assign(base, { connected: false, expired: true });
+        else error = "Couldn't list LIFX lights. Try again in a minute.";
+      }
+    }
+    return json({ ...base, devices, error });
+  }
+  if (pick === "nest" || pick === "ecobee" || pick === "smartthings" || pick === "hue") {
     const base = await status(accountId, pick);
     let devices: { id: string; name: string }[] = [];
     let error = "";
@@ -50,6 +71,7 @@ export async function GET(req: Request) {
       try {
         if (pick === "nest") devices = await nestDevices(accountId);
         else if (pick === "ecobee") devices = await ecobeeDevices(accountId);
+        else if (pick === "hue") devices = await hueDevices(accountId);
         else devices = await smartThingsDevices(accountId);
       } catch (e) {
         if (e instanceof SmartHomeDisconnected) Object.assign(base, { connected: false, expired: true });
@@ -60,13 +82,14 @@ export async function GET(req: Request) {
   }
   const out: Record<string, Awaited<ReturnType<typeof status>>> = {};
   for (const p of providers) out[p] = await status(accountId, p);
-  return json({ ...out, govee: await goveeStatus(accountId) });
+  return json({ ...out, govee: await goveeStatus(accountId), lifx: await lifxStatus(accountId) });
 }
 
 const putBody = z.object({
   tempestToken: z.string().min(8).max(80).nullable().optional(),
   wuApiKey: z.string().min(8).max(80).nullable().optional(),
   goveeApiKey: z.string().trim().min(8).max(80).optional(),
+  lifxToken: z.string().trim().min(16).max(120).optional(),
 });
 
 export async function PUT(req: Request) {
@@ -93,6 +116,20 @@ export async function PUT(req: Request) {
     await forgetGovee(accountId);
     return json({ ok: true, devices });
   }
+  if (parsed.data.lifxToken !== undefined) {
+    let devices: number;
+    try {
+      devices = await lifxCheckToken(parsed.data.lifxToken);
+    } catch (e) {
+      return json(
+        { error: e instanceof LifxTokenRefused ? "LIFX didn't accept that token." : "Couldn't reach LIFX. Try again in a minute." },
+        400,
+      );
+    }
+    await setSecret(accountId, "lifx.token", parsed.data.lifxToken);
+    forgetLifx(accountId);
+    return json({ ok: true, devices });
+  }
   return json({ ok: true });
 }
 
@@ -106,7 +143,14 @@ export async function DELETE(req: Request) {
     await forgetGovee(session.accountId);
     return json({ ok: true });
   }
-  if (service !== "nest" && service !== "ecobee" && service !== "smartthings") return json({ error: "Bad request" }, 400);
+  if (service === "lifx") {
+    await setSecret(session.accountId, "lifx.token", null);
+    forgetLifx(session.accountId);
+    return json({ ok: true });
+  }
+  if (service !== "nest" && service !== "ecobee" && service !== "smartthings" && service !== "hue")
+    return json({ error: "Bad request" }, 400);
   await disconnectSmartHome(session.accountId, service);
+  if (service === "hue") forgetHue(session.accountId);
   return json({ ok: true });
 }
