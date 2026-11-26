@@ -513,6 +513,14 @@ export const WIDGETS: { [T in WidgetType]: WidgetInfo<T> } = {
     minSize: { w: 2, h: 1 },
     defaults: () => ({ schools: [] }),
   },
+  schoolDays: {
+    label: "School days",
+    description: "School today or not, Pro-D days, breaks and hot lunch",
+    icon: "🎒",
+    size: { w: 3, h: 3 },
+    minSize: { w: 2, h: 2 },
+    defaults: () => ({ count: 3, showLunch: true }),
+  },
   whiteboard: {
     label: "Whiteboard",
     description: "Finger draw with a few colours; the same doodle on every display",
@@ -752,7 +760,11 @@ export const WIDGET_GROUPS: { id: string; label: string; types: WidgetType[] }[]
     label: "Calendar",
     types: ["agenda", "calendarMonth", "calendarWeek", "calendarUpNext", "countdown", "tasks", "packages", "tides"],
   },
-  { id: "family", label: "Family", types: ["meals", "menus", "shopping", "messages", "chores", "whiteboard", "school", "presence"] },
+  {
+    id: "family",
+    label: "Family",
+    types: ["meals", "menus", "shopping", "messages", "chores", "whiteboard", "school", "schoolDays", "presence"],
+  },
   {
     id: "home",
     label: "Home",

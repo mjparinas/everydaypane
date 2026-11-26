@@ -33,6 +33,7 @@ export const SAMPLE_FEEDS: Record<string, unknown> = {
   chores: loadJson("chores.json"),
   tasks: loadJson("tasks.json"),
   school: loadJson("school.json"),
+  "school-days": loadJson("school-days.json"),
   ha: loadJson("ha.json"),
   transit: loadJson("transit.json"),
   commute: loadJson("commute.json"),

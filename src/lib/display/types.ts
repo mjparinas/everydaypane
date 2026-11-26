@@ -1,4 +1,5 @@
 import type { DashboardConfig, Theme, View } from "@/lib/config/schema";
+import type { SchoolDayOff } from "@/lib/schoolCalendar";
 
 // What a display receives: the parts of the settings document it needs, nothing secret. Built by
 // src/lib/display/payload.ts, read by src/display/. Types only, so the display bundle carries no schema code.
@@ -499,6 +500,19 @@ export interface SchoolData {
   /** The notice text when the district posted one. */
   detail: string;
   districtName: string;
+}
+
+/** The school year for the School days widget (src/server/schoolDays.ts); the wall works out today itself. */
+export interface SchoolDaysData {
+  updatedAt: number;
+  calendarName: string;
+  firstDay: string;
+  lastDay: string;
+  daysOff: SchoolDayOff[];
+  /** Monday to Friday. */
+  lunches: string[];
+  /** A school calendar link that couldn't be read (its days are missing). */
+  error?: string;
 }
 
 /** One person on the who's-home strip (drawn from the shared HA feed). */
