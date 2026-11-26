@@ -52,7 +52,15 @@ export function LiveLayoutEditor({
   const frame = useRef<HTMLIFrameElement>(null);
   const [scale, setScale] = useState(0.5);
   const [listening, setListening] = useState(false);
-  const [drag, setDrag] = useState<Drag | null>(null);
+  const [drag, setDragState] = useState<Drag | null>(null);
+  // Pointer handlers read the drag from this ref, not from the render: pointermove updates render at continuous
+  // priority, so a fast pointerup could run with a closure from before the moves and drop the resize (seen in CI,
+  // 2026-11-25: "the top-left corner didn't resize").
+  const dragRef = useRef<Drag | null>(null);
+  const setDrag = (d: Drag | null) => {
+    dragRef.current = d;
+    setDragState(d);
+  };
   const [stageRect, setStageRect] = useState({ left: 0, top: 0, width: DESIGN_W, height: DESIGN_H });
   const draftTimer = useRef<number | undefined>(undefined);
   const latest = useRef({ config, version, viewId });
@@ -188,6 +196,7 @@ export function LiveLayoutEditor({
   }
 
   function move(e: React.PointerEvent, w: Widget) {
+    const drag = dragRef.current;
     if (!drag || drag.pointer !== e.pointerId || drag.id !== w.id) return;
     const c = cellFromEvent(e);
     let resizeCell = c;
@@ -216,6 +225,7 @@ export function LiveLayoutEditor({
   }
 
   function end(e: React.PointerEvent, w: Widget) {
+    const drag = dragRef.current;
     if (!drag || drag.pointer !== e.pointerId) return;
     if (!drag.moved) onSelect(w.id);
     else if (fits({ ...drag.rect, type: w.type }, grid, others(w.id))) onChange(w.id, drag.rect);
@@ -338,7 +348,13 @@ export function LiveLayoutEditor({
                     aria-hidden="true"
                     data-corner={corner}
                     className={`absolute h-5 w-5 touch-none bg-brand/80 after:absolute after:h-2 after:w-2 after:border-white ${HANDLE[corner]} ${
-                      corner === "se" || selected || dragging ? "" : "hidden group-hover:block group-focus:block"
+                      selected || dragging
+                        ? ""
+                        : corner === "se"
+                          ? // Touch screens have no hover, so an always-on handle on every tile buried a phone-sized
+                            // preview (Melvin, 2026-11-26); there a tap selects the tile and shows its four handles.
+                            "[@media(hover:none)]:hidden"
+                          : "hidden group-hover:block group-focus:block"
                     }`}
                     onPointerDown={(e) => start(e, w, corner)}
                     onPointerMove={(e) => move(e, w)}

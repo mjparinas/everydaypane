@@ -30,7 +30,24 @@ const common = {
 
 // Widgets built as their own file (src/display/widgets/lazy.ts). Their ../api is apiShared.ts, which uses
 // display.js's copy, so there is one set of feeds and one device token.
-const LAZY = ["ecoflow", "internet", "unifi", "whiteboard", "wildfires", "windy", "haEntity", "oura", "airthings", "rivers", "laundry"];
+const LAZY = [
+  "ecoflow",
+  "internet",
+  "unifi",
+  "whiteboard",
+  "wildfires",
+  "windy",
+  "haEntity",
+  "oura",
+  "airthings",
+  "snow",
+  "rivers",
+  "borderWait",
+  "drivebc",
+  "rachio",
+  "blueRiiot",
+  "laundry",
+];
 const sharedApi = {
   name: "shared-api",
   setup(build) {

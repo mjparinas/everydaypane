@@ -3,23 +3,29 @@
 import { useEffect, useState, type ReactNode } from "react";
 
 import { AIRTHINGS_KINDS, AIRTHINGS_LABELS } from "@/lib/airthings";
+import { POOL_KINDS, POOL_LABELS } from "@/lib/blueRiiot";
+import { BORDER_CROSSINGS, BORDER_DIRECTION_LABELS, BORDER_DIRECTIONS, BORDER_INFO } from "@/lib/border";
 import { PERIOD_LABELS, PERIODS } from "@/lib/config/periods";
 import type { CountdownEvent, DashboardConfig, TimerPreset, Widget } from "@/lib/config/schema";
 import { WIDGETS } from "@/lib/config/widgets";
+import { DRIVEBC_LICENCE, DRIVEBC_MAX_CAMERAS, DRIVEBC_REFRESH } from "@/lib/drivebc";
 import { EARTH_OVERLAY_LABELS, EARTH_OVERLAYS, EARTH_ZOOM_LABELS, EARTH_ZOOMS } from "@/lib/earth";
 import { FERRY_ROUTES, ferryRouteName } from "@/lib/ferries";
 import { MEAL_LABELS, MEAL_SLOTS } from "@/lib/meals";
 import { RIVER_PRESETS, RIVER_STATION_RE } from "@/lib/rivers";
 import { LIGHT_PROVIDERS, type DirectSmartProvider } from "@/lib/smartHome";
+import { MOUNTAINS } from "@/lib/snow";
 import { WINDY_OVERLAY_LABELS, WINDY_OVERLAYS, windyPressureAllowed } from "@/lib/windy";
 
 import { useAirthings } from "./airthings";
+import { usePools } from "./blueRiiot";
 import { PlaceFinder } from "./CommutePanel";
 import { useEcoFlow } from "./EcoFlowPanel";
 import { Range, Segmented, Select, Stepper, Text, TextArea, Toggle } from "./fields";
 import { HaEntityList, useHa } from "./haEntities";
 import { useLaundry } from "./laundry";
 import { useMusic } from "./music";
+import { useRachio } from "./rachio";
 import { loadSmartProvider, type SmartProviderDetail } from "./smartHome";
 import { newId } from "./store";
 import { UnifiSitePicker } from "./UnifiPanel";
@@ -935,6 +941,43 @@ function TypeSettings({
         </>
       );
     }
+    case "borderWait": {
+      const e = edit<"borderWait">();
+      return (
+        <>
+          <Select
+            label="Directions"
+            value={w.directions}
+            options={BORDER_DIRECTIONS.map((d) => ({ value: d, label: BORDER_DIRECTION_LABELS[d] }))}
+            onChange={(v) => e((x) => void (x.directions = v))}
+          />
+          <Toggle
+            label="NEXUS lane waits"
+            checked={w.showNexus}
+            hint="Under the regular wait, where the agency reports one."
+            onChange={(v) => e((x) => void (x.showNexus = v))}
+          />
+          <p className="text-xs text-soft">
+            Car waits from CBSA (into Canada) and U.S. CBP (into the U.S.), which update about hourly. Pick at least one crossing.
+          </p>
+          {BORDER_CROSSINGS.map((id) => (
+            <Toggle
+              key={id}
+              label={BORDER_INFO[id].name}
+              hint={BORDER_INFO[id].detail}
+              checked={w.crossings.includes(id)}
+              onChange={(on) =>
+                e((x) => {
+                  // Kept in the list's own order (west to east), and never empty.
+                  const next = BORDER_CROSSINGS.filter((c) => (c === id ? on : x.crossings.includes(c)));
+                  if (next.length) x.crossings = next;
+                })
+              }
+            />
+          ))}
+        </>
+      );
+    }
     case "sports": {
       const e = edit<"sports">();
       const teams = config.integrations.sports.teams;
@@ -1125,6 +1168,10 @@ function TypeSettings({
       return <LaundrySettings w={w} onChange={edit<"laundry">()} />;
     case "rivers":
       return <RiversSettings w={w} onChange={edit<"rivers">()} />;
+    case "rachio":
+      return <RachioSettings w={w} onChange={edit<"rachio">()} />;
+    case "blueRiiot":
+      return <PoolSettings w={w} onChange={edit<"blueRiiot">()} />;
     case "ecoflow":
       return <EcoFlowSettings w={w} e={edit<"ecoflow">()} />;
     case "unifi": {
@@ -1313,6 +1360,49 @@ function TypeSettings({
             format={(n) => `${n} s`}
             onChange={(v) => e((x) => void (x.refreshSeconds = v))}
           />
+        </>
+      );
+    }
+    case "drivebc": {
+      const e = edit<"drivebc">();
+      return (
+        <>
+          <DriveBcCameras
+            cameras={w.cameras}
+            onAdd={(c) => e((x) => void (x.cameras = [...x.cameras, c]))}
+            onRemove={(id) => e((x) => void (x.cameras = x.cameras.filter((c) => c.id !== id)))}
+          />
+          <Range
+            label="New picture every"
+            value={w.refreshSeconds}
+            min={DRIVEBC_REFRESH.min}
+            max={DRIVEBC_REFRESH.max}
+            step={30}
+            format={(n) => (n < 120 ? `${n} s` : `${Math.round(n / 60)} min`)}
+            hint="Lower Mainland cameras take a new picture every two to 15 minutes, so faster only shows the same one again."
+            onChange={(v) => e((x) => void (x.refreshSeconds = v))}
+          />
+          <Select
+            label="Layout"
+            value={w.layout}
+            options={[
+              { value: "grid", label: "All cameras side by side" },
+              { value: "cycle", label: "One camera at a time" },
+            ]}
+            onChange={(v) => e((x) => void (x.layout = v))}
+          />
+          {w.layout === "cycle" && (
+            <Range
+              label="Next camera after"
+              value={w.cycleSeconds}
+              min={5}
+              max={120}
+              step={5}
+              format={(n) => `${n} s`}
+              onChange={(v) => e((x) => void (x.cycleSeconds = v))}
+            />
+          )}
+          <Toggle label="Show camera names" checked={w.showName} onChange={(v) => e((x) => void (x.showName = v))} />
         </>
       );
     }
@@ -1560,6 +1650,43 @@ function TypeSettings({
           )}
           <p className="text-xs text-soft">
             Set <span className="font-mono">PACKAGE_TRACK_API_KEY</span> on the server for live status (optional).
+          </p>
+        </>
+      );
+    }
+    case "snow": {
+      const e = edit<"snow">();
+      return (
+        <>
+          <p className="text-xs text-soft">Mountains to show, in this order. Keep at least one.</p>
+          {MOUNTAINS.map((m) => (
+            <Toggle
+              key={m.id}
+              label={m.name}
+              checked={w.mountains.includes(m.id)}
+              onChange={(on) =>
+                e((x) => {
+                  const next = on
+                    ? MOUNTAINS.map((r) => r.id).filter((id) => id === m.id || x.mountains.includes(id))
+                    : x.mountains.filter((id) => id !== m.id);
+                  if (next.length) x.mountains = next;
+                })
+              }
+            />
+          ))}
+          <Toggle label="Snow depth" checked={w.showDepth} onChange={(v) => e((x) => void (x.showDepth = v))} />
+          <Toggle
+            label="Snowfall today and the next two days"
+            checked={w.showForecast}
+            onChange={(v) => e((x) => void (x.showForecast = v))}
+          />
+          <Toggle
+            label="Temperature on the mountain"
+            checked={w.showTemperature}
+            onChange={(v) => e((x) => void (x.showTemperature = v))}
+          />
+          <p className="text-xs text-soft">
+            From Open-Meteo&apos;s weather model at each mountain&apos;s mid-mountain height, not the resorts&apos; own snow reports.
           </p>
         </>
       );
@@ -2070,6 +2197,96 @@ function CountdownEvents({ events, count, onChange }: { events: CountdownEvent[]
   );
 }
 
+interface DriveBcMatch {
+  id: string;
+  name: string;
+  caption: string;
+  highway: string;
+  km: number | null;
+}
+
+/** Picked DriveBC cameras, and a search of DriveBC's camera list by name, place or highway (nearest first). */
+function DriveBcCameras({
+  cameras,
+  onAdd,
+  onRemove,
+}: {
+  cameras: { id: string; name: string }[];
+  onAdd: (c: { id: string; name: string }) => void;
+  onRemove: (id: string) => void;
+}) {
+  const [q, setQ] = useState("");
+  const [matches, setMatches] = useState<DriveBcMatch[] | null>(null);
+  const [note, setNote] = useState("");
+  const [busy, setBusy] = useState(false);
+  const full = cameras.length >= DRIVEBC_MAX_CAMERAS;
+
+  async function search(e?: React.FormEvent) {
+    e?.preventDefault();
+    setBusy(true);
+    setNote("");
+    const r = await fetch(`/api/household/drivebc/?${new URLSearchParams({ q: q.trim() })}`).catch(() => null);
+    const body = (await r?.json().catch(() => ({}))) as { cameras?: DriveBcMatch[]; error?: string } | undefined;
+    setBusy(false);
+    setMatches(body?.cameras ?? []);
+    if (!r?.ok) setNote(body?.error ?? "Couldn't search DriveBC's cameras.");
+  }
+
+  return (
+    <div className="grid gap-2">
+      <p className="text-sm font-medium">Cameras</p>
+      {cameras.length === 0 && <p className="text-xs text-soft">No cameras yet. Find one below.</p>}
+      {cameras.map((c) => (
+        <div key={c.id} className="flex items-center justify-between gap-2 text-sm">
+          <span className="min-w-0 truncate">{c.name}</span>
+          <button type="button" className="btn-ghost" onClick={() => onRemove(c.id)}>
+            Remove
+          </button>
+        </div>
+      ))}
+      {!full && (
+        <form className="flex items-end gap-2" onSubmit={(e) => void search(e)}>
+          <div className="min-w-0 flex-1">
+            <Text
+              label="Find a camera"
+              value={q}
+              maxLength={60}
+              placeholder="Port Mann, Hwy 1, Coquihalla; empty for the nearest"
+              onChange={setQ}
+            />
+          </div>
+          <button className="btn-primary" disabled={busy}>
+            {busy ? "Finding…" : "Find"}
+          </button>
+        </form>
+      )}
+      {note && <p className="text-xs text-soft">{note}</p>}
+      {matches && !full && (
+        <div className="grid gap-1">
+          {matches.length === 0 && !note && <p className="text-xs text-soft">No cameras matched.</p>}
+          {matches
+            .filter((m) => !cameras.some((c) => c.id === m.id))
+            .map((m) => (
+              <button
+                key={m.id}
+                type="button"
+                className="btn-ghost justify-start text-left"
+                title={m.caption}
+                onClick={() => onAdd({ id: m.id, name: m.name })}
+              >
+                {m.name} {m.highway && <span className="text-soft">· Hwy {m.highway}</span>}
+                {m.km !== null && <span className="text-soft"> · {m.km} km</span>}
+              </button>
+            ))}
+        </div>
+      )}
+      <p className="text-xs text-soft">
+        Up to {DRIVEBC_MAX_CAMERAS} cameras. {DRIVEBC_LICENCE}
+      </p>
+    </div>
+  );
+}
+
 interface StopMatch {
   id: string;
   code: string;
@@ -2305,6 +2522,87 @@ function AirthingsSettings({ w, onChange }: { w: Extract<Widget, { type: "airthi
           ))}
         </>
       )}
+    </>
+  );
+}
+
+function PoolSettings({ w, onChange }: { w: Extract<Widget, { type: "blueRiiot" }>; onChange: Edit<"blueRiiot"> }) {
+  const status = usePools();
+  // A pool saved earlier that the account no longer lists still shows, so it can be switched off.
+  const listed = status?.pools ?? [];
+  const pools = [...listed, ...w.pools.filter((id) => !listed.some((p) => p.id === id)).map((id) => ({ id, name: id }))];
+  return (
+    <>
+      <p className="text-xs text-soft">Readings to show, where the pool has them (free chlorine only after a test strip in the app).</p>
+      {POOL_KINDS.map((k) => (
+        <Toggle
+          key={k}
+          label={POOL_LABELS[k]}
+          checked={w.readings.includes(k)}
+          onChange={(on) =>
+            onChange((x) => {
+              const next = on ? POOL_KINDS.filter((r) => r === k || x.readings.includes(r)) : x.readings.filter((r) => r !== k);
+              if (next.length) x.readings = next;
+            })
+          }
+        />
+      ))}
+      {!status ? null : !status.configured ? (
+        <p className="text-xs text-soft">
+          Connect Blue Riiot under <SettingsLink href="#settings/pool">Settings › Pool</SettingsLink>.
+        </p>
+      ) : pools.length === 0 ? (
+        <p className="text-xs text-soft">{status.error || "Blue Riiot lists no pools yet."}</p>
+      ) : pools.length > 1 ? (
+        <>
+          <p className="text-xs text-soft">Pick the pools to show. With none picked, it shows them all.</p>
+          {pools.map((p) => (
+            <Toggle
+              key={p.id}
+              label={p.name}
+              checked={w.pools.includes(p.id)}
+              onChange={(on) => onChange((x) => void (x.pools = on ? [...x.pools, p.id] : x.pools.filter((s) => s !== p.id)))}
+            />
+          ))}
+        </>
+      ) : null}
+    </>
+  );
+}
+
+function RachioSettings({ w, onChange }: { w: Extract<Widget, { type: "rachio" }>; onChange: Edit<"rachio"> }) {
+  const status = useRachio();
+  // A controller saved earlier that the account no longer lists still shows, so it can be switched off.
+  const listed = status?.controllers ?? [];
+  const controllers = [...listed, ...w.devices.filter((id) => !listed.some((c) => c.id === id)).map((id) => ({ id, name: id }))];
+  return (
+    <>
+      <Toggle
+        label="Skip from the wall"
+        checked={w.allowSkip}
+        hint="A Skip button on the next watering. Anyone in the kitchen can tap it."
+        onChange={(v) => onChange((x) => void (x.allowSkip = v))}
+      />
+      <Toggle label="Show zones" checked={w.showZones} onChange={(v) => onChange((x) => void (x.showZones = v))} />
+      {!status ? null : !status.configured ? (
+        <p className="text-xs text-soft">
+          Connect Rachio under <SettingsLink href="#settings/sprinklers">Settings › Sprinklers</SettingsLink>.
+        </p>
+      ) : controllers.length === 0 ? (
+        <p className="text-xs text-soft">{status.error || "Rachio lists no controllers yet."}</p>
+      ) : controllers.length > 1 ? (
+        <>
+          <p className="text-xs text-soft">Pick the controllers to show. With none picked, it shows them all.</p>
+          {controllers.map((c) => (
+            <Toggle
+              key={c.id}
+              label={c.name}
+              checked={w.devices.includes(c.id)}
+              onChange={(on) => onChange((x) => void (x.devices = on ? [...x.devices, c.id] : x.devices.filter((s) => s !== c.id)))}
+            />
+          ))}
+        </>
+      ) : null}
     </>
   );
 }

@@ -1,5 +1,8 @@
 import { AIRTHINGS_DEFAULT_KINDS } from "../airthings";
+import { POOL_DEFAULT_KINDS } from "../blueRiiot";
+import { BORDER_DEFAULT_CROSSINGS } from "../border";
 import { RIVER_DEFAULT_STATIONS } from "../rivers";
+import { DEFAULT_MOUNTAINS } from "../snow";
 import type { Widget, WidgetType } from "./schema";
 
 // What the admin panel's widget picker offers, and what a new widget of each type starts with.
@@ -165,6 +168,22 @@ export const WIDGETS: { [T in WidgetType]: WidgetInfo<T> } = {
     minSize: { w: 2, h: 2 },
     defaults: () => ({ devices: [], readings: [...AIRTHINGS_DEFAULT_KINDS] }),
   },
+  blueRiiot: {
+    label: "Pool",
+    description: "Water temperature, pH and ORP from Blue Riiot",
+    icon: "🏊",
+    size: { w: 3, h: 2 },
+    minSize: { w: 2, h: 2 },
+    defaults: () => ({ pools: [], readings: [...POOL_DEFAULT_KINDS] }),
+  },
+  rachio: {
+    label: "Sprinklers",
+    description: "Next Rachio watering, skip it with a tap",
+    icon: "💧",
+    size: { w: 3, h: 2 },
+    minSize: { w: 2, h: 2 },
+    defaults: () => ({ devices: [], allowSkip: true, showZones: true }),
+  },
   ecoflow: {
     label: "EcoFlow",
     description: "Battery, solar and power in and out",
@@ -252,6 +271,14 @@ export const WIDGETS: { [T in WidgetType]: WidgetInfo<T> } = {
     size: { w: 4, h: 3 },
     minSize: { w: 2, h: 2 },
     defaults: () => ({ packages: [], count: 6, showDelivered: false }),
+  },
+  snow: {
+    label: "Snow report",
+    description: "New snow and depth on the local mountains",
+    icon: "🏔️",
+    size: { w: 4, h: 3 },
+    minSize: { w: 2, h: 2 },
+    defaults: () => ({ mountains: [...DEFAULT_MOUNTAINS], showDepth: true, showForecast: true, showTemperature: false }),
   },
   rivers: {
     label: "River levels",
@@ -374,6 +401,15 @@ export const WIDGETS: { [T in WidgetType]: WidgetInfo<T> } = {
       ringSeconds: 10,
     }),
   },
+  drivebc: {
+    label: "Highway cameras",
+    description: "DriveBC pictures of the highways you drive",
+    icon: "🛣️",
+    size: { w: 4, h: 3 },
+    minSize: { w: 2, h: 2 },
+    supportsFontScale: false,
+    defaults: () => ({ cameras: [], refreshSeconds: 120, layout: "grid" as const, cycleSeconds: 15, showName: true }),
+  },
   ferries: {
     label: "BC Ferries",
     description: "Next sailings and how full they are",
@@ -381,6 +417,14 @@ export const WIDGETS: { [T in WidgetType]: WidgetInfo<T> } = {
     size: { w: 4, h: 3 },
     minSize: { w: 2, h: 2 },
     defaults: () => ({ routes: ["TSASWB" as const], count: 3, showVessel: false }),
+  },
+  borderWait: {
+    label: "Border wait times",
+    description: "Peace Arch, Pacific Highway and Aldergrove, both ways",
+    icon: "🛂",
+    size: { w: 4, h: 3 },
+    minSize: { w: 2, h: 2 },
+    defaults: () => ({ crossings: [...BORDER_DEFAULT_CROSSINGS], directions: "both" as const, showNexus: false }),
   },
   sports: {
     label: "Sports scores",
@@ -664,7 +708,19 @@ export const WIDGET_GROUPS: { id: string; label: string; types: WidgetType[] }[]
   {
     id: "weather",
     label: "Weather & map",
-    types: ["weather", "tempest", "weatherUnderground", "airQuality", "airthings", "radar", "wildfires", "rivers", "earth", "windy"],
+    types: [
+      "weather",
+      "tempest",
+      "weatherUnderground",
+      "airQuality",
+      "airthings",
+      "snow",
+      "radar",
+      "wildfires",
+      "rivers",
+      "earth",
+      "windy",
+    ],
   },
   {
     id: "calendar",
@@ -686,8 +742,12 @@ export const WIDGET_GROUPS: { id: string; label: string; types: WidgetType[] }[]
       "commute",
       "transit",
       "ferries",
+      "drivebc",
+      "borderWait",
       "internet",
       "ecoflow",
+      "rachio",
+      "blueRiiot",
       "laundry",
     ],
   },

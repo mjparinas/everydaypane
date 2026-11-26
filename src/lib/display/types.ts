@@ -276,7 +276,7 @@ export interface SportsData {
 }
 
 export type AlertSeverity = "extreme" | "severe" | "moderate" | "minor";
-export type AlertSource = "alertReady" | "weather" | "roads" | "earthquakes" | "power" | "evacuations" | "indoorAir" | "laundry";
+export type AlertSource = "alertReady" | "weather" | "roads" | "earthquakes" | "power" | "evacuations" | "indoorAir" | "pool" | "laundry";
 
 /** One emergency alert for the area, from any source (src/server/alerts.ts). */
 export interface EmergencyAlert {
@@ -534,6 +534,25 @@ export interface TempestData {
   stale?: boolean;
 }
 
+/** One DriveBC highway camera as a display gets it (src/server/drivebc.ts). */
+export interface DriveBcCamera {
+  id: string;
+  name: string;
+  caption: string;
+  /** Epoch ms of the camera's last new picture, or null when DriveBC didn't say. */
+  updated: number | null;
+  /** DriveBC has switched the camera off, or marked its picture delayed or stale. */
+  state: "ok" | "late" | "off";
+}
+
+export interface DriveBcData {
+  updatedAt: number;
+  /** Cameras on this household's widgets that DriveBC's list knows; a camera missing here still shows its picture. */
+  cameras: DriveBcCamera[];
+  /** DriveBC's camera list didn't answer, so there is no status this time. */
+  down: boolean;
+}
+
 /** One Airthings reading as a display gets it (src/server/airthings.ts): already in the dashboard's units. */
 export interface AirthingsReading {
   kind: "radon" | "co2" | "voc" | "pm25" | "pm1" | "humidity" | "temp";
@@ -556,6 +575,64 @@ export interface AirthingsData {
   /** False until the household saves an Airthings API client. */
   configured: boolean;
   devices: AirthingsDevice[];
+  error?: string;
+  stale?: boolean;
+}
+
+/** One Blue Riiot pool reading as a display gets it (src/server/blueRiiot.ts): already in the dashboard's units. */
+export interface PoolReading {
+  kind: "temp" | "ph" | "orp" | "chlorine" | "salinity";
+  value: number;
+  unit: string;
+  level: "ok" | "warn" | "bad" | "none";
+  trend?: "up" | "down";
+  /** Blue Riiot's ideal range in the same units, when the reading is coloured. */
+  ideal?: { min: number | null; max: number | null };
+}
+
+export interface PoolInfo {
+  id: string;
+  name: string;
+  /** Epoch ms of the newest reading, or null when Blue Riiot has none. */
+  recorded: number | null;
+  readings: PoolReading[];
+}
+
+export interface PoolData {
+  updatedAt: number;
+  /** False until the household saves its Blue Riiot sign-in. */
+  configured: boolean;
+  pools: PoolInfo[];
+  error?: string;
+  stale?: boolean;
+}
+
+/** The next watering on one Rachio controller (src/server/rachio.ts). */
+export interface RachioWatering {
+  /** Epoch ms it starts. */
+  start: number;
+  /** The schedule's name in the Rachio app ("Lawn mornings"). */
+  name: string;
+  minutes: number;
+  zones: string[];
+}
+
+export interface RachioController {
+  id: string;
+  name: string;
+  online: boolean;
+  /** Epoch ms a rain delay ends, when one is on. */
+  rainDelayUntil: number | null;
+  next: RachioWatering | null;
+  /** Rachio doesn't list upcoming waterings for this controller (no schedules, or the read failed). */
+  noSchedule?: boolean;
+}
+
+export interface RachioData {
+  updatedAt: number;
+  /** False until the household saves a Rachio API key. */
+  configured: boolean;
+  controllers: RachioController[];
   error?: string;
   stale?: boolean;
 }
@@ -834,6 +911,54 @@ export interface UnifiData {
   /** Short reason when UniFi refused or failed, for the empty state. */
   error?: string;
   stale?: boolean;
+}
+
+/** One mountain in the snow report (src/server/snow.ts). Amounts are centimetres; the wall converts for `unit`. */
+export interface SnowMountain {
+  id: string;
+  name: string;
+  /** Snow that fell in the last 24 hours. */
+  newSnow?: number;
+  /** Modelled snow on the ground now. */
+  depth?: number;
+  /** °C or °F, as the dashboard's units say. */
+  temperature?: number;
+  /** Today and the next two days: forecast snowfall for each local day. */
+  forecast: { day: string; snow: number }[];
+}
+
+export interface SnowData {
+  updatedAt: number;
+  unit: "cm" | "in";
+  mountains: SnowMountain[];
+  error?: string;
+}
+
+/** One direction at one border crossing (src/server/border.ts). */
+export interface BorderWait {
+  /** Minutes for regular cars; 0 is no delay; null when the agency has no reading right now. */
+  minutes: number | null;
+  /** NEXUS lane minutes, when the agency reports them. */
+  nexus?: number;
+  closed: boolean;
+  /** Epoch ms of the agency's reading; 0 when it gave no time. */
+  at: number;
+}
+
+export interface BorderCrossingData {
+  id: string;
+  name: string;
+  /** Into the U.S., from U.S. CBP. */
+  toUS: BorderWait | null;
+  /** Into Canada, from CBSA. */
+  toCanada: BorderWait | null;
+}
+
+export interface BorderData {
+  updatedAt: number;
+  crossings: BorderCrossingData[];
+  /** Which agency's feed couldn't be read (and had no last good copy). */
+  down: { cbsa: boolean; cbp: boolean };
 }
 
 /** One river gauge as a display gets it (src/server/rivers.ts): metres and m³/s; the wall converts for imperial. */

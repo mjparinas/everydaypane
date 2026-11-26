@@ -143,6 +143,7 @@ const emptyIntegrations = (): DashboardConfig["integrations"] => ({
     tempest: {},
     airthings: { alertRadon: false, alertCo2: false, co2Ppm: 1500 },
     laundry: { country: "CA", alertDone: true, doneMinutes: 180 },
+    blueRiiot: { alerts: false },
     weatherUnderground: { stationId: "" },
     menus: { slug: "", schoolName: "" },
   },

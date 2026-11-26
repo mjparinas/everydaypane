@@ -30,6 +30,8 @@ same change, and moves it out of **In progress** when it merges.
 | Weather Underground (`weatherUnderground`) | PWS current conditions | IBM WU PWS API (`WU_API_KEY` or per-account secret) |
 | School menu (`menus`) | Nutrislice breakfast and lunch for a day or week; not the meal plan | Nutrislice published JSON (`config.integrations.smartHome.menus`) |
 | Air quality (`airQuality`) | AQHI or US AQI (outdoor) | Open-Meteo air quality |
+| Sprinklers (`rachio`) | Each Rachio controller's next watering (when, schedule, minutes, zones), rain delay, offline; optional **Skip** with a second tap (`allowSkip`) | Rachio public API (household API key, `docs/rachio.md`) |
+| Pool (`blueRiiot`) | Water temperature, pH, ORP, salinity and (after a test strip) free chlorine per pool, green/amber/red by Blue Riiot's own ranges, when last measured; pick readings and pools | Blue Riiot's **unofficial** app cloud API (household's app email and password, `docs/blue-riiot.md`) |
 | Indoor air (`airthings`) | Radon, CO₂, VOC, PM2.5, PM1, humidity and temperature per Airthings monitor, green/amber/red by Airthings' levels; pick readings and devices | Airthings consumer API (household's own API client, `docs/airthings.md`) |
 | WiFi QR (`wifiQr`) | Join code, optionally the password | Settings document |
 | Phone edit QR (`editQr`) | QR to `/d/<token>/edit/` for meals, shopping and messages with no sign-in | This display's address |
@@ -56,6 +58,7 @@ same change, and moves it out of **In progress** when it merges.
 | Sports scores (`sports`) | Live score, last result and next game for followed teams (NHL, NBA, WNBA, NFL, MLB, MLS, Premier League, Champions League) | ESPN public site API |
 | To-dos (`tasks`) | Open tasks from **Google Tasks, Microsoft To Do or Todoist** (`provider`); **tap to tick off** (`allowCheck`, 4 s undo) | Unified `/api/display/tasks/` feed |
 | Packages (`packages`) | UPS, FedEx, Canada Post, USPS tracking numbers on the widget; live status when `PACKAGE_TRACK_API_KEY` is set | Optional 17track-style API (`src/server/packages.ts`) |
+| Snow report (`snow`) | New snow in the last 24 h, snow depth and snowfall today and the next two days, optional mountain temperature, for picked mountains (Cypress, Grouse, Seymour, Whistler by default; Sasquatch, Manning Park, Mt. Baker, Sun Peaks) | Open-Meteo forecast at each mountain's mid-mountain elevation (model estimate, no key) |
 | River levels (`rivers`) | Up to six river and creek gauges (Fraser at Mission and Hope, Salmon and Nicomekl in Langley, or any station by number): level, rising/falling/steady with the 6 h and 24 h change, a day's line, optional flow | Environment Canada real-time hydrometric (MSC GeoMet OGC API, Datamart CSV fallback) |
 | Tides (`tides`) | Next highs and lows at a station; optional height | NOAA (US) + Canadian IWLS (`docs/tides.md`) |
 | TransLink departures (`transit`) | Next buses from up to six picked stops, live times, route filter, walk-minutes cutoff | TransLink GTFS-realtime |
@@ -64,7 +67,9 @@ same change, and moves it out of **In progress** when it merges.
 | Wildfires (`wildfires`) | Active fires around home on the radar's map, coloured by stage of control (fires of note ringed), burned areas, evacuation orders and alerts, the nearest 0 to 5 fires listed; five map areas, fires under control on or off | BC Wildfire Service and EmergencyInfoBC public ArcGIS layers, Esri grey canvas map |
 | Timers (`timer`) | Kitchen timers started from preset buttons on the wall, up to six at once, pause, +1 min; flash, full-screen alert and beeps when done | Device (localStorage) |
 | Pomodoro (`pomodoro`) | Focus and break rounds, long break after the last round, optional auto-start, chime between phases | Device (localStorage) |
+| Highway cameras (`drivebc`) | Still pictures from up to four DriveBC highway cameras (Hwy 1, Port Mann, Coquihalla…), side by side or one at a time, refreshed every 1–15 min, paused under the screen saver; delayed or switched-off cameras say so | DriveBC site feed + `www.drivebc.ca/images/<id>.jpg`, OGL-BC (`docs/drivebc.md`) |
 | BC Ferries (`ferries`) | Next sailings on up to four routes, how full each is, cancellations and delays | Community BC Ferries API (bcferriesapi.ca) |
+| Border wait times (`borderWait`) | Car waits at Point Roberts, Peace Arch, Pacific Highway, Aldergrove and Abbotsford–Sumas, into the U.S. and into Canada (or one way), coloured green/amber/red, fastest marked, optional NEXUS; old readings greyed | CBSA open data (`bwt-eng.csv`) and U.S. CBP (`bwt.cbp.gov/api/bwtnew`), no key |
 | Earth wind map (`earth`) | earth.nullschool.net's animated wind globe centred on any place, four zooms, a colour layer (temperature, rain, humidity…), place marker, animation on or off | earth.nullschool.net (framed), Open-Meteo place search |
 | Windy map (`windy`) | Windy's map centred on any place, one layer (radar, rain, wind, gusts, temperature, clouds, new snow, thunderstorms, satellite, PM2.5), zoom 3–11, place marker, pressure lines, touch on or off | embed.windy.com (framed), Open-Meteo place search |
 | Stocks (`stocks`) | Watchlist quotes with daily change | Yahoo Finance (unofficial) or Finnhub with `FINNHUB_API_KEY` |
@@ -117,6 +122,7 @@ The features catalogue lives in `src/lib/marketingFeatures.ts` (grouped like the
 **Alerts** (`src/server/alerts.ts`): Alert Ready (NAAD), **Environment Canada weather warnings** (through NAAD),
 DriveBC road events and weather conditions, Earthquakes Canada, BC Hydro power outages, **EmergencyInfoBC evacuation orders and alerts** (any hazard, covering the home or within `alerts.evacuationKm`). Each switchable in `config.alerts.sources`.
 Optional high radon and CO₂ from Airthings (`config.integrations.smartHome.airthings`, off by default).
+Optional pool water past Blue Riiot's warning range (`config.integrations.smartHome.blueRiiot.alerts`, off by default).
 **Washer and dryer done** notices (`config.integrations.smartHome.laundry.alertDone`, on by default, needs a Laundry widget on a view): blue instead of red (`notice`), shown whatever the strip threshold, never emailed and left out of the Alerts widget.
 Optional email to everyone on `ADMIN_EMAILS` and `FAMILY_EMAILS` when a new strip-worthy alert arrives (`config.alerts.notifyEmail`).
 
@@ -148,7 +154,7 @@ Revenue, Traffic, Codes, Flags, …). Cookieless marketing beacon. Customer path
 
 **Integrations connected from Settings:** Google Calendar, Microsoft 365 calendars and **To Do** (OAuth, `?todo=1` / `?files=1`), Google Tasks, **Todoist**, Google Photos (Picker), iCal calendar links (with iCloud publish steps in Settings and `docs/icloud-calendar.md`),
 **Govee** (API key, Settings › Smart home), **Philips Hue** (OAuth, Settings › Smart home), **LIFX** (personal token, Settings › Smart home), Amazon Photos, **photo sources** (Bing, Reddit, weather albums, Immich API keys, Dropbox/Box/SmugMug OAuth, OneDrive via Microsoft, Flickr API key, iCloud published URLs), the photo library (Vercel Blob), Home Assistant (Cloudflare Tunnel + Access), Spotify, Sonos, garbage
-zone lookup, sports teams to follow, TransLink, commute places (TomTom geocoding), optional **package tracking** key, **UniFi Site Manager** API key (Settings › UniFi network), **EcoFlow** access and secret keys, **Oura** (OAuth, Settings › Content & finance), **Airthings** (API client id and secret, Settings › Indoor air), **LG ThinQ** personal access token (Settings › Laundry).
+zone lookup, sports teams to follow, TransLink, commute places (TomTom geocoding), optional **package tracking** key, **UniFi Site Manager** API key (Settings › UniFi network), **EcoFlow** access and secret keys, **Oura** (OAuth, Settings › Content & finance), **Airthings** (API client id and secret, Settings › Indoor air), **Rachio** (API key, Settings › Sprinklers), **Blue Riiot** (app email and password, Settings › Pool; unofficial), **LG ThinQ** personal access token (Settings › Laundry).
 
 ## In progress
 
@@ -308,8 +314,13 @@ npm run templates:previews  # regenerate public/templates/*.png from real widget
   high the water is and which way it's going (see Architecture).
 - **Kitchen timers and pomodoro** (Melvin, 2026-11-21: "1 with visual and sound alerts", then "i want a regular
   timer, and a separate pomodoro"): two widgets, `timer` and `pomodoro` (see Architecture).
+- **DriveBC highway cameras** (Melvin, 2026-11-25: "build that all", from a batch of widget ideas): still pictures
+  from DriveBC's public highway cameras, picked by name or highway in the widget's settings, refreshed on a timer like
+  the Camera widget and paused under the screen saver; no key (see Architecture).
 - **BC Ferries** (Melvin, 2026-11-21): the next sailings for routes chosen in the widget's settings, with how full
   each one is (see Architecture).
+- **Border wait times** (Melvin, 2026-11-25: "build that all", from a list naming border waits): a widget with the
+  Lower Mainland crossings in both directions from the two agencies' public feeds, no key (see Architecture).
 - **Earth wind map** (Melvin, 2026-11-21: "can i add this and specific a location? https://earth.nullschool.net"):
   earth.nullschool.net framed in a widget, centred on a place picked in its settings (Langley by default), with a
   zoom, a colour layer and its own place marker (see Architecture).
@@ -340,6 +351,16 @@ npm run templates:previews  # regenerate public/templates/*.png from real widget
 - **UniFi network health** (Melvin, 2026-11-21: "do all 6", from a list of official cloud APIs; native only, not
   through Home Assistant, nothing running at home): a `unifi` widget with the gateway's own view of the internet from
   UniFi Site Manager. It sits beside the browser-side internet ping widget rather than replacing it (see Architecture).
+- **Mountain snow report** (Melvin, 2026-11-25: "build that all", from a list of widget ideas): new snow, depth and
+  the next days' snowfall on the local mountains, picked in the widget's settings, from Open-Meteo with no key (see
+  Architecture).
+- **Rachio sprinklers** (Melvin, 2026-11-25: "build that all", a batch of native integrations): the next watering
+  on the wall with a Skip button, from Rachio's official public API with the household's own API key, not Home
+  Assistant (see Architecture). Skip is on for a new widget but needs a second tap (Claude's default, 2026-11-25).
+- **Blue Riiot pool** (Melvin, 2026-11-26: "Are there APIs for things like blueriiot", then yes to the unofficial
+  route): the Blue Connect's readings on the wall from the cloud the Blue Riiot app uses, signed in with the app's
+  email and password stored encrypted, because Blue Riiot has no developer API. Unofficial, so it can break; the docs
+  say so. Out-of-range alerts are off by default (see Architecture).
 - **Washer and dryer** (Melvin, 2026-11-25: "build that all", from a list that included washer and dryer done alerts;
   native cloud APIs, not Home Assistant): a `laundry` widget with time left and "done" from LG ThinQ and Samsung
   SmartThings, and a blue "done" notice on the alert strip (see Architecture). Claude's defaults: notices on, "done"
@@ -361,7 +382,7 @@ panel can be complex if you need it to be."
   imports it with display.js's own `?v=` only on a screen that shows it. Its `../api` is swapped at build time for
   `src/display/apiShared.ts`, which calls display.js's copy, so feeds, the device token and offline state stay single.
   The internet widget, the UniFi network widget, EcoFlow, the whiteboard, wildfires, the Windy map, the Smart device tile
-  (`haEntity.ts`; cameras and `HA_EVERY` stay in `ha.ts`), Oura, Indoor air (Airthings), River levels and Laundry load this way, and `next.config.ts` gives each file the same
+  (`haEntity.ts`; cameras and `HA_EVERY` stay in `ha.ts`), Oura, Indoor air (Airthings), the snow report, River levels, Border wait times, Sprinklers (Rachio), Highway cameras (DriveBC), the Pool (Blue Riiot) and Laundry load this way, and `next.config.ts` gives each file the same
   immutable cache header as display.js.
 - **Budget:** the display's script stays under 80 KB gzipped and its stylesheet under 20 KB (`scripts/bundle-check.mjs`,
   a CI step; CSS raised from 10 KB on 2026-11-23 for more clock styles; script raised from 40 KB by Melvin on 2026-11-25: "double the size of the limit"). A new dependency on the display needs a very good reason.
@@ -601,6 +622,15 @@ panel can be complex if you need it to be."
   `src/server/alerts.ts`): an order covering the home is extreme and an alert severe; within `alerts.evacuationKm`
   (default 10 km) they are moderate and minor. This sandbox can't reach ArcGIS Online, so tests use shapes from the
   layers' descriptions and sample features read on 2026-11-21.
+- **Mountain snow report:** `src/server/snow.ts` asks Open-Meteo's forecast API once for every mountain on any snow
+  widget (comma-separated `latitude`/`longitude`/`elevation`, answered as an array), with `hourly=snowfall,snow_depth`,
+  `daily=snowfall_sum`, the current temperature, `past_days=1` and the dashboard's time zone. The mountains, their
+  coordinates and a mid-mountain elevation (so snowfall isn't the model's smoothed valley height) are in
+  `src/lib/snow.ts`. New snow is the last 24 hourly stamps up to now, depth the latest past `snow_depth`, and the
+  forecast today and the next two local days. Cached 30 minutes, keyed by time zone and mountains only (public data, so
+  households share it); amounts travel in centimetres and the wall converts to inches, the server converts the
+  temperature. These are model numbers, not the resorts' reports (resorts publish only web pages), so the widget says
+  "Model estimate". Displays poll `/api/display/snow/` every 15 minutes; the widget loads on its own (`snow.js`).
 - **River levels:** `src/server/rivers.ts` reads Environment Canada's real-time hydrometric data, no key: MSC GeoMet's
   OGC API (`api.weather.gc.ca/collections/hydrometric-realtime/items?STATION_NUMBER=…&datetime=<30 h ago>/..`,
   properties `STATION_NAME`, `DATETIME`, `LEVEL`, `DISCHARGE`), and when that fails the Datamart's hourly CSV for the
@@ -623,6 +653,33 @@ panel can be complex if you need it to be."
   after its time on the wall's own clock and labels conditions older than 15 minutes with their time. Its field names
   come from the project's published JSON schema (`schemas/bc-ferries-api-v2-capacity-schema.json`); this sandbox can't
   reach it, so tests use that shape.
+- **DriveBC highway cameras** (`src/server/drivebc.ts`, setup `docs/drivebc.md`): the Ministry of Transportation's
+  public cameras under the Open Government Licence – British Columbia, no key. The camera list and status come from
+  DriveBC's own site feed (`www.drivebc.ca/api/webcams/`, cached ten minutes, parsed leniently since it has no
+  published schema: `is_on`, `marked_stale`/`marked_delayed`, `last_update_modified`, GeoJSON `location`); the older
+  `images.drivebc.ca/webcam/api/v1` is abandoned (months-old readings) and isn't used. The widget settings' search
+  (`/api/household/drivebc/`, name, place, "hwy 1" or id, nearest home first) falls back to the BC Data Catalogue's
+  monthly `webcams.csv` when the site feed fails. A widget keeps up to four cameras as `{ id, name }`. Pictures are
+  `www.drivebc.ca/images/<id>.jpg` (the old `bchighwaycam/pub/cameras/` addresses broke when DriveBC moved them),
+  served through `/api/display/drivebc/image/?c=<id>` only for cameras on the household's widgets, checked to be a
+  JPEG and kept a minute in memory for every display; the service worker leaves them alone. Displays poll
+  `/api/display/drivebc/` every five minutes for each camera's last new picture and state (`ok`, `late` when DriveBC
+  marks it or it hasn't changed in 20 minutes, `off`). The widget loads on its own (`drivebc.js`), swaps each picture
+  in only once it has loaded, fetches nothing while the screen saver is up or the page is hidden, and in "one at a
+  time" loads only the camera on screen. The wall credits "DriveBC · OGL-BC"; the settings carry the licence line.
+  This sandbox can't reach drivebc.ca, so tests use the catalogue CSV's published header and DriveBC's field names.
+- **Border wait times:** `src/server/border.ts` reads CBSA's "Current Border Wait Times" open data
+  (`www.cbsa-asfc.gc.ca/bwt-taf/bwt-eng.csv`, semicolon-separated, columns found by header; "Travellers Flow - Canada
+  bound" is the Canada-bound car wait, written "No Delay", "N minutes", "Not Applicable" or "--", with times like
+  "2026-11-25 14:48 PDT") and U.S. CBP's JSON (`bwt.cbp.gov/api/bwtnew`, every port; `passenger_vehicle_lanes`
+  `standard_lanes` and `NEXUS_SENTRI_lanes`, `operational_status` "delay", "no delay", "Lanes Closed", "Update
+  Pending" or "N/A", times like "At 3:00 pm PST" on the port's `date`). Crossings and their ids are in
+  `src/lib/border.ts`: CBSA calls Peace Arch "Douglas"; CBP's 300401 is Pacific Highway, 300402 Peace Arch, 302301
+  Lynden (Aldergrove), 300901 Sumas, 300403 Point Roberts. Each agency is read at most every five minutes for every
+  household, trimmed to those crossings before caching; one failing never hides the other and the last good copy is
+  served. Displays poll `/api/display/border/` every five minutes; the widget loads on its own (`borderWait.js`) and
+  greys out readings older than two hours, since both agencies update about hourly. This sandbox can't reach either,
+  so tests use the shapes read on 2026-11-26.
 - **Earth wind map:** earth.nullschool.net (Cameron Beccario's site) in an `<iframe>`; checked 2026-11-21: it sends no
   `X-Frame-Options` or `frame-ancestors`, and its script handles being framed itself (it blocks only a few named
   sites, hides its app banner and uses its lighter 1° data in a frame). Everything it shows is set by the address's
@@ -802,6 +859,29 @@ panel can be complex if you need it to be."
   `source: "laundry"`, `notice: true`, id per machine and `sent` = done time (so each cycle can be dismissed once); the
   strip shows notices whatever `alerts.banner` is, in blue, and `notifyNewStripAlerts` and the Alerts widget skip them.
   The widget loads on its own (`laundry.js`). This sandbox can't reach LG or SmartThings, so tests use documented shapes.
+- **Rachio** (`src/server/rachio.ts`, setup `docs/rachio.md`): Rachio's public API (`api.rach.io/1/public`,
+  `Authorization: Bearer <key>`) with the household's API key from the Rachio app (encrypted `rachio.apiKey`, checked
+  with `person/info` before Settings › Sprinklers saves it through `/api/household/rachio/`). One read of
+  `person/<id>` (controllers, zones, schedule rules, rain delay) and each controller's `device/<id>/scheduleitem` (the
+  next two weeks, fields read leniently because Rachio doesn't document them) every 10 minutes per household, inside
+  Rachio's 1,700 calls a day. Displays poll `/api/display/rachio/` every five minutes and get names, times, minutes and
+  zone names only (never rule ids or the key). A wall skip (`POST`, controller and start) is accepted only for the
+  watering the feed currently calls next and only when a Sprinklers widget with `allowSkip` shows that controller:
+  `schedulerule/skip` for a fixed schedule, else (Flex, or Rachio's "not supported for 3.0 API") a rain delay ending a
+  minute after that watering. Skips are remembered in the cache table so the wall moves on even if Rachio still lists
+  the run. The widget loads on its own (`rachio.js`). This sandbox can't reach Rachio, so tests use community shapes.
+- **Blue Riiot** (`src/server/blueRiiot.ts`, setup `docs/blue-riiot.md`): no official API, so the app's own cloud
+  (`api.riiotlabs.com/prod`), as pyblueriiot and Home Assistant's blueconnect component use it. `POST /user/login`
+  with the household's app email and password (encrypted `blueRiiot.email` / `blueRiiot.password`, checked with a
+  fresh sign-in before Settings › Pool saves them through `/api/household/blueriiot/`) returns short-lived AWS
+  credentials, kept in memory only; every read is a `GET` signed with AWS Signature V4 (`eu-west-1`, `execute-api`,
+  `signV4`, checked against AWS's published test vectors). Pools and their Blue Connect serials are cached six hours,
+  `lastMeasurements?mode=blue_and_strip` 15 minutes per household. Levels come from each reading's own `ok_min`/
+  `ok_max` and `warning_low`/`warning_high`, filled from fallbacks for pH, ORP and chlorine (`src/lib/blueRiiot.ts`);
+  ok, warn, bad or none. Displays poll `/api/display/blueriiot/` every five minutes and get pool names and readings in
+  the dashboard's units (°F for imperial). Pool alerts (`poolAlerts`, source `pool`, "moderate", id per pool, kind and
+  day) join the alerts route only when switched on, only for "bad" pH, ORP, chlorine or salinity under six hours old.
+  The widget loads on its own (`blueRiiot.js`). This sandbox can't reach Blue Riiot, so tests use community shapes.
 - **Tempest, Weather Underground and Nutrislice** (Phase 4, Household): Tempest and WU station settings in
   `config.integrations.smartHome`; Tempest token and optional WU key in secrets. **Menus** widget reads Nutrislice JSON
   only (`src/server/menus.ts`), never the `meals` table.

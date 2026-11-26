@@ -37,10 +37,13 @@ export const SAMPLE_FEEDS: Record<string, unknown> = {
   transit: loadJson("transit.json"),
   commute: loadJson("commute.json"),
   ferries: loadJson("ferries.json"),
+  drivebc: loadJson("drivebc.json"),
+  border: loadJson("border.json"),
   sports: loadJson("sports.json"),
   garbage: loadJson("garbage.json"),
   alerts: loadJson("alerts.json"),
   tides: loadJson("tides.json"),
+  snow: loadJson("snow.json"),
   quotes: loadJson("quotes.json"),
   radar: loadJson("radar.json"),
   wildfires: loadJson("wildfires.json"),
@@ -48,6 +51,8 @@ export const SAMPLE_FEEDS: Record<string, unknown> = {
   airthings: loadJson("airthings.json"),
   laundry: loadJson("laundry.json"),
   rivers: loadJson("rivers.json"),
+  rachio: loadJson("rachio.json"),
+  blueriiot: loadJson("blueriiot.json"),
   ecoflow: loadJson("ecoflow.json"),
   "weather-underground": loadJson("weather-underground.json"),
   unifi: loadJson("unifi.json"),
@@ -89,6 +94,14 @@ export function withDemoBindings(widget: Widget): Widget {
         return { ...widget, entityId: "climate.house", control: "climate", title: widget.title || "Thermostat" };
       }
       return { ...widget, entityId: "light.kitchen", control: "light", title: widget.title || "Kitchen" };
+    case "drivebc":
+      return {
+        ...widget,
+        cameras: [
+          { id: "292", name: "Port Mann Bridge - W" },
+          { id: "904", name: "Hwy 1 at 176 Street - W" },
+        ],
+      };
     case "camera":
       return { ...widget, entityId: "camera.front_door" };
     case "media":

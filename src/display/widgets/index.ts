@@ -77,14 +77,24 @@ export function mountWidget(el: HTMLElement, w: Widget, ctx: WidgetContext): Cle
       return lazyWidget("unifi", el, w, ctx);
     case "weatherUnderground":
       return weatherUnderground(el, w, ctx);
+    case "borderWait":
+      return lazyWidget("borderWait", el, w, ctx);
     case "airthings":
       return lazyWidget("airthings", el, w, ctx);
     case "laundry":
       return lazyWidget("laundry", el, w, ctx);
+    case "drivebc":
+      return lazyWidget("drivebc", el, w, ctx);
+    case "snow":
+      return lazyWidget("snow", el, w, ctx);
     case "rivers":
       return lazyWidget("rivers", el, w, ctx);
     case "ecoflow":
       return lazyWidget("ecoflow", el, w, ctx);
+    case "rachio":
+      return lazyWidget("rachio", el, w, ctx);
+    case "blueRiiot":
+      return lazyWidget("blueRiiot", el, w, ctx);
     case "airQuality":
       return airQuality(el, w, ctx);
     case "wifiQr":
