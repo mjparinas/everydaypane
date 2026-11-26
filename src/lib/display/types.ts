@@ -322,7 +322,7 @@ export interface HaEntity {
   max?: number;
   step?: number;
   action?: string;
-  /** Colour lights (Govee): the colour now as #rrggbb, present only when the light can change colour. */
+  /** Colour lights (Govee, Hue, LIFX): the colour now as #rrggbb, present only when the light can change colour. */
   color?: string;
   /** Scenes the light offers (Govee), by name; the server keeps what each name sends. */
   scenes?: string[];
