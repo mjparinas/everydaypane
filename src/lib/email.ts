@@ -56,6 +56,10 @@ export type EmailBody = {
   footnote?: string;
   /** Accent bar colour under the header (brand by default). */
   accent?: string;
+  /** Small line above the title ("Getting started · 3 of 18"), and an optional pill beside it. */
+  kicker?: { text: string; pill?: { label: string; bg: string; ink: string } };
+  /** Extra footer lines (already escaped / trusted): why it was sent, unsubscribe, postal address. */
+  legalHtml?: string;
 };
 
 /**
@@ -70,6 +74,14 @@ export function emailHtml(body: EmailBody): string {
     ? `<p style="margin:20px 0 0;font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:1.5;color:${EMAIL.soft}">${escapeHtml(body.footnote)}</p>`
     : "";
   const cta = body.cta ? ctaButton(body.cta.href, body.cta.label) : "";
+  const kicker = body.kicker
+    ? `<p style="margin:0 0 10px;font-family:Arial,Helvetica,sans-serif;font-size:12px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:${EMAIL.soft}">${escapeHtml(body.kicker.text)}${
+        body.kicker.pill
+          ? ` <span style="display:inline-block;margin-left:6px;padding:3px 9px;border-radius:999px;background:${body.kicker.pill.bg};color:${body.kicker.pill.ink};letter-spacing:0.04em">${escapeHtml(body.kicker.pill.label)}</span>`
+          : ""
+      }</p>`
+    : "";
+  const legal = body.legalHtml ? `<br><br>${body.legalHtml}` : "";
   const year = new Date().getFullYear();
   const home = escapeHtml(SITE_URL);
 
@@ -107,7 +119,7 @@ export function emailHtml(body: EmailBody): string {
         </tr>
         <tr>
           <td style="padding:28px 28px 8px">
-            <h1 style="margin:0 0 14px;font-family:'Manrope',Arial,Helvetica,sans-serif;font-size:22px;font-weight:800;line-height:1.25;color:${EMAIL.ink};letter-spacing:-0.02em">${title}</h1>
+            ${kicker}<h1 style="margin:0 0 14px;font-family:'Manrope',Arial,Helvetica,sans-serif;font-size:22px;font-weight:800;line-height:1.25;color:${EMAIL.ink};letter-spacing:-0.02em">${title}</h1>
             <div style="font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.55;color:${EMAIL.ink}">${body.bodyHtml}</div>
             ${cta}
             ${footnote}
@@ -121,7 +133,7 @@ export function emailHtml(body: EmailBody): string {
                   ${wordmarkHtml()} · ${escapeHtml(BRAND.tagline)}<br>
                   <a href="${home}" style="color:${EMAIL.brand};text-decoration:none">${home.replace(/^https?:\/\//, "")}</a>
                   <span style="color:${EMAIL.line}"> · </span>
-                  © ${year} ${escapeHtml(BRAND.name)}
+                  © ${year} ${escapeHtml(BRAND.name)}${legal}
                 </td>
               </tr>
             </table>

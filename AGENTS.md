@@ -129,6 +129,8 @@ Optional pool water past Blue Riiot's warning range (`config.integrations.smartH
 **Washer and dryer done** notices (`config.integrations.smartHome.laundry.alertDone`, on by default, needs a Laundry widget on a view): blue instead of red (`notice`), shown whatever the strip threshold, never emailed and left out of the Alerts widget.
 Optional email to everyone on `ADMIN_EMAILS` and `FAMILY_EMAILS` when a new strip-worthy alert arrives (`config.alerts.notifyEmail`).
 
+**Getting-started emails** (`src/lib/onboarding.ts`, `src/server/onboarding.ts`): 18 daily emails to a new household's admins, one feature each with a picture of the app (`public/email/onboarding/`, `node scripts/email-images.mjs`); 7 Free, 11 marked Household. One-click unsubscribe (`/api/email/unsubscribe/`), paused from `/admin/` › Automations.
+
 **Household and family:** Clerk Account Portal in production (`accounts.everydaypane.com/sign-in` and `/sign-up`, from `NEXT_PUBLIC_CLERK_SIGN_IN_URL` / `SIGN_UP_URL`); local and CI stay on `/signin/`; Turso
 `account_members` stays the source of truth for household roles; `user.created` webhook seeds Free households
 (`docs/clerk.md`). Wall displays open **`/display/`** and unlock with a **phone QR** (or a signed-in picker) at
@@ -385,6 +387,11 @@ npm run templates:previews  # regenerate public/templates/*.png from real widget
   native cloud APIs, not Home Assistant): a `laundry` widget with time left and "done" from LG ThinQ and Samsung
   SmartThings, and a blue "done" notice on the alert strip (see Architecture). Claude's defaults: notices on, "done"
   for three hours unless the next cycle starts.
+- **Getting-started emails** (Melvin, 2026-11-26: "daily emails for as many days as possible without repeating and
+  without having boring or thin content", branded, concise, a graphic or screenshot in each, mostly features everyone
+  has but "a good portion" Household, "properly emphasized", and "optimized for speed and performance"): built like
+  Liftsmith's getting-started tour. Rules in Architecture. A new feature worth an email gets one appended to
+  `ONBOARDING` with its picture in `scripts/email-images.mjs`; nothing in the series repeats another email.
 - **Canadian English** in everything a person reads (colour, centre, favourite), as in Liftsmith.
 
 ## Display: super lightweight (rule, Melvin, 2026-11-17)
@@ -582,6 +589,22 @@ panel can be complex if you need it to be."
   (`/api/display/transit/`, polled every 30 seconds); the wall counts minutes down from absolute times between reads.
   TransLink's licence notice is shown in the widget's settings and as "Live times from TransLink" on the wall.
   Setup: `docs/translink.md`.
+- **Getting-started emails:** the series is `ONBOARDING` in `src/lib/onboarding.ts` (words, tier, flags, button,
+  picture); `onboardingMail` in `src/lib/onboardingEmail.ts` draws each in the shared `email.ts` chrome with a kicker
+  ("Getting started · 3 of 18"), a Free / Household / In your plan pill, the picture (1008 × 630 JPEG shown at 504,
+  under 120 KB, from `scripts/email-images.mjs`, which draws scenes from the starter-template screenshots and the
+  widget samples), the points and a tip. A Household email to a Free household ends with a "Household plan only" box
+  with the price from `marketingPlans.ts`, and its button opens `/household/#upgrade`; to a paying household it says
+  it's included and links to the setting. The hourly job (`/api/cron/admin/`) runs `runOnboarding`: households
+  created since 2026-11-26 (`ONBOARDING_SINCE`, the grandfather household never) and in the last 45 days, each
+  `admin` member; first email an hour after sign-up (8 AM–9 PM local, else 10 AM next day), then one a day from 10 AM
+  in the dashboard's time zone, never after 9 PM, never two in a day (`dueStep`). Emails and points whose feature
+  flag is off are skipped (`liveSteps`), and the kicker counts what's left. Three queries a run, settings read only
+  for households with one due, sent in batches of 100 through Resend's batch endpoint; each send is claimed in
+  `onboarding_sends` first and handed back if Resend refuses. Every email has `List-Unsubscribe` (RFC 8058 one-click)
+  and a footer link to `/api/email/unsubscribe/` (an HMAC of the address under `SESSION_SECRET`; GET asks, POST
+  records `email_optouts`), why it was sent, and `MAIL_POSTAL_ADDRESS` (CASL); production sends nothing until that's
+  set. Staff pause the series in `/admin/` › Automations (`onboarding`).
 - **Alert email:** when `config.alerts.notifyEmail` is on, each new strip-worthy alert (`meetsBanner` in `src/lib/alerts.ts`)
   triggers one email per alert id to household members (`src/server/alertNotify.ts`, `sendEmail` through Resend, HTML from
   `alertEmail` in `src/lib/email.ts`); ids are stored in `account_alert_notified` so repeats are never sent. The display

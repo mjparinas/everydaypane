@@ -14,6 +14,8 @@ export type AutomationSettings = {
   refund: boolean;
   report: boolean;
   morningDigest: boolean;
+  /** Getting-started emails to new households (src/server/onboarding.ts). */
+  onboarding: boolean;
 };
 
 const DEFAULTS: AutomationSettings = {
@@ -21,6 +23,7 @@ const DEFAULTS: AutomationSettings = {
   refund: true,
   report: true,
   morningDigest: true,
+  onboarding: true,
 };
 
 export async function getAutomations(): Promise<AutomationSettings> {
