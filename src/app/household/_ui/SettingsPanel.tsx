@@ -20,6 +20,7 @@ import { MusicPanel } from "./MusicPanel";
 import { PhotosPanel } from "./PhotosPanel";
 import { HouseholdBadge, HouseholdSoftLock, PlanSettingsCard, usePlan } from "./plan";
 import { ReportProblem } from "./ReportProblem";
+import { SchoolDaysPanel } from "./SchoolDaysPanel";
 import { ScreenSaverPanel, ScreenSaverSummary } from "./ScreenSaverPanel";
 import { SmartHomePanel } from "./SmartHomePanel";
 import { SportsPanel } from "./SportsPanel";
@@ -41,7 +42,7 @@ const GROUPS = [
     tier: "Everyday",
     sections: ["google", "microsoft", "icals", "tasks"],
   },
-  { id: "family", label: "Family tools", tier: "Everyday", sections: ["garbage", "commute", "chores", "sports", "school"] },
+  { id: "family", label: "Family tools", tier: "Everyday", sections: ["garbage", "commute", "chores", "sports", "school", "school-days"] },
   { id: "photos-music", label: "Photos & music", tier: "Everyday", sections: ["photos", "music"] },
   {
     id: "screen",
@@ -330,6 +331,7 @@ export function SettingsPanel() {
                 onChange={(v) => edit((c) => void (c.school.statusUrl = v))}
               />
             </Section>
+            <SchoolDaysPanel />
           </div>
         </HouseholdSoftLock>
       )}

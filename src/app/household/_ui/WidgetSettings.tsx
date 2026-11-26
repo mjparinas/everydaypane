@@ -1603,6 +1603,19 @@ function TypeSettings({
         </>
       );
     }
+    case "schoolDays": {
+      const e = edit<"schoolDays">();
+      return (
+        <>
+          <Stepper label="Days off listed" value={w.count} min={0} max={6} onChange={(v) => e((x) => void (x.count = v))} />
+          <Toggle label="Show hot lunch" checked={w.showLunch} onChange={(v) => e((x) => void (x.showLunch = v))} />
+          <p className="text-xs text-soft">
+            The school year, days off and lunches are set under{" "}
+            <SettingsLink href="#settings/school-days">Settings › School days</SettingsLink>.
+          </p>
+        </>
+      );
+    }
     case "packages": {
       const e = edit<"packages">();
       return (

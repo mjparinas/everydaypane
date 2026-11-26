@@ -53,6 +53,7 @@ same change, and moves it out of **In progress** when it merges.
 | Meals (`meals`) | Breakfast, lunch, dinner for a day or a week; recurring cadences fill future days | `account_meals` + `account_meal_rules` |
 | Shopping list (`shopping`) | Groceries from phones; **tap to tick off** (`allowCheck`); optional **add from the wall** (`allowAdd`); optional bought items | `shopping` table |
 | Who's home (`presence`) | Who is home, from person and device tracker entities, read only | Home Assistant |
+| School days (`schoolDays`) | School today or not (weekend, Pro-D day, break with the day school's back, summer), early dismissals, a "Tomorrow: no school" line, the next 0 to 6 days off with "in N days", and the weekly hot-lunch line | Settings › School days: the school year and days off (one-tap **Langley 2026–27 elementary or middle** preset), optional school iCal links read for Pro-D/No school/break events, lunch per weekday |
 | School status (`school`) | Open, closed, delayed or late start; optional school names | District status page (`config.school`) |
 | Whiteboard (`whiteboard`) | Finger draw with a few colours and an eraser; wider tiles show more colours; hold Clear to wipe; same doodle on every display | `whiteboard` table |
 | Alerts (`alerts`) | Current emergency alerts, optional "all clear" | See alerts below |
@@ -388,6 +389,13 @@ npm run templates:previews  # regenerate public/templates/*.png from real widget
   Crescent Beach); the moon is worked out on the device, both as its own widget and as a line on Sunrise & sunset; aurora
   chances come from NOAA's Kp forecast for home's latitude; On this day reads Wikipedia with a family-friendly filter
   (see Architecture).
+- **School days** (Melvin, 2026-11-26: "school lunch menu and school-day calendar", from the coordinator's gaps list):
+  the lunch menu half already existed (`menus`, Nutrislice), so the new part is a `schoolDays` widget that knows the
+  school year: Pro-D days, holidays, winter and spring break, summer, early dismissals and a weekly hot-lunch line for
+  schools without Nutrislice. Langley publishes its calendars as PDFs only (no iCal), so the 2026–27 elementary and
+  middle calendars are presets (`SCHOOL_PRESETS` in `src/lib/schoolCalendar.ts`); a new school year needs a new preset
+  from sd35.bc.ca/school-calendar. Separate from School status, which reads snow-day closures off the district page
+  (see Architecture).
 - **Washer and dryer** (Melvin, 2026-11-25: "build that all", from a list that included washer and dryer done alerts;
   native cloud APIs, not Home Assistant): a `laundry` widget with time left and "done" from LG ThinQ and Samsung
   SmartThings, and a blue "done" notice on the alert strip (see Architecture). Claude's defaults: notices on, "done"
@@ -416,7 +424,7 @@ panel can be complex if you need it to be."
   The internet widget, the UniFi network widget, EcoFlow, the whiteboard, wildfires, the Windy map, the Smart device tile
   (`haEntity.ts`; cameras and `HA_EVERY` stay in `ha.ts`), Oura, Indoor air (Airthings), the snow report, River levels,
   Border wait times, Sprinklers (Rachio), Highway cameras (DriveBC), the Pool (Blue Riiot), tides, moon phase, aurora,
-  On this day and Laundry load this way, and `next.config.ts` gives each file the same
+  On this day, Laundry and School days load this way, and `next.config.ts` gives each file the same
   immutable cache header as display.js.
 - **Budget:** the display's script stays under 80 KB gzipped and its stylesheet under 20 KB (`scripts/bundle-check.mjs`,
   a CI step; CSS raised from 10 KB on 2026-11-23 for more clock styles; script raised from 40 KB by Melvin on 2026-11-25: "double the size of the limit"). A new dependency on the display needs a very good reason.
@@ -564,6 +572,15 @@ panel can be complex if you need it to be."
   then in the rest of the page. Anything else is open. A widget can name schools; a notice counts when it names one of
   them or says all schools. Displays poll `/api/display/school/`. The district name and page are Settings › School status
   (Langley School District, sd35.bc.ca, by default).
+- **School days** (`src/lib/schoolCalendar.ts`, `src/server/schoolDays.ts`): the year lives in `config.school`
+  (`calendarName`, `firstDay`, `lastDay`, `daysOff` with `kind` off or early, `icalIds`, `lunches` Monday to Friday).
+  `/api/display/school-days/` sends that list from today on, merged with days off read from the picked calendar links
+  (all-day events whose titles say Pro-D, No school, non-instructional, break and the like; any "early dismissal"; the
+  household's own entry wins a clash). A link is read even when it's switched off for the family calendar. The wall
+  works out today, tomorrow and the next days off itself (re-drawn every five minutes, so midnight turns it over);
+  weekends are always off, a weekend inside a break reads as the break, and after the last day it's summer. Settings ›
+  School days has the presets, the day list, the link switches and the lunches. The widget loads on its own
+  (`schoolDays.js`).
 - **Who's home** (Melvin, 2026-11-22): presence widgets list Home Assistant person and device tracker entities. Those ids
   are added to `usedEntities().all` and never to `controls`, so the wall can show home or away and cannot change them.
   The widget uses the same five-second Home Assistant feed as the other tiles.
