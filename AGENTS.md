@@ -37,7 +37,7 @@ same change, and moves it out of **In progress** when it merges.
 | Indoor air (`airthings`) | Radon, CO₂, VOC, PM2.5, PM1, humidity and temperature per Airthings monitor, green/amber/red by Airthings' levels; pick readings and devices | Airthings consumer API (household's own API client, `docs/airthings.md`) |
 | WiFi QR (`wifiQr`) | Join code, optionally the password | Settings document |
 | Phone edit QR (`editQr`) | QR to `/d/<token>/edit/` for meals, shopping and messages with no sign-in | This display's address |
-| Countdowns (`countdown`) | Days until holidays, birthdays and events, yearly ones roll over | Settings document |
+| Countdowns (`countdown`) | Days until holidays, birthdays, **anniversaries** and events, yearly ones roll over; the age a birthday turns or an anniversary's years; an optional **photo per date**; on the day it leads the tile with the photo large ("Happy birthday, Sam!", `celebrate`, on by default) | Settings document; photos in the private photo library store (`src/server/countdownPhotos.ts`) |
 | Schedule (`agenda`) | Today, or the next 1 to 14 days | Google Calendar + Microsoft 365 + iCal links, family events |
 | Month calendar (`calendarMonth`) | Month grid or 1 to 6 weeks from this one, Sunday or Monday start, weekends on or off, title toggle, fit titles (wrap/shrink, on by default), scroll after N weeks (default 3), optional tap-to-open day details with every event and its source colour | Google Calendar + Microsoft 365 + iCal links, family events |
 | Week calendar (`calendarWeek`) | One week in a grid, optional weekends | Same calendar feed |
@@ -129,6 +129,7 @@ Optional high radon and CO₂ from Airthings (`config.integrations.smartHome.air
 Optional pool water past Blue Riiot's warning range (`config.integrations.smartHome.blueRiiot.alerts`, off by default).
 **Washer and dryer done** notices (`config.integrations.smartHome.laundry.alertDone`, on by default, needs a Laundry widget on a view): blue instead of red (`notice`), shown whatever the strip threshold, never emailed and left out of the Alerts widget.
 Optional email to everyone on `ADMIN_EMAILS` and `FAMILY_EMAILS` when a new strip-worthy alert arrives (`config.alerts.notifyEmail`).
+**Smart notices** (`config.alerts.rules`, `src/lib/alertRules.ts`): blue notes that combine two integrations, each its own switch in Settings › Emergency alerts › Smart notices: sprinklers due in frost (Rachio + forecast, on), sprinklers due when rain is likely (off), backup battery left during a BC Hydro outage at home (EcoFlow, on), poor air outside with indoor PM2.5 (AQHI + Airthings, on, from AQHI 7), pool freeze warning (Blue Riiot + forecast, off), laundry left in the machine (off, after 60 min) and bins out the night before (garbage day, off, from 6 PM).
 
 **Getting-started emails** (`src/lib/onboarding.ts`, `src/server/onboarding.ts`): 18 daily emails to a new household's admins, one feature each with a picture of the app (`public/email/onboarding/`, `node scripts/email-images.mjs`); 7 Free, 11 marked Household. One-click unsubscribe (`/api/email/unsubscribe/`), paused from `/admin/` › Automations.
 
@@ -402,6 +403,11 @@ npm run templates:previews  # regenerate public/templates/*.png from real widget
   has but "a good portion" Household, "properly emphasized", and "optimized for speed and performance"): built like
   Liftsmith's getting-started tour. Rules in Architecture. A new feature worth an email gets one appended to
   `ONBOARDING` with its picture in `scripts/email-images.mjs`; nothing in the series repeats another email.
+- **Birthdays and anniversaries** (Melvin, 2026-11-26: "build the other 6 gaps", one being "birthdays and anniversaries
+  with a countdown and a photo"): the existing Countdowns widget grew rather than a new widget. Anniversaries are a
+  fourth kind that counts years from the date as birthdays count the age; each date can carry one uploaded photo,
+  drawn as a small circle in its row and large on the day itself (see Architecture). Claude's defaults: celebrate on
+  the day is on, and a birthday or anniversary is always yearly when picked.
 - **Canadian English** in everything a person reads (colour, centre, favourite), as in Liftsmith.
 
 ## Display: super lightweight (rule, Melvin, 2026-11-17)
@@ -615,6 +621,17 @@ panel can be complex if you need it to be."
   and a footer link to `/api/email/unsubscribe/` (an HMAC of the address under `SESSION_SECRET`; GET asks, POST
   records `email_optouts`), why it was sent, and `MAIL_POSTAL_ADDRESS` (CASL); production sends nothing until that's
   set. Staff pause the series in `/admin/` › Automations (`onboarding`).
+- **Smart notices** (Melvin, 2026-11-26: "smart alerts across integrations", e.g. "the pool pH is off" or "the dryer's
+  done and nobody's home"): `evaluateRules` in `src/lib/alertRules.ts` is pure and takes whichever feeds a rule reads;
+  `ruleAlertsFor` in `src/server/alertRules.ts` gathers only the feeds a switched-on rule needs (`rulesNeed`), skips a
+  feed whose widget flag is off, reads EcoFlow only while a BC Hydro outage covers the home and Airthings only while the
+  air outside is past the threshold, and reuses each feed's own cache, so the alerts poll adds no new calls. Rule alerts
+  are `source: "smart"`, `notice: true` (blue, ℹ on the strip, never emailed, not in the Alerts widget), with ids that
+  stay the same for one occurrence (a watering's start, an outage id, a day) so a dismissal sticks. Off by default for
+  the ones that would fire often (Claude's defaults, 2026-11-26). Pool water out of range, radon and CO₂ and "washer
+  done" keep their own switches. "Nobody's home" rules were left out: a note on a wall in an empty house reaches nobody,
+  and notices aren't emailed. A new rule adds a key to `config.alerts.rules` (with a default), a branch in
+  `evaluateRules`, its feeds in `rulesNeed` and a switch in the Smart notices block.
 - **Alert email:** when `config.alerts.notifyEmail` is on, each new strip-worthy alert (`meetsBanner` in `src/lib/alerts.ts`)
   triggers one email per alert id to household members (`src/server/alertNotify.ts`, `sendEmail` through Resend, HTML from
   `alertEmail` in `src/lib/email.ts`); ids are stored in `account_alert_notified` so repeats are never sent. The display
@@ -794,6 +811,14 @@ panel can be complex if you need it to be."
   and no touches (`pointer-events: none`) unless `interactive` is on, when touches on the map pan and zoom it but don't
   count as use for the screen saver. The CSP's `frame-src` allows embed.windy.com. This sandbox can't reach Windy, so
   tests check the address and the frame's life, and preview screenshots use a stand-in (`public/templates/samples/windy.html`).
+- **Countdown photos** (`src/server/countdownPhotos.ts`): a date's photo is shrunk to 800 px JPEG in the admin's
+  browser and uploaded to `/api/household/countdown-photo/`, which stores it in the photo library's private Blob store
+  under the reserved source id `countdown` (never a photos widget's album, so `/api/display/photo/` can't reach it);
+  the date keeps only the id (`photo`). Walls get it from `/api/display/countdown-photo/?i=` only while a saved
+  countdown widget names it; an admin's live preview may show any of the household's own, so it appears before
+  Publish. Each settings save deletes countdown photos no date names that are over a day old (a photo uploaded but
+  not yet published survives a save from another tab). Backups keep the id but not the picture; a missing one falls
+  back to the emoji on the wall.
 - **Settings backup and restore** (Melvin, 2026-11-21): Settings › Backup downloads the whole settings document as
   `everydaypane-settings-<date>.json` and restores one (`src/server/backup.ts`, `/api/household/backup/`). The file is the
   document itself, walked generically, so new widget types and settings are in it with no change there. It never holds

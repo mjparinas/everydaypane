@@ -1085,6 +1085,47 @@ html.portrait-view .stage {
 .cd-emoji {
   flex: none;
 }
+.cd-photo {
+  flex: none;
+  width: 1.3em;
+  height: 1.3em;
+  border-radius: 50%;
+  object-fit: cover;
+}
+/* The day itself: the event leads the tile, its photo as large as the space allows. */
+.cd-hero {
+  display: flex;
+  align-items: center;
+  gap: 4cqw;
+  flex: 1 1 auto;
+  min-height: 0;
+  font-size: calc(min(12cqh, 7cqw) * var(--font-scale, 1));
+}
+.cd-hero .cd-emoji {
+  font-size: 1.6em;
+}
+.cd-hero-img {
+  flex: none;
+  width: min(38cqw, 55cqh);
+  height: min(38cqw, 55cqh);
+  border-radius: 50%;
+  object-fit: cover;
+  box-shadow: 0 0 0 0.12em var(--accent);
+}
+.cd-hero-text {
+  min-width: 0;
+}
+.cd-hero-title {
+  font-weight: 700;
+  line-height: 1.15;
+  overflow-wrap: break-word;
+  hyphens: auto;
+}
+.cd-hero-sub {
+  color: var(--muted);
+  font-size: 0.6em;
+  margin-top: 0.2em;
+}
 .cd-name {
   flex: 1;
   min-width: 0;

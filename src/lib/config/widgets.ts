@@ -104,11 +104,11 @@ export const WIDGETS: { [T in WidgetType]: WidgetInfo<T> } = {
   },
   countdown: {
     label: "Countdown",
-    description: "Days until holidays and birthdays",
+    description: "Days until holidays, birthdays and anniversaries, with photos",
     icon: "🎉",
     size: { w: 3, h: 3 },
     minSize: { w: 2, h: 1 },
-    defaults: () => ({ events: [], count: 4 }),
+    defaults: () => ({ events: [], count: 4, celebrate: true }),
   },
   agenda: {
     label: "Schedule",

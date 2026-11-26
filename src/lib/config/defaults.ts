@@ -1,3 +1,4 @@
+import { RULES_DEFAULT } from "../alertRules";
 import { FREE_LIMITS, isFreeWidgetType } from "../plans";
 import { SCREEN_SAVER_OFF } from "../screenSaver";
 import type { DashboardConfig, View, Widget } from "./schema";
@@ -168,6 +169,7 @@ const baseShell = (): Omit<DashboardConfig, "views" | "schedule" | "themeId"> =>
     powerKm: 5,
     evacuationKm: 10,
     notifyEmail: false,
+    rules: { ...RULES_DEFAULT },
   },
   school: { districtName: "Langley School District", statusUrl: "https://www.sd35.bc.ca/" },
   chores: { people: [], items: [], rewards: [], pinSet: false },
