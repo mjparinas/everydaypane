@@ -56,7 +56,7 @@ same change, and moves it out of **In progress** when it merges.
 | Who's home (`presence`) | Who is home, from person and device tracker entities, read only | Home Assistant |
 | School days (`schoolDays`) | School today or not (weekend, Pro-D day, break with the day school's back, summer), early dismissals, a "Tomorrow: no school" line, the next 0 to 6 days off with "in N days", and the weekly hot-lunch line | Settings › School days: the school year and days off (one-tap **Langley 2026–27 elementary or middle** preset), optional school iCal links read for Pro-D/No school/break events, lunch per weekday |
 | School status (`school`) | Open, closed, delayed or late start; optional school names | District status page (`config.school`) |
-| Whiteboard (`whiteboard`) | Finger draw with a few colours and an eraser; wider tiles show more colours; hold Clear to wipe; same doodle on every display | `whiteboard` table |
+| Whiteboard (`whiteboard`) | Finger draw with a few colours and an eraser; wider tiles show more colours; hold Clear to wipe; same doodle on every display; **draw from phones** at `/family/` and `/d/<token>/edit/` | `account_whiteboard` table (one board per household) |
 | Alerts (`alerts`) | Current emergency alerts, optional "all clear" | See alerts below |
 | Chore chart (`chores`) | Today's chores by **morning/afternoon/evening** (or anytime), **tap to tick off**, completion dots / progress rings, stars this week, optional **star rewards** and **child PIN**; kids phone at `/d/<token>/chores/` and `/family/chores/` | Settings document + `chores_done` + `chore_redemptions` |
 | Sports scores (`sports`) | Live score, last result and next game for followed teams (NHL, NBA, WNBA, NFL, MLB, MLS, Premier League, Champions League) | ESPN public site API |
@@ -238,9 +238,11 @@ npm run templates:previews  # regenerate public/templates/*.png from real widget
 - **Shopping list** (Melvin, 2026-11-22): groceries the family adds from their phones, shown on the wall, ticked off
   with a tap when the widget allows it (see Architecture).
 - **Whiteboard** (Melvin, 2026-11-22): a simple shared doodle on the wall — a few colours, finger draw, eraser, hold
-  Clear to wipe; wider tiles show more colours; the same board on every display (see Architecture).
+  Clear to wipe; wider tiles show more colours; the same board on every display (see Architecture). **From phones**
+  (Melvin, 2026-11-26: "yes let the whiteboard sync from phones"): `/family/` and the kitchen edit link draw on the
+  same board with every colour, the eraser and hold to clear.
 - **Phone edit without login** (Melvin, 2026-11-22: QR to the display link with `/edit`): `/d/<token>/edit/` edits
-  meals, shopping and the message board with no magic link; an `editQr` widget and the Displays tab both show the QR
+  meals, shopping, the message board and (2026-11-26) the whiteboard with no magic link; an `editQr` widget and the Displays tab both show the QR
   (see Architecture). Not Google Tasks or a new local to-do list — those stay separate.
 - **UV, pollen, school status and who's home** (Melvin, 2026-11-22): the weather widget can show the UV index and the
   highest pollen count Open-Meteo reports; a school widget reads the district page (Langley SD35 by default) for closed,
@@ -587,7 +589,11 @@ panel can be complex if you need it to be."
   display, hold Clear, wider tile → more colours): one shared board in the `whiteboard` table
   (`src/server/whiteboard.ts`), strokes on a fixed 1600×900 board so every tile letterboxes the same doodle. Displays
   poll `/api/display/whiteboard/` every three seconds; a stroke posts on finger-up and Clear posts after an 800 ms hold.
-  No brush sizes, undo or sync from phones.
+  One board per household in `account_whiteboard` (2026-11-26; the old single-row `whiteboard` table was shared by
+  every household, and its doodle is read as the grandfather household's until that household draws). Phones use
+  `/api/whiteboard/` (`Whiteboard` component; family session or display token through `familyEditorFor`, 600 posts an
+  hour per person, off with the `widget.whiteboard` flag), which shares its handlers with the wall's route
+  (`src/server/whiteboardApi.ts`) and polls every three seconds while the page is visible. No brush sizes or undo.
 - **Meal planning** (Melvin, 2026-11-17: "add meal planning"; repeats Melvin, 2026-11-23: cereal every Monday, eggs
   every Tuesday, every N days): one-off rows in `account_meals` and recurring rules in `account_meal_rules`
   (`src/server/meals.ts`), planned by anyone on `ADMIN_EMAILS` or `FAMILY_EMAILS` from the admin panel's Meals tab or
@@ -1162,7 +1168,7 @@ panel can be complex if you need it to be."
   CSP that allows only our own origin (and Sentry's ingest, Cloudflare's speed test in `connect-src` for the internet widget, `'self'` plus earth.nullschool.net, embed.windy.com and the video and chart embeds in `frame-src`;
   `script-src` never allows `'unsafe-inline'` — Next.js pages get a per-request nonce from `proxy.ts`, the display loads
   only `/display/display.js`), and a Permissions-Policy that turns off camera, microphone and location.
-- **Family sessions** (`FAMILY_EMAILS`) use `/family/` and the meals, shopping and messages APIs only. They are not
+- **Family sessions** (`FAMILY_EMAILS`) use `/family/` and the meals, shopping, messages and whiteboard APIs only. They are not
   accepted as display viewers (`viewerFor`), so they cannot call `/api/display/*` (Home Assistant, cameras, tasks, …).
 - **Display-token family edits:** a valid `x-display-token` may use the meals, shopping and messages APIs the same way
   a family session does (`familyEditorFor`), so `/d/<token>/edit/` works without login. It does not grant admin pin,

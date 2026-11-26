@@ -336,6 +336,31 @@ export const flows = [
     },
   },
   {
+    name: "a doodle drawn on a phone lands on the whiteboard",
+    async run({ browser, page, base, expect }) {
+      const phone = await browser.newContext({ viewport: { width: 390, height: 844 }, storageState: await page.context().storageState() });
+      const p = await phone.newPage();
+      await p.goto(`${base}/family/`);
+      const canvas = p.getByRole("img", { name: "Whiteboard" }).or(p.locator("canvas[aria-label='Whiteboard']"));
+      await canvas.scrollIntoViewIfNeeded();
+      await p.getByRole("button", { name: "Colour #e11d48" }).click();
+      const box = await canvas.boundingBox();
+      expect(box, "no whiteboard on the family page");
+      const saved = p.waitForResponse((r) => r.url().includes("/api/whiteboard/") && r.request().method() === "POST");
+      await p.mouse.move(box.x + 40, box.y + 40);
+      await p.mouse.down();
+      await p.mouse.move(box.x + 120, box.y + 80, { steps: 8 });
+      await p.mouse.up();
+      expect((await saved).ok(), "the stroke wasn't saved");
+      await phone.close();
+      const board = await (await page.request.get(`${base}/api/whiteboard/`)).json();
+      expect(
+        board.strokes.some((s) => s.colour === "#e11d48"),
+        "the stroke isn't on the shared board",
+      );
+    },
+  },
+  {
     name: "a meal planned on a phone reaches the display",
     async run({ browser, page, base, expect }) {
       const phone = await browser.newContext({ viewport: { width: 390, height: 844 }, storageState: await page.context().storageState() });
