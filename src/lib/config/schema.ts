@@ -9,11 +9,13 @@ import { FERRY_ROUTES } from "../ferries";
 import { DONE_MINUTES_DEFAULT } from "../laundry";
 import { MEAL_SLOTS } from "../meals";
 import { NEWS_PRESETS } from "../newsPresets";
+import { REGION_IDS } from "../regions";
 import { RIVER_DEFAULT_STATIONS, RIVER_STATION_RE } from "../rivers";
 import { SCREEN_SAVER_OFF } from "../screenSaver";
 import { SMART_HOME_PROVIDERS } from "../smartHome";
 import { DEFAULT_MOUNTAINS, MOUNTAIN_IDS } from "../snow";
 import { LEAGUE_IDS, MAX_TEAMS } from "../sports";
+import { TRANSIT_AGENCY_IDS } from "../transitAgencies";
 import { WINDY_OVERLAYS } from "../windy";
 import { PERIODS } from "./periods";
 
@@ -435,6 +437,9 @@ export const widgetSchema = z.discriminatedUnion("type", [
   z.object({
     ...base,
     type: z.literal("transit"),
+    // Which agency's feed (regional packs, Melvin, 2026-11-26). Stops belong to one agency; TransLink is the default so
+    // a widget saved before other agencies existed still loads.
+    agency: z.enum(TRANSIT_AGENCY_IDS).default("translink"),
     stops: z
       .array(z.object({ id: z.string().min(1).max(40), code: z.string().max(20), name: z.string().max(120) }))
       .max(6)
@@ -956,6 +961,9 @@ export const configSchema = z
       longitude: z.number().min(-180).max(180),
       timeZone,
     }),
+    // Regional pack (Melvin, 2026-11-26): which local sources apply (src/lib/regions.ts). "auto" works it out from
+    // `location`; a household right on a border picks one by hand.
+    region: z.enum(["auto", ...REGION_IDS]).default("auto"),
     units: z.enum(["metric", "imperial"]),
     hour12: z.boolean(),
     // Forecast source for the weather / sun widgets (Melvin, 2026-11-23). Open-Meteo stays the default; Environment

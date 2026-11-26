@@ -4,6 +4,11 @@ The **TransLink** widget shows the next buses from a few stops near home, with m
 running late (Melvin, 2026-11-19). Times come from TransLink's live GTFS-realtime feed; the server reads it every 30
 seconds at most, whatever the number of screens, and displays ask the server, never TransLink.
 
+**Other cities** (regional packs, 2026-11-26): the same widget (now called **Transit departures**) can read the TTC
+(Toronto), Calgary Transit, Edmonton Transit Service, Halifax Transit or King County Metro (Seattle) instead. Pick the
+agency at the top of the widget's settings; the household's region's agency is listed first. Those feeds are open, so
+they need no key and nothing below. Only TransLink needs the key.
+
 ## Get an API key (once)
 
 1. Go to **developer.translink.ca** and register (it's free). Confirm the email TransLink sends.

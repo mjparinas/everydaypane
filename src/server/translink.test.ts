@@ -6,6 +6,7 @@ import { GET as adminGET } from "@/app/api/household/transit/route";
 import { defaultConfig } from "@/lib/config/defaults";
 import { newWidget } from "@/lib/config/widgets";
 import type { TransitData } from "@/lib/display/types";
+import { TRANSIT_AGENCIES } from "@/lib/transitAgencies";
 import { LEGACY_ACCOUNT_ID } from "@/server/accounts";
 import { cookieFor, req, useTestServer } from "@/test/server";
 
@@ -295,5 +296,54 @@ describe("TransLink routes", () => {
     };
     expect(body.keySet).toBe(false);
     expect(body.stops.map((s) => s.code)).toEqual(["55210"]);
+  });
+  it("reads a keyless agency next to TransLink, each under its own stop keys, one failing never hiding the other", async () => {
+    vi.useFakeTimers({ now: NOW * 1000, toFake: ["Date"] });
+    const seen: string[] = [];
+    stubTransLink(seen);
+    const fallback = vi.mocked(fetch).getMockImplementation();
+    const ttc = TRANSIT_AGENCIES.ttc;
+    let ttcUp = true;
+    vi.mocked(fetch).mockImplementation((input, init) => {
+      const url = String(input);
+      if (url === ttc.realtimeUrl) {
+        seen.push(url);
+        return Promise.resolve(ttcUp ? new Response(sample()) : new Response("down", { status: 503 }));
+      }
+      // The TTC's timetable is the same little zip, served whole (no range requests).
+      if (url === ttc.staticUrl) return Promise.resolve(new Response(zip(GTFS)));
+      return fallback ? fallback(input, init) : Promise.reject(new Error("no stub"));
+    });
+    const config = defaultConfig();
+    config.views[0]?.widgets.splice(0, config.views[0].widgets.length, { ...transitWidget(), agency: "ttc" });
+
+    // No TransLink key and no TransLink widget: the TTC still answers, and its stops are filed under "ttc:".
+    const r = await transitFeed(config);
+    expect(Object.keys(r.value.stops)).toEqual(["ttc:100"]);
+    expect(r.value.stops["ttc:100"]?.map((d) => d.route)).toEqual(["502", "502"]);
+    expect(seen.some((u) => u.startsWith(REALTIME_URL))).toBe(false);
+
+    // With TransLink too, a TTC outage leaves TransLink's departures and names the TTC as failed. (A new TTC stop,
+    // since the last good read of the old one would be served instead.)
+    vi.stubEnv("TRANSLINK_API_KEY", "test-key");
+    ttcUp = false;
+    const first = config.views[0]?.widgets[0];
+    if (first?.type === "transit") first.stops = [{ id: "200", code: "", name: "Queen St" }];
+    config.views[0]?.widgets.push({ ...newWidget("transit", "bus2", { x: 6, y: 0 }), stops: transitWidget().stops });
+    const both = await transitFeed(config);
+    expect(Object.keys(both.value.stops)).toEqual(["100"]);
+    expect(both.value.failed).toEqual(["ttc"]);
+    vi.useRealTimers();
+  });
+
+  it("refuses an agency it doesn't know in the stop search", async () => {
+    stubTransLink();
+    const cookie = await cookieFor("admin@example.com");
+    expect((await adminGET(req("/api/household/transit/?agency=nowhere", { headers: { cookie } }))).status).toBe(400);
+    const body = (await (await adminGET(req("/api/household/transit/?agency=ttc&q=x", { headers: { cookie } }))).json()) as {
+      keySet: boolean;
+    };
+    // Only TransLink needs a key.
+    expect(body.keySet).toBe(true);
   });
 });

@@ -526,10 +526,12 @@ export interface TransitDeparture {
 
 export interface TransitData {
   updatedAt: number;
-  /** False until TRANSLINK_API_KEY is set in Vercel. */
+  /** False until TRANSLINK_API_KEY is set in Vercel. Only TransLink widgets look at it: the other agencies need no key. */
   configured: boolean;
-  /** Stop id → its next departures, soonest first. */
+  /** stopKey(agency, stop id) → its next departures, soonest first (TransLink's stops keep their bare id). */
   stops: Record<string, TransitDeparture[]>;
+  /** Agencies whose feed couldn't be read on the last try; the others still show. */
+  failed?: string[];
 }
 
 /** WeatherFlow Tempest / AIR observation (src/server/tempest.ts). */
