@@ -327,7 +327,7 @@ export interface HaEntity {
   max?: number;
   step?: number;
   action?: string;
-  /** Colour lights (Govee): the colour now as #rrggbb, present only when the light can change colour. */
+  /** Colour lights (Govee, Hue, LIFX): the colour now as #rrggbb, present only when the light can change colour. */
   color?: string;
   /** Scenes the light offers (Govee), by name; the server keeps what each name sends. */
   scenes?: string[];
@@ -834,6 +834,26 @@ export interface UnifiData {
   /** Short reason when UniFi refused or failed, for the empty state. */
   error?: string;
   stale?: boolean;
+}
+
+/** One river gauge as a display gets it (src/server/rivers.ts): metres and m³/s; the wall converts for imperial. */
+export interface RiverStationData {
+  id: string;
+  name: string;
+  level: number | null;
+  discharge: number | null;
+  at: number | null;
+  change6h: number | null;
+  change24h: number | null;
+  trend: "rising" | "falling" | "steady" | null;
+  spark: (number | null)[];
+  error?: string;
+}
+
+export interface RiversData {
+  updatedAt: number;
+  units: "metric" | "imperial";
+  stations: RiverStationData[];
 }
 
 /** One washer or dryer as a display gets it (src/server/laundry.ts). */

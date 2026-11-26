@@ -81,6 +81,8 @@ export function mountWidget(el: HTMLElement, w: Widget, ctx: WidgetContext): Cle
       return lazyWidget("airthings", el, w, ctx);
     case "laundry":
       return lazyWidget("laundry", el, w, ctx);
+    case "rivers":
+      return lazyWidget("rivers", el, w, ctx);
     case "ecoflow":
       return lazyWidget("ecoflow", el, w, ctx);
     case "airQuality":

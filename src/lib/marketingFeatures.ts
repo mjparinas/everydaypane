@@ -30,6 +30,7 @@ const FEATURE_BLURBS: Partial<Record<WidgetType, string>> = {
   airthings: "Indoor radon, CO₂, VOC and particles from Airthings.",
   laundry: "Washer and dryer time left and done, from LG ThinQ or Samsung SmartThings.",
   radar: "Environment Canada observed + forecast over a map.",
+  rivers: "Fraser River and creek levels from Environment Canada gauges, rising or falling, with a day's line.",
   wildfires: "BC Wildfire Service fires, burned areas and evacuation areas on a map, nearest fires listed.",
   earth: "earth.nullschool.net centred on your place.",
   windy: "Windy's map on one layer: radar, rain, wind, temperature, clouds, snow or air quality.",
@@ -52,7 +53,8 @@ const FEATURE_BLURBS: Partial<Record<WidgetType, string>> = {
   ferries: "Next sailings and how full they are.",
   garbage: "Township of Langley Recycle Coach zones.",
   school: "Open, closed, delayed or late start.",
-  haEntity: "Lights, climate, covers, lock (lock only), Nest, ecobee, SmartThings, Govee colour lights and scenes.",
+  haEntity:
+    "Lights, climate, covers, lock (lock only), Nest, ecobee, SmartThings, Govee colour lights and scenes, Philips Hue and LIFX lights.",
   camera: "UniFi Protect snapshots on a timer.",
   media: "HA, Spotify or Sonos now-playing controls.",
   presence: "Person and device trackers, read only.",

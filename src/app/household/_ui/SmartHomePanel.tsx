@@ -20,7 +20,7 @@ const RESULTS: Record<string, string> = {
 const noop = () => () => undefined;
 const readResults = () => {
   const q = new URLSearchParams(window.location.search);
-  return `${q.get("nest") ?? ""}|${q.get("ecobee") ?? ""}|${q.get("smartthings") ?? ""}`;
+  return `${q.get("nest") ?? ""}|${q.get("ecobee") ?? ""}|${q.get("smartthings") ?? ""}|${q.get("hue") ?? ""}`;
 };
 
 function ServiceBlock({
@@ -140,6 +140,68 @@ function GoveeBlock({ status, onChanged }: { status: SmartServiceStatus | undefi
   );
 }
 
+/** LIFX lights (Melvin, 2026-11-25): a personal access token from cloud.lifx.com, checked with LIFX before it is kept. */
+function LifxBlock({ status, onChanged }: { status: SmartServiceStatus | undefined; onChanged: () => void }) {
+  const [token, setToken] = useState("");
+  const [note, setNote] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  async function save() {
+    setBusy(true);
+    setNote("");
+    const r = await fetch("/api/household/smart-home/", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ lifxToken: token.trim() }),
+    }).catch(() => null);
+    const body = ((await r?.json().catch(() => ({}))) ?? {}) as { error?: string; devices?: number };
+    setBusy(false);
+    if (!r?.ok) return setNote(body.error ?? "Couldn't save that.");
+    setToken("");
+    setNote(`Saved. LIFX lists ${body.devices ?? 0} light${body.devices === 1 ? "" : "s"} on this token.`);
+    onChanged();
+  }
+
+  async function remove() {
+    setNote("");
+    const r = await fetch("/api/household/smart-home/?provider=lifx", { method: "DELETE" }).catch(() => null);
+    if (!r?.ok) setNote("Couldn't remove the token.");
+    onChanged();
+  }
+
+  return (
+    <div className="grid gap-2 rounded-xl border border-line p-3">
+      <h3 className="font-semibold">LIFX</h3>
+      <p className="text-sm text-soft">
+        {status?.expired
+          ? "LIFX stopped accepting the saved token. Paste a new one."
+          : status?.connected
+            ? "Connected. Add a Smart device widget, pick LIFX lights as its provider and choose a light."
+            : "Lights on and off, brightness and colour. Sign in at cloud.lifx.com › Settings › Personal access tokens › Generate new token. See docs/lifx.md."}
+      </p>
+      {note && (
+        <p className="rounded-xl bg-bg p-3 text-sm" role="status">
+          {note}
+        </p>
+      )}
+      <Text
+        label={status?.connected ? "Replace token" : "LIFX token"}
+        type="password"
+        value={token}
+        maxLength={120}
+        hint="Saved encrypted on the server and never shown again."
+        onChange={setToken}
+      />
+      <div className="flex flex-wrap gap-2">
+        <button type="button" className="btn-primary" disabled={busy || token.trim().length < 16} onClick={() => void save()}>
+          {busy ? "Checking…" : "Save token"}
+        </button>
+        {status?.connected && <ConfirmButton label="Remove token" onConfirm={() => void remove()} />}
+      </div>
+    </div>
+  );
+}
+
 export function SmartHomePanel() {
   const status = useSmartHome();
   const edit = useAdmin((s) => s.edit);
@@ -147,7 +209,7 @@ export function SmartHomePanel() {
   const [error, setError] = useState("");
   const [tempestToken, setTempestToken] = useState("");
   const [wuKey, setWuKey] = useState("");
-  const [nestR, ecobeeR, stR] = useSyncExternalStore(noop, readResults, () => "||").split("|");
+  const [nestR, ecobeeR, stR, hueR] = useSyncExternalStore(noop, readResults, () => "|||").split("|");
 
   async function disconnect(provider: NativeSmartProvider) {
     setError("");
@@ -174,8 +236,8 @@ export function SmartHomePanel() {
     <>
       <Section id="settings-smart-home" title="Smart home (direct)">
         <p className="text-sm text-soft">
-          Control Nest, ecobee, SmartThings and Govee lights on the wall without Home Assistant. Home Assistant tiles keep working; each
-          tile picks where its device comes from. Google Nest needs a paid Device Access subscription — see docs/nest.md.
+          Control Nest, ecobee, SmartThings, and Govee, Philips Hue and LIFX lights on the wall without Home Assistant. Home Assistant tiles
+          keep working; each tile picks where its device comes from. Google Nest needs a paid Device Access subscription — see docs/nest.md.
         </p>
         {error && <p className="text-sm text-bad">{error}</p>}
         <ServiceBlock
@@ -206,6 +268,16 @@ export function SmartHomePanel() {
           onDisconnect={() => void disconnect("smartthings")}
         />
         <GoveeBlock status={status?.govee} onChanged={() => void loadSmartHome(true)} />
+        <ServiceBlock
+          name="Philips Hue"
+          provider="hue"
+          status={status?.hue}
+          result={hueR ?? ""}
+          envNames="HUE_CLIENT_ID and HUE_CLIENT_SECRET"
+          docs="docs/hue.md"
+          onDisconnect={() => void disconnect("hue")}
+        />
+        <LifxBlock status={status?.lifx} onChanged={() => void loadSmartHome(true)} />
       </Section>
 
       <Section id="settings-weather-stations" title="Weather stations">

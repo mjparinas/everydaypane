@@ -22,6 +22,11 @@ export type SecretKey =
   | "smartthings.refreshToken"
   // A Govee developer API key (from the Govee Home app), src/server/govee.ts.
   | "govee.apiKey"
+  // Philips Hue: the OAuth refresh token, and the bridge's application key made through the cloud (src/server/hue.ts).
+  | "hue.refreshToken"
+  | "hue.appKey"
+  // A LIFX personal access token (cloud.lifx.com › Settings), src/server/lifx.ts.
+  | "lifx.token"
   | "tempest.token"
   | "wu.apiKey"
   | "lg.token"
@@ -85,6 +90,9 @@ export async function secretsSet(accountId: string): Promise<Record<SecretKey, b
     "ecobee.refreshToken": set.has("ecobee.refreshToken"),
     "smartthings.refreshToken": set.has("smartthings.refreshToken"),
     "govee.apiKey": set.has("govee.apiKey"),
+    "hue.refreshToken": set.has("hue.refreshToken"),
+    "hue.appKey": set.has("hue.appKey"),
+    "lifx.token": set.has("lifx.token"),
     "tempest.token": set.has("tempest.token"),
     "wu.apiKey": set.has("wu.apiKey"),
     "lg.token": set.has("lg.token"),
