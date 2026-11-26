@@ -98,7 +98,7 @@ export function PhotosPanel() {
       if (!list.length) return setError("Add at least one https:// photo address, one per line.");
       source = { id, kind, name: name || "Photos", urls: list.slice(0, 500) };
     } else if (kind === "library") {
-      source = { id, kind, name: name || "Family photos" };
+      source = { id, kind, name: name || "Family photos", familyUploads: true };
     } else if (kind === "bingPotd") {
       source = { id, kind, name: name || "Bing today" };
     } else if (kind === "reddit") {
@@ -195,7 +195,19 @@ export function PhotosPanel() {
               {checks[s.id]?.error ?? checks[s.id]?.image ?? `${checks[s.id]?.count ?? 0} photos`}
             </p>
           )}
-          {s.kind === "library" && <LibraryAlbum sourceId={s.id} />}
+          {s.kind === "library" && (
+            <>
+              <Toggle
+                label="Family can add photos from their phones"
+                checked={s.familyUploads}
+                onChange={(on) => editSource(s.id, (x) => void (x.kind === "library" && (x.familyUploads = on)))}
+              />
+              <p className="text-xs text-soft">
+                From the Family page, or the kitchen edit link (Displays tab). A new photo shows on the wall within a few minutes.
+              </p>
+              <LibraryAlbum sourceId={s.id} />
+            </>
+          )}
           {s.kind === "amazonPeople" &&
             (amazon?.connected ? (
               amazon.people.length ? (

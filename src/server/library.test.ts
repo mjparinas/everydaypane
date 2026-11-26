@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { GET as photoGET } from "@/app/api/display/photo/route";
 import { GET as photosGET } from "@/app/api/display/photos/route";
+import { DELETE as familyDELETE, GET as familyGET, POST as familyPOST } from "@/app/api/family/photos/route";
 import { GET as googleGET, POST as googlePOST } from "@/app/api/household/google-photos/route";
 import { DELETE as libraryDELETE, GET as libraryGET, POST as libraryPOST } from "@/app/api/household/library/route";
 import type { PhotoData } from "@/lib/display/types";
@@ -43,10 +44,10 @@ describe("photo library", () => {
     store.clear();
   });
 
-  async function withLibrary(): Promise<string> {
+  async function withLibrary(familyUploads = false): Promise<string> {
     const stored = await loadConfig(LEGACY_ACCOUNT_ID);
     const config = structuredClone(stored.config);
-    config.integrations.photos.sources = [{ id: "family", kind: "library", name: "Family" }];
+    config.integrations.photos.sources = [{ id: "family", kind: "library", name: "Family", familyUploads }];
     expect((await saveConfig(LEGACY_ACCOUNT_ID, config, stored.version)).ok).toBe(true);
     return (await addDevice(LEGACY_ACCOUNT_ID, "Kitchen", null)).token;
   }
@@ -89,6 +90,62 @@ describe("photo library", () => {
     ).toBe(200);
     expect(store.size).toBe(0);
     expect((await photoGET(req(`/api/display/photo/?s=family&i=${id}&t=${token}`))).status).toBe(404);
+  });
+
+  it("takes photos from family phones only for an album open to them, and lets each take back their own", async () => {
+    const kid = await cookieFor("kid@example.com");
+    const send = (headers: Record<string, string>, album = "family") =>
+      familyPOST(
+        req(`/api/family/photos/?album=${album}`, {
+          method: "POST",
+          headers: {
+            "content-type": "image/jpeg",
+            "x-photo-width": "1536",
+            "x-photo-height": "2048",
+            "x-photo-taken": "2019-11-26",
+            ...headers,
+          },
+          body: JPEG,
+        }),
+      );
+    // Closed to the family: nothing is offered and nothing is taken.
+    await withLibrary(false);
+    expect(await (await familyGET(req("/api/family/photos/", { headers: { cookie: kid } }))).json()).toMatchObject({ albums: [] });
+    expect((await send({ cookie: kid })).status).toBe(404);
+    expect(store.size).toBe(0);
+
+    const token = await withLibrary(true);
+    expect(await (await familyGET(req("/api/family/photos/", { headers: { cookie: kid } }))).json()).toMatchObject({
+      albums: [{ id: "family", name: "Family" }],
+    });
+    expect((await send({})).status).toBe(401);
+    expect((await send({ cookie: kid }, "elsewhere")).status).toBe(404);
+    const fromKid = (await (await send({ cookie: kid })).json()) as { id: string };
+    // The kitchen edit link can add too, with the display's token.
+    const fromWall = (await (await send({ "x-display-token": token })).json()) as { id: string };
+    expect(store.size).toBe(2);
+
+    const feed = (await (await photosGET(req("/api/display/photos/", { headers: { "x-display-token": token } }))).json()) as PhotoData;
+    expect(feed.sources.family?.photos).toContainEqual([fromKid.id, 1536, 2048, "2019-11-26"]);
+
+    const takeBack = (id: string, headers: Record<string, string>) =>
+      familyDELETE(req(`/api/family/photos/?album=family&photo=${id}`, { method: "DELETE", headers }));
+    expect((await takeBack(fromWall.id, { cookie: kid })).status).toBe(403);
+    expect((await takeBack(fromKid.id, { cookie: kid })).status).toBe(200);
+    expect((await takeBack(fromKid.id, { cookie: kid })).status).toBe(404);
+    // An admin may take back anyone's.
+    expect((await takeBack(fromWall.id, { cookie: await cookieFor("admin@example.com") })).status).toBe(200);
+    expect(store.size).toBe(0);
+  });
+
+  it("answers an unchanged photo list with 304", async () => {
+    const token = await withLibrary();
+    const first = await photosGET(req("/api/display/photos/", { headers: { "x-display-token": token } }));
+    const tag = first.headers.get("etag") ?? "";
+    expect(tag).not.toBe("");
+    expect((await photosGET(req("/api/display/photos/", { headers: { "x-display-token": token, "if-none-match": tag } }))).status).toBe(
+      304,
+    );
   });
 
   it("deletes a library album's photos only when the source is removed by a successful Save", async () => {

@@ -84,8 +84,11 @@ export function screenSaver(
           showBackground: false,
           sourceIds: s.photoSourceIds,
           intervalSeconds: 30,
-          fit: "cover",
-          showCaption: false,
+          fit: "auto",
+          showCaption: true,
+          pairPortraits: true,
+          drift: true,
+          memories: true,
         },
         {
           payload: p,

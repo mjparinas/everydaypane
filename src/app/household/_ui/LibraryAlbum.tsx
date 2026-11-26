@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 
 import type { DashboardConfig } from "@/lib/config/schema";
+import { isPicture, prepareUpload } from "@/lib/photoUpload";
 
 import { useAdmin } from "./store";
 
@@ -16,25 +17,6 @@ interface Item {
   h: number;
   taken: string | null;
   origin: "upload" | "google";
-}
-
-const MAX_SIDE = 2048;
-
-async function shrink(file: File): Promise<{ blob: Blob; w: number; h: number }> {
-  const bitmap = await createImageBitmap(file, { imageOrientation: "from-image" });
-  const k = Math.min(1, MAX_SIDE / Math.max(bitmap.width, bitmap.height));
-  const w = Math.max(1, Math.round(bitmap.width * k));
-  const h = Math.max(1, Math.round(bitmap.height * k));
-  const canvas = document.createElement("canvas");
-  canvas.width = w;
-  canvas.height = h;
-  const ctx = canvas.getContext("2d");
-  if (!ctx) throw new Error("No canvas");
-  ctx.drawImage(bitmap, 0, 0, w, h);
-  bitmap.close();
-  const blob = await new Promise<Blob | null>((r) => canvas.toBlob(r, "image/jpeg", 0.85));
-  if (!blob) throw new Error("Couldn't read that picture");
-  return { blob, w, h };
 }
 
 async function fetchLibrary(sourceId: string): Promise<{ storage: boolean; photos: Item[] }> {
@@ -77,15 +59,20 @@ export function LibraryAlbum({ sourceId }: { sourceId: string }) {
   async function upload(files: FileList | null) {
     if (!files?.length) return;
     setError("");
-    const list = [...files].filter((f) => f.type.startsWith("image/") || /\.(heic|heif|jpe?g|png|webp)$/i.test(f.name));
+    const list = [...files].filter(isPicture);
     let failed = 0;
     for (const [i, file] of list.entries()) {
       setBusy(`Uploading ${i + 1} of ${list.length}…`);
       try {
-        const { blob, w, h } = await shrink(file);
+        const { blob, w, h, taken } = await prepareUpload(file);
         const r = await fetch(`/api/household/library/?source=${encodeURIComponent(sourceId)}`, {
           method: "POST",
-          headers: { "Content-Type": "image/jpeg", "x-photo-width": String(w), "x-photo-height": String(h) },
+          headers: {
+            "Content-Type": "image/jpeg",
+            "x-photo-width": String(w),
+            "x-photo-height": String(h),
+            ...(taken ? { "x-photo-taken": taken } : {}),
+          },
           body: blob,
         });
         if (!r.ok) failed++;

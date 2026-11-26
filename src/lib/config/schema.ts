@@ -227,8 +227,16 @@ export const widgetSchema = z.discriminatedUnion("type", [
     type: z.literal("photos"),
     sourceIds: z.array(id).max(20),
     intervalSeconds: z.number().int().min(5).max(3600),
-    fit: z.enum(["cover", "contain"]),
+    // "auto" (Melvin, 2026-11-26, photo frame polish) fills the frame unless that would crop a lot, then shows the
+    // whole photo over a soft copy of itself (src/lib/photoFrame.ts).
+    fit: z.enum(["cover", "contain", "auto"]),
     showCaption: z.boolean(),
+    // Two portraits side by side in a landscape frame (two landscapes stacked in a portrait one), instead of cropping.
+    pairPortraits: z.boolean().default(false),
+    // A slow zoom and drift across each photo (transform only; off under prefers-reduced-motion).
+    drift: z.boolean().default(false),
+    // Photos taken on this day in earlier years come up first, labelled "On this day".
+    memories: z.boolean().default(false),
   }),
   // Home Assistant or native Nest / ecobee / SmartThings (Phase 4, Household). `provider` defaults so older tiles stay on HA.
   z.object({
@@ -816,7 +824,8 @@ export const photoSourceSchema = z.discriminatedUnion("kind", [
   z.object({ id, kind: z.literal("amazonPeople"), name: z.string().max(60), personIds: z.array(z.string().max(128)).max(20) }),
   z.object({ id, kind: z.literal("urls"), name: z.string().max(60), urls: z.array(z.url()).max(500) }),
   // Photos kept by Everydaypane itself: uploaded from the admin panel or picked in Google Photos (src/server/library.ts).
-  z.object({ id, kind: z.literal("library"), name: z.string().max(60) }),
+  // `familyUploads` (Melvin, 2026-11-26): the family can add photos to this album from /family/ and the kitchen edit link.
+  z.object({ id, kind: z.literal("library"), name: z.string().max(60), familyUploads: z.boolean().default(false) }),
   // Phase 3 photo sources (src/server/photos/).
   z.object({ id, kind: z.literal("bingPotd"), name: z.string().max(60) }),
   z.object({

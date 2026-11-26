@@ -429,7 +429,7 @@ export const flows = [
       const errors = [];
       d.on("pageerror", (e) => errors.push(e.message));
       await d.goto(device.url);
-      await d.locator(".ph-img.on").waitFor();
+      await d.locator(".ph-slide.on .ph-img").waitFor();
       await d.locator(".cell-clock .c-hm").waitFor();
       expect(await d.locator(".cell-clock").evaluate((el) => el.classList.contains("on-photo")), "the clock isn't marked as on the photo");
       expect(!(await d.locator(".cell-photos").evaluate((el) => el.classList.contains("on-photo"))), "the photo is marked as on itself");

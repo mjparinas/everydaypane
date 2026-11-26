@@ -97,7 +97,7 @@ export const VIEW_TEMPLATES: ViewTemplate[] = [
       padding: 10,
       tilePadding: 12,
       widgets: [
-        w("photos", "t-photos", { x: 0, y: 0, w: 12, h: 8 }, { intervalSeconds: 30, fit: "cover", showCaption: true }),
+        w("photos", "t-photos", { x: 0, y: 0, w: 12, h: 8 }, { intervalSeconds: 30, fit: "auto", showCaption: true }),
         w("clock", "t-clock", { x: 0, y: 0, w: 3, h: 2 }, { showBackground: false }),
         w("date", "t-date", { x: 3, y: 0, w: 2, h: 1 }, { showBackground: false }),
       ],

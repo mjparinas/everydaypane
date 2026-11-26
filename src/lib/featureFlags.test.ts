@@ -109,13 +109,46 @@ describe("applyFlags", () => {
 
   it("drops switched-off photo sources, and a photos widget left with none of its picks", () => {
     const c = withWidgets([
-      { ...base, id: "p1", type: "photos", sourceIds: ["amz"], intervalSeconds: 30, fit: "cover", showCaption: false },
-      { ...base, id: "p2", type: "photos", sourceIds: ["amz", "lib"], intervalSeconds: 30, fit: "cover", showCaption: false },
-      { ...base, id: "p3", type: "photos", sourceIds: [], intervalSeconds: 30, fit: "cover", showCaption: false },
+      {
+        ...base,
+        id: "p1",
+        type: "photos",
+        sourceIds: ["amz"],
+        intervalSeconds: 30,
+        fit: "cover",
+        showCaption: false,
+        pairPortraits: false,
+        drift: false,
+        memories: false,
+      },
+      {
+        ...base,
+        id: "p2",
+        type: "photos",
+        sourceIds: ["amz", "lib"],
+        intervalSeconds: 30,
+        fit: "cover",
+        showCaption: false,
+        pairPortraits: false,
+        drift: false,
+        memories: false,
+      },
+      {
+        ...base,
+        id: "p3",
+        type: "photos",
+        sourceIds: [],
+        intervalSeconds: 30,
+        fit: "cover",
+        showCaption: false,
+        pairPortraits: false,
+        drift: false,
+        memories: false,
+      },
     ]);
     c.integrations.photos.sources = [
       { id: "amz", kind: "amazonShare", name: "A", url: "https://www.amazon.com/photos/share/x" },
-      { id: "lib", kind: "library", name: "L" },
+      { id: "lib", kind: "library", name: "L", familyUploads: false },
     ];
     const out = applyFlags(c, new Set([photoFlag("amazonShare")]));
     expect(out.integrations.photos.sources.map((s) => s.id)).toEqual(["lib"]);

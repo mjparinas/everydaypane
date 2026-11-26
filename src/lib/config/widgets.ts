@@ -152,13 +152,21 @@ export const WIDGETS: { [T in WidgetType]: WidgetInfo<T> } = {
   },
   photos: {
     label: "Photos",
-    description: "A slideshow from Amazon Photos or links",
+    description: "A photo frame from your albums and family uploads",
     icon: "🖼️",
     size: { w: 6, h: 5 },
     minSize: { w: 2, h: 2 },
     supportsTitle: false,
     supportsFontScale: false,
-    defaults: () => ({ sourceIds: [], intervalSeconds: 30, fit: "cover", showCaption: false }),
+    defaults: () => ({
+      sourceIds: [],
+      intervalSeconds: 30,
+      fit: "auto",
+      showCaption: true,
+      pairPortraits: true,
+      drift: true,
+      memories: true,
+    }),
   },
   haEntity: {
     label: "Smart device",

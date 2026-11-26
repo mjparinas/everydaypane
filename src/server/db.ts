@@ -123,6 +123,8 @@ const COLUMNS = [
   `ALTER TABLE devices ADD COLUMN is_test INTEGER NOT NULL DEFAULT 0`,
   // Wall unlock via phone QR picks which display (Melvin, 2026-11-23).
   `ALTER TABLE device_sign_ins ADD COLUMN device_id TEXT`,
+  // Who added a library photo from a phone (photo frame polish, 2026-11-26), so they can take back their own.
+  `ALTER TABLE photos ADD COLUMN added_by TEXT`,
 ];
 
 async function migrate(c: Client): Promise<void> {
