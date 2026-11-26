@@ -85,9 +85,17 @@ export const countdownEventSchema = z.object({
   name: z.string().min(1).max(60),
   date: isoDate,
   emoji: z.string().max(8).default(""),
-  kind: z.enum(["holiday", "birthday", "event"]),
+  // Anniversaries (Melvin, 2026-11-26: "birthdays and anniversaries with a countdown and a photo") count the years
+  // since `date`, as a birthday counts the age.
+  kind: z.enum(["holiday", "birthday", "anniversary", "event"]),
   // Yearly events (birthdays, Christmas) roll over to next year once the day has passed.
   yearly: z.boolean(),
+  // A photo uploaded for this date (Melvin, 2026-11-26): a library photo id under the reserved `countdown` source,
+  // served only through /api/display/countdown-photo/ and only while a countdown widget names it.
+  photo: z
+    .string()
+    .regex(/^[A-Za-z0-9_-]{8,40}$/)
+    .optional(),
 });
 export type CountdownEvent = z.infer<typeof countdownEventSchema>;
 
@@ -187,6 +195,8 @@ export const widgetSchema = z.discriminatedUnion("type", [
     type: z.literal("countdown"),
     events: z.array(countdownEventSchema).max(50),
     count: z.number().int().min(1).max(12),
+    // On the day itself, the event (with its photo) takes over the tile: "Happy birthday, Sam!". On by default.
+    celebrate: z.boolean().default(true),
   }),
   z.object({ ...base, type: z.literal("agenda"), range: z.enum(["today", "upcoming"]), days: z.number().int().min(1).max(14) }),
   // One week in a grid (Melvin, 2026-11-23): same calendar feed as the schedule and month widgets.

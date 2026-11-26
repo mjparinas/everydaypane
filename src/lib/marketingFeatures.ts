@@ -42,7 +42,7 @@ const FEATURE_BLURBS: Partial<Record<WidgetType, string>> = {
   calendarMonth: "Month or 1–6 weeks, weekends on/off, fit titles, scroll.",
   calendarWeek: "One week in a grid, optional weekends.",
   calendarUpNext: "The next event large, with a short following list.",
-  countdown: "Holidays, birthdays and events; yearly ones roll over.",
+  countdown: "Birthdays, anniversaries and holidays with a photo each; the age or the years, and a celebration on the day.",
   tasks: "Google Tasks, Microsoft To Do or Todoist with tap-to-tick.",
   chores: "Kids, morning/afternoon/evening bands, stars, weekly goals, fair rotation.",
   meals: "Breakfast, lunch, dinner for a day or a week.",
