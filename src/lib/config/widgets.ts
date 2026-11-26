@@ -1,4 +1,5 @@
 import { AIRTHINGS_DEFAULT_KINDS } from "../airthings";
+import { POOL_DEFAULT_KINDS } from "../blueRiiot";
 import { BORDER_DEFAULT_CROSSINGS } from "../border";
 import { RIVER_DEFAULT_STATIONS } from "../rivers";
 import { DEFAULT_MOUNTAINS } from "../snow";
@@ -182,6 +183,22 @@ export const WIDGETS: { [T in WidgetType]: WidgetInfo<T> } = {
     size: { w: 3, h: 3 },
     minSize: { w: 2, h: 2 },
     defaults: () => ({ devices: [], readings: [...AIRTHINGS_DEFAULT_KINDS] }),
+  },
+  blueRiiot: {
+    label: "Pool",
+    description: "Water temperature, pH and ORP from Blue Riiot",
+    icon: "🏊",
+    size: { w: 3, h: 2 },
+    minSize: { w: 2, h: 2 },
+    defaults: () => ({ pools: [], readings: [...POOL_DEFAULT_KINDS] }),
+  },
+  rachio: {
+    label: "Sprinklers",
+    description: "Next Rachio watering, skip it with a tap",
+    icon: "💧",
+    size: { w: 3, h: 2 },
+    minSize: { w: 2, h: 2 },
+    defaults: () => ({ devices: [], allowSkip: true, showZones: true }),
   },
   ecoflow: {
     label: "EcoFlow",
@@ -391,6 +408,15 @@ export const WIDGETS: { [T in WidgetType]: WidgetInfo<T> } = {
       fullScreen: false,
       ringSeconds: 10,
     }),
+  },
+  drivebc: {
+    label: "Highway cameras",
+    description: "DriveBC pictures of the highways you drive",
+    icon: "🛣️",
+    size: { w: 4, h: 3 },
+    minSize: { w: 2, h: 2 },
+    supportsFontScale: false,
+    defaults: () => ({ cameras: [], refreshSeconds: 120, layout: "grid" as const, cycleSeconds: 15, showName: true }),
   },
   ferries: {
     label: "BC Ferries",
@@ -733,9 +759,12 @@ export const WIDGET_GROUPS: { id: string; label: string; types: WidgetType[] }[]
       "commute",
       "transit",
       "ferries",
+      "drivebc",
       "borderWait",
       "internet",
       "ecoflow",
+      "rachio",
+      "blueRiiot",
     ],
   },
   { id: "media", label: "Outside", types: ["photos", "sports", "alerts", "note"] },

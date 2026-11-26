@@ -4137,6 +4137,55 @@ html.portrait-view .stage {
   }
 }
 
+/* Rachio sprinklers: the next watering large, Skip on the right (a second tap confirms). */
+.w-rachio {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7em;
+  height: 100%;
+  overflow: hidden;
+}
+.rc-name {
+  font-weight: 600;
+  color: var(--muted);
+}
+.rc-row {
+  display: flex;
+  align-items: center;
+  gap: 0.8em;
+}
+.rc-main {
+  flex: 1;
+  min-width: 0;
+}
+.rc-when {
+  font-size: 1.6em;
+  font-weight: 600;
+  line-height: 1.2;
+}
+.rc-sub,
+.rc-zones {
+  color: var(--muted);
+}
+.rc-warn {
+  color: var(--danger);
+}
+.rc-skip {
+  flex: none;
+  font: inherit;
+  font-weight: 600;
+  padding: 0.55em 1.1em;
+  border: 2px solid var(--accent);
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--accent);
+  touch-action: manipulation;
+}
+.rc-armed {
+  background: var(--accent);
+  color: var(--bg);
+}
+
 /* Airthings indoor air: Airthings' own green, amber and red bands. */
 .w-airthings {
   display: flex;
@@ -4194,6 +4243,75 @@ html.portrait-view .stage {
 .at-old {
   font-size: 0.8em;
   color: var(--muted);
+}
+
+/* Blue Riiot pool: green in Blue Riiot's ideal range, amber in its warning range, red past it. */
+.w-pool {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6em;
+  font-size: 1.15em;
+  height: 100%;
+  overflow: hidden;
+}
+.pl-name {
+  font-weight: 600;
+  color: var(--muted);
+  margin-bottom: 0.2em;
+}
+.pl-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(8.5em, 1fr));
+  gap: 0.35em 1em;
+}
+.pl-r {
+  display: flex;
+  align-items: baseline;
+  gap: 0.45em;
+}
+.pl-dot {
+  width: 0.65em;
+  height: 0.65em;
+  border-radius: 50%;
+  flex: none;
+  align-self: center;
+  background: var(--muted);
+  opacity: 0.4;
+}
+.pl-ok .pl-dot {
+  background: #40c057;
+  opacity: 1;
+}
+.pl-warn .pl-dot {
+  background: #fab005;
+  opacity: 1;
+}
+.pl-bad .pl-dot {
+  background: #fa5252;
+  opacity: 1;
+}
+.pl-k {
+  color: var(--muted);
+}
+.pl-v {
+  margin-left: auto;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.pl-bad .pl-v {
+  color: #fa5252;
+}
+.pl-v small {
+  font-weight: 400;
+  font-size: 0.75em;
+  color: var(--muted);
+}
+.pl-when {
+  font-size: 0.8em;
+  color: var(--muted);
+}
+.pl-stale .pl-grid {
+  opacity: 0.6;
 }
 
 /* EcoFlow power stations */
@@ -4309,6 +4427,94 @@ html.portrait-view .stage {
   stroke: var(--accent);
   stroke-width: 2;
   stroke-linejoin: round;
+}
+
+/* DriveBC highway cameras (Melvin, 2026-11-25): one to four still pictures, or one at a time in turn. */
+.w-drivebc {
+  position: relative;
+  height: 100%;
+  border-radius: var(--radius);
+  overflow: hidden;
+  background: #000;
+}
+.dbc-grid {
+  display: grid;
+  gap: 2px;
+  height: 100%;
+}
+.dbc-n2 {
+  grid-template-columns: 1fr 1fr;
+}
+.dbc-n3,
+.dbc-n4 {
+  grid-template: 1fr 1fr / 1fr 1fr;
+}
+@container (aspect-ratio < 1) {
+  .dbc-n2 {
+    grid-template: 1fr 1fr / 1fr;
+  }
+}
+.dbc-cam {
+  position: relative;
+  min-width: 0;
+  min-height: 0;
+}
+.dbc-n1 .dbc-cam {
+  grid-area: 1 / 1;
+  opacity: 0;
+  transition: opacity 0.6s;
+}
+.dbc-n1 .dbc-cam.on,
+.dbc-n1 .dbc-cam:only-child {
+  opacity: 1;
+}
+.dbc-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.dbc-bar {
+  position: absolute;
+  inset: auto 0 0;
+  display: flex;
+  justify-content: space-between;
+  gap: 0.6em;
+  padding: 1.4em 0.7em 0.45em;
+  background: linear-gradient(transparent, rgb(0 0 0 / 0.65));
+  color: #fff;
+  font-size: clamp(11px, 2cqw, 16px);
+  line-height: 1.2;
+}
+.dbc-name {
+  overflow: hidden;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.dbc-note {
+  flex: none;
+  opacity: 0.85;
+}
+.dbc-cam.late .dbc-note {
+  color: #fca5a5;
+  opacity: 1;
+}
+.dbc-title {
+  position: absolute;
+  top: 0.5em;
+  left: 0.7em;
+  color: #fff;
+  font-size: clamp(12px, 2.2cqw, 18px);
+  font-weight: 600;
+  text-shadow: 0 1px 6px rgb(0 0 0 / 0.7);
+}
+.dbc-credit {
+  position: absolute;
+  top: 0.3em;
+  right: 0.5em;
+  color: rgb(255 255 255 / 0.75);
+  font-size: 9px;
+  text-shadow: 0 0 3px #000;
 }
 
 /* River levels */

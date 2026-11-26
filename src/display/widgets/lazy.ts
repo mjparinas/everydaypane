@@ -17,9 +17,12 @@ type Lazy = {
   haEntity: Mount<"haEntity">;
   oura: Mount<"oura">;
   airthings: Mount<"airthings">;
+  drivebc: Mount<"drivebc">;
   snow: Mount<"snow">;
   rivers: Mount<"rivers">;
   borderWait: Mount<"borderWait">;
+  rachio: Mount<"rachio">;
+  blueRiiot: Mount<"blueRiiot">;
   tides: Mount<"tides">;
   moon: Mount<"moon">;
   aurora: Mount<"aurora">;

@@ -1,7 +1,9 @@
 import { z } from "zod";
 
 import { AIRTHINGS_DEFAULT_KINDS, AIRTHINGS_KINDS } from "../airthings";
+import { POOL_DEFAULT_KINDS, POOL_KINDS } from "../blueRiiot";
 import { BORDER_CROSSINGS, BORDER_DIRECTIONS } from "../border";
+import { DRIVEBC_MAX_CAMERAS, DRIVEBC_REFRESH } from "../drivebc";
 import { EARTH_OVERLAYS, EARTH_ZOOMS } from "../earth";
 import { FERRY_ROUTES } from "../ferries";
 import { MEAL_SLOTS } from "../meals";
@@ -258,6 +260,29 @@ export const widgetSchema = z.discriminatedUnion("type", [
       .default([...AIRTHINGS_DEFAULT_KINDS])
       .refine((r) => new Set(r).size === r.length, "Each reading once"),
   }),
+  // Blue Riiot pool monitor (Melvin, 2026-11-26: unofficial cloud API, signed in with the app's email and password under
+  // Settings › Pool). `pools` are Blue Riiot pool ids, none picked means every pool.
+  z.object({
+    ...base,
+    type: z.literal("blueRiiot"),
+    pools: z.array(z.string().trim().min(1).max(80)).max(4).default([]),
+    readings: z
+      .array(z.enum(POOL_KINDS))
+      .min(1)
+      .max(POOL_KINDS.length)
+      .default([...POOL_DEFAULT_KINDS])
+      .refine((r) => new Set(r).size === r.length, "Each reading once"),
+  }),
+  // Rachio sprinklers (Melvin, 2026-11-25: native Rachio cloud API, not Home Assistant). API key under Settings ›
+  // Sprinklers; `devices` are controller ids, none picked means every controller. `allowSkip` lets a tap on the wall
+  // skip the next watering, because anyone in the kitchen can reach the screen.
+  z.object({
+    ...base,
+    type: z.literal("rachio"),
+    devices: z.array(z.string().trim().min(1).max(64)).max(8).default([]),
+    allowSkip: z.boolean().default(true),
+    showZones: z.boolean().default(true),
+  }),
   // EcoFlow power stations (Melvin, 2026-11-21: native EcoFlow developer API, not Home Assistant). Keys under
   // Settings › EcoFlow; `devices` are serial numbers, none picked means every device on the account.
   z.object({
@@ -398,6 +423,21 @@ export const widgetSchema = z.discriminatedUnion("type", [
     routes: z.array(z.string().trim().min(1).max(12)).max(30),
     count: z.number().int().min(1).max(12),
     walkMinutes: z.number().int().min(0).max(60),
+  }),
+  // DriveBC highway cameras (Melvin, 2026-11-25): still pictures from public highway cameras (Hwy 1, Port Mann,
+  // Coquihalla…), refreshed on a timer like the Camera widget (src/server/drivebc.ts). Each camera keeps its DriveBC id
+  // and name, so the wall can label it without asking DriveBC. `layout` shows them side by side or one at a time.
+  z.object({
+    ...base,
+    type: z.literal("drivebc"),
+    cameras: z
+      .array(z.object({ id: z.string().regex(/^\d{1,6}$/), name: z.string().max(120) }))
+      .max(DRIVEBC_MAX_CAMERAS)
+      .refine((c) => new Set(c.map((x) => x.id)).size === c.length, "Each camera once"),
+    refreshSeconds: z.number().int().min(DRIVEBC_REFRESH.min).max(DRIVEBC_REFRESH.max).default(DRIVEBC_REFRESH.default),
+    layout: z.enum(["grid", "cycle"]).default("grid"),
+    cycleSeconds: z.number().int().min(5).max(120).default(15),
+    showName: z.boolean().default(true),
   }),
   // A UniFi Protect camera, through Home Assistant's UniFi Protect integration (camera.* entity).
   z.object({ ...base, type: z.literal("camera"), entityId: z.string().max(255), refreshSeconds: z.number().int().min(2).max(600) }),
@@ -1033,6 +1073,8 @@ export const configSchema = z
               co2Ppm: z.number().int().min(800).max(5000).default(1500),
             })
             .default({ alertRadon: false, alertCo2: false, co2Ppm: 1500 }),
+          // Blue Riiot (2026-11-26): readings far outside the ideal range on the strip, off by default; sign-in in secrets.
+          blueRiiot: z.object({ alerts: z.boolean().default(false) }).default({ alerts: false }),
           weatherUnderground: z.object({ stationId: z.string().max(24).default("") }),
           menus: z.object({
             slug: z.string().trim().max(80).default(""),
@@ -1042,6 +1084,7 @@ export const configSchema = z
         .default({
           tempest: {},
           airthings: { alertRadon: false, alertCo2: false, co2Ppm: 1500 },
+          blueRiiot: { alerts: false },
           weatherUnderground: { stationId: "" },
           menus: { slug: "", schoolName: "" },
         }),

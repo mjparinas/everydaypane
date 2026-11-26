@@ -1,0 +1,18 @@
+{
+  "updatedAt": 1795473660000,
+  "configured": true,
+  "controllers": [
+    {
+      "id": "dev-front",
+      "name": "Front yard",
+      "online": true,
+      "rainDelayUntil": null,
+      "next": {
+        "start": 1795521600000,
+        "name": "Lawn mornings",
+        "minutes": 25,
+        "zones": ["Front lawn", "Side strip", "Beds"]
+      }
+    }
+  ]
+}
