@@ -217,7 +217,7 @@ describe("calendar links: admin and displays", () => {
     const r = await displayGET(req("/api/display/calendar/", { headers: { "x-display-token": token } }));
     const data = (await r.json()) as CalendarData;
     expect(data.connected).toBe(true);
-    expect(data.events.map((e) => e.title)).toContain("Pro-D day");
+    expect(data.events.map((e) => e.title)).toContain("Pro-D Day");
     expect(data.events.every((e) => e.calendar === "School")).toBe(true);
 
     await DELETE(req("/api/household/calendar-links/?id=school1", { method: "DELETE", headers: { cookie: admin } }));
