@@ -105,7 +105,7 @@ same change, and moves it out of **In progress** when it merges.
 (photos as the backdrop), **per-widget background** (on/off and opacity; theme surface opacity is the default; clocks and dates start with no panel), **per-widget font size** (`fontScale`, 70–150 %, text widgets only — not photos, radar, wildfires, camera, earth, Windy, embeds or the whiteboard), **per-widget outer padding** (`outerPadding`, 0–48 px, omitted means none; insets the panel in its grid cell), a time-of-day schedule
 (morning, afternoon, evening, overnight) choosing the view, theme, day or night mode and dimming — each period can start at a **fixed time, sunrise or sunset** (sunrise/sunset from today's Open-Meteo weather at the dashboard location); themes with colour
 palettes, fonts, corner radius, opacity and optional glass; burn-in protection (pixel shift); offline mode (service
-worker serves the last good data and shows "Offline"); a **screen saver** (photos only, **an idle view** of the household's choosing such as a photo frame, or dark after idle minutes, dark
+worker serves the last good data and shows "Offline"); a **screen saver** (photos only with **Time Between Photos**, 1 min by default, **an idle view** of the household's choosing such as a photo frame, or dark after idle minutes, dark
 in a night window, woken by a tap, Home Assistant motion sensors, the doorbell, a new alert or a timer going off); doorbell pop-up full
 screen; the red, dismissible alert strip;
 no pinch zoom; display and shared-feed polling pauses while hidden or browser-offline, backs off after failures, and
@@ -412,6 +412,11 @@ npm run templates:previews  # regenerate public/templates/*.png from real widget
   and a jump link; the group chip is **Screen saver & alerts** with the screen saver first; Edit view has **Show when
   nobody's using the screen** to make that view the idle view; the homepage has a `#photo-frame` section (in use ↔
   photo frame on one pane); the guide is `/blog/photo-frame-screen-saver/`, linked from Settings as "How it works".
+- **Screen saver photo delay** (Melvin, 2026-11-26: "make the photos screen saver delay between each photo
+  customizable. right now it's a bit too fast"): Settings › Screen saver has **Time Between Photos**
+  (`screenSaver.photoSeconds`, 10 s, 30 s, 1 min, 5 min or custom; 1 min by default, was a fixed 30 s). With an idle
+  view, the same control sets that view's photos widgets' own interval, so the two never disagree. The Photo frame
+  starter template now changes photos every minute.
 - **Photo frame polish** (Melvin, 2026-11-26: "polish the photo frame until it rivals Skylight"): the photos widget
   gained `fit: "auto"` (fill unless the photo's shape is more than a third off the frame's, then the whole photo over a
   32-pixel blurred copy of itself instead of black bars), `pairPortraits` (two portraits side by side in a landscape

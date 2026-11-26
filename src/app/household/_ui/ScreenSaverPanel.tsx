@@ -8,6 +8,7 @@ import { HaEntityList } from "./haEntities";
 import { HouseholdBadge, usePlan } from "./plan";
 import { useAdmin } from "./store";
 import { formatDisplay, TimePicker } from "./TimePicker";
+import { PhotoInterval } from "./WidgetSettings";
 
 const MAX_MOTION = 5;
 
@@ -76,6 +77,9 @@ export function ScreenSaverPanel() {
   const edit = useAdmin((st) => st.edit);
   // Staff can switch the idle view off platform-wide; a saved "view" choice stays listed so the select isn't blank.
   const idleViewOn = useFlags().on(featureFlag("idleView")) || s.shows === "view";
+  // The idle view's photos widgets keep their own interval; this panel sets them all at once so the two stay linked.
+  const idlePhotos = views.find((v) => v.id === s.viewId)?.widgets.filter((w) => w.type === "photos") ?? [];
+  const idleSeconds = idlePhotos[0]?.type === "photos" ? idlePhotos[0].intervalSeconds : undefined;
   const motion = s.motionEntityIds.length < MAX_MOTION ? [...s.motionEntityIds, ""] : s.motionEntityIds;
 
   return (
@@ -119,6 +123,19 @@ export function ScreenSaverPanel() {
             options={views.map((v) => ({ value: v.id, label: v.name }))}
             onChange={(v) => edit((c) => void (c.screenSaver.viewId = v))}
           />
+          {idleSeconds !== undefined && (
+            <PhotoInterval
+              key={s.viewId}
+              value={idleSeconds}
+              hint="For the photos on this view. It's the same setting as on its photos widget."
+              onChange={(v) =>
+                edit((c) => {
+                  for (const w of c.views.find((x) => x.id === c.screenSaver.viewId)?.widgets ?? [])
+                    if (w.type === "photos") w.intervalSeconds = v;
+                })
+              }
+            />
+          )}
           <p className="text-xs text-soft">
             Build it in Views like any other view. The Photo frame starter template is a good start: photos with the time on top. A tap goes
             back to the view the display would be showing now, and the tap never presses anything on the idle view.
@@ -149,6 +166,7 @@ export function ScreenSaverPanel() {
           ) : (
             <p className="text-xs text-soft">Add a photo album under Photos first; until then the screen goes dark instead.</p>
           )}
+          <PhotoInterval value={s.photoSeconds} onChange={(v) => edit((c) => void (c.screenSaver.photoSeconds = v))} />
           <Toggle label="Show the Time and Date" checked={s.showClock} onChange={(v) => edit((c) => void (c.screenSaver.showClock = v))} />
         </>
       )}

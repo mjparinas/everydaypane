@@ -942,6 +942,9 @@ export const screenSaverSchema = z.object({
   viewId: id.optional(),
   // The albums the photo saver shows (none picked means all of them).
   photoSourceIds: z.array(id).max(20),
+  // Time between photos on the photo saver (Melvin, 2026-11-26: "a bit too fast" at the old fixed 30 s). Documents
+  // saved before it get the slower one-minute default.
+  photoSeconds: z.number().int().min(5).max(3600).default(60),
   showClock: z.boolean(),
   night: z.boolean(),
   nightStart: hhmm,

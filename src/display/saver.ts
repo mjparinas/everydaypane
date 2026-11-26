@@ -83,7 +83,7 @@ export function screenSaver(
           h: 1,
           showBackground: false,
           sourceIds: s.photoSourceIds,
-          intervalSeconds: 30,
+          intervalSeconds: s.photoSeconds,
           fit: "auto",
           showCaption: true,
           pairPortraits: true,

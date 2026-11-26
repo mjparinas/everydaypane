@@ -25,6 +25,14 @@ describe("config schema", () => {
     expect(configSchema.safeParse(c).success).toBe(true);
   });
 
+  it("gives a screen saver saved before the photo delay the slower one-minute default", () => {
+    const c = defaultConfig() as unknown as { screenSaver: Record<string, unknown> };
+    delete c.screenSaver.photoSeconds;
+    const r = configSchema.parse(c);
+    expect(r.screenSaver.photoSeconds).toBe(60);
+    expect(configSchema.safeParse({ ...r, screenSaver: { ...r.screenSaver, photoSeconds: 4 } }).success).toBe(false);
+  });
+
   it("loads a dashboard saved before Google Tasks existed", () => {
     const c = defaultConfig() as unknown as { integrations: Record<string, unknown> };
     delete c.integrations.tasks;
