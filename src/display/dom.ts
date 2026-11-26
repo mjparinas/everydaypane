@@ -48,3 +48,45 @@ export function setText(node: { textContent: string | null }, text: string): voi
 export function underSaver(el: Element): boolean {
   return document.documentElement.classList.contains("saving") && !el.closest(".idle-stage");
 }
+
+/**
+ * Steps `target`'s font size down until `box` no longer overflows (or `over` says it fits), never below `floorPx`. Text a widget sizes from its
+ * cell (a note, a chore title) can otherwise spill past the tile's edges (design review, 2026-11-26). A binary search,
+ * so about eight layouts however far it shrinks.
+ */
+export function shrinkToFit(
+  box: HTMLElement,
+  target: HTMLElement = box,
+  floorPx = 14,
+  over = () => box.scrollHeight > box.clientHeight + 1 || box.scrollWidth > box.clientWidth + 1,
+): void {
+  target.style.fontSize = "";
+  if (!box.isConnected || !over()) return;
+  let hi = parseFloat(getComputedStyle(target).fontSize);
+  if (!Number.isFinite(hi) || hi <= floorPx) return;
+  let lo = floorPx;
+  while (hi - lo > 0.5) {
+    const mid = (lo + hi) / 2;
+    target.style.fontSize = `${mid}px`;
+    if (over()) hi = mid;
+    else lo = mid;
+  }
+  target.style.fontSize = `${lo}px`;
+}
+
+/** Runs `fit` now, when web fonts finish loading and whenever `el` changes size. Returns a stop function. */
+export function keepFitted(el: HTMLElement, fit: () => void): () => void {
+  let frame = 0;
+  const later = () => {
+    window.cancelAnimationFrame(frame);
+    frame = window.requestAnimationFrame(fit);
+  };
+  later();
+  void document.fonts?.ready.then(later);
+  const ro = typeof ResizeObserver === "function" ? new ResizeObserver(later) : null;
+  ro?.observe(el);
+  return () => {
+    window.cancelAnimationFrame(frame);
+    ro?.disconnect();
+  };
+}

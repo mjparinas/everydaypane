@@ -290,13 +290,16 @@ html.portrait-view .stage {
 }
 .offline {
   position: absolute;
+  z-index: 40;
   right: 16px;
   bottom: 12px;
-  padding: 6px 12px;
+  padding: 10px 20px;
   border-radius: 999px;
-  font-size: calc(14px * var(--font-scale, 1));
-  background: color-mix(in srgb, var(--surface) 90%, transparent);
-  color: var(--muted);
+  font-size: calc(22px * var(--font-scale, 1));
+  font-weight: 700;
+  background: #f59f00;
+  color: #1a1300;
+  box-shadow: 0 4px 18px rgb(0 0 0 / 0.25);
   opacity: 0;
   transform: translateY(8px);
   transition:
@@ -306,6 +309,11 @@ html.portrait-view .stage {
 .offline.show {
   opacity: 1;
   transform: none;
+}
+/* Widgets fed from the server dim while the screen can't reach it; the ones the screen works out itself don't. */
+.app.is-offline .cell:not(.cell-clock, .cell-date, .cell-moon, .cell-timer, .cell-pomodoro, .cell-photos, .cell-whiteboard) {
+  opacity: 0.55;
+  transition: opacity 0.4s;
 }
 
 .updating {
@@ -482,7 +490,7 @@ html.portrait-view .stage {
   color: var(--muted);
   font-weight: 600;
   letter-spacing: 0;
-  margin-left: 0.1em;
+  margin-left: 0.3em;
 }
 .c-ampm {
   font-size: 0.28em;
@@ -1043,12 +1051,16 @@ html.portrait-view .stage {
   padding: 2cqmin;
 }
 .wifi-text {
+  flex: 1;
   min-width: 0;
 }
 .wifi-ssid {
+  /* One line, shrunk to fit: "ParinasH / ome" broke the network's name mid-word (design review, 2026-11-26). */
+  overflow: hidden;
   font-size: calc(min(16cqh, 9cqw) * var(--font-scale, 1));
   font-weight: 700;
-  overflow-wrap: anywhere;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 @container (max-aspect-ratio: 1.1) {
   .w-wifi {
@@ -1112,6 +1124,8 @@ html.portrait-view .stage {
   gap: 0.4em;
   height: 100%;
   justify-content: center;
+  justify-content: safe center;
+  overflow: hidden;
 }
 .note-text {
   white-space: pre-wrap;
@@ -1949,6 +1963,9 @@ html.portrait-view .stage {
   min-height: 0;
 }
 .tl-name {
+  /* Never squeezed to nothing: without the stop's name, two stops' buses read as one list out of order. */
+  min-height: 1.3em;
+  line-height: 1.3;
   overflow: hidden;
   color: var(--muted);
   font-size: 0.8em;
@@ -2129,6 +2146,65 @@ html.portrait-view .stage {
   flex: none;
   font-size: 0.75em;
 }
+/* Opened strip: every alert with its details, and Dismiss as its own button (design review, 2026-11-26). */
+.alert-strip.open {
+  flex-direction: column;
+  align-items: stretch;
+  cursor: default;
+}
+.as-list {
+  display: grid;
+  gap: 0.6em;
+  max-height: 55vh;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  list-style: none;
+}
+.as-item {
+  display: flex;
+  gap: 0.6em;
+}
+.as-body {
+  min-width: 0;
+}
+.as-desc {
+  display: -webkit-box;
+  overflow: hidden;
+  font-size: 0.8em;
+  opacity: 0.9;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+}
+.as-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.6em;
+}
+.as-hint {
+  flex: 1;
+  font-size: 0.75em;
+  opacity: 0.85;
+}
+.as-btn {
+  min-width: 6em;
+  min-height: 64px;
+  padding: 0 1.2em;
+  border: 2px solid rgb(255 255 255 / 0.7);
+  border-radius: 999px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-weight: 700;
+}
+.as-dismiss {
+  background: #fff;
+  color: #c92a2a;
+}
+.alert-strip.notice .as-dismiss {
+  color: #3b5bdb;
+}
 
 /* Alerts widget */
 .w-alerts {
@@ -2174,6 +2250,14 @@ html.portrait-view .stage {
 }
 .al-clear {
   color: var(--muted);
+  text-align: center;
+}
+.al-ok {
+  display: block;
+  color: var(--good);
+  font-size: 2.4em;
+  font-weight: 800;
+  line-height: 1;
 }
 
 /* Photo frame: two stacked images cross-fading (opacity only). */
@@ -2234,6 +2318,21 @@ html.portrait-view .stage {
 .ha-toggle.on .ha-value,
 .ha-light.on .ha-value {
   color: var(--accent);
+}
+/* On has to read from across the room, not only as the word's colour (design review, 2026-11-26): the tile fills with
+   the accent and off goes quiet. */
+.cell.ha-lit {
+  background-image: linear-gradient(
+    color-mix(in srgb, var(--ha-tint, var(--accent)) 22%, transparent),
+    color-mix(in srgb, var(--ha-tint, var(--accent)) 22%, transparent)
+  );
+  box-shadow:
+    inset 0 0 0 3px color-mix(in srgb, var(--ha-tint, var(--accent)) 60%, transparent),
+    0 10px 30px -18px rgb(0 0 0 / 0.5);
+}
+.ha-toggle:not(.on) .ha-value,
+.ha-light:not(.on) .ha-value {
+  color: var(--muted);
 }
 /* Whole-tile switch (a11y audit, 2026-11-22): still a big kitchen hit target, but a real control. */
 .ha-switch {
@@ -3074,10 +3173,26 @@ html.portrait-view .stage {
   flex-direction: column;
   gap: 0.45em;
   min-width: 0;
+  min-height: 0;
+  /* A long list scrolls by touch inside the column rather than pushing the rewards out of reach. */
+  overflow-x: hidden;
+  overflow-y: auto;
+  scrollbar-width: none;
   padding: 0.55em 0.6em;
   border-top: 0.25em solid var(--kid);
   border-radius: calc(var(--radius) / 2);
   background: color-mix(in srgb, var(--kid) 10%, transparent);
+}
+.ch-col::-webkit-scrollbar {
+  display: none;
+}
+.ch-col > .ch-list,
+.ch-col > .ch-bands {
+  flex: none;
+  overflow: visible;
+}
+.ch-emoji {
+  flex: none;
 }
 .ch-head {
   display: flex;
@@ -3188,6 +3303,8 @@ html.portrait-view .stage {
 }
 .ch-list {
   display: grid;
+  /* minmax(0, 1fr): a long chore name wraps inside the column instead of widening the row past its edge. */
+  grid-template-columns: minmax(0, 1fr);
   gap: 0.3em;
   min-height: 0;
   margin: 0;
@@ -3235,13 +3352,17 @@ html.portrait-view .stage {
   animation: ch-tick 0.35s;
 }
 .ch-title {
+  /* Two lines, then an ellipsis: "Homework d" read as a cut-off word on the wall (design review, 2026-11-26). */
+  display: -webkit-box;
   flex: 1;
   min-width: 0;
   overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  line-height: 1.15;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
 }
-.ch-done .ch-title {
+.ch-done .ch-title,
+.ch-done .ch-emoji {
   text-decoration: line-through;
   opacity: 0.55;
 }
@@ -3627,8 +3748,16 @@ html.portrait-view .stage {
   font-weight: 800;
   line-height: 1.05;
 }
+/* Status colours are fixed, not the theme accent: "Open" in Sunset's orange read as a warning (design review,
+   2026-11-26). */
+:root {
+  --good: #2b8a3e;
+}
+[data-mode="night"] {
+  --good: #69db7c;
+}
 .sc-open {
-  color: var(--accent);
+  color: var(--good);
 }
 .sc-delayed {
   color: var(--sun);
@@ -3832,11 +3961,16 @@ html.portrait-view .stage {
 }
 .ch-rewards {
   display: flex;
+  flex: none;
   flex-wrap: wrap;
   gap: 0.35em;
   margin-top: 0.35em;
 }
 .ch-redeem {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   font: inherit;
   font-size: 0.8em;
   padding: 0.25em 0.5em;

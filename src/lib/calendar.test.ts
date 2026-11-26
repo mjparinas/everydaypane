@@ -46,6 +46,17 @@ describe("calendar dates", () => {
     expect(days.get("2026-11-17")?.map((e) => e.id)).toEqual(["allday", "timed"]);
   });
 
+  it("orders a day's timed events by start time even when the merged feed doesn't", () => {
+    const days = byDay(
+      [
+        ev({ id: "four", start: "2026-11-17T16:00:00-07:00", end: "2026-11-17T17:00:00-07:00" }),
+        ev({ id: "three", start: "2026-11-17T15:00:00-07:00", end: "2026-11-17T16:00:00-07:00" }),
+      ],
+      TZ,
+    );
+    expect(days.get("2026-11-17")?.map((e) => e.id)).toEqual(["three", "four"]);
+  });
+
   it("builds a month grid of whole weeks, starting on Sunday or Monday", () => {
     // November 2026 starts on a Sunday and ends on a Monday.
     const sunday = monthGrid("2026-11-17", 0);

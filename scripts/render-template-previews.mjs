@@ -180,7 +180,7 @@ const server = createServer((req, res) => {
     const widget =
       t?.payload.views[0]?.widgets.find((w) => w.id === widgetId) ??
       t?.payload.views[0]?.widgets.find((w) => w.type === "wifiQr" || w.type === "editQr");
-    let text = "WIFI:T:WPA;S:ParinasHome;P:welcome-friends;;";
+    let text = "WIFI:T:WPA;S:MapleStreetWiFi;P:come-on-in-2026;;";
     if (widget?.type === "wifiQr") {
       text = `WIFI:T:${widget.encryption};S:${widget.ssid};P:${widget.password};;`;
     } else if (widget?.type === "editQr") {

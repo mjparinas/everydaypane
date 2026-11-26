@@ -98,5 +98,20 @@
     "id": "smart-home",
     "name": "Smart home",
     "file": "smart-home.png"
+  },
+  {
+    "id": "family-hub-portrait",
+    "name": "Family hub (portrait)",
+    "file": "family-hub-portrait.png"
+  },
+  {
+    "id": "kids-routine-portrait",
+    "name": "Kids routine (portrait)",
+    "file": "kids-routine-portrait.png"
+  },
+  {
+    "id": "playroom-portrait",
+    "name": "Playroom (portrait)",
+    "file": "playroom-portrait.png"
   }
 ]

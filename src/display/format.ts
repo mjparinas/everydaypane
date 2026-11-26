@@ -2,11 +2,19 @@ import { zonedFormatter, type ZonedFormatter } from "@/lib/timeZone";
 
 // Intl formatters are slow to build, so zonedFormatter caches the underlying native formatters.
 const cache = new Map<string, ZonedFormatter>();
+/**
+ * en-CA writes "3:48 p.m."; the clock, calendars and agenda say "3:48 PM". Every time on the wall uses the one form
+ * (design review, 2026-11-26).
+ */
+export const wallAmPm = (text: string) => text.replace(/\s?([ap])\.m\./gi, (_, p: string) => ` ${p.toUpperCase()}M`);
+
 export function fmt(timeZone: string, opts: Intl.DateTimeFormatOptions): ZonedFormatter {
   const key = timeZone + JSON.stringify(opts);
   let formatter = cache.get(key);
   if (!formatter) {
-    formatter = zonedFormatter(timeZone, opts);
+    const native = zonedFormatter(timeZone, opts);
+    formatter =
+      opts.hour === undefined ? native : { format: (v) => wallAmPm(native.format(v)), formatToParts: (v) => native.formatToParts(v) };
     cache.set(key, formatter);
   }
   return formatter;

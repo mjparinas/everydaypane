@@ -5,6 +5,7 @@ import type { DisplayPayload } from "@/lib/display/types";
 import { SCREEN_SAVER_OFF } from "@/lib/screenSaver";
 import { zonedFormatter } from "@/lib/timeZone";
 
+import { wallAmPm } from "./format";
 import { screenSaver } from "./saver";
 
 const MIN = 60_000;
@@ -94,7 +95,7 @@ describe("the display's screen saver", () => {
     expect(s.mode).toBe("photos");
     expect(app.querySelector(".saver .w-photos")).not.toBeNull();
     const want = zonedFormatter("America/Vancouver", { hour: "numeric", minute: "2-digit", hour12: true });
-    expect(app.querySelector(".sv-time")?.textContent).toBe(want.format(Date.now()));
+    expect(app.querySelector(".sv-time")?.textContent).toBe(wallAmPm(want.format(Date.now())));
     vi.unstubAllGlobals();
   });
 

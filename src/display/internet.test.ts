@@ -97,7 +97,7 @@ describe("internet widget", () => {
     await vi.advanceTimersByTimeAsync(0);
     expect(text(cell, ".in-speed")).toBe("Speed test soon");
     await vi.advanceTimersByTimeAsync(60_000);
-    expect(text(cell, ".in-speed")).toBe("↓ 100 Mbps · ↑ 20 Mbps · 1:01 p.m.");
+    expect(text(cell, ".in-speed")).toBe("↓ 100 Mbps · ↑ 20 Mbps · 1:01 PM");
     // 1 MB and 10 MB were too quick to trust at 100 Mbps; 50 MB took four seconds.
     expect(calls.filter((c) => c.includes("bytes=") && !c.endsWith("bytes=0"))).toEqual([
       "GET https://speed.cloudflare.com/__down?bytes=1000000",

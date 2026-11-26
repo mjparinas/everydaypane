@@ -115,6 +115,11 @@
     "file": "unifi.png"
   },
   {
+    "type": "laundry",
+    "name": "Laundry",
+    "file": "laundry.png"
+  },
+  {
     "type": "weatherUnderground",
     "name": "Weather Underground",
     "file": "weatherUnderground.png"
