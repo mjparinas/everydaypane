@@ -20,9 +20,9 @@ interface Item {
 
 const MAX_SIDE = 2048;
 
-async function shrink(file: File): Promise<{ blob: Blob; w: number; h: number }> {
+export async function shrink(file: File, maxSide = MAX_SIDE): Promise<{ blob: Blob; w: number; h: number }> {
   const bitmap = await createImageBitmap(file, { imageOrientation: "from-image" });
-  const k = Math.min(1, MAX_SIDE / Math.max(bitmap.width, bitmap.height));
+  const k = Math.min(1, maxSide / Math.max(bitmap.width, bitmap.height));
   const w = Math.max(1, Math.round(bitmap.width * k));
   const h = Math.max(1, Math.round(bitmap.height * k));
   const canvas = document.createElement("canvas");

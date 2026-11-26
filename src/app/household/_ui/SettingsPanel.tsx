@@ -2,7 +2,11 @@
 
 import { useEffect, useState, useSyncExternalStore } from "react";
 
+import type { DashboardConfig } from "@/lib/config/schema";
+import { WIDGETS } from "@/lib/config/widgets";
 import { isHouseholdSettingsGroup } from "@/lib/plans";
+import { alertSourceLabels, REGION_IDS, regionAt, regionOf, REGIONS, type RegionId } from "@/lib/regions";
+import { TRANSIT_AGENCIES } from "@/lib/transitAgencies";
 
 import { BackupPanel } from "./BackupPanel";
 import { CalendarLinksPanel } from "./CalendarLinksPanel";
@@ -20,6 +24,7 @@ import { MusicPanel } from "./MusicPanel";
 import { PhotosPanel } from "./PhotosPanel";
 import { HouseholdBadge, HouseholdSoftLock, PlanSettingsCard, usePlan } from "./plan";
 import { ReportProblem } from "./ReportProblem";
+import { SchoolDaysPanel } from "./SchoolDaysPanel";
 import { ScreenSaverPanel, ScreenSaverSummary } from "./ScreenSaverPanel";
 import { SmartHomePanel } from "./SmartHomePanel";
 import { SportsPanel } from "./SportsPanel";
@@ -41,7 +46,7 @@ const GROUPS = [
     tier: "Everyday",
     sections: ["google", "microsoft", "icals", "tasks"],
   },
-  { id: "family", label: "Family tools", tier: "Everyday", sections: ["garbage", "commute", "chores", "sports", "school"] },
+  { id: "family", label: "Family tools", tier: "Everyday", sections: ["garbage", "commute", "chores", "sports", "school", "school-days"] },
   { id: "photos-music", label: "Photos & music", tier: "Everyday", sections: ["photos", "music"] },
   {
     id: "screen",
@@ -110,6 +115,7 @@ export function SettingsPanel() {
   const edit = useAdmin((s) => s.edit);
   const { isPaid, openUpgrade } = usePlan();
   const { location, burnIn, alerts } = config;
+  const rules = alerts.rules;
   const section = useSyncExternalStore(subscribeHash, settingsSectionFromHash, () => null);
   // Which group is open comes from the hash (deep links from widgets), not from effect-synced state.
   const openGroup = groupForSection(section);
@@ -249,6 +255,7 @@ export function SettingsPanel() {
                 />
               </div>
             )}
+            <RegionPicker config={config} onChange={(v) => edit((c) => void (c.region = v))} />
           </Section>
         </div>
       )}
@@ -330,6 +337,7 @@ export function SettingsPanel() {
                 onChange={(v) => edit((c) => void (c.school.statusUrl = v))}
               />
             </Section>
+            <SchoolDaysPanel />
           </div>
         </HouseholdSoftLock>
       )}
@@ -431,36 +439,109 @@ export function SettingsPanel() {
                   <details className="rounded-xl border border-line bg-bg px-3 py-2">
                     <summary className="cursor-pointer text-sm font-semibold text-ink">Alert sources</summary>
                     <div className="mt-3 grid gap-3">
+                      {/* Regional packs (2026-11-26): only the sources that cover this household's region, named for it. */}
+                      {(Object.entries(alertSourceLabels(regionOf(config))) as [keyof typeof alerts.sources, string | null][]).map(
+                        ([key, label]) =>
+                          label && (
+                            <Toggle
+                              key={key}
+                              label={label}
+                              checked={alerts.sources[key]}
+                              onChange={(v) => edit((c) => void (c.alerts.sources[key] = v))}
+                            />
+                          ),
+                      )}
+                      <p className="text-xs text-soft">
+                        Sources for {regionOf(config).name}. Change the region under{" "}
+                        <a className="underline" href="#settings/location">
+                          Location
+                        </a>
+                        .
+                      </p>
+                    </div>
+                  </details>
+                  <details className="rounded-xl border border-line bg-bg px-3 py-2" id="settings-smart-notices">
+                    <summary className="cursor-pointer text-sm font-semibold text-ink">Smart notices</summary>
+                    <div className="mt-3 grid gap-3">
+                      <p className="text-xs text-soft">
+                        Blue notes on the strip that put two things together, like the sprinklers and the forecast. Each needs the
+                        integrations it names; they are never emailed.
+                      </p>
                       <Toggle
-                        label="Alert Ready (public emergencies)"
-                        checked={alerts.sources.alertReady}
-                        onChange={(v) => edit((c) => void (c.alerts.sources.alertReady = v))}
+                        label="Sprinklers due in frost"
+                        checked={rules.sprinklerFrost}
+                        onChange={(v) => edit((c) => void (c.alerts.rules.sprinklerFrost = v))}
+                        hint="Rachio + the forecast: a watering in the next day when it will be near freezing."
                       />
                       <Toggle
-                        label="Environment Canada weather warnings"
-                        checked={alerts.sources.weather}
-                        onChange={(v) => edit((c) => void (c.alerts.sources.weather = v))}
+                        label="Sprinklers due when rain is likely"
+                        checked={rules.sprinklerRain}
+                        onChange={(v) => edit((c) => void (c.alerts.rules.sprinklerRain = v))}
+                        hint="Rachio + the forecast: 70% chance of rain or more within three hours of a watering."
                       />
                       <Toggle
-                        label="DriveBC road events"
-                        checked={alerts.sources.roads}
-                        onChange={(v) => edit((c) => void (c.alerts.sources.roads = v))}
+                        label="Backup battery during a power outage"
+                        checked={rules.outageBattery}
+                        onChange={(v) => edit((c) => void (c.alerts.rules.outageBattery = v))}
+                        hint="BC Hydro + EcoFlow: when an outage covers your home, how much each power station has left."
                       />
                       <Toggle
-                        label="Earthquakes"
-                        checked={alerts.sources.earthquakes}
-                        onChange={(v) => edit((c) => void (c.alerts.sources.earthquakes = v))}
+                        label="Poor air outside"
+                        checked={rules.smokyAir}
+                        onChange={(v) => edit((c) => void (c.alerts.rules.smokyAir = v))}
+                        hint="Air quality, plus indoor PM2.5 from Airthings when you have it: keep the windows shut."
+                      />
+                      {rules.smokyAir && (
+                        <Range
+                          label="From AQHI"
+                          value={rules.smokyAqhi}
+                          min={4}
+                          max={10}
+                          step={1}
+                          format={(n) => String(n)}
+                          onChange={(v) => edit((c) => void (c.alerts.rules.smokyAqhi = v))}
+                        />
+                      )}
+                      <Toggle
+                        label="Pool freeze warning"
+                        checked={rules.poolFreeze}
+                        onChange={(v) => edit((c) => void (c.alerts.rules.poolFreeze = v))}
+                        hint="Blue Riiot + the forecast: a hard freeze in the next day while the pool is still reporting."
                       />
                       <Toggle
-                        label="BC Hydro power outages"
-                        checked={alerts.sources.power}
-                        onChange={(v) => edit((c) => void (c.alerts.sources.power = v))}
+                        label="Laundry left in the machine"
+                        checked={rules.laundryWaiting}
+                        onChange={(v) => edit((c) => void (c.alerts.rules.laundryWaiting = v))}
+                        hint="Laundry: a reminder once a finished load has sat a while, even after the done note is dismissed."
                       />
+                      {rules.laundryWaiting && (
+                        <Range
+                          label="After"
+                          value={rules.laundryWaitMinutes}
+                          min={15}
+                          max={240}
+                          step={15}
+                          format={(n) => `${n} min`}
+                          onChange={(v) => edit((c) => void (c.alerts.rules.laundryWaitMinutes = v))}
+                        />
+                      )}
                       <Toggle
-                        label="Evacuation orders and alerts (EmergencyInfoBC)"
-                        checked={alerts.sources.evacuations}
-                        onChange={(v) => edit((c) => void (c.alerts.sources.evacuations = v))}
+                        label="Bins out the night before"
+                        checked={rules.garbageEve}
+                        onChange={(v) => edit((c) => void (c.alerts.rules.garbageEve = v))}
+                        hint="Garbage day: which carts go out, the evening before pickup."
                       />
+                      {rules.garbageEve && (
+                        <Range
+                          label="From"
+                          value={rules.garbageHour}
+                          min={12}
+                          max={22}
+                          step={1}
+                          format={(n) => `${n % 12 || 12} ${n < 12 ? "AM" : "PM"}`}
+                          onChange={(v) => edit((c) => void (c.alerts.rules.garbageHour = v))}
+                        />
+                      )}
                     </div>
                   </details>
                   {isPaid ? (
@@ -542,3 +623,42 @@ export function SettingsPanel() {
 
 // Re-export so callers that only need steppers from this file keep a single import path unused; silence lint if unused.
 void Stepper;
+
+/**
+ * Regional packs (Melvin, 2026-11-26): which local sources this household's location gets, worked out from the
+ * coordinates (src/lib/regions.ts), with a by-hand choice for a home right on a border.
+ */
+function RegionPicker({ config, onChange }: { config: DashboardConfig; onChange: (v: RegionId | "auto") => void }) {
+  const auto = REGIONS[regionAt(config.location.latitude, config.location.longitude)];
+  const region = regionOf(config);
+  const labels = alertSourceLabels(region);
+  const alerts = [labels.alertReady, labels.weather, labels.earthquakes].filter(Boolean).join(", ");
+  const local = [
+    labels.power,
+    labels.roads,
+    labels.evacuations,
+    ...region.transit.map((a) => `${TRANSIT_AGENCIES[a].name} departures`),
+    ...region.localWidgets.map((t) => WIDGETS[t as keyof typeof WIDGETS]?.label).filter(Boolean),
+  ].filter(Boolean);
+  return (
+    <div className="grid gap-2 rounded-xl border border-line bg-bg px-3 py-3">
+      <Select
+        label="Region"
+        value={config.region ?? "auto"}
+        options={[
+          { value: "auto", label: `From the location (${auto.name})` },
+          ...REGION_IDS.map((id) => ({ value: id, label: REGIONS[id].name })),
+        ]}
+        hint="Picks the local alerts, power outages and transit that apply. Pick one by hand if you live right on a border."
+        onChange={onChange}
+      />
+      <p className="text-xs text-soft">
+        <span className="font-semibold text-ink">Alerts:</span> {alerts || "none for this region yet"}.
+      </p>
+      <p className="text-xs text-soft">
+        <span className="font-semibold text-ink">Local to {region.name}:</span>{" "}
+        {local.length ? local.join(", ") : "nothing extra yet. Weather, radar, calendars and everything else still work."}
+      </p>
+    </div>
+  );
+}

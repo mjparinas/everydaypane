@@ -1,3 +1,4 @@
+import { RULES_DEFAULT } from "../alertRules";
 import { FREE_LIMITS, isFreeWidgetType } from "../plans";
 import { SCREEN_SAVER_OFF } from "../screenSaver";
 import type { DashboardConfig, View, Widget } from "./schema";
@@ -155,6 +156,7 @@ const emptyIntegrations = (): DashboardConfig["integrations"] => ({
 const baseShell = (): Omit<DashboardConfig, "views" | "schedule" | "themeId"> => ({
   name: "Everydaypane",
   location: { name: "Langley, BC", latitude: 49.1044, longitude: -122.6604, timeZone: VAN },
+  region: "auto",
   units: "metric",
   hour12: true,
   weather: { provider: "openMeteo" },
@@ -168,8 +170,18 @@ const baseShell = (): Omit<DashboardConfig, "views" | "schedule" | "themeId"> =>
     powerKm: 5,
     evacuationKm: 10,
     notifyEmail: false,
+    rules: { ...RULES_DEFAULT },
   },
-  school: { districtName: "Langley School District", statusUrl: "https://www.sd35.bc.ca/" },
+  school: {
+    districtName: "Langley School District",
+    statusUrl: "https://www.sd35.bc.ca/",
+    calendarName: "",
+    firstDay: "",
+    lastDay: "",
+    daysOff: [],
+    icalIds: [],
+    lunches: ["", "", "", "", ""],
+  },
   chores: { people: [], items: [], rewards: [], pinSet: false },
   burnIn: { shift: true, maxPixels: 6, minutes: 3 },
   screenSaver: { ...SCREEN_SAVER_OFF, photoSourceIds: [], motionEntityIds: [] },

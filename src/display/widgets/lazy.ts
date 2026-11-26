@@ -22,12 +22,14 @@ type Lazy = {
   snow: Mount<"snow">;
   rivers: Mount<"rivers">;
   borderWait: Mount<"borderWait">;
+  gasPrices: Mount<"gasPrices">;
   rachio: Mount<"rachio">;
   blueRiiot: Mount<"blueRiiot">;
   tides: Mount<"tides">;
   moon: Mount<"moon">;
   aurora: Mount<"aurora">;
   onThisDay: Mount<"onThisDay">;
+  schoolDays: Mount<"schoolDays">;
 };
 
 (globalThis as { __epApi?: typeof api }).__epApi = api;

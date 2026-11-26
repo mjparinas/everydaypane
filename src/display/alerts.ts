@@ -87,7 +87,7 @@ export function alertStrip(getPayload: () => DisplayPayload | null, onNew?: () =
     if (!open) {
       return fill(
         el,
-        h("span", { class: "as-icon", "aria-hidden": "true" }, top.notice ? "✓" : "⚠"),
+        h("span", { class: "as-icon", "aria-hidden": "true" }, top.notice ? (top.source === "smart" ? "ℹ" : "✓") : "⚠"),
         h(
           "span",
           { class: "as-text" },
@@ -122,7 +122,7 @@ export function alertStrip(getPayload: () => DisplayPayload | null, onNew?: () =
           h(
             "li",
             { class: `as-item${a.notice ? " as-notice" : ""}` },
-            h("span", { class: "as-icon", "aria-hidden": "true" }, a.notice ? "✓" : "⚠"),
+            h("span", { class: "as-icon", "aria-hidden": "true" }, a.notice ? (a.source === "smart" ? "ℹ" : "✓") : "⚠"),
             h(
               "div",
               { class: "as-body" },
