@@ -17,7 +17,8 @@ export const SCREEN_SAVER_OFF: ScreenSaver = {
   motionEntityIds: [],
 };
 
-export type SaverMode = "off" | "photos" | "dark";
+/** "view" draws the household's chosen idle view (`viewId`) over the dashboard. */
+export type SaverMode = "off" | "photos" | "dark" | "view";
 
 /** Whether `minute` (minutes since midnight) falls in a window that may run past midnight. Equal ends mean never. */
 export function inWindow(start: string, end: string, minute: number): boolean {

@@ -26,6 +26,7 @@ export function ViewSettingsDrawer({
   view,
   config,
   usedBySchedule,
+  usedBySaver = false,
   canDelete,
   onClose,
   onEdit,
@@ -36,6 +37,7 @@ export function ViewSettingsDrawer({
   view: View;
   config: DashboardConfig;
   usedBySchedule: string[];
+  usedBySaver?: boolean;
   canDelete: boolean;
   onClose: () => void;
   onEdit: (change: (v: View) => void) => void;
@@ -125,6 +127,11 @@ export function ViewSettingsDrawer({
         {canDelete &&
           (usedBySchedule.length ? (
             <p className="text-xs text-soft">The {usedBySchedule.join(" and ")} schedule uses this view, so it can&rsquo;t be deleted.</p>
+          ) : usedBySaver ? (
+            <p className="text-xs text-soft">
+              The screen saver shows this view when nobody&rsquo;s using the screen, so it can&rsquo;t be deleted. Pick another in Settings
+              › Screen saver first.
+            </p>
           ) : (
             <ConfirmButton label="Delete view" onConfirm={onDelete} />
           ))}

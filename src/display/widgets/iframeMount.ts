@@ -1,4 +1,4 @@
-import { h } from "../dom";
+import { h, underSaver } from "../dom";
 
 /** Tear down iframes under the screen saver or when the tab is hidden (Melvin, 2026-11-23: same pattern as earth). */
 export function mountIframe(
@@ -14,7 +14,7 @@ export function mountIframe(
   const reloadMs = opts.reloadMs ?? 0;
   const sandbox = opts.sandbox ?? "allow-scripts allow-same-origin allow-popups";
 
-  const shouldShow = () => !document.hidden && !document.documentElement.classList.contains("saving");
+  const shouldShow = () => !document.hidden && !underSaver(wrap);
 
   const make = () => {
     frame?.remove();

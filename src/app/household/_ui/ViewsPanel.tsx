@@ -161,6 +161,8 @@ export function ViewsPanel() {
   })).filter((g) => g.templates.length > 0);
 
   const usedBySchedule = PERIODS.filter((p) => config.schedule[p].viewId === active.id).map((p) => PERIOD_LABELS[p].toLowerCase());
+  // The screen saver's idle view can't be deleted out from under it either (Melvin, 2026-11-26).
+  const usedBySaver = config.screenSaver.idle && config.screenSaver.shows === "view" && config.screenSaver.viewId === active.id;
   const emptyView = active.widgets.length === 0;
   const showTemplates = templatesOpen || emptyView;
 
@@ -188,6 +190,11 @@ export function ViewsPanel() {
               }}
             >
               {v.name}
+              {config.screenSaver.idle && config.screenSaver.shows === "view" && config.screenSaver.viewId === v.id ? (
+                <span className="ml-1.5 text-xs opacity-70" title="The screen saver shows this view when nobody's using the screen">
+                  · idle
+                </span>
+              ) : null}
             </button>
           ))}
           <button
@@ -310,6 +317,7 @@ export function ViewsPanel() {
           view={active}
           config={config}
           usedBySchedule={usedBySchedule}
+          usedBySaver={usedBySaver}
           canDelete={config.views.length > 1}
           onClose={() => setEditingView(false)}
           onEdit={editView}

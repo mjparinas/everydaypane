@@ -249,8 +249,18 @@ html.portrait-view .stage {
   display: block;
   animation: saver-in 1.5s ease-out;
 }
-.saving .stage {
+.saving .stage:not(.idle-stage) {
   visibility: hidden;
+}
+/* The idle view (Melvin, 2026-11-26): an ordinary view drawn in the saver. Taps go to the saver, which only wakes. */
+.saver-view {
+  background: radial-gradient(120% 120% at 0% 0%, var(--bg2), var(--bg) 60%);
+}
+.idle-stage {
+  position: absolute;
+  inset: 0;
+  height: 100%;
+  pointer-events: none;
 }
 .saver .w-photos {
   border-radius: 0;

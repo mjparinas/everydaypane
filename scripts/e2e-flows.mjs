@@ -539,6 +539,43 @@ export const flows = [
     },
   },
   {
+    name: "an idle view takes over when nobody uses the screen, and a tap goes back to the dashboard without pressing it",
+    async run({ browser, page, base, expect }) {
+      const device = await addDevice(page, base, "home");
+      const context = await browser.newContext({ viewport: VIEWPORT });
+      await unlockDisplayContext(context, page, device);
+      let idleId = "";
+      await context.route("**/api/display/state/**", async (r) => {
+        try {
+          const res = await r.fetch();
+          if (res.status() !== 200) return await r.fulfill({ response: res });
+          const json = await res.json();
+          // The server sends only the views this screen needs, so idle on its own view (the settings here are changed
+          // in the browser, after the server picked them).
+          idleId = json.views.find((v) => v.widgets.length > 0)?.id ?? "";
+          json.screenSaver = { ...json.screenSaver, idle: true, shows: "view", viewId: idleId, minutes: 0.1 };
+          await r.fulfill({ response: res, json });
+        } catch {
+          // The page closed while this request was in flight.
+        }
+      });
+      const d = await context.newPage();
+      await d.goto(device.url);
+      await d.locator(".stage:not(.idle-stage) .cell").first().waitFor({ state: "attached" });
+      await d.locator(".saver.show.saver-view .idle-stage .cell").first().waitFor();
+      expect(idleId !== "", "the display got no view with widgets to idle on");
+      expect(
+        await d.locator(".stage:not(.idle-stage)").evaluate((el) => getComputedStyle(el).visibility === "hidden"),
+        "the dashboard still paints under the idle view",
+      );
+      expect(await d.locator(".idle-stage").evaluate((el) => getComputedStyle(el).pointerEvents === "none"), "the idle view takes touches");
+      await d.locator(".saver.show").click();
+      await d.locator(".idle-stage").waitFor({ state: "detached" });
+      expect(await d.locator(".stage:not(.idle-stage) .cell").first().isVisible(), "the dashboard didn't come back");
+      await context.close();
+    },
+  },
+  {
     name: "a kid ticks a chore off on the wall and earns its stars",
     async run({ browser, page, base, expect }) {
       // Settings › Chores on a phone: add a kid, then a chore for them.

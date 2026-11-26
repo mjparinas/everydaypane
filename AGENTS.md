@@ -102,7 +102,7 @@ same change, and moves it out of **In progress** when it merges.
 (photos as the backdrop), **per-widget background** (on/off and opacity; theme surface opacity is the default; clocks and dates start with no panel), **per-widget font size** (`fontScale`, 70–150 %, text widgets only — not photos, radar, wildfires, camera, earth, Windy, embeds or the whiteboard), **per-widget outer padding** (`outerPadding`, 0–48 px, omitted means none; insets the panel in its grid cell), a time-of-day schedule
 (morning, afternoon, evening, overnight) choosing the view, theme, day or night mode and dimming — each period can start at a **fixed time, sunrise or sunset** (sunrise/sunset from today's Open-Meteo weather at the dashboard location); themes with colour
 palettes, fonts, corner radius, opacity and optional glass; burn-in protection (pixel shift); offline mode (service
-worker serves the last good data and shows "Offline"); a **screen saver** (photos only or dark after idle minutes, dark
+worker serves the last good data and shows "Offline"); a **screen saver** (photos only, **an idle view** of the household's choosing such as a photo frame, or dark after idle minutes, dark
 in a night window, woken by a tap, Home Assistant motion sensors, the doorbell, a new alert or a timer going off); doorbell pop-up full
 screen; the red, dismissible alert strip;
 no pinch zoom; display and shared-feed polling pauses while hidden or browser-offline, backs off after failures, and
@@ -344,6 +344,12 @@ npm run templates:previews  # regenerate public/templates/*.png from real widget
 - **Screen saver** (Melvin, 2026-11-21): after some minutes with no touch the display shows only photos (full screen,
   optional clock) or goes dark, and during a night window it goes dark; Home Assistant motion sensors keep it awake and
   wake it (see Architecture). Off until switched on in Settings › Screen saver.
+- **Idle view** (Melvin, 2026-11-26: "a mode that basically is a screensaver/photo mode … really just another view
+  that people can customize"): the screen saver's third choice, **A view** (`screenSaver.shows: "view"`, `viewId`).
+  The idle screen is an ordinary view built in the Views editor (the Photo frame starter template fits); a tap goes
+  back to whatever the display would show now (its fixed view or the schedule's). Melvin's calls: Household only (the
+  whole screen saver already is), one idle view per household (not per display), the waking tap never presses a
+  widget, and the timeout stays the 1-minute-minimum `minutes`. The night window still goes dark instead.
 - **Airthings indoor air** (Melvin, 2026-11-21: "do all 6", from a list of native cloud APIs; native only, not Home
   Assistant): an Indoor air widget for radon, CO₂, VOC, particles, humidity and temperature, with optional high radon
   and CO₂ on the alert strip (see Architecture). Separate from the outdoor Air quality widget.
@@ -495,7 +501,13 @@ panel can be complex if you need it to be."
   on it wanders a few pixels each minute against burn-in. Motion sensors (`binary_sensor.*`, up to five) are added to
   the entities read from Home Assistant (`usedEntities().all`), never to those that can be controlled; while one is
   `on`, the screen counts as in use. "Dark" is a black screen: a browser can't switch a panel's backlight off.
-  An admin's preview never shows the saver.
+  An admin's preview never shows the saver. The **idle view** is drawn inside the saver by `mountIdleView` in
+  `main.ts` (same `mountWidget` code, a second `.stage.idle-stage`, the view's own theme applied while it is up) and
+  taken down on wake; `.idle-stage` has no pointer events, so every tap lands on the saver and only wakes. Heavy
+  widgets that pause under the saver (earth, Windy and other frames, DriveBC) ask `underSaver(el)` in `dom.ts`, so they
+  keep running on the idle view. The view loop pauses while the saver is up. The settings refuse an idle view that
+  doesn't exist, the Views tab won't delete it (and marks its tab "· idle"), and a display whose idle view vanished
+  shows photos instead.
 - **Family message board:** anyone on `ADMIN_EMAILS` or `FAMILY_EMAILS` posts notes from `/family/`; the author name is
   typed, never the email, because the wall is readable by anyone in the kitchen. Notes can expire; admins pin. Displays
   poll the board every 30 seconds with an ETag. The kitchen edit page (`/d/<token>/edit/`) can post too (no pin).

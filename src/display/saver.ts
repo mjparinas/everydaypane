@@ -24,7 +24,18 @@ export interface Saver {
   readonly mode: SaverMode;
 }
 
-export function screenSaver(app: HTMLElement, getPayload: () => DisplayPayload | null, now = () => Date.now()): Saver {
+/**
+ * Draws a view into the saver (the idle view, Melvin 2026-11-26) and returns how to take it down, or null when the
+ * view is gone. main.ts supplies it, because it owns the widget mounting and the theme.
+ */
+export type MountIdleView = (into: HTMLElement, viewId: string) => (() => void) | null;
+
+export function screenSaver(
+  app: HTMLElement,
+  getPayload: () => DisplayPayload | null,
+  now = () => Date.now(),
+  mountIdleView?: MountIdleView,
+): Saver {
   const el = h("div", { class: "saver", "aria-hidden": "true" });
   app.append(el);
   const loadedAt = now();
@@ -35,13 +46,24 @@ export function screenSaver(app: HTMLElement, getPayload: () => DisplayPayload |
 
   const draw = (next: SaverMode) => {
     if (next === mode) return;
-    stopShow?.();
+    // The mode changes before the old show is taken down, so the idle view's cleanup (which puts the dashboard's
+    // theme back) already sees the saver as off.
+    const stop = stopShow;
     stopShow = null;
-    el.replaceChildren();
     mode = next;
+    stop?.();
+    el.replaceChildren();
     el.className = next === "off" ? "saver" : `saver show saver-${next}`;
     document.documentElement.classList.toggle("saving", next !== "off");
-    if (next === "photos") stopShow = drawPhotos();
+    if (next === "view") {
+      const id = getPayload()?.screenSaver.viewId;
+      stopShow = (id && mountIdleView?.(el, id)) || null;
+      // The idle view was deleted after this page loaded its settings: photos, as before the idle view existed.
+      if (!stopShow) {
+        el.className = "saver show saver-photos";
+        stopShow = drawPhotos();
+      }
+    } else if (next === "photos") stopShow = drawPhotos();
   };
 
   const drawPhotos = () => {

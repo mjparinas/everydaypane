@@ -97,4 +97,70 @@ describe("the display's screen saver", () => {
     expect(app.querySelector(".sv-time")?.textContent).toBe(want.format(Date.now()));
     vi.unstubAllGlobals();
   });
+
+  it("draws the idle view after the idle minutes, and a tap goes back without reaching the idle view's widgets", () => {
+    vi.useFakeTimers({ now: new Date("2026-11-21T20:00:00Z") });
+    const app = document.createElement("div");
+    document.body.append(app);
+    const pressed = vi.fn();
+    const taken = vi.fn();
+    const mount = vi.fn((into: HTMLElement, viewId: string) => {
+      const button = document.createElement("button");
+      button.className = "idle-widget";
+      button.dataset.view = viewId;
+      button.addEventListener("click", pressed);
+      into.append(button);
+      return taken;
+    });
+    const p = payload({ idle: true, shows: "view", viewId: "frame", minutes: 1 });
+    const s = screenSaver(app, () => p, undefined, mount);
+    s.update();
+    expect(mount).not.toHaveBeenCalled();
+
+    vi.advanceTimersByTime(MIN + 15_000);
+    expect(s.mode).toBe("view");
+    expect(mount).toHaveBeenCalledWith(expect.any(HTMLElement), "frame");
+    expect(app.querySelector<HTMLElement>(".saver .idle-widget")?.dataset.view).toBe("frame");
+
+    // In the browser .idle-stage has no pointer events, so a tap lands on the saver itself.
+    (app.querySelector(".saver.show") as HTMLElement).click();
+    expect(s.mode).toBe("off");
+    expect(taken).toHaveBeenCalledOnce();
+    expect(pressed).not.toHaveBeenCalled();
+    expect(app.querySelector(".idle-widget")).toBeNull();
+  });
+
+  it("falls back to photos when the idle view is gone", () => {
+    vi.useFakeTimers({ now: new Date("2026-11-21T20:00:00Z") });
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(() => new Promise(() => undefined)),
+    );
+    const app = document.createElement("div");
+    document.body.append(app);
+    const p = payload({ idle: true, shows: "view", viewId: "deleted", minutes: 1, showClock: false });
+    const s = screenSaver(
+      app,
+      () => p,
+      undefined,
+      () => null,
+    );
+    s.update();
+    vi.advanceTimersByTime(MIN + 15_000);
+    expect(s.mode).toBe("view");
+    expect(app.querySelector(".saver.saver-photos .w-photos")).not.toBeNull();
+    vi.unstubAllGlobals();
+  });
+
+  it("the night window still goes dark instead of the idle view", () => {
+    vi.useFakeTimers({ now: new Date("2026-11-22T08:00:00Z") }); // midnight in Langley
+    const app = document.createElement("div");
+    document.body.append(app);
+    const mount = vi.fn(() => () => undefined);
+    const p = payload({ idle: true, shows: "view", viewId: "frame", night: true, nightStart: "23:00", nightEnd: "06:00", minutes: 1 });
+    const s = screenSaver(app, () => p, undefined, mount);
+    s.update();
+    expect(s.mode).toBe("dark");
+    expect(mount).not.toHaveBeenCalled();
+  });
 });

@@ -14,6 +14,7 @@ export function ScreenSaverPanel() {
   const hour12 = useAdmin((st) => st.config.hour12);
   const sources = useAdmin((st) => st.config.integrations.photos.sources);
   const haUrl = useAdmin((st) => st.config.integrations.homeAssistant.url);
+  const views = useAdmin((st) => st.config.views);
   const edit = useAdmin((st) => st.edit);
   const motion = s.motionEntityIds.length < MAX_MOTION ? [...s.motionEntityIds, ""] : s.motionEntityIds;
 
@@ -22,7 +23,7 @@ export function ScreenSaverPanel() {
       <Toggle
         label="When nobody's using it"
         checked={s.idle}
-        hint="After a while with no touch, the screen shows only photos or goes dark. A tap brings the dashboard back."
+        hint="After a while with no touch, the screen shows photos, a view of your choice, or goes dark. A tap brings the dashboard back."
         onChange={(v) => edit((c) => void (c.screenSaver.idle = v))}
       />
       {s.idle && (
@@ -31,10 +32,31 @@ export function ScreenSaverPanel() {
           value={s.shows}
           options={[
             { value: "photos", label: "Photos, full screen" },
+            { value: "view", label: "A view (like a photo frame)" },
             { value: "dark", label: "Nothing (dark screen)" },
           ]}
-          onChange={(v) => edit((c) => void (c.screenSaver.shows = v))}
+          onChange={(v) =>
+            edit((c) => {
+              c.screenSaver.shows = v;
+              // Start on a view so the setting saves; the first view is as good a guess as any.
+              if (v === "view" && !c.views.some((x) => x.id === c.screenSaver.viewId)) c.screenSaver.viewId = c.views[0]?.id;
+            })
+          }
         />
+      )}
+      {s.idle && s.shows === "view" && (
+        <>
+          <Select
+            label="Idle view"
+            value={s.viewId ?? ""}
+            options={views.map((v) => ({ value: v.id, label: v.name }))}
+            onChange={(v) => edit((c) => void (c.screenSaver.viewId = v))}
+          />
+          <p className="text-xs text-soft">
+            Build it in Views like any other view. The Photo frame starter template is a good start: photos with the time on top. A tap goes
+            back to the view the display would be showing now, and the tap never presses anything on the idle view.
+          </p>
+        </>
       )}
       {s.idle && s.shows === "photos" && (
         <>

@@ -40,3 +40,11 @@ export function svg(markup: string, cls = "icon"): HTMLSpanElement {
 export function setText(node: { textContent: string | null }, text: string): void {
   if (node.textContent !== text) node.textContent = text;
 }
+
+/**
+ * Whether the screen saver is covering this element. The dashboard under the saver is hidden, so heavy widgets there
+ * pause; a widget on the idle view (drawn inside the saver, Melvin 2026-11-26) is what's on screen and keeps going.
+ */
+export function underSaver(el: Element): boolean {
+  return document.documentElement.classList.contains("saving") && !el.closest(".idle-stage");
+}

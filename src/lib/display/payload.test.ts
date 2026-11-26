@@ -16,6 +16,15 @@ describe("display payload", () => {
     expect(JSON.stringify(p)).not.toContain("integrations");
   });
 
+  it("also sends the screen saver's idle view, but not to a preview", () => {
+    const c = defaultConfig();
+    c.screenSaver = { ...c.screenSaver, idle: true, shows: "view", viewId: "calendar" };
+    const p = displayPayload(c, 3, device("home"));
+    expect(p.views.map((v) => v.id).sort()).toEqual(["calendar", "home"]);
+    expect(p.fixedViewId).toBe("home");
+    expect(displayPayload(c, 3, null, "home").views.map((v) => v.id)).toEqual(["home"]);
+  });
+
   it("can mark Household instant refresh", () => {
     expect(displayPayload(defaultConfig(), 1, device(null), null, { instantRefresh: true }).instantRefresh).toBe(true);
   });

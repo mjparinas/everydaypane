@@ -2,7 +2,7 @@ import type { DriveBcData } from "@/lib/display/types";
 import { DRIVEBC_CREDIT } from "@/lib/drivebc";
 
 import { imageUrl, subscribe } from "../api";
-import { fill, h, setText } from "../dom";
+import { fill, h, setText, underSaver } from "../dom";
 import { fmt } from "../format";
 import type { Mount } from "./types";
 
@@ -27,9 +27,8 @@ interface Tile {
   n: number;
 }
 
-const paused = () => document.hidden || document.documentElement.classList.contains("saving");
-
 export const drivebc: Mount<"drivebc"> = (el, w, ctx) => {
+  const paused = () => document.hidden || underSaver(el);
   if (w.cameras.length === 0) {
     el.append(h("div", { class: "w-empty" }, "Pick highway cameras in this widget's settings."));
     return () => undefined;

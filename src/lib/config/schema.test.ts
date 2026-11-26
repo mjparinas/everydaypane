@@ -11,6 +11,20 @@ describe("config schema", () => {
     expect(r.success ? [] : r.error.issues).toEqual([]);
   });
 
+  it("accepts an idle view that exists and refuses one that doesn't", () => {
+    const c = defaultConfig();
+    const viewId = c.views[0]!.id;
+    c.screenSaver = { ...c.screenSaver, idle: true, shows: "view", viewId };
+    expect(configSchema.safeParse(c).success).toBe(true);
+    c.screenSaver.viewId = "gone";
+    const r = configSchema.safeParse(c);
+    expect(r.success).toBe(false);
+    expect(r.error?.issues[0]?.path).toEqual(["screenSaver", "viewId"]);
+    // Switched off, a stale choice doesn't block a save.
+    c.screenSaver.idle = false;
+    expect(configSchema.safeParse(c).success).toBe(true);
+  });
+
   it("loads a dashboard saved before Google Tasks existed", () => {
     const c = defaultConfig() as unknown as { integrations: Record<string, unknown> };
     delete c.integrations.tasks;
