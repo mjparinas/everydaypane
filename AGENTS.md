@@ -65,7 +65,7 @@ same change, and moves it out of **In progress** when it merges.
 | Snow report (`snow`) | New snow in the last 24 h, snow depth and snowfall today and the next two days, optional mountain temperature, for picked mountains (Cypress, Grouse, Seymour, Whistler by default; Sasquatch, Manning Park, Mt. Baker, Sun Peaks) | Open-Meteo forecast at each mountain's mid-mountain elevation (model estimate, no key) |
 | River levels (`rivers`) | Up to six river and creek gauges (Fraser at Mission and Hope, Salmon and Nicomekl in Langley, or any station by number): level, rising/falling/steady with the 6 h and 24 h change, a day's line, optional flow | Environment Canada real-time hydrometric (MSC GeoMet OGC API, Datamart CSV fallback) |
 | Tides (`tides`) | Next highs and lows at a station, optional height, optional **day curve** with a "now" line (`showCurve`); station search by name in its settings | Canadian IWLS + NOAA (US) (`docs/tides.md`) |
-| Transit departures (`transit`) | Next buses and trains from up to six picked stops of one **agency** (`agency`: TransLink, TTC, Calgary Transit, Edmonton ETS, Halifax Transit, King County Metro; the region's own first), live times, route filter, walk-minutes cutoff | GTFS-realtime per agency (`src/lib/transitAgencies.ts`); only TransLink needs a key |
+| Transit departures (`transit`) | Next buses and trains from up to six picked stops of one **agency** (`agency`: TransLink, TTC, Calgary Transit, Edmonton ETS, Halifax Transit, King County Metro, BC Transit in Victoria; the region's own first), live times, route filter, walk-minutes cutoff | GTFS-realtime per agency (`src/lib/transitAgencies.ts`); only TransLink needs a key |
 | Commute time (`commute`) | Drive times with live traffic from home to up to six places, "leave by" time | TomTom Routing API |
 | Rain radar (`radar`) | Animated radar over a map around home: the past 30 min to 3 h, then up to 3 h of forecast; rain or snow, five map areas, still or looping | Environment Canada (MSC GeoMet), Esri grey canvas map |
 | Wildfires (`wildfires`) | Active fires around home on the radar's map, coloured by stage of control (fires of note ringed), burned areas, evacuation orders and alerts, the nearest 0 to 5 fires listed; five map areas, fires under control on or off | BC Wildfire Service and EmergencyInfoBC public ArcGIS layers, Esri grey canvas map |
@@ -126,7 +126,7 @@ Manrope display, template preview screenshots from `public/templates/` — no pe
 The features catalogue lives in `src/lib/marketingFeatures.ts` (grouped like the admin widget picker).
 
 **Alerts** (`src/server/alerts.ts`): Alert Ready (NAAD), **Environment Canada weather warnings** (through NAAD),
-DriveBC road events and weather conditions, Earthquakes Canada, BC Hydro power outages, **EmergencyInfoBC evacuation orders and alerts** (any hazard, covering the home or within `alerts.evacuationKm`); in the U.S. **National Weather Service** watches and warnings and **USGS** earthquakes (USGS also outside both countries); in Québec **Hydro-Québec** power outages. Which apply is the household's **regional pack** (below). Each switchable in `config.alerts.sources`.
+DriveBC road events and weather conditions, Earthquakes Canada, BC Hydro power outages, **EmergencyInfoBC evacuation orders and alerts** (any hazard, covering the home or within `alerts.evacuationKm`); in the U.S. **National Weather Service** watches and warnings and **USGS** earthquakes (USGS also outside both countries); in Québec **Hydro-Québec** power outages; in Ontario and Alberta **Ontario 511** and **511 Alberta** road events (each needs Everydaypane's developer key, `ONTARIO_511_KEY` / `ALBERTA_511_KEY`, and is skipped without it); in Edmonton **EPCOR** power outages. Which apply is the household's **regional pack** (below). Each switchable in `config.alerts.sources`.
 Optional high radon and CO₂ from Airthings (`config.integrations.smartHome.airthings`, off by default).
 Optional pool water past Blue Riiot's warning range (`config.integrations.smartHome.blueRiiot.alerts`, off by default).
 **Washer and dryer done** notices (`config.integrations.smartHome.laundry.alertDone`, on by default, needs a Laundry widget on a view): blue instead of red (`notice`), shown whatever the strip threshold, never emailed and left out of the Alerts widget.
@@ -134,7 +134,7 @@ Optional email to everyone on `ADMIN_EMAILS` and `FAMILY_EMAILS` when a new stri
 **Smart notices** (`config.alerts.rules`, `src/lib/alertRules.ts`): blue notes that combine two integrations, each its own switch in Settings › Emergency alerts › Smart notices: sprinklers due in frost (Rachio + forecast, on), sprinklers due when rain is likely (off), backup battery left during a BC Hydro outage at home (EcoFlow, on), poor air outside with indoor PM2.5 (AQHI + Airthings, on, from AQHI 7), pool freeze warning (Blue Riiot + forecast, off), laundry left in the machine (off, after 60 min) and bins out the night before (garbage day, off, from 6 PM).
 
 **Regional packs** (`src/lib/regions.ts`, Melvin, 2026-11-26): the dashboard's location picks a region (Metro Vancouver
-and the Fraser Valley, B.C., Calgary, Edmonton, Toronto, Québec, Halifax, elsewhere in Canada, Seattle and King County,
+and the Fraser Valley, Greater Victoria, B.C., Calgary, Edmonton, Alberta, Toronto, Ontario, Québec, Halifax, elsewhere in Canada, Seattle and King County,
 elsewhere in the U.S., outside both), or Settings › Location picks one by hand (`config.region`, `"auto"` by default).
 The region decides which alert sources are read and how their toggles are named (hidden where nothing feeds them),
 which transit agencies the departures widget offers first, and the "Your region" summary under Settings › Location.
@@ -171,7 +171,7 @@ are no per-household overrides (see Architecture, Feature flags).
 
 **Integrations connected from Settings:** Google Calendar, Microsoft 365 calendars and **To Do** (OAuth, `?todo=1` / `?files=1`), Google Tasks, **Todoist**, Google Photos (Picker), iCal calendar links (with iCloud publish steps in Settings and `docs/icloud-calendar.md`),
 **Govee** (API key, Settings › Smart home), **Philips Hue** (OAuth, Settings › Smart home), **LIFX** (personal token, Settings › Smart home), Amazon Photos, **photo sources** (Bing, Reddit, weather albums, Immich API keys, Dropbox/Box/SmugMug OAuth, OneDrive via Microsoft, Flickr API key, iCloud published URLs), the photo library (Vercel Blob), Home Assistant (Cloudflare Tunnel + Access), Spotify, Sonos, garbage
-zone lookup, sports teams to follow, TransLink (the TTC, Calgary, Edmonton, Halifax and King County Metro feeds need nothing), commute places (TomTom geocoding), optional **package tracking** key, **UniFi Site Manager** API key (Settings › UniFi network), **EcoFlow** access and secret keys, **Oura** (OAuth, Settings › Content & finance), **Airthings** (API client id and secret, Settings › Indoor air), **Rachio** (API key, Settings › Sprinklers), **Blue Riiot** (app email and password, Settings › Pool; unofficial), **LG ThinQ** personal access token (Settings › Laundry), **17TRACK** API key (Settings › Packages).
+zone lookup, sports teams to follow, TransLink (the TTC, Calgary, Edmonton, Halifax, King County Metro and BC Transit feeds need nothing), commute places (TomTom geocoding), optional **package tracking** key, **UniFi Site Manager** API key (Settings › UniFi network), **EcoFlow** access and secret keys, **Oura** (OAuth, Settings › Content & finance), **Airthings** (API client id and secret, Settings › Indoor air), **Rachio** (API key, Settings › Sprinklers), **Blue Riiot** (app email and password, Settings › Pool; unofficial), **LG ThinQ** personal access token (Settings › Laundry), **17TRACK** API key (Settings › Packages).
 
 ## In progress
 
@@ -372,7 +372,12 @@ npm run templates:previews  # regenerate public/templates/*.png from real widget
   picks of first packs, all keyless and official: NWS alerts and USGS earthquakes for the U.S., Hydro-Québec outages,
   and five more GTFS-realtime agencies (TTC, Calgary, Edmonton, Halifax, King County Metro). Left for later because their
   feeds couldn't be confirmed from the sandbox: Ontario and Alberta 511 road events, Ontario and Alberta power outages,
-  BC Transit (Victoria, Kelowna); STM, OC Transpo and Sound Transit need keys.
+  BC Transit (Victoria, Kelowna); STM, OC Transpo and Sound Transit need keys. **Second round** (Melvin, 2026-11-26:
+  "can you add these: Ontario and Alberta 511 road events, Ontario and Alberta power outages, and Victoria's BC
+  Transit"): Ontario 511 and 511 Alberta road events (Everydaypane's own developer key per province, in Vercel), EPCOR
+  outages for Edmonton, and BC Transit Victoria with a Greater Victoria region; Alberta and Ontario regions outside the
+  metros. Hydro One, Toronto Hydro, ENMAX and FortisAlberta publish no outage feed anyone may read, so the rest of
+  Ontario and Alberta has no power source (checked 2026-11-26).
 - **Sports scores** (Melvin, 2026-11-21: "allow to customize the sports and the teams"): any teams from several leagues
   (up to 12), picked in Settings › Sports, with a live score while a game is on, the last result and the next game
   (see Architecture).
@@ -680,7 +685,13 @@ panel can be complex if you need it to be."
   `latitude`/`longitude`/`maxradiuskm`, graded like Earthquakes Canada. **Hydro-Québec**: `bisversion.json` names the
   current `bismarkers<version>.json`, whose `pannes` rows are positional (customers, start, estimated end, I/P, "[lon,
   lat]" string, codes; shape read 2026-11-26); points only, so within 1 km is severe and within `powerKm` moderate from
-  1,000 customers, else minor. A new pack is a `REGIONS` entry (plus a box or outline) and, for a new source, a parser
+  1,000 customers, else minor. **Ontario 511 / 511 Alberta**: `511on.ca/api/v2/get/event` and
+  `511.alberta.ca/api/v2/get/event` (`?key=&format=json`, `ONTARIO_511_KEY` / `ALBERTA_511_KEY`; no key, no call), the
+  province's whole list read every five minutes for everyone (Ontario allows ten calls a minute) and trimmed
+  (`trim511`), then per home: full closures and "Major" events within `radiusKm`, unplanned closures severe, planned
+  roadwork only once started and moderate (times are Unix seconds). **EPCOR**: the public ArcGIS layer `ocps_prod_av`
+  (polygons; `affcusts`, `cause`, `estresto` text, `faulted`, `nbhoods`) queried around home, graded like BC Hydro's.
+  A new pack is a `REGIONS` entry (plus a box or outline) and, for a new source, a parser
   in `alerts.ts` and a label in `alertSourceLabels`.
 - **Transit agencies** (`src/lib/transitAgencies.ts`): realtime and static GTFS addresses, credit line and licence
   notice per agency. `src/server/translink.ts` serves them all: `usedStops` groups widget stops by agency, each agency's

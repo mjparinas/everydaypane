@@ -30,15 +30,15 @@ export interface ArcFeature {
 }
 
 /** One ArcGIS query. ArcGIS reports problems as `{ error }`, often with a 200, so that counts as a failure too. */
-export async function arcgisQuery(url: string, params: Record<string, string>): Promise<ArcFeature[]> {
+export async function arcgisQuery(url: string, params: Record<string, string>, who = "BC Wildfire Service"): Promise<ArcFeature[]> {
   const q = new URLSearchParams({ f: "json", ...params });
   const r = await fetch(`${url}?${q.toString()}`, {
     signal: AbortSignal.timeout(12_000),
     headers: { "User-Agent": "Everydaypane/1.0" },
   });
-  if (!r.ok) throw new Error(`BC Wildfire Service answered ${r.status}`);
+  if (!r.ok) throw new Error(`${who} answered ${r.status}`);
   const body = (await r.json()) as { features?: unknown; error?: { message?: string } } | null;
-  if (body?.error) throw new Error(`BC Wildfire Service: ${body.error.message ?? "error"}`);
+  if (body?.error) throw new Error(`${who}: ${body.error.message ?? "error"}`);
   return Array.isArray(body?.features) ? (body.features as ArcFeature[]) : [];
 }
 
