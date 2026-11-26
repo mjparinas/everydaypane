@@ -9,6 +9,7 @@ import { MEAL_SLOTS } from "@/lib/meals";
 import { isShoppingCategory, type ShoppingCategory } from "@/lib/shopping";
 import { guessCategory } from "@/lib/shoppingGuess";
 
+import { markChanged } from "./changes";
 import { randomToken } from "./crypto";
 import { query, run } from "./db";
 import { mealsBetween } from "./meals";
@@ -95,6 +96,7 @@ export async function addShoppingItem(
     "INSERT INTO shopping (id, account_id, text, done, sort, added_at, done_at, added_by, category, low) VALUES (?, ?, ?, 0, ?, ?, NULL, ?, ?, ?)",
     [id, accountId, text, Number(max[0]?.n ?? 0) + 1, now, input.by, category ?? null, low ? 1 : 0],
   );
+  await markChanged(accountId, "shopping");
   return { ok: true, item: { id, text, done: false, category: category ?? guessCategory(text), low } };
 }
 
@@ -122,6 +124,7 @@ export async function updateShoppingItem(
     await run("UPDATE shopping SET category = ? WHERE account_id = ? AND lower(text) = ?", [input.category, accountId, keyOf(row.text)]);
   if (input.low !== undefined)
     await run("UPDATE shopping SET low = ? WHERE account_id = ? AND id = ?", [input.low ? 1 : 0, accountId, input.id]);
+  await markChanged(accountId, "shopping");
   return "ok";
 }
 
@@ -131,6 +134,7 @@ async function writeDone(accountId: string, id: string, done: boolean, now: numb
   if (!rows[0]) return "not-found";
   if (done) await run("UPDATE shopping SET done = 1, done_at = ? WHERE account_id = ? AND id = ?", [now, accountId, id]);
   else await run("UPDATE shopping SET done = 0, done_at = NULL WHERE account_id = ? AND id = ?", [accountId, id]);
+  await markChanged(accountId, "shopping");
   return "ok";
 }
 
@@ -174,11 +178,15 @@ export async function setShoppingDoneFromPhone(
 }
 
 export async function removeShoppingItem(accountId: string, id: string): Promise<boolean> {
-  return (await run("DELETE FROM shopping WHERE account_id = ? AND id = ?", [accountId, id])) > 0;
+  const removed = (await run("DELETE FROM shopping WHERE account_id = ? AND id = ?", [accountId, id])) > 0;
+  if (removed) await markChanged(accountId, "shopping");
+  return removed;
 }
 
 export async function clearDoneShopping(accountId: string): Promise<number> {
-  return run("DELETE FROM shopping WHERE account_id = ? AND done = 1", [accountId]);
+  const removed = await run("DELETE FROM shopping WHERE account_id = ? AND done = 1", [accountId]);
+  if (removed > 0) await markChanged(accountId, "shopping");
+  return removed;
 }
 
 /**

@@ -10,6 +10,8 @@ import { configVersion, saveConfig } from "@/server/config";
 import { cookieFor, req, useTestServer } from "@/test/server";
 
 import { addDevice } from "./devices";
+import { postMessage } from "./messages";
+import { addShoppingItem } from "./shopping";
 
 async function cookieForMember(email: string): Promise<string> {
   const session = await issueTestSession(email);
@@ -65,5 +67,37 @@ describe("Refresh displays", () => {
     expect(unchanged.status).toBe(304);
     expect(unchanged.headers.get("etag")).toBe(etag);
     expect(unchanged.headers.get("x-display-release")).toBe(release);
+  });
+
+  describe("family lists on the same long-poll", () => {
+    const watch = (token: string, query: string) =>
+      watchGET(req(`/api/display/config-watch/?${query}`, { headers: { "x-display-token": token } }));
+
+    it("answers a first look at once with the counters", async () => {
+      const { token } = await addDevice(LEGACY_ACCOUNT_ID, "Kitchen", null);
+      await addShoppingItem(LEGACY_ACCOUNT_ID, { text: "Milk", by: "test" });
+      const since = await configVersion(LEGACY_ACCOUNT_ID);
+      const started = Date.now();
+      const body = (await (await watch(token, `since=${since}&feeds=1`)).json()) as { version: number; feeds: Record<string, number> };
+      expect(Date.now() - started).toBeLessThan(1_000);
+      expect(body.version).toBe(since);
+      expect(body.feeds.shopping).toBeGreaterThan(0);
+    });
+
+    it("wakes when a phone posts a message and names the list", async () => {
+      const { token } = await addDevice(LEGACY_ACCOUNT_ID, "Kitchen", null);
+      const since = await configVersion(LEGACY_ACCOUNT_ID);
+      const first = (await (await watch(token, `since=${since}&feeds=1`)).json()) as { feeds: Record<string, number> };
+      const seen = Object.entries(first.feeds)
+        .map(([k, v]) => `${k}:${v}`)
+        .join(",");
+      const watching = watch(token, `since=${since}&seen=${seen}`);
+      await new Promise((r) => setTimeout(r, 50));
+      await postMessage(LEGACY_ACCOUNT_ID, { author: "Sam", text: "Back at 6", colour: "blue", expiresInHours: null, postedBy: "sam" });
+      const body = (await (await watching).json()) as { version: number; feeds: Record<string, number> };
+      expect(body.version).toBe(since);
+      expect(body.feeds.messages).toBe((first.feeds.messages ?? 0) + 1);
+      expect(body.feeds.shopping ?? 0).toBe(first.feeds.shopping ?? 0);
+    });
   });
 });

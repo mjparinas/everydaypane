@@ -2,6 +2,7 @@ import "server-only";
 
 import type { DashboardConfig } from "@/lib/config/schema";
 
+import { markChanged } from "./changes";
 import { randomToken } from "./crypto";
 import { query, run } from "./db";
 
@@ -85,6 +86,7 @@ export async function postMessage(
   );
   // Expired notes are cleared out as new ones arrive, so the table stays small without a cron job.
   await run("DELETE FROM messages WHERE account_id = ? AND expires_at IS NOT NULL AND expires_at <= ?", [accountId, now]);
+  await markChanged(accountId, "messages");
   return {
     id,
     author: input.author,
@@ -109,11 +111,14 @@ export async function removeMessage(
   // A note from before authors were recorded (posted_by null) can be deleted by anyone in the family.
   if (!by.admin && row.posted_by !== null && row.posted_by !== by.email) return "forbidden";
   await run("DELETE FROM messages WHERE account_id = ? AND id = ?", [accountId, id]);
+  await markChanged(accountId, "messages");
   return "ok";
 }
 
 export async function pinMessage(accountId: string, id: string, pinned: boolean): Promise<boolean> {
-  return (await run("UPDATE messages SET pinned = ? WHERE account_id = ? AND id = ?", [pinned ? 1 : 0, accountId, id])) === 1;
+  const ok = (await run("UPDATE messages SET pinned = ? WHERE account_id = ? AND id = ?", [pinned ? 1 : 0, accountId, id])) === 1;
+  if (ok) await markChanged(accountId, "messages");
+  return ok;
 }
 
 /** What a display shows: no emails, no expiry times. */

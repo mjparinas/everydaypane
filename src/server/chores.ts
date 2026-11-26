@@ -7,6 +7,7 @@ import { dueOn, weekStart } from "@/lib/chores";
 import type { DashboardConfig } from "@/lib/config/schema";
 import type { ChoresData } from "@/lib/display/types";
 
+import { markChanged } from "./changes";
 import { verifyChoresPin } from "./chorePin";
 import { randomToken } from "./crypto";
 import { query, run } from "./db";
@@ -107,6 +108,7 @@ export async function setChoreDone(
       input.person,
     ]);
   }
+  await markChanged(accountId, "chores");
   return "ok";
 }
 
@@ -142,6 +144,7 @@ export async function redeemChoreReward(
     accountId,
     Date.parse(`${monday}T00:00:00Z`) - 60 * 86_400_000,
   ]);
+  await markChanged(accountId, "chores");
   return "ok";
 }
 
