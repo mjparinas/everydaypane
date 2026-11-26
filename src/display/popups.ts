@@ -1,6 +1,6 @@
 import type { BoardMessage } from "@/lib/display/types";
 
-import { subscribe } from "./api";
+import { get, send, subscribe } from "./api";
 import { h } from "./dom";
 import { everyMinute } from "./ticker";
 import { ago } from "./widgets/messages";
@@ -11,9 +11,13 @@ import { ago } from "./widgets/messages";
 // sender picked, and stays until someone taps Dismiss. Newer notes stack in at the bottom; dismissing one fades it and
 // the ones above slide down into its place. The note itself stays on the message board.
 //
-// Claude's calls (2026-11-26): dismissing is per screen (remembered in localStorage, like the alert strip), only notes
-// posted after this screen first saw the board pop up, so switching the mode on doesn't bury the wall in old notes,
-// and a note deleted from a phone leaves the corner too.
+// Claude's calls (2026-11-26): dismissing is per screen, only notes posted after this screen first saw the board pop
+// up, so switching the mode on doesn't bury the wall in old notes, and a note deleted from a phone leaves the corner too.
+//
+// Durable per screen (Melvin, 2026-11-26: "if i refresh the page they should not go away … dismissed message on one
+// screen, shouldnt impact the other"): the screen's starting point and dismissals live on the server under its display
+// device (`/api/display/popups/`, src/server/popups.ts), because some wall browsers lose localStorage on a reload.
+// localStorage is only this screen's copy, used until the server answers or when it can't.
 
 const SINCE_KEY = "ep-popups-since";
 const DISMISSED_KEY = "ep-popups-dismissed";
@@ -46,6 +50,8 @@ export function popupsDue(messages: BoardMessage[], since: number, dismissed: Re
   return messages.filter((m) => m.createdAt > since && !dismissed.has(m.id)).sort((a, b) => a.createdAt - b.createdAt);
 }
 
+const newestOf = (messages: BoardMessage[]) => messages.reduce((n, m) => Math.max(n, m.createdAt), 0);
+
 const reduced = () => window.matchMedia?.("(prefers-reduced-motion: reduce)").matches === true;
 
 /** Starts the corner stack; `onNew` hears about each note the first time it pops up (the screen saver wakes for it). */
@@ -66,6 +72,37 @@ export function messagePopups(onNew?: () => void): { el: HTMLElement; stop: () =
     })(),
   );
   let latest: BoardMessage[] = [];
+  let fed = false;
+  /** null until the server has answered once; then the server's word wins over this browser's copy. */
+  let loading: Promise<void> | null = null;
+  let fromServer = false;
+  const remember = () => {
+    if (since !== null) write(SINCE_KEY, String(since));
+    write(DISMISSED_KEY, JSON.stringify([...dismissed].slice(-50)));
+  };
+  const load = () => {
+    if (fromServer || loading) return;
+    loading = get<{ since: number; dismissed: string[] }>("popups").then((r) => {
+      loading = null;
+      if (!r.data) {
+        // 204 (not a display device) has nothing to load; out of reach tries again on the next board read. Either way
+        // the screen carries on from its own copy, or from the board as it is now.
+        if (r.live) fromServer = true;
+        if (since === null && fed) {
+          since = newestOf(latest);
+          remember();
+          draw();
+        }
+        return;
+      }
+      fromServer = true;
+      since = r.data.since;
+      // A dismissal made here while the server was out of reach is kept as well.
+      dismissed = new Set([...r.data.dismissed, ...dismissed]);
+      remember();
+      if (fed) draw();
+    });
+  };
 
   /** Moves every note still in the stack from where it was to where it is now, so a gap closes by sliding. */
   const slide = (before: Map<HTMLElement, number>) => {
@@ -97,6 +134,7 @@ export function messagePopups(onNew?: () => void): { el: HTMLElement; stop: () =
       ev.stopPropagation();
       dismissed.add(m.id);
       write(DISMISSED_KEY, JSON.stringify([...dismissed].slice(-50)));
+      void send("popups", { dismiss: m.id });
       draw();
     });
     return { node, time, message: m };
@@ -150,9 +188,12 @@ export function messagePopups(onNew?: () => void): { el: HTMLElement; stop: () =
 
   const stopFeed = subscribe<{ messages: BoardMessage[] }>("messages", 30_000, (data) => {
     latest = data.messages;
-    // The first read only learns what's already on the board, so turning the mode on (or a new screen) pops nothing.
-    if (since === null) {
-      since = latest.reduce((n, m) => Math.max(n, m.createdAt), 0);
+    fed = true;
+    load();
+    // Until the server answers, the first read only learns what's already on the board, so turning the mode on (or a
+    // new screen) pops nothing; the server's own starting point replaces it once it arrives.
+    if (since === null && !loading) {
+      since = newestOf(latest);
       write(SINCE_KEY, String(since));
     }
     // Dismissals of notes that are gone from the board are forgotten, so the list never grows.
