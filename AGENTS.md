@@ -25,7 +25,7 @@ same change, and moves it out of **In progress** when it merges.
 | Sunrise & sunset (`sunTimes`) | Today's sunrise, sunset and length of daylight; optional emoji, daylight hours and **tonight's moon phase** (`showMoon`) | Open-Meteo forecast; moon worked out on the device |
 | Moon phase (`moon`) | Drawn moon disc, phase name, % lit, next full and new moon, traditional full moon names (Cold Moon, Harvest Moon) | Worked out on the device (`src/lib/moon.ts`, Meeus) |
 | Aurora tonight (`aurora`) | Tonight's peak Kp, chance of seeing it from home (good / possible / slim / unlikely), Kp needed here, G storm level, a bar per three-hour block for the next day | NOAA SWPC planetary Kp forecast (`src/server/aurora.ts`) |
-| Weather (`weather`) | Current conditions, hourly, up to 7 days, with icons, UV index and pollen | Open-Meteo (default) or Environment Canada city page (`config.weather.provider`); UV/pollen/AQ still Open-Meteo |
+| Weather (`weather`) | Current conditions (the largest thing on the tile, scaled to the space left), hourly, up to 7 days as a smaller row, with icons, UV index and pollen | Open-Meteo (default) or Environment Canada city page (`config.weather.provider`); UV/pollen/AQ still Open-Meteo |
 | Tempest (`tempest`) | Backyard station: temp, humidity, wind, rain today | WeatherFlow REST (`config.integrations.smartHome.tempest`, token secret) |
 | EcoFlow (`ecoflow`) | Each power station's battery %, power in and out, solar, AC and DC flows, time to full or empty; pick devices or show all | EcoFlow IoT Developer Platform (household access and secret keys, `docs/ecoflow.md`) |
 | Laundry (`laundry`) | Each washer and dryer: phase, time left, "Done" until the next cycle or `doneMinutes`; optional blue done notice on the alert strip; pick machines, hide idle | LG ThinQ Connect (household's personal access token) + Samsung through the SmartThings connection (`docs/laundry.md`) |
@@ -271,6 +271,10 @@ npm run templates:previews  # regenerate public/templates/*.png from real widget
   `public/icons/` (16–512 PNG, Apple 120/152/167/180, maskable 192/512), `favicon.ico`, `icon.svg`,
   `apple-touch-icon.png` and the Next `src/app/` copies; the root layout, display shell and web app manifest
   (`src/app/manifest.ts`) all point at that set (Melvin, 2026-11-23: favicon and high-res icons for phones and tablets).
+- **Today's weather leads** (Melvin, 2026-11-26: "the current weather today is supposed to be bigger … and more
+  prominent than the other ones"): the current temperature, icon and condition fill the height the forecast rows leave
+  and scale with it (`.wx-now` is its own size container); the hourly and day rows are a smaller, quieter strip. A
+  short, wide tile keeps today and the days side by side.
 - **Month calendar title** (Melvin, 2026-11-19: "add a toggle to show/hide month title"): the month widget's
   "November 2026" line can be switched off in its settings (`showTitle`, on by default); the grid takes the space.
 - **Tile padding** (Melvin, 2026-11-22: "is it possible to adjust the inner padding of the tiles"): each view has a
