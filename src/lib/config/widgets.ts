@@ -1,4 +1,5 @@
 import { AIRTHINGS_DEFAULT_KINDS } from "../airthings";
+import { BORDER_DEFAULT_CROSSINGS } from "../border";
 import { RIVER_DEFAULT_STATIONS } from "../rivers";
 import { DEFAULT_MOUNTAINS } from "../snow";
 import type { Widget, WidgetType } from "./schema";
@@ -383,6 +384,14 @@ export const WIDGETS: { [T in WidgetType]: WidgetInfo<T> } = {
     minSize: { w: 2, h: 2 },
     defaults: () => ({ routes: ["TSASWB" as const], count: 3, showVessel: false }),
   },
+  borderWait: {
+    label: "Border wait times",
+    description: "Peace Arch, Pacific Highway and Aldergrove, both ways",
+    icon: "🛂",
+    size: { w: 4, h: 3 },
+    minSize: { w: 2, h: 2 },
+    defaults: () => ({ crossings: [...BORDER_DEFAULT_CROSSINGS], directions: "both" as const, showNexus: false }),
+  },
   sports: {
     label: "Sports scores",
     description: "Live scores and next games for your teams",
@@ -688,7 +697,21 @@ export const WIDGET_GROUPS: { id: string; label: string; types: WidgetType[] }[]
   {
     id: "home",
     label: "Home",
-    types: ["haEntity", "camera", "media", "unifi", "wifiQr", "editQr", "garbage", "commute", "transit", "ferries", "internet", "ecoflow"],
+    types: [
+      "haEntity",
+      "camera",
+      "media",
+      "unifi",
+      "wifiQr",
+      "editQr",
+      "garbage",
+      "commute",
+      "transit",
+      "ferries",
+      "borderWait",
+      "internet",
+      "ecoflow",
+    ],
   },
   { id: "media", label: "Outside", types: ["photos", "sports", "alerts", "note"] },
   {

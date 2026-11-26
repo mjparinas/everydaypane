@@ -65,6 +65,7 @@ same change, and moves it out of **In progress** when it merges.
 | Timers (`timer`) | Kitchen timers started from preset buttons on the wall, up to six at once, pause, +1 min; flash, full-screen alert and beeps when done | Device (localStorage) |
 | Pomodoro (`pomodoro`) | Focus and break rounds, long break after the last round, optional auto-start, chime between phases | Device (localStorage) |
 | BC Ferries (`ferries`) | Next sailings on up to four routes, how full each is, cancellations and delays | Community BC Ferries API (bcferriesapi.ca) |
+| Border wait times (`borderWait`) | Car waits at Point Roberts, Peace Arch, Pacific Highway, Aldergrove and Abbotsford–Sumas, into the U.S. and into Canada (or one way), coloured green/amber/red, fastest marked, optional NEXUS; old readings greyed | CBSA open data (`bwt-eng.csv`) and U.S. CBP (`bwt.cbp.gov/api/bwtnew`), no key |
 | Earth wind map (`earth`) | earth.nullschool.net's animated wind globe centred on any place, four zooms, a colour layer (temperature, rain, humidity…), place marker, animation on or off | earth.nullschool.net (framed), Open-Meteo place search |
 | Windy map (`windy`) | Windy's map centred on any place, one layer (radar, rain, wind, gusts, temperature, clouds, new snow, thunderstorms, satellite, PM2.5), zoom 3–11, place marker, pressure lines, touch on or off | embed.windy.com (framed), Open-Meteo place search |
 | Stocks (`stocks`) | Watchlist quotes with daily change | Yahoo Finance (unofficial) or Finnhub with `FINNHUB_API_KEY` |
@@ -309,6 +310,8 @@ npm run templates:previews  # regenerate public/templates/*.png from real widget
   timer, and a separate pomodoro"): two widgets, `timer` and `pomodoro` (see Architecture).
 - **BC Ferries** (Melvin, 2026-11-21): the next sailings for routes chosen in the widget's settings, with how full
   each one is (see Architecture).
+- **Border wait times** (Melvin, 2026-11-25: "build that all", from a list naming border waits): a widget with the
+  Lower Mainland crossings in both directions from the two agencies' public feeds, no key (see Architecture).
 - **Earth wind map** (Melvin, 2026-11-21: "can i add this and specific a location? https://earth.nullschool.net"):
   earth.nullschool.net framed in a widget, centred on a place picked in its settings (Langley by default), with a
   zoom, a colour layer and its own place marker (see Architecture).
@@ -359,7 +362,7 @@ panel can be complex if you need it to be."
   imports it with display.js's own `?v=` only on a screen that shows it. Its `../api` is swapped at build time for
   `src/display/apiShared.ts`, which calls display.js's copy, so feeds, the device token and offline state stay single.
   The internet widget, the UniFi network widget, EcoFlow, the whiteboard, wildfires, the Windy map, the Smart device tile
-  (`haEntity.ts`; cameras and `HA_EVERY` stay in `ha.ts`), Oura, Indoor air (Airthings) the snow report and River levels load this way, and `next.config.ts` gives each file the same
+  (`haEntity.ts`; cameras and `HA_EVERY` stay in `ha.ts`), Oura, Indoor air (Airthings), the snow report, River levels and Border wait times load this way, and `next.config.ts` gives each file the same
   immutable cache header as display.js.
 - **Budget:** the display's script stays under 80 KB gzipped and its stylesheet under 20 KB (`scripts/bundle-check.mjs`,
   a CI step; CSS raised from 10 KB on 2026-11-23 for more clock styles; script raised from 40 KB by Melvin on 2026-11-25: "double the size of the limit"). A new dependency on the display needs a very good reason.
@@ -630,6 +633,18 @@ panel can be complex if you need it to be."
   after its time on the wall's own clock and labels conditions older than 15 minutes with their time. Its field names
   come from the project's published JSON schema (`schemas/bc-ferries-api-v2-capacity-schema.json`); this sandbox can't
   reach it, so tests use that shape.
+- **Border wait times:** `src/server/border.ts` reads CBSA's "Current Border Wait Times" open data
+  (`www.cbsa-asfc.gc.ca/bwt-taf/bwt-eng.csv`, semicolon-separated, columns found by header; "Travellers Flow - Canada
+  bound" is the Canada-bound car wait, written "No Delay", "N minutes", "Not Applicable" or "--", with times like
+  "2026-11-25 14:48 PDT") and U.S. CBP's JSON (`bwt.cbp.gov/api/bwtnew`, every port; `passenger_vehicle_lanes`
+  `standard_lanes` and `NEXUS_SENTRI_lanes`, `operational_status` "delay", "no delay", "Lanes Closed", "Update
+  Pending" or "N/A", times like "At 3:00 pm PST" on the port's `date`). Crossings and their ids are in
+  `src/lib/border.ts`: CBSA calls Peace Arch "Douglas"; CBP's 300401 is Pacific Highway, 300402 Peace Arch, 302301
+  Lynden (Aldergrove), 300901 Sumas, 300403 Point Roberts. Each agency is read at most every five minutes for every
+  household, trimmed to those crossings before caching; one failing never hides the other and the last good copy is
+  served. Displays poll `/api/display/border/` every five minutes; the widget loads on its own (`borderWait.js`) and
+  greys out readings older than two hours, since both agencies update about hourly. This sandbox can't reach either,
+  so tests use the shapes read on 2026-11-26.
 - **Earth wind map:** earth.nullschool.net (Cameron Beccario's site) in an `<iframe>`; checked 2026-11-21: it sends no
   `X-Frame-Options` or `frame-ancestors`, and its script handles being framed itself (it blocks only a few named
   sites, hides its app banner and uses its lighter 1° data in a frame). Everything it shows is set by the address's

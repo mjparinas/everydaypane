@@ -51,6 +51,7 @@ const FEATURE_BLURBS: Partial<Record<WidgetType, string>> = {
   transit: "Live departures from up to six TransLink stops.",
   commute: "Drive times with traffic and leave-by.",
   ferries: "Next sailings and how full they are.",
+  borderWait: "Car waits at Peace Arch, Pacific Highway, Aldergrove and more, into the U.S. and into Canada.",
   garbage: "Township of Langley Recycle Coach zones.",
   school: "Open, closed, delayed or late start.",
   haEntity:

@@ -3,6 +3,7 @@
 import { useEffect, useState, type ReactNode } from "react";
 
 import { AIRTHINGS_KINDS, AIRTHINGS_LABELS } from "@/lib/airthings";
+import { BORDER_CROSSINGS, BORDER_DIRECTION_LABELS, BORDER_DIRECTIONS, BORDER_INFO } from "@/lib/border";
 import { PERIOD_LABELS, PERIODS } from "@/lib/config/periods";
 import type { CountdownEvent, DashboardConfig, TimerPreset, Widget } from "@/lib/config/schema";
 import { WIDGETS } from "@/lib/config/widgets";
@@ -928,6 +929,43 @@ function TypeSettings({
                   const next = on ? [...x.routes, code] : x.routes.filter((c) => c !== code);
                   // At least one route, at most four (the schema refuses anything else).
                   if (next.length >= 1 && next.length <= 4) x.routes = next;
+                })
+              }
+            />
+          ))}
+        </>
+      );
+    }
+    case "borderWait": {
+      const e = edit<"borderWait">();
+      return (
+        <>
+          <Select
+            label="Directions"
+            value={w.directions}
+            options={BORDER_DIRECTIONS.map((d) => ({ value: d, label: BORDER_DIRECTION_LABELS[d] }))}
+            onChange={(v) => e((x) => void (x.directions = v))}
+          />
+          <Toggle
+            label="NEXUS lane waits"
+            checked={w.showNexus}
+            hint="Under the regular wait, where the agency reports one."
+            onChange={(v) => e((x) => void (x.showNexus = v))}
+          />
+          <p className="text-xs text-soft">
+            Car waits from CBSA (into Canada) and U.S. CBP (into the U.S.), which update about hourly. Pick at least one crossing.
+          </p>
+          {BORDER_CROSSINGS.map((id) => (
+            <Toggle
+              key={id}
+              label={BORDER_INFO[id].name}
+              hint={BORDER_INFO[id].detail}
+              checked={w.crossings.includes(id)}
+              onChange={(on) =>
+                e((x) => {
+                  // Kept in the list's own order (west to east), and never empty.
+                  const next = BORDER_CROSSINGS.filter((c) => (c === id ? on : x.crossings.includes(c)));
+                  if (next.length) x.crossings = next;
                 })
               }
             />
