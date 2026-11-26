@@ -870,7 +870,10 @@ export type CommuteDestination = z.infer<typeof commuteDestinationSchema>;
 export const screenSaverSchema = z.object({
   idle: z.boolean(),
   minutes: z.number().int().min(1).max(240),
-  shows: z.enum(["photos", "dark"]),
+  // "view" (Melvin, 2026-11-26): the idle screen is an ordinary view built in the Views editor, a photo frame for
+  // example; a tap goes back to whatever the display should be showing now. Household only (planGates).
+  shows: z.enum(["photos", "dark", "view"]),
+  viewId: id.optional(),
   // The albums the photo saver shows (none picked means all of them).
   photoSourceIds: z.array(id).max(20),
   showClock: z.boolean(),
@@ -1142,6 +1145,9 @@ export const configSchema = z
       if (!viewIds.has(config.schedule[p].viewId))
         ctx.addIssue({ code: "custom", message: "Unknown view", path: ["schedule", p, "viewId"] });
     }
+    const saver = config.screenSaver;
+    if (saver.idle && saver.shows === "view" && (!saver.viewId || !viewIds.has(saver.viewId)))
+      ctx.addIssue({ code: "custom", message: "Pick the view to show when idle", path: ["screenSaver", "viewId"] });
     config.views.forEach((view, vi) => {
       if (view.themeId !== null && !themeIds.has(view.themeId))
         ctx.addIssue({ code: "custom", message: "Unknown theme", path: ["views", vi, "themeId"] });

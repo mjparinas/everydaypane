@@ -28,7 +28,7 @@ import {
 import { h } from "./dom";
 import { attachModal } from "./modal";
 import { reloadForRelease } from "./release";
-import { screenSaver, type Saver } from "./saver";
+import { screenSaver, type MountIdleView, type Saver } from "./saver";
 import { mountWidget } from "./widgets";
 import { cameraLoop, HA_EVERY } from "./widgets/ha";
 import type { Cleanup, WidgetContext } from "./widgets/types";
@@ -122,8 +122,7 @@ function pick(
   }
   const view = p.views.find((v) => v.id === viewId) ?? p.views[0];
   if (!view) throw new Error("No views to show");
-  const theme = p.themes[view.themeId ?? p.themeId] ?? p.themes[p.themeId] ?? Object.values(p.themes)[0];
-  if (!theme) throw new Error("No theme");
+  const theme = themeOf(p, view);
   // A fixed view still follows day and night from the schedule; an admin preview can force either.
   const modePeriod = period ?? currentPeriod(p.schedule, now, p.location.timeZone, sun);
   const mode = previewMode || p.schedule[modePeriod].mode;
@@ -131,6 +130,53 @@ function pick(
   const dimLevel = previewMode === "night" ? p.schedule.night.dim : previewMode === "day" ? 0 : p.schedule[modePeriod].dim;
   return { view, period, theme, palette: mode === "night" ? theme.night : theme.day, dimLevel };
 }
+
+function themeOf(p: DisplayPayload, view: View): Theme {
+  const theme = p.themes[view.themeId ?? p.themeId] ?? p.themes[p.themeId] ?? Object.values(p.themes)[0];
+  if (!theme) throw new Error("No theme");
+  return theme;
+}
+
+/** While the idle view is up it is what's on screen, so its colours are the screen's (the dashboard is hidden). */
+function idleTheme(p: DisplayPayload): Theme | null {
+  if (saver?.mode !== "view") return null;
+  const view = p.views.find((v) => v.id === p.screenSaver.viewId);
+  return view ? themeOf(p, view) : null;
+}
+
+/**
+ * The idle view (Melvin, 2026-11-26): an ordinary view drawn inside the screen saver, with the same widget code as the
+ * dashboard. Feeds are shared through subscribe(), so a widget on both views polls once. It takes no touches
+ * (`.idle-stage` has no pointer events), so a tap lands on the saver and only wakes the screen.
+ */
+const mountIdleView: MountIdleView = (into, viewId) => {
+  const p = payload;
+  const view = p?.views.find((v) => v.id === viewId);
+  if (!p || !view) return null;
+  const idle = h("div", { class: "stage idle-stage", style: stageGridStyle(view) });
+  into.append(idle);
+  const ctx = ctxFor(p);
+  const period = currentPeriod(p.schedule, new Date(), p.location.timeZone, sun);
+  const stops: Cleanup[] = [];
+  for (const placed of placeWidgets(view.widgets.filter((w) => widgetVisible(w, period)))) {
+    const w = placed.widget;
+    const cell = h("section", { class: cellClass(placed), style: cellStyle(w), "aria-label": w.title ?? w.type });
+    idle.append(cell);
+    try {
+      stops.push(mountWidget(cell, w, ctx));
+    } catch (e) {
+      cell.textContent = "This widget couldn't load.";
+      report(e instanceof Error ? e.message : String(e), e instanceof Error ? e.stack : undefined);
+    }
+  }
+  render();
+  return () => {
+    for (const stop of stops) stop();
+    idle.remove();
+    // The saver is already off here (saver.ts), so this puts the dashboard's own colours back.
+    render();
+  };
+};
 
 /** Keep today's sunrise/sunset when any period starts on them (shared weather feed, same as sunTimes widgets). */
 function watchSun(p: DisplayPayload) {
@@ -280,6 +326,8 @@ function scheduleLoop(p: DisplayPayload) {
   const ids = loopViewIds(p);
   if (ids.length < 2) return;
   loopTimer = window.setInterval(() => {
+    // The loop waits while the screen saver is up; the dashboard under it is hidden.
+    if (saver && saver.mode !== "off") return;
     loopIndex = (loopIndex + 1) % ids.length;
     render();
   }, sec * 1000);
@@ -291,7 +339,9 @@ function render(force = false) {
   const now = new Date();
   const { view, period, theme, palette, dimLevel } = pick(p, now);
   const mode = palette === theme.night ? "night" : "day";
-  applyTheme(theme, palette, mode);
+  const screen = idleTheme(p);
+  if (screen) applyTheme(screen, mode === "night" ? screen.night : screen.day, mode);
+  else applyTheme(theme, palette, mode);
   dim.style.opacity = String(dimLevel);
   const periodKey = period ?? "";
   if (force || shown.viewId !== view.id || shown.version !== p.version || shown.themeId !== theme.id || shown.period !== periodKey) {
@@ -700,7 +750,7 @@ async function start() {
   const modeBtn = previewModeToggle();
   const lockBtn = lockDisplayControl();
   app.replaceChildren(stage, dim, offlineDot, activityIndicator, ...(modeBtn ? [modeBtn] : []), ...(lockBtn ? [lockBtn] : []));
-  saver = screenSaver(app, () => payload);
+  saver = screenSaver(app, () => payload, undefined, mountIdleView);
   const updateConnectionIndicator = () => {
     offlineDot.classList.toggle("show", offline);
     offlineDot.textContent =

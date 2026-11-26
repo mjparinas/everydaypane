@@ -1,6 +1,6 @@
 import { earthUrl } from "@/lib/earth";
 
-import { h } from "../dom";
+import { h, underSaver } from "../dom";
 import type { Mount } from "./types";
 
 // The earth wind map (Melvin, 2026-11-21): earth.nullschool.net in a frame, centred where the widget says. Earth
@@ -18,7 +18,7 @@ export const earth: Mount<"earth"> = (el, w) => {
   let frame: HTMLIFrameElement | null = null;
   let madeAt = 0;
 
-  const shouldShow = () => !document.hidden && !document.documentElement.classList.contains("saving");
+  const shouldShow = () => !document.hidden && !underSaver(root);
 
   const make = () => {
     frame?.remove();

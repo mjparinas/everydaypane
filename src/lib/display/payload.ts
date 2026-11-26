@@ -17,6 +17,9 @@ export function displayPayload(
     ? [config.schedule.morning.viewId, config.schedule.afternoon.viewId, config.schedule.evening.viewId, config.schedule.night.viewId]
     : [];
   const wanted = new Set(fixed ? [fixed] : scheduled.length ? scheduled : [config.views[0]?.id ?? ""]);
+  // The screen saver's idle view (Melvin, 2026-11-26) travels too; a preview never shows the saver.
+  const saver = config.screenSaver;
+  if (!previewViewId && saver.idle && saver.shows === "view" && saver.viewId) wanted.add(saver.viewId);
   const views = config.views.filter((v) => wanted.has(v.id));
   const themeIds = new Set([config.themeId, ...views.map((v) => v.themeId).filter((t): t is string => t !== null)]);
   const themes: Record<string, Theme> = {};
