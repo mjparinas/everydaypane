@@ -21,6 +21,7 @@ const ENV_NAMES: Record<NativeSmartProvider, string> = {
   nest: "NEST_PROJECT_ID and Google OAuth client (or NEST_CLIENT_ID / NEST_CLIENT_SECRET)",
   ecobee: "ECOBEE_CLIENT_ID and ECOBEE_CLIENT_SECRET",
   smartthings: "SMARTTHINGS_CLIENT_ID and SMARTTHINGS_CLIENT_SECRET",
+  hue: "HUE_CLIENT_ID and HUE_CLIENT_SECRET",
 };
 
 export async function startSmartHomeConnect(provider: NativeSmartProvider, req: Request): Promise<Response> {

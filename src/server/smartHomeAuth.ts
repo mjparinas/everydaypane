@@ -84,6 +84,19 @@ const SERVICES: Record<NativeSmartProvider, ServiceInfo> = {
     },
     tokenUrl: "https://auth-global.api.smartthings.com/oauth/token",
   },
+  // Philips Hue's Remote API (Melvin, 2026-11-25): an app from developers.meethue.com, whose callback URL is set there
+  // (so none is sent here). Hue has no scopes; the token reaches every bridge on the account.
+  hue: {
+    label: "Philips Hue",
+    scope: "",
+    clientId: env.hueClientId,
+    clientSecret: env.hueClientSecret,
+    authUrl: (_redirect, state) => {
+      const p = new URLSearchParams({ client_id: SERVICES.hue.clientId(), response_type: "code", state });
+      return `https://api.meethue.com/v2/oauth2/authorize?${p}`;
+    },
+    tokenUrl: "https://api.meethue.com/v2/oauth2/token",
+  },
 };
 
 export const SMART_STATE_COOKIE = "ep_smart_state";
@@ -115,7 +128,8 @@ export function smartStateCookie(value: string): string {
 }
 export const clearedSmartStateCookie = () => `${SMART_STATE_COOKIE}=; Path=/api/smart-home/; HttpOnly; SameSite=Lax; Max-Age=0`;
 
-const tokenSchema = z.object({ access_token: z.string(), expires_in: z.number(), refresh_token: z.string().optional() });
+// Hue has sent `expires_in` as a string ("604799") in older versions of its API, so either is read.
+const tokenSchema = z.object({ access_token: z.string(), expires_in: z.coerce.number(), refresh_token: z.string().optional() });
 
 async function tokenRequest(s: NativeSmartProvider, params: Record<string, string>): Promise<z.infer<typeof tokenSchema>> {
   const info = SERVICES[s];
@@ -148,12 +162,15 @@ export async function connectSmartHome(
   const t = await tokenRequest(s, { grant_type: "authorization_code", code, redirect_uri: redirect });
   if (!t.refresh_token) throw new Error(`${SERVICES[s].label} didn't send a refresh token`);
   await setSecret(accountId, tokenKey(s), t.refresh_token, now);
+  if (s === "hue") await setSecret(accountId, "hue.appKey", null);
   access.set(accessKey(accountId, s), { token: t.access_token, expiresAt: now + (t.expires_in - 60) * 1000, refresh: t.refresh_token });
 }
 
 export async function disconnectSmartHome(accountId: string, s: NativeSmartProvider): Promise<void> {
   access.delete(accessKey(accountId, s));
   await setSecret(accountId, tokenKey(s), null);
+  // Hue's bridge key belongs to the account that was connected; a new account makes its own.
+  if (s === "hue") await setSecret(accountId, "hue.appKey", null);
 }
 
 export async function smartHomeConnected(accountId: string, s: NativeSmartProvider): Promise<boolean> {

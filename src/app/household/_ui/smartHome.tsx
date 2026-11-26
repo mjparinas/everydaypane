@@ -25,6 +25,8 @@ const failed: SmartHomeStatus = {
   ecobee: { configured: false, connected: false, error: "Couldn't ask the server" },
   smartthings: { configured: false, connected: false, error: "Couldn't ask the server" },
   govee: { configured: false, connected: false, error: "Couldn't ask the server" },
+  hue: { configured: false, connected: false, error: "Couldn't ask the server" },
+  lifx: { configured: false, connected: false, error: "Couldn't ask the server" },
 };
 
 export function loadSmartHome(fresh = false): Promise<SmartHomeStatus> {
