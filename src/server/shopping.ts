@@ -49,7 +49,7 @@ const itemOf = (r: Row): ShoppingItem => ({
 });
 
 const norm = (text: string) => text.trim().replace(/\s+/g, " ");
-const keyOf = (text: string) => norm(text).toLocaleLowerCase("en-CA");
+const keyOf = (text: string) => norm(text).toLocaleLowerCase("en-CA").normalize("NFC");
 
 async function prune(accountId: string, now: number): Promise<void> {
   await run("DELETE FROM shopping WHERE account_id = ? AND done = 1 AND done_at IS NOT NULL AND done_at < ?", [
@@ -101,11 +101,13 @@ export async function addShoppingItem(
 }
 
 async function pickedCategory(accountId: string, text: string): Promise<ShoppingCategory | undefined> {
-  const rows = await query<{ category: string | null }>(
-    "SELECT category FROM shopping WHERE account_id = ? AND lower(text) = ? AND category IS NOT NULL ORDER BY added_at DESC LIMIT 1",
-    [accountId, keyOf(text)],
+  const rows = await query<Pick<Row, "text" | "category">>(
+    "SELECT text, category FROM shopping WHERE account_id = ? AND category IS NOT NULL ORDER BY added_at DESC, sort DESC",
+    [accountId],
   );
-  const picked = rows[0]?.category;
+  // SQLite lower() only folds ASCII. Apply the same normalization to both grocery names.
+  const key = keyOf(text);
+  const picked = rows.find((row) => keyOf(row.text) === key)?.category;
   return isShoppingCategory(picked) ? picked : undefined;
 }
 
@@ -117,13 +119,20 @@ export async function updateShoppingItem(
   accountId: string,
   input: { id: string; category?: ShoppingCategory | undefined; low?: boolean | undefined },
 ): Promise<"ok" | "not-found"> {
-  const rows = await query<{ text: string }>("SELECT text FROM shopping WHERE account_id = ? AND id = ?", [accountId, input.id]);
-  const row = rows[0];
+  const rows = await query<Pick<Row, "id" | "text">>("SELECT id, text FROM shopping WHERE account_id = ? AND (id = ? OR ?)", [
+    accountId,
+    input.id,
+    input.category ? 1 : 0,
+  ]);
+  const row = rows.find((item) => item.id === input.id);
   if (!row) return "not-found";
-  if (input.category)
-    await run("UPDATE shopping SET category = ? WHERE account_id = ? AND lower(text) = ?", [input.category, accountId, keyOf(row.text)]);
-  if (input.low !== undefined)
-    await run("UPDATE shopping SET low = ? WHERE account_id = ? AND id = ?", [input.low ? 1 : 0, accountId, input.id]);
+  const key = keyOf(row.text);
+  const ids = rows.filter((item) => keyOf(item.text) === key).map((item) => item.id);
+  await run(
+    `UPDATE shopping SET category = COALESCE(?, category), low = CASE WHEN id = ? THEN COALESCE(?, low) ELSE low END
+     WHERE account_id = ? AND id IN (SELECT value FROM json_each(?))`,
+    [input.category ?? null, input.id, input.low === undefined ? null : Number(input.low), accountId, JSON.stringify(ids)],
+  );
   await markChanged(accountId, "shopping");
   return "ok";
 }

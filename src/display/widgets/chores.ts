@@ -1,9 +1,11 @@
 import { activePeriod, PERIOD_LABELS, periodRank, type ChorePeriod } from "@/lib/chores";
+import { minutesInZone } from "@/lib/config/time";
 import type { ChoresData } from "@/lib/display/types";
 
 import { refresh, sendExplained, subscribe } from "../api";
 import { fill, h, keepFitted, shrinkToFit } from "../dom";
 import { attachModal } from "../modal";
+import { everyMinute } from "../ticker";
 import type { Mount } from "./types";
 
 // The chore chart (Melvin, 2026-11-21): a column for each kid with today's chores and the stars they've earned this
@@ -58,17 +60,14 @@ export function bandsFor(items: Item[]): { period: ChorePeriod; items: Item[] }[
     .map((period) => ({ period, items: by.get(period)! }));
 }
 
-function hourInZone(now: Date, timeZone: string): number {
-  const parts = new Intl.DateTimeFormat("en-CA", { timeZone, hour: "numeric", hourCycle: "h23" }).formatToParts(now);
-  return Number(parts.find((p) => p.type === "hour")?.value ?? "12");
-}
-
 export const chores: Mount<"chores"> = (el, w, ctx) => {
   const root = h("div", { class: "w-chores" }, h("div", { class: "w-empty" }, "Loading chores…"));
   el.append(root);
   let data: ChoresData | null = null;
   let message = "";
   let messageTimer: number | undefined;
+  const periodAt = (now: Date) => activePeriod(Math.floor(minutesInZone(now, ctx.timeZone) / 60));
+  let active = periodAt(new Date());
   // Ticks made on this screen that the feed hasn't shown back yet (chore|person → done).
   const ticks = new Map<string, boolean>();
 
@@ -209,7 +208,6 @@ export const chores: Mount<"chores"> = (el, w, ctx) => {
     if (!data) return;
     const cols = columns(data, w.personIds, ticks);
     if (!cols.length) return fill(root, h("div", { class: "w-empty" }, "Add the kids and their chores under Settings › Chores."));
-    const active = activePeriod(hourInZone(new Date(), ctx.timeZone));
     const showBands = w.layout === "byPeriod";
     const showProgress = w.layout === "progress";
 
@@ -229,7 +227,7 @@ export const chores: Mount<"chores"> = (el, w, ctx) => {
                   ...bandsFor(items).map(({ period, items: band }) =>
                     h(
                       "section",
-                      { class: `ch-band${period === active ? " ch-band-now" : ""}` },
+                      { class: `ch-band${period === active ? " ch-band-now" : ""}`, "data-period": period },
                       h("div", { class: "ch-band-label" }, PERIOD_LABELS[period]),
                       h("ul", { class: "ch-list" }, ...band.map((item) => itemRow(p, item))),
                     ),
@@ -303,8 +301,20 @@ export const chores: Mount<"chores"> = (el, w, ctx) => {
     }
     draw();
   });
+  // The feed can stay unchanged across a period boundary. Update the highlight from the wall clock.
+  const stopTick =
+    w.layout === "byPeriod"
+      ? everyMinute((now) => {
+          const period = periodAt(now);
+          if (period === active) return;
+          active = period;
+          for (const band of root.querySelectorAll<HTMLElement>(".ch-band"))
+            band.classList.toggle("ch-band-now", band.dataset.period === active);
+        })
+      : undefined;
   return () => {
     stopFeed();
+    stopTick?.();
     stopFit();
     window.clearTimeout(messageTimer);
   };

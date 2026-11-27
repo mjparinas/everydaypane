@@ -65,6 +65,17 @@ export const photos = (
   let stopped = false;
   let pending: HTMLImageElement[] = [];
 
+  const cancelSlides = () => {
+    window.clearTimeout(timer);
+    window.clearTimeout(clearTimer);
+    for (const img of [...pending, ...root.querySelectorAll("img")]) {
+      img.onload = null;
+      img.onerror = null;
+      img.src = "";
+    }
+    pending = [];
+  };
+
   const today = () => isoDate(new Date(), ctx.timeZone);
   const refill = (newPass = false) => {
     if (newPass) seen.clear();
@@ -188,7 +199,11 @@ export const photos = (
     const wanted = w.sourceIds.length ? w.sourceIds : Object.keys(d.sources);
     const list = wanted.flatMap((s) => (d.sources[s]?.photos ?? []).map((photo) => ({ source: s, photo })));
     const unique = new Map(list.map((pick) => [pickKey(pick), pick]));
-    const sig = [...unique.keys()].join(",");
+    const emptyText = unique.size
+      ? null
+      : (wanted.map((s) => d.sources[s]?.error).find(Boolean) ??
+        (wanted.length ? "No photos in these albums yet" : "Add a photo album under Settings › Photos."));
+    const sig = JSON.stringify(emptyText ?? [...unique.keys()]);
     if (sig === signature) return;
     signature = sig;
     deck = [...unique.values()];
@@ -198,16 +213,16 @@ export const photos = (
     for (const k of fresh) if (!keys.has(k)) fresh.delete(k);
     rotation.known = keys;
     refill();
-    if (!deck.length) {
-      const errors = wanted.map((s) => d.sources[s]?.error).filter(Boolean);
-      fill(
-        root,
-        h(
-          "div",
-          { class: "w-empty" },
-          errors[0] ?? (wanted.length ? "No photos in these albums yet" : "Add a photo album under Settings › Photos."),
-        ),
-      );
+    if (emptyText !== null) {
+      cancelSlides();
+      for (const slide of slides) {
+        slide.className = "ph-slide";
+        slide.replaceChildren();
+      }
+      label.textContent = "";
+      label.classList.remove("on");
+      failures = 0;
+      fill(root, h("div", { class: "w-empty" }, emptyText));
       return;
     }
     if (!root.contains(slides[0] as Node)) fill(root, ...slides, label);
@@ -218,12 +233,6 @@ export const photos = (
   return () => {
     stopped = true;
     stop();
-    window.clearTimeout(timer);
-    window.clearTimeout(clearTimer);
-    for (const img of [...pending, ...root.querySelectorAll("img")]) {
-      img.onload = null;
-      img.onerror = null;
-      img.src = "";
-    }
+    cancelSlides();
   };
 };

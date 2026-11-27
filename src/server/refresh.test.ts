@@ -4,7 +4,7 @@ import { GET as watchGET } from "@/app/api/display/config-watch/route";
 import { GET as stateGET } from "@/app/api/display/state/route";
 import { POST as refreshPOST } from "@/app/api/household/refresh/route";
 import { defaultConfig } from "@/lib/config/defaults";
-import { createAccount, LEGACY_ACCOUNT_ID } from "@/server/accounts";
+import { createAccount, LEGACY_ACCOUNT_ID, setAccountPlan } from "@/server/accounts";
 import { issueTestSession, testSessionCookie } from "@/server/auth";
 import * as changes from "@/server/changes";
 import { configVersion, saveConfig, touchConfig } from "@/server/config";
@@ -40,6 +40,26 @@ describe("Refresh displays", () => {
     const cookie = await cookieForMember("free.refresh@example.com");
     const r = await refreshPOST(req("/api/household/refresh/", { method: "POST", headers: { cookie } }));
     expect(r.status).toBe(402);
+  });
+
+  it("notifies an existing wall of plan changes without a settings save", async () => {
+    const account = await createAccount("Free home", "upgrade.refresh@example.com");
+    const { token } = await addDevice(account.id, "Kitchen", null);
+    const state = (etag?: string) =>
+      stateGET(req("/api/display/state/", { headers: { "x-display-token": token, "if-none-match": etag ?? "" } }));
+    const before = await state();
+    expect(await before.json()).toMatchObject({ instantRefresh: false });
+
+    await setAccountPlan(account.id, "paid");
+    const upgraded = await state(before.headers.get("etag")!);
+    expect(upgraded.status).toBe(200);
+    expect(await upgraded.json()).toMatchObject({ instantRefresh: true });
+    expect((await state(upgraded.headers.get("etag")!)).status).toBe(304);
+
+    await setAccountPlan(account.id, "free");
+    const downgraded = await state(upgraded.headers.get("etag")!);
+    expect(downgraded.status).toBe(200);
+    expect(await downgraded.json()).toMatchObject({ instantRefresh: false });
   });
 
   it("wakes a waiting config-watch when the version moves", async () => {

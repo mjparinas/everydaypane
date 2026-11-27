@@ -180,6 +180,21 @@ describe("shopping aisles and running low", () => {
     expect(list.items).toEqual([{ id: "old", text: "Bananas", done: false, category: "produce", low: false }]);
   });
 
+  it("moves existing items with accented capitals and remembers the aisle across spellings", async () => {
+    const accented = await addShoppingItem(LEGACY_ACCOUNT_ID, { text: "Épinards", by: "a", category: "produce" }, NOON);
+    await addShoppingItem(LEGACY_ACCOUNT_ID, { text: "épinards", by: "a" }, NOON + 1);
+    if (!accented.ok) throw new Error("Couldn't add item");
+
+    expect(await updateShoppingItem(LEGACY_ACCOUNT_ID, { id: accented.item.id, category: "frozen", low: true })).toBe("ok");
+    const again = await addShoppingItem(LEGACY_ACCOUNT_ID, { text: "ÉPINARDS".normalize("NFD"), by: "a" }, NOON + 2);
+    expect(again.ok && again.item.category).toBe("frozen");
+    expect((await listShopping(LEGACY_ACCOUNT_ID, NOON + 3)).items.map((item) => [item.category, item.low])).toEqual([
+      ["frozen", true],
+      ["frozen", false],
+      ["frozen", false],
+    ]);
+  });
+
   it("moves aisle and marks low from a phone, and takes a running-low add from the wall", async () => {
     const kid = await cookieFor("kid@example.com");
     const headers = { cookie: kid };

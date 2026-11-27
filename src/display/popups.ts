@@ -76,31 +76,25 @@ export function messagePopups(onNew?: () => void): { el: HTMLElement; stop: () =
   /** null until the server has answered once; then the server's word wins over this browser's copy. */
   let loading: Promise<void> | null = null;
   let fromServer = false;
+  let stopped = false;
   const remember = () => {
     if (since !== null) write(SINCE_KEY, String(since));
     write(DISMISSED_KEY, JSON.stringify([...dismissed].slice(-50)));
   };
   const load = () => {
-    if (fromServer || loading) return;
+    if (stopped || fromServer || loading || document.hidden || navigator.onLine === false) return;
     loading = get<{ since: number; dismissed: string[] }>("popups").then((r) => {
       loading = null;
-      if (!r.data) {
-        // 204 (not a display device) has nothing to load; out of reach tries again on the next board read. Either way
-        // the screen carries on from its own copy, or from the board as it is now.
-        if (r.live) fromServer = true;
-        if (since === null && fed) {
-          since = newestOf(latest);
-          remember();
-          draw();
-        }
-        return;
+      if (stopped) return;
+      // A live 204 needs no retry. Cached answers can seed an offline wall until a live response arrives.
+      fromServer = r.live;
+      if (r.data && (r.live || since === null)) {
+        since = r.data.since;
+        dismissed = new Set([...r.data.dismissed, ...dismissed]);
       }
-      fromServer = true;
-      since = r.data.since;
-      // A dismissal made here while the server was out of reach is kept as well.
-      dismissed = new Set([...r.data.dismissed, ...dismissed]);
+      since ??= newestOf(latest);
       remember();
-      if (fed) draw();
+      draw();
     });
   };
 
@@ -206,6 +200,8 @@ export function messagePopups(onNew?: () => void): { el: HTMLElement; stop: () =
     draw();
   });
   const stopTick = everyMinute((now) => {
+    // An unchanged board answers 304, so retry state independently of new messages.
+    if (fed) load();
     for (const s of shown.values()) s.time.textContent = ago(now.getTime() - s.message.createdAt);
   });
   el.addEventListener("animationend", (ev) => (ev.target as HTMLElement).classList.remove("entering"));
@@ -213,6 +209,7 @@ export function messagePopups(onNew?: () => void): { el: HTMLElement; stop: () =
   return {
     el,
     stop: () => {
+      stopped = true;
       stopFeed();
       stopTick();
       // Switched off: start fresh next time, rather than popping everything posted in between.

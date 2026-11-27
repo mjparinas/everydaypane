@@ -4,6 +4,9 @@ import { json, unauthorized } from "@/server/http";
 import { photosFeed } from "@/server/photos";
 import { accountIdOf, viewerFor } from "@/server/viewer";
 
+// A cold Amazon album can spend up to 45 seconds listing its pages before the response is ready.
+export const maxDuration = 60;
+
 // The photo frame's lists. Displays ask every five minutes so a photo the family adds shows soon (photo frame polish,
 // 2026-11-26); an unchanged list answers 304, so the poll costs a few bytes.
 export async function GET(req: Request) {

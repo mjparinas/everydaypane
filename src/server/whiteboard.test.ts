@@ -58,6 +58,25 @@ describe("whiteboard", () => {
     expect(staleClear.ok).toBe(false);
   });
 
+  it.each([false, true])("keeps simultaneous strokes with the same timestamp (board already saved: %s)", async (saved) => {
+    const account = "acct_concurrent";
+    await getWhiteboard(account);
+    if (saved) await appendStroke(account, 1, stroke("original"), 10);
+    const writes = await Promise.all([appendStroke(account, 1, stroke("phone"), 10), appendStroke(account, 1, stroke("wall"), 10)]);
+    expect(writes.map((result) => result.ok)).toEqual([true, true]);
+    expect((await getWhiteboard(account)).strokes.map((s) => s.id).sort()).toEqual(
+      saved ? ["original", "phone", "wall"] : ["phone", "wall"],
+    );
+  });
+
+  it("keeps the board cleared when a stroke arrives alongside Clear", async () => {
+    const account = "acct_concurrent";
+    await appendStroke(account, 1, stroke("original"), 10);
+    const [clear] = await Promise.all([clearWhiteboard(account, 1, 20), appendStroke(account, 1, stroke("incoming"), 20)]);
+    expect(clear.ok).toBe(true);
+    expect(await getWhiteboard(account)).toEqual({ revision: 2, updatedAt: 20, strokes: [] });
+  });
+
   it("sanitises strokes from the wall", () => {
     expect(sanitizeStroke(stroke("stroke1"))).toMatchObject({ id: "stroke1", tool: "pen", colour: "#111111" });
     expect(sanitizeStroke({ ...stroke("bad-colour"), colour: "#fff" })).toBeNull();

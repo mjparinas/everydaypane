@@ -114,9 +114,13 @@ export function fillTile(
  * Hides a list's last items, one at a time, while the list overflows its box, keeping at least one, so the wall
  * never shows half a row (design review, 2026-11-26: hide what doesn't fit rather than shrink it below the floor).
  */
-export function dropOverflow(box: HTMLElement, items: string): void {
+export function dropOverflow(box: HTMLElement, items: string, keep?: HTMLElement | null): void {
   const rows = [...box.querySelectorAll<HTMLElement>(items)];
   // An inline style, because a row's own `display` rule would beat the `hidden` attribute.
   for (const r of rows) r.style.display = "";
-  for (let i = rows.length - 1; i > 0 && box.scrollHeight > box.clientHeight + 1; i--) rows[i]!.style.display = "none";
+  const first = keep ? 0 : 1;
+  for (let i = rows.length - 1; i >= first && box.scrollHeight > box.clientHeight + 1; i--) {
+    const row = rows[i]!;
+    if (row !== keep) row.style.display = "none";
+  }
 }

@@ -2,6 +2,7 @@ import { meetsBanner, rank } from "@/lib/alerts";
 import { addDays, eventDays, eventTime, localDate } from "@/lib/calendar";
 import { upcoming } from "@/lib/config/countdown";
 import type { CountdownEvent, DashboardConfig } from "@/lib/config/schema";
+import { minutesInZone } from "@/lib/config/time";
 import type {
   AlertData,
   BriefData,
@@ -45,8 +46,7 @@ export interface BriefInput {
 
 /** The local hour (0–23) of a moment in a zone. */
 export function localHour(ms: number, timeZone: string): number {
-  const h = new Intl.DateTimeFormat("en-CA", { timeZone, hour: "numeric", hourCycle: "h23" }).format(ms);
-  return Number(h) % 24;
+  return Math.floor(minutesInZone(new Date(ms), timeZone) / 60);
 }
 
 /** "3 PM" or "15:00" for a local hour. */

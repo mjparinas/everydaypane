@@ -61,6 +61,18 @@ export async function listMessages(accountId: string, limit = 50, now = Date.now
   return rows.map(toMessage);
 }
 
+/** Keep recent notes available to the wall even when older notes fill the pinned slots. */
+export async function listDisplayMessages(accountId: string, now = Date.now()): Promise<Message[]> {
+  const rows = await query<Row>(
+    `WITH active AS (SELECT * FROM messages WHERE account_id = ? AND (expires_at IS NULL OR expires_at > ?)),
+          pinned AS (SELECT * FROM active WHERE pinned = 1 ORDER BY created_at DESC, id DESC LIMIT 20),
+          recent AS (SELECT * FROM active ORDER BY created_at DESC, id DESC LIMIT 20)
+     SELECT * FROM pinned UNION SELECT * FROM recent ORDER BY pinned DESC, created_at DESC, id DESC`,
+    [accountId, now],
+  );
+  return rows.map(toMessage);
+}
+
 /** Posts from the wall when a messages widget allows it (Melvin, 2026-11-23). No expiry; kitchen link uses the device id. */
 export async function postMessageFromWall(
   accountId: string,

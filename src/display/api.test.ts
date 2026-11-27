@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { beginActivity, connectionStatus, get, isUpdating, retryDelay, subscribe } from "./api";
+import { apiUrl, beginActivity, connectionStatus, get, isUpdating, retryDelay, subscribe } from "./api";
 
 afterEach(() => {
   vi.useRealTimers();
@@ -10,6 +10,13 @@ afterEach(() => {
 });
 
 describe("display polling", () => {
+  it("keeps widget query parameters intact and merges additional parameters", () => {
+    expect(apiUrl("brief?w=kids")).toBe("/api/display/brief/?w=kids");
+    expect(apiUrl("trello?board=family&lists=4&cards=6", { cards: "8" })).toBe("/api/display/trello/?board=family&lists=4&cards=8");
+    const address = new URL(apiUrl("affirmation?category=general&custom=A%20good%20day%20%26%20night"), "https://example.test");
+    expect(address.searchParams.get("custom")).toBe("A good day & night");
+  });
+
   it("tracks active API requests until all finish", () => {
     const endOne = beginActivity();
     expect(isUpdating()).toBe(true);

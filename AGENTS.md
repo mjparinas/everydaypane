@@ -652,13 +652,16 @@ panel can be complex if you need it to be."
   shows photos instead.
 - **Family message board:** anyone on `ADMIN_EMAILS` or `FAMILY_EMAILS` posts notes from `/family/`; the author name is
   typed, never the email, because the wall is readable by anyone in the kitchen. Notes can expire; admins pin. Displays
-  poll the board every 30 seconds with an ETag. The kitchen edit page (`/d/<token>/edit/`) can post too (no pin).
+  poll the board every 30 seconds with an ETag. The feed carries recent notes alongside pinned notes, and wall tiles
+  reserve a spot for the newest note when pins fill the available space. The kitchen edit page (`/d/<token>/edit/`) can
+  post too (no pin).
 - **Message pop-ups** (`src/display/popups.ts`, started by `main.ts` when `payload.messagePopups.enabled` and not a
   preview): shares the message board's 30-second `messages` feed. Each display device's state is on the server
   (`src/server/popups.ts`, `/api/display/popups/`): `display_popups.since` is the newest `createdAt` on the board the
   first time that device read it, and `display_popup_dismissed` holds what was dismissed on it (kept 30 days); a note
-  pops up when it's newer and not dismissed there. The wall reads it once on start and posts each dismissal, so a
-  reload, even one that lost localStorage, shows the same notes, and screens never share dismissals. localStorage
+  pops up when it's newer and not dismissed there. The wall reads it on start, retries until it gets a live answer,
+  and posts each dismissal, so a reload, even one that lost localStorage, shows the same notes, and screens never
+  share dismissals. localStorage
   (`ep-popups-since`, `ep-popups-dismissed`) is only the screen's copy until the server answers or when it can't (an
   admin's wall page, offline). Saving the settings with the mode switched off deletes every device's rows. The stack is absolutely placed bottom right (`z-index` 14: over widgets, under the
   saver, night dimming, doorbell and alert strip; lifted above the offline pill). Dismiss fades the note (opacity and

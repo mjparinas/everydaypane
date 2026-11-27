@@ -41,6 +41,7 @@ const RETRY_AFTER_FAILURE = 20 * 60_000;
 export const timing = { pause: (ms: number) => new Promise<void>((r) => setTimeout(r, ms)) };
 const MAX_AMAZON_SHARE_PHOTOS = 5000;
 const PAGE = 200;
+const SHARE_LIST_MS = 45_000;
 
 export type { Listed } from "./photos/types";
 
@@ -71,17 +72,21 @@ interface AmazonNode {
   };
 }
 
-async function amazonJson(url: string, headers: Record<string, string> = {}): Promise<unknown> {
-  const get = () =>
-    fetch(url, {
+async function amazonJson(url: string, headers: Record<string, string> = {}, deadline = Infinity): Promise<unknown> {
+  const get = () => {
+    const remaining = deadline - Date.now();
+    if (remaining <= 0) throw new Error("Amazon took too long to list the album");
+    return fetch(url, {
       headers: { Accept: "application/json", "User-Agent": "Mozilla/5.0 (Everydaypane photo frame)", ...headers },
-      signal: AbortSignal.timeout(15_000),
+      signal: AbortSignal.timeout(Math.min(15_000, remaining)),
     });
+  };
   let r = await get();
   // A 503 means "busy, come back later": wait as long as Amazon asks (a few seconds at most here) and try once more.
   if (r.status === 503 || r.status === 429) {
     const wait = Math.min(10, Math.max(2, Number(r.headers.get("retry-after")) || 4));
     await r.body?.cancel().catch(() => undefined);
+    if (Date.now() + wait * 1000 >= deadline) throw new Error("Amazon took too long to list the album");
     await timing.pause(wait * 1000);
     r = await get();
   }
@@ -115,12 +120,23 @@ export function photoFromNode(n: AmazonNode): Listed | null {
   return { id: n.id, url: n.tempLink, w, h, taken: taken ? taken.slice(0, 10) : null };
 }
 
+/** A cold album can show what loaded while it waits to retry, but only complete lists go in the cache. */
+class IncompleteAlbum extends Error {
+  constructor(
+    readonly photos: Listed[],
+    cause: unknown,
+  ) {
+    super("Couldn't finish loading the Amazon album", { cause });
+  }
+}
+
 async function listShare(url: string): Promise<Listed[]> {
   const share = parseShareUrl(url);
   if (!share) throw new Error("Not an Amazon Photos share link");
   const api = `${share.origin}/drive/v1`;
   const common = new URLSearchParams({ shareId: share.shareId, resourceVersion: "V2", ContentType: "JSON" }).toString();
-  const info = (await amazonJson(`${api}/shares/${share.shareId}?${common}`)) as { nodeInfo?: { id?: string } };
+  const deadline = Date.now() + SHARE_LIST_MS;
+  const info = (await amazonJson(`${api}/shares/${share.shareId}?${common}`, {}, deadline)) as { nodeInfo?: { id?: string } };
   const root = info.nodeInfo?.id;
   if (!root) throw new Error("Amazon didn't return the shared album");
 
@@ -129,22 +145,22 @@ async function listShare(url: string): Promise<Listed[]> {
   const photos = new Map<string, Listed>();
   const folders: { id: string; depth: number }[] = [{ id: root, depth: 0 }];
   let visited = 0;
-  // Leave time for large albums while bounding how long we keep starting new page requests.
-  const deadline = Date.now() + 45_000;
-  while (folders.length && photos.size < MAX_AMAZON_SHARE_PHOTOS && visited < 100 && Date.now() < deadline) {
+  while (folders.length && photos.size < MAX_AMAZON_SHARE_PHOTOS && visited < 100) {
     const folder = folders.shift();
     if (!folder) break;
     visited++;
-    for (let offset = 0; photos.size < MAX_AMAZON_SHARE_PHOTOS && Date.now() < deadline;) {
-      await timing.pause(500);
+    for (let offset = 0; photos.size < MAX_AMAZON_SHARE_PHOTOS;) {
       let page: { data?: AmazonNode[]; count?: number };
       try {
+        if (Date.now() + 500 >= deadline) throw new Error("Amazon took too long to list the album");
+        await timing.pause(500);
         page = (await amazonJson(
           `${api}/nodes/${folder.id}/children?asset=ALL&limit=${PAGE}&offset=${offset}&tempLink=true&searchOnFamily=false&sort=${sort}&${common}`,
+          {},
+          deadline,
         )) as { data?: AmazonNode[]; count?: number };
       } catch (error) {
-        // Part of an album beats none: keep what came before Amazon stopped answering.
-        if (photos.size) return [...photos.values()];
+        if (photos.size) throw new IncompleteAlbum([...photos.values()], error);
         throw error;
       }
       const data = page.data ?? [];
@@ -300,24 +316,23 @@ async function listed(accountId: string, config: DashboardConfig, source: PhotoS
           ? 30 * 60_000
           : AMAZON_TTL;
   const failed = failures.get(key);
-  if (failed && now - failed.at < RETRY_AFTER_FAILURE) {
-    // Amazon refused a little while ago: serve the last good list if there is one, and don't ask again yet.
-    return (
-      await cached(
-        key,
-        Number.POSITIVE_INFINITY,
-        () => Promise.reject(failed.error instanceof Error ? failed.error : new Error("Couldn't load these photos")),
-        now,
-      )
-    ).value;
-  }
+  const recentFailure = failed && now - failed.at < RETRY_AFTER_FAILURE ? failed : undefined;
   try {
-    const result = await cached(key, ttl, () => list(accountId, config, source), now);
-    if (result.stale) failures.set(key, { at: now, error: new Error("Amazon refused; showing the last list") });
-    else failures.delete(key);
+    // During backoff, read the last good list without starting another upstream request.
+    const result = await cached(
+      key,
+      recentFailure ? Infinity : ttl,
+      () => (recentFailure ? Promise.reject(recentFailure.error) : list(accountId, config, source)),
+      now,
+    );
+    if (!recentFailure) {
+      if (result.stale) failures.set(key, { at: now, error: new Error("Amazon refused; showing the last list") });
+      else failures.delete(key);
+    }
     return result.value;
   } catch (error) {
-    failures.set(key, { at: now, error });
+    if (!recentFailure) failures.set(key, { at: now, error });
+    if (error instanceof IncompleteAlbum) return error.photos;
     throw error;
   }
 }
