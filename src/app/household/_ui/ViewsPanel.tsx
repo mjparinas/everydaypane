@@ -218,7 +218,7 @@ export function ViewsPanel() {
               setSelected(null);
             }}
           >
-            + Add a widget
+            + Add a Widget
           </button>
           <button
             type="button"

@@ -336,6 +336,23 @@ export type FeaturePreview = {
   payload: DisplayPayload;
   /** Sample feeds swapped in for this shot only (the preview server reads SAMPLE_FEEDS by path). */
   feeds: Record<string, unknown>;
+  /** Drawn over the wall before the shot: "grid" outlines every cell and names the grid's numbers. */
+  overlay?: "grid";
+  /** Take the shot with the browser offline, so the wall shows its "Offline" pill over saved data. */
+  offline?: boolean;
+  /** Only a panel of a composite (below), not a card picture of its own. */
+  panelOnly?: boolean;
+};
+
+/** A card picture made of several real wall shots side by side, each with a label (Morning, Overnight…). */
+export type FeatureComposite = {
+  file: string;
+  width: number;
+  height: number;
+  columns: number;
+  /** Shown between panels in a row of two (the screen saver's "after 10 minutes"). */
+  between?: string;
+  panels: { id: string; label: string; note?: string; width: number; height: number }[];
 };
 
 const fixed = (w: Partial<Widget> & { type: WidgetType; x: number; y: number; w: number; h: number }): Widget => {
@@ -347,15 +364,17 @@ const fixed = (w: Partial<Widget> & { type: WidgetType; x: number; y: number; w:
   } as Widget);
 };
 
-function featureConfig(viewId: string, widgets: Widget[]) {
+function featureConfig(viewId: string, widgets: Widget[], grid: { cols?: number; rows?: number; themeId?: string } = {}) {
   const config = defaultConfig();
-  const cols = Math.max(...widgets.map((w) => w.x + w.w));
-  const rows = Math.max(...widgets.map((w) => w.y + w.h));
+  const cols = grid.cols ?? Math.max(...widgets.map((w) => w.x + w.w));
+  const rows = grid.rows ?? Math.max(...widgets.map((w) => w.y + w.h));
+  const themeId = grid.themeId ?? "aurora";
   config.name = "Everydaypane";
-  config.themeId = "aurora";
+  config.themeId = themeId;
   config.themes = structuredClone(BUILT_IN_THEMES);
-  config.views = [{ id: viewId, name: viewId, themeId: "aurora", cols, rows, gap: 16, padding: 14, tilePadding: 16, widgets }];
+  config.views = [{ id: viewId, name: viewId, themeId, cols, rows, gap: 16, padding: 14, tilePadding: 16, widgets }];
   config.schedule.enabled = false;
+  config.alerts.enabled = false;
   config.screenSaver.idle = false;
   config.screenSaver.night = false;
   config.burnIn.shift = false;
@@ -372,6 +391,135 @@ smartNoticeView.alerts.enabled = true;
 
 const alertsSample = SAMPLE_FEEDS.alerts as { updatedAt: number; alerts: { notice?: boolean }[] };
 
+const regionAlerts = (alerts: Record<string, unknown>[]) => ({ updatedAt: FIXED_NOW, alerts });
+
+// Regional packs (Melvin, 2026-11-27: screenshots on the features cards): the same widgets in two places, each reading
+// its own region's sources. Langley reads Alert Ready, BC Hydro, DriveBC and TransLink; Toronto Alert Ready, Ontario
+// 511 and the TTC.
+// Six by six: a taller grid would letterbox as a portrait view.
+const langleyPack = featureConfig("feature-region-bc", [
+  fixed({ type: "alerts", x: 0, y: 0, w: 6, h: 2, title: "Alerts" }),
+  fixed({ type: "transit", x: 0, y: 2, w: 6, h: 4, title: "TransLink" }),
+]);
+const torontoTransit = fixed({ type: "transit", x: 0, y: 2, w: 6, h: 4, title: "TTC" });
+const torontoPack = featureConfig("feature-region-on", [
+  fixed({ type: "alerts", x: 0, y: 0, w: 6, h: 2, title: "Alerts" }),
+  {
+    ...torontoTransit,
+    agency: "ttc",
+    stops: [
+      { id: "14235", code: "14235", name: "Queen St West at Spadina" },
+      { id: "4321", code: "4321", name: "Spadina Station" },
+    ],
+  } as Widget,
+]);
+langleyPack.alerts.enabled = true;
+torontoPack.alerts.enabled = true;
+torontoPack.location = { ...torontoPack.location, name: "Toronto", latitude: 43.65, longitude: -79.38, timeZone: "America/Toronto" };
+const langleyFeeds = {
+  alerts: regionAlerts([
+    {
+      id: "naad-rainfall",
+      source: "weather",
+      severity: "moderate",
+      title: "Rainfall warning",
+      area: "Alert Ready · Fraser Valley",
+      sent: FIXED_NOW - 3 * 3_600_000,
+      expires: null,
+    },
+    {
+      id: "bchydro-1",
+      source: "power",
+      severity: "minor",
+      title: "Power outage 3 km away",
+      area: "BC Hydro · Walnut Grove · 412 customers",
+      sent: FIXED_NOW - 3_600_000,
+      expires: null,
+    },
+    {
+      id: "drivebc-1",
+      source: "roads",
+      severity: "minor",
+      title: "Hwy 1 eastbound lane closed",
+      area: "DriveBC · 200 Street to 232 Street",
+      sent: FIXED_NOW - 2 * 3_600_000,
+      expires: null,
+    },
+  ]),
+};
+const ttcAt = (min: number) => Math.round(FIXED_NOW / 1000) + min * 60;
+const torontoFeeds = {
+  alerts: regionAlerts([
+    {
+      id: "naad-snow",
+      source: "weather",
+      severity: "moderate",
+      title: "Snowfall warning",
+      area: "Alert Ready · City of Toronto",
+      sent: FIXED_NOW - 2 * 3_600_000,
+      expires: null,
+    },
+    {
+      id: "on511-1",
+      source: "roads",
+      severity: "minor",
+      title: "Gardiner Expressway lane closed",
+      area: "Ontario 511 · Eastbound at Spadina Avenue",
+      sent: FIXED_NOW - 3_600_000,
+      expires: null,
+    },
+  ]),
+  transit: {
+    updatedAt: FIXED_NOW,
+    configured: true,
+    stops: {
+      "ttc:14235": [
+        { route: "501", headsign: "Long Branch", time: ttcAt(3), delay: 0, live: true },
+        { route: "510", headsign: "Union Station", time: ttcAt(6), delay: 60, live: true },
+        { route: "501", headsign: "Neville Park", time: ttcAt(11), delay: null, live: false },
+      ],
+      "ttc:4321": [
+        { route: "1", headsign: "Vaughan Metropolitan Centre", time: ttcAt(2), delay: 0, live: true },
+        { route: "1", headsign: "Finch", time: ttcAt(7), delay: 0, live: true },
+        { route: "510", headsign: "Union Station", time: ttcAt(9), delay: 0, live: true },
+      ],
+    },
+  },
+};
+
+// Multi-view grid: a 12 × 6 wall with room left over, so the cells, the gap and the edge show under the outline.
+const gridView = featureConfig(
+  "feature-grid",
+  [
+    fixed({ type: "clock", x: 0, y: 0, w: 3, h: 2 }),
+    fixed({ type: "weather", x: 3, y: 0, w: 5, h: 3 }),
+    fixed({ type: "calendarUpNext", x: 8, y: 0, w: 4, h: 3 }),
+    fixed({ type: "date", x: 0, y: 2, w: 3, h: 1 }),
+    fixed({ type: "agenda", x: 0, y: 3, w: 5, h: 3 }),
+    fixed({ type: "garbage", x: 9, y: 4, w: 3, h: 2 }),
+  ],
+  { cols: 12, rows: 6 },
+);
+
+// Widgets on photos: the photo fills the wall and the panels sit on top of it.
+const onPhotoView = featureConfig("feature-on-photos", [
+  { ...fixed({ type: "photos", x: 0, y: 0, w: 12, h: 6 }), sourceIds: ["sample"], showCaption: false } as Widget,
+  fixed({ type: "clock", x: 0, y: 0, w: 3, h: 2, showBackground: false }),
+  fixed({ type: "date", x: 0, y: 2, w: 3, h: 1, showBackground: false }),
+  fixed({ type: "weather", x: 0, y: 4, w: 5, h: 2 }),
+  fixed({ type: "calendarUpNext", x: 8, y: 0, w: 4, h: 3 }),
+]);
+
+// Offline: an everyday wall drawn from saved data with the amber pill in the corner.
+const offlineView = featureConfig("feature-offline", [
+  fixed({ type: "clock", x: 0, y: 0, w: 3, h: 2 }),
+  fixed({ type: "date", x: 0, y: 2, w: 3, h: 1 }),
+  fixed({ type: "weather", x: 3, y: 0, w: 5, h: 3 }),
+  fixed({ type: "agenda", x: 0, y: 3, w: 4, h: 3 }),
+  fixed({ type: "meals", x: 4, y: 3, w: 4, h: 3 }),
+  fixed({ type: "messages", x: 8, y: 0, w: 4, h: 6 }),
+]);
+
 export const FEATURE_PREVIEWS: FeaturePreview[] = [
   {
     id: "feature-smart-notices",
@@ -381,5 +529,92 @@ export const FEATURE_PREVIEWS: FeaturePreview[] = [
     mode: "day",
     payload: displayPayload(smartNoticeView, 1, null, "feature-smart-notices", { instantRefresh: false }),
     feeds: { alerts: { ...alertsSample, alerts: alertsSample.alerts.filter((a) => a.notice) } },
+  },
+  {
+    id: "feature-region-bc",
+    file: "region-bc",
+    cols: 6,
+    rows: 6,
+    mode: "day",
+    payload: displayPayload(langleyPack, 1, null, "feature-region-bc", { instantRefresh: false }),
+    feeds: langleyFeeds,
+    panelOnly: true,
+  },
+  {
+    id: "feature-region-on",
+    file: "region-on",
+    cols: 6,
+    rows: 6,
+    mode: "day",
+    payload: displayPayload(torontoPack, 1, null, "feature-region-on", { instantRefresh: false }),
+    feeds: torontoFeeds,
+    panelOnly: true,
+  },
+  {
+    id: "feature-grid",
+    file: "multi-view-grid",
+    cols: 12,
+    rows: 6,
+    mode: "day",
+    payload: displayPayload(gridView, 1, null, "feature-grid", { instantRefresh: false }),
+    feeds: {},
+    overlay: "grid",
+  },
+  {
+    id: "feature-on-photos",
+    file: "widgets-on-photos",
+    cols: 12,
+    rows: 6,
+    mode: "day",
+    payload: displayPayload(onPhotoView, 1, null, "feature-on-photos", { instantRefresh: false }),
+    feeds: {},
+  },
+  {
+    id: "feature-offline",
+    file: "offline-burn-in",
+    cols: 12,
+    rows: 6,
+    mode: "day",
+    payload: displayPayload(offlineView, 1, null, "feature-offline", { instantRefresh: false }),
+    feeds: {},
+    offline: true,
+  },
+];
+
+// Composites: real wall shots next to each other. Template ids are the starter templates' own previews.
+const HD = { width: 1920, height: 1080 };
+export const FEATURE_COMPOSITES: FeatureComposite[] = [
+  {
+    file: "regional-packs",
+    width: 1600,
+    height: 880,
+    columns: 2,
+    panels: [
+      { id: "feature-region-bc", label: "Langley, B.C.", width: 960, height: 960 },
+      { id: "feature-region-on", label: "Toronto, Ont.", width: 960, height: 960 },
+    ],
+  },
+  {
+    file: "time-of-day",
+    width: 1920,
+    height: 1200,
+    columns: 2,
+    panels: [
+      { id: "kitchen-glance", label: "Morning", note: "From 6:00 AM", ...HD },
+      { id: "family-hub", label: "Afternoon", note: "From noon", ...HD },
+      { id: "kitchen-command", label: "Evening", note: "From sunset", ...HD },
+      { id: "night-clock", label: "Overnight", note: "From 10:00 PM, night mode and dimmed", ...HD },
+    ],
+  },
+  {
+    file: "screen-saver",
+    width: 1920,
+    height: 620,
+    columns: 2,
+    between: "After 10 minutes idle",
+    panels: [
+      { id: "kitchen-glance", label: "In Use", ...HD },
+      { id: "photo-frame", label: "Photo Frame", note: "A tap wakes it", ...HD },
+    ],
   },
 ];

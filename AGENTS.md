@@ -119,9 +119,11 @@ even when the display browser has old time-zone data.
 
 **Marketing site** (public pages, Melvin, 2026-11-23): homepage at `/` (no longer redirects to admin), with a **Connect a display** link in the header, hero and footer that opens `/display/` (Melvin, 2026-11-25: so a wall screen taps it instead of typing the address), plus `/pricing/`,
 `/features/` (every widget with a real-widget sample PNG from `public/features/widgets/`, and display behaviour cards,
-smart notices and regional packs among them, some with a wall picture from `public/features/<name>.png`
-(`FEATURE_PREVIEWS`), all regenerated with `npm run templates:previews` alongside starter templates; `PREVIEW_ONLY=a,b`
-renders just those), `/compare/` (and per-competitor pages including Home Screens), `/blog/` with RSS,
+smart notices and regional packs among them, each with a wall picture from `public/features/<name>.png`
+(`FEATURE_PREVIEWS`, and `FEATURE_COMPOSITES` for labelled side-by-side shots such as Morning to Overnight; Melvin,
+2026-11-27), all regenerated with `npm run templates:previews` alongside starter templates; `PREVIEW_ONLY=a,b`
+renders just those; the Live household editor card is the real Views tab, retaken from a production build with
+`node scripts/feature-editor-preview.mjs`), `/compare/` (and per-competitor pages including Home Screens), `/blog/` with RSS,
 `/privacy/`, `/terms/`, `/contact/`, `robots.ts` and `sitemap.ts`. Built like Tuned/Liftsmith (`src/components/site/`,
 Manrope display, template preview screenshots from `public/templates/` — no personal photos in OG). Free vs
 **Household** pricing copy in `src/lib/marketingPlans.ts`; checkout uses the existing Stripe Household flow

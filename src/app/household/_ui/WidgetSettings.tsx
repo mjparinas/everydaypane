@@ -124,7 +124,7 @@ export function WidgetSettings({
       )}
       <TypeSettings widget={widget} config={config} onChange={onChange} />
       <details className="grid gap-4 border-t border-line pt-4">
-        <summary className="cursor-pointer text-xs font-semibold tracking-wide text-soft uppercase">Looks &Amp; Schedule</summary>
+        <summary className="cursor-pointer text-xs font-semibold tracking-wide text-soft uppercase">Looks &amp; Schedule</summary>
         <PanelBackground widget={widget} config={config} onChange={onChange} />
         {info.supportsFontScale !== false && <FontScale widget={widget} onChange={onChange} />}
         <VisiblePeriods widget={widget} onChange={onChange} />
