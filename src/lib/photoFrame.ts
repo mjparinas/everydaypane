@@ -60,18 +60,32 @@ export const pickKey = (p: Pick) => `${p.source}\n${p.photo[0]}`;
 
 /**
  * One pass through the deck: photos added since the frame last looked come first (newest family photo up next), then
- * this day in earlier years, then everything else shuffled. Nothing repeats within a pass.
+ * this day in earlier years, then everything else shuffled (Fisher-Yates, a new order every pass and every load).
+ * Nothing repeats within a pass. `recent` holds what this screen showed last, newest last, even before a reload
+ * (Melvin, 2026-11-27: "in photo mode can you ensure that they are randomly chosen"): the newer half of the deck's
+ * worth of those goes to the end of the pass, so a refresh or a new pass never opens on the photo just shown, and an
+ * "On this day" photo leads once rather than after every reload. Only half, so a small album still shuffles.
  */
-export function order(deck: Pick[], opts: { today: string; memories: boolean; fresh?: Set<string> }, random = Math.random): Pick[] {
+export function order(
+  deck: Pick[],
+  opts: { today: string; memories: boolean; fresh?: Set<string>; recent?: string[] },
+  random = Math.random,
+): Pick[] {
+  const inDeck = new Set(deck.map(pickKey));
+  const recentKeys = (opts.recent ?? []).filter((k) => inDeck.has(k));
+  const later = new Set(recentKeys.slice(-Math.floor(deck.length / 2)));
   const fresh: Pick[] = [];
   const memories: Pick[] = [];
   const rest: Pick[] = [];
+  const last: Pick[] = [];
   for (const p of deck) {
-    if (opts.fresh?.has(pickKey(p))) fresh.push(p);
+    const key = pickKey(p);
+    if (opts.fresh?.has(key)) fresh.push(p);
+    else if (later.has(key)) last.push(p);
     else if (opts.memories && memoryYear(p.photo[3], opts.today) !== null) memories.push(p);
     else rest.push(p);
   }
-  return [...fresh, ...shuffle(memories, random), ...shuffle(rest, random)];
+  return [...fresh, ...shuffle(memories, random), ...shuffle(rest, random), ...shuffle(last, random)];
 }
 
 const MONTH_DAY_YEAR = new Intl.DateTimeFormat("en-CA", { timeZone: "UTC", month: "long", day: "numeric", year: "numeric" });
