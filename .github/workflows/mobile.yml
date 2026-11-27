@@ -69,7 +69,8 @@ jobs:
       - name: Build for the simulator (app, share extension and widget)
         working-directory: mobile/ios/App
         run: |
-          set -o pipefail
           xcodebuild -project App.xcodeproj -scheme App -configuration Debug \
             -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' \
-            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO build | tail -n 80
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO build > build.log 2>&1 \
+            || { grep -E "error:|BUILD FAILED" -B2 -A6 build.log | head -n 200; exit 1; }
+          tail -n 20 build.log
