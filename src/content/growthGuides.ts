@@ -718,11 +718,20 @@ export const GROWTH_GUIDES: Post[] = [
     "A Family Wall Dashboard for Calgary, Toronto, Seattle and Beyond",
     "Everydaypane picks local alerts, power outages and transit from your location. What you get in Alberta, Ontario, Québec, Nova Scotia and Washington.",
     "Guides",
-    "/features/regional-packs.png",
+    "/templates/dual-city.png",
     [
       {
         p: "Everydaypane started on a kitchen wall in Langley, B.C., which is why it knows about BC Ferries and the Township's garbage day. But the parts most families care about (calendars, weather, photos, chores, meals) work anywhere. And for the local parts, your location now picks a **regional pack**: the alerts, power outages and transit that actually apply where you live.",
       },
+      img(
+        fig(
+          "/features/regional-packs.png",
+          1600,
+          880,
+          "Two walls side by side: Langley with TransLink and BC Hydro, Toronto with the TTC and Ontario 511",
+          "Same widgets, different places: each wall reads its own region's sources.",
+        ),
+      ),
       { h2: "What Each Region Gets" },
       { h3: "Everywhere in Canada" },
       {
