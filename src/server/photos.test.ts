@@ -108,8 +108,8 @@ describe("photo routes", () => {
         if (url.startsWith("https://www.amazon.ca/drive/v1/shares/AbCdEfGhIjKlMnOp1234"))
           return Promise.resolve(Response.json({ nodeInfo: { id: "root" } }));
         if (url.includes("/nodes/root/children") && url.includes("offset=0"))
-          return Promise.resolve(Response.json({ count: 3, data: [node("p1"), { id: "sub", kind: "FOLDER" }] }));
-        if (url.includes("/nodes/root/children")) return Promise.resolve(Response.json({ count: 3, data: [node("p2")] }));
+          return Promise.resolve(Response.json({ count: 4, data: [node("p1"), { id: "sub", kind: "FOLDER" }] }));
+        if (url.includes("/nodes/root/children")) return Promise.resolve(Response.json({ count: 4, data: [node("p1"), node("p2")] }));
         if (url.includes("/nodes/sub/children")) return Promise.resolve(Response.json({ count: 1, data: [node("p3")] }));
         if (url.startsWith("https://content-na.drive.amazonaws.com/")) {
           if (expired) return Promise.resolve(new Response("gone", { status: 410 }));
@@ -167,6 +167,30 @@ describe("photo routes", () => {
     });
     const kid = await cookieFor("kid@example.com");
     expect((await checkGET(req("/api/household/photos/", { headers: { cookie: kid } }))).status).toBe(401);
+  });
+
+  it("lists and serves photos past the old cutoff in a large Amazon shared album", async () => {
+    const count = 3845;
+    vi.stubGlobal(
+      "fetch",
+      vi.fn((input: string | URL | Request) => {
+        const url = new URL(String(input));
+        if (url.pathname.includes("/shares/")) return Promise.resolve(Response.json({ nodeInfo: { id: "root" } }));
+        if (url.pathname.includes("/children")) {
+          expect(url.searchParams.get("sort")).toBe('["name ASC","createdDate ASC"]');
+          const offset = Number(url.searchParams.get("offset"));
+          const limit = Number(url.searchParams.get("limit"));
+          const data = Array.from({ length: Math.min(limit, count - offset) }, (_, i) => node(`p${offset + i}`));
+          return Promise.resolve(Response.json({ count, data }));
+        }
+        return Promise.resolve(new Response("jpeg-bytes", { headers: { "content-type": "image/jpeg" } }));
+      }),
+    );
+    const token = await withSources([{ id: "album", kind: "amazonShare", name: "Family", url: SHARE }]);
+    const data = (await (await photosGET(req("/api/display/photos/", { headers: { "x-display-token": token } }))).json()) as PhotoData;
+    expect(data.sources.album?.photos).toHaveLength(count);
+    expect(data.sources.album?.photos.at(-1)?.[0]).toBe("p3844");
+    expect((await photoGET(req(`/api/display/photo/?s=album&i=p3844&w=1280&t=${token}`))).status).toBe(200);
   });
 
   it("waits and tries again when Amazon answers 503, and keeps the last good album while Amazon refuses", async () => {
