@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 
+import { PhotoGridSkeleton } from "@/components/Skeleton";
 import type { DashboardConfig } from "@/lib/config/schema";
 import { isPicture, prepareUpload } from "@/lib/photoUpload";
 
@@ -169,7 +170,7 @@ export function LibraryAlbum({ sourceId }: { sourceId: string }) {
   if (!storage) return <p className="text-sm text-bad">Photo storage isn&rsquo;t set up yet.</p>;
   return (
     <div className="grid gap-2">
-      <p className="text-sm text-soft">{items === null ? "Loading…" : `${items.length} photos`}</p>
+      {items === null ? <PhotoGridSkeleton /> : <p className="text-sm text-soft">{`${items.length} photos`}</p>}
       {items && items.length > 0 && (
         <div className="grid max-h-72 grid-cols-4 gap-1 overflow-y-auto sm:grid-cols-6">
           {items.slice(0, 300).map((p) => (

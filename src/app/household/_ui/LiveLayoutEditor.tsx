@@ -65,6 +65,9 @@ export function LiveLayoutEditor({
   // Until the preview reports where its stage really sits, the overlay is drawn over the whole frame and may move a
   // few pixels when the report lands (browser tests wait for this before dragging a handle).
   const [stageKnown, setStageKnown] = useState(false);
+  // Which view the frame has finished drawing; until it matches, widget-shaped skeletons sit over the black frame
+  // (Melvin, 2026-11-27: skeletons while a page loads).
+  const [drawnView, setDrawnView] = useState<string | null>(null);
   const draftTimer = useRef<number | undefined>(undefined);
   const latest = useRef({ config, version, viewId });
 
@@ -134,6 +137,7 @@ export function LiveLayoutEditor({
       if (!parsePreviewReady(event.data)) return;
       if (event.source === iframe?.contentWindow) {
         setListening(true);
+        setDrawnView(viewId);
         if (event.source && "postMessage" in event.source) sendDraft(event.source as Window);
         return;
       }
@@ -290,7 +294,32 @@ export function LiveLayoutEditor({
             pointerEvents: "none",
           }}
           sandbox="allow-scripts allow-same-origin allow-forms"
+          onLoad={() => setDrawnView(viewId)}
         />
+        {drawnView !== viewId ? (
+          <div
+            className="pointer-events-none absolute inset-0 grid"
+            role="status"
+            aria-busy="true"
+            data-testid="preview-skeleton"
+            style={{
+              gridTemplateColumns: `repeat(${view.cols}, minmax(0, 1fr))`,
+              gridTemplateRows: `repeat(${view.rows}, minmax(0, 1fr))`,
+              gap: `${view.gap * scale}px`,
+              padding: `${view.padding * scale}px`,
+            }}
+          >
+            <span className="sr-only">Loading the preview…</span>
+            {view.widgets.map((w) => (
+              <span
+                key={w.id}
+                aria-hidden="true"
+                className={`rounded-lg motion-safe:animate-pulse ${isBackdrop(w) ? "bg-white/10" : "bg-white/20"}`}
+                style={{ gridColumn: `${w.x + 1} / span ${w.w}`, gridRow: `${w.y + 1} / span ${w.h}` }}
+              />
+            ))}
+          </div>
+        ) : null}
         {/* Transparent hit layer: same padding/gap/cols as the display stage so handles sit on the live widgets. */}
         <div
           ref={overlay}

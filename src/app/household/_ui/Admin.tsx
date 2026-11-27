@@ -6,6 +6,7 @@ import { useEffect, useState, useSyncExternalStore } from "react";
 import { MealPlanner } from "@/components/MealPlanner";
 import { MessageBoard } from "@/components/MessageBoard";
 import { ShoppingList } from "@/components/ShoppingList";
+import { Bone } from "@/components/Skeleton";
 import { Mark } from "@/components/Wordmark";
 import type { DashboardConfig } from "@/lib/config/schema";
 import type { PlanId } from "@/lib/plans";
@@ -194,7 +195,8 @@ function MobileStatus() {
 
 function PlanChip() {
   const { isPaid, planLabel, openUpgrade, openPortal, hasCustomer, loading } = usePlan();
-  if (loading) return null;
+  // Hold the chip's place while the plan loads, so the header doesn't shift when it appears.
+  if (loading) return <Bone className={`h-6 w-12 rounded-full ${isPaid ? "max-sm:hidden" : ""}`} />;
   if (isPaid) {
     return (
       <button

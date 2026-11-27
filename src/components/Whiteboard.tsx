@@ -17,6 +17,8 @@ import {
   type WhiteboardTool,
 } from "@/lib/whiteboard";
 
+import { Bone } from "./Skeleton";
+
 // The household's whiteboard on a phone (Melvin, 2026-11-26: "let the whiteboard sync from phones"). Same board,
 // strokes and hold-to-clear as the wall's widget (src/display/widgets/whiteboard.ts), drawn on the same 1600 × 900
 // board so a doodle lines up everywhere. Used by /family/ and `/d/<token>/edit/`.
@@ -170,18 +172,22 @@ export function Whiteboard() {
 
   return (
     <div className="grid gap-2">
-      <canvas
-        ref={canvasRef}
-        width={BOARD_W}
-        height={BOARD_H}
-        aria-label="Whiteboard"
-        className="block w-full rounded-xl border border-line bg-white"
-        style={{ aspectRatio: `${BOARD_W} / ${BOARD_H}`, touchAction: "none" }}
-        onPointerDown={onDown}
-        onPointerMove={onMove}
-        onPointerUp={finish}
-        onPointerCancel={finish}
-      />
+      <div className="relative">
+        <canvas
+          ref={canvasRef}
+          width={BOARD_W}
+          height={BOARD_H}
+          aria-label="Whiteboard"
+          className="block w-full rounded-xl border border-line bg-white"
+          style={{ aspectRatio: `${BOARD_W} / ${BOARD_H}`, touchAction: "none" }}
+          onPointerDown={onDown}
+          onPointerMove={onMove}
+          onPointerUp={finish}
+          onPointerCancel={finish}
+        />
+        {/* Until the board arrives, a pulse over the blank canvas (skeletons, Melvin, 2026-11-27). */}
+        {!loaded && !error ? <Bone className="pointer-events-none absolute inset-0 rounded-xl opacity-60" /> : null}
+      </div>
       <div className="flex flex-wrap items-center gap-2" role="toolbar" aria-label="Whiteboard tools">
         {WHITEBOARD_COLOURS.map((c) => {
           const on = tool === "pen" && colour === c;
@@ -227,7 +233,7 @@ export function Whiteboard() {
         </button>
       </div>
       <p className="text-sm text-soft" role="status">
-        {error || "Draw here and it shows on every wall screen with a whiteboard."}
+        {error || (loaded ? "Draw here and it shows on every wall screen with a whiteboard." : "Loading the whiteboard…")}
       </p>
     </div>
   );
