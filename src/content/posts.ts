@@ -1,5 +1,6 @@
 // Public blog: release notes, guides and comparisons. Structured data so the index, sitemap, RSS and pages share one list.
 
+import { DEEP_GUIDES } from "./deepGuides";
 import { GROWTH_GUIDES } from "./growthGuides";
 
 export type PostKind = "release" | "guide" | "compare" | "story";
@@ -957,8 +958,8 @@ const STORIES: Post[] = [
   ),
 ];
 
-export const POSTS: Post[] = [...RELEASES, ...GUIDES, ...MORE_GUIDES, ...GROWTH_GUIDES, ...COMPARES, ...STORIES].sort((a, b) =>
-  a.date < b.date ? 1 : a.date > b.date ? -1 : a.slug.localeCompare(b.slug),
+export const POSTS: Post[] = [...RELEASES, ...GUIDES, ...MORE_GUIDES, ...GROWTH_GUIDES, ...DEEP_GUIDES, ...COMPARES, ...STORIES].sort(
+  (a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : a.slug.localeCompare(b.slug)),
 );
 
 export function postBySlug(slug: string): Post | undefined {

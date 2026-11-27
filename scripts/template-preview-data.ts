@@ -8,6 +8,7 @@ import { BUILT_IN_THEMES } from "../src/lib/config/themes";
 import { newWidget, WIDGET_TYPES, WIDGETS } from "../src/lib/config/widgets";
 import { displayPayload } from "../src/lib/display/payload";
 import type { DisplayPayload } from "../src/lib/display/types";
+import { SCHOOL_PRESETS } from "../src/lib/schoolCalendar";
 
 // Bundled by scripts/render-template-previews.mjs. Builds a DisplayPayload per starter template and per widget
 // type, and loads the shared sample feeds so Playwright can screenshot the real display widgets (not a CSS mock).
@@ -724,6 +725,116 @@ const mealsWall = featureConfig(
   WALL,
 );
 
+// Second batch of blog walls (Melvin, 2026-11-27: "do them all", ten more in-depth posts).
+const winterAlerts = regionAlerts([
+  {
+    id: "naad-snow-bc",
+    source: "weather",
+    severity: "moderate",
+    title: "Snowfall warning",
+    area: "Alert Ready · Metro Vancouver - Fraser Valley",
+    description: "Snow, heavy at times, with 10 to 15 cm expected by Thursday morning. Prepare for quickly changing road conditions.",
+    sent: FIXED_NOW - 2 * 3_600_000,
+    expires: null,
+  },
+  {
+    id: "drivebc-coq",
+    source: "roads",
+    severity: "minor",
+    title: "Hwy 5 Coquihalla: winter tires and chains required",
+    area: "DriveBC · Hope to Merritt",
+    sent: FIXED_NOW - 3_600_000,
+    expires: null,
+  },
+]);
+const winterWall = featureConfig(
+  "blog-winter",
+  [
+    fixed({ type: "clock", x: 0, y: 0, w: 3, h: 2 }),
+    fixed({ type: "school", x: 3, y: 0, w: 3, h: 2 }),
+    fixed({ type: "alerts", x: 6, y: 0, w: 6, h: 2 }),
+    { ...fixed({ type: "drivebc", x: 0, y: 2, w: 7, h: 4 }), title: "Highway Cameras" } as Widget,
+    fixed({ type: "snow", x: 7, y: 2, w: 5, h: 4 }),
+    fixed({ type: "weather", x: 0, y: 6, w: 7, h: 2 }),
+    fixed({ type: "agenda", x: 7, y: 6, w: 5, h: 2 }),
+  ],
+  WALL,
+);
+winterWall.alerts.enabled = true;
+
+const langleyPreset = SCHOOL_PRESETS.find((p) => p.id === "sd35-elementary-2026-27");
+if (!langleyPreset) throw new Error("Langley elementary preset is missing");
+const { calendarName, firstDay, lastDay, daysOff } = langleyPreset;
+const langleyElementary = { calendarName, firstDay, lastDay, daysOff };
+const schoolWall = featureConfig(
+  "blog-school-year",
+  [
+    fixed({ type: "clock", x: 0, y: 0, w: 4, h: 2 }),
+    { ...fixed({ type: "schoolDays", x: 0, y: 2, w: 4, h: 4 }), count: 6 } as Widget,
+    fixed({ type: "school", x: 0, y: 6, w: 4, h: 2 }),
+    { ...fixed({ type: "calendarMonth", x: 4, y: 0, w: 8, h: 8 }), weeks: 4 } as Widget,
+  ],
+  WALL,
+);
+
+const airthingsSample = SAMPLE_FEEDS.airthings as { devices: Record<string, unknown>[] };
+const basementAir = {
+  ...airthingsSample,
+  devices: [
+    ...airthingsSample.devices,
+    {
+      serial: "2960000002",
+      name: "Basement",
+      recorded: FIXED_NOW - 10 * 60_000,
+      battery: 64,
+      readings: [
+        { kind: "radon", value: 212, unit: "Bq/m³", level: "poor" },
+        { kind: "co2", value: 640, unit: "ppm", level: "good" },
+        { kind: "voc", value: 310, unit: "ppb", level: "fair" },
+        { kind: "humidity", value: 52, unit: "%", level: "good" },
+        { kind: "temp", value: 18.4, unit: "°C", level: "good" },
+      ],
+    },
+  ],
+};
+const radonAlerts = regionAlerts([
+  {
+    id: "airthings:radon:2960000002:sample",
+    source: "indoorAir",
+    severity: "moderate",
+    title: "High radon: Basement",
+    area: "Basement",
+    description: "212 Bq/m³. Airthings flags radon from 150 Bq/m³; open windows and check the long-term average in the Airthings app.",
+    sent: FIXED_NOW - 10 * 60_000,
+    expires: null,
+  },
+]);
+const indoorAirWall = featureConfig(
+  "blog-indoor-air",
+  [
+    fixed({ type: "clock", x: 0, y: 0, w: 4, h: 2 }),
+    fixed({ type: "airQuality", x: 0, y: 2, w: 4, h: 3 }),
+    fixed({ type: "airthings", x: 4, y: 0, w: 4, h: 5 }),
+    fixed({ type: "weather", x: 8, y: 0, w: 4, h: 5 }),
+    fixed({ type: "alerts", x: 0, y: 5, w: 6, h: 3 }),
+    { ...fixed({ type: "agenda", x: 6, y: 5, w: 6, h: 3 }), title: "Today" } as Widget,
+  ],
+  WALL,
+);
+indoorAirWall.alerts.enabled = true;
+
+const birthdayWall = featureConfig(
+  "blog-birthday",
+  [
+    fixed({ type: "clock", x: 0, y: 0, w: 4, h: 2 }),
+    { ...fixed({ type: "agenda", x: 0, y: 2, w: 4, h: 6 }), title: "Today" } as Widget,
+    { ...fixed({ type: "countdown", x: 4, y: 0, w: 8, h: 5 }), title: "Countdowns" } as Widget,
+    fixed({ type: "photos", x: 4, y: 5, w: 5, h: 3 }),
+    fixed({ type: "weather", x: 9, y: 5, w: 3, h: 3 }),
+  ],
+  WALL,
+);
+
 export const BLOG_PREVIEWS: FeaturePreview[] = [
   {
     id: "blog-morning-brief",
@@ -764,6 +875,48 @@ export const BLOG_PREVIEWS: FeaturePreview[] = [
     ...WALL,
     mode: "day",
     payload: displayPayload(mealsWall, 1, null, "blog-meals-wall", { instantRefresh: false }),
+    feeds: {},
+  },
+  {
+    id: "blog-winter",
+    file: "winter-roads-wall",
+    ...WALL,
+    mode: "day",
+    payload: displayPayload(winterWall, 1, null, "blog-winter", { instantRefresh: false }),
+    feeds: {
+      alerts: winterAlerts,
+      school: {
+        updatedAt: FIXED_NOW,
+        state: "delayed",
+        summary: "Late start",
+        detail: "Schools open at 10 AM because of snow",
+        districtName: "Langley School District",
+      },
+    },
+  },
+  {
+    id: "blog-school-year",
+    file: "school-year-wall",
+    ...WALL,
+    mode: "day",
+    payload: displayPayload(schoolWall, 1, null, "blog-school-year", { instantRefresh: false }),
+    // The real Langley elementary preset, so the post's picture shows the district's own dates.
+    feeds: { "school-days": { updatedAt: FIXED_NOW, ...langleyElementary, lunches: ["Pizza day", "", "Sushi", "", "Hot dog day"] } },
+  },
+  {
+    id: "blog-indoor-air",
+    file: "indoor-air-wall",
+    ...WALL,
+    mode: "day",
+    payload: displayPayload(indoorAirWall, 1, null, "blog-indoor-air", { instantRefresh: false }),
+    feeds: { airthings: basementAir, alerts: radonAlerts },
+  },
+  {
+    id: "blog-birthday",
+    file: "birthday-wall",
+    ...WALL,
+    mode: "day",
+    payload: displayPayload(birthdayWall, 1, null, "blog-birthday", { instantRefresh: false }),
     feeds: {},
   },
 ];
