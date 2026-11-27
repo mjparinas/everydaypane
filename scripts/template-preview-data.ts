@@ -618,3 +618,152 @@ export const FEATURE_COMPOSITES: FeatureComposite[] = [
     ],
   },
 ];
+
+// Blog walls (Melvin, 2026-11-26: blog posts "visually appealing and with several pictures"): whole walls built for
+// one post each, from the same real widgets and sample feeds, written to public/blog/<file>.png at 1920 × 1080.
+// `npm run templates:previews` redraws them with everything else; PREVIEW_ONLY=blog-morning-brief draws one.
+const WALL = { cols: 12, rows: 8 };
+const blogHa = SAMPLE_FEEDS.ha as { entities: Record<string, unknown> };
+const blogLights = {
+  ...blogHa,
+  entities: {
+    ...blogHa.entities,
+    "hue.living_room": { id: "hue.living_room", state: "on", name: "Living Room", changed: FIXED_NOW, brightness: 200, color: "#ffb347" },
+    "govee.tv_strip": {
+      id: "govee.tv_strip",
+      state: "on",
+      name: "TV Light Strip",
+      changed: FIXED_NOW,
+      brightness: 150,
+      color: "#7048e8",
+      scenes: ["Movie Night", "Sunset", "Aurora", "Reading"],
+    },
+    "lifx.porch": { id: "lifx.porch", state: "off", name: "Front Porch", changed: FIXED_NOW, brightness: 0, color: "#ffffff" },
+  },
+};
+const light = (provider: "hue" | "govee" | "lifx", entityId: string, title: string, x: number, y: number) =>
+  ({ ...fixed({ type: "haEntity", x, y, w: 4, h: 3, title }), provider, entityId, control: "light" }) as Widget;
+
+const briefWall = featureConfig(
+  "blog-morning-brief",
+  [
+    fixed({ type: "clock", x: 0, y: 0, w: 4, h: 2 }),
+    { ...fixed({ type: "brief", x: 4, y: 0, w: 8, h: 2 }), layout: "sentence" } as Widget,
+    fixed({ type: "weather", x: 0, y: 2, w: 5, h: 3 }),
+    { ...fixed({ type: "agenda", x: 5, y: 2, w: 4, h: 6 }), title: "Today" } as Widget,
+    fixed({ type: "garbage", x: 9, y: 2, w: 3, h: 2 }),
+    { ...fixed({ type: "meals", x: 9, y: 4, w: 3, h: 4 }), days: 1 } as Widget,
+    fixed({ type: "countdown", x: 0, y: 5, w: 5, h: 3 }),
+  ],
+  WALL,
+);
+const briefList = featureConfig("blog-brief-list", [{ ...fixed({ type: "brief", x: 0, y: 0, w: 6, h: 2 }), layout: "list" } as Widget]);
+
+const smokeAlerts = {
+  updatedAt: FIXED_NOW,
+  alerts: [
+    {
+      id: "evac:sample",
+      source: "evacuations",
+      severity: "moderate",
+      title: "Evacuation order nearby: Chilliwack Lake area",
+      area: "Chilliwack Lake wildfire",
+      description: "Wildfire. 212 homes. Issued by Fraser Valley Regional District. About 88 km away. Leave the area now.",
+      sent: FIXED_NOW - 40 * 60_000,
+      expires: null,
+    },
+    {
+      id: "naad-smoke",
+      source: "weather",
+      severity: "moderate",
+      title: "Special air quality statement",
+      area: "Metro Vancouver - Fraser Valley",
+      description: "Wildfire smoke is causing poor air quality. Limit time outdoors and keep windows closed.",
+      sent: FIXED_NOW - 3 * 3_600_000,
+      expires: null,
+    },
+  ],
+};
+const wildfireWall = featureConfig(
+  "blog-wildfire-season",
+  [
+    fixed({ type: "wildfires", x: 0, y: 0, w: 6, h: 8 }),
+    fixed({ type: "alerts", x: 6, y: 0, w: 6, h: 3 }),
+    fixed({ type: "airQuality", x: 6, y: 3, w: 3, h: 2 }),
+    fixed({ type: "weather", x: 9, y: 3, w: 3, h: 2 }),
+    fixed({ type: "radar", x: 6, y: 5, w: 3, h: 3 }),
+    fixed({ type: "rivers", x: 9, y: 5, w: 3, h: 3 }),
+  ],
+  WALL,
+);
+wildfireWall.alerts.enabled = true;
+
+const lightsWall = featureConfig(
+  "blog-smart-lights",
+  [
+    fixed({ type: "clock", x: 0, y: 0, w: 4, h: 2 }),
+    fixed({ type: "presence", x: 0, y: 2, w: 4, h: 3 }),
+    fixed({ type: "haEntity", x: 0, y: 5, w: 4, h: 3, title: "Thermostat", control: "climate" }),
+    light("hue", "hue.living_room", "Living Room", 4, 0),
+    light("govee", "govee.tv_strip", "TV Light Strip", 8, 0),
+    { ...light("lifx", "lifx.porch", "Front Porch", 4, 3), h: 2 } as Widget,
+    fixed({ type: "camera", x: 4, y: 5, w: 4, h: 3, title: "Backyard" }),
+    fixed({ type: "media", x: 8, y: 3, w: 4, h: 5 }),
+  ],
+  WALL,
+);
+
+const mealsWall = featureConfig(
+  "blog-meals-wall",
+  [
+    { ...fixed({ type: "meals", x: 0, y: 0, w: 8, h: 5 }), days: 5, title: "This Week" } as Widget,
+    { ...fixed({ type: "shopping", x: 8, y: 0, w: 4, h: 8 }), groupByCategory: true, allowCheck: true, count: 14 } as Widget,
+    fixed({ type: "messages", x: 0, y: 5, w: 5, h: 3 }),
+    fixed({ type: "editQr", x: 5, y: 5, w: 3, h: 3 }),
+  ],
+  WALL,
+);
+
+export const BLOG_PREVIEWS: FeaturePreview[] = [
+  {
+    id: "blog-morning-brief",
+    file: "morning-brief-wall",
+    ...WALL,
+    mode: "day",
+    payload: displayPayload(briefWall, 1, null, "blog-morning-brief", { instantRefresh: false }),
+    feeds: {},
+  },
+  {
+    id: "blog-brief-list",
+    file: "morning-brief-list",
+    cols: 6,
+    rows: 2,
+    mode: "day",
+    payload: displayPayload(briefList, 1, null, "blog-brief-list", { instantRefresh: false }),
+    feeds: {},
+  },
+  {
+    id: "blog-wildfire-season",
+    file: "wildfire-season-wall",
+    ...WALL,
+    mode: "day",
+    payload: displayPayload(wildfireWall, 1, null, "blog-wildfire-season", { instantRefresh: false }),
+    feeds: { alerts: smokeAlerts, air: { updatedAt: FIXED_NOW, aqhi: 7, usAqi: 154, pm25: 58.4 } },
+  },
+  {
+    id: "blog-smart-lights",
+    file: "smart-lights-wall",
+    ...WALL,
+    mode: "day",
+    payload: displayPayload(lightsWall, 1, null, "blog-smart-lights", { instantRefresh: false }),
+    feeds: { ha: blogLights },
+  },
+  {
+    id: "blog-meals-wall",
+    file: "meals-wall",
+    ...WALL,
+    mode: "day",
+    payload: displayPayload(mealsWall, 1, null, "blog-meals-wall", { instantRefresh: false }),
+    feeds: {},
+  },
+];

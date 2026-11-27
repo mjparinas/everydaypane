@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-import type { Block } from "@/content/posts";
+import type { Block, Figure } from "@/content/posts";
 import { SIGNUP_PATH } from "@/lib/site";
 
 /** Renders blog blocks. Inline **bold** and [label](/path/) links. */
@@ -44,6 +44,15 @@ export function ArticleBody({ blocks }: { blocks: Block[] }) {
               <span dangerouslySetInnerHTML={{ __html: inline(b.tip) }} />
             </p>
           );
+        if ("img" in b) return <Picture key={i} figure={b.img} />;
+        if ("gallery" in b)
+          return (
+            <div key={i} className="!my-8 grid gap-4 sm:grid-cols-2">
+              {b.gallery.map((f) => (
+                <Picture key={f.src} figure={f} inGallery />
+              ))}
+            </div>
+          );
         if ("cta" in b)
           return (
             <p key={i} className="rounded-2xl border border-line bg-panel px-5 py-4">
@@ -57,6 +66,36 @@ export function ArticleBody({ blocks }: { blocks: Block[] }) {
         return null;
       })}
     </div>
+  );
+}
+
+const WIDTH: Record<NonNullable<Figure["size"]>, string> = {
+  full: "w-full",
+  narrow: "mx-auto w-full max-w-md",
+  phone: "mx-auto w-full max-w-[18rem]",
+};
+
+/** One captioned screenshot. Lazy-loaded, with its real size so the text doesn't jump as it arrives. */
+function Picture({ figure, inGallery = false }: { figure: Figure; inGallery?: boolean }) {
+  const width = inGallery ? "w-full" : WIDTH[figure.size ?? "full"];
+  return (
+    <figure className={`${inGallery ? "" : "!my-8"} ${width}`}>
+      <div className="overflow-hidden rounded-2xl border border-line bg-panel">
+        {/* eslint-disable-next-line @next/next/no-img-element -- static screenshots in /public, already sized */}
+        <img
+          src={figure.src}
+          alt={figure.alt}
+          width={figure.w}
+          height={figure.h}
+          loading="lazy"
+          decoding="async"
+          className="h-auto w-full"
+        />
+      </div>
+      {figure.caption ? (
+        <figcaption className="mt-2 text-center text-sm text-soft" dangerouslySetInnerHTML={{ __html: inline(figure.caption) }} />
+      ) : null}
+    </figure>
   );
 }
 
