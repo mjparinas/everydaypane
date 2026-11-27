@@ -106,7 +106,7 @@ describe("shopping widget", () => {
       [...el.querySelectorAll(".sh-items > li")].map((n) =>
         n.classList.contains("sh-cat") ? `# ${n.textContent}` : n.querySelector(".sh-title")?.textContent,
       ),
-    ).toEqual(["# Produce", "Apples", "# Dairy & eggs", "Milk", "Cheese", "Bananas"]);
+    ).toEqual(["# Produce", "Apples", "# Dairy & Eggs", "Milk", "Cheese", "Bananas"]);
     expect([...el.querySelectorAll(".sh-low")].map((n) => n.closest("li")?.getAttribute("data-id"))).toEqual(["c"]);
     stop();
   });
