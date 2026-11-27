@@ -43,7 +43,6 @@ const base = (now: number, extra: Partial<BriefInput> = {}): BriefInput => ({
   now,
   timeZone: TZ,
   hour12: true,
-  events: 3,
   eveningTomorrow: true,
   banner: "severe",
   ...extra,
@@ -92,7 +91,7 @@ describe("morning brief", () => {
     expect(composeBrief(base(at("2026-11-26T09:10:00"), { weather: snowy })).items[0]?.text).toBe("Snow all day");
   });
 
-  it("names only events still ahead, all-day ones first, and counts the rest", () => {
+  it("names only events still ahead, all-day ones first, every one of them", () => {
     const now = at("2026-11-26T12:00:00");
     const events = [
       event("Breakfast club", "2026-11-26T07:00:00-07:00", "2026-11-26T08:00:00-07:00"),
@@ -104,7 +103,7 @@ describe("morning brief", () => {
     ];
     const brief = composeBrief(base(now, { calendar: { updatedAt: 0, from: "", to: "", events } }));
     expect(brief.greeting).toBe("Good afternoon");
-    expect(brief.items.map((i) => i.text)).toEqual(["Pro-D Day", "Piano at 3 PM", "Swim at 5:30 PM", "1 more on the calendar"]);
+    expect(brief.items.map((i) => i.text)).toEqual(["Pro-D Day", "Piano at 3 PM", "Swim at 5:30 PM", "Book club at 7 PM"]);
   });
 
   it("reads tomorrow from 7 PM: its weather, plans, bins and dinner", () => {

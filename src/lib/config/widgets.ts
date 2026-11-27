@@ -665,7 +665,7 @@ export const WIDGETS: { [T in WidgetType]: WidgetInfo<T> } = {
     icon: "☕",
     size: { w: 6, h: 2 },
     minSize: { w: 3, h: 1 },
-    defaults: () => ({ layout: "sentence" as const, sources: [...BRIEF_SOURCES], events: 3, eveningTomorrow: true }),
+    defaults: () => ({ layout: "sentence" as const, sources: [...BRIEF_SOURCES], eveningTomorrow: true }),
   },
   onThisDay: {
     label: "On This Day",

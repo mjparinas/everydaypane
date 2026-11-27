@@ -12,7 +12,9 @@ export const brief: Mount<"brief"> = (el, w) => {
   el.append(root);
   let body: HTMLElement | null = null;
 
-  // Step the text down until nothing overflows; the widget's own font size setting still scales every step.
+  // Step the text down until nothing overflows; the widget's own font size setting still scales every step. A busy
+  // day that still doesn't fit at half size scrolls by touch rather than hiding its last lines (Melvin, 2026-11-27:
+  // every event is named now, not "3 more on the calendar").
   const fit = () => {
     if (!body) return;
     let scale = 1;
@@ -21,6 +23,7 @@ export const brief: Mount<"brief"> = (el, w) => {
       scale -= 0.07;
       body.style.setProperty("--fit", scale.toFixed(2));
     }
+    body.classList.toggle("bf-scroll", body.scrollHeight > body.clientHeight + 1);
   };
 
   const stop = subscribe<BriefData>(`brief?w=${encodeURIComponent(w.id)}`, 5 * 60_000, (d) => {

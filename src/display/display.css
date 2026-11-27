@@ -4689,6 +4689,11 @@ html.portrait-view .stage {
   overflow: hidden;
   font-size: calc(1.5em * var(--fit, 1));
 }
+.bf-body.bf-scroll {
+  overflow-y: auto;
+  scrollbar-width: none;
+  overscroll-behavior: contain;
+}
 .bf-sentence {
   font-weight: 600;
   line-height: 1.3;

@@ -37,7 +37,7 @@ const quiet = <T>(p: Promise<T>): Promise<T | undefined> => p.catch(() => undefi
 export async function briefFeed(
   accountId: string,
   config: DashboardConfig,
-  w: Pick<BriefWidget, "sources" | "events" | "eveningTomorrow">,
+  w: Pick<BriefWidget, "sources" | "eveningTomorrow">,
   now = Date.now(),
 ): Promise<BriefData> {
   const off = await flagsOff();
@@ -73,7 +73,6 @@ export async function briefFeed(
     now,
     timeZone: tz,
     hour12: config.hour12,
-    events: w.events,
     eveningTomorrow: w.eveningTomorrow,
     banner: config.alerts.banner,
     ...(wx ? { weather: wx } : {}),

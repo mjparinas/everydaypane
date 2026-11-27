@@ -29,8 +29,6 @@ export interface BriefInput {
   now: number;
   timeZone: string;
   hour12: boolean;
-  /** How many calendar events to name at most. */
-  events: number;
   /** Read tomorrow from BRIEF_EVENING_HOUR. */
   eveningTomorrow: boolean;
   banner: DashboardConfig["alerts"]["banner"];
@@ -143,13 +141,12 @@ function calendarItems(input: BriefInput, date: string, day: "today" | "tomorrow
     return true;
   });
   events.sort((a, b) => Number(b.allDay) - Number(a.allDay) || Date.parse(a.start) - Date.parse(b.start));
-  const named = events.slice(0, input.events);
-  for (const e of named) {
+  // Every event is named (Melvin, 2026-11-27: "says 3 more on the calendar, can you show them all?"); the wall shrinks
+  // the text to fit instead.
+  for (const e of events) {
     const text = e.allDay ? e.title : `${e.title} at ${eventTime(e, date, input.timeZone, input.hour12)}`;
     out.push({ source: "calendar", icon: e.allDay ? "📌" : "📅", text, ...(e.location ? { detail: e.location } : {}), tone: "" });
   }
-  const more = events.length - named.length;
-  if (more > 0) out.push({ source: "calendar", icon: "🗓️", text: `${more} more on the calendar`, tone: "" });
   return out;
 }
 

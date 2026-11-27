@@ -767,7 +767,6 @@ export const widgetSchema = z.discriminatedUnion("type", [
       .array(z.enum(BRIEF_SOURCES))
       .max(BRIEF_SOURCES.length)
       .default([...BRIEF_SOURCES]),
-    events: z.number().int().min(1).max(5).default(3),
     eveningTomorrow: z.boolean().default(true),
   }),
   // Playful horoscope (Melvin, 2026-11-23): curated kitchen blurbs by sign, not a live astrology feed.

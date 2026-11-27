@@ -2069,7 +2069,6 @@ function TypeSettings({
               }
             />
           ))}
-          <Stepper label="Calendar Events to Name" value={w.events} min={1} max={5} onChange={(v) => e((x) => void (x.events = v))} />
           <Toggle
             label="Read Tomorrow in the Evening"
             checked={w.eveningTomorrow}
