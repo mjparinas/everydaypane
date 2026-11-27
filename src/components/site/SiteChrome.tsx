@@ -17,8 +17,15 @@ const NAV = [
   { href: "/blog/", label: "Blog" },
 ] as const;
 
-/** Friendly label + initials from an email (no separate profile name stored). */
-function accountNavLabel(email: string): { name: string; initials: string } {
+/** Label + initials for the header: the profile name when there is one, else a guess from the email (Melvin, 2026-11-27). */
+function accountNavLabel(email: string, profileName?: string): { name: string; initials: string } {
+  if (profileName) {
+    const words = profileName.split(/\s+/).filter(Boolean);
+    const initials = (
+      words.length >= 2 ? `${words[0]?.charAt(0) ?? ""}${words.at(-1)?.charAt(0) ?? ""}` : profileName.slice(0, 2)
+    ).toUpperCase();
+    return { name: profileName, initials: initials || "?" };
+  }
   const local = (email.split("@")[0] ?? email).trim();
   const parts = local.split(/[._+\-]+/).filter(Boolean);
   const name = parts.map((p) => p.charAt(0).toUpperCase() + p.slice(1).toLowerCase()).join(" ") || email;
@@ -32,7 +39,7 @@ export function JsonLd({ data }: { data: object | object[] }) {
 
 export async function SiteHeader() {
   const session = await sessionFor((await cookies()).get(SESSION_COOKIE)?.value);
-  const account = session ? accountNavLabel(session.email) : null;
+  const account = session ? accountNavLabel(session.email, session.name) : null;
   const home = session?.role === "admin" ? APP_PATH : FAMILY_PATH;
 
   return (

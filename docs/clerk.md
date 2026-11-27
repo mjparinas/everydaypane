@@ -42,3 +42,10 @@ Users have no passwords; they sign in with an email code after import.
 ## Local / CI without Clerk
 
 Set `AUTH_TEST_MODE=1` and leave Clerk keys empty. Sign-in uses `/api/auth/test-signin/` and an `ep_test_session` cookie. Playwright (`scripts/e2e.mjs`) does this automatically. Never enable `AUTH_TEST_MODE` in production.
+
+## People's names
+
+The household header and the marketing site's account chip show the person's name from their Clerk profile (full
+name, else first and last, else username) and fall back to the email only when there is none (Melvin, 2026-11-27).
+Email-code sign-in doesn't ask for a name unless **First and last name** is turned on under User & authentication in
+the Clerk Dashboard; anyone can add theirs on the Account Portal's profile page (`accounts.everydaypane.com/user`).

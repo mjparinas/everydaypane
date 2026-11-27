@@ -252,6 +252,7 @@ export function Admin({
   initial,
   version,
   email,
+  personName,
   staff = false,
   initialPlan = "free",
   flagsOff = [],
@@ -260,6 +261,8 @@ export function Admin({
   initial: DashboardConfig;
   version: number;
   email: string;
+  /** The signed-in person's name from their profile; the email shows only when there is none (Melvin, 2026-11-27). */
+  personName?: string | undefined;
   staff?: boolean;
   initialPlan?: PlanId;
   /** Platform feature flags that are off for this household (Melvin, 2026-11-26). */
@@ -271,14 +274,14 @@ export function Admin({
     <AdminProvider config={initial} version={version}>
       <PlanProvider initialPlan={initialPlan}>
         <FlagsProvider off={flagsOff} unconfigured={unconfigured}>
-          <AdminPanel email={email} staff={staff} />
+          <AdminPanel email={email} personName={personName} staff={staff} />
         </FlagsProvider>
       </PlanProvider>
     </AdminProvider>
   );
 }
 
-function AdminPanel({ email, staff }: { email: string; staff: boolean }) {
+function AdminPanel({ email, personName, staff }: { email: string; personName?: string | undefined; staff: boolean }) {
   const name = useAdmin((s) => s.config.name);
   const tab = useSyncExternalStore(subscribeHash, hashTab, () => "views" as Tab);
   const dirty = useDirty();
@@ -320,7 +323,9 @@ function AdminPanel({ email, staff }: { email: string; staff: boolean }) {
             <Mark size={36} />
             <div className="min-w-0">
               <h1 className="truncate text-lg font-bold">{name}</h1>
-              <p className="truncate text-xs text-soft">{email}</p>
+              <p className="truncate text-xs text-soft" title={email}>
+                {personName || email}
+              </p>
             </div>
             <PlanChip />
           </div>

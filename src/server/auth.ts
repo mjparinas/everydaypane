@@ -20,6 +20,23 @@ export interface Session {
   email: string;
   role: Role;
   accountId: string;
+  /** The person's own name from their Clerk profile, when they gave one (Melvin, 2026-11-27: show my name, not my email). */
+  name?: string;
+}
+
+/** A Clerk user's display name: full name, else first and last, else username; never the email. */
+export function clerkDisplayName(
+  user: { fullName?: string | null; firstName?: string | null; lastName?: string | null; username?: string | null } | null | undefined,
+): string | undefined {
+  if (!user) return undefined;
+  const full =
+    user.fullName?.trim() ||
+    [user.firstName, user.lastName]
+      .map((p) => p?.trim() ?? "")
+      .filter(Boolean)
+      .join(" ");
+  const name = full || user.username?.trim() || "";
+  return name || undefined;
 }
 
 export function readCookie(req: Request, name: string): string | undefined {
@@ -64,7 +81,12 @@ export function decodeTestSession(value: string | undefined): Session | null {
     const raw = JSON.parse(Buffer.from(payload, "base64url").toString("utf8")) as Partial<Session>;
     if (typeof raw.email !== "string" || typeof raw.accountId !== "string") return null;
     if (raw.role !== "admin" && raw.role !== "family") return null;
-    return { email: raw.email.toLowerCase(), role: raw.role, accountId: raw.accountId };
+    return {
+      email: raw.email.toLowerCase(),
+      role: raw.role,
+      accountId: raw.accountId,
+      ...(typeof raw.name === "string" && raw.name.trim() ? { name: raw.name.trim() } : {}),
+    };
   } catch {
     return null;
   }
@@ -100,7 +122,15 @@ async function clerkSession(): Promise<Session | null> {
     user?.emailAddresses.find((a) => a.id === user.primaryEmailAddressId)?.emailAddress?.toLowerCase() ??
     user?.emailAddresses[0]?.emailAddress?.toLowerCase();
   if (!email) return null;
-  return sessionFromEmail(email);
+  const session = await sessionFromEmail(email);
+  const name = clerkDisplayName(user);
+  return session && name ? { ...session, name } : session;
+}
+
+/** Re-checks a test cookie's membership, keeping the name it carries (test mode only). */
+async function fromTestSession(test: Session): Promise<Session | null> {
+  const session = await sessionFromEmail(test.email);
+  return session && test.name ? { ...session, name: test.name } : session;
 }
 
 /**
@@ -112,7 +142,7 @@ export async function requestSession(req?: Request): Promise<Session | null> {
     const fromTest = decodeTestSession(readCookie(req, TEST_SESSION_COOKIE));
     if (fromTest) {
       // Re-check membership so removing someone still signs them out.
-      return sessionFromEmail(fromTest.email);
+      return fromTestSession(fromTest);
     }
   }
 
@@ -121,7 +151,7 @@ export async function requestSession(req?: Request): Promise<Session | null> {
   } catch {
     if (authTestMode() && req) {
       const fromTest = decodeTestSession(readCookie(req, TEST_SESSION_COOKIE));
-      return fromTest ? sessionFromEmail(fromTest.email) : null;
+      return fromTest ? fromTestSession(fromTest) : null;
     }
     return null;
   }
@@ -131,7 +161,7 @@ export async function requestSession(req?: Request): Promise<Session | null> {
 export async function sessionFor(_cookieValue?: string): Promise<Session | null> {
   if (authTestMode() && _cookieValue) {
     const fromTest = decodeTestSession(_cookieValue);
-    if (fromTest) return sessionFromEmail(fromTest.email);
+    if (fromTest) return fromTestSession(fromTest);
   }
   try {
     return await clerkSession();
@@ -173,7 +203,7 @@ export async function issueTestSession(email: string): Promise<Session | null> {
 export async function currentHouseholdSession(cookieValue?: string): Promise<Session | null> {
   if (authTestMode() && cookieValue) {
     const fromTest = decodeTestSession(cookieValue);
-    if (fromTest) return sessionFromEmail(fromTest.email);
+    if (fromTest) return fromTestSession(fromTest);
   }
   return requestSession();
 }

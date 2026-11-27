@@ -27,6 +27,7 @@ export default async function HouseholdPage() {
       initial={config}
       version={version}
       email={session.email}
+      personName={session.name}
       staff={isStaffEmail(session.email)}
       initialPlan={account?.plan ?? "free"}
       flagsOff={[...off]}
