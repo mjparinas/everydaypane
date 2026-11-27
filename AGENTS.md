@@ -127,7 +127,8 @@ renders just those; the Live household editor card is the real Views tab, retake
 `/privacy/`, `/terms/`, `/contact/`, `robots.ts` and `sitemap.ts`. Built like Tuned/Liftsmith (`src/components/site/`,
 Manrope display, template preview screenshots from `public/templates/` — no personal photos in OG). Free vs
 **Household** pricing copy in `src/lib/marketingPlans.ts`; checkout uses the existing Stripe Household flow
-(`POST /api/household/billing/?action=checkout`). Footer shows version + short commit with no GitHub link (`src/lib/build.ts`).
+(`POST /api/household/billing/?action=checkout&interval=month|year`; yearly needs `STRIPE_PRICE_ID_YEARLY` and falls back to
+monthly without it, Stripe Tax with `STRIPE_AUTOMATIC_TAX=1`; setup in `docs/stripe.md`, Melvin, 2026-11-27). Footer shows version + short commit with no GitHub link (`src/lib/build.ts`).
 The features catalogue lives in `src/lib/marketingFeatures.ts` (grouped like the admin widget picker).
 
 **Alerts** (`src/server/alerts.ts`): Alert Ready (NAAD), **Environment Canada weather warnings** (through NAAD),

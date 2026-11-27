@@ -79,6 +79,12 @@ export function settingsChecklist(): SettingRow[] {
       powers: "Household Checkout",
       state: stripeEnabled() ? "set" : env.stripeSecretKey() || env.stripePriceId() ? "partly" : "missing",
     },
+    {
+      name: "STRIPE_PRICE_ID_YEARLY",
+      group: "Billing",
+      powers: "Yearly Household price",
+      state: env.stripePriceIdYearly() ? "set" : "missing",
+    },
     { name: "STRIPE_WEBHOOK_SECRET", group: "Billing", powers: "Stripe webhooks", state: env.stripeWebhookSecret() ? "set" : "missing" },
     { name: "CRON_SECRET", group: "Jobs", powers: "Scheduled digests", state: env.cronSecret() ? "set" : "missing" },
     { name: "GITHUB_TOKEN", group: "Monitoring", powers: "CI status (optional)", state: env.githubToken() ? "set" : "missing" },

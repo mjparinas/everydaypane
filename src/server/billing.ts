@@ -25,6 +25,18 @@ export function stripeEnabled(): boolean {
   return Boolean(env.stripeSecretKey() && env.stripePriceId());
 }
 
+export type BillingInterval = "month" | "year";
+
+/** True when a yearly price is set, so Checkout can offer yearly (Melvin, 2026-11-27: marketing sells $59/yr). */
+export function yearlyEnabled(): boolean {
+  return stripeEnabled() && Boolean(env.stripePriceIdYearly());
+}
+
+/** The price for an interval; yearly falls back to monthly when no yearly price exists, so the button never dead-ends. */
+export function priceFor(interval: BillingInterval): string {
+  return interval === "year" && env.stripePriceIdYearly() ? env.stripePriceIdYearly() : env.stripePriceId();
+}
+
 export function stripe(): Stripe {
   if (client) return client;
   const key = env.stripeSecretKey();
@@ -33,7 +45,12 @@ export function stripe(): Stripe {
   return client;
 }
 
-export async function createCheckoutSession(accountId: string, email: string, origin: string): Promise<string> {
+export async function createCheckoutSession(
+  accountId: string,
+  email: string,
+  origin: string,
+  interval: BillingInterval = "month",
+): Promise<string> {
   const account = await accountById(accountId);
   if (!account) throw new Error("Account not found");
   // Already on Household: open the portal instead of stacking another subscription Checkout.
@@ -47,10 +64,13 @@ export async function createCheckoutSession(accountId: string, email: string, or
     customerId = customer.id;
     await setStripeIds(accountId, { customerId });
   }
+  const tax = env.stripeAutomaticTax();
   const session = await s.checkout.sessions.create({
     mode: "subscription",
     customer: customerId,
-    line_items: [{ price: env.stripePriceId(), quantity: 1 }],
+    line_items: [{ price: priceFor(interval), quantity: 1 }],
+    // Stripe Tax needs the buyer's address; saving it on the customer keeps renewals taxed the same way.
+    ...(tax ? { automatic_tax: { enabled: true }, customer_update: { address: "auto" as const, name: "auto" as const } } : {}),
     success_url: `${origin}/household/?billing=success`,
     cancel_url: `${origin}/household/?billing=cancel`,
     client_reference_id: accountId,

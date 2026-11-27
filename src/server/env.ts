@@ -98,6 +98,9 @@ export const env = {
   cronSecret: () => process.env.CRON_SECRET ?? "",
   stripeSecretKey: () => process.env.STRIPE_SECRET_KEY ?? "",
   stripePriceId: () => process.env.STRIPE_PRICE_ID ?? "",
+  stripePriceIdYearly: () => process.env.STRIPE_PRICE_ID_YEARLY ?? "",
+  /** "1" turns on Stripe Tax in Checkout once the account has tax registrations (Settings › Tax in Stripe). */
+  stripeAutomaticTax: () => process.env.STRIPE_AUTOMATIC_TAX === "1",
   stripeWebhookSecret: () => process.env.STRIPE_WEBHOOK_SECRET ?? "",
   isProduction: () => process.env.VERCEL_ENV === "production",
 };
