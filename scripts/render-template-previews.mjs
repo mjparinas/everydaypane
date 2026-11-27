@@ -43,9 +43,8 @@ await esbuild.build({
   logLevel: "silent",
 });
 
-const { FIXED_NOW, FEATURE_COMPOSITES, FEATURE_PREVIEWS, SAMPLE_FEEDS, TEMPLATE_PREVIEWS, WIDGET_PREVIEWS, displayShell } = await import(
-  pathToFileURL(bundled).href
-);
+const { BLOG_PREVIEWS, FIXED_NOW, FEATURE_COMPOSITES, FEATURE_PREVIEWS, SAMPLE_FEEDS, TEMPLATE_PREVIEWS, WIDGET_PREVIEWS, displayShell } =
+  await import(pathToFileURL(bundled).href);
 
 const MIME = {
   ".html": "text/html; charset=utf-8",
@@ -101,7 +100,7 @@ function serveStatic(urlPath, res) {
   res.end(readFileSync(file));
 }
 
-const previews = new Map([...TEMPLATE_PREVIEWS, ...WIDGET_PREVIEWS, ...FEATURE_PREVIEWS].map((t) => [t.id, t]));
+const previews = new Map([...TEMPLATE_PREVIEWS, ...WIDGET_PREVIEWS, ...FEATURE_PREVIEWS, ...BLOG_PREVIEWS].map((t) => [t.id, t]));
 
 const server = createServer((req, res) => {
   const url = new URL(req.url ?? "/", "http://127.0.0.1");
@@ -397,6 +396,16 @@ for (const t of FEATURE_PREVIEWS) {
   if (t.panelOnly || !wanted(t.file)) continue;
   writeFileSync(join(featureOutDir, `${t.file}.png`), await shoot(t, { width: CELL * t.cols, height: CELL * t.rows }));
   console.log(`wrote public/features/${t.file}.png`);
+}
+
+// Blog walls: a whole wall per post at the panel's own size (a 6 × 4 tile at the sample cell size).
+const blogOutDir = join(root, "public", "blog");
+mkdirSync(blogOutDir, { recursive: true });
+for (const t of BLOG_PREVIEWS) {
+  if (!wanted(t.file, t.id)) continue;
+  const size = t.cols === 12 ? { width: WIDTH, height: HEIGHT } : { width: CELL * t.cols, height: CELL * t.rows };
+  writeFileSync(join(blogOutDir, `${t.file}.png`), await shoot(t, size));
+  console.log(`wrote public/blog/${t.file}.png`);
 }
 
 // Composites: real wall shots side by side with a label each (time of day, screen saver, regional packs).

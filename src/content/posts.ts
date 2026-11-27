@@ -1,9 +1,33 @@
 // Public blog: release notes, guides and comparisons. Structured data so the index, sitemap, RSS and pages share one list.
 
+import { GROWTH_GUIDES } from "./growthGuides";
+
 export type PostKind = "release" | "guide" | "compare" | "story";
 
+/**
+ * A picture in the body of a post (Melvin, 2026-11-26: posts need several pictures, not only the hero). `src` is a file
+ * under public/; `w` and `h` are its pixel size so the page doesn't jump while it loads. `size` "narrow" keeps a small
+ * widget sample or a phone screenshot from blowing up to the column's full width.
+ */
+export interface Figure {
+  src: string;
+  alt: string;
+  w: number;
+  h: number;
+  caption?: string;
+  size?: "full" | "narrow" | "phone";
+}
+
 export type Block =
-  { p: string } | { h2: string } | { h3: string } | { ul: string[] } | { ol: string[] } | { tip: string } | { cta?: true };
+  | { p: string }
+  | { h2: string }
+  | { h3: string }
+  | { ul: string[] }
+  | { ol: string[] }
+  | { tip: string }
+  | { img: Figure }
+  | { gallery: Figure[] }
+  | { cta?: true };
 
 export interface Post {
   slug: string;
@@ -933,7 +957,7 @@ const STORIES: Post[] = [
   ),
 ];
 
-export const POSTS: Post[] = [...RELEASES, ...GUIDES, ...MORE_GUIDES, ...COMPARES, ...STORIES].sort((a, b) =>
+export const POSTS: Post[] = [...RELEASES, ...GUIDES, ...MORE_GUIDES, ...GROWTH_GUIDES, ...COMPARES, ...STORIES].sort((a, b) =>
   a.date < b.date ? 1 : a.date > b.date ? -1 : a.slug.localeCompare(b.slug),
 );
 
@@ -953,6 +977,9 @@ export function readMinutes(post: Post): number {
     if ("tip" in b) return n + b.tip.split(/\s+/).length;
     if ("h2" in b) return n + b.h2.split(/\s+/).length;
     if ("h3" in b) return n + b.h3.split(/\s+/).length;
+    // A picture takes about as long to look at as a dozen words to read.
+    if ("img" in b) return n + 12;
+    if ("gallery" in b) return n + 12 * b.gallery.length;
     return n;
   }, 0);
   return Math.max(1, Math.round(words / 200));

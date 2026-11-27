@@ -1,12 +1,37 @@
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 
-import { postBySlug, POSTS } from "../content/posts";
+import { postBySlug, POSTS, type Figure } from "../content/posts";
 import { shortCommit } from "./build";
 import { COMPETITORS } from "./compare";
 import { MARKETING_PLAN_TABLE, MARKETING_PLANS } from "./marketingPlans";
 import { FREE_LIMITS, PAID_LIMITS } from "./plans";
 
+/** Pixel size of a PNG or WebP (lossy VP8, lossless VP8L or extended VP8X), read from its header. */
+function imageSize(file: string): { w: number; h: number } {
+  const b = readFileSync(join(process.cwd(), "public", file));
+  if (b.toString("ascii", 1, 4) === "PNG") return { w: b.readUInt32BE(16), h: b.readUInt32BE(20) };
+  const chunk = b.toString("ascii", 12, 16);
+  if (chunk === "VP8 ") return { w: b.readUInt16LE(26) & 0x3fff, h: b.readUInt16LE(28) & 0x3fff };
+  if (chunk === "VP8L") {
+    const bits = b.readUInt32LE(21);
+    return { w: (bits & 0x3fff) + 1, h: ((bits >> 14) & 0x3fff) + 1 };
+  }
+  if (chunk === "VP8X") return { w: b.readUIntLE(24, 3) + 1, h: b.readUIntLE(27, 3) + 1 };
+  throw new Error(`${file}: not a PNG or WebP`);
+}
+
 describe("marketing content", () => {
+  it("gives every blog picture a real file with its stated size", () => {
+    const figures: Figure[] = POSTS.flatMap((p) => p.body.flatMap((b) => ("img" in b ? [b.img] : "gallery" in b ? b.gallery : [])));
+    expect(figures.length).toBeGreaterThan(40);
+    for (const f of figures) {
+      expect(f.alt.length, f.src).toBeGreaterThan(10);
+      expect(imageSize(f.src), f.src).toEqual({ w: f.w, h: f.h });
+    }
+  });
+
   it("has unique blog slugs and a latest release", () => {
     const slugs = POSTS.map((p) => p.slug);
     expect(new Set(slugs).size).toBe(slugs.length);

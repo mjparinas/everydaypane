@@ -123,7 +123,7 @@ smart notices and regional packs among them, each with a wall picture from `publ
 (`FEATURE_PREVIEWS`, and `FEATURE_COMPOSITES` for labelled side-by-side shots such as Morning to Overnight; Melvin,
 2026-11-27), all regenerated with `npm run templates:previews` alongside starter templates; `PREVIEW_ONLY=a,b`
 renders just those; the Live household editor card is the real Views tab, retaken from a production build with
-`node scripts/feature-editor-preview.mjs`), `/compare/` (and per-competitor pages including Home Screens), `/blog/` with RSS,
+`node scripts/feature-editor-preview.mjs`), `/compare/` (and per-competitor pages including Home Screens), `/blog/` with RSS (posts in `src/content/posts.ts`; bodies can hold **pictures** — `img` and two-up `gallery` blocks with their pixel sizes, checked against the files by `marketing.test.ts`; Melvin, 2026-11-26: posts need several pictures; ten search-led guides with 4–6 pictures each in `src/content/growthGuides.ts`, such as the Skylight alternative, kitchen screens, chore charts, meal planning, wildfire season and other cities; blog-only walls are `BLOG_PREVIEWS` rendered to `public/blog/` by `npm run templates:previews`, phone and settings shots there are WebP captures of the real app),
 `/privacy/`, `/terms/`, `/contact/`, `robots.ts` and `sitemap.ts`. Built like Tuned/Liftsmith (`src/components/site/`,
 Manrope display, template preview screenshots from `public/templates/` — no personal photos in OG). Free vs
 **Household** pricing copy in `src/lib/marketingPlans.ts`; checkout uses the existing Stripe Household flow
