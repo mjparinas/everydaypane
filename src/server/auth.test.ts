@@ -3,7 +3,15 @@ import { describe, expect, it } from "vitest";
 import { useTestServer } from "@/test/server";
 
 import { createAccount } from "./accounts";
-import { decodeTestSession, encodeTestSession, issueTestSession, requestSession, sessionFromEmail, testSessionCookie } from "./auth";
+import {
+  clerkDisplayName,
+  decodeTestSession,
+  encodeTestSession,
+  issueTestSession,
+  requestSession,
+  sessionFromEmail,
+  testSessionCookie,
+} from "./auth";
 
 describe("Clerk-backed household sessions (test cookie)", () => {
   useTestServer();
@@ -41,5 +49,23 @@ describe("Clerk-backed household sessions (test cookie)", () => {
 
   it("returns null for strangers", async () => {
     expect(await issueTestSession("stranger@example.com")).toBeNull();
+  });
+
+  it("keeps the person's name through a test session", async () => {
+    const session = await issueTestSession("admin@example.com");
+    const header = testSessionCookie({ ...session!, name: "Melvin Parinas" }).split(";")[0] ?? "";
+    const resolved = await requestSession(new Request("http://localhost/", { headers: { cookie: header, origin: "http://localhost" } }));
+    expect(resolved?.name).toBe("Melvin Parinas");
+    expect(resolved?.email).toBe("admin@example.com");
+  });
+});
+
+describe("clerkDisplayName", () => {
+  it("prefers the full name, then first and last, then username, never the email", () => {
+    expect(clerkDisplayName({ fullName: "Melvin Parinas", firstName: "M" })).toBe("Melvin Parinas");
+    expect(clerkDisplayName({ fullName: null, firstName: "Melvin", lastName: " " })).toBe("Melvin");
+    expect(clerkDisplayName({ firstName: null, lastName: null, username: "melvin" })).toBe("melvin");
+    expect(clerkDisplayName({ fullName: "  ", firstName: null, lastName: null, username: null })).toBeUndefined();
+    expect(clerkDisplayName(null)).toBeUndefined();
   });
 });
