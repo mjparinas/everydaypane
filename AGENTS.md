@@ -271,8 +271,8 @@ npm run templates:previews  # regenerate public/templates/*.png from real widget
   moves; admins can tap **Refresh displays**. **Family lists on the same long-poll** (Melvin, 2026-11-26: "why do
   messages or other updates take 30 seconds to load"): every write to messages, shopping, meals, chores, the
   whiteboard, family calendar events or library photos bumps a per-household counter (`account_changes`,
-  `markChanged` in `src/server/changes.ts`); config-watch reads it with the settings version in one query a second
-  and answers when one moves, and the wall refetches only that feed (`refresh(path)`), so a phone's note shows in
+  `markChanged` in `src/server/changes.ts`); config-watch reads it with the settings version in one query every 2.5
+  seconds and answers when one moves, and the wall refetches only that feed (`refresh(path)`), so a phone's note shows in
   a second or two. No new connection, no SSE or WebSocket (on Vercel they hold a function the same way). A new
   family-editable feed adds its name to `LIVE_FEEDS` and a `markChanged` after each write. Free keeps each feed's own
   timer (30 s messages, 60 s shopping, meals and chores). State responses carry the release

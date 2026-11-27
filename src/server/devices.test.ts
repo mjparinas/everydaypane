@@ -2,12 +2,13 @@ import { describe, expect, it, vi } from "vitest";
 
 import { GET, POST } from "@/app/api/household/devices/[id]/route";
 import { GET as listDevices } from "@/app/api/household/devices/route";
+import { seen } from "@/app/household/_ui/DisplaysPanel";
 import { LEGACY_ACCOUNT_ID } from "@/server/accounts";
 import { cookieFor, req, useTestServer } from "@/test/server";
 
 import * as crypto from "./crypto";
 import { query } from "./db";
-import { addDevice, deviceForToken } from "./devices";
+import { addDevice, deviceForToken, LAST_SEEN_THROTTLE_MS } from "./devices";
 
 const ctx = (id: string) => ({ params: Promise.resolve({ id }) });
 const tokenOfEdit = (editUrl: string) => /\/d\/([^/]+)\//.exec(editUrl)?.[1] ?? "";
@@ -103,5 +104,34 @@ describe("display addresses", () => {
     const row = body.devices.find((d) => d.id === device.id);
     expect(row?.url).toMatch(/\/display\/$/);
     expect(row?.editUrl).toBeNull();
+  });
+
+  it("throttles last_seen_at writes to 5 minutes and keeps active displays Online", async () => {
+    expect(LAST_SEEN_THROTTLE_MS).toBe(300_000);
+    const t0 = 1_700_000_000_000;
+    const { device, token } = await addDevice(LEGACY_ACCOUNT_ID, "Kitchen", null, t0);
+    const readLastSeen = async () => {
+      const [row] = await query<{ last_seen_at: number | null }>("SELECT last_seen_at FROM devices WHERE id = ?", [device.id]);
+      return row?.last_seen_at === null || row?.last_seen_at === undefined ? null : Number(row.last_seen_at);
+    };
+
+    expect(await readLastSeen()).toBeNull();
+    expect(seen(null, t0)).toBe("Never opened");
+
+    await deviceForToken(token, t0);
+    expect(await readLastSeen()).toBe(t0);
+
+    // Polls inside the 5-minute window skip the UPDATE while the Displays tab still reports Online.
+    await deviceForToken(token, t0 + 60_000);
+    await deviceForToken(token, t0 + 240_000);
+    await deviceForToken(token, t0 + LAST_SEEN_THROTTLE_MS);
+    expect(await readLastSeen()).toBe(t0);
+    expect(seen(t0, t0 + 240_000)).toBe("Online");
+    expect(seen(t0, t0 + 359_999)).toBe("Online");
+
+    // First poll past 5 minutes writes the new timestamp; past 6 minutes without a poll shows elapsed minutes.
+    await deviceForToken(token, t0 + LAST_SEEN_THROTTLE_MS + 1);
+    expect(await readLastSeen()).toBe(t0 + LAST_SEEN_THROTTLE_MS + 1);
+    expect(seen(t0, t0 + 360_000)).toBe("Seen 6 min ago");
   });
 });

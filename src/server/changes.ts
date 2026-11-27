@@ -28,7 +28,7 @@ export interface Versions {
   feeds: Partial<Record<LiveFeed, number>>;
 }
 
-/** The settings version and every list's counter, in one read (config-watch asks once a second). */
+/** The settings version and every list's counter, in one read (config-watch asks every 2.5 seconds). */
 export async function versions(accountId: string): Promise<Versions> {
   const rows = await query<{ feed: string; version: number }>(
     `SELECT '' AS feed, version FROM account_config WHERE account_id = ?
