@@ -9,10 +9,12 @@ import {
   createCheckoutSession,
   handleStripeWebhook,
   planFromSubscriptionStatus,
+  priceFor,
   resetBillingForTests,
   setStripeForTests,
   stripeEnabled,
   subscriptionIdFromInvoice,
+  yearlyEnabled,
 } from "./billing";
 
 describe("subscriptionIdFromInvoice", () => {
@@ -156,6 +158,47 @@ describe("billing webhooks", () => {
     const url = await createCheckoutSession(account.id, "checkout@example.com", "http://localhost");
     expect(url).toBe("https://checkout.stripe.com/c/pay/cs_test");
     expect((await accountById(account.id))?.stripeCustomerId).toBe("cus_new");
+  });
+
+  it("charges the yearly price when one is set and falls back to monthly when not", async () => {
+    expect(yearlyEnabled()).toBe(false);
+    expect(priceFor("year")).toBe("price_test");
+    vi.stubEnv("STRIPE_PRICE_ID_YEARLY", "price_yearly");
+    try {
+      expect(yearlyEnabled()).toBe(true);
+      expect(priceFor("year")).toBe("price_yearly");
+      expect(priceFor("month")).toBe("price_test");
+
+      const account = await createAccount("Yearly home", "yearly@example.com");
+      const stripe = mockStripe({ constructEvent: () => ({ type: "ping", data: { object: {} } }) as unknown as Stripe.Event });
+      (stripe.customers.create as ReturnType<typeof vi.fn>).mockResolvedValue({ id: "cus_year" });
+      const create = stripe.checkout.sessions.create as ReturnType<typeof vi.fn>;
+      create.mockResolvedValue({ url: "https://checkout.stripe.com/c/pay/cs_year" });
+      await createCheckoutSession(account.id, "yearly@example.com", "http://localhost", "year");
+      const args = create.mock.calls[0]?.[0] as Stripe.Checkout.SessionCreateParams;
+      expect(args.line_items).toEqual([{ price: "price_yearly", quantity: 1 }]);
+      expect(args.automatic_tax).toBeUndefined();
+    } finally {
+      vi.unstubAllEnvs();
+    }
+  });
+
+  it("turns on Stripe Tax and saves the address when STRIPE_AUTOMATIC_TAX is 1", async () => {
+    vi.stubEnv("STRIPE_AUTOMATIC_TAX", "1");
+    try {
+      const account = await createAccount("Tax home", "tax@example.com");
+      const stripe = mockStripe({ constructEvent: () => ({ type: "ping", data: { object: {} } }) as unknown as Stripe.Event });
+      (stripe.customers.create as ReturnType<typeof vi.fn>).mockResolvedValue({ id: "cus_tax" });
+      const create = stripe.checkout.sessions.create as ReturnType<typeof vi.fn>;
+      create.mockResolvedValue({ url: "https://checkout.stripe.com/c/pay/cs_tax" });
+      await createCheckoutSession(account.id, "tax@example.com", "http://localhost");
+      const args = create.mock.calls[0]?.[0] as Stripe.Checkout.SessionCreateParams;
+      expect(args.automatic_tax).toEqual({ enabled: true });
+      expect(args.customer_update).toEqual({ address: "auto", name: "auto" });
+      expect(args.line_items).toEqual([{ price: "price_test", quantity: 1 }]);
+    } finally {
+      vi.unstubAllEnvs();
+    }
   });
 
   it("applySubscription keeps trialing and past_due as Paid", async () => {

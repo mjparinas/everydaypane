@@ -15,8 +15,9 @@ Living go-to-market checklist for Melvin and agents. Update this file when a lau
 | Privacy & Terms for public accounts | Done in product | Self-serve Free; Stripe Household; no “env allowlist only” |
 | Household Upgrade + Customer Portal | Done in product | Settings › Plan (`PlanSettingsCard`) + upgrade dialog from soft CTAs |
 | RSS alternate + Privacy chrome | Done in product | Blog metadata; Privacy uses `SiteChrome` + `pageMeta` |
-| Stripe `STRIPE_PRICE_ID` (monthly) in Vercel | Ops | Webhook endpoint `/api/stripe/webhook/` |
-| Yearly Stripe price | Blocked | Marketing shows $59/yr; checkout uses monthly until `STRIPE_PRICE_ID_YEARLY` exists |
+| Stripe account, prices, webhook and keys in Vercel | Ops | Steps in [`docs/stripe.md`](stripe.md); none set as of 2026-11-27 |
+| Yearly Stripe price | Done in product | `STRIPE_PRICE_ID_YEARLY`; the upgrade dialog offers Yearly/Monthly once it's set |
+| Sales tax | Optional | `STRIPE_AUTOMATIC_TAX=1` after adding registrations in Stripe Tax |
 | Domain `everydaypane.com` + `NEXT_PUBLIC_SITE_URL` | Ops | See [Domain & email cutover](#domain--email-cutover) |
 | Resend `MAIL_FROM` / contact on everydaypane.com | Ops | |
 | Google Search Console + sitemap | Ops | After canonical domain is final |
@@ -82,7 +83,7 @@ Melvin-owned ops (code defaults already favour everydaypane.com where set).
 4. Add the property in Google Search Console; submit `https://…/sitemap.xml`.
 5. Keep `pane.getliftsmith.com` as a permanent redirect to everydaypane.com so old links and OAuth leftovers heal.
 
-Open decisions: exact public launch date; creating Stripe yearly price + wiring `STRIPE_PRICE_ID_YEARLY`.
+Open decisions: exact public launch date; whether to collect GST/HST through Stripe Tax.
 
 ---
 

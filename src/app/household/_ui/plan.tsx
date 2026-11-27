@@ -14,13 +14,17 @@ type BillingBody = {
   plan?: PlanId;
   planLabel?: string;
   stripeEnabled?: boolean;
+  yearlyEnabled?: boolean;
   hasCustomer?: boolean;
 };
+
+export type BillingInterval = "month" | "year";
 
 export type PlanContextValue = {
   plan: PlanId;
   planLabel: string;
   stripeEnabled: boolean;
+  yearlyEnabled: boolean;
   hasCustomer: boolean;
   loading: boolean;
   isPaid: boolean;
@@ -29,7 +33,7 @@ export type PlanContextValue = {
   openUpgrade: (reason?: UpgradeReasonKey) => void;
   closeUpgrade: () => void;
   refresh: () => Promise<void>;
-  startCheckout: () => Promise<void>;
+  startCheckout: (interval?: BillingInterval) => Promise<void>;
   openPortal: () => Promise<void>;
   billingBusy: boolean;
   billingError: string;
@@ -42,6 +46,7 @@ const BANNER_DISMISS_KEY = "everydaypane.freeBanner.dismissed";
 export function PlanProvider({ children, initialPlan = "free" }: { children: ReactNode; initialPlan?: PlanId }) {
   const [plan, setPlan] = useState<PlanId>(initialPlan);
   const [stripeEnabled, setStripeEnabled] = useState(false);
+  const [yearlyEnabled, setYearlyEnabled] = useState(false);
   const [hasCustomer, setHasCustomer] = useState(false);
   const [loading, setLoading] = useState(true);
   const [upgradeOpen, setUpgradeOpen] = useState(() => typeof window !== "undefined" && window.location.hash === "#upgrade");
@@ -55,6 +60,7 @@ export function PlanProvider({ children, initialPlan = "free" }: { children: Rea
     if (!body?.plan) return;
     setPlan(body.plan === "paid" ? "paid" : "free");
     setStripeEnabled(Boolean(body.stripeEnabled));
+    setYearlyEnabled(Boolean(body.yearlyEnabled));
     setHasCustomer(Boolean(body.hasCustomer));
   }, []);
 
@@ -129,11 +135,11 @@ export function PlanProvider({ children, initialPlan = "free" }: { children: Rea
     }
   }, [upgradeReturnHash]);
 
-  const startCheckout = useCallback(async () => {
+  const startCheckout = useCallback(async (interval: BillingInterval = "month") => {
     setBillingBusy(true);
     setBillingError("");
     try {
-      const r = await fetch("/api/household/billing/?action=checkout", { method: "POST" });
+      const r = await fetch(`/api/household/billing/?action=checkout&interval=${interval}`, { method: "POST" });
       const j = (await r.json().catch(() => ({}))) as { url?: string; error?: string };
       if (r.status === 503) {
         setBillingError(j.error ?? "Billing is not configured yet.");
@@ -174,6 +180,7 @@ export function PlanProvider({ children, initialPlan = "free" }: { children: Rea
       plan,
       planLabel: planLabel(plan),
       stripeEnabled,
+      yearlyEnabled,
       hasCustomer,
       loading,
       isPaid: plan === "paid",
@@ -190,6 +197,7 @@ export function PlanProvider({ children, initialPlan = "free" }: { children: Rea
     [
       plan,
       stripeEnabled,
+      yearlyEnabled,
       hasCustomer,
       loading,
       upgradeOpen,
@@ -365,9 +373,13 @@ export function UpgradeDialog() {
     openPortal,
     hasCustomer,
     stripeEnabled,
+    yearlyEnabled,
     billingBusy,
     billingError,
   } = usePlan();
+  const [chosen, setChosen] = useState<BillingInterval>("year");
+  // Without a yearly price in Stripe only monthly can be charged, so don't show a yearly total (Melvin, 2026-11-27).
+  const interval: BillingInterval = yearlyEnabled ? chosen : "month";
 
   useEffect(() => {
     if (!upgradeOpen) return;
@@ -424,8 +436,38 @@ export function UpgradeDialog() {
                 ))}
               </ul>
               <div className="rounded-2xl bg-bg p-4 text-sm">
+                {yearlyEnabled ? (
+                  <div className="mb-3 grid grid-cols-2 gap-2" role="radiogroup" aria-label="Billing">
+                    {(["year", "month"] as const).map((i) => (
+                      <button
+                        key={i}
+                        type="button"
+                        role="radio"
+                        aria-checked={interval === i}
+                        className={`min-h-11 rounded-xl border px-3 font-semibold ${
+                          interval === i ? "border-brand bg-panel text-brand" : "border-line text-soft"
+                        }`}
+                        onClick={() => setChosen(i)}
+                      >
+                        {i === "year" ? "Yearly" : "Monthly"}
+                      </button>
+                    ))}
+                  </div>
+                ) : null}
                 <p className="font-semibold">
-                  {usd(paid.priceYearly)} / year <span className="font-normal text-soft">· about {usd(paid.priceYearly / 12)} / month</span>
+                  {interval === "year" ? (
+                    <>
+                      {usd(paid.priceYearly)} / year{" "}
+                      <span className="font-normal text-soft">· about {usd(paid.priceYearly / 12)} / month</span>
+                    </>
+                  ) : (
+                    <>
+                      {usd(paid.priceMonthly)} / month
+                      {yearlyEnabled ? (
+                        <span className="font-normal text-soft"> · yearly saves {usd(paid.priceMonthly * 12 - paid.priceYearly)}</span>
+                      ) : null}
+                    </>
+                  )}
                 </p>
                 <p className="mt-1 text-soft">
                   Free keeps {FREE_LIMITS.views} view, {FREE_LIMITS.displays} displays and {FREE_LIMITS.calendars} calendars. Household goes
@@ -456,7 +498,7 @@ export function UpgradeDialog() {
               type="button"
               className="btn-primary"
               disabled={billingBusy || !stripeEnabled}
-              onClick={() => void startCheckout()}
+              onClick={() => void startCheckout(interval)}
               data-cta="household-checkout"
             >
               {billingBusy ? "Opening…" : stripeEnabled ? "Get Household" : "Billing Unavailable"}

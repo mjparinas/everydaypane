@@ -6,7 +6,16 @@ import { useState } from "react";
 import { APP_PATH, signUpHref } from "@/lib/site";
 
 /** Household upgrade via existing Stripe Checkout (`/api/household/billing/`). */
-export function HouseholdCheckoutButton({ className = "", label = "Get Household" }: { className?: string; label?: string }) {
+export function HouseholdCheckoutButton({
+  className = "",
+  label = "Get Household",
+  interval = "year",
+}: {
+  className?: string;
+  label?: string;
+  /** The pricing cards lead with the yearly price; the server falls back to monthly when no yearly price is set. */
+  interval?: "month" | "year";
+}) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -15,7 +24,7 @@ export function HouseholdCheckoutButton({ className = "", label = "Get Household
     setBusy(true);
     setError("");
     try {
-      const r = await fetch("/api/household/billing/?action=checkout", { method: "POST" });
+      const r = await fetch(`/api/household/billing/?action=checkout&interval=${interval}`, { method: "POST" });
       if (r.status === 401) {
         router.push(signUpHref("/pricing/"));
         return;
