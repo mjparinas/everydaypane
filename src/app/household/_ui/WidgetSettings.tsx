@@ -2,6 +2,7 @@
 
 import { useEffect, useState, type ReactNode } from "react";
 
+import { SelectSkeleton } from "@/components/Skeleton";
 import { AIRTHINGS_KINDS, AIRTHINGS_LABELS } from "@/lib/airthings";
 import { POOL_KINDS, POOL_LABELS } from "@/lib/blueRiiot";
 import { BORDER_CROSSINGS, BORDER_DIRECTION_LABELS, BORDER_DIRECTIONS, BORDER_INFO } from "@/lib/border";
@@ -2351,7 +2352,7 @@ export function PhotoInterval({ value, hint, onChange }: { value: number; hint?:
 function SonosSpeaker({ value, onChange }: { value: string; onChange: (v: string) => void }) {
   const status = useMusic();
   const players = status?.sonos.players ?? [];
-  if (!status) return <p className="text-xs text-soft">Loading the Sonos speakers…</p>;
+  if (!status) return <SelectSkeleton label="Loading the Sonos speakers…" />;
   if (!status.sonos.connected)
     return (
       <p className="text-xs text-soft">

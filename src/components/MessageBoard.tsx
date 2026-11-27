@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 
 import { familyAuthError, useFamilyAuth, useFamilyFetch } from "@/components/FamilyAuth";
 
+import { MessageNotesSkeleton } from "./Skeleton";
+
 // The family message board (Melvin, 2026-11-17), for phones: post a note, see what's on the wall, delete your own.
 // Admins can also pin a note to the top and delete any. Used by /family/, the admin Messages tab, and `/d/<token>/edit/`.
 
@@ -197,7 +199,7 @@ export function MessageBoard() {
 
       <section aria-label="On the board" className="grid gap-3 sm:grid-cols-2">
         {notes === null ? (
-          <p className="text-sm text-soft">Loading…</p>
+          <MessageNotesSkeleton />
         ) : notes.length === 0 ? (
           <p className="text-sm text-soft">The board is empty.</p>
         ) : (

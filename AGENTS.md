@@ -152,7 +152,7 @@ shared wall address **and a phone-edit QR/link**, meals, shopping, settings for 
 the kids and their chores),
 **settings backup and restore** (Settings › Backup, a JSON file), `/family/` for the message board, **family calendar
 events**, meals and the shopping list, **`/d/<token>/edit/`** (same meals, shopping and messages with no login — scan the
-edit QR or open the Displays link), Sentry. Settings is grouped with a sticky jump nav and `#settings/…` deep links;
+edit QR or open the Displays link), Sentry. **Loading skeletons** (Melvin, 2026-11-27) shaped like each page and list while it loads (`src/components/Skeleton.tsx`, a `loading.tsx` for `/household/`, `/family/`, `/family/chores/` and the kitchen edit and chores pages, widget-shaped blocks over the Views live preview until it draws; opacity pulse, still under reduced motion; never on the wall display). Settings is grouped with a sticky jump nav and `#settings/…` deep links;
 bounded numbers use sliders or −/+ steppers that show min–max (not browser number arrows). Views default to a **12×8**
 grid with gap 16 / edge 14 / tile 16 for the 1920×1080 wall panels, with one-tap grid presets and a grouped widget
 picker. The Views tab embeds one **live editable layout** (the real display under a transparent drag overlay, working

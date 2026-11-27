@@ -6,6 +6,8 @@ import { familyAuthError, useFamilyAuth, useFamilyFetch } from "@/components/Fam
 import { CHORE_PERIODS, PERIOD_LABELS, type ChorePeriod } from "@/lib/chores";
 import type { ChoresData } from "@/lib/display/types";
 
+import { KidsChoresSkeleton } from "./Skeleton";
+
 // Kids phone chore chart (Melvin, 2026-11-23): pick your name, tick today's chores, redeem stars. Used by
 // `/family/chores/` and `/d/<token>/chores/`. Parents still edit the chart in Settings › Chores.
 
@@ -153,7 +155,7 @@ export function KidsChores() {
   }
 
   if (!board && !error) {
-    return <p className="text-sm text-soft">Loading chores…</p>;
+    return <KidsChoresSkeleton />;
   }
 
   if (!board) {

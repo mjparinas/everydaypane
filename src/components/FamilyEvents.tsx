@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 
+import { FamilyEventsSkeleton } from "./Skeleton";
+
 // Family calendar events (Melvin, 2026-11-22): post visits and concerts from a phone; they appear on the wall calendar in blue.
 
 interface EventRow {
@@ -191,7 +193,7 @@ export function FamilyEvents() {
       </form>
       <ul className="grid gap-2">
         {rows === null ? (
-          <li className="text-sm text-soft">Loading…</li>
+          <FamilyEventsSkeleton />
         ) : rows.length === 0 ? (
           <li className="text-sm text-soft">No upcoming events yet.</li>
         ) : (

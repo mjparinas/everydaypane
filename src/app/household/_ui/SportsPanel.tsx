@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 
+import { SelectSkeleton } from "@/components/Skeleton";
 import { LEAGUE_IDS, LEAGUES, MAX_TEAMS, type LeagueId } from "@/lib/sports";
 
 import { ConfirmButton, Section, Select } from "./fields";
@@ -88,7 +89,7 @@ export function SportsPanel() {
             onChange={setLeague}
           />
           {error && <p className="text-sm text-bad">{error}</p>}
-          {!error && !choices && <p className="text-sm text-soft">Loading teams…</p>}
+          {!error && !choices && <SelectSkeleton label="Loading teams…" />}
           {choices && open.length > 0 && picked && (
             <div className="flex items-end gap-2">
               <div className="min-w-0 flex-1">

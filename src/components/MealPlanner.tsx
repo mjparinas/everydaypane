@@ -19,6 +19,8 @@ import {
   type MealSlot,
 } from "@/lib/meals";
 
+import { MealPlannerSkeleton } from "./Skeleton";
+
 // The meal planner (Melvin, 2026-11-17), for phones: a week of days, each with breakfast, lunch and dinner. A meal
 // saves as soon as you leave its box (no Save button), and displays show it within a minute. Meals planned lately are
 // offered as suggestions. Recurring cadences (Melvin, 2026-11-23) fill future days from a rule; a one-off still wins
@@ -232,7 +234,7 @@ export function MealPlanner() {
     }
   }
 
-  if (!plan) return <p className="text-sm text-soft">{error || "Loading…"}</p>;
+  if (!plan) return error ? <p className="text-sm text-bad">{error}</p> : <MealPlannerSkeleton />;
   const days = Array.from({ length: DAYS }, (_, i) => addDays(plan.from, i));
   const step = (n: number) => void load(addDays(plan.from, n));
 

@@ -7,6 +7,8 @@ import type { ShoppingData, ShoppingItem } from "@/lib/display/types";
 import { groupByCategory, SHOPPING_CATEGORIES, SHOPPING_CATEGORY_LABELS, type ShoppingCategory } from "@/lib/shopping";
 import { guessCategory } from "@/lib/shoppingGuess";
 
+import { ShoppingListSkeleton } from "./Skeleton";
+
 // The family shopping list (Melvin, 2026-11-22), for phones: add an item, tick it off, remove it, clear what's
 // bought, or pull in this week's meals. Displays show it within a minute. Used by /family/, the admin Shopping tab,
 // and `/d/<token>/edit/`. Open items are grouped by aisle; each can move aisle or be marked running low (Melvin,
@@ -152,7 +154,7 @@ export function ShoppingList() {
     }
   }
 
-  if (!items) return <p className="text-sm text-soft">{error || "Loading…"}</p>;
+  if (!items) return error ? <p className="text-sm text-bad">{error}</p> : <ShoppingListSkeleton />;
   const open = items.filter((i) => !i.done);
   const done = items.filter((i) => i.done);
 

@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 
+import { DisplaysSkeleton } from "@/components/Skeleton";
 import type { DashboardConfig } from "@/lib/config/schema";
 import { FREE_LIMITS } from "@/lib/plans";
 import { DISPLAY_PATH } from "@/lib/site";
@@ -150,7 +151,7 @@ export function DisplaysPanel() {
 
       <Section title="Displays">
         {devices === null ? (
-          <p className="text-sm text-soft">Loading…</p>
+          <DisplaysSkeleton />
         ) : devices.length === 0 ? (
           <div className="grid gap-2 text-sm text-soft">
             <p className="font-medium text-ink">First screen</p>
