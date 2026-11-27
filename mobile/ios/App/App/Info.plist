@@ -2,12 +2,12 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-  <key>CAPACITOR_DEBUG</key>
+	<key>CAPACITOR_DEBUG</key>
 	<string>$(CAPACITOR_DEBUG)</string>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>en</string>
 	<key>CFBundleDisplayName</key>
-        <string>Everydaypane</string>
+	<string>Everydaypane</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -20,28 +20,45 @@
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
 	<string>$(MARKETING_VERSION)</string>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>com.everydaypane.app</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>everydaypane</string>
+			</array>
+		</dict>
+	</array>
 	<key>CFBundleVersion</key>
 	<string>$(CURRENT_PROJECT_VERSION)</string>
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>To tell your family's wall when you're home, Everydaypane watches for you arriving and leaving home, even when the app is closed. Your location never leaves your phone, only home or away.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Everydaypane uses your location only to notice when you arrive home or leave, if you switch on Share When I'm Home.</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>
-    <false/>
-    <key>UISceneConfigurations</key>
-    <dict>
-      <key>UIWindowSceneSessionRoleApplication</key>
-      <array>
-        <dict>
-            <key>UISceneConfigurationName</key>
-            <string>Default Configuration</string>
-            <key>UISceneDelegateClassName</key>
-            <string>$(PRODUCT_MODULE_NAME).SceneDelegate</string>
-            <key>UISceneStoryboardFile</key>
-            <string>Main</string>
-        </dict>
-      </array>
-    </dict>
+		<false/>
+		<key>UISceneConfigurations</key>
+		<dict>
+			<key>UIWindowSceneSessionRoleApplication</key>
+			<array>
+				<dict>
+					<key>UISceneConfigurationName</key>
+					<string>Default Configuration</string>
+					<key>UISceneDelegateClassName</key>
+					<string>$(PRODUCT_MODULE_NAME).SceneDelegate</string>
+					<key>UISceneStoryboardFile</key>
+					<string>Main</string>
+				</dict>
+			</array>
+		</dict>
 	</dict>
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen</string>
@@ -49,7 +66,7 @@
 	<string>Main</string>
 	<key>UIRequiredDeviceCapabilities</key>
 	<array>
-		<string>armv7</string>
+		<string>arm64</string>
 	</array>
 	<key>UISupportedInterfaceOrientations</key>
 	<array>

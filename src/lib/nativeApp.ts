@@ -82,8 +82,8 @@ function plugin<T>(name: string): T | undefined {
         prop === "then"
           ? undefined
           : prop === "addListener"
-          ? (event: string, fn: (data: never) => void) => Promise.resolve(listen(name, event, fn))
-          : (options?: unknown) => call(name, String(prop), options ?? {}),
+            ? (event: string, fn: (data: never) => void) => Promise.resolve(listen(name, event, fn))
+            : (options?: unknown) => call(name, String(prop), options ?? {}),
     },
   ) as T;
 }
@@ -120,4 +120,13 @@ export function sharedTextItems(text: string, max = 20): string[] {
     )
     .filter((line) => line && line.length <= 80)
     .slice(0, max);
+}
+
+/**
+ * Marketing and pricing pages inside the Everydaypane app (Melvin, 2026-11-27): the app opens on the household's own
+ * pages, and App Store and Google Play rules don't allow selling plans there, so these go to `/app/` instead.
+ */
+export function appRedirect(path: string, ua: string): boolean {
+  if (!inNativeApp(ua)) return false;
+  return path === "/" || /^\/(pricing|compare|features|blog)(\/|$)/.test(path);
 }

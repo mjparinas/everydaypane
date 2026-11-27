@@ -107,7 +107,14 @@ export async function registerMobileDevice(
       now,
       existing.id,
     ]);
-    device = { ...existing, platform: input.platform, name: input.name, pushToken: input.pushToken, pushEnv: input.pushEnv, lastSeenAt: now };
+    device = {
+      ...existing,
+      platform: input.platform,
+      name: input.name,
+      pushToken: input.pushToken,
+      pushEnv: input.pushEnv,
+      lastSeenAt: now,
+    };
   } else {
     // Someone else signed in on this phone: the old registration goes, so it stops getting their household's pushes.
     if (existing) await run("DELETE FROM mobile_devices WHERE id = ?", [existing.id]);
@@ -137,7 +144,8 @@ export async function registerMobileDevice(
       lastSeenAt: now,
     };
   }
-  if (input.pushToken) await run("UPDATE mobile_devices SET push_token = NULL WHERE push_token = ? AND id <> ?", [input.pushToken, device.id]);
+  if (input.pushToken)
+    await run("UPDATE mobile_devices SET push_token = NULL WHERE push_token = ? AND id <> ?", [input.pushToken, device.id]);
   return { ok: true, device, appToken };
 }
 

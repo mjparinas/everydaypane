@@ -1,7 +1,6 @@
 import "server-only";
 
 import { connect } from "node:http2";
-
 import { importPKCS8, SignJWT } from "jose";
 import { after } from "next/server";
 
@@ -77,7 +76,11 @@ async function apnsToken(cfg: NonNullable<ReturnType<typeof apnsConfig>>, now = 
 }
 
 export function apnsPayload(m: PushMessage): string {
-  return JSON.stringify({ aps: { alert: { title: m.title, body: m.body }, sound: "default", "thread-id": m.kind }, url: m.url, kind: m.kind });
+  return JSON.stringify({
+    aps: { alert: { title: m.title, body: m.body }, sound: "default", "thread-id": m.kind },
+    url: m.url,
+    kind: m.kind,
+  });
 }
 
 type SendOutcome = "sent" | "dead" | "failed";
@@ -251,7 +254,12 @@ export function pushWorthy(alerts: EmergencyAlert[], config: DashboardConfig): E
 }
 
 /** Pushes any alert the household hasn't been told about yet. Old claims are cleared after 30 days. */
-export async function pushNewAlerts(accountId: string, config: DashboardConfig, alerts: EmergencyAlert[], now = Date.now()): Promise<number> {
+export async function pushNewAlerts(
+  accountId: string,
+  config: DashboardConfig,
+  alerts: EmergencyAlert[],
+  now = Date.now(),
+): Promise<number> {
   const { apns, fcm } = pushConfigured();
   if (!apns && !fcm) return 0;
   // Only fresh ones: a phone that registers today shouldn't buzz for a warning issued yesterday.
