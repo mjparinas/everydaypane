@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import { composeBrief, hourLabel, precipKind, type BriefInput } from "./brief";
 import type { CalendarEvent, WeatherData } from "./display/types";
@@ -156,6 +156,19 @@ describe("morning brief", () => {
     expect(brief.summary).toBe(
       "Dry, high of 11°, Maya's birthday (turning 8), Soccer at 9 AM, recycling and green cart out tonight, Tacos for dinner.",
     );
+  });
+
+  it("switches to tomorrow at 7 PM even when the runtime sets Vancouver to UTC−8", () => {
+    const nativeFormat = Intl.DateTimeFormat;
+    const formatter = vi.spyOn(Intl, "DateTimeFormat").mockImplementation(function (locales, options) {
+      return new nativeFormat(locales, options?.timeZone === TZ ? { ...options, timeZone: "Etc/GMT+8" } : options);
+    });
+    try {
+      expect(composeBrief(base(at("2026-11-26T18:59:00"))).day).toBe("today");
+      expect(composeBrief(base(at("2026-11-26T19:00:00")))).toMatchObject({ day: "tomorrow", date: "2026-11-27" });
+    } finally {
+      formatter.mockRestore();
+    }
   });
 
   it("keeps reading today in the evening when that's switched off", () => {

@@ -4,6 +4,8 @@
 //
 // Typed with a small local interface rather than the WebWorker lib, which can't share a program with the DOM lib.
 
+export {};
+
 interface FetchEventLike extends Event {
   request: Request;
   respondWith(r: Promise<Response>): void;
@@ -78,8 +80,12 @@ sw.addEventListener("activate", (e) => {
   );
 });
 
-function timeout(ms: number): Promise<never> {
-  return new Promise((_, reject) => setTimeout(() => reject(new Error("timeout")), ms));
+function withTimeout<T>(pending: Promise<T>, ms: number): Promise<T> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const timeout = new Promise<never>((_, reject) => {
+    timer = setTimeout(() => reject(new Error("timeout")), ms);
+  });
+  return Promise.race([pending, timeout]).finally(() => clearTimeout(timer));
 }
 
 async function offlineCopy(req: Request): Promise<Response | undefined> {
@@ -97,7 +103,7 @@ function isDisplayDocumentPath(pathname: string): boolean {
 
 async function networkFirst(req: Request, key: Request, ms: number): Promise<Response> {
   try {
-    const r = await Promise.race([fetch(req), timeout(ms)]);
+    const r = await withTimeout(fetch(req), ms);
     if (r.status === 200) {
       const copy = r.clone();
       void caches.open(DATA).then((c) => c.put(key, copy));
@@ -133,7 +139,7 @@ async function displayDocument(req: Request, ms: number): Promise<Response> {
     })
     .catch(() => undefined);
   try {
-    const r = await Promise.race([network, timeout(ms)]);
+    const r = await withTimeout(network, ms);
     if (r.status >= 500) return (await offlineCopy(key)) ?? r;
     return r;
   } catch {
@@ -186,7 +192,9 @@ sw.addEventListener("fetch", (e) => {
     e.respondWith(displayDocument(req, 6000));
   } else if (url.pathname.startsWith("/api/display/")) {
     // Keyed by URL alone (the token header is the same for every request from this device).
-    e.respondWith(networkFirst(req, new Request(url.pathname + url.search), 10000));
+    // A cold Amazon album needs up to 45 seconds to list its pages, plus server overhead.
+    const timeoutMs = url.pathname === "/api/display/photos/" ? 60_000 : 10_000;
+    e.respondWith(networkFirst(req, new Request(url.origin + url.pathname + url.search), timeoutMs));
   } else if (/^\/display\/(display\.(js|css)|sw\.js)/.test(url.pathname) || url.pathname.startsWith("/fonts/")) {
     // Shell assets only — not `/display/unlock/` (Next.js gate page).
     e.respondWith(cacheFirst(req));

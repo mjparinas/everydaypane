@@ -26,10 +26,16 @@ export const messages: Mount<"messages"> = (el, w) => {
   let message = "";
   let colour: (typeof COLOURS)[number] = "yellow";
 
-  const fit = () => dropOverflow(root, ".msg");
+  const fit = () => dropOverflow(root, ".msg", root.querySelector<HTMLElement>("[data-latest]"));
   const draw = (now: number) => {
     if (!list) return;
+    const latest = list.reduce<BoardMessage | undefined>(
+      (newest, m) => (!newest || m.createdAt > newest.createdAt ? m : newest),
+      undefined,
+    );
     const shown = list.slice(0, w.count);
+    // Keep pinned notes first while reserving space for the latest note if the pins would crowd it out.
+    if (latest && !shown.includes(latest)) shown.splice(w.count - 1, 1, latest);
     const note = message ? h("div", { class: "msg-flash" }, message) : null;
     if (!shown.length) {
       fill(
@@ -51,7 +57,7 @@ export const messages: Mount<"messages"> = (el, w) => {
       ...shown.map((m) =>
         h(
           "div",
-          { class: `msg msg-${m.colour}${m.pinned ? " msg-pinned" : ""}` },
+          { class: `msg msg-${m.colour}${m.pinned ? " msg-pinned" : ""}`, "data-latest": m === latest ? "" : undefined },
           h("div", { class: "msg-text" }, m.text),
           h("div", { class: "msg-meta" }, m.pinned ? "📌 " : "", m.author, " · ", ago(now - m.createdAt)),
         ),

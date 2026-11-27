@@ -10,7 +10,7 @@ import { cookieFor, req, useTestServer } from "@/test/server";
 import { loadConfig, saveConfig } from "./config";
 import { query } from "./db";
 import { addDevice } from "./devices";
-import { boardTag, listMessages, postMessage, postMessageFromWall } from "./messages";
+import { boardTag, listMessages, pinMessage, postMessage, postMessageFromWall } from "./messages";
 
 const note = { author: "Mom", text: "Soccer moved to 5", colour: "yellow", expiresInHours: 24 };
 const ctx = (id: string) => ({ params: Promise.resolve({ id }) });
@@ -100,6 +100,27 @@ describe("message board", () => {
     const again = await displayGET(req("/api/display/messages/", { headers: { "x-display-token": token, "if-none-match": tag } }));
     expect(again.status).toBe(304);
     expect((await displayGET(req("/api/display/messages/"))).status).toBe(401);
+  });
+
+  it("delivers new notes to the wall even when older pins fill the feed", async () => {
+    const startedAt = Date.now();
+    const post = (text: string, addedAt: number) =>
+      postMessage(LEGACY_ACCOUNT_ID, { ...note, text, colour: "yellow", postedBy: "kid@example.com" }, addedAt);
+    for (let i = 0; i < 20; i++) {
+      const pinned = await post(`Pinned ${i}`, startedAt + i);
+      await pinMessage(LEGACY_ACCOUNT_ID, pinned.id, true);
+    }
+    const { token } = await addDevice(LEGACY_ACCOUNT_ID, "Kitchen", null);
+    const headers = { "x-display-token": token };
+    const first = await displayGET(req("/api/display/messages/", { headers }));
+    const fresh = await post("New pickup plan", startedAt + 20);
+    const updated = await displayGET(
+      req("/api/display/messages/", { headers: { ...headers, "if-none-match": first.headers.get("etag")! } }),
+    );
+    expect(updated.status).toBe(200);
+    const { messages } = (await updated.json()) as { messages: { id: string; pinned: boolean }[] };
+    expect(messages.filter((m) => m.pinned)).toHaveLength(20);
+    expect(messages.at(-1)).toMatchObject({ id: fresh.id, pinned: false });
   });
 
   it("posts from the wall when a messages widget allows it", async () => {

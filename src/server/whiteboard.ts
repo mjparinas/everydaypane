@@ -63,30 +63,40 @@ function parseStrokes(json: string): WhiteboardStroke[] {
   }
 }
 
-async function read(accountId: string, now = Date.now()): Promise<WhiteboardData> {
+async function read(accountId: string, now: number): Promise<{ data: WhiteboardData; stored: Row | undefined }> {
   const rows = await query<Row>("SELECT revision, json, updated_at FROM account_whiteboard WHERE account_id = ?", [accountId]);
+  const stored = rows[0];
   // Before boards were per household there was one row for everyone; it belongs to the grandfather household.
   const row =
-    rows[0] ??
+    stored ??
     (accountId === LEGACY_ACCOUNT_ID ? (await query<Row>("SELECT revision, json, updated_at FROM whiteboard WHERE id = 1"))[0] : undefined);
-  if (!row) return empty(now);
-  return {
-    revision: Number(row.revision),
-    updatedAt: Number(row.updated_at),
-    strokes: parseStrokes(row.json),
-  };
+  const data = row ? { revision: Number(row.revision), updatedAt: Number(row.updated_at), strokes: parseStrokes(row.json) } : empty(now);
+  return { data, stored };
 }
 
-async function write(accountId: string, data: WhiteboardData): Promise<void> {
-  await run(
-    "INSERT INTO account_whiteboard (account_id, revision, json, updated_at) VALUES (?, ?, ?, ?) ON CONFLICT(account_id) DO UPDATE SET revision = excluded.revision, json = excluded.json, updated_at = excluded.updated_at",
-    [accountId, data.revision, JSON.stringify(data.strokes), data.updatedAt],
+/** The public revision moves only on Clear. Compare the stored row too so concurrent strokes can't overwrite one another. */
+async function write(accountId: string, stored: Row | undefined, data: WhiteboardData): Promise<boolean> {
+  const changed = await run(
+    `INSERT INTO account_whiteboard (account_id, revision, json, updated_at) VALUES (?, ?, ?, ?)
+     ON CONFLICT(account_id) DO UPDATE SET revision = excluded.revision, json = excluded.json, updated_at = excluded.updated_at
+     WHERE account_whiteboard.revision = ? AND account_whiteboard.json = ? AND account_whiteboard.updated_at = ?`,
+    [
+      accountId,
+      data.revision,
+      JSON.stringify(data.strokes),
+      data.updatedAt,
+      stored?.revision ?? null,
+      stored?.json ?? null,
+      stored?.updated_at ?? null,
+    ],
   );
+  if (!changed) return false;
   await markChanged(accountId, "whiteboard");
+  return true;
 }
 
 export async function getWhiteboard(accountId: string, now = Date.now()): Promise<WhiteboardData> {
-  return read(accountId, now);
+  return (await read(accountId, now)).data;
 }
 
 export function whiteboardTag(data: WhiteboardData): string {
@@ -139,14 +149,14 @@ export async function appendStroke(
   stroke: WhiteboardStroke,
   now = Date.now(),
 ): Promise<{ ok: true; data: WhiteboardData } | { ok: false; reason: "stale" | "duplicate"; data: WhiteboardData }> {
-  const current = await read(accountId, now);
-  if (revision !== current.revision) return { ok: false, reason: "stale", data: current };
-  if (current.strokes.some((s) => s.id === stroke.id)) return { ok: false, reason: "duplicate", data: current };
-  const strokes = [...current.strokes, stroke];
-  while (strokes.length > MAX_STROKES) strokes.shift();
-  const data: WhiteboardData = { revision: current.revision, updatedAt: now, strokes };
-  await write(accountId, data);
-  return { ok: true, data };
+  for (;;) {
+    const { data: current, stored } = await read(accountId, now);
+    if (revision !== current.revision) return { ok: false, reason: "stale", data: current };
+    if (current.strokes.some((s) => s.id === stroke.id)) return { ok: false, reason: "duplicate", data: current };
+    const strokes = [...current.strokes, stroke].slice(-MAX_STROKES);
+    const data: WhiteboardData = { revision, updatedAt: now, strokes };
+    if (await write(accountId, stored, data)) return { ok: true, data };
+  }
 }
 
 /** Wipes the board when the client's revision matches (hold-to-clear on the wall or a phone). */
@@ -155,9 +165,10 @@ export async function clearWhiteboard(
   revision: number,
   now = Date.now(),
 ): Promise<{ ok: true; data: WhiteboardData } | { ok: false; reason: "stale"; data: WhiteboardData }> {
-  const current = await read(accountId, now);
-  if (revision !== current.revision) return { ok: false, reason: "stale", data: current };
-  const data: WhiteboardData = { revision: current.revision + 1, updatedAt: now, strokes: [] };
-  await write(accountId, data);
-  return { ok: true, data };
+  for (;;) {
+    const { data: current, stored } = await read(accountId, now);
+    if (revision !== current.revision) return { ok: false, reason: "stale", data: current };
+    const data: WhiteboardData = { revision: revision + 1, updatedAt: now, strokes: [] };
+    if (await write(accountId, stored, data)) return { ok: true, data };
+  }
 }

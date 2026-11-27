@@ -75,8 +75,19 @@ describe("family events", () => {
       ctx(created.id),
     );
     expect(r.status).toBe(200);
-    const rows = await eventsInRange(LEGACY_ACCOUNT_ID, "2026-11-01", "2027-01-01");
+    const rows = await eventsInRange(LEGACY_ACCOUNT_ID, "2026-11-01", "2027-01-01", "America/Vancouver");
     expect(rows[0]?.title).toBe("Dentist check-up");
     expect(toCalendar(created).id).toMatch(/^family:/);
+  });
+
+  it("uses local dates and exclusive ends for timed and all-day events", async () => {
+    const save = (title: string, start: string, end: string, allDay: boolean) =>
+      createFamilyEvent(LEGACY_ACCOUNT_ID, { title, start, end, allDay, createdBy: "kid@example.com" });
+    await save("Ends at the start", "2026-11-30T23:00:00-07:00", "2026-12-01T00:00:00-07:00", false);
+    await save("Late on Dec 1", "2026-12-02T05:00:00.000Z", "2026-12-02T06:00:00.000Z", false);
+    await save("All day Dec 1", "2026-12-01", "2026-12-02", true);
+    await save("All day Dec 2", "2026-12-02", "2026-12-03", true);
+    const rows = await eventsInRange(LEGACY_ACCOUNT_ID, "2026-12-01", "2026-12-02", "America/Vancouver");
+    expect(rows.map((row) => row.title)).toEqual(["All day Dec 1", "Late on Dec 1"]);
   });
 });

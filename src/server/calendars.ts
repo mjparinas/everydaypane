@@ -22,8 +22,9 @@ export interface Feed {
 export async function combinedFeed(accountId: string, config: DashboardConfig, now = Date.now()): Promise<Feed> {
   const links = config.integrations.icals.filter((l) => l.enabled);
   const m365On = config.integrations.microsoft.calendars.some((c) => c.enabled);
-  const { from, to } = feedRange(now, config.location.timeZone);
-  const family = await familyEvents(accountId, from, to);
+  const timeZone = config.location.timeZone;
+  const { from, to } = feedRange(now, timeZone);
+  const family = await familyEvents(accountId, from, to, timeZone);
 
   let google: Awaited<ReturnType<typeof calendarFeed>> | null = null;
   let googleConnected = true;
@@ -48,7 +49,7 @@ export async function combinedFeed(accountId: string, config: DashboardConfig, n
   if (!googleConnected && !m365 && !links.length && !family.length)
     return { data: { updatedAt: now, from: "", to: "", events: [] }, connected: false, stale: false };
 
-  const results = await Promise.allSettled(links.map((l) => icalEvents(accountId, l, from, to, config.location.timeZone, now)));
+  const results = await Promise.allSettled(links.map((l) => icalEvents(accountId, l, from, to, timeZone, now)));
   const linked = results.flatMap((r, i) => {
     if (r.status === "fulfilled") return r.value;
     console.error(`[calendar] link ${links[i]?.id} failed`, r.reason);

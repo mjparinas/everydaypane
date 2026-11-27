@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 import { json, readJson, sameOrigin, unauthorized } from "@/server/http";
-import { listMessages } from "@/server/messages";
+import { listDisplayMessages } from "@/server/messages";
 import { dismissPopup, popupState } from "@/server/popups";
 import { accountIdOf, viewerFor } from "@/server/viewer";
 
@@ -12,7 +12,7 @@ export async function GET(req: Request) {
   if (!viewer) return unauthorized();
   if (viewer.kind !== "device") return new Response(null, { status: 204, headers: { "Cache-Control": "no-store" } });
   const accountId = accountIdOf(viewer);
-  const board = await listMessages(accountId, 20);
+  const board = await listDisplayMessages(accountId);
   return json(await popupState(accountId, viewer.device.id, board));
 }
 

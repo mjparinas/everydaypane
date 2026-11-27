@@ -1,5 +1,6 @@
 import "server-only";
 
+import { localDate } from "@/lib/calendar";
 import type { CalendarEvent } from "@/lib/display/types";
 
 import { markChanged } from "./changes";
@@ -65,16 +66,18 @@ export const toCalendar = (e: FamilyEvent): CalendarEvent => ({
   calendar: FAMILY_CALENDAR,
 });
 
-/** Events that overlap [from, to) (local inclusive dates, as in feedRange). */
-export async function eventsInRange(accountId: string, from: string, to: string): Promise<CalendarEvent[]> {
-  const boundStart = `${from}T00:00:00Z`;
-  const boundEnd = `${to}T00:00:00Z`;
-  const rows = await query<Row>("SELECT * FROM family_events WHERE account_id = ? AND end > ? AND start < ? ORDER BY start", [
-    accountId,
-    boundStart,
-    boundEnd,
-  ]);
-  return rows.map(toEvent).map(toCalendar);
+/** Events overlapping the local date range, including from and excluding to. */
+export async function eventsInRange(accountId: string, from: string, to: string, timeZone: string): Promise<CalendarEvent[]> {
+  const rows = await query<Row>("SELECT * FROM family_events WHERE account_id = ? ORDER BY start", [accountId]);
+  return rows
+    .map(toEvent)
+    .filter((event) => {
+      if (event.allDay) return event.start < to && event.end > from;
+      const start = Date.parse(event.start);
+      const end = Date.parse(event.end);
+      return Number.isFinite(start) && Number.isFinite(end) && localDate(start, timeZone) < to && localDate(end - 1, timeZone) >= from;
+    })
+    .map(toCalendar);
 }
 
 /** Upcoming and recent items for the family page (newest created last in the list, sorted by start). */

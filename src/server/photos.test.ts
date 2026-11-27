@@ -169,8 +169,8 @@ describe("photo routes", () => {
     expect((await checkGET(req("/api/household/photos/", { headers: { cookie: kid } }))).status).toBe(401);
   });
 
-  it("lists and serves photos past the old cutoff in a large Amazon shared album", async () => {
-    const count = 3845;
+  it("lists and serves up to 5,000 photos from a large Amazon shared album", async () => {
+    const count = 5_250;
     vi.stubGlobal(
       "fetch",
       vi.fn((input: string | URL | Request) => {
@@ -188,9 +188,45 @@ describe("photo routes", () => {
     );
     const token = await withSources([{ id: "album", kind: "amazonShare", name: "Family", url: SHARE }]);
     const data = (await (await photosGET(req("/api/display/photos/", { headers: { "x-display-token": token } }))).json()) as PhotoData;
-    expect(data.sources.album?.photos).toHaveLength(count);
-    expect(data.sources.album?.photos.at(-1)?.[0]).toBe("p3844");
-    expect((await photoGET(req(`/api/display/photo/?s=album&i=p3844&w=1280&t=${token}`))).status).toBe(200);
+    expect(data.sources.album?.photos).toHaveLength(5_000);
+    expect(data.sources.album?.photos.at(-1)?.[0]).toBe("p4999");
+    expect((await photoGET(req(`/api/display/photo/?s=album&i=p4999&w=1280&t=${token}`))).status).toBe(200);
+  });
+
+  it.each(["upstream error", "deadline"])("preserves a complete album after an interrupted refresh (%s)", async (failure) => {
+    vi.spyOn(console, "error").mockImplementation(() => undefined);
+    const now = Date.parse("2026-11-26T08:00:00Z");
+    const refreshAt = now + 7 * 3_600_000;
+    let clock = now;
+    let interrupted = false;
+    vi.spyOn(Date, "now").mockImplementation(() => clock);
+    const fetch = vi.fn(async (input: string | URL | Request) => {
+      const url = new URL(String(input));
+      if (url.pathname.includes("/shares/")) return Response.json({ nodeInfo: { id: "root" } });
+      if (url.searchParams.get("offset") === "0") {
+        if (interrupted && failure === "deadline") clock += 45_000;
+        return Response.json({ count: 2, data: [node("p1")] });
+      }
+      return interrupted ? new Response("temporary upstream error", { status: 502 }) : Response.json({ count: 2, data: [node("p2")] });
+    });
+    vi.stubGlobal("fetch", fetch);
+    await withSources([{ id: "album", kind: "amazonShare", name: "Family", url: SHARE }]);
+    const { config } = await loadConfig(LEGACY_ACCOUNT_ID);
+    const ids = async (at: number) => (await photosFeed(LEGACY_ACCOUNT_ID, config, at)).sources.album?.photos.map((p) => p[0]);
+
+    expect(await ids(now)).toEqual(["p1", "p2"]);
+    interrupted = true;
+    clock = refreshAt;
+    expect(await ids(refreshAt)).toEqual(["p1", "p2"]);
+    const calls = fetch.mock.calls.length;
+    clearMemoryCache();
+    expect(await ids(refreshAt + 60_000)).toEqual(["p1", "p2"]);
+    expect(fetch).toHaveBeenCalledTimes(calls);
+
+    interrupted = false;
+    clock = refreshAt + 21 * 60_000;
+    expect(await ids(clock)).toEqual(["p1", "p2"]);
+    expect(fetch.mock.calls.length).toBeGreaterThan(calls);
   });
 
   it("waits and tries again when Amazon answers 503, and keeps the last good album while Amazon refuses", async () => {

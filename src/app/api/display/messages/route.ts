@@ -2,7 +2,7 @@ import { z } from "zod";
 
 import { loadDisplayConfig } from "@/server/featureFlags";
 import { json, readJson, sameOrigin, unauthorized } from "@/server/http";
-import { boardTag, forDisplay, listMessages, MESSAGE_COLOURS, postMessageFromWall } from "@/server/messages";
+import { boardTag, forDisplay, listDisplayMessages, MESSAGE_COLOURS, postMessageFromWall } from "@/server/messages";
 import { accountIdOf, viewerFor } from "@/server/viewer";
 
 // The board for the message board widget. Displays poll it; an unchanged board answers 304.
@@ -10,7 +10,7 @@ export async function GET(req: Request) {
   const viewer = await viewerFor(req);
   if (!viewer) return unauthorized();
   const accountId = accountIdOf(viewer);
-  const messages = (await listMessages(accountId, 20)).map(forDisplay);
+  const messages = (await listDisplayMessages(accountId)).map(forDisplay);
   const tag = boardTag(messages);
   if (req.headers.get("if-none-match") === tag)
     return new Response(null, { status: 304, headers: { etag: tag, "Cache-Control": "no-store" } });

@@ -71,10 +71,13 @@ export function retryDelay(intervalMs: number, failures: number, capMs = 15 * 60
 }
 
 export function apiUrl(path: string, params: Record<string, string> = {}): string {
-  const q = new URLSearchParams(params);
+  const queryAt = path.indexOf("?");
+  const route = queryAt < 0 ? path : path.slice(0, queryAt);
+  const q = new URLSearchParams(queryAt < 0 ? "" : path.slice(queryAt + 1));
+  for (const [key, value] of Object.entries(params)) q.set(key, value);
   if (PREVIEW) q.set("view", PREVIEW);
   const s = q.toString();
-  return `/api/display/${path}/${s ? `?${s}` : ""}`;
+  return `/api/display/${route.replace(/\/$/, "")}/${s ? `?${s}` : ""}`;
 }
 
 export async function get<T>(
