@@ -1,10 +1,11 @@
+import type { Widget } from "@/lib/config/schema";
 import type { PhotoData } from "@/lib/display/types";
 import { caption, fitFor, order, orientation, pairs, partnerIndex, pickKey, type Pick } from "@/lib/photoFrame";
 
 import { imageUrl, subscribe } from "../api";
 import { fill, h } from "../dom";
 import { isoDate } from "../format";
-import type { Mount } from "./types";
+import type { Cleanup, WidgetContext } from "./types";
 
 // The photo frame: a slideshow from the chosen sources (all of them when none is chosen). Each photo is a "slide" that
 // cross-fades with opacity only, and is loaded before it is shown, at the width the frame draws it, so the proxy sends
@@ -20,7 +21,18 @@ const FADE_MS = 1500;
 /** Photos refresh often enough that one a parent adds from their phone shows within minutes; 304 when unchanged. */
 const FEED_MS = 5 * 60_000;
 
-export const photos: Mount<"photos"> = (el, w, ctx) => {
+export const createPhotoRotation = () => ({
+  known: null as Set<string> | null,
+  seen: new Set<string>(),
+  fresh: new Set<string>(),
+});
+
+export const photos = (
+  el: HTMLElement,
+  w: Extract<Widget, { type: "photos" }>,
+  ctx: WidgetContext,
+  savedRotation?: ReturnType<typeof createPhotoRotation>,
+): Cleanup => {
   const slides = [h("div", { class: "ph-slide" }), h("div", { class: "ph-slide" })];
   const label = h("div", { class: "ph-caption" });
   const note = h("div", { class: "w-empty" }, "Loading photos…");
@@ -30,8 +42,8 @@ export const photos: Mount<"photos"> = (el, w, ctx) => {
   let deck: Pick[] = [];
   let queue: Pick[] = [];
   let queueDay = "";
-  let known: Set<string> | null = null;
-  const fresh = new Set<string>();
+  const rotation = savedRotation ?? createPhotoRotation();
+  const { seen, fresh } = rotation;
   let front = 0;
   let timer: number | undefined;
   let clearTimer: number | undefined;
@@ -41,12 +53,17 @@ export const photos: Mount<"photos"> = (el, w, ctx) => {
   let pending: HTMLImageElement[] = [];
 
   const today = () => isoDate(new Date(), ctx.timeZone);
-  const refill = () => {
+  const refill = (newPass = false) => {
+    if (newPass) seen.clear();
     queueDay = today();
-    queue = order(deck, { today: queueDay, memories: w.memories, fresh });
+    queue = order(
+      deck.filter((p) => !seen.has(pickKey(p))),
+      { today: queueDay, memories: w.memories, fresh },
+    );
   };
   const next = (): Pick | undefined => {
-    if (!queue.length || queueDay !== today()) refill();
+    if (queueDay !== today()) refill();
+    if (!queue.length && deck.length) refill(true);
     return queue.shift();
   };
 
@@ -89,7 +106,8 @@ export const photos: Mount<"photos"> = (el, w, ctx) => {
     const frame = orientation(width, height);
     const picks = [first];
     if (w.pairPortraits && pairs(frame, orientation(first.photo[1], first.photo[2]))) {
-      const i = partnerIndex(queue, frame);
+      // The saver can pair portraits even when they're sparse in a large album.
+      const i = partnerIndex(queue, frame, savedRotation ? queue.length : undefined);
       const partner = i >= 0 ? queue.splice(i, 1)[0] : undefined;
       if (partner) picks.push(partner);
     }
@@ -97,10 +115,15 @@ export const photos: Mount<"photos"> = (el, w, ctx) => {
     const across = frame === "landscape" && picks.length > 1;
     const panes = picks.map((p) => pane(p, across ? width / 2 : width));
     pending = panes.map((p) => p.img);
+    const slideQueue = queue;
     let waiting = panes.length;
     const done = () => {
       if (stopped || --waiting > 0) return;
       pending = [];
+      if (savedRotation) {
+        for (const p of picks) seen.add(pickKey(p));
+        if (queue !== slideQueue) refill();
+      }
       const ok = panes.filter((p) => p.img.naturalWidth);
       if (!ok.length) {
         if (++failures >= Math.min(3, deck.length)) {
@@ -140,15 +163,16 @@ export const photos: Mount<"photos"> = (el, w, ctx) => {
   const stop = subscribe<PhotoData>("photos", FEED_MS, (d) => {
     const wanted = w.sourceIds.length ? w.sourceIds : Object.keys(d.sources);
     const list = wanted.flatMap((s) => (d.sources[s]?.photos ?? []).map((photo) => ({ source: s, photo })));
-    const sig = list.map(pickKey).join(",");
+    const unique = new Map(list.map((pick) => [pickKey(pick), pick]));
+    const sig = [...unique.keys()].join(",");
     if (sig === signature) return;
     signature = sig;
-    deck = list;
+    deck = [...unique.values()];
     // Photos that weren't there when the frame last looked (a parent just added them) come up next, once.
-    const keys = new Set(list.map(pickKey));
-    if (known) for (const k of keys) if (!known.has(k)) fresh.add(k);
+    const keys = new Set(unique.keys());
+    if (rotation.known) for (const k of keys) if (!rotation.known.has(k) && !seen.has(k)) fresh.add(k);
     for (const k of fresh) if (!keys.has(k)) fresh.delete(k);
-    known = keys;
+    rotation.known = keys;
     refill();
     if (!deck.length) {
       const errors = wanted.map((s) => d.sources[s]?.error).filter(Boolean);

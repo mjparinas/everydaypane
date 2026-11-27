@@ -13,7 +13,7 @@ import { immichImage, listImmich } from "./photos/immich";
 import { listOnedrive } from "./photos/onedrive";
 import { listReddit } from "./photos/reddit";
 import { listSmugmug } from "./photos/smugmug";
-import type { Listed } from "./photos/types";
+import { MAX_PHOTOS, type Listed } from "./photos/types";
 import { listWeatherAlbums } from "./photos/weatherAlbums";
 import { fetchPublicHttps, publicHttpsUrl } from "./publicUrl";
 import { getSecret } from "./secrets";
@@ -39,7 +39,7 @@ const RETRY_AFTER_FAILURE = 20 * 60_000;
 
 /** Waits between Amazon requests (tests make it instant). */
 export const timing = { pause: (ms: number) => new Promise<void>((r) => setTimeout(r, ms)) };
-const MAX_PHOTOS = 1500;
+const MAX_AMAZON_SHARE_PHOTOS = 5000;
 const PAGE = 200;
 
 export type { Listed } from "./photos/types";
@@ -124,25 +124,27 @@ async function listShare(url: string): Promise<Listed[]> {
   const root = info.nodeInfo?.id;
   if (!root) throw new Error("Amazon didn't return the shared album");
 
-  const photos: Listed[] = [];
+  // Amazon's default order can repeat IDs across pages and omit other photos.
+  const sort = encodeURIComponent(JSON.stringify(["name ASC", "createdDate ASC"]));
+  const photos = new Map<string, Listed>();
   const folders: { id: string; depth: number }[] = [{ id: root, depth: 0 }];
   let visited = 0;
-  // A big album with many folders must not keep a display waiting: list for at most 20 seconds and keep what came.
-  const deadline = Date.now() + 20_000;
-  while (folders.length && photos.length < MAX_PHOTOS && visited < 100 && Date.now() < deadline) {
+  // Leave time for large albums while bounding how long we keep starting new page requests.
+  const deadline = Date.now() + 45_000;
+  while (folders.length && photos.size < MAX_AMAZON_SHARE_PHOTOS && visited < 100 && Date.now() < deadline) {
     const folder = folders.shift();
     if (!folder) break;
     visited++;
-    for (let offset = 0; photos.length < MAX_PHOTOS;) {
+    for (let offset = 0; photos.size < MAX_AMAZON_SHARE_PHOTOS && Date.now() < deadline;) {
       await timing.pause(500);
       let page: { data?: AmazonNode[]; count?: number };
       try {
         page = (await amazonJson(
-          `${api}/nodes/${folder.id}/children?asset=ALL&limit=${PAGE}&offset=${offset}&tempLink=true&searchOnFamily=false&${common}`,
+          `${api}/nodes/${folder.id}/children?asset=ALL&limit=${PAGE}&offset=${offset}&tempLink=true&searchOnFamily=false&sort=${sort}&${common}`,
         )) as { data?: AmazonNode[]; count?: number };
       } catch (error) {
         // Part of an album beats none: keep what came before Amazon stopped answering.
-        if (photos.length) return photos;
+        if (photos.size) return [...photos.values()];
         throw error;
       }
       const data = page.data ?? [];
@@ -152,13 +154,13 @@ async function listShare(url: string): Promise<Listed[]> {
           continue;
         }
         const p = photoFromNode(n);
-        if (p) photos.push(p);
+        if (p) photos.set(p.id, p);
       }
       offset += data.length;
       if (!data.length || offset >= (page.count ?? 0)) break;
     }
   }
-  return photos;
+  return [...photos.values()].slice(0, MAX_AMAZON_SHARE_PHOTOS);
 }
 
 // ---- Amazon people (needs the admin's cookies) ----

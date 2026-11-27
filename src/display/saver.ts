@@ -7,7 +7,7 @@ import { h } from "./dom";
 import { fmt } from "./format";
 import { everyMinute } from "./ticker";
 import { HA_EVERY } from "./widgets/ha";
-import { photos } from "./widgets/photos";
+import { createPhotoRotation, photos } from "./widgets/photos";
 
 // The screen saver (Melvin, 2026-11-21): after some minutes with nobody using the screen it shows only photos or goes
 // dark, and during the night window it goes dark. A touch, a key, a Home Assistant motion sensor, a doorbell ring or a
@@ -43,6 +43,8 @@ export function screenSaver(
   let mode: SaverMode = "off";
   let stopShow: (() => void) | null = null;
   let motion: { key: string; stop: () => void } | null = null;
+  let rotation = createPhotoRotation();
+  let photoSources = "";
 
   const draw = (next: SaverMode) => {
     if (next === mode) return;
@@ -70,6 +72,11 @@ export function screenSaver(
     const p = getPayload();
     if (!p) return null;
     const s = p.screenSaver;
+    const sources = s.photoSourceIds.join("\n");
+    if (sources !== photoSources) {
+      photoSources = sources;
+      rotation = createPhotoRotation();
+    }
     // The photos widget, filling the screen: it already shuffles, cross-fades and asks for photos at screen width.
     const stops = [
       photos(
@@ -95,6 +102,7 @@ export function screenSaver(
           timeZone: p.location.timeZone,
           hour12: p.hour12,
         },
+        rotation,
       ),
     ];
     if (s.showClock) {
