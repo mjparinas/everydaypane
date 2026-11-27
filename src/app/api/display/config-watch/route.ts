@@ -9,7 +9,8 @@ export const runtime = "nodejs";
 export const maxDuration = 30;
 
 const WAIT_MS = 22_000;
-const TICK_MS = 1_000;
+/** Poll every 2.5s (Melvin, 2026-11-26): cuts idle DB reads by 60% while keeping wall updates ~1.25s on average. */
+const TICK_MS = 2_500;
 
 /**
  * Household displays hold this until the settings version moves past `since` or a family list's counter differs from

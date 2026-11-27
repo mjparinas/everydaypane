@@ -25,10 +25,11 @@ interface Device {
   editUrl: string | null;
 }
 
-function seen(at: number | null): string {
+export function seen(at: number | null, now = Date.now()): string {
   if (at === null) return "Never opened";
-  const ms = Date.now() - at;
-  if (ms < 120_000) return "Online";
+  const ms = now - at;
+  // `last_seen_at` writes at most once every 5 minutes (`LAST_SEEN_THROTTLE_MS`), plus 1 minute of poll headroom.
+  if (ms < 360_000) return "Online";
   const min = Math.floor(ms / 60_000);
   if (min < 60) return min <= 1 ? "Seen 1 min ago" : `Seen ${min} min ago`;
   const hr = Math.floor(min / 60);

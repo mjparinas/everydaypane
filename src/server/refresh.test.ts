@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { GET as watchGET } from "@/app/api/display/config-watch/route";
 import { GET as stateGET } from "@/app/api/display/state/route";
@@ -6,7 +6,8 @@ import { POST as refreshPOST } from "@/app/api/household/refresh/route";
 import { defaultConfig } from "@/lib/config/defaults";
 import { createAccount, LEGACY_ACCOUNT_ID } from "@/server/accounts";
 import { issueTestSession, testSessionCookie } from "@/server/auth";
-import { configVersion, saveConfig } from "@/server/config";
+import * as changes from "@/server/changes";
+import { configVersion, saveConfig, touchConfig } from "@/server/config";
 import { cookieFor, req, useTestServer } from "@/test/server";
 
 import { addDevice } from "./devices";
@@ -51,6 +52,33 @@ describe("Refresh displays", () => {
     expect((await refreshPOST(req("/api/household/refresh/", { method: "POST", headers: { cookie } }))).status).toBe(200);
     const body = (await (await watching).json()) as { version: number };
     expect(body.version).toBeGreaterThan(since);
+  });
+
+  it("ticks config-watch every 2.5 seconds rather than every second", async () => {
+    const { token } = await addDevice(LEGACY_ACCOUNT_ID, "Kitchen", null);
+    const since = await configVersion(LEGACY_ACCOUNT_ID);
+    const spy = vi.spyOn(changes, "versions");
+    vi.useFakeTimers();
+    try {
+      const watching = watchGET(req(`/api/display/config-watch/?since=${since}`, { headers: { "x-display-token": token } }));
+      await vi.advanceTimersByTimeAsync(0);
+      expect(spy).toHaveBeenCalledTimes(1);
+
+      // No second DB read at 1s or 2.4s.
+      await vi.advanceTimersByTimeAsync(1_000);
+      expect(spy).toHaveBeenCalledTimes(1);
+      await vi.advanceTimersByTimeAsync(1_400);
+      expect(spy).toHaveBeenCalledTimes(1);
+
+      await touchConfig(LEGACY_ACCOUNT_ID);
+      await vi.advanceTimersByTimeAsync(100);
+      expect(spy).toHaveBeenCalledTimes(2);
+      const body = (await (await watching).json()) as { version: number };
+      expect(body.version).toBe(since + 1);
+    } finally {
+      vi.useRealTimers();
+      spy.mockRestore();
+    }
   });
 
   it("includes the release version on both changed and unchanged state responses", async () => {

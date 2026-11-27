@@ -33,6 +33,8 @@ type Row = {
 };
 const DISPLAY_TOKEN_LENGTH = 8;
 const TOKEN_ATTEMPTS = 10;
+/** Throttle `last_seen_at` writes to 5 minutes (Melvin, 2026-11-26) to cut background DB writes by 80%. */
+export const LAST_SEEN_THROTTLE_MS = 300_000;
 
 const newDisplayToken = () => randomAlphanumeric(DISPLAY_TOKEN_LENGTH);
 
@@ -157,7 +159,7 @@ export async function deviceForTokenHash(tokenHash: string, now = Date.now()): P
   const rows = await query<Row>("SELECT * FROM devices WHERE token_hash = ?", [tokenHash]);
   const row = rows[0];
   if (!row?.account_id) return null;
-  if (row.last_seen_at === null || now - Number(row.last_seen_at) > 60_000) {
+  if (row.last_seen_at === null || now - Number(row.last_seen_at) > LAST_SEEN_THROTTLE_MS) {
     await run("UPDATE devices SET last_seen_at = ? WHERE id = ?", [now, row.id]);
   }
   return toDevice(row);
