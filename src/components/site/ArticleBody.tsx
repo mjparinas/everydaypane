@@ -100,10 +100,17 @@ function Picture({ figure, inGallery = false }: { figure: Figure; inGallery?: bo
 }
 
 function inline(text: string): string {
-  return text
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/\*\*(.+?)\*\*/g, '<strong class="text-ink">$1</strong>')
-    .replace(/\[(.+?)\]\((\/[^)]+)\)/g, '<a class="font-semibold text-brand underline-offset-2 hover:underline" href="$2">$1</a>');
+  return (
+    text
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      // Commands and paths in backticks (the Raspberry Pi guide, 2026-11-27), kept on one line so they read as typed.
+      .replace(
+        /`([^`]+)`/g,
+        '<code class="rounded border border-line bg-panel px-1.5 py-0.5 font-mono text-[0.9em] text-ink break-all">$1</code>',
+      )
+      .replace(/\*\*(.+?)\*\*/g, '<strong class="text-ink">$1</strong>')
+      .replace(/\[(.+?)\]\((\/[^)]+)\)/g, '<a class="font-semibold text-brand underline-offset-2 hover:underline" href="$2">$1</a>')
+  );
 }
