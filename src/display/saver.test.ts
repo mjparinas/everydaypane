@@ -24,6 +24,7 @@ afterEach(() => {
   vi.unstubAllGlobals();
   document.body.replaceChildren();
   document.documentElement.className = "";
+  localStorage.clear();
 });
 
 describe("the display's screen saver", () => {
@@ -124,6 +125,48 @@ describe("the display's screen saver", () => {
     await vi.advanceTimersByTimeAsync(MIN + 15_000);
     expect(loaded).toEqual(["vertical-a", "vertical-b", "horizontal-0"]);
     s.wake();
+  });
+
+  it("doesn't open on the same photo after the screen reloads", async () => {
+    vi.useFakeTimers({ now: new Date("2026-11-21T20:00:00Z") });
+    // No shuffle at all: without the screen remembering, every load would open on "one".
+    vi.spyOn(Math, "random").mockReturnValue(0.99999);
+    const album: PhotoItem[] = ["one", "two", "three", "four"].map((id): PhotoItem => [id, 1200, 800, ""]);
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(() => Promise.resolve(Response.json({ sources: { album: { photos: album } } }))),
+    );
+    const loaded: string[] = [];
+    vi.spyOn(HTMLImageElement.prototype, "src", "set").mockImplementation(function (this: HTMLImageElement, src: string) {
+      if (!src) return;
+      Object.defineProperties(this, { naturalWidth: { value: 1200 }, naturalHeight: { value: 800 } });
+      setTimeout(() => {
+        loaded.push(new URL(src, window.location.href).searchParams.get("i") ?? "");
+        this.dispatchEvent(new Event("load"));
+      }, 0);
+    });
+    vi.spyOn(HTMLElement.prototype, "clientWidth", "get").mockReturnValue(1920);
+    vi.spyOn(HTMLElement.prototype, "clientHeight", "get").mockReturnValue(1080);
+    vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockReturnValue(null);
+    const p = payload({ idle: true, shows: "photos", minutes: 1, photoSeconds: 60 });
+
+    const first = document.createElement("div");
+    document.body.append(first);
+    const a = screenSaver(first, () => p);
+    a.update();
+    await vi.advanceTimersByTimeAsync(MIN + 500);
+    expect(loaded).toEqual(["one"]);
+    a.wake();
+    first.remove();
+
+    // A reload: a new page, a new saver, only localStorage carried over.
+    const second = document.createElement("div");
+    document.body.append(second);
+    const b = screenSaver(second, () => p);
+    b.update();
+    await vi.advanceTimersByTimeAsync(MIN + 500);
+    expect(loaded).toEqual(["one", "two"]);
+    b.wake();
   });
 
   it("shows a clock over the photos when asked", () => {

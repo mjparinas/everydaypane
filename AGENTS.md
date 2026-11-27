@@ -851,7 +851,12 @@ panel can be complex if you need it to be."
   the hidden slide, waits for its pictures, then cross-fades (opacity) and lets the old slide's images go after the
   fade. Pairing looks 12 photos ahead in the shuffled pass for a partner. The soft backdrop is a 32-pixel canvas of the
   photo, stretched and CSS-blurred once per slide. One pass shows every photo once: new ones, then this day in earlier
-  years, then the rest shuffled; the pass is rebuilt at midnight in the dashboard's zone. `/api/display/photos/` has an
+  years, then the rest shuffled (Fisher-Yates, a new order each pass and each load); midnight or a feed change
+  reshuffles only what the pass hasn't shown. Each screen remembers its last 50 photos in localStorage
+  (`everydaypane.photos.recent.<widget id>`, the saver's id is `saver`), and the newer half of the deck's worth of them
+  go to the end of a pass, so a reload or a new pass never opens on the photo just shown and an On This Day photo
+  leads once a day rather than after every reload (Melvin, 2026-11-27: "in photo mode can you ensure that they are
+  randomly chosen"). `/api/display/photos/` has an
   ETag over the lists and displays poll it every five minutes (it was 30), so a family photo shows within minutes.
 - **Chore chart:** the kids and chores are in the settings document (`config.chores`, edited in Settings › Chores and
   saved with Save); ticks are rows in `chores_done` (one per day, chore and person, with the stars the chore was worth

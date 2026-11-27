@@ -20,11 +20,23 @@ const widthFor = (px: number) => STEPS.find((s) => s >= px * (window.devicePixel
 const FADE_MS = 1500;
 /** Photos refresh often enough that one a parent adds from their phone shows within minutes; 304 when unchanged. */
 const FEED_MS = 5 * 60_000;
+/** How many photos a screen remembers having shown, across reloads, so a refresh doesn't open on the same ones. */
+const RECENT = 50;
+const recentKey = (id: string) => `everydaypane.photos.recent.${id}`;
+const loadRecent = (id: string): string[] => {
+  try {
+    const list: unknown = JSON.parse(localStorage.getItem(recentKey(id)) ?? "[]");
+    return Array.isArray(list) ? list.filter((k): k is string => typeof k === "string").slice(-RECENT) : [];
+  } catch {
+    return [];
+  }
+};
 
 export const createPhotoRotation = () => ({
   known: null as Set<string> | null,
   seen: new Set<string>(),
   fresh: new Set<string>(),
+  recent: null as string[] | null,
 });
 
 export const photos = (
@@ -44,6 +56,7 @@ export const photos = (
   let queueDay = "";
   const rotation = savedRotation ?? createPhotoRotation();
   const { seen, fresh } = rotation;
+  const recent = (rotation.recent ??= loadRecent(w.id));
   let front = 0;
   let timer: number | undefined;
   let clearTimer: number | undefined;
@@ -58,7 +71,7 @@ export const photos = (
     queueDay = today();
     queue = order(
       deck.filter((p) => !seen.has(pickKey(p))),
-      { today: queueDay, memories: w.memories, fresh },
+      { today: queueDay, memories: w.memories, fresh, recent },
     );
   };
   const next = (): Pick | undefined => {
@@ -120,10 +133,9 @@ export const photos = (
     const done = () => {
       if (stopped || --waiting > 0) return;
       pending = [];
-      if (savedRotation) {
-        for (const p of picks) seen.add(pickKey(p));
-        if (queue !== slideQueue) refill();
-      }
+      // Every frame keeps to one pass: a feed change or midnight reshuffles only what this pass hasn't shown.
+      for (const p of picks) seen.add(pickKey(p));
+      if (queue !== slideQueue) refill();
       const ok = panes.filter((p) => p.img.naturalWidth);
       if (!ok.length) {
         if (++failures >= Math.min(3, deck.length)) {
@@ -151,7 +163,19 @@ export const photos = (
       const lead = ok[0]?.pick as Pick;
       const key = pickKey(lead);
       const text = w.showCaption ? caption(lead.photo[3], queueDay || today(), { memories: w.memories, fresh: fresh.has(key) }) : "";
-      for (const p of ok) fresh.delete(pickKey(p.pick));
+      for (const p of ok) {
+        const k = pickKey(p.pick);
+        fresh.delete(k);
+        const at = recent.indexOf(k);
+        if (at >= 0) recent.splice(at, 1);
+        recent.push(k);
+      }
+      if (recent.length > RECENT) recent.splice(0, recent.length - RECENT);
+      try {
+        localStorage.setItem(recentKey(w.id), JSON.stringify(recent));
+      } catch {
+        // Private mode or a full store: the order is still random, it just can't remember across a reload.
+      }
       label.textContent = text;
       label.classList.toggle("on", Boolean(text));
       note.remove();

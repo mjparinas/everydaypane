@@ -47,6 +47,46 @@ describe("photo frame", () => {
     expect(new Set(off.map((p) => p.photo[0]))).toEqual(new Set(["old", "memory", "new", "other"]));
   });
 
+  it("shuffles the whole deck, so every photo can come first and each turns up once", () => {
+    const deck = ["a", "b", "c", "d", "e"].map((id) => pick(id, 4, 3));
+    const firsts = new Set<string>();
+    // A plain counter stands in for Math.random: each pass draws different numbers, as a real screen does.
+    for (let pass = 0; pass < 5; pass++) {
+      let n = pass;
+      const out = order(deck, { today: "2026-11-27", memories: false }, () => (n++ * 0.37) % 1);
+      expect(out.map((p) => p.photo[0]).sort()).toEqual(["a", "b", "c", "d", "e"]);
+      firsts.add(out[0]?.photo[0] ?? "");
+    }
+    expect(firsts.size).toBeGreaterThan(1);
+  });
+
+  it("puts what this screen showed last at the end, so a reload or a new pass doesn't open on it", () => {
+    const deck = ["a", "b", "c", "d"].map((id) => pick(id, 4, 3));
+    // A random 0.99 leaves the shuffle as it was, so only the demotion moves anything.
+    const out = order(deck, { today: "2026-11-27", memories: false, recent: ["a", "b"].map((id) => `lib\n${id}`) }, () => 0.99);
+    expect(
+      out
+        .map((p) => p.photo[0])
+        .slice(2)
+        .sort(),
+    ).toEqual(["a", "b"]);
+    // Only the newer half of the deck counts, so a small album still shuffles rather than looping in one order.
+    const small = order(deck, { today: "2026-11-27", memories: false, recent: ["a", "b", "c", "d"].map((id) => `lib\n${id}`) }, () => 0.99);
+    expect(
+      small
+        .map((p) => p.photo[0])
+        .slice(2)
+        .sort(),
+    ).toEqual(["c", "d"]);
+  });
+
+  it("leads with an On This Day photo once, not again after the screen reloads", () => {
+    const deck = [pick("memory", 4, 3, "2021-11-27"), pick("x", 4, 3), pick("y", 4, 3), pick("z", 4, 3)];
+    expect(order(deck, { today: "2026-11-27", memories: true }, () => 0.5)[0]?.photo[0]).toBe("memory");
+    const after = order(deck, { today: "2026-11-27", memories: true, recent: ["lib\nmemory"] }, () => 0.5);
+    expect(after.at(-1)?.photo[0]).toBe("memory");
+  });
+
   it("captions with the date and how long ago, this day in earlier years, or a photo just added", () => {
     expect(caption("2023-11-14", "2026-11-26", { memories: true, fresh: false })).toBe("November 14, 2023 · 3 years ago");
     expect(caption("2026-08-01", "2026-11-26", { memories: true, fresh: false })).toBe("August 1, 2026");
