@@ -115,26 +115,77 @@ export const FEATURE_WIDGET_GROUPS: FeatureWidgetGroup[] = WIDGET_GROUPS.map((g)
   })),
 }));
 
-/** A display behaviour card on /features/; `image` is a real wall screenshot from `npm run templates:previews`. */
-export type FeatureBehaviour = { name: string; blurb: string; image?: string };
+/**
+ * A display behaviour card on /features/. `image` is a real wall screenshot (width and height in pixels) from
+ * `npm run templates:previews`, except the live editor's, which `node scripts/feature-editor-preview.mjs` takes from a
+ * production build. `wide` cards span both columns and show the picture at its own shape; the others sit in pairs in a
+ * 2:1 frame.
+ */
+export type FeatureBehaviour = { name: string; blurb: string; image?: string; width?: number; height?: number; wide?: boolean };
 
+// Every card has a picture (Melvin, 2026-11-27: "can you add screenshots to these"). Names are headings, so Title Case.
 export const FEATURE_BEHAVIOURS: FeatureBehaviour[] = [
   // Smart notices and regional packs (Melvin, 2026-11-26: "add smart notices and regional packs").
   {
-    name: "Smart notices",
+    name: "Smart Notices",
     blurb:
       "Blue notes that put two things together: sprinklers due in frost or rain, the backup battery left in a power cut, smoky air outside with the reading indoors, a pool freeze, laundry left in the machine, bins out tonight.",
     image: "/features/smart-notices.png",
+    width: 1280,
+    height: 640,
+    wide: true,
   },
   {
-    name: "Regional packs",
+    name: "Regional Packs",
     blurb:
       "Your location picks the sources: Alert Ready, BC Hydro and DriveBC in B.C., Hydro-Québec in Québec, the National Weather Service and USGS in the U.S., and live transit from TransLink, the TTC, Calgary, Edmonton, Halifax or King County Metro.",
+    image: "/features/regional-packs.png",
+    width: 1600,
+    height: 880,
   },
-  { name: "Multi-view grid", blurb: "Rows, columns, gap, edge inset and padding inside tiles." },
-  { name: "Widgets on photos", blurb: "Photos as backdrop; panels stay readable on top." },
-  { name: "Time-of-day schedule", blurb: "Morning to overnight views, themes and dimming." },
-  { name: "Screen saver", blurb: "A photo frame view, photos or dark when idle; a tap wakes it." },
-  { name: "Offline + burn-in", blurb: "Service worker cache and pixel shift." },
-  { name: "Live household editor", blurb: "Real wall widgets under a drag overlay; templates when a view is empty." },
+  {
+    name: "Multi-View Grid",
+    blurb: "Rows, columns, gap, edge inset and padding inside tiles.",
+    image: "/features/multi-view-grid.png",
+    width: 1920,
+    height: 960,
+  },
+  {
+    name: "Widgets on Photos",
+    blurb: "Photos as backdrop; panels stay readable on top.",
+    image: "/features/widgets-on-photos.png",
+    width: 1920,
+    height: 960,
+  },
+  {
+    name: "Offline + Burn-In",
+    blurb: "Service worker cache and pixel shift.",
+    image: "/features/offline-burn-in.png",
+    width: 1920,
+    height: 960,
+  },
+  {
+    name: "Time-of-Day Schedule",
+    blurb: "Morning to overnight views, themes and dimming.",
+    image: "/features/time-of-day.png",
+    width: 1920,
+    height: 1200,
+    wide: true,
+  },
+  {
+    name: "Screen Saver",
+    blurb: "A photo frame view, photos or dark when idle; a tap wakes it.",
+    image: "/features/screen-saver.png",
+    width: 1920,
+    height: 620,
+    wide: true,
+  },
+  {
+    name: "Live Household Editor",
+    blurb: "Real wall widgets under a drag overlay; templates when a view is empty.",
+    image: "/features/live-editor.png",
+    width: 1600,
+    height: 960,
+    wide: true,
+  },
 ];

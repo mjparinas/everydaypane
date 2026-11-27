@@ -1,4 +1,4 @@
-import { existsSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 
@@ -17,12 +17,17 @@ describe("marketing features catalogue", () => {
 
   it("keeps display behaviour copy for the features page", () => {
     expect(FEATURE_BEHAVIOURS.length).toBeGreaterThanOrEqual(5);
-    expect(FEATURE_BEHAVIOURS.map((b) => b.name)).toEqual(expect.arrayContaining(["Smart notices", "Regional packs"]));
+    expect(FEATURE_BEHAVIOURS.map((b) => b.name)).toEqual(expect.arrayContaining(["Smart Notices", "Regional Packs"]));
   });
 
-  it("has a committed picture for every behaviour that names one", () => {
-    for (const b of FEATURE_BEHAVIOURS.filter((x) => x.image)) {
-      expect(existsSync(join(process.cwd(), "public", b.image!)), `missing ${b.image} — run npm run templates:previews`).toBe(true);
+  it("has a committed picture of the stated size for every behaviour", () => {
+    for (const b of FEATURE_BEHAVIOURS) {
+      expect(b.image, `${b.name} has no picture`).toBeTruthy();
+      const file = join(process.cwd(), "public", b.image!);
+      expect(existsSync(file), `missing ${b.image} — run npm run templates:previews`).toBe(true);
+      // A PNG's width and height are the two big-endian numbers at bytes 16 and 20.
+      const png = readFileSync(file);
+      expect([png.readUInt32BE(16), png.readUInt32BE(20)], b.image).toEqual([b.width, b.height]);
     }
   });
 

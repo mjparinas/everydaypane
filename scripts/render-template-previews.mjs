@@ -43,7 +43,7 @@ await esbuild.build({
   logLevel: "silent",
 });
 
-const { FIXED_NOW, FEATURE_PREVIEWS, SAMPLE_FEEDS, TEMPLATE_PREVIEWS, WIDGET_PREVIEWS, displayShell } = await import(
+const { FIXED_NOW, FEATURE_COMPOSITES, FEATURE_PREVIEWS, SAMPLE_FEEDS, TEMPLATE_PREVIEWS, WIDGET_PREVIEWS, displayShell } = await import(
   pathToFileURL(bundled).href
 );
 
@@ -341,16 +341,102 @@ for (const t of WIDGET_PREVIEWS) {
 
 // Display behaviours on /features/ (smart notices…): a small view each, with its own sample feeds for the shot.
 const featureOutDir = join(root, "public", "features");
-for (const t of FEATURE_PREVIEWS) {
-  if (!wanted(t.file)) continue;
-  const saved = Object.fromEntries(Object.keys(t.feeds).map((k) => [k, SAMPLE_FEEDS[k]]));
-  Object.assign(SAMPLE_FEEDS, t.feeds);
-  await page.setViewportSize({ width: CELL * t.cols, height: CELL * t.rows });
+
+/** Outlines every grid cell under the widgets and names the grid's numbers (the Multi-view grid card). */
+async function drawGridOverlay(payload) {
+  const v = payload.views[0];
+  await page.evaluate(
+    ({ cols, rows, gap, padding, tilePadding, taken }) => {
+      const stage = document.querySelector(".stage");
+      if (!stage) return;
+      // Only the free cells: widget panels are translucent, and lines through them would read as part of the widget.
+      for (let y = 0; y < rows; y++)
+        for (let x = 0; x < cols; x++) {
+          if (taken.includes(`${x},${y}`)) continue;
+          const box = document.createElement("div");
+          box.style.cssText = `grid-column:${x + 1};grid-row:${y + 1};border:2px dashed rgb(59 91 219 / .55);border-radius:10px;background:rgb(59 91 219 / .06);pointer-events:none;z-index:0`;
+          stage.prepend(box);
+        }
+      const chip = document.createElement("div");
+      chip.textContent = `${cols} × ${rows} Grid · Gap ${gap} · Edge ${padding} · Tile ${tilePadding}`;
+      chip.style.cssText =
+        "position:absolute;right:28px;bottom:24px;z-index:60;padding:12px 22px;border-radius:999px;background:#3b5bdb;color:#fff;font:700 26px Manrope,Inter,sans-serif;box-shadow:0 6px 20px rgb(0 0 0 / .25)";
+      document.body.append(chip);
+    },
+    {
+      cols: v.cols,
+      rows: v.rows,
+      gap: v.gap,
+      padding: v.padding,
+      tilePadding: v.tilePadding,
+      taken: v.widgets.flatMap((w) => Array.from({ length: w.w * w.h }, (_, i) => `${w.x + (i % w.w)},${w.y + Math.floor(i / w.w)}`)),
+    },
+  );
+}
+
+/** Opens a preview at its own size with its feeds swapped in, and returns the settled page's screenshot. */
+async function shoot(t, size) {
+  const saved = Object.fromEntries(Object.keys(t.feeds ?? {}).map((k) => [k, SAMPLE_FEEDS[k]]));
+  Object.assign(SAMPLE_FEEDS, t.feeds ?? {});
+  await page.setViewportSize(size);
   await page.goto(`${base}/preview/${t.id}/`, { waitUntil: "networkidle" });
   await settlePreview(t.payload);
-  await page.screenshot({ path: join(featureOutDir, `${t.file}.png`), type: "png" });
+  if (t.overlay === "grid") await drawGridOverlay(t.payload);
+  if (t.offline) {
+    await page.context().setOffline(true);
+    await page.waitForSelector(".offline.show", { timeout: 5_000 });
+    await page.waitForTimeout(600);
+  }
+  const png = await page.screenshot({ type: "png" });
+  if (t.offline) await page.context().setOffline(false);
   Object.assign(SAMPLE_FEEDS, saved);
+  return png;
+}
+
+for (const t of FEATURE_PREVIEWS) {
+  if (t.panelOnly || !wanted(t.file)) continue;
+  writeFileSync(join(featureOutDir, `${t.file}.png`), await shoot(t, { width: CELL * t.cols, height: CELL * t.rows }));
   console.log(`wrote public/features/${t.file}.png`);
+}
+
+// Composites: real wall shots side by side with a label each (time of day, screen saver, regional packs).
+const esc = (s) => s.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+for (const c of FEATURE_COMPOSITES) {
+  if (!wanted(c.file)) continue;
+  const shots = [];
+  for (const p of c.panels) {
+    const t = previews.get(p.id);
+    if (!t) throw new Error(`Composite ${c.file}: unknown preview ${p.id}`);
+    shots.push({ ...p, src: `data:image/png;base64,${(await shoot(t, { width: p.width, height: p.height })).toString("base64")}` });
+  }
+  const panel = (p) =>
+    `<figure><img src="${p.src}" style="aspect-ratio:${p.width}/${p.height}"><figcaption><b>${esc(p.label)}</b>${p.note ? `<span>${esc(p.note)}</span>` : ""}</figcaption></figure>`;
+  const middle = c.between ? `<div class="between"><span>${esc(c.between)}</span><i>→</i></div>` : "";
+  const body =
+    c.between && shots.length === 2
+      ? `<main class="pair">${panel(shots[0])}${middle}${panel(shots[1])}</main>`
+      : `<main style="grid-template-columns:repeat(${c.columns},1fr)">${shots.map(panel).join("")}</main>`;
+  await page.setViewportSize({ width: c.width, height: c.height });
+  await page.goto(`${base}/brand/composite`, { waitUntil: "load" });
+  await page.setContent(
+    `<!doctype html><html><head><style>
+@font-face{font-family:Manrope;src:url(/fonts/manrope.woff2) format("woff2");font-weight:200 800}
+html,body{margin:0;height:100%;background:#0b1220;color:#e8ecf6;font-family:Manrope,sans-serif}
+main{box-sizing:border-box;height:100%;padding:36px;display:grid;gap:28px 32px;align-content:center}
+main.pair{grid-template-columns:1fr auto 1fr;align-items:center}
+figure{margin:0;display:flex;flex-direction:column;gap:14px;min-width:0}
+img{display:block;width:100%;object-fit:cover;border-radius:14px;box-shadow:0 10px 30px rgb(0 0 0 / .45)}
+figcaption{display:flex;gap:14px;align-items:baseline;font-size:30px}
+figcaption b{font-weight:800}
+figcaption span{font-size:24px;color:#9aa6c2}
+.between{display:flex;flex-direction:column;align-items:center;gap:6px;width:150px;text-align:center;font-weight:700;font-size:22px;color:#9aa6c2;margin-bottom:48px}
+.between i{font-style:normal;font-size:64px;color:#f59f00;line-height:1}
+</style></head><body>${body}</body></html>`,
+    { waitUntil: "load" },
+  );
+  await page.evaluate(() => document.fonts.ready);
+  await page.screenshot({ path: join(featureOutDir, `${c.file}.png`), type: "png" });
+  console.log(`wrote public/features/${c.file}.png`);
 }
 
 if (!only)
