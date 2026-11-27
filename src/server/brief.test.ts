@@ -24,7 +24,7 @@ vi.mock("./featureFlags", () => ({ flagsOff: () => Promise.resolve(new Set(["wid
 
 const { briefFeed } = await import("./brief");
 
-const all = { sources: [...BRIEF_SOURCES], events: 3, eveningTomorrow: true };
+const all = { sources: [...BRIEF_SOURCES], eveningTomorrow: true };
 
 describe("brief feed", () => {
   beforeEach(() => void (calls.length = 0));

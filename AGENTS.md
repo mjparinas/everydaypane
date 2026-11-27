@@ -1199,10 +1199,10 @@ panel can be complex if you need it to be."
   status widget (its page defaults to Langley's), ferries only for routes on a Ferries widget, garbage once a zone is
   picked, commute once home is set, and garbage, commute and meals not while their platform flag is off. Rain or snow is
   the first wet hour today (code says so with a 30 % chance, or any 60 %), or "until" when it's already wet; events are
-  those still ahead, all-day first, `events` named and the rest counted; bins are "out tonight" the day before and
+  those still ahead, all-day first, every one named (Melvin, 2026-11-27: no "N more on the calendar"); bins are "out tonight" the day before and
   "pickup today" before noon; ferries and traffic are today only (traffic: 10 min and a quarter over empty roads, read
   in the last 20 min). Strip-worthy alerts lead, household notices never. From 7 PM (`BRIEF_EVENING_HOUR`) it reads
-  tomorrow. The display polls every five minutes, paints the text and steps the size down until it fits (`brief.js`).
+  tomorrow. The display polls every five minutes, paints the text and steps the size down until it fits, scrolling by touch past half size (`brief.js`).
 - **Packages** (`src/server/packages.ts`, `src/lib/packages.ts`, setup `docs/packages.md`): 17TRACK's tracking API
   v2.2 (`api.17track.net/track/v2.2`, header `17token`) with the household's key (encrypted `packages.17track`, checked
   with `getquota` before Settings › Packages saves it through `/api/household/packages/`). A new number costs one of the
