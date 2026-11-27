@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import type { DisplayPayload } from "@/lib/display/types";
+import type { DisplayPayload, PhotoItem } from "@/lib/display/types";
 import { SCREEN_SAVER_OFF } from "@/lib/screenSaver";
 import { zonedFormatter } from "@/lib/timeZone";
 
@@ -20,6 +20,8 @@ function payload(s: Partial<DisplayPayload["screenSaver"]>): DisplayPayload {
 
 afterEach(() => {
   vi.useRealTimers();
+  vi.restoreAllMocks();
+  vi.unstubAllGlobals();
   document.body.replaceChildren();
   document.documentElement.className = "";
 });
@@ -78,6 +80,50 @@ describe("the display's screen saver", () => {
     expect(s.mode).toBe("off");
     vi.advanceTimersByTime(5 * MIN + 15_000);
     expect(s.mode).toBe("dark");
+  });
+
+  it("pairs distant portraits on a landscape screen and resumes with unseen photos after waking", async () => {
+    vi.useFakeTimers({ now: new Date("2026-11-21T20:00:00Z") });
+    vi.spyOn(Math, "random").mockReturnValue(0.99999);
+    const portraits: PhotoItem[] = [
+      ["vertical-a", 800, 1200, ""],
+      ["vertical-b", 800, 1200, ""],
+    ];
+    const landscapes = Array.from({ length: 15 }, (_, i): PhotoItem => [`horizontal-${i}`, 1200, 800, ""]);
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(() => Promise.resolve(Response.json({ sources: { album: { photos: [portraits[0], ...landscapes, portraits[1]] } } }))),
+    );
+    const loaded: string[] = [];
+    vi.spyOn(HTMLImageElement.prototype, "src", "set").mockImplementation(function (this: HTMLImageElement, src: string) {
+      if (!src) return;
+      const id = new URL(src, window.location.href).searchParams.get("i") ?? "";
+      const portrait = id.startsWith("vertical");
+      Object.defineProperties(this, {
+        naturalWidth: { value: portrait ? 800 : 1200 },
+        naturalHeight: { value: portrait ? 1200 : 800 },
+      });
+      setTimeout(() => {
+        loaded.push(id);
+        this.dispatchEvent(new Event("load"));
+      }, 0);
+    });
+    vi.spyOn(HTMLElement.prototype, "clientWidth", "get").mockReturnValue(1920);
+    vi.spyOn(HTMLElement.prototype, "clientHeight", "get").mockReturnValue(1080);
+    vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockReturnValue(null);
+    const app = document.createElement("div");
+    document.body.append(app);
+    const p = payload({ idle: true, shows: "photos", minutes: 1, photoSeconds: 60 });
+    const s = screenSaver(app, () => p);
+    s.update();
+    await vi.advanceTimersByTimeAsync(MIN + 500);
+    expect(loaded).toEqual(["vertical-a", "vertical-b"]);
+    expect(app.querySelectorAll(".saver .ph-pair.on img")).toHaveLength(2);
+
+    s.wake();
+    await vi.advanceTimersByTimeAsync(MIN + 15_000);
+    expect(loaded).toEqual(["vertical-a", "vertical-b", "horizontal-0"]);
+    s.wake();
   });
 
   it("shows a clock over the photos when asked", () => {

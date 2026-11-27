@@ -31,7 +31,7 @@ export function pairs(frame: Orientation, photo: Orientation): boolean {
   return (frame === "landscape" && photo === "portrait") || (frame === "portrait" && photo === "landscape");
 }
 
-/** Index in the queue of the next photo that can be this one's partner, looking a little ahead so the shuffle holds. */
+/** Index of the next eligible partner within the requested lookahead. */
 export function partnerIndex(queue: Pick[], frame: Orientation, lookAhead = 12): number {
   for (let i = 0; i < Math.min(queue.length, lookAhead); i++) {
     const p = queue[i]?.photo;

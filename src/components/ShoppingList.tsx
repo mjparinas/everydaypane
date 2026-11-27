@@ -250,7 +250,9 @@ function Row({
   onRemove: (item: ShoppingItem) => Promise<void>;
 }) {
   return (
-    <li className="flex flex-wrap items-center gap-x-2">
+    // Name above, controls below on a phone (Melvin, 2026-11-27: names were cut to "B…" beside Low, aisle and Remove);
+    // one row from sm up. Names wrap rather than truncate.
+    <li className="flex flex-col gap-x-2 pb-2 sm:flex-row sm:items-center sm:pb-0">
       <label className="flex min-w-0 flex-1 items-center gap-3 py-2">
         <input
           type="checkbox"
@@ -260,46 +262,48 @@ function Row({
           aria-label={item.done ? `Put ${item.text} back on the list` : `Mark ${item.text} bought`}
           onChange={() => void onToggle(item)}
         />
-        <span className={item.done ? "min-w-0 flex-1 truncate text-soft line-through" : "min-w-0 flex-1 truncate"}>{item.text}</span>
+        <span className={item.done ? "min-w-0 flex-1 break-words text-soft line-through" : "min-w-0 flex-1 break-words"}>{item.text}</span>
       </label>
-      {!item.done && (
-        <>
-          <button
-            type="button"
-            className={item.low ? "btn-ghost border-amber-400 bg-amber-100 px-3 text-amber-900" : "btn-ghost px-3"}
-            disabled={busy}
-            aria-pressed={item.low}
-            aria-label={item.low ? `${item.text}: running low. Tap if it's run out` : `Mark ${item.text} running low`}
-            onClick={() => void onPatch(item, { low: !item.low })}
-          >
-            Low
-          </button>
-          <label>
-            <span className="sr-only">Aisle for {item.text}</span>
-            <select
-              className="field w-auto py-1 text-xs"
-              value={item.category}
+      <div className="flex shrink-0 items-center gap-2 pl-8 sm:pl-0">
+        {!item.done && (
+          <>
+            <button
+              type="button"
+              className={item.low ? "btn-ghost border-amber-400 bg-amber-100 px-3 text-amber-900" : "btn-ghost px-3"}
               disabled={busy}
-              onChange={(e) => void onPatch(item, { category: e.target.value as ShoppingCategory })}
+              aria-pressed={item.low}
+              aria-label={item.low ? `${item.text}: running low. Tap if it's run out` : `Mark ${item.text} running low`}
+              onClick={() => void onPatch(item, { low: !item.low })}
             >
-              {SHOPPING_CATEGORIES.map((c) => (
-                <option key={c} value={c}>
-                  {SHOPPING_CATEGORY_LABELS[c]}
-                </option>
-              ))}
-            </select>
-          </label>
-        </>
-      )}
-      <button
-        type="button"
-        className="btn-ghost px-3"
-        disabled={busy}
-        aria-label={`Remove ${item.text}`}
-        onClick={() => void onRemove(item)}
-      >
-        Remove
-      </button>
+              Low
+            </button>
+            <label>
+              <span className="sr-only">Aisle for {item.text}</span>
+              <select
+                className="field w-auto py-1 text-xs"
+                value={item.category}
+                disabled={busy}
+                onChange={(e) => void onPatch(item, { category: e.target.value as ShoppingCategory })}
+              >
+                {SHOPPING_CATEGORIES.map((c) => (
+                  <option key={c} value={c}>
+                    {SHOPPING_CATEGORY_LABELS[c]}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </>
+        )}
+        <button
+          type="button"
+          className="btn-ghost px-3"
+          disabled={busy}
+          aria-label={`Remove ${item.text}`}
+          onClick={() => void onRemove(item)}
+        >
+          Remove
+        </button>
+      </div>
     </li>
   );
 }

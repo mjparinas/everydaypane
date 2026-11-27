@@ -829,7 +829,9 @@ panel can be complex if you need it to be."
   Amazon turns cloud servers away at times (a 503 robot page, seen 2026-11-17), so Amazon albums are listed every six
   hours, a 503 is retried once after a pause, a refusal isn't retried for 20 minutes, and the last good list is served
   meanwhile. We wait and retry; we never disguise the server or route around Amazon's blocking (for example through
-  the home network). Settings › Photos shows each album's photo count or error.
+  the home network). Amazon shared albums list up to 5,000 photos each. Settings › Photos shows each album's photo
+  count or error. The Photos screen saver resumes with unseen photos after each wake-up until the wall page reloads,
+  and can pair portraits from anywhere in its remaining rotation.
 - **Photo library** (Melvin, 2026-11-17, after Amazon turned our server away; he asked for both): a `library` photo
   source keeps its own photos in a **private Vercel Blob store** (`everydaypane-photos`, `BLOB_READ_WRITE_TOKEN`), one
   row each in the `photos` table (`src/server/library.ts`). Photos get in two ways: **uploads** from Settings › Photos,

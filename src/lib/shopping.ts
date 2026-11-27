@@ -21,14 +21,14 @@ export type ShoppingCategory = (typeof SHOPPING_CATEGORIES)[number];
 export const SHOPPING_CATEGORY_LABELS: Record<ShoppingCategory, string> = {
   produce: "Produce",
   bakery: "Bakery",
-  dairy: "Dairy & eggs",
-  meat: "Meat & seafood",
+  dairy: "Dairy & Eggs",
+  meat: "Meat & Seafood",
   pantry: "Pantry",
   frozen: "Frozen",
   drinks: "Drinks",
   snacks: "Snacks",
   household: "Household",
-  personal: "Personal care",
+  personal: "Personal Care",
   other: "Other",
 };
 
