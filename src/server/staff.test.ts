@@ -29,7 +29,7 @@ describe("staff", () => {
 
   it("lists households with members and device counts", async () => {
     await upsertMember(LEGACY_ACCOUNT_ID, "ops@example.com", "admin");
-    const other = await createAccount("River's home", "river@example.com");
+    const other = await createAccount("River's home", "river@example.com", undefined, { trial: false });
     await upsertMember(other.id, "kid@example.com", "family");
 
     const list = await listHouseholdsForStaff();

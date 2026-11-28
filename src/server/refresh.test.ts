@@ -36,14 +36,14 @@ describe("Refresh displays", () => {
   });
 
   it("refuses Free households with 402", async () => {
-    await createAccount("Free home", "free.refresh@example.com");
+    await createAccount("Free home", "free.refresh@example.com", undefined, { trial: false });
     const cookie = await cookieForMember("free.refresh@example.com");
     const r = await refreshPOST(req("/api/household/refresh/", { method: "POST", headers: { cookie } }));
     expect(r.status).toBe(402);
   });
 
   it("notifies an existing wall of plan changes without a settings save", async () => {
-    const account = await createAccount("Free home", "upgrade.refresh@example.com");
+    const account = await createAccount("Free home", "upgrade.refresh@example.com", undefined, { trial: false });
     const { token } = await addDevice(account.id, "Kitchen", null);
     const state = (etag?: string) =>
       stateGET(req("/api/display/state/", { headers: { "x-display-token": token, "if-none-match": etag ?? "" } }));

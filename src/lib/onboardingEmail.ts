@@ -18,6 +18,8 @@ export interface OnboardingMailInput {
   n: number;
   total: number;
   plan: PlanId;
+  /** Set while the household is in its Household trial: "December 12", the day it ends. */
+  trialEndsOn?: string;
   siteUrl: string;
   unsubscribeUrl: string;
   postalAddress: string;
@@ -44,7 +46,9 @@ export function onboardingMail(m: OnboardingMailInput): OnboardingMail {
     ? ""
     : upsell
       ? `This is part of the Household plan, ${price}. Everything you have on Free stays as it is.`
-      : "This is included in your Household plan.";
+      : m.trialEndsOn
+        ? `This is on in your Household trial until ${m.trialEndsOn}. No card needed to try it.`
+        : "This is included in your Household plan.";
   const why = "You're getting this because you started an Everydaypane household. One email a day while you settle in.";
 
   const text = [
@@ -72,7 +76,7 @@ export function onboardingMail(m: OnboardingMailInput): OnboardingMail {
         upsell
           ? `background:#fff7e6;border:1px solid #f5d08a;color:#7a4b00`
           : `background:#ebf6ee;border:1px solid #b6dfc0;color:${EMAIL.good}`
-      }"><strong>${upsell ? "Household plan only." : "Household plan."}</strong> ${escapeHtml(planLine.replace(/^This is /, "It's "))}</p>`
+      }"><strong>${upsell ? "Household plan only." : m.trialEndsOn ? "Household trial." : "Household plan."}</strong> ${escapeHtml(planLine.replace(/^This is /, "It's "))}</p>`
     : "";
   const bodyHtml = [
     p(step.intro),
@@ -94,7 +98,7 @@ export function onboardingMail(m: OnboardingMailInput): OnboardingMail {
       pill: paidStep
         ? upsell
           ? { label: "Household", bg: "#fff1cc", ink: "#8a5a00" }
-          : { label: "In Your Plan", bg: "#ebf6ee", ink: EMAIL.good }
+          : { label: m.trialEndsOn ? "In Your Trial" : "In Your Plan", bg: "#ebf6ee", ink: EMAIL.good }
         : { label: "Free", bg: "#e8edfc", ink: EMAIL.brand },
     },
     legalHtml: `${escapeHtml(why)}<br><a href="${unsub}" style="color:${EMAIL.soft}">Unsubscribe from these tips</a> · ${escapeHtml(BRAND.name)}, ${escapeHtml(m.postalAddress)}`,

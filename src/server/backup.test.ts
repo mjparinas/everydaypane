@@ -126,7 +126,7 @@ describe("settings backup", () => {
   });
 
   it("refuses backup download and restore on Free", async () => {
-    const account = await createAccount("Free backup", "free.backup@example.com");
+    const account = await createAccount("Free backup", "free.backup@example.com", undefined, { trial: false });
     const session = await issueTestSession("free.backup@example.com");
     expect(session).toBeTruthy();
     const cookie = testSessionCookie(session!).split(";")[0] ?? "";

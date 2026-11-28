@@ -24,6 +24,34 @@ export async function revenueSummary() {
       stripeLinked = Number(r.stripe);
     } else free += Number(r.n);
   }
+  // Household trials running now and how many ended without paying (Melvin, 2026-11-28).
+  const now = Date.now();
+  const trialRows = await query<{ running: number | null; ended: number | null }>(
+    `SELECT SUM(CASE WHEN trial_ends_at > ? THEN 1 ELSE 0 END) AS running,
+            SUM(CASE WHEN trial_ends_at <= ? THEN 1 ELSE 0 END) AS ended
+     FROM accounts WHERE plan = 'free' AND trial_ends_at IS NOT NULL`,
+    [now, now],
+  );
+  const trials = Number(trialRows[0]?.running ?? 0);
+  const trialsEnded = Number(trialRows[0]?.ended ?? 0);
+  // Answers to the cancel survey in the Stripe Customer Portal (recordCancellation in billing.ts).
+  const cancelRows = await query<{ props: string | null }>(
+    "SELECT props FROM admin_events WHERE name = 'household_cancelled' ORDER BY at DESC",
+  );
+  const tally = new Map<string, number>();
+  const cancelComments: string[] = [];
+  for (const r of cancelRows) {
+    let p: { reason?: string; comment?: string } = {};
+    try {
+      p = r.props ? (JSON.parse(r.props) as typeof p) : {};
+    } catch {
+      // A cut-off props string still counts, as unanswered.
+    }
+    const reason = p.reason || "unanswered";
+    tally.set(reason, (tally.get(reason) ?? 0) + 1);
+    if (p.comment && cancelComments.length < 10) cancelComments.push(p.comment);
+  }
+  const cancelReasons = [...tally].map(([reason, n]) => ({ reason, n })).sort((a, b) => b.n - a.n);
   const costs = await getSetting<RunningCost[]>("running_costs", []);
   const costsMonth = costs.reduce((s, c) => s + (c.period === "year" ? c.amount / 12 : c.amount), 0);
   const grossMrr = paid * HOUSEHOLD_MRR_USD;
@@ -32,6 +60,10 @@ export async function revenueSummary() {
     free,
     paid,
     stripeLinked,
+    trials,
+    trialsEnded,
+    cancelReasons,
+    cancelComments,
     grossMrr,
     netMrr: Math.max(0, Math.round(netMrr * 100) / 100),
     costs,

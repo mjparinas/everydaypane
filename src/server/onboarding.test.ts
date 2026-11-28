@@ -47,7 +47,7 @@ describe("getting-started emails", () => {
 
   it("marks Household emails by plan", async () => {
     clearFlagCache();
-    const acct = await createAccount("Home", "new@example.com", SIGNUP);
+    const acct = await createAccount("Home", "new@example.com", SIGNUP, { trial: false });
     const r = fakeResend();
     for (let d = 0; d < 4; d++) await runOnboarding(SIGNUP + H + d * 24 * H, r.send);
     expect(r.calls[3]!.mails[0]!.html).toContain("Household plan only.");
@@ -91,6 +91,24 @@ describe("getting-started emails", () => {
     clearFlagCache();
     await createAccount("Home", "old@example.com", Date.UTC(2026, 10, 20));
     expect(await runOnboarding(Date.UTC(2026, 10, 27, 18), fakeResend().send)).toEqual({ sent: 0 });
+  });
+
+  it("sends the trial-ending emails on day 10 and day 13, in place of that day's tip", async () => {
+    clearFlagCache();
+    await createAccount("Home", "new@example.com", SIGNUP);
+    const r = fakeResend();
+    const D = 24 * H;
+    for (let d = 0; d < 10; d++) await runOnboarding(SIGNUP + H + d * D, r.send);
+    expect(r.calls.at(-1)!.mails[0]!.html).toContain("Household trial");
+    // Day 10 at 10 AM in Vancouver: four days left.
+    expect(await runOnboarding(SIGNUP + 10 * D, r.send)).toEqual({ sent: 1 });
+    expect(r.calls.at(-1)!.mails[0]!.subject).toBe("4 days left in your Household trial");
+    // Still one email that day.
+    expect(await runOnboarding(SIGNUP + 10 * D + 3 * H, r.send)).toEqual({ sent: 0 });
+    expect(await runOnboarding(SIGNUP + 11 * D + H, r.send)).toEqual({ sent: 1 });
+    expect(r.calls.at(-1)!.mails[0]!.subject).not.toContain("trial");
+    expect(await runOnboarding(SIGNUP + 13 * D + H, r.send)).toEqual({ sent: 1 });
+    expect(r.calls.at(-1)!.mails[0]!.subject).toBe("Your Household trial ends tomorrow");
   });
 
   it("signs unsubscribe links", () => {

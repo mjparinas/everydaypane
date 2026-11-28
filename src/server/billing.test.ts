@@ -123,7 +123,7 @@ describe("billing webhooks", () => {
   });
 
   it("demotes on subscription deleted", async () => {
-    const account = await createAccount("Cancel home", "cancel@example.com");
+    const account = await createAccount("Cancel home", "cancel@example.com", undefined, { trial: false });
     await setAccountPlan(account.id, "paid");
     await setStripeIds(account.id, { customerId: "cus_c", subscriptionId: "sub_c" });
     mockStripe({
@@ -242,7 +242,7 @@ describe("billing webhooks", () => {
   });
 
   it("does not mark Paid on checkout.session.completed without a subscription id", async () => {
-    const account = await createAccount("No sub yet", "nosub@example.com");
+    const account = await createAccount("No sub yet", "nosub@example.com", undefined, { trial: false });
     mockStripe({
       constructEvent: () =>
         ({
@@ -263,5 +263,69 @@ describe("billing webhooks", () => {
     const updated = await accountById(account.id);
     expect(updated?.plan).toBe("free");
     expect(updated?.stripeCustomerId).toBe("cus_pending");
+  });
+});
+
+describe("Household trial", () => {
+  useTestServer({
+    STRIPE_SECRET_KEY: "sk_test_x",
+    STRIPE_PRICE_ID: "price_test",
+    STRIPE_WEBHOOK_SECRET: "whsec_test",
+  });
+
+  afterEach(() => {
+    resetBillingForTests();
+    setStripeForTests(null);
+  });
+
+  function checkoutStripe() {
+    const create = vi.fn().mockResolvedValue({ url: "https://checkout.stripe.com/c/pay/cs_trial" });
+    setStripeForTests({
+      customers: { create: vi.fn().mockResolvedValue({ id: "cus_trial" }) },
+      checkout: { sessions: { create } },
+      billingPortal: { sessions: { create: vi.fn() } },
+    } as unknown as Stripe);
+    return create;
+  }
+
+  it("keeps the trial's days left when a trialing household subscribes", async () => {
+    const now = Date.now();
+    const account = await createAccount("Trial checkout", "trial.checkout@example.com", now);
+    expect(account.plan).toBe("paid");
+    expect(account.paidPlan).toBe("free");
+    const create = checkoutStripe();
+    await createCheckoutSession(account.id, "trial.checkout@example.com", "http://localhost");
+    const args = create.mock.calls[0]?.[0] as Stripe.Checkout.SessionCreateParams;
+    expect(args.subscription_data?.trial_end).toBe(Math.floor((now + 14 * 86_400_000) / 1000));
+  });
+
+  it("charges at once in the trial's last two days (Stripe's minimum)", async () => {
+    const account = await createAccount("Late trial", "late.trial@example.com", Date.now() - 13 * 86_400_000);
+    const create = checkoutStripe();
+    await createCheckoutSession(account.id, "late.trial@example.com", "http://localhost");
+    const args = create.mock.calls[0]?.[0] as Stripe.Checkout.SessionCreateParams;
+    expect(args.subscription_data?.trial_end).toBeUndefined();
+  });
+
+  it("records the cancel survey's answer once per subscription", async () => {
+    const { recordCancellation } = await import("./billing");
+    const { query } = await import("./db");
+    const account = await createAccount("Leaving home", "leaving@example.com");
+    const sub = {
+      id: "sub_bye",
+      status: "active",
+      cancel_at_period_end: true,
+      cancel_at: null,
+      cancellation_details: { feedback: "too_expensive", comment: "Money's tight", reason: "cancellation_requested" },
+      metadata: {},
+      customer: "cus_bye",
+    } as unknown as Stripe.Subscription;
+    await recordCancellation(account.id, sub);
+    await recordCancellation(account.id, sub);
+    const rows = await query<{ props: string }>("SELECT props FROM admin_events WHERE name = 'household_cancelled'");
+    expect(rows).toHaveLength(1);
+    expect(JSON.parse(rows[0]!.props)).toEqual({ subscription: "sub_bye", reason: "too_expensive", comment: "Money's tight" });
+    const { revenueSummary } = await import("./adminRevenue");
+    expect((await revenueSummary()).cancelReasons).toEqual([{ reason: "too_expensive", n: 1 }]);
   });
 });

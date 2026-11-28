@@ -40,7 +40,7 @@ export default async function SignInPage({ searchParams }: { searchParams: Promi
             <p className="mt-4 text-sm text-soft">
               New here?{" "}
               <Link href={SIGNUP_PATH} className="font-semibold text-brand hover:underline">
-                Start Free
+                Start a Free Trial
               </Link>
             </p>
           )}

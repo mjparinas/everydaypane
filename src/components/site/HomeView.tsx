@@ -4,11 +4,11 @@ import { Wordmark } from "@/components/Wordmark";
 import { latestPosts } from "@/content/posts";
 import { BRAND } from "@/lib/brand";
 import { faqJsonLd, HOME_FAQS } from "@/lib/faqs";
-import { MARKETING_PLAN_TABLE, MARKETING_PLANS, usd } from "@/lib/marketingPlans";
+import { MARKETING_PLAN_TABLE, MARKETING_PLANS, usd, yearlySavings } from "@/lib/marketingPlans";
 import { pageMeta } from "@/lib/pageMeta";
 import { DISPLAY_PATH, SIGNUP_PATH, SITE_URL } from "@/lib/site";
 
-import { HouseholdCheckoutButton } from "./CheckoutButtons";
+import { TrialCta } from "./CheckoutButtons";
 import { IdleFrameMock, PaneMock } from "./PaneMock";
 import { SiteBeacon } from "./SiteBeacon";
 import { Check, CtaBanner, Eyebrow, JsonLd, organizationJsonLd, SiteFooter, SiteHeader } from "./SiteChrome";
@@ -143,6 +143,9 @@ export function HomeView() {
             <div className="site-rise">
               <Wordmark height={40} className="mb-5" />
               <Eyebrow>Family wall dashboard</Eyebrow>
+              <p className="mt-3 inline-flex items-center gap-2 rounded-full border border-brand/25 bg-brand/10 px-3 py-1 text-sm font-semibold text-brand">
+                <span aria-hidden="true">✦</span> 14 days of Household free · No card
+              </p>
               <h1 className="mt-4 font-display text-[2.55rem] leading-[1.05] font-extrabold tracking-tight text-balance sm:text-6xl">
                 Your Home, <span className="bg-gradient-to-r from-brand to-sky bg-clip-text text-transparent">at a glance.</span>
               </h1>
@@ -153,7 +156,7 @@ export function HomeView() {
                   data-cta="hero"
                   className="inline-flex min-h-14 items-center justify-center rounded-2xl bg-brand px-7 text-lg font-semibold text-brand-ink shadow-[0_12px_40px_-12px_rgb(59_91_219/0.7)]"
                 >
-                  Start Free
+                  Start Your Free Trial
                 </Link>
                 <a
                   href="#screens"
@@ -164,6 +167,9 @@ export function HomeView() {
                 </a>
               </div>
               <p className="mt-4 text-base text-soft">
+                Every widget for 14 days, then keep Household for {usd(paid.priceYearly)} a year or stay on Free forever.
+              </p>
+              <p className="mt-2 text-base text-soft">
                 Setting up a wall screen?{" "}
                 <Link
                   href={DISPLAY_PATH}
@@ -330,9 +336,10 @@ export function HomeView() {
 
         <section id="pricing" className="mx-auto max-w-6xl px-4 py-16">
           <Eyebrow>Pricing</Eyebrow>
-          <h2 className="mt-3 font-display text-3xl font-extrabold tracking-tight sm:text-4xl">Start free. Household is the best value.</h2>
+          <h2 className="mt-3 font-display text-3xl font-extrabold tracking-tight sm:text-4xl">Try Household Free for 14 Days.</h2>
           <p className="mt-3 max-w-2xl text-soft">
-            No ads on either plan. Household is about {usd(paid.priceYearly / 12)} a month when you pay yearly.
+            Every new household starts with Household, no card needed. Keep it for about {usd(paid.priceYearly / 12)} a month paid yearly,
+            or carry on with Free. No ads on either plan.
           </p>
           <div className="mt-8 grid gap-5 lg:grid-cols-2">
             {[free, paid].map((p) => (
@@ -359,7 +366,8 @@ export function HomeView() {
                 </p>
                 {p.priceMonthly > 0 ? (
                   <p className="text-sm text-soft">
-                    or {usd(p.priceMonthly)} / month · save {usd(p.priceMonthly * 12 - p.priceYearly)} yearly
+                    Billed yearly · save {usd(yearlySavings(p).dollars)}, over {yearlySavings(p).months} months free · or{" "}
+                    {usd(p.priceMonthly)} monthly
                   </p>
                 ) : (
                   <p className="text-sm text-soft">Forever free · 2 displays · 1 view</p>
@@ -373,7 +381,7 @@ export function HomeView() {
                   ))}
                 </ul>
                 {p.id === "paid" ? (
-                  <HouseholdCheckoutButton className="mt-6" label={p.cta} />
+                  <TrialCta plan={p} />
                 ) : (
                   <Link
                     href={SIGNUP_PATH}
@@ -383,6 +391,7 @@ export function HomeView() {
                     {p.cta}
                   </Link>
                 )}
+                {p.ctaNote && p.id !== "paid" ? <p className="mt-2 text-sm text-soft">{p.ctaNote}</p> : null}
               </article>
             ))}
           </div>
@@ -459,7 +468,7 @@ export function HomeView() {
           <CtaBanner
             cta="home-end"
             title="Hang Your Family's Week on the Wall"
-            body="Start on Free in a few minutes. Upgrade to Household when you want every widget — still no ads."
+            body="Up in a few minutes, with every Household widget free for 14 days. Then Free forever, or keep Household — still no ads."
           />
         </section>
       </main>

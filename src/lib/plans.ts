@@ -47,6 +47,25 @@ export function isFreeWidgetType(type: string): type is FreeWidgetType {
   return (FREE_WIDGET_TYPES as readonly string[]).includes(type);
 }
 
+/**
+ * Household trial (Melvin, 2026-11-28: "can do you all 5", after the coordinator's 14-day trial idea): every new
+ * household gets Household for 14 days with no card, and drops back to Free by itself when it ends. A Free household
+ * that never had one can start it from any "Try Household" button. Stored as `accounts.trial_ends_at`; the stored
+ * plan stays what Stripe or staff set, and the plan everything reads is worked out from both.
+ */
+export const TRIAL_DAYS = 14;
+export const TRIAL_MS = TRIAL_DAYS * 86_400_000;
+
+/** The plan a household has right now: Household while it pays (or staff granted it) or while its trial runs. */
+export function effectivePlan(stored: PlanId, trialEndsAt: number | null, now = Date.now()): PlanId {
+  return stored === "paid" || (trialEndsAt !== null && trialEndsAt > now) ? "paid" : "free";
+}
+
+/** Whole days left in a trial, rounded up (the last afternoon still reads "1 day left"); 0 once it's over. */
+export function trialDaysLeft(trialEndsAt: number | null, now = Date.now()): number {
+  return trialEndsAt === null || trialEndsAt <= now ? 0 : Math.ceil((trialEndsAt - now) / 86_400_000);
+}
+
 export function planLabel(plan: PlanId): string {
   return plan === "paid" ? "Household" : "Free";
 }

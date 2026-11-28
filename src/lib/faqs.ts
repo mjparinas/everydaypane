@@ -13,6 +13,10 @@ export const HOME_FAQS: Faq[] = [
     a: "Yes. Free covers two displays, one view, clocks, weather, notes and two Google calendars. Household unlocks every widget, more displays and views, photos, Home Assistant, transit, chores, meals and more for $7 a month or $59 a year — the best value for most households.",
   },
   {
+    q: "Is there a free trial of Household?",
+    a: "Yes. Every new household gets 14 days of Household free, with no card. If you don't subscribe, it goes back to Free by itself and nothing you set up is deleted. Subscribe during the trial and your first charge is the day it would have ended.",
+  },
+  {
     q: "Do I need to buy special hardware?",
     a: "No. Everydaypane runs in a browser. It is tuned for a landscape kitchen panel around 1920×1080, and it works on tablets, smart displays and any screen you already have.",
   },

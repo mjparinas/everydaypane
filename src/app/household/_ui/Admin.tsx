@@ -15,6 +15,7 @@ import { signInHref } from "@/lib/site";
 
 import { DisplaysPanel } from "./DisplaysPanel";
 import { FlagsProvider } from "./flags";
+import { TrialBanner } from "./GettingStarted";
 import { HouseholdFeaturePrompt, PlanProvider, SaveNeedsUpgrade, UpgradeDialog, usePlan } from "./plan";
 import { SchedulePanel } from "./SchedulePanel";
 import { SettingsPanel } from "./SettingsPanel";
@@ -195,9 +196,22 @@ function MobileStatus() {
 }
 
 function PlanChip() {
-  const { isPaid, planLabel, openUpgrade, openPortal, hasCustomer, loading } = usePlan();
+  const { isPaid, planLabel, openUpgrade, openPortal, hasCustomer, loading, trialing, trialDaysLeft } = usePlan();
   // Hold the chip's place while the plan loads, so the header doesn't shift when it appears.
   if (loading) return <Bone className={`h-6 w-12 rounded-full ${isPaid ? "max-sm:hidden" : ""}`} />;
+  if (trialing) {
+    // The trial's days left live here all trial long (Melvin, 2026-11-28); the banner only joins in the last four.
+    return (
+      <button
+        type="button"
+        className="inline-flex items-center gap-1.5 rounded-full border border-brand/30 bg-brand/10 px-2.5 py-1 text-xs font-semibold text-brand"
+        onClick={() => openUpgrade("default")}
+        aria-label={`Household trial, ${trialDaysLeft} days left`}
+      >
+        Trial · {trialDaysLeft} {trialDaysLeft === 1 ? "Day" : "Days"} Left
+      </button>
+    );
+  }
   if (isPaid) {
     return (
       <button
@@ -362,6 +376,7 @@ function AdminPanel({ email, personName, staff }: { email: string; personName?: 
           </button>
         </nav>
       </header>
+      <TrialBanner />
       <MobileStatus />
 
       <main className="mx-auto max-w-7xl p-4">

@@ -1,16 +1,16 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
-import { HouseholdCheckoutButton } from "@/components/site/CheckoutButtons";
+import { TrialCta } from "@/components/site/CheckoutButtons";
 import { Check, CtaBanner, Eyebrow, JsonLd, organizationJsonLd, SitePage } from "@/components/site/SiteChrome";
-import { MARKETING_PLAN_TABLE, MARKETING_PLANS, usd } from "@/lib/marketingPlans";
+import { MARKETING_PLAN_TABLE, MARKETING_PLANS, usd, yearlySavings } from "@/lib/marketingPlans";
 import { pageMeta } from "@/lib/pageMeta";
 import { SIGNUP_PATH, SITE_URL } from "@/lib/site";
 
 export const metadata: Metadata = pageMeta({
   title: "Pricing",
   description:
-    "Everydaypane Free vs Household. Start free with 2 displays; Household at $59/year unlocks every widget — best value, no ads.",
+    "Everydaypane Free vs Household. Try Household free for 14 days, no card; then $59/year for every widget, or stay on Free with 2 displays. No ads.",
   path: "/pricing/",
 });
 
@@ -36,10 +36,23 @@ export default function PricingPage() {
         ]}
       />
       <Eyebrow>Pricing</Eyebrow>
-      <h1 className="mt-3 font-display text-4xl font-extrabold tracking-tight sm:text-5xl">Free forever. Household is the best value.</h1>
+      <h1 className="mt-3 font-display text-4xl font-extrabold tracking-tight sm:text-5xl">Try Household Free for 14 Days.</h1>
       <p className="mt-4 max-w-2xl text-lg text-soft">
-        No ads on either plan. Pay yearly on Household and it works out to about {usd(paid.priceYearly / 12)} a month.
+        Every new household starts on Household with no card. Keep it for {usd(paid.priceYearly)} a year (about {usd(paid.priceYearly / 12)}{" "}
+        a month), or carry on with Free forever. No ads on either plan.
       </p>
+      <ol className="mt-6 grid max-w-3xl gap-3 text-sm sm:grid-cols-3">
+        {[
+          ["Today", "Sign up and every Household widget is on. No card."],
+          ["Day 10", "We email what your family used, so you can decide."],
+          ["Day 14", "Subscribe to keep it, or the wall goes back to Free. Nothing is deleted."],
+        ].map(([when, what]) => (
+          <li key={when} className="rounded-2xl border border-line bg-panel p-4">
+            <p className="font-display font-extrabold text-brand">{when}</p>
+            <p className="mt-1 text-soft">{what}</p>
+          </li>
+        ))}
+      </ol>
       <div className="mt-10 grid gap-5 lg:grid-cols-2">
         {MARKETING_PLANS.map((p) => (
           <article key={p.id} className={`card relative flex flex-col ${p.highlighted ? "border-brand ring-4 ring-brand/15" : ""}`}>
@@ -53,7 +66,10 @@ export default function PricingPage() {
               {p.priceMonthly > 0 ? <span className="text-base font-semibold text-soft"> / year</span> : null}
             </p>
             {p.priceMonthly > 0 ? (
-              <p className="text-sm text-soft">or {usd(p.priceMonthly)} / month</p>
+              <p className="text-sm text-soft">
+                Billed yearly · save {usd(yearlySavings(p).dollars)}, over {yearlySavings(p).months} months free · or {usd(p.priceMonthly)}{" "}
+                monthly
+              </p>
             ) : (
               <p className="text-sm text-soft">2 displays · 1 view · essentials</p>
             )}
@@ -66,14 +82,17 @@ export default function PricingPage() {
               ))}
             </ul>
             {p.id === "paid" ? (
-              <HouseholdCheckoutButton className="mt-6" label={p.cta} />
+              <TrialCta plan={p} />
             ) : (
-              <Link
-                href={SIGNUP_PATH}
-                className="mt-6 inline-flex min-h-12 items-center justify-center rounded-2xl border border-line px-5 font-semibold"
-              >
-                {p.cta}
-              </Link>
+              <>
+                <Link
+                  href={SIGNUP_PATH}
+                  className="mt-6 inline-flex min-h-12 items-center justify-center rounded-2xl border border-line px-5 font-semibold"
+                >
+                  {p.cta}
+                </Link>
+                {p.ctaNote ? <p className="mt-2 text-sm text-soft">{p.ctaNote}</p> : null}
+              </>
             )}
           </article>
         ))}
@@ -100,7 +119,11 @@ export default function PricingPage() {
         </table>
       </div>
       <div className="mt-14">
-        <CtaBanner cta="pricing-end" title="Start on Free Today" body="Upgrade to Household when you want every widget on every screen." />
+        <CtaBanner
+          cta="pricing-end"
+          title="Try Household Free for 14 Days"
+          body="Every widget on every screen, no card. Keep it after, or stay on Free."
+        />
       </div>
     </SitePage>
   );

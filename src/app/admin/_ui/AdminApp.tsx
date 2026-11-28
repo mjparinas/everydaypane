@@ -841,11 +841,28 @@ function DevicesMetricsTab({ days }: { days: number }) {
   );
 }
 
+/** Stripe's cancellation_details.feedback values, as the portal's survey words them. */
+const CANCEL_REASON_LABELS: Record<string, string> = {
+  too_expensive: "It's too expensive",
+  missing_features: "Some features are missing",
+  switched_service: "I'm switching to a different service",
+  unused: "I don't use it enough",
+  customer_service: "Customer service was less than expected",
+  too_complex: "Ease of use was less than expected",
+  low_quality: "Quality was less than expected",
+  other: "Other reason",
+  unanswered: "Didn't answer",
+};
+
 function RevenueTab({ flash, canWrite }: { flash: Flash; canWrite: boolean }) {
   const { data, reload, error } = useFetch<{
     free: number;
     paid: number;
     stripeLinked: number;
+    trials: number;
+    trialsEnded: number;
+    cancelReasons: { reason: string; n: number }[];
+    cancelComments: string[];
     grossMrr: number;
     netMrr: number;
     costs: { id: string; name: string; amount: number; period: "month" | "year" }[];
@@ -864,7 +881,29 @@ function RevenueTab({ flash, canWrite }: { flash: Flash; canWrite: boolean }) {
         <Tile label="Stripe-linked" value={String(data.stripeLinked)} />
         <Tile label="Gross MRR" value={`$${data.grossMrr}`} />
         <Tile label="Profit / Month" value={`$${data.profitMonth}`} hint={`costs $${data.costsMonth}`} />
+        <Tile label="Trials Running" value={String(data.trials)} hint={`${data.trialsEnded} ended on Free`} />
       </div>
+      <Card title="Why People Cancel" sub="The one-question survey on Stripe's billing page">
+        {data.cancelReasons.length ? (
+          <ul className="grid gap-1 text-sm">
+            {data.cancelReasons.map((r) => (
+              <li key={r.reason} className="flex justify-between gap-3">
+                <span>{CANCEL_REASON_LABELS[r.reason] ?? r.reason}</span>
+                <span className="font-semibold">{r.n}</span>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="text-sm text-soft">No cancellations yet.</p>
+        )}
+        {data.cancelComments.length ? (
+          <ul className="mt-3 grid gap-1 text-sm text-soft">
+            {data.cancelComments.map((c, i) => (
+              <li key={i}>“{c}”</li>
+            ))}
+          </ul>
+        ) : null}
+      </Card>
       <Card title="Running Costs" sub="Typed by staff; yearly fees count as a twelfth">
         {costs.map((c, i) => (
           <div key={c.id || i} className="mb-2 flex flex-wrap gap-2">

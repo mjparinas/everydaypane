@@ -11,6 +11,8 @@ export interface MarketingPlan {
   highlighted?: boolean;
   badge?: string;
   cta: string;
+  /** One line under the button. */
+  ctaNote?: string;
   features: string[];
 }
 
@@ -22,6 +24,7 @@ export const MARKETING_PLANS: MarketingPlan[] = [
     priceYearly: 0,
     blurb: "Two wall displays with the essentials. No card, no ads.",
     cta: "Start Free",
+    ctaNote: "Starts with 14 days of Household, then Free forever.",
     features: [
       "2 wall displays and 1 view",
       "Clock, date, weather, sunrise & sunset, air quality",
@@ -39,8 +42,9 @@ export const MARKETING_PLANS: MarketingPlan[] = [
     priceYearly: 59,
     blurb: "The whole house on every screen. Best value for a busy family.",
     highlighted: true,
-    badge: "Best value",
-    cta: "Get Household",
+    badge: "14 Days Free",
+    cta: "Start 14-Day Free Trial",
+    ctaNote: "No card needed. Back to Free by itself unless you subscribe.",
     features: [
       "Everything in Free",
       "Up to 20 displays and 30 views",
@@ -78,6 +82,15 @@ export const MARKETING_PLAN_TABLE: { feature: string; free: boolean | string; pa
   { feature: "Instant display refresh", free: false, paid: true },
   { feature: "Ads", free: "None", paid: "None" },
 ];
+
+/** The 14-day Household trial, as the marketing pages say it (Melvin, 2026-11-28: "emphasize the free trial"). */
+export const TRIAL_LINE = "Try Household free for 14 days. No card needed.";
+
+/** What yearly saves over twelve monthly payments, in dollars and whole months (Melvin, 2026-11-28: yearly first). */
+export function yearlySavings(plan: MarketingPlan): { dollars: number; months: number } {
+  const dollars = plan.priceMonthly * 12 - plan.priceYearly;
+  return { dollars, months: plan.priceMonthly ? Math.floor(dollars / plan.priceMonthly) : 0 };
+}
 
 export function usd(n: number): string {
   return n === 0 ? "$0" : `$${n.toFixed(n % 1 ? 2 : 0)}`;

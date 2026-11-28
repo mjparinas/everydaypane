@@ -88,7 +88,7 @@ describe("gateNewDisplay", () => {
   useTestServer();
 
   it("caps Free at two displays and Paid at twenty", async () => {
-    const free = await createAccount("Free home", "free-displays@example.com");
+    const free = await createAccount("Free home", "free-displays@example.com", undefined, { trial: false });
     expect(await planForAccount(free.id)).toBe("free");
     expect(await gateNewDisplay(free.id)).toEqual({ ok: true });
     await addDevice(free.id, "Kitchen", null);

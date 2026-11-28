@@ -2,7 +2,7 @@ import "server-only";
 
 import type { PlanId } from "@/lib/plans";
 
-import { accountById, setAccountPlan } from "./accounts";
+import { accountById, endTrial, setAccountPlan } from "./accounts";
 import { randomToken } from "./crypto";
 import { query, run } from "./db";
 import { listHouseholdsForStaff } from "./staffAccounts";
@@ -74,4 +74,6 @@ export async function addHouseholdNote(accountId: string, admin: string, text: s
 export async function grantPlan(accountId: string, plan: PlanId) {
   if (!(await accountById(accountId))) throw new Error("Household not found");
   await setAccountPlan(accountId, plan);
+  // "Move to Free" means Free now, so a running Household trial ends with it.
+  if (plan === "free") await endTrial(accountId);
 }

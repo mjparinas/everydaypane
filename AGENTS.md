@@ -145,7 +145,9 @@ elsewhere in the U.S., outside both), or Settings › Location picks one by hand
 The region decides which alert sources are read and how their toggles are named (hidden where nothing feeds them),
 which transit agencies the departures widget offers first, and the "Your region" summary under Settings › Location.
 
-**Getting-started emails** (`src/lib/onboarding.ts`, `src/server/onboarding.ts`): 18 daily emails to a new household's admins, one feature each with a picture of the app (`public/email/onboarding/`, `node scripts/email-images.mjs`); 7 Free, 11 marked Household. One-click unsubscribe (`/api/email/unsubscribe/`), paused from `/admin/` › Automations.
+**Getting-started emails** (`src/lib/onboarding.ts`, `src/server/onboarding.ts`): 18 daily emails to a new household's admins, one feature each with a picture of the app (`public/email/onboarding/`, `node scripts/email-images.mjs`); 7 Free, 11 marked Household (during the trial they say "In Your Trial"). Plus two **trial-ending emails** on day 10 and day 13 with the household's own usage (`src/lib/trialEmail.ts`). One-click unsubscribe (`/api/email/unsubscribe/`), paused from `/admin/` › Automations.
+
+**Household trial and conversion** (Melvin, 2026-11-28): every new household gets **14 days of Household, no card** (`accounts.trial_ends_at`, `TRIAL_DAYS` in `src/lib/plans.ts`); a Free household that never had one starts it from any **Try Household** button (`POST /api/household/billing/?action=trial`). The plan chip counts the days, a banner joins in the last four, and Checkout during the trial keeps the days left (`subscription_data.trial_end`). When it ends the wall shows only Free things, with each Household widget left in its cell as a "paused" note (`lockForFree`, `src/lib/config/freeWall.ts`; the saved settings never change), and the household panel offers Keep Household or **Switch to the Free Layout** (`fitFree`). **Get Started** on the Views tab (calendar, photos, a screen; `GettingStarted.tsx`), and a new household's first visit moves the starter's weather, clock and date from Langley to the visitor's city from Vercel's IP headers (`src/server/firstLocation.ts`). Marketing pages lead with the trial; the Household price leads with yearly. Cancel survey: Stripe's own in the Customer Portal (cancellation reasons are on in the live portal configuration), answers recorded as `household_cancelled` events and shown in `/admin/` › Revenue with running trials.
 
 **Household and family:** Clerk Account Portal in production (`accounts.everydaypane.com/sign-in` and `/sign-up`, from `NEXT_PUBLIC_CLERK_SIGN_IN_URL` / `SIGN_UP_URL`); local and CI stay on `/signin/`; Turso
 `account_members` stays the source of truth for household roles; `user.created` webhook seeds Free households
@@ -515,6 +517,14 @@ npm run templates:previews  # regenerate public/templates/*.png from real widget
   shouldnt impact the other"); only notes posted after
   a screen first read the board pop up; four at most, the rest behind "+N More"; newest by the corner; a new note wakes
   the screen saver; an admin's preview shows none (see Architecture).
+- **Household trial and conversion** (Melvin, 2026-11-28: "can do you all 5", after the coordinator suggested a
+  no-card trial plus five conversion steps; "can you emphasize the free trial on the website"): 14 days, no card, at
+  sign-up, back to Free by itself; Try Household starts one for a Free household that never had one, never a second.
+  Claude's calls: the stored plan stays what Stripe or staff set and `Account.plan` is worked out with the trial
+  (`paidPlan` is what billing reads); staff "Move to Free" ends a running trial; Free walls don't sell (the paused
+  notes say what's off and nothing else, since anyone in the kitchen reads the wall); a household's IP city only
+  replaces the untouched Langley starter before its first save. Yearly saves $25 over monthly, which is three months
+  free (the "about two months" in the suggestion was under).
 - **Canadian English** in everything a person reads (colour, centre, favourite), as in Liftsmith.
 
 ## Display: super lightweight (rule, Melvin, 2026-11-17)

@@ -95,7 +95,8 @@ export async function SiteHeader() {
                 Sign In
               </Link>
               <Link href={SIGNUP_PATH} className="btn-primary ml-1 rounded-xl px-3.5 text-sm sm:px-4" data-cta="nav-start-free">
-                Start Free
+                <span className="sm:hidden">Try Free</span>
+                <span className="max-sm:hidden">Start Free Trial</span>
               </Link>
             </>
           )}
@@ -206,8 +207,9 @@ export function CtaBanner({ title, body, cta }: { title: string; body: string; c
         data-track="start_free"
         className="relative mt-6 inline-flex min-h-12 items-center rounded-2xl bg-white px-6 font-semibold text-brand shadow-md"
       >
-        Start Free
+        Start Your 14-Day Free Trial
       </Link>
+      <p className="relative mt-3 text-sm text-white/85">No card needed. Free forever after, unless you subscribe.</p>
     </section>
   );
 }

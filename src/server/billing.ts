@@ -53,8 +53,8 @@ export async function createCheckoutSession(
 ): Promise<string> {
   const account = await accountById(accountId);
   if (!account) throw new Error("Account not found");
-  // Already on Household: open the portal instead of stacking another subscription Checkout.
-  if (account.plan === "paid" && account.stripeCustomerId) {
+  // Already paying: open the portal instead of stacking another subscription Checkout. A trial isn't paying.
+  if (account.paidPlan === "paid" && account.stripeCustomerId) {
     return createPortalSession(accountId, origin);
   }
   const s = stripe();
@@ -65,6 +65,9 @@ export async function createCheckoutSession(
     await setStripeIds(accountId, { customerId });
   }
   const tax = env.stripeAutomaticTax();
+  // Subscribing during the Household trial keeps the days left (Melvin, 2026-11-28): the card is charged when the
+  // trial would have ended. Stripe wants a trial end at least two days out, so the last day or two charge now.
+  const trialEnd = account.trialEndsAt && account.trialEndsAt - Date.now() > 2 * 86_400_000 + 60_000 ? account.trialEndsAt : null;
   const session = await s.checkout.sessions.create({
     mode: "subscription",
     customer: customerId,
@@ -75,7 +78,7 @@ export async function createCheckoutSession(
     cancel_url: `${origin}/household/?billing=cancel`,
     client_reference_id: accountId,
     metadata: { accountId },
-    subscription_data: { metadata: { accountId } },
+    subscription_data: { metadata: { accountId }, ...(trialEnd ? { trial_end: Math.floor(trialEnd / 1000) } : {}) },
     // Omit payment_method_types — Stripe picks methods dynamically (stripe-best-practices).
   });
   if (!session.url) throw new Error("Checkout session had no URL");
@@ -95,6 +98,29 @@ export async function createPortalSession(accountId: string, origin: string): Pr
 /** Statuses that keep Household access. `past_due` is a grace window (matches invoice.payment_failed). */
 export function planFromSubscriptionStatus(status: Stripe.Subscription.Status): PlanId {
   return status === "active" || status === "trialing" || status === "past_due" || status === "paused" ? "paid" : "free";
+}
+
+/**
+ * The one-question cancel survey (Melvin, 2026-11-28) is Stripe's own in the Customer Portal; its answer arrives on the
+ * subscription as `cancellation_details`. Recorded once per subscription as a `household_cancelled` event so
+ * Platform › Revenue can count reasons. The free-text comment is cut short and never shown on a wall.
+ */
+export async function recordCancellation(accountId: string, sub: Stripe.Subscription): Promise<void> {
+  const details = sub.cancellation_details;
+  const cancelling = sub.status === "canceled" || sub.cancel_at_period_end || sub.cancel_at !== null;
+  if (!cancelling || !details || (!details.feedback && !details.comment)) return;
+  const { query } = await import("./db");
+  const seen = await query("SELECT 1 FROM admin_events WHERE name = 'household_cancelled' AND account_id = ? AND props LIKE ?", [
+    accountId,
+    `%"subscription":"${sub.id}"%`,
+  ]);
+  if (seen.length) return;
+  const { recordEvent } = await import("./adminAnalytics");
+  await recordEvent(
+    "household_cancelled",
+    { subscription: sub.id, reason: details.feedback ?? "unanswered", comment: (details.comment ?? "").slice(0, 300) },
+    accountId,
+  );
 }
 
 export async function applySubscription(accountId: string, subscription: Stripe.Subscription): Promise<void> {
@@ -148,7 +174,10 @@ export async function handleStripeWebhook(rawBody: string, signature: string): P
     case "customer.subscription.deleted": {
       const sub = event.data.object as Stripe.Subscription;
       const accountId = sub.metadata?.accountId || (await accountIdForSubscription(sub));
-      if (accountId) await applySubscription(accountId, sub);
+      if (accountId) {
+        await applySubscription(accountId, sub);
+        await recordCancellation(accountId, sub);
+      }
       break;
     }
     case "invoice.paid": {

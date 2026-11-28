@@ -11,6 +11,7 @@ import { FREE_LIMITS, PAID_LIMITS } from "@/lib/plans";
 
 import { AddWidgetDrawer } from "./AddWidgetDrawer";
 import { Section } from "./fields";
+import { SetupChecklist } from "./GettingStarted";
 import { LiveLayoutEditor, widgetName } from "./LiveLayoutEditor";
 import { HouseholdBadge, UpgradeLink, usePlan } from "./plan";
 import { newId, useAdmin } from "./store";
@@ -168,6 +169,7 @@ export function ViewsPanel() {
 
   return (
     <div className="grid min-w-0 grid-cols-[minmax(0,1fr)] content-start gap-4">
+      <SetupChecklist />
       {/* The tab list's basis is its content (not 0), so on a phone it takes its own row and scrolls sideways instead of
           squeezing to one chip per line under the action buttons (Melvin's Android screenshot, 2026-11-26). */}
       <div className="flex flex-wrap items-center gap-2">

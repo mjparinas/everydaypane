@@ -21,7 +21,7 @@ describe("accounts", () => {
 
   it("creates a Free household with a Free-safe starter layout", async () => {
     await ensureAccountsSeeded();
-    const account = await createAccount("Pat's home", "pat@example.com");
+    const account = await createAccount("Pat's home", "pat@example.com", undefined, { trial: false });
     expect(account.plan).toBe("free");
     expect(account.id).not.toBe(LEGACY_ACCOUNT_ID);
     const members = await accountsForEmail("pat@example.com");

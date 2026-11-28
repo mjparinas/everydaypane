@@ -1,7 +1,7 @@
 import "server-only";
 
 import { freeDefaultConfig } from "@/lib/config/defaults";
-import { PLAN_IDS, type PlanId } from "@/lib/plans";
+import { effectivePlan, PLAN_IDS, TRIAL_MS, type PlanId } from "@/lib/plans";
 
 import { randomToken } from "./crypto";
 import { query, run } from "./db";
@@ -17,7 +17,12 @@ export type MemberRole = "admin" | "family";
 export interface Account {
   id: string;
   name: string;
+  /** What the household has right now: Household while it pays, staff granted it, or its trial runs. */
   plan: PlanId;
+  /** What Stripe or staff set, ignoring the trial. Billing reads this, never `plan`. */
+  paidPlan: PlanId;
+  /** When the Household trial ends (or ended); null when it never had one. */
+  trialEndsAt: number | null;
   stripeCustomerId: string | null;
   stripeSubscriptionId: string | null;
   createdAt: number;
@@ -37,16 +42,23 @@ type AccountRow = {
   stripe_customer_id: string | null;
   stripe_subscription_id: string | null;
   created_at: number;
+  trial_ends_at?: number | null;
 };
 
-const toAccount = (r: AccountRow): Account => ({
-  id: r.id,
-  name: r.name,
-  plan: r.plan === "paid" ? "paid" : "free",
-  stripeCustomerId: r.stripe_customer_id,
-  stripeSubscriptionId: r.stripe_subscription_id,
-  createdAt: Number(r.created_at),
-});
+const toAccount = (r: AccountRow, now = Date.now()): Account => {
+  const paidPlan: PlanId = r.plan === "paid" ? "paid" : "free";
+  const trialEndsAt = r.trial_ends_at === null || r.trial_ends_at === undefined ? null : Number(r.trial_ends_at);
+  return {
+    id: r.id,
+    name: r.name,
+    plan: effectivePlan(paidPlan, trialEndsAt, now),
+    paidPlan,
+    trialEndsAt,
+    stripeCustomerId: r.stripe_customer_id,
+    stripeSubscriptionId: r.stripe_subscription_id,
+    createdAt: Number(r.created_at),
+  };
+};
 
 let seeded: Promise<void> | null = null;
 
@@ -150,7 +162,12 @@ async function migrateLegacyData(accountId: string, now: number): Promise<void> 
   }
 }
 
-export async function createAccount(name: string, adminEmail: string, now = Date.now()): Promise<Account> {
+export async function createAccount(
+  name: string,
+  adminEmail: string,
+  now = Date.now(),
+  { trial = true }: { trial?: boolean } = {},
+): Promise<Account> {
   await ensureAccountsSeeded(now);
   const e = adminEmail.trim().toLowerCase();
   const existing = await accountsForEmail(e);
@@ -179,9 +196,11 @@ export async function createAccount(name: string, adminEmail: string, now = Date
     throw new Error("Couldn't finish signup. Try again in a moment.");
   }
 
+  // Every new household starts a 14-day Household trial, no card (Melvin, 2026-11-28). Its settings are still the
+  // Free-safe starter, so the wall looks the same the day the trial ends unless the family added Household things.
   await run(
-    "INSERT INTO accounts (id, name, plan, stripe_customer_id, stripe_subscription_id, created_at) VALUES (?, ?, 'free', NULL, NULL, ?)",
-    [id, name.trim() || "Home", now],
+    "INSERT INTO accounts (id, name, plan, stripe_customer_id, stripe_subscription_id, created_at, trial_ends_at) VALUES (?, ?, 'free', NULL, NULL, ?, ?)",
+    [id, name.trim() || "Home", now, trial ? now + TRIAL_MS : null],
   );
   // Seed a Free-safe document (not "{}") so the wall and first Save match the marketed Free tier.
   await run("INSERT INTO account_config (account_id, json, version, updated_at) VALUES (?, ?, 0, ?)", [
@@ -197,6 +216,23 @@ export async function accountById(id: string): Promise<Account | null> {
   await ensureAccountsSeeded();
   const row = (await query<AccountRow>("SELECT * FROM accounts WHERE id = ?", [id]))[0];
   return row ? toAccount(row) : null;
+}
+
+/**
+ * Starts the 14-day Household trial for a Free household that never had one ("Try Household"). Returns false when
+ * it already had a trial or already pays, so a second tap can't stretch it.
+ */
+export async function startTrial(accountId: string, now = Date.now()): Promise<boolean> {
+  const changed = await run("UPDATE accounts SET trial_ends_at = ? WHERE id = ? AND plan = 'free' AND trial_ends_at IS NULL", [
+    now + TRIAL_MS,
+    accountId,
+  ]);
+  return changed === 1;
+}
+
+/** Ends a running trial now (staff "Move to Free"); a household that never had one is marked as having used it. */
+export async function endTrial(accountId: string, now = Date.now()): Promise<void> {
+  await run("UPDATE accounts SET trial_ends_at = ? WHERE id = ? AND (trial_ends_at IS NULL OR trial_ends_at > ?)", [now, accountId, now]);
 }
 
 export async function setAccountPlan(accountId: string, plan: PlanId): Promise<void> {

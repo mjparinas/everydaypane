@@ -1,5 +1,7 @@
 import "server-only";
 
+import { effectivePlan } from "@/lib/plans";
+
 import { ensureAccountsSeeded, type Account } from "./accounts";
 import { query } from "./db";
 
@@ -15,6 +17,7 @@ type AccountRow = {
   stripe_customer_id: string | null;
   stripe_subscription_id: string | null;
   created_at: number;
+  trial_ends_at: number | null;
 };
 
 /** Every household for the platform admin panel (newest first). */
@@ -37,10 +40,13 @@ export async function listHouseholdsForStaff(): Promise<StaffHousehold[]> {
     membersBy.set(m.account_id, list);
   }
 
+  const now = Date.now();
   return accounts.map((r) => ({
     id: r.id,
     name: r.name,
-    plan: r.plan === "paid" ? "paid" : "free",
+    plan: effectivePlan(r.plan === "paid" ? "paid" : "free", r.trial_ends_at == null ? null : Number(r.trial_ends_at), now),
+    paidPlan: r.plan === "paid" ? "paid" : "free",
+    trialEndsAt: r.trial_ends_at == null ? null : Number(r.trial_ends_at),
     stripeCustomerId: r.stripe_customer_id,
     stripeSubscriptionId: r.stripe_subscription_id,
     createdAt: Number(r.created_at),

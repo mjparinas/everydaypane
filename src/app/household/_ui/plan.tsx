@@ -4,7 +4,7 @@ import { createContext, createElement, useCallback, useContext, useEffect, useMe
 
 import { MARKETING_PLANS, usd } from "@/lib/marketingPlans";
 import { inNativeApp } from "@/lib/nativeApp";
-import { FREE_LIMITS, PAID_LIMITS, planLabel, UPGRADE_REASONS, type PlanId, type UpgradeReasonKey } from "@/lib/plans";
+import { FREE_LIMITS, PAID_LIMITS, planLabel, TRIAL_DAYS, UPGRADE_REASONS, type PlanId, type UpgradeReasonKey } from "@/lib/plans";
 
 import { Section } from "./fields";
 
@@ -14,6 +14,10 @@ import { Section } from "./fields";
 type BillingBody = {
   plan?: PlanId;
   planLabel?: string;
+  paidPlan?: PlanId;
+  trialEndsAt?: number | null;
+  trialDaysLeft?: number;
+  trialAvailable?: boolean;
   stripeEnabled?: boolean;
   yearlyEnabled?: boolean;
   hasCustomer?: boolean;
@@ -28,7 +32,19 @@ export type PlanContextValue = {
   yearlyEnabled: boolean;
   hasCustomer: boolean;
   loading: boolean;
+  /** Household features are on (paying, granted, or in the trial). */
   isPaid: boolean;
+  /** Paying (or granted by staff): the trial doesn't count. */
+  subscribed: boolean;
+  /** In the 14-day Household trial (Melvin, 2026-11-28). */
+  trialing: boolean;
+  trialDaysLeft: number;
+  trialEndsAt: number | null;
+  /** Free and never had a trial: "Try Household" starts one. */
+  trialAvailable: boolean;
+  /** Had a trial that's over and isn't paying. */
+  trialEnded: boolean;
+  startTrial: () => Promise<boolean>;
   upgradeOpen: boolean;
   upgradeReason: UpgradeReasonKey;
   openUpgrade: (reason?: UpgradeReasonKey) => void;
@@ -42,13 +58,15 @@ export type PlanContextValue = {
 
 const PlanContext = createContext<PlanContextValue | null>(null);
 
-const BANNER_DISMISS_KEY = "everydaypane.freeBanner.dismissed";
-
 export function PlanProvider({ children, initialPlan = "free" }: { children: ReactNode; initialPlan?: PlanId }) {
   const [plan, setPlan] = useState<PlanId>(initialPlan);
   const [stripeEnabled, setStripeEnabled] = useState(false);
   const [yearlyEnabled, setYearlyEnabled] = useState(false);
   const [hasCustomer, setHasCustomer] = useState(false);
+  const [paidPlan, setPaidPlan] = useState<PlanId>(initialPlan);
+  const [trialEndsAt, setTrialEndsAt] = useState<number | null>(null);
+  const [trialDaysLeft, setTrialDaysLeft] = useState(0);
+  const [trialAvailable, setTrialAvailable] = useState(false);
   const [loading, setLoading] = useState(true);
   const [upgradeOpen, setUpgradeOpen] = useState(() => typeof window !== "undefined" && window.location.hash === "#upgrade");
   const [upgradeReason, setUpgradeReason] = useState<UpgradeReasonKey>("default");
@@ -63,6 +81,10 @@ export function PlanProvider({ children, initialPlan = "free" }: { children: Rea
     setStripeEnabled(Boolean(body.stripeEnabled));
     setYearlyEnabled(Boolean(body.yearlyEnabled));
     setHasCustomer(Boolean(body.hasCustomer));
+    setPaidPlan(body.paidPlan === "paid" ? "paid" : body.paidPlan === "free" ? "free" : body.plan === "paid" ? "paid" : "free");
+    setTrialEndsAt(typeof body.trialEndsAt === "number" ? body.trialEndsAt : null);
+    setTrialDaysLeft(Number(body.trialDaysLeft) || 0);
+    setTrialAvailable(Boolean(body.trialAvailable));
   }, []);
 
   const refresh = useCallback(async () => {
@@ -158,6 +180,27 @@ export function PlanProvider({ children, initialPlan = "free" }: { children: Rea
     }
   }, []);
 
+  /** Starts the no-card Household trial; the plan flips at once and walls reload to show it. */
+  const startTrial = useCallback(async (): Promise<boolean> => {
+    setBillingBusy(true);
+    setBillingError("");
+    try {
+      const r = await fetch("/api/household/billing/?action=trial", { method: "POST" });
+      const j = (await r.json().catch(() => ({}))) as { error?: string };
+      if (!r.ok) {
+        setBillingError(j.error ?? "Couldn't start the trial.");
+        return false;
+      }
+      await refresh();
+      return true;
+    } catch {
+      setBillingError("Couldn't start the trial.");
+      return false;
+    } finally {
+      setBillingBusy(false);
+    }
+  }, [refresh]);
+
   const openPortal = useCallback(async () => {
     setBillingBusy(true);
     setBillingError("");
@@ -185,6 +228,13 @@ export function PlanProvider({ children, initialPlan = "free" }: { children: Rea
       hasCustomer,
       loading,
       isPaid: plan === "paid",
+      subscribed: paidPlan === "paid",
+      trialing: plan === "paid" && paidPlan !== "paid" && trialDaysLeft > 0,
+      trialDaysLeft,
+      trialEndsAt,
+      trialAvailable: trialAvailable && plan !== "paid",
+      trialEnded: plan !== "paid" && trialEndsAt !== null && !trialAvailable,
+      startTrial,
       upgradeOpen,
       upgradeReason,
       openUpgrade,
@@ -201,6 +251,11 @@ export function PlanProvider({ children, initialPlan = "free" }: { children: Rea
       yearlyEnabled,
       hasCustomer,
       loading,
+      paidPlan,
+      trialDaysLeft,
+      trialEndsAt,
+      trialAvailable,
+      startTrial,
       upgradeOpen,
       upgradeReason,
       openUpgrade,
@@ -234,53 +289,6 @@ export function HouseholdBadge({ className = "" }: { className?: string }) {
     >
       Household
     </span>
-  );
-}
-
-export function FreePlanBanner() {
-  const { isPaid, openUpgrade, loading } = usePlan();
-  const [dismissed, setDismissed] = useState(() => {
-    if (typeof window === "undefined") return true;
-    try {
-      return sessionStorage.getItem(BANNER_DISMISS_KEY) === "1";
-    } catch {
-      return false;
-    }
-  });
-
-  if (loading || isPaid || dismissed) return null;
-
-  // Quieter Free CTA (H5, 2026-11-24): one soft line + text actions; Plan chip and badges still carry upgrade.
-  return (
-    <div className="border-b border-line bg-bg/80" role="region" aria-label="Household plan">
-      <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-2 px-4 py-2">
-        <p className="min-w-0 flex-1 text-sm text-soft">
-          Free plan — core wall tools work.{" "}
-          <button
-            type="button"
-            className="font-semibold text-brand underline-offset-2 hover:underline"
-            onClick={() => openUpgrade("default")}
-          >
-            What’s on Household?
-          </button>
-        </p>
-        <button
-          type="button"
-          className="btn-ghost shrink-0 text-soft"
-          aria-label="Dismiss plan note"
-          onClick={() => {
-            try {
-              sessionStorage.setItem(BANNER_DISMISS_KEY, "1");
-            } catch {
-              // ignore
-            }
-            setDismissed(true);
-          }}
-        >
-          Dismiss
-        </button>
-      </div>
-    </div>
   );
 }
 
@@ -318,7 +326,7 @@ export function HouseholdLockedButton({
 
 /** Full-tab placeholder when Free opens Meals / Shopping / Messages / Schedule. */
 export function HouseholdFeaturePrompt({ reason, title, blurb }: { reason: UpgradeReasonKey; title: string; blurb: string }) {
-  const { openUpgrade } = usePlan();
+  const { openUpgrade, trialAvailable } = usePlan();
   return (
     <div className="mx-auto grid max-w-lg gap-4 py-8 text-center">
       <div className="flex justify-center">
@@ -328,7 +336,7 @@ export function HouseholdFeaturePrompt({ reason, title, blurb }: { reason: Upgra
       <p className="text-soft">{blurb}</p>
       <p className="text-sm text-soft">{UPGRADE_REASONS[reason]}</p>
       <button type="button" className="btn-primary justify-self-center" onClick={() => openUpgrade(reason)}>
-        Why Upgrade
+        {trialAvailable ? "Try Household Free" : "Why Upgrade"}
       </button>
     </div>
   );
@@ -344,7 +352,7 @@ export function HouseholdSoftLock({
   children: ReactNode;
   label?: string;
 }) {
-  const { isPaid, openUpgrade } = usePlan();
+  const { isPaid, openUpgrade, trialAvailable } = usePlan();
   if (isPaid) return <>{children}</>;
   return (
     <div className="relative">
@@ -357,7 +365,7 @@ export function HouseholdSoftLock({
         <span className="card flex max-w-xs flex-col items-center gap-2 p-4 text-center shadow-md">
           <HouseholdBadge />
           <span className="text-sm font-semibold">{label}</span>
-          <span className="text-xs text-soft">Tap to see what’s included</span>
+          <span className="text-xs text-soft">{trialAvailable ? `Try It Free for ${TRIAL_DAYS} Days` : "Tap to see what’s included"}</span>
         </span>
       </button>
     </div>
@@ -366,7 +374,12 @@ export function HouseholdSoftLock({
 
 export function UpgradeDialog() {
   const {
-    isPaid,
+    isPaid: householdOn,
+    trialing,
+    trialDaysLeft,
+    trialEndsAt,
+    trialAvailable,
+    startTrial,
     upgradeOpen,
     upgradeReason,
     closeUpgrade,
@@ -379,6 +392,11 @@ export function UpgradeDialog() {
     billingError,
   } = usePlan();
   const [chosen, setChosen] = useState<BillingInterval>("year");
+  const [trialStarted, setTrialStarted] = useState(false);
+  // During the trial the dialog still sells: "paid" here means paying, so the trial sees prices and Subscribe.
+  const isPaid = householdOn && !trialing;
+  const firstCharge =
+    trialEndsAt && trialDaysLeft > 2 ? new Date(trialEndsAt).toLocaleDateString(undefined, { month: "long", day: "numeric" }) : "";
   // App Store and Google Play rules (Melvin, 2026-11-27: no in-app purchase; billing stays on the web): inside the
   // app the dialog still says what Household adds, but shows no price and no way to buy or manage a plan.
   const inApp = inNativeApp();
@@ -417,16 +435,36 @@ export function UpgradeDialog() {
               <HouseholdBadge />
             </div>
             <h2 id="upgrade-title" className="text-xl font-bold">
-              {isPaid ? "You’re on Household" : "Upgrade to Household"}
+              {trialStarted
+                ? "Your Household Trial Has Started"
+                : isPaid
+                  ? "You’re on Household"
+                  : trialing
+                    ? "Keep Household After Your Trial"
+                    : trialAvailable
+                      ? `Try Household Free for ${TRIAL_DAYS} Days`
+                      : "Upgrade to Household"}
             </h2>
-            <p className="mt-1 text-sm text-soft">{isPaid ? "Thanks — every widget and family tool is unlocked." : reason}</p>
+            <p className="mt-1 text-sm text-soft">
+              {trialStarted
+                ? `Every widget and family tool is on for ${TRIAL_DAYS} days. Your walls are reloading now.`
+                : isPaid
+                  ? "Thanks — every widget and family tool is unlocked."
+                  : trialing
+                    ? `${trialDaysLeft} ${trialDaysLeft === 1 ? "day" : "days"} left. ${
+                        firstCharge ? `Subscribe now and your first charge is on ${firstCharge}.` : "Subscribe to keep everything as it is."
+                      }`
+                    : trialAvailable
+                      ? `${reason} No card needed. After ${TRIAL_DAYS} days you’re back on Free unless you subscribe.`
+                      : reason}
+            </p>
           </div>
           <button type="button" className="btn-ghost min-h-9 shrink-0 px-3" onClick={closeUpgrade} aria-label="Close">
             ✕
           </button>
         </div>
         <div className="grid flex-1 gap-4 overflow-y-auto px-5 py-4">
-          {!isPaid && (
+          {!isPaid && !trialStarted && (
             <>
               <p className="text-sm text-ink">{paid.blurb}</p>
               <ul className="grid gap-2 text-sm">
@@ -487,7 +525,23 @@ export function UpgradeDialog() {
           ) : null}
         </div>
         <div className="grid gap-2 border-t border-line px-5 py-4">
-          {inApp ? (
+          {trialStarted ? (
+            <button type="button" className="btn-primary" onClick={closeUpgrade}>
+              Start Exploring
+            </button>
+          ) : trialAvailable && !isPaid ? (
+            // The trial takes no card, so it's offered in the app too (no purchase happens there).
+            <button
+              type="button"
+              className="btn-primary"
+              disabled={billingBusy}
+              data-cta="household-trial"
+              onClick={() => void startTrial().then((ok) => setTrialStarted(ok))}
+            >
+              {billingBusy ? "Starting…" : `Start ${TRIAL_DAYS}-Day Free Trial`}
+            </button>
+          ) : null}
+          {trialStarted || (trialAvailable && !isPaid && !stripeEnabled) ? null : inApp ? (
             <p className="text-sm text-soft">{isPaid ? "Plans can't be changed in the app." : "Plans aren't sold in the app."}</p>
           ) : isPaid ? (
             hasCustomer ? (
@@ -502,17 +556,27 @@ export function UpgradeDialog() {
           ) : (
             <button
               type="button"
-              className="btn-primary"
+              className={trialAvailable ? "btn-ghost" : "btn-primary"}
               disabled={billingBusy || !stripeEnabled}
               onClick={() => void startCheckout(interval)}
               data-cta="household-checkout"
             >
-              {billingBusy ? "Opening…" : stripeEnabled ? "Get Household" : "Billing Unavailable"}
+              {billingBusy
+                ? "Opening…"
+                : !stripeEnabled
+                  ? "Billing Unavailable"
+                  : trialing
+                    ? "Subscribe"
+                    : trialAvailable
+                      ? "Or Subscribe Now"
+                      : "Get Household"}
             </button>
           )}
-          <button type="button" className="btn-ghost" onClick={closeUpgrade}>
-            {isPaid ? "Close" : "Keep Using Free"}
-          </button>
+          {trialStarted ? null : (
+            <button type="button" className="btn-ghost" onClick={closeUpgrade}>
+              {isPaid ? "Close" : trialing ? "Not Yet" : "Keep Using Free"}
+            </button>
+          )}
         </div>
       </div>
     </div>
@@ -520,14 +584,36 @@ export function UpgradeDialog() {
 }
 
 export function PlanSettingsCard() {
-  const { isPaid, planLabel: label, openUpgrade, openPortal, hasCustomer, stripeEnabled, billingBusy, billingError } = usePlan();
+  const {
+    isPaid: householdOn,
+    trialing,
+    trialDaysLeft,
+    trialAvailable,
+    planLabel: label,
+    openUpgrade,
+    openPortal,
+    hasCustomer,
+    stripeEnabled,
+    billingBusy,
+    billingError,
+  } = usePlan();
+  const isPaid = householdOn && !trialing;
   return (
     <Section id="settings-plan" title="Plan" actions={isPaid ? undefined : <HouseholdBadge />}>
       <p className="text-sm text-soft">
-        You’re on <strong className="text-ink">{label}</strong>
-        {isPaid
-          ? " — every widget, family tool and display refresh is unlocked."
-          : ` — ${FREE_LIMITS.views} view, ${FREE_LIMITS.displays} displays, ${FREE_LIMITS.calendars} calendars, and the core widgets.`}
+        {trialing ? (
+          <>
+            You’re on the <strong className="text-ink">Household trial</strong> — {trialDaysLeft} {trialDaysLeft === 1 ? "day" : "days"}{" "}
+            left, then back to Free unless you subscribe.
+          </>
+        ) : (
+          <>
+            You’re on <strong className="text-ink">{label}</strong>
+            {isPaid
+              ? " — every widget, family tool and display refresh is unlocked."
+              : ` — ${FREE_LIMITS.views} view, ${FREE_LIMITS.displays} displays, ${FREE_LIMITS.calendars} calendars, and the core widgets.`}
+          </>
+        )}
       </p>
       {billingError ? (
         <p className="text-sm text-bad" role="alert">
@@ -547,7 +633,7 @@ export function PlanSettingsCard() {
         ) : null
       ) : (
         <button type="button" className="btn-primary justify-self-start" onClick={() => openUpgrade("default")}>
-          See Why Household
+          {trialing ? "Keep Household" : trialAvailable ? `Try Household Free for ${TRIAL_DAYS} Days` : "See Why Household"}
         </button>
       )}
     </Section>

@@ -1,3 +1,4 @@
+import { lockForFree } from "@/lib/config/freeWall";
 import { displayPayload } from "@/server/display";
 import { DISPLAY_ASSET_VERSION } from "@/server/displayHtml";
 import { loadDisplayConfig } from "@/server/featureFlags";
@@ -21,7 +22,10 @@ export async function GET(req: Request) {
       status: 304,
       headers: { ETag: etag, "Cache-Control": "no-cache", "X-Display-Release": DISPLAY_ASSET_VERSION },
     });
-  return json(displayPayload(config, version, device, preview, { instantRefresh: plan === "paid" }), 200, {
+  // A Free household's wall shows only what Free includes; Household widgets stay as "paused" notes (trial ended).
+  // The household preview keeps every view, so a Free admin can still open and tidy the ones the wall dropped.
+  const shown = plan === "paid" || preview ? config : lockForFree(config);
+  return json(displayPayload(shown, version, device, preview, { instantRefresh: plan === "paid" }), 200, {
     ETag: etag,
     "Cache-Control": "no-cache",
     "X-Display-Release": DISPLAY_ASSET_VERSION,
