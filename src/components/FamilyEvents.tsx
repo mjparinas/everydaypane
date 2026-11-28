@@ -64,7 +64,7 @@ function defaultFormTimes(now = new Date()) {
   const later = new Date(now.getTime() + 3_600_000);
   return {
     startDate: today,
-    endDate: addDays(today, 1),
+    lastDate: today,
     startLocal,
     endLocal: `${localYmd(later)}T${pad(later.getHours())}:${pad(later.getMinutes())}`,
   };
@@ -76,7 +76,8 @@ export function FamilyEvents() {
   const [title, setTitle] = useState("");
   const [allDay, setAllDay] = useState(true);
   const [startDate, setStartDate] = useState(initial.startDate);
-  const [endDate, setEndDate] = useState(initial.endDate);
+  // The last day itself, inclusive; the API takes the day after (iCal style).
+  const [lastDate, setLastDate] = useState(initial.lastDate);
   const [startLocal, setStartLocal] = useState(initial.startLocal);
   const [endLocal, setEndLocal] = useState(initial.endLocal);
   const [error, setError] = useState("");
@@ -98,7 +99,7 @@ export function FamilyEvents() {
     setSending(true);
     setError("");
     const start = allDay ? startDate : new Date(startLocal).toISOString();
-    const end = allDay ? endDate || addDays(startDate, 1) : new Date(endLocal).toISOString();
+    const end = allDay ? addDays(lastDate && lastDate >= startDate ? lastDate : startDate, 1) : new Date(endLocal).toISOString();
     try {
       const r = await fetch("/api/family-events/", {
         method: "POST",
@@ -129,20 +130,17 @@ export function FamilyEvents() {
   }
 
   return (
-    <section className="grid gap-3" aria-labelledby="events-heading">
-      <h2 id="events-heading" className="text-lg font-bold">
-        Family Calendar
-      </h2>
+    <div className="grid gap-3">
       <p className="text-sm text-soft">Shows on the wall in the Family calendar (blue), with Google and school calendars.</p>
       {error && (
-        <p className="rounded-xl bg-danger/10 p-3 text-sm text-danger" role="alert">
+        <p className="rounded-xl bg-bad/10 p-3 text-sm text-bad" role="alert">
           {error}
         </p>
       )}
       <form className="card grid gap-3 p-4" onSubmit={(e) => void submit(e)}>
         <label className="grid gap-1">
           <span className="text-sm font-semibold">What</span>
-          <input className="input" value={title} onChange={(e) => setTitle(e.target.value)} maxLength={120} required />
+          <input className="field" value={title} onChange={(e) => setTitle(e.target.value)} maxLength={120} required />
         </label>
         <label className="flex items-center gap-2 text-sm">
           <input type="checkbox" checked={allDay} onChange={(e) => setAllDay(e.target.checked)} />
@@ -150,40 +148,52 @@ export function FamilyEvents() {
         </label>
         {allDay ? (
           <div className="grid grid-cols-2 gap-3">
-            <label className="grid gap-1">
-              <span className="text-sm font-semibold">First day</span>
+            <label className="grid min-w-0 gap-1">
+              <span className="text-sm font-semibold">First Day</span>
               <input
-                className="input"
+                className="field min-w-0"
                 type="date"
                 value={startDate}
                 onChange={(e) => {
                   setStartDate(e.target.value);
-                  if (endDate <= e.target.value) setEndDate(addDays(e.target.value, 1));
+                  if (lastDate < e.target.value) setLastDate(e.target.value);
                 }}
                 required
               />
             </label>
-            <label className="grid gap-1">
-              <span className="text-sm font-semibold">Day after last</span>
+            <label className="grid min-w-0 gap-1">
+              <span className="text-sm font-semibold">Last Day</span>
               <input
-                className="input"
+                className="field min-w-0"
                 type="date"
-                value={endDate}
-                min={addDays(startDate, 1)}
-                onChange={(e) => setEndDate(e.target.value)}
+                value={lastDate}
+                min={startDate}
+                onChange={(e) => setLastDate(e.target.value)}
                 required
               />
             </label>
           </div>
         ) : (
           <div className="grid grid-cols-2 gap-3">
-            <label className="grid gap-1">
+            <label className="grid min-w-0 gap-1">
               <span className="text-sm font-semibold">Starts</span>
-              <input className="input" type="datetime-local" value={startLocal} onChange={(e) => setStartLocal(e.target.value)} required />
+              <input
+                className="field min-w-0"
+                type="datetime-local"
+                value={startLocal}
+                onChange={(e) => setStartLocal(e.target.value)}
+                required
+              />
             </label>
-            <label className="grid gap-1">
+            <label className="grid min-w-0 gap-1">
               <span className="text-sm font-semibold">Ends</span>
-              <input className="input" type="datetime-local" value={endLocal} onChange={(e) => setEndLocal(e.target.value)} required />
+              <input
+                className="field min-w-0"
+                type="datetime-local"
+                value={endLocal}
+                onChange={(e) => setEndLocal(e.target.value)}
+                required
+              />
             </label>
           </div>
         )}
@@ -198,10 +208,14 @@ export function FamilyEvents() {
           <li className="text-sm text-soft">No upcoming events yet.</li>
         ) : (
           rows.map((ev) => (
-            <li key={ev.id} className="card flex items-start justify-between gap-3 p-3" style={{ borderLeft: "4px solid #5b8def" }}>
-              <div className="min-w-0">
-                <div className="font-semibold">{ev.title}</div>
-                <div className="text-sm text-soft">{fmtWhen(ev)}</div>
+            <li key={ev.id} className="card flex items-center justify-between gap-3 p-3">
+              <div className="flex min-w-0 items-start gap-3">
+                {/* The Family calendar's own blue on the wall. */}
+                <span aria-hidden="true" className="mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full bg-[#5b8def]" />
+                <div className="min-w-0">
+                  <div className="font-semibold break-words">{ev.title}</div>
+                  <div className="text-sm text-soft">{fmtWhen(ev)}</div>
+                </div>
               </div>
               {ev.canDelete && (
                 <button type="button" className="btn-ghost shrink-0 text-sm" onClick={() => void remove(ev.id)}>
@@ -212,6 +226,6 @@ export function FamilyEvents() {
           ))
         )}
       </ul>
-    </section>
+    </div>
   );
 }

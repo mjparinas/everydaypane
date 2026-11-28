@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 
 import { DeleteAccount } from "@/components/DeleteAccount";
 import { FamilyEvents } from "@/components/FamilyEvents";
+import { FamilyHub } from "@/components/FamilyHub";
 import { FamilyPhotos } from "@/components/FamilyPhotos";
 import { InstallPrompt } from "@/components/InstallPrompt";
 import { MealPlanner } from "@/components/MealPlanner";
@@ -18,12 +19,13 @@ import { SignOut } from "./SignOut";
 
 export const metadata: Metadata = { title: "Family" };
 
-// The family's page (FAMILY_EMAILS): the message board, the meal plan and the shopping list, made for a phone.
+// The family's page (FAMILY_EMAILS): the message board, calendar, shopping, meals, whiteboard and photos, made for a
+// phone, one list at a time in tabs (FamilyHub, Melvin, 2026-11-28).
 export default async function FamilyPage() {
   const session = await currentHouseholdSession((await cookies()).get(SESSION_COOKIE)?.value);
   if (!session) redirect("/signin/?next=/family/");
   return (
-    <main className="mx-auto grid max-w-5xl gap-4 p-4">
+    <main className="mx-auto grid max-w-5xl gap-4 p-4 pb-28 md:pb-8">
       <NativeAppBridge />
       <header className="flex items-center justify-between gap-2">
         <div className="flex min-w-0 items-center gap-3">
@@ -31,45 +33,51 @@ export default async function FamilyPage() {
           <h1 className="text-xl font-bold">Family</h1>
         </div>
         <div className="flex shrink-0 gap-2 whitespace-nowrap">
+          <a className="btn-ghost" href="/family/chores/">
+            Chores
+          </a>
           {session.role === "admin" && (
             <a className="btn-ghost" href="/household/">
               Household
             </a>
           )}
-          <SignOut />
         </div>
       </header>
       <InstallPrompt />
-      <div className="mx-auto grid w-full max-w-xl gap-4">
-        <MessageBoard />
-        <FamilyEvents />
-        <p className="text-sm">
-          <a className="font-semibold text-brand underline-offset-2 hover:underline" href="/family/chores/">
-            Kids Chores →
-          </a>
-        </p>
-      </div>
-      <section className="mx-auto grid w-full max-w-xl gap-3" aria-labelledby="whiteboard-heading">
-        <h2 id="whiteboard-heading" className="text-lg font-bold">
-          Whiteboard
-        </h2>
-        <Whiteboard />
-      </section>
-      <FamilyPhotos />
-      <section className="grid gap-3" aria-labelledby="meals-heading">
-        <h2 id="meals-heading" className="text-lg font-bold">
-          Meal Plan
-        </h2>
-        <MealPlanner />
-      </section>
-      <ThisPhoneCard />
-      <section className="mx-auto grid w-full max-w-xl gap-3" aria-labelledby="shopping-heading">
-        <h2 id="shopping-heading" className="text-lg font-bold">
-          Shopping List
-        </h2>
-        <ShoppingList />
-      </section>
-      <DeleteAccount className="mx-auto w-full max-w-xl" />
+      <FamilyHub
+        tabs={[
+          { id: "messages", label: "Messages", content: <MessageBoard /> },
+          { id: "calendar", label: "Calendar", content: <FamilyEvents /> },
+          { id: "shopping", label: "Shopping", content: <ShoppingList /> },
+          { id: "meals", label: "Meals", wide: true, content: <MealPlanner /> },
+          { id: "draw", label: "Draw", content: <Whiteboard /> },
+          { id: "photos", label: "Photos", content: <FamilyPhotos /> },
+        ]}
+        footer={
+          <details className="group mx-auto mt-6 w-full max-w-xl border-t border-line pt-4">
+            <summary className="flex min-h-11 cursor-pointer list-none items-center gap-2 text-sm font-semibold text-soft hover:text-ink">
+              <svg
+                viewBox="0 0 24 24"
+                className="h-4 w-4 transition-transform group-open:rotate-90"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth={2}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
+                <path d="m9 6 6 6-6 6" />
+              </svg>
+              Account &amp; This Phone
+            </summary>
+            <div className="grid gap-4 pt-2">
+              <ThisPhoneCard />
+              <SignOut />
+              <DeleteAccount />
+            </div>
+          </details>
+        }
+      />
     </main>
   );
 }

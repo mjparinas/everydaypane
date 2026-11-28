@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 
 import { familyAuthError, useFamilyAuth, useFamilyFetch } from "@/components/FamilyAuth";
+import { wallAmPm } from "@/display/format";
 
 import { MessageNotesSkeleton } from "./Skeleton";
 
@@ -51,6 +52,20 @@ function readName(): string {
 
 type Board = { messages: Note[]; admin: boolean };
 
+// "5:13 PM" today, "Nov 27" before: short enough for one line beside Pin and Delete, and PM as on the wall.
+function when(ms: number): string {
+  const d = new Date(ms);
+  if (d.toDateString() !== new Date().toDateString()) return d.toLocaleDateString("en-CA", { month: "short", day: "numeric" });
+  return wallAmPm(d.toLocaleTimeString("en-CA", { hour: "numeric", minute: "2-digit" }));
+}
+// When it comes down: the time if that's today, else just the day.
+function until(ms: number): string {
+  const d = new Date(ms);
+  if (d.toDateString() === new Date().toDateString())
+    return wallAmPm(d.toLocaleTimeString("en-CA", { hour: "numeric", minute: "2-digit" }));
+  return d.toLocaleDateString("en-CA", { weekday: "short" });
+}
+
 export function MessageBoard() {
   const familyFetch = useFamilyFetch();
   const { displayToken } = useFamilyAuth();
@@ -63,6 +78,8 @@ export function MessageBoard() {
   const [expiry, setExpiry] = useState<string>("24");
   const [error, setError] = useState("");
   const [sending, setSending] = useState(false);
+  // A phone that has posted before just says who it's from (Melvin, 2026-11-28: the form was busy); Change opens the box.
+  const [editName, setEditName] = useState(true);
 
   async function fetchBoard(): Promise<Board | string> {
     try {
@@ -79,7 +96,9 @@ export function MessageBoard() {
     setNotes(board.messages);
     setAdmin(board.admin);
     // The name this phone used last time (localStorage only exists in the browser, so it's read once the board loads).
-    setAuthor((a) => a || readName());
+    const remembered = readName();
+    setAuthor((a) => a || remembered);
+    if (remembered) setEditName(false);
   }
   const load = () => fetchBoard().then(show);
 
@@ -111,6 +130,7 @@ export function MessageBoard() {
     const body = (await r.json().catch(() => ({}))) as { error?: string };
     if (!r.ok) return setError(body.error ?? "Couldn't post that.");
     setText("");
+    setEditName(false);
     void load();
   }
 
@@ -131,11 +151,13 @@ export function MessageBoard() {
 
   return (
     <div className="grid gap-4">
-      <form onSubmit={post} className="card grid gap-3" aria-label="Post a note">
-        <label className="grid gap-1 text-sm font-medium">
-          Note
+      <form onSubmit={post} className="card grid gap-3 p-4" aria-label="Post a note">
+        <label className="grid">
+          <span className="sr-only">Note</span>
+          {/* The box takes the note's colour, so the choice below previews itself and needs no label. */}
           <textarea
-            className="field min-h-24 py-2 text-base"
+            className="field min-h-24 border-transparent py-3 text-base text-[#1d1d1f] placeholder:text-[#1d1d1f]/55"
+            style={{ background: bgOf(colour) }}
             value={text}
             maxLength={280}
             required
@@ -143,31 +165,8 @@ export function MessageBoard() {
             onChange={(e) => setText(e.target.value)}
           />
         </label>
-        <div className="grid grid-cols-2 gap-3">
-          <label className="grid gap-1 text-sm font-medium">
-            From
-            <input
-              className="field"
-              value={author}
-              maxLength={30}
-              required
-              placeholder="Your name"
-              onChange={(e) => setAuthor(e.target.value)}
-            />
-          </label>
-          <label className="grid gap-1 text-sm font-medium">
-            Keep It
-            <select className="field" value={expiry} onChange={(e) => setExpiry(e.target.value)}>
-              {EXPIRY.map((x) => (
-                <option key={x.value} value={x.value}>
-                  {x.label}
-                </option>
-              ))}
-            </select>
-          </label>
-        </div>
         <fieldset className="flex flex-wrap gap-2">
-          <legend className="mb-1 text-sm font-medium">Colour</legend>
+          <legend className="sr-only">Colour</legend>
           {COLOURS.map((c) => (
             <label key={c.value} className="cursor-pointer">
               <input
@@ -179,7 +178,7 @@ export function MessageBoard() {
                 onChange={() => setColour(c.value)}
               />
               <span
-                className="block h-11 w-11 rounded-full border-2 border-transparent peer-checked:border-ink peer-focus-visible:ring-2 peer-focus-visible:ring-brand/40"
+                className="block h-11 w-11 rounded-full border-2 border-black/10 peer-checked:border-ink peer-focus-visible:ring-2 peer-focus-visible:ring-brand/40"
                 style={{ background: c.bg }}
                 title={c.label}
               />
@@ -187,6 +186,41 @@ export function MessageBoard() {
             </label>
           ))}
         </fieldset>
+        <div className="grid grid-cols-2 items-end gap-3">
+          {editName ? (
+            <label className="grid gap-1 text-sm font-medium">
+              From
+              <input
+                className="field"
+                value={author}
+                maxLength={30}
+                required
+                autoComplete="given-name"
+                placeholder="Your name"
+                onChange={(e) => setAuthor(e.target.value)}
+              />
+            </label>
+          ) : (
+            <p className="flex min-h-11 min-w-0 items-center gap-1 text-sm">
+              <span className="truncate">
+                From <strong>{author}</strong>
+              </span>
+              <button type="button" className="min-h-11 shrink-0 px-1.5 font-semibold text-brand" onClick={() => setEditName(true)}>
+                Change
+              </button>
+            </p>
+          )}
+          <label className="grid gap-1 text-sm font-medium">
+            Keep It
+            <select className="field" value={expiry} onChange={(e) => setExpiry(e.target.value)}>
+              {EXPIRY.map((x) => (
+                <option key={x.value} value={x.value}>
+                  {x.label}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
         <button className="btn-primary" disabled={sending || !text.trim() || !author.trim()}>
           {sending ? "Posting…" : "Post to the Board"}
         </button>
@@ -197,7 +231,7 @@ export function MessageBoard() {
         )}
       </form>
 
-      <section aria-label="On the board" className="grid gap-3 sm:grid-cols-2">
+      <section aria-label="On the board" className="grid gap-3">
         {notes === null ? (
           <MessageNotesSkeleton />
         ) : notes.length === 0 ? (
@@ -206,30 +240,31 @@ export function MessageBoard() {
           notes.map((n) => (
             <article
               key={n.id}
-              className="flex flex-col gap-2 rounded-2xl p-4 text-[#1d1d1f] shadow-sm"
+              className="grid gap-1 rounded-2xl py-3 pr-2 pl-4 text-[#1d1d1f] shadow-sm"
               style={{ background: bgOf(n.colour) }}
             >
-              <p className="font-semibold break-words whitespace-pre-wrap">{n.text}</p>
-              {/* Grid rows stretch a short note to its neighbour's height; the meta line and buttons sit at the bottom
-                  at their own height instead of the buttons growing to fill it. */}
-              <p className="mt-auto text-xs opacity-70">
-                {n.pinned ? "📌 " : ""}
-                {n.author} · {new Date(n.createdAt).toLocaleString("en-CA", { dateStyle: "medium", timeStyle: "short" })}
-                {n.expiresAt
-                  ? ` · until ${new Date(n.expiresAt).toLocaleString("en-CA", { weekday: "short", hour: "numeric", minute: "2-digit" })}`
-                  : ""}
-              </p>
-              <div className="flex flex-wrap items-start gap-2">
-                {admin && (
-                  <button className="min-h-9 rounded-lg bg-black/10 px-3 text-sm font-medium" onClick={() => void pin(n.id, !n.pinned)}>
-                    {n.pinned ? "Unpin" : "Pin"}
-                  </button>
-                )}
-                {n.canDelete && (
-                  <button className="min-h-9 rounded-lg bg-black/10 px-3 text-sm font-medium" onClick={() => void remove(n.id)}>
-                    Delete
-                  </button>
-                )}
+              <p className="pr-2 font-semibold break-words whitespace-pre-wrap">{n.text}</p>
+              <div className="flex items-center justify-between gap-2">
+                <p className="min-w-0 text-xs text-[#1d1d1f]/70">
+                  {n.pinned ? "Pinned · " : ""}
+                  {n.author} · {when(n.createdAt)}
+                  {n.expiresAt ? ` · until ${until(n.expiresAt)}` : ""}
+                </p>
+                <div className="flex shrink-0">
+                  {admin && (
+                    <button
+                      className="min-h-11 rounded-lg px-3 text-sm font-semibold hover:bg-black/10"
+                      onClick={() => void pin(n.id, !n.pinned)}
+                    >
+                      {n.pinned ? "Unpin" : "Pin"}
+                    </button>
+                  )}
+                  {n.canDelete && (
+                    <button className="min-h-11 rounded-lg px-3 text-sm font-semibold hover:bg-black/10" onClick={() => void remove(n.id)}>
+                      Delete
+                    </button>
+                  )}
+                </div>
               </div>
             </article>
           ))

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
 import { FamilyAuthProvider } from "@/components/FamilyAuth";
+import { FamilyHub } from "@/components/FamilyHub";
 import { FamilyPhotos } from "@/components/FamilyPhotos";
 import { MealPlanner } from "@/components/MealPlanner";
 import { MessageBoard } from "@/components/MessageBoard";
@@ -13,7 +14,8 @@ import { deviceForToken } from "@/server/devices";
 export const metadata: Metadata = { title: "Edit · Everydaypane" };
 
 // Kitchen phone page (Melvin, 2026-11-22): open `/d/<token>/edit/` (or scan the edit QR) to change meals, shopping
-// and the message board with no magic-link sign-in. Auth is knowing this display's secret address.
+// and the message board with no magic-link sign-in. Auth is knowing this display's secret address. One list at a time
+// in tabs (FamilyHub, Melvin, 2026-11-28: "seems a bit busy and not easy to use").
 export default async function DisplayEditPage({ params }: { params: Promise<{ token: string }> }) {
   const { token } = await params;
   const device = await deviceForToken(token);
@@ -21,48 +23,33 @@ export default async function DisplayEditPage({ params }: { params: Promise<{ to
 
   return (
     <FamilyAuthProvider displayToken={token}>
-      <main className="mx-auto grid max-w-5xl gap-4 p-4">
-        <header className="flex items-center gap-3">
-          <Mark size={32} />
-          <div className="min-w-0">
-            <h1 className="text-xl font-bold">Edit</h1>
-            <p className="text-sm text-soft truncate">{device.name} · no sign-in needed</p>
+      <main className="mx-auto grid max-w-5xl gap-4 p-4 pb-28 md:pb-8">
+        <header className="flex items-center justify-between gap-3">
+          <div className="flex min-w-0 items-center gap-3">
+            <Mark size={32} />
+            <div className="min-w-0">
+              <h1 className="truncate text-xl font-bold">{device.name}</h1>
+              <p className="text-sm text-soft">Edit the wall</p>
+            </div>
           </div>
-        </header>
-        <p className="text-sm text-soft max-w-xl">
-          Anyone who can open this link can change the meal plan, shopping list, message board and whiteboard, and add photos to albums open
-          to the family. Keep the QR on the wall, not shared online.
-        </p>
-        <p className="text-sm">
-          <a className="font-semibold text-brand underline-offset-2 hover:underline" href={`/d/${token}/chores/`}>
-            Kids Chores →
+          <a className="btn-ghost shrink-0" href={`/d/${token}/chores/`}>
+            Chores
           </a>
-        </p>
-        <section className="mx-auto grid w-full max-w-xl gap-3" aria-labelledby="messages-heading">
-          <h2 id="messages-heading" className="text-lg font-bold">
-            Message Board
-          </h2>
-          <MessageBoard />
-        </section>
-        <section className="mx-auto grid w-full max-w-xl gap-3" aria-labelledby="whiteboard-heading">
-          <h2 id="whiteboard-heading" className="text-lg font-bold">
-            Whiteboard
-          </h2>
-          <Whiteboard />
-        </section>
-        <FamilyPhotos />
-        <section className="grid gap-3" aria-labelledby="meals-heading">
-          <h2 id="meals-heading" className="text-lg font-bold">
-            Meal Plan
-          </h2>
-          <MealPlanner />
-        </section>
-        <section className="mx-auto grid w-full max-w-xl gap-3" aria-labelledby="shopping-heading">
-          <h2 id="shopping-heading" className="text-lg font-bold">
-            Shopping List
-          </h2>
-          <ShoppingList />
-        </section>
+        </header>
+        <FamilyHub
+          tabs={[
+            { id: "messages", label: "Messages", content: <MessageBoard /> },
+            { id: "shopping", label: "Shopping", content: <ShoppingList /> },
+            { id: "meals", label: "Meals", wide: true, content: <MealPlanner /> },
+            { id: "draw", label: "Draw", content: <Whiteboard /> },
+            { id: "photos", label: "Photos", content: <FamilyPhotos /> },
+          ]}
+          footer={
+            <p className="mx-auto w-full max-w-xl pt-4 text-xs text-soft">
+              No sign-in needed: anyone with this link can make changes. Keep the QR on the wall, not shared online.
+            </p>
+          }
+        />
       </main>
     </FamilyAuthProvider>
   );

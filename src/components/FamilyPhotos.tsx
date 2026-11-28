@@ -103,10 +103,7 @@ export function FamilyPhotos() {
 
   if (!albums?.length) return null;
   return (
-    <section className="mx-auto grid w-full max-w-xl gap-3" aria-labelledby="photos-heading">
-      <h2 id="photos-heading" className="text-lg font-bold">
-        Photos for the Wall
-      </h2>
+    <div className="grid gap-3">
       <p className="text-sm text-soft">New photos come up next on the photo frame, within a few minutes.</p>
       {albums.length > 1 && (
         <label className="grid gap-1 text-sm">
@@ -154,6 +151,6 @@ export function FamilyPhotos() {
           ))}
         </ul>
       )}
-    </section>
+    </div>
   );
 }
