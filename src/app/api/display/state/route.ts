@@ -21,7 +21,7 @@ export async function GET(req: Request) {
       status: 304,
       headers: { ETag: etag, "Cache-Control": "no-cache", "X-Display-Release": DISPLAY_ASSET_VERSION },
     });
-  return json(displayPayload(config, version, device, preview, { instantRefresh: plan === "paid" }), 200, {
+  return json(displayPayload(config, version, device, preview, { instantRefresh: plan === "paid", brandMark: plan === "free" }), 200, {
     ETag: etag,
     "Cache-Control": "no-cache",
     "X-Display-Release": DISPLAY_ASSET_VERSION,

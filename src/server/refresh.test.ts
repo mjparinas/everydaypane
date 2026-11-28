@@ -48,18 +48,18 @@ describe("Refresh displays", () => {
     const state = (etag?: string) =>
       stateGET(req("/api/display/state/", { headers: { "x-display-token": token, "if-none-match": etag ?? "" } }));
     const before = await state();
-    expect(await before.json()).toMatchObject({ instantRefresh: false });
+    expect(await before.json()).toMatchObject({ instantRefresh: false, brandMark: true });
 
     await setAccountPlan(account.id, "paid");
     const upgraded = await state(before.headers.get("etag")!);
     expect(upgraded.status).toBe(200);
-    expect(await upgraded.json()).toMatchObject({ instantRefresh: true });
+    expect(await upgraded.json()).toMatchObject({ instantRefresh: true, brandMark: false });
     expect((await state(upgraded.headers.get("etag")!)).status).toBe(304);
 
     await setAccountPlan(account.id, "free");
     const downgraded = await state(upgraded.headers.get("etag")!);
     expect(downgraded.status).toBe(200);
-    expect(await downgraded.json()).toMatchObject({ instantRefresh: false });
+    expect(await downgraded.json()).toMatchObject({ instantRefresh: false, brandMark: true });
   });
 
   it("wakes a waiting config-watch when the version moves", async () => {

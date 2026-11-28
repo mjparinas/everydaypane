@@ -10,7 +10,7 @@ export function displayPayload(
   version: number,
   device: DisplayDevice | null,
   previewViewId: string | null = null,
-  opts: { instantRefresh?: boolean } = {},
+  opts: { instantRefresh?: boolean; brandMark?: boolean } = {},
 ): DisplayPayload {
   const fixed = previewViewId ?? (device?.viewId && config.views.some((v) => v.id === device.viewId) ? device.viewId : null);
   const scheduled = config.schedule.enabled
@@ -48,5 +48,6 @@ export function displayPayload(
     screenSaver: config.screenSaver,
     messagePopups: { enabled: config.messagePopups.enabled },
     instantRefresh: opts.instantRefresh === true,
+    brandMark: opts.brandMark === true,
   };
 }
