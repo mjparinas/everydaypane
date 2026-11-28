@@ -31,6 +31,9 @@ const sw = self as unknown as ServiceWorkerScope;
 const VERSION = new URLSearchParams(sw.location.search).get("v") ?? "dev";
 const SHELL = `ep-shell-${VERSION}`;
 const DATA = "ep-data";
+const PHOTOS = "ep-photos";
+/** Enough fallback photos for variety across views and the saver, small enough (~2–3 MB) for modest wall hardware. */
+const MAX_SW_PHOTOS = 12;
 const FONTS = [
   "/fonts/inter.woff2",
   "/fonts/manrope.woff2",
@@ -60,6 +63,12 @@ sw.addEventListener("activate", (e) => {
       .then(() => sw.clients.matchAll({ type: "window" }))
       .then(async (clients) => {
         const cache = await caches.open(DATA);
+        if (typeof cache.keys === "function") {
+          for (const req of await cache.keys()) {
+            const p = new URL(req.url).pathname;
+            if (p.startsWith("/api/display/photo/") || p.startsWith("/api/display/countdown-photo/")) await cache.delete(req);
+          }
+        }
         // The page itself, so a reload while offline still opens the dashboard and not just its last JSON.
         await Promise.all(
           clients.map(async (client) => {
@@ -169,6 +178,31 @@ async function cacheFirst(req: Request): Promise<Response> {
   return r;
 }
 
+async function photoResponse(req: Request, key: Request): Promise<Response> {
+  const cache = await caches.open(PHOTOS);
+  const hit = await cache.match(key, { ignoreVary: true });
+  if (hit) return hit;
+  try {
+    const r = await withTimeout(fetch(req), 45_000);
+    if (r.status === 200 && (r.headers.get("content-type") ?? "").startsWith("image/")) {
+      const copy = r.clone();
+      void (async () => {
+        await cache.put(key, copy);
+        if (typeof cache.keys === "function") {
+          const keys = await cache.keys();
+          for (let i = 0; i < keys.length - MAX_SW_PHOTOS; i++) {
+            const old = keys[i];
+            if (old) await cache.delete(old);
+          }
+        }
+      })().catch(() => undefined);
+    }
+    return r;
+  } catch {
+    return new Response(null, { status: 503 });
+  }
+}
+
 sw.addEventListener("fetch", (e) => {
   const req = e.request;
   if (req.method !== "GET") return;
@@ -182,6 +216,14 @@ sw.addEventListener("fetch", (e) => {
   // Album art is one address per track and the browser's own cache keeps it (Cache-Control), so the offline copy
   // doesn't collect one picture per song.
   if (url.pathname.startsWith("/api/display/art/")) return;
+  // Countdown photos are kept a day by the browser's own cache; don't collect them in the offline JSON cache.
+  if (url.pathname.startsWith("/api/display/countdown-photo/")) return;
+  // Photo frame pictures live in their own small bounded cache so a failed upstream load always has a few fallbacks
+  // without filling storage across a large album, and a cold Amazon re-list gets 45s instead of the 10s JSON timeout.
+  if (url.pathname.startsWith("/api/display/photo/")) {
+    e.respondWith(photoResponse(req, new Request(url.origin + url.pathname + url.search)));
+    return;
+  }
   // Radar pictures are one address per six minutes and the browser's cache keeps them a day; offline, the loop
   // simply stops at what it has.
   if (url.pathname.startsWith("/api/display/radar/frame/")) return;

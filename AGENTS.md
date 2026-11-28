@@ -44,7 +44,7 @@ same change, and moves it out of **In progress** when it merges.
 | Week calendar (`calendarWeek`) | One week in a grid, optional weekends | Same calendar feed |
 | Up next (`calendarUpNext`) | The next event large, with a short following list | Same calendar feed |
 | Garbage day (`garbage`) | Next pickups, 1 to 8 weeks | Township of Langley (Recycle Coach) |
-| Photos (`photos`) | Photo frame: smart fit (whole photo over a soft copy of itself when filling would crop a lot), cover or contain, **portrait pairs** side by side, slow **drift**, captions with the date and how long ago, **On this day** photos first, new photos (family uploads) shown next | Amazon shared albums, Amazon people, URL lists, photo library (uploads and Google Photos picks), Bing picture of the day, Reddit, weather-linked albums, Immich, Dropbox, OneDrive, Box, Flickr, SmugMug, iCloud published links (`docs/icloud-photos.md`) |
+| Photos (`photos`) | Photo frame: smart fit (whole photo over a soft copy of itself when filling would crop a lot), cover or contain, **portrait pairs** side by side, slow **drift**, captions with the date and how long ago, **On this day** photos first, new photos (family uploads) shown next, **cached-photo fallback** when an upstream photo doesn't load | Amazon shared albums, Amazon people, URL lists, photo library (uploads and Google Photos picks), Bing picture of the day, Reddit, weather-linked albums, Immich, Dropbox, OneDrive, Box, Flickr, SmugMug, iCloud published links (`docs/icloud-photos.md`) |
 | Smart device (`haEntity`) | Toggle, light, sensor, climate, cover, lock (lock only), button; `provider` Home Assistant (default), **Nest**, **ecobee**, **SmartThings**, **Govee lights** (on/off, brightness, colour swatches, scenes), **Philips Hue lights** or **LIFX lights** (on/off, brightness, colour swatches) | Shared `/api/display/ha/` feed; OAuth + REST for native providers and Hue, an API key for Govee, a personal token for LIFX (`docs/nest.md`, `docs/ecobee.md`, `docs/smartthings.md`, `docs/govee.md`, `docs/hue.md`, `docs/lifx.md`) |
 | UniFi network (`unifi`) | Online / slow / down, latest latency and packet loss, minutes down and last outage in 24 h, 24 h latency chart, clients and devices, optional current usage, ISP | UniFi Site Manager API (`api.ui.com`, `unifi.apiKey` secret, `docs/unifi.md`) |
 | Camera (`camera`) | UniFi Protect snapshot on a timer | Home Assistant |
@@ -860,7 +860,11 @@ panel can be complex if you need it to be."
   (`everydaypane.photos.recent.<widget id>`, the saver's id is `saver`), and the newer half of the deck's worth of them
   go to the end of a pass, so a reload or a new pass never opens on the photo just shown and an On This Day photo
   leads once a day rather than after every reload (Melvin, 2026-11-27: "in photo mode can you ensure that they are
-  randomly chosen"). `/api/display/photos/` has an
+  randomly chosen"). Each screen also keeps a small bounded fallback cache of loaded photos (`everydaypane.photos.cached`,
+  up to 6 per source / 10 overall, backed by at most 12 compressed images in `ep-photos` Cache Storage via `sw.ts` with no
+  extra decoded bitmaps kept in RAM; up to 3 warmed gently on disk after the first slide), and swaps in a random cached
+  photo whenever an upstream image fails or an album refuses to list so the wall never goes blank (Melvin, 2026-11-27).
+  `/api/display/photos/` has an
   ETag over the lists and displays poll it every five minutes (it was 30), so a family photo shows within minutes.
 - **Chore chart:** the kids and chores are in the settings document (`config.chores`, edited in Settings › Chores and
   saved with Save); ticks are rows in `chores_done` (one per day, chore and person, with the stars the chore was worth

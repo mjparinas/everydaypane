@@ -140,6 +140,24 @@ describe("photo routes", () => {
     expect((await photoGET(req(`/api/display/photo/?s=album&i=p1&t=${token}`))).status).toBe(404);
   });
 
+  it("retries once when Amazon briefly answers 503 on a photo download", async () => {
+    const JPEG = new Uint8Array([0xff, 0xd8, 0xff, 0xe0, 1, 2, 3]);
+    let imageBusy = 1;
+    vi.stubGlobal(
+      "fetch",
+      vi.fn((input: string | URL | Request) => {
+        const url = String(input);
+        if (url.includes("/shares/")) return Promise.resolve(Response.json({ nodeInfo: { id: "root" } }));
+        if (url.includes("/children")) return Promise.resolve(Response.json({ count: 1, data: [node("p1")] }));
+        if (imageBusy-- > 0) return Promise.resolve(new Response("busy", { status: 503 }));
+        return Promise.resolve(new Response(JPEG, { headers: { "content-type": "image/jpeg" } }));
+      }),
+    );
+    const token = await withSources([{ id: "album", kind: "amazonShare", name: "Family", url: SHARE }]);
+    const res = await photoGET(req(`/api/display/photo/?s=album&i=p1&w=1280&t=${token}`));
+    expect(res.status).toBe(200);
+  });
+
   it("serves Amazon photos sent as binary/octet-stream, and says why an album fails in the admin panel", async () => {
     const errors = vi.spyOn(console, "error").mockImplementation(() => undefined);
     const JPEG = new Uint8Array([0xff, 0xd8, 0xff, 0xe0, 1, 2, 3]);
