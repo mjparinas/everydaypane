@@ -64,7 +64,10 @@ describe("clerkDisplayName", () => {
   it("prefers the full name, then first and last, then username, never the email", () => {
     expect(clerkDisplayName({ fullName: "Melvin Parinas", firstName: "M" })).toBe("Melvin Parinas");
     expect(clerkDisplayName({ fullName: null, firstName: "Melvin", lastName: " " })).toBe("Melvin");
-    expect(clerkDisplayName({ firstName: null, lastName: null, username: "melvin" })).toBe("melvin");
+    expect(clerkDisplayName({ firstName: null, lastName: null, username: "melvin" })).toBe("Melvin");
+    expect(clerkDisplayName({ fullName: "melvin parinas" })).toBe("Melvin Parinas");
+    expect(clerkDisplayName({ firstName: "anne-marie", lastName: "o'brien" })).toBe("Anne-Marie O'Brien");
+    expect(clerkDisplayName({ fullName: "Ronan McDonald" })).toBe("Ronan McDonald");
     expect(clerkDisplayName({ fullName: "  ", firstName: null, lastName: null, username: null })).toBeUndefined();
     expect(clerkDisplayName(null)).toBeUndefined();
   });

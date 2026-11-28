@@ -3,6 +3,7 @@ import "server-only";
 import { createHmac, timingSafeEqual } from "node:crypto";
 
 import { authTestMode, clerkConfigured, TEST_SESSION_COOKIE } from "@/lib/authFlags";
+import { nameCase } from "@/lib/titleCase";
 
 import { accountsForEmail, type MemberRole } from "./accounts";
 import { env } from "./env";
@@ -36,7 +37,8 @@ export function clerkDisplayName(
       .filter(Boolean)
       .join(" ");
   const name = full || user.username?.trim() || "";
-  return name || undefined;
+  // Title-cased for the header and avatar initials (Melvin, 2026-11-28); Clerk keeps what was typed.
+  return name ? nameCase(name) : undefined;
 }
 
 export function readCookie(req: Request, name: string): string | undefined {

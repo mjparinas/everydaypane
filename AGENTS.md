@@ -323,7 +323,8 @@ npm run templates:previews  # regenerate public/templates/*.png from real widget
   blog titles and headings, and short status chips on the wall ("Out for Delivery", "Under Control"). Sentences stay in
   sentence case: hints, descriptions, errors, empty states ("Nothing coming up"), placeholders, the morning brief,
   emails (subject and body), marketing paragraphs and alert text from agencies. What people type (notes, meals,
-  messages, shopping, chores, view names) is shown as typed, except calendar titles (`calendarTitleCase`). Rules are
+  messages, shopping, chores, view names) is shown as typed, except calendar titles (`calendarTitleCase`) and the
+  signed-in person's name and initials in the household header and site account chip (`nameCase`, Melvin, 2026-11-28). Rules are
   Chicago-style, in `titleCase` (`src/lib/titleCase.ts`): small words (a, of, the, with…) lower mid-title, capitals
   already there kept (Microsoft To Do, BC, PRO-D, ID). New UI copy follows the same split.
 - **Calendar names on the wall** (Melvin, 2026-11-26: "one of my calendars just shows my email, can you see if you can
