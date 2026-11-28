@@ -1,0 +1,8 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Everydaypane</string>
+    <string name="title_activity_main">Everydaypane</string>
+    <string name="package_name">com.everydaypane.app</string>
+    <string name="custom_url_scheme">com.everydaypane.app</string>
+    <string name="widget_description">Dinner, the shopping list and chores left today.</string>
+</resources>

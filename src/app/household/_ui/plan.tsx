@@ -3,6 +3,7 @@
 import { createContext, createElement, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 
 import { MARKETING_PLANS, usd } from "@/lib/marketingPlans";
+import { inNativeApp } from "@/lib/nativeApp";
 import { FREE_LIMITS, PAID_LIMITS, planLabel, UPGRADE_REASONS, type PlanId, type UpgradeReasonKey } from "@/lib/plans";
 
 import { Section } from "./fields";
@@ -378,6 +379,9 @@ export function UpgradeDialog() {
     billingError,
   } = usePlan();
   const [chosen, setChosen] = useState<BillingInterval>("year");
+  // App Store and Google Play rules (Melvin, 2026-11-27: no in-app purchase; billing stays on the web): inside the
+  // app the dialog still says what Household adds, but shows no price and no way to buy or manage a plan.
+  const inApp = inNativeApp();
   // Without a yearly price in Stripe only monthly can be charged, so don't show a yearly total (Melvin, 2026-11-27).
   const interval: BillingInterval = yearlyEnabled ? chosen : "month";
 
@@ -435,7 +439,7 @@ export function UpgradeDialog() {
                   </li>
                 ))}
               </ul>
-              <div className="rounded-2xl bg-bg p-4 text-sm">
+              <div className={`rounded-2xl bg-bg p-4 text-sm ${inApp ? "hidden" : ""}`}>
                 {yearlyEnabled ? (
                   <div className="mb-3 grid grid-cols-2 gap-2" role="radiogroup" aria-label="Billing">
                     {(["year", "month"] as const).map((i) => (
@@ -483,7 +487,9 @@ export function UpgradeDialog() {
           ) : null}
         </div>
         <div className="grid gap-2 border-t border-line px-5 py-4">
-          {isPaid ? (
+          {inApp ? (
+            <p className="text-sm text-soft">{isPaid ? "Plans can't be changed in the app." : "Plans aren't sold in the app."}</p>
+          ) : isPaid ? (
             hasCustomer ? (
               <button type="button" className="btn-primary" disabled={billingBusy || !stripeEnabled} onClick={() => void openPortal()}>
                 {billingBusy ? "Opening…" : "Manage Billing"}
@@ -528,7 +534,7 @@ export function PlanSettingsCard() {
           {billingError}
         </p>
       ) : null}
-      {isPaid ? (
+      {inNativeApp() ? null : isPaid ? (
         hasCustomer ? (
           <button
             type="button"

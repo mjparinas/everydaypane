@@ -3,6 +3,7 @@
 import { useClerk } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 
+import { signOutThisPhone } from "@/components/NativeApp";
 import { signInHref } from "@/lib/site";
 
 export function SignOut() {
@@ -16,7 +17,9 @@ function TestSignOut() {
     <button
       className="btn-ghost"
       onClick={() => {
-        void fetch("/api/auth/signout/", { method: "POST" }).then(() => router.replace("/signin/"));
+        void signOutThisPhone()
+          .then(() => fetch("/api/auth/signout/", { method: "POST" }))
+          .then(() => router.replace("/signin/"));
       }}
     >
       Sign Out
@@ -31,7 +34,9 @@ function ClerkSignOut() {
     <button
       className="btn-ghost"
       onClick={() => {
-        void signOut({ redirectUrl: signInHref() }).catch(() => router.replace(signInHref()));
+        void signOutThisPhone()
+          .then(() => signOut({ redirectUrl: signInHref() }))
+          .catch(() => router.replace(signInHref()));
       }}
     >
       Sign Out

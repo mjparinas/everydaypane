@@ -6,7 +6,8 @@ export default function manifest(): MetadataRoute.Manifest {
     name: "Everydaypane",
     short_name: "Everydaypane",
     description: "Your home, at a glance.",
-    start_url: "/household/",
+    // Admins land on Household and family on Family (src/app/app/page.tsx).
+    start_url: "/app/",
     scope: "/",
     display: "standalone",
     background_color: "#f6f7fb",

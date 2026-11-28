@@ -7,6 +7,7 @@ import { poolAlertsFor } from "@/server/blueRiiot";
 import { loadDisplayConfig } from "@/server/featureFlags";
 import { json, unauthorized } from "@/server/http";
 import { laundryAlertsFor } from "@/server/laundry";
+import { pushLater, pushNewAlerts } from "@/server/push";
 import { accountIdOf, viewerFor } from "@/server/viewer";
 
 export async function GET(req: Request) {
@@ -30,5 +31,7 @@ export async function GET(req: Request) {
     ? { ...area, alerts: [...area.alerts, ...home].sort((a, b) => rank(a.severity) - rank(b.severity) || b.sent - a.sent) }
     : area;
   void notifyNewStripAlerts(accountId, config, data.alerts).catch((error) => console.error("[alerts] notify email failed", error));
+  // Phones with the app get a push for each new one (claimed once, however many walls are reading).
+  pushLater(() => pushNewAlerts(accountId, config, data.alerts));
   return json(data);
 }

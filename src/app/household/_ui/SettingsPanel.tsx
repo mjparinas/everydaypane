@@ -2,6 +2,8 @@
 
 import { useEffect, useState, useSyncExternalStore } from "react";
 
+import { DeleteAccount } from "@/components/DeleteAccount";
+import { InstallPrompt } from "@/components/InstallPrompt";
 import type { DashboardConfig } from "@/lib/config/schema";
 import { WIDGETS } from "@/lib/config/widgets";
 import { featureFlag } from "@/lib/featureFlags";
@@ -179,6 +181,7 @@ export function SettingsPanel() {
       {showGroup("home") && (
         <div className="grid gap-4 lg:grid-cols-2">
           <PlanSettingsCard />
+          <InstallPrompt />
           <ScreenSaverSummary onOpen={() => goSettingsSection("screen-saver")} />
           <Section id="settings-dashboard" title="Dashboard">
             <Text label="Name" value={config.name} maxLength={60} onChange={(v) => edit((c) => void (c.name = v))} />
@@ -266,6 +269,7 @@ export function SettingsPanel() {
               <RegionPicker config={config} onChange={(v) => edit((c) => void (c.region = v))} />
             </Flagged>
           </Section>
+          <DeleteAccount />
         </div>
       )}
 

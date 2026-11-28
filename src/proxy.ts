@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 
 import { authTestMode, clerkConfigured, TEST_SESSION_COOKIE } from "@/lib/authFlags";
+import { appRedirect } from "@/lib/nativeApp";
 import { contentSecurityPolicy } from "@/lib/securityHeaders";
 import { signInHref } from "@/lib/site";
 
@@ -48,6 +49,12 @@ function redirectToSignIn(req: NextRequest): NextResponse {
 
 function gate(req: NextRequest, signedIn: boolean): NextResponse {
   const path = req.nextUrl.pathname;
+  if (appRedirect(path, req.headers.get("user-agent") ?? "")) {
+    const url = req.nextUrl.clone();
+    url.pathname = "/app/";
+    url.search = "";
+    return NextResponse.redirect(url);
+  }
   // Clerk still attaches the session. The preview route checks household membership and sets the display shell CSP.
   if (/^\/household\/preview\/[^/]+\/?$/.test(path)) return NextResponse.next();
   if (needsAuthPath(path) && !signedIn && !hasTestSession(req)) {

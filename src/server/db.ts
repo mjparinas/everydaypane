@@ -115,6 +115,29 @@ const MIGRATIONS = [
   // A counter per household and family list, bumped on every write, so a wall's open config-watch request can say
   // which list changed and the wall fetches only that one (Melvin, 2026-11-26: updates in seconds, not 30). src/server/changes.ts.
   `CREATE TABLE IF NOT EXISTS account_changes (account_id TEXT NOT NULL, feed TEXT NOT NULL, version INTEGER NOT NULL, PRIMARY KEY (account_id, feed))`,
+  // Phones and tablets running the Everydaypane app (Melvin, 2026-11-27: Capacitor app with native support,
+  // src/server/mobile.ts): who signed it in, its push token, what it wants to hear about, and the app token its
+  // home-screen widgets and geofence use (stored only as a hash).
+  `CREATE TABLE IF NOT EXISTS mobile_devices (
+    id TEXT PRIMARY KEY,
+    account_id TEXT NOT NULL,
+    email TEXT NOT NULL,
+    platform TEXT NOT NULL,
+    name TEXT NOT NULL,
+    token_hash TEXT NOT NULL UNIQUE,
+    push_token TEXT,
+    push_env TEXT,
+    notify_messages INTEGER NOT NULL DEFAULT 1,
+    notify_alerts INTEGER NOT NULL DEFAULT 1,
+    share_presence INTEGER NOT NULL DEFAULT 0,
+    presence TEXT,
+    presence_at INTEGER,
+    created_at INTEGER NOT NULL,
+    last_seen_at INTEGER NOT NULL
+  )`,
+  `CREATE INDEX IF NOT EXISTS mobile_devices_by_account ON mobile_devices (account_id)`,
+  // Pushes already sent for an alert or notice, claimed before sending so two walls polling at once push it once.
+  `CREATE TABLE IF NOT EXISTS push_sent (account_id TEXT NOT NULL, key TEXT NOT NULL, sent_at INTEGER NOT NULL, PRIMARY KEY (account_id, key))`,
 ];
 
 // Columns added after a table was first created. SQLite has no ADD COLUMN IF NOT EXISTS, so each one runs on its own

@@ -3,6 +3,7 @@ import { z } from "zod";
 import { loadDisplayConfig } from "@/server/featureFlags";
 import { json, readJson, sameOrigin, unauthorized } from "@/server/http";
 import { boardTag, forDisplay, listDisplayMessages, MESSAGE_COLOURS, postMessageFromWall } from "@/server/messages";
+import { pushLater, pushNewMessage } from "@/server/push";
 import { accountIdOf, viewerFor } from "@/server/viewer";
 
 // The board for the message board widget. Displays poll it; an unchanged board answers 304.
@@ -35,5 +36,6 @@ export async function POST(req: Request) {
   const by = viewer.kind === "device" ? `display:${viewer.device.id}` : "wall";
   const result = await postMessageFromWall(accountId, config, { ...parsed.data, postedBy: by });
   if (result === "forbidden") return json({ error: "Not allowed" }, 403);
+  pushLater(() => pushNewMessage(accountId, result));
   return json({ message: forDisplay(result) }, 201);
 }

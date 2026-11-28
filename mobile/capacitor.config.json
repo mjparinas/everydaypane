@@ -1,0 +1,23 @@
+{
+  "appId": "com.everydaypane.app",
+  "appName": "Everydaypane",
+  "webDir": "www",
+  "server": {
+    "url": "https://www.everydaypane.com/app/",
+    "allowNavigation": ["everydaypane.com", "www.everydaypane.com", "accounts.everydaypane.com", "clerk.everydaypane.com"],
+    "errorPath": "offline.html"
+  },
+  "ios": {
+    "appendUserAgent": "EverydaypaneApp/1 (iOS)",
+    "contentInset": "never",
+    "limitsNavigationsToAppBoundDomains": false
+  },
+  "android": {
+    "appendUserAgent": "EverydaypaneApp/1 (Android)"
+  },
+  "plugins": {
+    "PushNotifications": {
+      "presentationOptions": ["badge", "sound", "alert"]
+    }
+  }
+}

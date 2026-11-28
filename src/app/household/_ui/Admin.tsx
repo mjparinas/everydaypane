@@ -5,6 +5,7 @@ import { useEffect, useState, useSyncExternalStore } from "react";
 
 import { MealPlanner } from "@/components/MealPlanner";
 import { MessageBoard } from "@/components/MessageBoard";
+import { NativeAppBridge, signOutThisPhone } from "@/components/NativeApp";
 import { ShoppingList } from "@/components/ShoppingList";
 import { Bone } from "@/components/Skeleton";
 import { Mark } from "@/components/Wordmark";
@@ -305,6 +306,7 @@ function AdminPanel({ email, personName, staff }: { email: string; personName?: 
   }
 
   async function signOut() {
+    await signOutThisPhone();
     await fetch("/api/auth/signout/", { method: "POST" });
     // ClerkProvider mounts window.Clerk; revoke the browser session when present.
     const clerk = (window as unknown as { Clerk?: { signOut: (opts?: { redirectUrl?: string }) => Promise<void> } }).Clerk;
@@ -317,6 +319,7 @@ function AdminPanel({ email, personName, staff }: { email: string; personName?: 
 
   return (
     <div className={`min-h-dvh md:pb-8 ${dockUp ? "pb-36" : "pb-24"}`}>
+      <NativeAppBridge />
       <header className="sticky top-0 z-20 border-b border-line bg-panel/95 backdrop-blur">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-2">
           <div className="flex min-w-0 items-center gap-3">

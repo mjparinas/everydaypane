@@ -2,10 +2,13 @@ import type { Metadata } from "next";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
+import { DeleteAccount } from "@/components/DeleteAccount";
 import { FamilyEvents } from "@/components/FamilyEvents";
 import { FamilyPhotos } from "@/components/FamilyPhotos";
+import { InstallPrompt } from "@/components/InstallPrompt";
 import { MealPlanner } from "@/components/MealPlanner";
 import { MessageBoard } from "@/components/MessageBoard";
+import { NativeAppBridge, ThisPhoneCard } from "@/components/NativeApp";
 import { ShoppingList } from "@/components/ShoppingList";
 import { Whiteboard } from "@/components/Whiteboard";
 import { Mark } from "@/components/Wordmark";
@@ -21,6 +24,7 @@ export default async function FamilyPage() {
   if (!session) redirect("/signin/?next=/family/");
   return (
     <main className="mx-auto grid max-w-5xl gap-4 p-4">
+      <NativeAppBridge />
       <header className="flex items-center justify-between gap-2">
         <div className="flex min-w-0 items-center gap-3">
           <Mark size={32} />
@@ -35,6 +39,7 @@ export default async function FamilyPage() {
           <SignOut />
         </div>
       </header>
+      <InstallPrompt />
       <div className="mx-auto grid w-full max-w-xl gap-4">
         <MessageBoard />
         <FamilyEvents />
@@ -57,12 +62,14 @@ export default async function FamilyPage() {
         </h2>
         <MealPlanner />
       </section>
+      <ThisPhoneCard />
       <section className="mx-auto grid w-full max-w-xl gap-3" aria-labelledby="shopping-heading">
         <h2 id="shopping-heading" className="text-lg font-bold">
           Shopping List
         </h2>
         <ShoppingList />
       </section>
+      <DeleteAccount className="mx-auto w-full max-w-xl" />
     </main>
   );
 }

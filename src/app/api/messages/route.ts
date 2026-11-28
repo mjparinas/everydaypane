@@ -4,6 +4,7 @@ import { rateLimit } from "@/server/db";
 import { familyEditorAccountId, familyEditorFor, familyEditorIsAdmin, familyEditorKey } from "@/server/familyAuth";
 import { json, readJson, sameOrigin, unauthorized } from "@/server/http";
 import { listMessages, MESSAGE_COLOURS, postMessage, type Message } from "@/server/messages";
+import { pushLater, pushNewMessage } from "@/server/push";
 
 // The family message board, for signed-in phones and `/d/<token>/edit/` (no pin from the kitchen link).
 
@@ -44,5 +45,7 @@ export async function POST(req: Request) {
   const parsed = body.safeParse(await readJson(req, 4_000).catch(() => null));
   if (!parsed.success) return json({ error: parsed.error.issues[0]?.message ?? "Bad request" }, 400);
   const m = await postMessage(accountId, { ...parsed.data, postedBy: actor });
+  // Everyone else in the household with the app hears about it.
+  pushLater(() => pushNewMessage(accountId, m));
   return json({ message: forPerson(m, actor, familyEditorIsAdmin(editor)) }, 201);
 }
