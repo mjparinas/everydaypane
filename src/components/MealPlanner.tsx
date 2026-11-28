@@ -49,9 +49,6 @@ function dayHeading(date: string, today: string): string {
 
 type Status = "saving" | "saved" | "error";
 
-// "Every Mon" reads "Repeats every Mon"; "Weekdays" reads "Repeats weekdays".
-const lowerFirst = (s: string) => s.charAt(0).toLowerCase() + s.slice(1);
-
 type CadenceKey = "once" | `interval:${number}` | `weekdays:${string}`;
 
 function cadenceKey(repeat: MealRepeat | null | undefined): CadenceKey {
@@ -94,8 +91,6 @@ export function MealPlanner() {
   const [drafts, setDrafts] = useState<Record<string, string>>({});
   const [cadence, setCadence] = useState<Record<string, CadenceKey>>({});
   const [status, setStatus] = useState<Record<string, Status>>({});
-  // Repeat choices stay folded behind a button per meal (Melvin, 2026-11-28: a select under every meal was busy).
-  const [repeatOpen, setRepeatOpen] = useState<Record<string, boolean>>({});
   const [error, setError] = useState("");
 
   async function fetchPlan(from: string | null): Promise<Plan | string> {
@@ -256,7 +251,7 @@ export function MealPlanner() {
             Back to Today
           </button>
         ) : (
-          <p className="text-sm text-soft">Saves as you go</p>
+          <p className="text-sm text-soft">Saves as you go · set a repeat to fill future days</p>
         )}
         <button type="button" className="btn-ghost" onClick={() => step(DAYS)} aria-label="Later week">
           Later ›
@@ -288,58 +283,44 @@ export function MealPlanner() {
               if (rule && !opts.some((o) => o.value === cadenceKey(rule.repeat))) {
                 opts.splice(1, 0, { value: cadenceKey(rule.repeat), label: repeatLabel(rule.repeat) });
               }
-              const trayOpen = repeatOpen[k] ?? false;
               return (
-                <div key={slot} className="grid gap-1">
-                  <div className="flex items-end gap-1">
-                    <label className="grid min-w-0 flex-1 grid-cols-[auto_1fr] items-center gap-2 text-sm @min-[40rem]:grid-cols-1 @min-[40rem]:items-stretch @min-[40rem]:gap-1">
-                      <span className="w-[6.5rem] shrink-0 font-medium @min-[40rem]:w-auto">
-                        <span aria-hidden="true">{MEAL_ICONS[slot]}</span> {MEAL_LABELS[slot]}
+                <div key={slot} className="grid gap-1.5">
+                  <label className="grid grid-cols-[auto_1fr] items-center gap-2 text-sm @min-[40rem]:grid-cols-1 @min-[40rem]:items-stretch @min-[40rem]:gap-1">
+                    <span className="w-[6.5rem] shrink-0 font-medium @min-[40rem]:w-auto">
+                      <span aria-hidden="true">{MEAL_ICONS[slot]}</span> {MEAL_LABELS[slot]}
+                    </span>
+                    <span className="relative min-w-0">
+                      <input
+                        className="field w-full pr-8"
+                        value={value}
+                        maxLength={120}
+                        list="meal-suggestions"
+                        placeholder="Not planned"
+                        enterKeyHint="done"
+                        onChange={(e) => setDrafts((d) => ({ ...d, [k]: e.target.value }))}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") e.currentTarget.blur();
+                        }}
+                        onBlur={() => {
+                          const sameText = value.trim() === saved;
+                          const sameCadence = cadenceKey(rule?.repeat) === chosen || (!rule && chosen === "once");
+                          if (sameText && sameCadence && !cadence[k]) return;
+                          void save(date, slot, value, chosen);
+                        }}
+                      />
+                      <span
+                        className={`pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 text-xs ${st === "error" ? "text-bad" : "text-soft"}`}
+                        aria-live="polite"
+                      >
+                        {st === "saving" ? "…" : st === "saved" ? "✓" : st === "error" ? "!" : ""}
                       </span>
-                      <span className="relative min-w-0">
-                        <input
-                          className="field w-full pr-8"
-                          value={value}
-                          maxLength={120}
-                          list="meal-suggestions"
-                          placeholder="Not planned"
-                          enterKeyHint="done"
-                          onChange={(e) => setDrafts((d) => ({ ...d, [k]: e.target.value }))}
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter") e.currentTarget.blur();
-                          }}
-                          onBlur={() => {
-                            const sameText = value.trim() === saved;
-                            const sameCadence = cadenceKey(rule?.repeat) === chosen || (!rule && chosen === "once");
-                            if (sameText && sameCadence && !cadence[k]) return;
-                            void save(date, slot, value, chosen);
-                          }}
-                        />
-                        <span
-                          className={`pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 text-xs ${st === "error" ? "text-bad" : "text-soft"}`}
-                          aria-live="polite"
-                        >
-                          {st === "saving" ? "…" : st === "saved" ? "✓" : st === "error" ? "!" : ""}
-                        </span>
-                      </span>
-                    </label>
-                    <button
-                      type="button"
-                      className={`grid h-11 w-11 shrink-0 place-items-center rounded-xl ${rule || trayOpen ? "text-brand" : "text-soft"} ${
-                        trayOpen ? "bg-brand/10" : "hover:bg-bg"
-                      }`}
-                      aria-expanded={trayOpen}
-                      aria-label={`Repeat options for ${MEAL_LABELS[slot]}, ${dayName(date)}`}
-                      title={rule ? repeatLabel(rule.repeat) : "Repeat"}
-                      onClick={() => setRepeatOpen((o) => ({ ...o, [k]: !trayOpen }))}
-                    >
-                      <RepeatIcon />
-                    </button>
-                  </div>
-                  {trayOpen ? (
-                    <div className="flex flex-wrap items-center gap-2 pr-12 @max-[40rem]:pl-[7rem]">
+                    </span>
+                  </label>
+                  <div className="grid grid-cols-[auto_1fr] items-center gap-2 text-xs @min-[40rem]:grid-cols-1 @min-[40rem]:items-stretch @min-[40rem]:gap-1">
+                    <span className="w-[6.5rem] shrink-0 text-soft @min-[40rem]:w-auto">Repeat</span>
+                    <div className="flex min-w-0 flex-wrap items-center gap-2">
                       <select
-                        className="field min-w-0 flex-1 text-sm"
+                        className="field min-w-0 flex-1 py-1 text-xs"
                         value={chosen}
                         aria-label={`Repeat ${MEAL_LABELS[slot]} on ${dayName(date)}`}
                         onChange={(e) => {
@@ -354,20 +335,27 @@ export function MealPlanner() {
                           </option>
                         ))}
                       </select>
-                      {rule && value.trim() && value.trim() !== rule.text ? (
-                        <button type="button" className="btn-ghost px-3 text-sm" onClick={() => void updateSeries(date, slot, value)}>
-                          Update Series
-                        </button>
-                      ) : null}
                       {rule ? (
-                        <button type="button" className="btn-ghost px-3 text-sm" onClick={() => void stopRule(date, slot)}>
-                          Stop
-                        </button>
+                        <>
+                          <span className="text-soft" title={repeatLabel(rule.repeat)}>
+                            ↻ {repeatLabel(rule.repeat)}
+                          </span>
+                          {value.trim() && value.trim() !== rule.text ? (
+                            <button
+                              type="button"
+                              className="btn-ghost px-1.5 py-0.5 text-xs"
+                              onClick={() => void updateSeries(date, slot, value)}
+                            >
+                              Update Series
+                            </button>
+                          ) : null}
+                          <button type="button" className="btn-ghost px-1.5 py-0.5 text-xs" onClick={() => void stopRule(date, slot)}>
+                            Stop
+                          </button>
+                        </>
                       ) : null}
                     </div>
-                  ) : rule ? (
-                    <p className="pr-12 text-xs text-soft @max-[40rem]:pl-[7rem]">Repeats {lowerFirst(repeatLabel(rule.repeat))}</p>
-                  ) : null}
+                  </div>
                 </div>
               );
             })}
@@ -375,22 +363,5 @@ export function MealPlanner() {
         ))}
       </div>
     </div>
-  );
-}
-
-function RepeatIcon() {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      className="h-5 w-5"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth={1.75}
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <path d="M4 11V9a3 3 0 0 1 3-3h12m-3-3 3 3-3 3M20 13v2a3 3 0 0 1-3 3H5m3 3-3-3 3-3" />
-    </svg>
   );
 }

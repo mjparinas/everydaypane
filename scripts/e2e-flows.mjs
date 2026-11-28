@@ -340,7 +340,7 @@ export const flows = [
     async run({ browser, page, base, expect }) {
       const phone = await browser.newContext({ viewport: { width: 390, height: 844 }, storageState: await page.context().storageState() });
       const p = await phone.newPage();
-      await p.goto(`${base}/family/#draw`);
+      await p.goto(`${base}/family/`);
       const canvas = p.getByRole("img", { name: "Whiteboard" }).or(p.locator("canvas[aria-label='Whiteboard']"));
       await canvas.scrollIntoViewIfNeeded();
       await p.getByRole("button", { name: "Colour #e11d48" }).click();
@@ -361,40 +361,11 @@ export const flows = [
     },
   },
   {
-    // Melvin, 2026-11-28: the edit screen was "a bit busy and not easy to use"; now one list at a time in tabs.
-    name: "the kitchen edit page shows one list at a time and remembers the tab",
-    async run({ browser, page, base, expect }) {
-      const r = await page.request.post(`${base}/api/household/devices/`, {
-        headers: { origin: base },
-        data: { name: "Edit tabs", viewId: null },
-      });
-      expect(r.status() === 201, `add device: ${r.status()}`);
-      const edit = String((await r.json()).editUrl).replace(/^https?:\/\/[^/]+/, base);
-      const phone = await browser.newContext({ viewport: { width: 390, height: 844 } });
-      const p = await phone.newPage();
-      await p.goto(edit);
-      await p.getByRole("form", { name: "Post a note" }).waitFor();
-      expect(!(await p.getByPlaceholder("Milk, bread, apples").isVisible()), "the shopping list shows on the messages tab");
-      await p.getByRole("navigation", { name: "Lists" }).getByRole("button", { name: "Shopping" }).click();
-      await p.getByPlaceholder("Milk, bread, apples").fill("Oat milk");
-      await p.getByRole("button", { name: "Add", exact: true }).click();
-      await p.getByRole("button", { name: "Edit Oat milk" }).click();
-      await p.getByRole("button", { name: "Mark Oat milk running low" }).click();
-      await p.getByRole("button", { name: "Oat milk: running low. Tap if it's run out" }).waitFor();
-      expect(new URL(p.url()).hash === "#shopping", `tab not in the address: ${p.url()}`);
-      await p.reload();
-      await p.getByRole("button", { name: "Edit Oat milk" }).waitFor();
-      const overflow = await p.evaluate(() => document.documentElement.scrollWidth > innerWidth);
-      expect(!overflow, "the edit page scrolls sideways on a phone");
-      await phone.close();
-    },
-  },
-  {
     name: "a meal planned on a phone reaches the display",
     async run({ browser, page, base, expect }) {
       const phone = await browser.newContext({ viewport: { width: 390, height: 844 }, storageState: await page.context().storageState() });
       const p = await phone.newPage();
-      await p.goto(`${base}/family/#meals`);
+      await p.goto(`${base}/family/`);
       // Tomorrow, not today: from 8 PM the widget starts at tomorrow, so a meal planned for today drops off in the evening.
       const tomorrow = p.getByRole("region", { name: /^Tomorrow/ });
       // Exact name: a "Repeat Dinner on …" select is also a combobox whose name contains Dinner.
