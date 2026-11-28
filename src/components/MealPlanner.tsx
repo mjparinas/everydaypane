@@ -243,7 +243,7 @@ export function MealPlanner() {
     // just because the screen is desktop-sized — Melvin, 2026-11-23.
     <div className="@container grid gap-4">
       <div className="flex items-center justify-between gap-2">
-        <button type="button" className="btn-ghost" onClick={() => step(-DAYS)} aria-label="Earlier week">
+        <button type="button" className="btn-ghost shrink-0 px-3 whitespace-nowrap" onClick={() => step(-DAYS)} aria-label="Earlier week">
           ‹ Earlier
         </button>
         {plan.from !== plan.today ? (
@@ -251,9 +251,9 @@ export function MealPlanner() {
             Back to Today
           </button>
         ) : (
-          <p className="text-sm text-soft">Saves as you go · set a repeat to fill future days</p>
+          <p className="min-w-0 text-center text-sm text-soft">Saves as you go</p>
         )}
-        <button type="button" className="btn-ghost" onClick={() => step(DAYS)} aria-label="Later week">
+        <button type="button" className="btn-ghost shrink-0 px-3 whitespace-nowrap" onClick={() => step(DAYS)} aria-label="Later week">
           Later ›
         </button>
       </div>
@@ -316,46 +316,50 @@ export function MealPlanner() {
                       </span>
                     </span>
                   </label>
-                  <div className="grid grid-cols-[auto_1fr] items-center gap-2 text-xs @min-[40rem]:grid-cols-1 @min-[40rem]:items-stretch @min-[40rem]:gap-1">
-                    <span className="w-[6.5rem] shrink-0 text-soft @min-[40rem]:w-auto">Repeat</span>
-                    <div className="flex min-w-0 flex-wrap items-center gap-2">
-                      <select
-                        className="field min-w-0 flex-1 py-1 text-xs"
-                        value={chosen}
-                        aria-label={`Repeat ${MEAL_LABELS[slot]} on ${dayName(date)}`}
-                        onChange={(e) => {
-                          const next = e.target.value as CadenceKey;
-                          setCadence((c) => ({ ...c, [k]: next }));
-                          if (value.trim()) void save(date, slot, value, next);
-                        }}
-                      >
-                        {opts.map((o) => (
-                          <option key={o.value} value={o.value}>
-                            {o.label}
-                          </option>
-                        ))}
-                      </select>
-                      {rule ? (
-                        <>
-                          <span className="text-soft" title={repeatLabel(rule.repeat)}>
-                            ↻ {repeatLabel(rule.repeat)}
-                          </span>
-                          {value.trim() && value.trim() !== rule.text ? (
-                            <button
-                              type="button"
-                              className="btn-ghost px-1.5 py-0.5 text-xs"
-                              onClick={() => void updateSeries(date, slot, value)}
-                            >
-                              Update Series
+                  {/* Repeat shows once a meal has words (or a series already fills it): seven days of three empty
+                      meals used to carry 21 "Just This Day" menus (Melvin, 2026-11-28: the family page felt busy). */}
+                  {value.trim() || rule ? (
+                    <div className="grid grid-cols-[auto_1fr] items-center gap-2 text-xs @min-[40rem]:grid-cols-1 @min-[40rem]:items-stretch @min-[40rem]:gap-1">
+                      <span className="w-[6.5rem] shrink-0 text-soft @min-[40rem]:w-auto">Repeat</span>
+                      <div className="flex min-w-0 flex-wrap items-center gap-2">
+                        <select
+                          className="field min-w-0 flex-1 py-1 text-xs"
+                          value={chosen}
+                          aria-label={`Repeat ${MEAL_LABELS[slot]} on ${dayName(date)}`}
+                          onChange={(e) => {
+                            const next = e.target.value as CadenceKey;
+                            setCadence((c) => ({ ...c, [k]: next }));
+                            if (value.trim()) void save(date, slot, value, next);
+                          }}
+                        >
+                          {opts.map((o) => (
+                            <option key={o.value} value={o.value}>
+                              {o.label}
+                            </option>
+                          ))}
+                        </select>
+                        {rule ? (
+                          <>
+                            <span className="text-soft" title={repeatLabel(rule.repeat)}>
+                              ↻ {repeatLabel(rule.repeat)}
+                            </span>
+                            {value.trim() && value.trim() !== rule.text ? (
+                              <button
+                                type="button"
+                                className="btn-ghost px-1.5 py-0.5 text-xs"
+                                onClick={() => void updateSeries(date, slot, value)}
+                              >
+                                Update Series
+                              </button>
+                            ) : null}
+                            <button type="button" className="btn-ghost px-1.5 py-0.5 text-xs" onClick={() => void stopRule(date, slot)}>
+                              Stop
                             </button>
-                          ) : null}
-                          <button type="button" className="btn-ghost px-1.5 py-0.5 text-xs" onClick={() => void stopRule(date, slot)}>
-                            Stop
-                          </button>
-                        </>
-                      ) : null}
+                          </>
+                        ) : null}
+                      </div>
                     </div>
-                  </div>
+                  ) : null}
                 </div>
               );
             })}

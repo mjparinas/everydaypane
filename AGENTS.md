@@ -515,6 +515,13 @@ npm run templates:previews  # regenerate public/templates/*.png from real widget
   shouldnt impact the other"); only notes posted after
   a screen first read the board pop up; four at most, the rest behind "+N More"; newest by the corner; a new note wakes
   the screen saver; an admin's preview shows none (see Architecture).
+- **Family page in tabs** (Melvin, 2026-11-28: "do a pass over the edit screen for a family, seems a bit busy and not
+  easy to use"): `/family/` and `/d/<token>/edit/` share `FamilyHome` (`src/components/FamilyHome.tsx`): one tab at a
+  time (Notes, Shopping, Meals, Chores, More; the hash names it, `#shopping`), the bar at the bottom on a phone and
+  under the header from `sm` up; More holds the family calendar (signed in only), whiteboard, photos, this phone and the
+  account. Inside the shared components: the note form remembers the name as "From Mom · Change", a shopping row is
+  the tick and the name with Edit opening Low, aisle and Remove, a meal's Repeat shows only once it has words or a
+  series, and Add Event folds the calendar form away with an inclusive Last Day. Claude's calls.
 - **Canadian English** in everything a person reads (colour, centre, favourite), as in Liftsmith.
 
 ## Display: super lightweight (rule, Melvin, 2026-11-17)

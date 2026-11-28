@@ -340,7 +340,9 @@ export const flows = [
     async run({ browser, page, base, expect }) {
       const phone = await browser.newContext({ viewport: { width: 390, height: 844 }, storageState: await page.context().storageState() });
       const p = await phone.newPage();
-      await p.goto(`${base}/family/`);
+      // The whiteboard lives under the family page's More tab.
+      await p.goto(`${base}/family/#more`);
+      await p.getByRole("heading", { name: "Whiteboard" }).waitFor();
       const canvas = p.getByRole("img", { name: "Whiteboard" }).or(p.locator("canvas[aria-label='Whiteboard']"));
       await canvas.scrollIntoViewIfNeeded();
       await p.getByRole("button", { name: "Colour #e11d48" }).click();
@@ -366,6 +368,8 @@ export const flows = [
       const phone = await browser.newContext({ viewport: { width: 390, height: 844 }, storageState: await page.context().storageState() });
       const p = await phone.newPage();
       await p.goto(`${base}/family/`);
+      // Meals is its own tab; the page opens on Notes.
+      await p.getByRole("navigation", { name: "Sections" }).getByRole("button", { name: "Meals" }).click();
       // Tomorrow, not today: from 8 PM the widget starts at tomorrow, so a meal planned for today drops off in the evening.
       const tomorrow = p.getByRole("region", { name: /^Tomorrow/ });
       // Exact name: a "Repeat Dinner on …" select is also a combobox whose name contains Dinner.
