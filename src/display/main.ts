@@ -422,6 +422,7 @@ async function loadState(): Promise<boolean> {
   burnIn();
   alerts();
   popups();
+  brandMark();
   doorbell();
   saver?.update();
   return true;
@@ -588,6 +589,18 @@ function popups() {
     popupStack.stop();
     popupStack.el.remove();
     popupStack = null;
+  }
+}
+
+// ---- Free walls: a faint Everydaypane mark in the bottom-left corner (Melvin, 2026-11-28). ----
+
+let mark: HTMLElement | null = null;
+function brandMark() {
+  const on = payload?.brandMark === true;
+  if (on && !mark) app.append((mark = h("div", { class: "brand-mark", "aria-hidden": "true" })));
+  else if (!on && mark) {
+    mark.remove();
+    mark = null;
   }
 }
 

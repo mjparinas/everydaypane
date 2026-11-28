@@ -26,6 +26,8 @@ export interface DisplayPayload {
   messagePopups: DashboardConfig["messagePopups"];
   /** Household plans watch for settings changes; Free keeps the 30-second poll only. */
   instantRefresh: boolean;
+  /** Free walls carry a faint Everydaypane mark in the bottom-left corner (Melvin, 2026-11-28). */
+  brandMark?: boolean;
 }
 
 export interface WeatherDay {

@@ -109,6 +109,8 @@ worker serves the last good data and shows "Offline"); a **screen saver** (photo
 in a night window, woken by a tap, Home Assistant motion sensors, the doorbell, a new alert or a timer going off); doorbell pop-up full
 screen; the red, dismissible alert strip; **message pop-ups** (`messagePopups`, Household, off by default: new message
 board notes in the bottom-right corner in the sender's colour, stacked, until someone taps Dismiss);
+a **faint Everydaypane mark** in the bottom-left corner on Free walls only (`brandMark` in the state payload, 26 px at
+18 % opacity, no touches, under the night dimming and screen saver; gone during a trial or on Household; Melvin, 2026-11-28);
 no pinch zoom; display and shared-feed polling pauses while hidden or browser-offline, backs off after failures, and
 resumes when visible/online; settings normally poll every 30 seconds (**Household** also long-polls for instant reload),
 and state responses carry a tiny release version header even on `304`s (a new release reloads the wall **once**; if the page still names the old release it keeps running rather than loop, `src/display/release.ts`);

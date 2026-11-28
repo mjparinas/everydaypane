@@ -315,6 +315,19 @@ html.portrait-view .stage {
   opacity: 1;
   transform: none;
 }
+/* Free walls (Melvin, 2026-11-28: "very transparent and subtle"): the mark sits in the edge padding's corner, under
+   the pop-ups, the night dimming and the screen saver, and never takes a touch. */
+.brand-mark {
+  position: absolute;
+  z-index: 13;
+  left: 10px;
+  bottom: 10px;
+  width: 26px;
+  height: 26px;
+  background: url(/brand/mark.svg) center / contain no-repeat;
+  opacity: 0.18;
+  pointer-events: none;
+}
 /* Widgets fed from the server dim while the screen can't reach it; the ones the screen works out itself don't. */
 .app.is-offline .cell:not(.cell-clock, .cell-date, .cell-moon, .cell-timer, .cell-pomodoro, .cell-photos, .cell-whiteboard) {
   opacity: 0.55;
