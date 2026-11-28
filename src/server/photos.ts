@@ -371,6 +371,7 @@ export async function photoImage(
   const source = config.integrations.photos.sources.find((s) => s.id === sourceId);
   if (!source) return null;
   const find = async () => (await listed(accountId, config, source)).find((p) => p.id === photoId) ?? null;
+  const startedAt = Date.now();
   let photo = await find();
   if (!photo) return null;
   if (source.kind === "library") return libraryImage(photo.url);
@@ -415,14 +416,22 @@ export async function photoImage(
     if (direct) return null;
     throw error;
   }
-  if ([403, 404, 410].includes(r.status) && !direct) {
-    // Amazon's temporary links expire: list again and retry once. The old list stays if Amazon refuses, and a recent
-    // refusal isn't asked again.
+  if ((r.status === 503 || r.status === 429) && !direct) {
+    const wait = Math.min(6, Math.max(1, Number(r.headers.get("retry-after")) || 2));
+    await r.body?.cancel().catch(() => undefined);
+    await timing.pause(wait * 1000);
+    r = await get(photo);
+  }
+  if ([400, 403, 404, 410].includes(r.status) && !direct) {
+    // Amazon's temporary links expire: list again and retry once. The old list stays if Amazon refuses, a recent
+    // refusal isn't asked again, and a sibling request that just re-listed since we started is reused without scraping twice.
+    await r.body?.cancel().catch(() => undefined);
     const key = sourceKey(accountId, source);
+    const now = Date.now();
     const failed = failures.get(key);
-    if (failed && Date.now() - failed.at < RETRY_AFTER_FAILURE) return null;
-    const fresh = await cached(key, 0, () => list(accountId, config, source));
-    if (fresh.stale) failures.set(key, { at: Date.now(), error: new Error("Amazon refused; showing the last list") });
+    if (failed && now - failed.at < RETRY_AFTER_FAILURE) return null;
+    const fresh = await cached(key, Math.max(0, now - startedAt), () => list(accountId, config, source), now);
+    if (fresh.stale) failures.set(key, { at: now, error: new Error("Amazon refused; showing the last list") });
     photo = fresh.value.find((p) => p.id === photoId) ?? null;
     if (!photo) return null;
     r = await get(photo);

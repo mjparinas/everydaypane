@@ -58,6 +58,55 @@ function shuffle<T>(list: T[], random: () => number): T[] {
 
 export const pickKey = (p: Pick) => `${p.source}\n${p.photo[0]}`;
 
+export interface CachedPick extends Pick {
+  url: string;
+}
+
+/**
+ * Fallback pool size per source and across the screen (Melvin, 2026-11-27: cache a few photos so a failed load never
+ * leaves a blank screen, without loading too many for modest wall hardware).
+ */
+export const MAX_CACHED_PER_SOURCE = 6;
+export const MAX_CACHED_TOTAL = 10;
+
+/** Keeps a loaded photo at the newest end of the fallback list, bounded per source and overall. */
+export function rememberCachedPhoto(
+  list: CachedPick[],
+  entry: CachedPick,
+  maxPerSource = MAX_CACHED_PER_SOURCE,
+  maxTotal = MAX_CACHED_TOTAL,
+): CachedPick[] {
+  if (maxPerSource <= 0 || maxTotal <= 0) return [];
+  const key = pickKey(entry);
+  const rest = list.filter((c) => pickKey(c) !== key);
+  let fromSource = 0;
+  for (const c of rest) if (c.source === entry.source) fromSource++;
+  const pruned =
+    fromSource < maxPerSource
+      ? rest
+      : rest.filter((c) => {
+          if (c.source !== entry.source || fromSource < maxPerSource) return true;
+          fromSource--;
+          return false;
+        });
+  pruned.push(entry);
+  return pruned.length > maxTotal ? pruned.slice(pruned.length - maxTotal) : pruned;
+}
+
+/** Picks a random cached photo from the widget's sources, preferring one not already on screen. */
+export function pickCachedPhoto(
+  list: CachedPick[],
+  sources: ReadonlySet<string>,
+  avoid: ReadonlySet<string>,
+  random = Math.random,
+): CachedPick | undefined {
+  const matching = list.filter((c) => sources.has(c.source));
+  if (!matching.length) return undefined;
+  const other = matching.filter((c) => !avoid.has(pickKey(c)));
+  const pool = other.length ? other : matching;
+  return pool[Math.floor(random() * pool.length)];
+}
+
 /**
  * One pass through the deck: photos added since the frame last looked come first (newest family photo up next), then
  * this day in earlier years, then everything else shuffled (Fisher-Yates, a new order every pass and every load).

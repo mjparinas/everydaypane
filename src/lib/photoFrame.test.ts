@@ -1,8 +1,21 @@
 import { describe, expect, it } from "vitest";
 
-import { caption, fitFor, memoryYear, order, orientation, partnerIndex, pickKey, type Pick } from "./photoFrame";
+import {
+  caption,
+  fitFor,
+  memoryYear,
+  order,
+  orientation,
+  partnerIndex,
+  pickCachedPhoto,
+  pickKey,
+  rememberCachedPhoto,
+  type CachedPick,
+  type Pick,
+} from "./photoFrame";
 
 const pick = (id: string, w: number, h: number, taken = ""): Pick => ({ source: "lib", photo: [id, w, h, taken] });
+const cached = (source: string, id: string): CachedPick => ({ source, photo: [id, 1200, 800, ""], url: `/p/${source}/${id}` });
 
 describe("photo frame", () => {
   it("tells portrait, landscape and square apart, and says unknown when a source gives no size", () => {
@@ -94,5 +107,20 @@ describe("photo frame", () => {
     expect(caption("2025-11-26", "2026-11-26", { memories: false, fresh: false })).toBe("November 26, 2025 · a year ago");
     expect(caption("", "2026-11-26", { memories: true, fresh: true })).toBe("Just added");
     expect(caption("", "2026-11-26", { memories: true, fresh: false })).toBe("");
+  });
+
+  it("caps cached fallback photos per source and overall, and pulls a random one not already on screen", () => {
+    let list: CachedPick[] = [];
+    for (const id of ["a", "b", "c", "a"]) list = rememberCachedPhoto(list, cached("amz", id), 2, 3);
+    expect(list.map((c) => c.photo[0])).toEqual(["c", "a"]);
+
+    list = rememberCachedPhoto(list, cached("lib", "x"), 2, 3);
+    list = rememberCachedPhoto(list, cached("lib", "y"), 2, 3);
+    expect(list.map((c) => `${c.source}:${c.photo[0]}`)).toEqual(["amz:a", "lib:x", "lib:y"]);
+
+    const wanted = new Set(["lib"]);
+    expect(pickCachedPhoto(list, wanted, new Set(["lib\ny"]), () => 0.9)?.photo[0]).toBe("x");
+    expect(pickCachedPhoto(list, new Set(["amz"]), new Set(["amz\na"]), () => 0.5)?.photo[0]).toBe("a");
+    expect(pickCachedPhoto(list, new Set(["missing"]), new Set())?.photo[0]).toBeUndefined();
   });
 });
