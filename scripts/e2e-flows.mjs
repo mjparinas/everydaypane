@@ -312,6 +312,33 @@ export const flows = [
     },
   },
   {
+    name: "the app opens on Notes with tabs for To-Dos, Shopping, Meals, Chores and More",
+    async run({ browser, page, base, expect }) {
+      const phone = await browser.newContext({ viewport: { width: 390, height: 844 }, storageState: await page.context().storageState() });
+      const p = await phone.newPage();
+      const errors = [];
+      p.on("pageerror", (e) => errors.push(e.message));
+      await p.goto(`${base}/app/`);
+      await p.getByRole("form", { name: "Post a note" }).waitFor();
+      const tabs = p.getByRole("navigation", { name: "Sections" });
+      await tabs.getByRole("button", { name: "Notes" }).and(p.locator("[aria-current=page]")).waitFor();
+      await p.getByRole("button", { name: "Add to Shopping" }).click();
+      await p.getByPlaceholder("Milk, bread, apples").waitFor();
+      expect(new URL(p.url()).hash === "#shopping", `address after Add to Shopping: ${p.url()}`);
+      await tabs.getByRole("button", { name: "To-Dos" }).click();
+      await p.getByText("No to-do lists yet").waitFor();
+      await p.goBack();
+      await tabs.getByRole("button", { name: "More" }).click();
+      await p.getByRole("heading", { name: "Whiteboard" }).waitFor();
+      await p.goBack();
+      await p.getByPlaceholder("Milk, bread, apples").waitFor();
+      const overflow = await p.evaluate(() => document.documentElement.scrollWidth > innerWidth);
+      expect(!overflow, "the app home scrolls sideways on a phone");
+      expect(errors.length === 0, errors.join("\n"));
+      await phone.close();
+    },
+  },
+  {
     name: "a family note reaches the display",
     async run({ browser, page, base, expect }) {
       const r = await page.request.post(`${base}/api/messages/`, {

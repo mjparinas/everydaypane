@@ -3,10 +3,34 @@ import "server-only";
 import type { DashboardConfig } from "@/lib/config/schema";
 import type { TaskProvider, TasksData } from "@/lib/display/types";
 
-import { cached, type Cached } from "./cache";
-import { completeTask as completeGoogleTask, googleTasksFeed, mayComplete as mayCompleteGoogle, TasksNotAllowed } from "./googleTasks";
-import { completeMicrosoftTask, mayCompleteMicrosoft, microsoftTasksFeed } from "./microsoftToDo";
-import { completeTodoistTask, mayCompleteTodoist, TodoistDisconnected, todoistTasksFeed } from "./todoist";
+import { cached, forget, type Cached } from "./cache";
+import {
+  addGoogleTask,
+  completeTask as completeGoogleTask,
+  googleListOn,
+  googleTasksFeed,
+  mayComplete as mayCompleteGoogle,
+  TasksNotAllowed,
+  updateGoogleTask,
+  type TaskChange,
+} from "./googleTasks";
+import {
+  addMicrosoftTask,
+  completeMicrosoftTask,
+  mayCompleteMicrosoft,
+  microsoftListOn,
+  microsoftTasksFeed,
+  updateMicrosoftTask,
+} from "./microsoftToDo";
+import {
+  addTodoistTask,
+  completeTodoistTask,
+  mayCompleteTodoist,
+  TodoistDisconnected,
+  todoistListOn,
+  todoistTasksFeed,
+  updateTodoistTask,
+} from "./todoist";
 
 const TTL = 55_000;
 
@@ -68,4 +92,47 @@ export function mayCompleteTasks(config: DashboardConfig, provider: TaskProvider
     default:
       return false;
   }
+}
+
+// ---- Edits from phones (Melvin, 2026-11-28: "editing todo lists" from the app) ----
+// A signed-in phone may add, rename, tick off and reopen tasks in any list switched on in Settings, whatever the wall's
+// widgets allow, as with the shopping list. Nothing else (due dates, deleting, moving) is written to the services.
+
+/** Whether a phone may edit this list: it is switched on in Settings. */
+export function listOn(config: DashboardConfig, provider: TaskProvider, listId: string): boolean {
+  switch (provider) {
+    case "google":
+      return googleListOn(config, listId);
+    case "microsoft":
+      return microsoftListOn(config, listId);
+    case "todoist":
+      return todoistListOn(config, listId);
+    default:
+      return false;
+  }
+}
+
+export async function addTask(accountId: string, config: DashboardConfig, provider: TaskProvider, listId: string, title: string) {
+  if (!listOn(config, provider, listId)) return "forbidden" as const;
+  if (provider === "google") await addGoogleTask(accountId, listId, title);
+  else if (provider === "microsoft") await addMicrosoftTask(accountId, listId, title);
+  else await addTodoistTask(accountId, listId, title);
+  await forget("tasks-unified:");
+  return "ok" as const;
+}
+
+export async function updateTask(
+  accountId: string,
+  config: DashboardConfig,
+  provider: TaskProvider,
+  listId: string,
+  taskId: string,
+  change: TaskChange,
+) {
+  if (!listOn(config, provider, listId)) return "forbidden" as const;
+  if (provider === "google") await updateGoogleTask(accountId, listId, taskId, change);
+  else if (provider === "microsoft") await updateMicrosoftTask(accountId, listId, taskId, change);
+  else await updateTodoistTask(accountId, taskId, change);
+  await forget("tasks-unified:");
+  return "ok" as const;
 }

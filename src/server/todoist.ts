@@ -8,6 +8,7 @@ import type { TaskItem } from "@/lib/display/types";
 import { cached, forget } from "./cache";
 import { randomToken } from "./crypto";
 import { env } from "./env";
+import type { TaskChange } from "./googleTasks";
 import { getSecret, setSecret } from "./secrets";
 
 const API = "https://api.todoist.com/rest/v2";
@@ -57,6 +58,8 @@ async function call(accountId: string, path: string, init: RequestInit = {}): Pr
   });
   if (r.status === 401) throw new TodoistDisconnected();
   if (!r.ok) throw new Error(`Todoist answered ${r.status}`);
+  // Closing and reopening answer 204 with no body.
+  if (r.status === 204) return null;
   return r.json() as Promise<unknown>;
 }
 
@@ -146,4 +149,19 @@ export const newTodoistState = () => randomToken(24);
 export function todoistConsentUrl(state: string, redirect: string): string {
   const p = new URLSearchParams({ client_id: env.todoistClientId(), scope: "data:read_write", state, redirect_uri: redirect });
   return `https://todoist.com/oauth/authorize?${p}`;
+}
+
+export const todoistListOn = (config: DashboardConfig, listId: string) =>
+  config.integrations.todoist.lists.some((l) => l.enabled && l.id === listId);
+
+export async function addTodoistTask(accountId: string, projectId: string, title: string): Promise<void> {
+  await call(accountId, "/tasks", { method: "POST", body: JSON.stringify({ content: title, project_id: projectId }) });
+  await forget("todoist-tasks:");
+}
+
+export async function updateTodoistTask(accountId: string, taskId: string, change: TaskChange): Promise<void> {
+  const path = `/tasks/${encodeURIComponent(taskId)}`;
+  if (change.title !== undefined) await call(accountId, path, { method: "POST", body: JSON.stringify({ content: change.title }) });
+  if (change.done !== undefined) await call(accountId, `${path}/${change.done ? "close" : "reopen"}`, { method: "POST" });
+  await forget("todoist-tasks:");
 }
