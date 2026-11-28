@@ -32,11 +32,11 @@ const COLOURS: { value: Colour; label: string; bg: string }[] = [
 const bgOf = (c: Colour) => COLOURS.find((x) => x.value === c)?.bg ?? "#fff3a8";
 
 const EXPIRY = [
-  { value: "", label: "Until Someone Deletes It" },
-  { value: "12", label: "12 Hours" },
-  { value: "24", label: "1 Day" },
-  { value: "72", label: "3 Days" },
-  { value: "168", label: "1 Week" },
+  { value: "", label: "Keep Until Deleted" },
+  { value: "12", label: "Keep 12 Hours" },
+  { value: "24", label: "Keep 1 Day" },
+  { value: "72", label: "Keep 3 Days" },
+  { value: "168", label: "Keep 1 Week" },
 ] as const;
 
 const NAME_KEY = "ep-board-name";
@@ -63,6 +63,9 @@ export function MessageBoard() {
   const [expiry, setExpiry] = useState<string>("24");
   const [error, setError] = useState("");
   const [sending, setSending] = useState(false);
+  // The name this phone posted with last time, and whether its field is open again.
+  const [savedName, setSavedName] = useState("");
+  const [editingName, setEditingName] = useState(false);
 
   async function fetchBoard(): Promise<Board | string> {
     try {
@@ -79,7 +82,9 @@ export function MessageBoard() {
     setNotes(board.messages);
     setAdmin(board.admin);
     // The name this phone used last time (localStorage only exists in the browser, so it's read once the board loads).
-    setAuthor((a) => a || readName());
+    const remembered = readName();
+    setSavedName((n) => n || remembered);
+    setAuthor((a) => a || remembered);
   }
   const load = () => fetchBoard().then(show);
 
@@ -102,6 +107,7 @@ export function MessageBoard() {
     } catch {
       // Private browsing: the name just isn't remembered.
     }
+    setSavedName(author.trim());
     const r = await familyFetch("/api/messages/", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -111,6 +117,7 @@ export function MessageBoard() {
     const body = (await r.json().catch(() => ({}))) as { error?: string };
     if (!r.ok) return setError(body.error ?? "Couldn't post that.");
     setText("");
+    setEditingName(false);
     void load();
   }
 
@@ -131,9 +138,34 @@ export function MessageBoard() {
 
   return (
     <div className="grid gap-4">
-      <form onSubmit={post} className="card grid gap-3" aria-label="Post a note">
-        <label className="grid gap-1 text-sm font-medium">
-          Note
+      {/* One box, the colours, then how long and Post (Melvin, 2026-11-28: the family page felt busy). The name this
+          phone used last time is kept, so after the first note "From" is one line with Change, not a field. */}
+      <form onSubmit={post} className="card grid gap-3 p-4" aria-label="Post a note">
+        {editingName || !savedName ? (
+          <label className="grid gap-1 text-sm font-medium">
+            From
+            <input
+              className="field"
+              value={author}
+              maxLength={30}
+              required
+              autoComplete="given-name"
+              placeholder="Your name"
+              onChange={(e) => setAuthor(e.target.value)}
+            />
+          </label>
+        ) : (
+          <p className="flex items-center gap-2 text-sm text-soft">
+            <span className="min-w-0 truncate">
+              From <strong className="font-semibold text-ink">{author}</strong>
+            </span>
+            <button type="button" className="min-h-11 px-2 font-semibold text-brand" onClick={() => setEditingName(true)}>
+              Change
+            </button>
+          </p>
+        )}
+        <label className="grid gap-1">
+          <span className="sr-only">Note</span>
           <textarea
             className="field min-h-24 py-2 text-base"
             value={text}
@@ -143,31 +175,8 @@ export function MessageBoard() {
             onChange={(e) => setText(e.target.value)}
           />
         </label>
-        <div className="grid grid-cols-2 gap-3">
-          <label className="grid gap-1 text-sm font-medium">
-            From
-            <input
-              className="field"
-              value={author}
-              maxLength={30}
-              required
-              placeholder="Your name"
-              onChange={(e) => setAuthor(e.target.value)}
-            />
-          </label>
-          <label className="grid gap-1 text-sm font-medium">
-            Keep It
-            <select className="field" value={expiry} onChange={(e) => setExpiry(e.target.value)}>
-              {EXPIRY.map((x) => (
-                <option key={x.value} value={x.value}>
-                  {x.label}
-                </option>
-              ))}
-            </select>
-          </label>
-        </div>
         <fieldset className="flex flex-wrap gap-2">
-          <legend className="mb-1 text-sm font-medium">Colour</legend>
+          <legend className="sr-only">Colour</legend>
           {COLOURS.map((c) => (
             <label key={c.value} className="cursor-pointer">
               <input
@@ -179,7 +188,7 @@ export function MessageBoard() {
                 onChange={() => setColour(c.value)}
               />
               <span
-                className="block h-11 w-11 rounded-full border-2 border-transparent peer-checked:border-ink peer-focus-visible:ring-2 peer-focus-visible:ring-brand/40"
+                className="block h-11 w-11 rounded-full border-2 border-black/5 peer-checked:border-ink peer-focus-visible:ring-2 peer-focus-visible:ring-brand/40"
                 style={{ background: c.bg }}
                 title={c.label}
               />
@@ -187,9 +196,21 @@ export function MessageBoard() {
             </label>
           ))}
         </fieldset>
-        <button className="btn-primary" disabled={sending || !text.trim() || !author.trim()}>
-          {sending ? "Posting…" : "Post to the Board"}
-        </button>
+        <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-2">
+          <label className="min-w-0">
+            <span className="sr-only">Keep It</span>
+            <select className="field" value={expiry} onChange={(e) => setExpiry(e.target.value)}>
+              {EXPIRY.map((x) => (
+                <option key={x.value} value={x.value}>
+                  {x.label}
+                </option>
+              ))}
+            </select>
+          </label>
+          <button className="btn-primary" disabled={sending || !text.trim() || !author.trim()}>
+            {sending ? "Posting…" : "Post to the Board"}
+          </button>
+        </div>
         {error && (
           <p className="text-sm text-bad" role="alert">
             {error}
@@ -201,7 +222,7 @@ export function MessageBoard() {
         {notes === null ? (
           <MessageNotesSkeleton />
         ) : notes.length === 0 ? (
-          <p className="text-sm text-soft">The board is empty.</p>
+          <p className="text-sm text-soft">Nothing on the board. Notes you post show on the wall.</p>
         ) : (
           notes.map((n) => (
             <article
