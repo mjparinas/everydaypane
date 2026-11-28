@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 
 import { familyAuthError, useFamilyAuth, useFamilyFetch } from "@/components/FamilyAuth";
+import { wallAmPm } from "@/display/format";
 
 import { MessageNotesSkeleton } from "./Skeleton";
 
@@ -50,6 +51,20 @@ function readName(): string {
 }
 
 type Board = { messages: Note[]; admin: boolean };
+
+// "5:13 PM" today, "Nov 27" before, and PM as on the wall rather than en-CA's "p.m." (Melvin, 2026-11-28 edit pass).
+function when(ms: number): string {
+  const d = new Date(ms);
+  if (d.toDateString() !== new Date().toDateString()) return d.toLocaleDateString("en-CA", { month: "short", day: "numeric" });
+  return wallAmPm(d.toLocaleTimeString("en-CA", { hour: "numeric", minute: "2-digit" }));
+}
+// When it comes down: the time if that's today, else just the day.
+function until(ms: number): string {
+  const d = new Date(ms);
+  if (d.toDateString() === new Date().toDateString())
+    return wallAmPm(d.toLocaleTimeString("en-CA", { hour: "numeric", minute: "2-digit" }));
+  return d.toLocaleDateString("en-CA", { weekday: "short" });
+}
 
 export function MessageBoard() {
   const familyFetch = useFamilyFetch();
@@ -235,19 +250,17 @@ export function MessageBoard() {
                   at their own height instead of the buttons growing to fill it. */}
               <p className="mt-auto text-xs opacity-70">
                 {n.pinned ? "📌 " : ""}
-                {n.author} · {new Date(n.createdAt).toLocaleString("en-CA", { dateStyle: "medium", timeStyle: "short" })}
-                {n.expiresAt
-                  ? ` · until ${new Date(n.expiresAt).toLocaleString("en-CA", { weekday: "short", hour: "numeric", minute: "2-digit" })}`
-                  : ""}
+                {n.author} · {when(n.createdAt)}
+                {n.expiresAt ? ` · until ${until(n.expiresAt)}` : ""}
               </p>
               <div className="flex flex-wrap items-start gap-2">
                 {admin && (
-                  <button className="min-h-9 rounded-lg bg-black/10 px-3 text-sm font-medium" onClick={() => void pin(n.id, !n.pinned)}>
+                  <button className="min-h-11 rounded-lg bg-black/10 px-3 text-sm font-medium" onClick={() => void pin(n.id, !n.pinned)}>
                     {n.pinned ? "Unpin" : "Pin"}
                   </button>
                 )}
                 {n.canDelete && (
-                  <button className="min-h-9 rounded-lg bg-black/10 px-3 text-sm font-medium" onClick={() => void remove(n.id)}>
+                  <button className="min-h-11 rounded-lg bg-black/10 px-3 text-sm font-medium" onClick={() => void remove(n.id)}>
                     Delete
                   </button>
                 )}

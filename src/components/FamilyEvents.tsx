@@ -138,7 +138,7 @@ export function FamilyEvents() {
       </h2>
       <p className="text-sm text-soft">Dentists, games and visits. They show on the wall&apos;s calendars in blue.</p>
       {error && (
-        <p className="rounded-xl bg-danger/10 p-3 text-sm text-danger" role="alert">
+        <p className="rounded-xl bg-bad/10 p-3 text-sm text-bad" role="alert">
           {error}
         </p>
       )}
