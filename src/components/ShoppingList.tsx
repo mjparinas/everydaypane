@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useId, useState, type FormEvent } from "react";
 
 import { familyAuthError, useFamilyAuth, useFamilyFetch } from "@/components/FamilyAuth";
 import type { ShoppingData, ShoppingItem } from "@/lib/display/types";
@@ -160,9 +160,6 @@ export function ShoppingList() {
 
   return (
     <div className="grid gap-3">
-      <p className="text-sm text-soft">
-        The wall shows this list and can tick items off. Mark something <strong>Low</strong> when there&apos;s still some left.
-      </p>
       <form className="flex gap-2" onSubmit={(e) => void add(e)}>
         <label className="min-w-0 flex-1">
           <span className="sr-only">New item</span>
@@ -203,7 +200,7 @@ export function ShoppingList() {
           {groupByCategory(open).map((g) => (
             <section key={g.category} aria-label={SHOPPING_CATEGORY_LABELS[g.category]}>
               <h3 className="text-xs font-bold tracking-wide text-soft uppercase">{SHOPPING_CATEGORY_LABELS[g.category]}</h3>
-              <ul className="grid gap-1">
+              <ul className="grid">
                 {g.items.map((item) => (
                   <Row key={item.id} item={item} busy={busy} onToggle={toggle} onPatch={patch} onRemove={remove} />
                 ))}
@@ -213,7 +210,7 @@ export function ShoppingList() {
           {done.length > 0 && (
             <section aria-label="Bought">
               <h3 className="text-xs font-bold tracking-wide text-soft uppercase">Bought</h3>
-              <ul className="grid gap-1">
+              <ul className="grid">
                 {done.map((item) => (
                   <Row key={item.id} item={item} busy={busy} onToggle={toggle} onPatch={patch} onRemove={remove} />
                 ))}
@@ -249,61 +246,89 @@ function Row({
   onPatch: (item: ShoppingItem, change: { low?: boolean; category?: ShoppingCategory }) => Promise<void>;
   onRemove: (item: ShoppingItem) => Promise<void>;
 }) {
+  // Each open item used to carry Low, an aisle menu and Remove all the time, three controls a row (Melvin,
+  // 2026-11-28: the family page felt busy). Now a row is the tick and the name, with "low" as a tag, and Edit opens
+  // those three under it. Bought items keep only Remove.
+  const [editing, setEditing] = useState(false);
+  const panel = useId();
   return (
-    // Name above, controls below on a phone (Melvin, 2026-11-27: names were cut to "B…" beside Low, aisle and Remove);
-    // one row from sm up. Names wrap rather than truncate.
-    <li className="flex flex-col gap-x-2 pb-2 sm:flex-row sm:items-center sm:pb-0">
-      <label className="flex min-w-0 flex-1 items-center gap-3 py-2">
-        <input
-          type="checkbox"
-          className="h-5 w-5 shrink-0 accent-brand"
-          checked={item.done}
-          disabled={busy}
-          aria-label={item.done ? `Put ${item.text} back on the list` : `Mark ${item.text} bought`}
-          onChange={() => void onToggle(item)}
-        />
-        <span className={item.done ? "min-w-0 flex-1 break-words text-soft line-through" : "min-w-0 flex-1 break-words"}>{item.text}</span>
-      </label>
-      <div className="flex shrink-0 items-center gap-2 pl-8 sm:pl-0">
-        {!item.done && (
-          <>
-            <button
-              type="button"
-              className={item.low ? "btn-ghost border-amber-400 bg-amber-100 px-3 text-amber-900" : "btn-ghost px-3"}
-              disabled={busy}
-              aria-pressed={item.low}
-              aria-label={item.low ? `${item.text}: running low. Tap if it's run out` : `Mark ${item.text} running low`}
-              onClick={() => void onPatch(item, { low: !item.low })}
-            >
-              Low
-            </button>
-            <label>
-              <span className="sr-only">Aisle for {item.text}</span>
-              <select
-                className="field w-auto py-1 text-xs"
-                value={item.category}
-                disabled={busy}
-                onChange={(e) => void onPatch(item, { category: e.target.value as ShoppingCategory })}
-              >
-                {SHOPPING_CATEGORIES.map((c) => (
-                  <option key={c} value={c}>
-                    {SHOPPING_CATEGORY_LABELS[c]}
-                  </option>
-                ))}
-              </select>
-            </label>
-          </>
+    <li className="grid">
+      <div className="flex items-center gap-2">
+        <label className="flex min-h-11 min-w-0 flex-1 items-center gap-3 py-1">
+          <input
+            type="checkbox"
+            className="h-5 w-5 shrink-0 accent-brand"
+            checked={item.done}
+            disabled={busy}
+            aria-label={item.done ? `Put ${item.text} back on the list` : `Mark ${item.text} bought`}
+            onChange={() => void onToggle(item)}
+          />
+          <span className={item.done ? "min-w-0 break-words text-soft line-through" : "min-w-0 break-words"}>{item.text}</span>
+          {item.low && !item.done ? (
+            <span className="shrink-0 rounded-md bg-amber-100 px-1.5 py-0.5 text-xs font-semibold text-amber-900">Low</span>
+          ) : null}
+        </label>
+        {item.done ? (
+          <button
+            type="button"
+            className="min-h-11 shrink-0 px-2 text-sm font-semibold text-soft hover:text-ink"
+            disabled={busy}
+            aria-label={`Remove ${item.text}`}
+            onClick={() => void onRemove(item)}
+          >
+            Remove
+          </button>
+        ) : (
+          <button
+            type="button"
+            className={`min-h-11 shrink-0 px-2 text-sm font-semibold ${editing ? "text-brand" : "text-soft hover:text-ink"}`}
+            aria-expanded={editing}
+            aria-controls={panel}
+            aria-label={`Edit ${item.text}`}
+            onClick={() => setEditing((v) => !v)}
+          >
+            {editing ? "Done" : "Edit"}
+          </button>
         )}
-        <button
-          type="button"
-          className="btn-ghost px-3"
-          disabled={busy}
-          aria-label={`Remove ${item.text}`}
-          onClick={() => void onRemove(item)}
-        >
-          Remove
-        </button>
       </div>
+      {editing && !item.done ? (
+        <div id={panel} className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2 pb-2 pl-8">
+          <button
+            type="button"
+            className={item.low ? "btn-ghost border-amber-400 bg-amber-100 px-3 text-amber-900" : "btn-ghost px-3"}
+            disabled={busy}
+            aria-pressed={item.low}
+            aria-label={item.low ? `${item.text}: running low. Tap if it's run out` : `Mark ${item.text} running low`}
+            onClick={() => void onPatch(item, { low: !item.low })}
+          >
+            Low
+          </button>
+          <label className="min-w-0">
+            <span className="sr-only">Aisle for {item.text}</span>
+            <select
+              className="field"
+              value={item.category}
+              disabled={busy}
+              onChange={(e) => void onPatch(item, { category: e.target.value as ShoppingCategory })}
+            >
+              {SHOPPING_CATEGORIES.map((c) => (
+                <option key={c} value={c}>
+                  {SHOPPING_CATEGORY_LABELS[c]}
+                </option>
+              ))}
+            </select>
+          </label>
+          <button
+            type="button"
+            className="btn-ghost px-3"
+            disabled={busy}
+            aria-label={`Remove ${item.text}`}
+            onClick={() => void onRemove(item)}
+          >
+            Remove
+          </button>
+        </div>
+      ) : null}
     </li>
   );
 }

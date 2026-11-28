@@ -220,21 +220,57 @@ export function PageHeaderSkeleton({ buttons = 2 }: { buttons?: number }) {
   );
 }
 
-/** The message board's form: text, name and keep-it, colours, post. */
+/** The message board's form: from, the note, colours, then keep-it beside Post. */
 export function MessageFormSkeleton() {
   return (
-    <div className="card grid gap-3">
+    <div className="card grid gap-3 p-4">
+      <FieldBone label="w-12" />
       <Bone className="h-24 rounded-xl" />
-      <div className="grid grid-cols-2 gap-3">
-        <FieldBone label="w-16" />
-        <FieldBone label="w-14" />
-      </div>
       <div className="flex gap-2">
         {[0, 1, 2, 3, 4].map((i) => (
           <Bone key={i} className="h-11 w-11 rounded-full" />
         ))}
       </div>
-      <ButtonBone className="w-full" />
+      <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-2">
+        <Bone className="h-11 rounded-xl" />
+        <ButtonBone className="w-40" />
+      </div>
+    </div>
+  );
+}
+
+/** The family and kitchen edit pages (`FamilyHome`): header, the tab bar, then the Notes tab. */
+export function FamilyHomeSkeleton({ buttons = 1, subtitle = false }: { buttons?: number; subtitle?: boolean }) {
+  return (
+    <div aria-busy="true" className="min-h-dvh">
+      <div className="mx-auto flex max-w-xl items-center justify-between gap-3 px-4 pt-4">
+        <div className="flex min-w-0 items-center gap-3">
+          <Bone className="h-8 w-8 rounded-[0.6rem]" />
+          <div className="grid gap-1.5">
+            <Bone className="h-6 w-24" />
+            {subtitle ? <Bone className="h-4 w-44" /> : null}
+          </div>
+        </div>
+        <div className="flex shrink-0 gap-2">
+          {Array.from({ length: buttons }, (_, i) => (
+            <ButtonBone key={i} className="w-28" />
+          ))}
+        </div>
+      </div>
+      <div className="fixed inset-x-0 bottom-0 border-t border-line bg-panel sm:static sm:mt-3 sm:border-t-0 sm:border-b">
+        <div className="mx-auto grid h-16 max-w-xl grid-cols-5 items-center justify-items-center sm:h-12">
+          {[0, 1, 2, 3, 4].map((i) => (
+            <Bone key={i} className="h-4 w-14" />
+          ))}
+        </div>
+      </div>
+      <div className="mx-auto grid w-full max-w-xl gap-4 p-4">
+        <HeadingBone className="w-44" />
+        <MessageFormSkeleton />
+        <div className="grid gap-3 sm:grid-cols-2">
+          <MessageNotesSkeleton />
+        </div>
+      </div>
     </div>
   );
 }
@@ -242,20 +278,4 @@ export function MessageFormSkeleton() {
 /** A section heading. */
 export function HeadingBone({ className = "w-32" }: { className?: string }) {
   return <Bone className={`h-6 ${className}`} />;
-}
-
-/** The whiteboard: the board at its real shape, then the tool row. */
-export function WhiteboardSkeleton() {
-  return (
-    <div className="grid gap-2">
-      <Bone className="aspect-[16/9] w-full rounded-xl" />
-      <div className="flex flex-wrap gap-2">
-        {[0, 1, 2, 3].map((i) => (
-          <Bone key={i} className="h-9 w-9 rounded-full" />
-        ))}
-        <ButtonBone className="w-20" />
-        <ButtonBone className="w-28" />
-      </div>
-    </div>
-  );
 }
