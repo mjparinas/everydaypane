@@ -6,6 +6,7 @@ import type { DashboardConfig } from "@/lib/config/schema";
 import type { TaskItem } from "@/lib/display/types";
 
 import { cached, forget } from "./cache";
+import type { TaskChange } from "./googleTasks";
 import { accessToken, MicrosoftDisconnected } from "./microsoft";
 import { graphGet, todoGranted } from "./microsoftPhotos";
 
@@ -102,4 +103,30 @@ export async function completeMicrosoftTask(
   await forget("m365-tasks:");
   await forget("tasks:");
   return "ok";
+}
+
+export const microsoftListOn = (config: DashboardConfig, listId: string) =>
+  config.integrations.microsoft.todoLists.some((l) => l.enabled && l.id === listId);
+
+async function graphWrite(accountId: string, method: "POST" | "PATCH", path: string, body: unknown): Promise<void> {
+  const token = await accessToken(accountId);
+  const r = await fetch(`https://graph.microsoft.com/v1.0${path}`, {
+    method,
+    headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+    signal: AbortSignal.timeout(8000),
+  });
+  if (!r.ok) throw new Error(`Microsoft To Do answered ${r.status}`);
+  await forget("m365-tasks:");
+}
+
+export function addMicrosoftTask(accountId: string, listId: string, title: string): Promise<void> {
+  return graphWrite(accountId, "POST", `/me/todo/lists/${encodeURIComponent(listId)}/tasks`, { title });
+}
+
+export function updateMicrosoftTask(accountId: string, listId: string, taskId: string, change: TaskChange): Promise<void> {
+  const body: Record<string, unknown> = {};
+  if (change.title !== undefined) body.title = change.title;
+  if (change.done !== undefined) body.status = change.done ? "completed" : "notStarted";
+  return graphWrite(accountId, "PATCH", `/me/todo/lists/${encodeURIComponent(listId)}/tasks/${encodeURIComponent(taskId)}`, body);
 }

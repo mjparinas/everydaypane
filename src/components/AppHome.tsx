@@ -6,6 +6,7 @@ import { SignOut } from "@/app/family/SignOut";
 import { DeleteAccount } from "@/components/DeleteAccount";
 import { FamilyEvents } from "@/components/FamilyEvents";
 import { FamilyPhotos } from "@/components/FamilyPhotos";
+import { FamilyTasks } from "@/components/FamilyTasks";
 import { InstallPrompt } from "@/components/InstallPrompt";
 import { KidsChores } from "@/components/KidsChores";
 import { MealPlanner } from "@/components/MealPlanner";
@@ -18,11 +19,11 @@ import { Mark } from "@/components/Wordmark";
 // The app's home (Melvin, 2026-11-28: "the mobile app should prioritize sending messages to the wall, editing todo
 // lists, shopping cart, etc, basically anything on the edit screen. make it an easy and intuitive interface"). One
 // thing at a time with a thumb-reachable tab bar, in the order a family reaches for them: a note to the wall first,
-// then the shopping list, meals and chores; the whiteboard, photos, the family calendar and this phone's settings sit
+// then to-dos, the shopping list, meals and chores; the whiteboard, photos, the family calendar and this phone's settings sit
 // under More, and Household is one tap away for admins. The tab lives in the address's hash (#shopping), so Back and
 // a link from a notification or widget land on the right one. Only the open tab is mounted, so only its list polls.
 
-export const APP_TABS = ["notes", "shopping", "meals", "chores", "more"] as const;
+export const APP_TABS = ["notes", "todos", "shopping", "meals", "chores", "more"] as const;
 export type AppTab = (typeof APP_TABS)[number];
 
 /** The tab an address hash names, or Notes. */
@@ -38,6 +39,7 @@ const subscribe = (fn: () => void) => {
 
 const TITLES: Record<AppTab, string> = {
   notes: "Notes to the Wall",
+  todos: "To-Dos",
   shopping: "Shopping List",
   meals: "Meal Plan",
   chores: "Chores",
@@ -89,6 +91,7 @@ export function AppHome({ isAdmin, name }: { isAdmin: boolean; name: string | nu
             <MessageBoard />
           </>
         )}
+        {tab === "todos" && <FamilyTasks />}
         {tab === "shopping" && <ShoppingList />}
         {tab === "meals" && <MealPlanner />}
         {tab === "chores" && <KidsChores />}
@@ -100,14 +103,14 @@ export function AppHome({ isAdmin, name }: { isAdmin: boolean; name: string | nu
         className="fixed inset-x-0 bottom-0 z-20 border-t border-line bg-panel/95 backdrop-blur"
         style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
       >
-        <ul className="mx-auto grid max-w-xl grid-cols-5">
+        <ul className="mx-auto grid max-w-xl grid-cols-6">
           {APP_TABS.map((t) => (
             <li key={t}>
               <button
                 type="button"
                 aria-current={t === tab ? "page" : undefined}
                 onClick={() => open(t)}
-                className={`flex min-h-16 w-full flex-col items-center justify-center gap-1 text-xs font-semibold transition ${
+                className={`flex min-h-16 w-full flex-col items-center justify-center gap-1 text-xs font-semibold whitespace-nowrap transition ${
                   t === tab ? "text-brand" : "text-soft hover:text-ink"
                 }`}
               >
@@ -122,23 +125,31 @@ export function AppHome({ isAdmin, name }: { isAdmin: boolean; name: string | nu
   );
 }
 
-const LABELS: Record<AppTab, string> = { notes: "Notes", shopping: "Shopping", meals: "Meals", chores: "Chores", more: "More" };
+const LABELS: Record<AppTab, string> = {
+  notes: "Notes",
+  todos: "To-Dos",
+  shopping: "Shopping",
+  meals: "Meals",
+  chores: "Chores",
+  more: "More",
+};
 
-/** The three things people open the app for most, as big buttons above the note form. */
+/** The other things people open the app for most, as big buttons above the note form. */
 function QuickActions({ open }: { open: (t: AppTab) => void }) {
   const actions: { tab: AppTab; label: string; hint: string }[] = [
+    { tab: "todos", label: "Add a To-Do", hint: "Google Tasks, To Do or Todoist" },
     { tab: "shopping", label: "Add to Shopping", hint: "Milk, eggs, bread" },
     { tab: "meals", label: "Plan Dinner", hint: "This week's meals" },
     { tab: "chores", label: "Tick Off Chores", hint: "Today's list" },
   ];
   return (
-    <div className="grid grid-cols-3 gap-2">
+    <div className="grid grid-cols-2 gap-2">
       {actions.map((a) => (
         <button
           key={a.tab}
           type="button"
           onClick={() => open(a.tab)}
-          className="grid min-h-24 content-center justify-items-center gap-1.5 rounded-2xl border border-line bg-panel p-3 text-center transition active:scale-[0.98]"
+          className="grid min-h-20 content-center justify-items-center gap-1.5 rounded-2xl border border-line bg-panel p-3 text-center transition active:scale-[0.98]"
         >
           <span className="grid h-10 w-10 place-items-center rounded-full bg-brand/10 text-brand">
             <TabIcon tab={a.tab} />
@@ -210,6 +221,13 @@ function TabIcon({ tab }: { tab: AppTab }) {
         <svg {...common}>
           <path d="M4 5h16v11H8l-4 4z" />
           <path d="M8 9h8M8 12h5" />
+        </svg>
+      );
+    case "todos":
+      return (
+        <svg {...common}>
+          <path d="M9 6h11M9 12h11M9 18h11" />
+          <path d="m3.5 6 1.5 1.5L7.5 5M3.5 12l1.5 1.5L7.5 11M3.5 18l1.5 1.5L7.5 17" />
         </svg>
       );
     case "shopping":

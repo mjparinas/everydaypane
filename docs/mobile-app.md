@@ -1,9 +1,9 @@
 # Everydaypane app for iPhone, iPad and Android
 
 The app lives in `mobile/` (Capacitor 8). It opens the live site at `https://www.everydaypane.com/app/`, the app home: big
-quick actions and a bottom tab bar for notes to the wall, shopping, meals and chores, with the whiteboard, photos, the
-family calendar and this phone's settings under More, and Household one tap away for admins. So **web changes reach the app
-without a new store release**. A new release is only needed when something in `mobile/` changes.
+quick actions and a bottom tab bar for notes to the wall, to-do lists, shopping, meals and chores, with the whiteboard,
+photos, the family calendar and this phone's settings under More, and Household one tap away for admins. So **web
+changes reach the app without a new store release**. A new release is only needed when something in `mobile/` changes.
 
 What the app adds on top of the website:
 

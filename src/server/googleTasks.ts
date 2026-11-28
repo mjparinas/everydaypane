@@ -165,3 +165,30 @@ export async function completeTask(
   await forget("tasks-unified:");
   return "ok";
 }
+
+/** A task change from a phone (Melvin, 2026-11-28: edit to-do lists from the app): a new title, done, or back to open. */
+export interface TaskChange {
+  title?: string;
+  done?: boolean;
+}
+
+/** Whether this Google list is switched on in Settings, which is all a signed-in phone needs to edit it. */
+export const googleListOn = (config: DashboardConfig, listId: string) =>
+  config.integrations.tasks.lists.some((l) => l.enabled && l.id === listId);
+
+export async function addGoogleTask(accountId: string, listId: string, title: string): Promise<void> {
+  await call(accountId, `/lists/${encodeURIComponent(listId)}/tasks`, { method: "POST", body: JSON.stringify({ title }) });
+  await forget("google-tasks:");
+}
+
+export async function updateGoogleTask(accountId: string, listId: string, taskId: string, change: TaskChange): Promise<void> {
+  const body: Record<string, unknown> = {};
+  if (change.title !== undefined) body.title = change.title;
+  // Reopening clears Google's completed time too, or the task stays hidden as done.
+  if (change.done !== undefined) Object.assign(body, change.done ? { status: "completed" } : { status: "needsAction", completed: null });
+  await call(accountId, `/lists/${encodeURIComponent(listId)}/tasks/${encodeURIComponent(taskId)}`, {
+    method: "PATCH",
+    body: JSON.stringify(body),
+  });
+  await forget("google-tasks:");
+}

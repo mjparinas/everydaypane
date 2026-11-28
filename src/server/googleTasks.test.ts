@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { GET as tasksGET, POST as tasksPOST } from "@/app/api/display/tasks/route";
+import { GET as familyGET, PATCH as familyPATCH, POST as familyPOST } from "@/app/api/family/tasks/route";
 import { GET as adminGET } from "@/app/api/household/google-tasks/route";
 import { newWidget } from "@/lib/config/widgets";
 import type { TasksData } from "@/lib/display/types";
@@ -68,6 +69,7 @@ describe("Google Tasks on displays", () => {
           );
         if (url.includes("/lists/groceries/tasks?"))
           return Promise.resolve(Response.json({ items: [{ id: "t1", title: "Milk", position: "1" }] }));
+        if (url.endsWith("/lists/groceries/tasks") && init?.method === "POST") return Promise.resolve(Response.json({ id: "t2" }));
         if (url.includes("/lists/groceries/tasks/t1") && init?.method === "PATCH") return Promise.resolve(Response.json({ id: "t1" }));
         if (url.includes("/lists/groceries/tasks/t1")) return Promise.resolve(Response.json({ id: "t1", status: "needsAction" }));
         if (url.includes("/lists/groceries/tasks/secret")) return Promise.resolve(new Response("missing", { status: 404 }));
@@ -125,6 +127,41 @@ describe("Google Tasks on displays", () => {
     expect((await tick(token, "chores")).status).toBe(403);
     expect(
       (await tasksPOST(req("/api/display/tasks/", { method: "POST", body: JSON.stringify({ list: "groceries", task: "t1" }) }))).status,
+    ).toBe(401);
+  });
+
+  it("lets a signed-in phone add, rename, tick off and reopen to-dos in switched-on lists, whatever the wall allows", async () => {
+    await connected(undefined, false);
+    const kid = await cookieFor("kid@example.com");
+    const send = (method: "POST" | "PATCH", body: object) =>
+      (method === "POST" ? familyPOST : familyPATCH)(
+        req("/api/family/tasks/", { method, headers: { cookie: kid }, body: JSON.stringify({ provider: "google", ...body }) }),
+      );
+    const data = (await (await familyGET(req("/api/family/tasks/", { headers: { cookie: kid } }))).json()) as unknown;
+    expect(data).toEqual({
+      admin: false,
+      lists: [{ id: "groceries", name: "Groceries", provider: "google", tasks: [{ id: "t1", title: "Milk" }] }],
+    });
+
+    expect((await send("POST", { list: "groceries", title: " Eggs " })).status).toBe(201);
+    const added = calls.find((c) => c.init?.method === "POST" && c.url.includes("tasks.googleapis.com"));
+    expect(added?.url).toBe("https://tasks.googleapis.com/tasks/v1/lists/groceries/tasks");
+    expect(JSON.parse(String(added?.init?.body))).toEqual({ title: "Eggs" });
+
+    const patches = () => calls.filter((c) => c.init?.method === "PATCH").map((c) => JSON.parse(String(c.init?.body)) as unknown);
+    expect((await send("PATCH", { list: "groceries", task: "t1", title: "Oat milk" })).status).toBe(200);
+    expect((await send("PATCH", { list: "groceries", task: "t1", done: true })).status).toBe(200);
+    expect((await send("PATCH", { list: "groceries", task: "t1", done: false })).status).toBe(200);
+    expect(patches()).toEqual([{ title: "Oat milk" }, { status: "completed" }, { status: "needsAction", completed: null }]);
+
+    expect((await send("POST", { list: "chores", title: "Sweep" })).status).toBe(403);
+    expect((await send("PATCH", { list: "groceries", task: "t1" })).status).toBe(400);
+    expect(
+      (
+        await familyPOST(
+          req("/api/family/tasks/", { method: "POST", body: JSON.stringify({ provider: "google", list: "groceries", title: "x" }) }),
+        )
+      ).status,
     ).toBe(401);
   });
 
