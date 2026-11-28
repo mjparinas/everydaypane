@@ -11,7 +11,7 @@ What the app adds on top of the website:
 | Push notifications: new message board notes, new alerts, washer or dryer done | APNs (token key) | Firebase Cloud Messaging |
 | Share › Everydaypane: photos to the photo frame, text and links to shopping or dinner | Share extension | Share intent |
 | Home-screen widget: dinner tonight, shopping list, chores left | WidgetKit (small, medium, large) | App widget (resizable) |
-| Wall mode on `/display/`: screen stays on, status bar and home bar hidden | Yes | Yes |
+| Wall mode on `/display/`: screen stays on, status bar hidden (Android: navigation bar too) | Yes | Yes |
 | Share When I'm Home (opt-in home geofence, for a future phone-based "who's home") | Region monitoring | Play services geofence |
 
 The phone's settings are the **This Phone** card on the Family page (only shown in the app). Plans are not sold in the
