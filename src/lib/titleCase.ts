@@ -78,3 +78,16 @@ export function titleCase(title: string): string {
   });
   return out.join("");
 }
+
+/**
+ * A person's name as the household header and the site's account chip show it (Melvin, 2026-11-28: "the customer name
+ * on the avatar and below the title needs to be titled cased"). Names aren't titles, so no word stays lower case:
+ * every part of a word with no capitals gets one ("melvin parinas" → "Melvin Parinas", "o'brien" → "O'Brien",
+ * "anne-marie" → "Anne-Marie"). A word typed with a capital anywhere (McDonald, DeVries, JR) is left
+ * as typed, so a name someone cased on purpose never changes.
+ */
+export function nameCase(name: string): string {
+  return name.replace(/\S+/g, (word) =>
+    /\p{Lu}/u.test(word) ? word : word.replace(/(^|[-'’.])(\p{Ll})/gu, (_, lead: string, ch: string) => lead + ch.toLocaleUpperCase()),
+  );
+}

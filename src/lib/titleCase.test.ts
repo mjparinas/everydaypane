@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { titleCase } from "./titleCase";
+import { nameCase, titleCase } from "./titleCase";
 
 describe("titleCase", () => {
   it.each([
@@ -30,5 +30,15 @@ describe("titleCase", () => {
     ["🎂 mom's birthday", "🎂 Mom's Birthday"],
   ])("%j → %j", (input, expected) => {
     expect(titleCase(input)).toBe(expected);
+  });
+});
+
+describe("nameCase", () => {
+  it("capitalises every part of a lower-case name and leaves cased words alone", () => {
+    expect(nameCase("melvin parinas")).toBe("Melvin Parinas");
+    expect(nameCase("anne-marie o'brien")).toBe("Anne-Marie O'Brien");
+    expect(nameCase("ana de la cruz")).toBe("Ana De La Cruz");
+    expect(nameCase("Ronan McDonald jr.")).toBe("Ronan McDonald Jr.");
+    expect(nameCase("ALEX")).toBe("ALEX");
   });
 });
