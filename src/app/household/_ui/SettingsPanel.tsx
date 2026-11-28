@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useSyncExternalStore } from "react";
 
+import { DeleteAccount } from "@/components/DeleteAccount";
 import { InstallPrompt } from "@/components/InstallPrompt";
 import type { DashboardConfig } from "@/lib/config/schema";
 import { WIDGETS } from "@/lib/config/widgets";
@@ -268,6 +269,7 @@ export function SettingsPanel() {
               <RegionPicker config={config} onChange={(v) => edit((c) => void (c.region = v))} />
             </Flagged>
           </Section>
+          <DeleteAccount />
         </div>
       )}
 

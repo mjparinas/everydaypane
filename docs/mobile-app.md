@@ -113,9 +113,11 @@ Both stores need:
 
 Two Apple rules to keep in mind:
 
-- **Account deletion (5.1.1(v))**: apps that let people create an account must let them delete it in the app. Sign-up
-  happens on Clerk's Account Portal, which the app can open. Before submitting, either add a "Delete Account" action to
-  Household Settings (I can build it) or confirm sign-up isn't reachable from the app.
+- **Account deletion (5.1.1(v))**: done. **Delete Account** is at the bottom of Settings › Home and of the Family
+  page, in the app and on the website. It shows what will go, then needs DELETE typed: a household whose only admin
+  deletes their account is deleted with everything in it (its Household plan cancelled at Stripe first), other
+  households just lose that person, and their Clerk sign-in is deleted. People on `ADMIN_EMAILS` / `FAMILY_EMAILS`
+  and the grandfather household can't be deleted there. Mention it in the App Review notes if they ask.
 - **Minimum functionality (4.2)**: the native features above are what make this more than a website in a frame; keep
   them on in the build you submit.
 

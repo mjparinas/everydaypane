@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
+import { DeleteAccount } from "@/components/DeleteAccount";
 import { FamilyEvents } from "@/components/FamilyEvents";
 import { FamilyPhotos } from "@/components/FamilyPhotos";
 import { InstallPrompt } from "@/components/InstallPrompt";
@@ -68,6 +69,7 @@ export default async function FamilyPage() {
         </h2>
         <ShoppingList />
       </section>
+      <DeleteAccount className="mx-auto w-full max-w-xl" />
     </main>
   );
 }
